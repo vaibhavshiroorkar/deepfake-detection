@@ -7,8 +7,8 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   const kind = req.nextUrl.searchParams.get("kind");
-  if (!kind || !["image", "video", "text"].includes(kind)) {
-    return NextResponse.json({ error: "kind must be image, video, or text" }, { status: 400 });
+  if (!kind || !["image", "video", "audio", "text"].includes(kind)) {
+    return NextResponse.json({ error: "kind must be image, video, audio, or text" }, { status: 400 });
   }
 
   try {
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(data, { status: res.status });
     }
 
-    // image or video — forward multipart
+    // image, video, or audio — forward multipart
     const form = await req.formData();
     const upstream = new FormData();
     const file = form.get("file");

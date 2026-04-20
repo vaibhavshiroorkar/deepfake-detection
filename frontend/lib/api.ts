@@ -5,7 +5,7 @@ export type Signal = {
 };
 
 export type BaseResult = {
-  kind: "image" | "video" | "text";
+  kind: "image" | "video" | "audio" | "text";
   suspicion: number;
   verdict: string;
   confidence: number;
@@ -26,27 +26,38 @@ export type VideoResult = BaseResult & {
   timeline: { timestamp: number; suspicion: number; verdict: string }[];
 };
 
+export type AudioResult = BaseResult & {
+  kind: "audio";
+  filename: string;
+  duration_seconds: number;
+  sample_rate: number;
+};
+
 export type TextResult = BaseResult & {
   kind: "text";
   length: { characters: number; words: number; sentences: number };
 };
 
-export type DetectionResult = ImageResult | VideoResult | TextResult;
+export type DetectionResult = ImageResult | VideoResult | AudioResult | TextResult;
 
-export async function detectImage(file: File): Promise<ImageResult> {
+async function upload(kind: "image" | "video" | "audio", file: File) {
   const fd = new FormData();
   fd.append("file", file);
-  const res = await fetch("/api/detect?kind=image", { method: "POST", body: fd });
+  const res = await fetch(`/api/detect?kind=${kind}`, { method: "POST", body: fd });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
+export async function detectImage(file: File): Promise<ImageResult> {
+  return upload("image", file);
+}
+
 export async function detectVideo(file: File): Promise<VideoResult> {
-  const fd = new FormData();
-  fd.append("file", file);
-  const res = await fetch("/api/detect?kind=video", { method: "POST", body: fd });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return upload("video", file);
+}
+
+export async function detectAudio(file: File): Promise<AudioResult> {
+  return upload("audio", file);
 }
 
 export async function detectText(text: string): Promise<TextResult> {

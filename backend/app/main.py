@@ -5,10 +5,11 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from .detectors import analyze_image, analyze_text, analyze_video
+from .detectors import analyze_audio, analyze_image, analyze_text, analyze_video
 
 MAX_IMAGE_BYTES = 25 * 1024 * 1024   # 25 MB
 MAX_VIDEO_BYTES = 200 * 1024 * 1024  # 200 MB
+MAX_AUDIO_BYTES = 50 * 1024 * 1024   # 50 MB
 MAX_TEXT_CHARS = 50_000
 
 app = FastAPI(
@@ -58,6 +59,19 @@ async def detect_video(file: UploadFile = File(...)):
         return analyze_video(data, filename=file.filename or "video")
     except Exception as e:
         raise HTTPException(422, f"Could not analyze video: {e}")
+
+
+@app.post("/api/detect/audio")
+async def detect_audio(file: UploadFile = File(...)):
+    data = await file.read()
+    if not data:
+        raise HTTPException(400, "Empty upload.")
+    if len(data) > MAX_AUDIO_BYTES:
+        raise HTTPException(413, f"Audio exceeds {MAX_AUDIO_BYTES // (1024*1024)} MB limit.")
+    try:
+        return analyze_audio(data, filename=file.filename or "audio")
+    except Exception as e:
+        raise HTTPException(422, f"Could not analyze audio: {e}")
 
 
 @app.post("/api/detect/text")
