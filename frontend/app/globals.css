@@ -1,0 +1,112 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter+Tight:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:wght@300..700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bone: #f4efe6;
+  --paper: #fbf8f1;
+  --ink: #141413;
+  --smoke: #3a3835;
+  --mute: #8a8478;
+  --rule: #d9d1c2;
+  --ember: #d84727;
+  --forest: #2f5d45;
+  --alert: #b8341f;
+  --grid: rgba(20, 20, 19, 0.045);
+}
+
+html, body {
+  background: var(--bone);
+  color: var(--ink);
+  font-family: "Inter Tight", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  background-image:
+    radial-gradient(1200px 400px at 15% -8%, rgba(216, 71, 39, 0.07), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(47, 93, 69, 0.05), transparent 55%),
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: auto, auto, 44px 44px, 44px 44px;
+  background-position: 0 0, 0 0, -1px -1px, -1px -1px;
+}
+
+/* Noise overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.08 0 0 0 0 0.08 0 0 0 0 0.07 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+::selection {
+  background: var(--ember);
+  color: var(--paper);
+}
+
+.font-display { font-family: "Fraunces", serif; font-optical-sizing: auto; }
+.font-mono { font-family: "JetBrains Mono", monospace; }
+
+/* Hairline rule */
+.hairline { height: 1px; background: var(--rule); }
+
+/* Marquee / strip */
+@keyframes slide-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee-track {
+  animation: slide-left 40s linear infinite;
+}
+
+/* Scanning line — ambient hero element */
+@keyframes scan {
+  0%   { transform: translateY(0%); opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+.scan-line {
+  animation: scan 4.2s cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 1; }
+}
+.pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Custom gauge track */
+.gauge-track {
+  background:
+    linear-gradient(90deg,
+      var(--forest) 0%,
+      var(--forest) 30%,
+      var(--amber, #e8a33d) 30%,
+      var(--amber, #e8a33d) 55%,
+      var(--ember) 55%,
+      var(--ember) 75%,
+      var(--alert) 75%,
+      var(--alert) 100%);
+  mask-image: linear-gradient(90deg, black 96%, transparent 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-line, .marquee-track, .pulse-soft { animation: none !important; }
+  * { transition-duration: 0.01ms !important; }
+}

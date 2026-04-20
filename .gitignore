@@ -1,0 +1,28 @@
+# Node
+node_modules/
+.next/
+out/
+dist/
+.env*.local
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Uploads / tmp
+tmp/
+uploads/
