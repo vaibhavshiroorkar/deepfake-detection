@@ -1,9 +1,14 @@
 """
-Image forensics. Heuristic signals combined into a verdict.
+Image forensics: detecting AI-generated and manipulated images.
 
-The analysis is explicitly multi-signal so the frontend can show its work:
-ELA, noise consistency, frequency-domain artifacts, face region anomalies,
-edge continuity. No single signal is decisive; the aggregate is.
+Two distinct problems require two distinct signal sets:
+  1. AI synthesis (GAN / diffusion) — no compositing artifacts, but missing
+     the physical imperfections every real camera introduces.
+  2. Traditional manipulation (splicing, inpainting) — ELA and face seam
+     signals catch these.
+
+Signals are combined with weights tuned to catch modern generators while
+keeping false-positive rates reasonable on unedited photographs.
 """
 from __future__ import annotations
 
@@ -26,6 +31,10 @@ class Signal:
     detail: str
 
 
+# ---------------------------------------------------------------------------
+# Image loading helpers
+# ---------------------------------------------------------------------------
+
 def _pil_from_bytes(data: bytes) -> Image.Image:
     img = Image.open(io.BytesIO(data))
     img.load()
@@ -43,10 +52,15 @@ def _cv_from_pil(img: Image.Image) -> np.ndarray:
     return cv2.cvtColor(arr, cv2.COLOR_RGB2BGR)
 
 
+# ---------------------------------------------------------------------------
+# Signal 1 — Error Level Analysis (catches splicing; AI images show flat ELA)
+# ---------------------------------------------------------------------------
+
 def _ela_signal(img: Image.Image) -> Signal:
-    """Error Level Analysis — recompress at quality 90 and measure per-pixel
-    deviation. Authentic photographs degrade uniformly; composites and
-    synthetic regions often leave bright ELA residue."""
+    """ELA reveals JPEG re-compression history.
+    Composited regions show high residue. AI-generated images show suspiciously
+    flat, low residue because they were synthesised in one pass.
+    Both extremes are penalised."""
     buf = io.BytesIO()
     rgb = img.convert("RGB")
     rgb.save(buf, format="JPEG", quality=90)
@@ -58,161 +72,305 @@ def _ela_signal(img: Image.Image) -> Signal:
     peak = float(np.percentile(arr, 99))
     std = float(arr.std())
 
-    # Calibrated on sample set: mean ~4-8 is typical for real JPEGs,
-    # >14 is suspicious. Composites push peaks aggressively.
     score = 0.0
-    score += min(1.0, max(0.0, (mean - 5.0) / 14.0)) * 0.5
-    score += min(1.0, max(0.0, (peak - 30.0) / 60.0)) * 0.35
-    score += min(1.0, max(0.0, (std - 8.0) / 18.0)) * 0.15
+    # High residue → composite / manipulation
+    score += min(1.0, max(0.0, (mean - 6.0) / 12.0)) * 0.45
+    score += min(1.0, max(0.0, (peak - 35.0) / 55.0)) * 0.30
+
+    # Suspiciously flat ELA → AI synthesis. Real JPEGs have mean 4-8 and
+    # meaningful std. Generated images are too uniform.
+    if mean < 3.5 and std < 3.0:
+        score += 0.35
+    elif mean < 5.0 and std < 4.5:
+        score += 0.15
+
     score = float(np.clip(score, 0.0, 1.0))
+    if score < 0.35:
+        detail = (f"Residual mean {mean:.2f}, 99th-pct {peak:.1f}. "
+                  "Recompression residue is normal for a camera photograph.")
+    elif mean < 5.0:
+        detail = (f"Residual mean {mean:.2f}, std {std:.2f}. "
+                  "ELA is suspiciously flat and clean — consistent with AI synthesis.")
+    else:
+        detail = (f"Residual mean {mean:.2f}, 99th-pct {peak:.1f}. "
+                  "Residue clusters suggest re-compressed or composited regions.")
+    return Signal("Error-level analysis", score, detail)
 
-    return Signal(
-        name="Error-level analysis",
-        score=score,
-        detail=f"Residual mean {mean:.2f}, 99th-percentile {peak:.1f}. "
-        + (
-            "Recompression residue is uniform — consistent with a single-origin photograph."
-            if score < 0.35
-            else "Residue clusters suggest regions compressed more than once or synthesized."
-        ),
-    )
 
+# ---------------------------------------------------------------------------
+# Signal 2 — Focus / depth-of-field uniformity
+# ---------------------------------------------------------------------------
 
-def _noise_signal(cv_img: np.ndarray) -> Signal:
-    """Local noise variance. Real sensor noise is spatially stationary;
-    synthetic imagery often has patches of unnaturally smooth or
-    unnaturally uniform noise."""
+def _focus_uniformity_signal(cv_img: np.ndarray) -> Signal:
+    """Real lenses produce depth-of-field blur: sharpness varies across the
+    frame. AI-generated images are uniformly sharp everywhere — no part is
+    defocused, even when perspective demands it.
+
+    Measures coefficient of variation of patch-level Laplacian variance.
+    Low CV → suspiciously uniform focus → AI."""
     gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY).astype(np.float32)
     h, w = gray.shape
-    step = max(16, min(h, w) // 24)
-    patches = []
-    if h > step and w > step:
-        for y in range(0, h - step, step):
-            for x in range(0, w - step, step):
-                patch = gray[y : y + step, x : x + step]
-                hp = patch - cv2.GaussianBlur(patch, (5, 5), 0)
-                patches.append(hp.std())
-    if not patches:
-        return Signal(
-            "Noise stationarity",
-            0.2,
-            "Image too small to sample noise patches reliably.",
-        )
-    patches = np.array(patches)
-    variance_of_variance = float(patches.std())
-    median_noise = float(np.median(patches))
+    step = max(32, min(h, w) // 10)
+    sharpness = []
+    for y in range(0, h - step, step):
+        for x in range(0, w - step, step):
+            patch = gray[y : y + step, x : x + step]
+            lap = cv2.Laplacian(patch, cv2.CV_32F)
+            v = float(lap.var())
+            if v > 0:
+                sharpness.append(v)
+
+    if len(sharpness) < 6:
+        return Signal("Focus variation", 0.2,
+                      "Image too small to profile depth of field.")
+
+    sharpness = np.array(sharpness)
+    cv = float(sharpness.std() / (sharpness.mean() + 1e-6))
+
+    # Natural photos: CV typically 1.0–3.0 (some areas sharp, some blurry).
+    # AI images: CV often < 0.5 (uniform sharpness throughout).
+    if cv < 0.35:
+        score = 0.85
+    elif cv < 0.6:
+        score = 0.65
+    elif cv < 1.0:
+        score = 0.35
+    else:
+        score = 0.1
+
+    return Signal(
+        "Focus variation",
+        score,
+        f"Sharpness CV across {len(sharpness)} patches: {cv:.2f}. "
+        + ("Unnaturally uniform sharpness — no depth-of-field blur. "
+           "Real lenses can't keep every plane in focus simultaneously."
+           if score > 0.5
+           else "Sharpness varies naturally across the frame."),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Signal 3 — Chromatic aberration
+# ---------------------------------------------------------------------------
+
+def _chromatic_aberration_signal(cv_img: np.ndarray) -> Signal:
+    """Every real lens produces chromatic aberration: colour channels shift
+    slightly at high-contrast edges. AI models generate pixel-perfect channel
+    alignment — a physical impossibility with glass optics.
+
+    Measures the spatial correlation between channel-specific edge maps.
+    Perfect correlation → no CA → suspicious."""
+    b, g, r = [c.astype(np.uint8) for c in cv2.split(cv_img)]
+    # Use Sobel magnitude instead of Canny for smoother gradient comparison
+    def sobel_mag(ch: np.ndarray) -> np.ndarray:
+        sx = cv2.Sobel(ch, cv2.CV_32F, 1, 0, ksize=3)
+        sy = cv2.Sobel(ch, cv2.CV_32F, 0, 1, ksize=3)
+        return np.sqrt(sx * sx + sy * sy)
+
+    mag_r = sobel_mag(r).ravel()
+    mag_g = sobel_mag(g).ravel()
+    mag_b = sobel_mag(b).ravel()
+
+    # Only compare at strong-edge positions (top 20 % by green gradient)
+    thresh = float(np.percentile(mag_g, 80))
+    mask = mag_g > thresh
+    if mask.sum() < 500:
+        return Signal("Chromatic aberration", 0.3,
+                      "Insufficient edge pixels to measure CA.")
+
+    rg_corr = float(np.corrcoef(mag_r[mask], mag_g[mask])[0, 1])
+    bg_corr = float(np.corrcoef(mag_b[mask], mag_g[mask])[0, 1])
+    alignment = float(np.clip((rg_corr + bg_corr) / 2, 0.0, 1.0))
+
+    # Real lenses: alignment ~0.85–0.95 (slight channel shift).
+    # AI images: alignment ~0.98–1.0 (channels move in perfect lockstep).
+    if alignment > 0.985:
+        score = 0.85
+    elif alignment > 0.97:
+        score = 0.60
+    elif alignment > 0.95:
+        score = 0.35
+    else:
+        score = 0.1
+
+    return Signal(
+        "Chromatic aberration",
+        score,
+        f"Channel gradient alignment {alignment:.4f}. "
+        + ("Channels are in perfect alignment — glass lenses can't do this. "
+           "Consistent with AI synthesis."
+           if score > 0.5
+           else "Natural colour-channel misalignment from lens optics."),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Signal 4 — Frequency-domain grid artifacts
+# ---------------------------------------------------------------------------
+
+def _grid_artifact_signal(cv_img: np.ndarray) -> Signal:
+    """Diffusion models process images in latent patches (commonly 8 × 8 or
+    16 × 16 pixels in pixel space after upsampling). This leaves periodic
+    energy peaks in the 2-D FFT at those spatial frequencies.
+
+    Real photographs have smooth, monotonically decaying radial spectra."""
+    gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY).astype(np.float32)
+    size = 512
+    gray = cv2.resize(gray, (size, size))
+    gray -= gray.mean()
+
+    fft = np.fft.fft2(gray)
+    fshift = np.fft.fftshift(fft)
+    mag = np.log1p(np.abs(fshift))
+
+    cy, cx = size // 2, size // 2
+    # Blank the DC component
+    mag[cy - 4 : cy + 5, cx - 4 : cx + 5] = 0.0
+
+    # Build a smooth radial baseline
+    y_idx, x_idx = np.indices(mag.shape)
+    r = np.sqrt((y_idx - cy) ** 2 + (x_idx - cx) ** 2)
+    radial_counts = np.bincount(r.ravel().astype(int), minlength=size)
+    radial_sums = np.bincount(r.ravel().astype(int), mag.ravel(), minlength=size)
+    with np.errstate(invalid="ignore"):
+        radial_mean = np.where(radial_counts > 0,
+                               radial_sums / radial_counts, 0.0)
+
+    # Expected value at each pixel from radial average
+    expected = radial_mean[np.clip(r.astype(int), 0, size - 1)]
+    residual = mag - expected  # positive = unexplained peak
+
+    peak_score = 0.0
+    for period in [8, 12, 16, 32, 64]:
+        freq = size // period
+        if freq < 3:
+            continue
+        for dy, dx in [(freq, 0), (0, freq), (freq, freq),
+                       (-freq, freq), (freq, -freq)]:
+            py, px = cy + dy, cx + dx
+            if 0 < py < size and 0 < px < size:
+                local_peak = residual[py - 2 : py + 3, px - 2 : px + 3].max()
+                if local_peak > 0.15:
+                    peak_score += local_peak * 0.4
+
+    score = float(np.clip(peak_score, 0.0, 1.0))
+    return Signal(
+        "Frequency grid artifacts",
+        score,
+        f"Peak residual at patch-boundary frequencies: {peak_score:.3f}. "
+        + ("Periodic energy peaks detected — characteristic of diffusion-model "
+           "patch processing or GAN upsampling."
+           if score > 0.3
+           else "No significant periodic artifacts in the frequency spectrum."),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Signal 5 — Sensor noise profile
+# ---------------------------------------------------------------------------
+
+def _sensor_noise_signal(cv_img: np.ndarray) -> Signal:
+    """Real camera sensors inject thermal and shot noise uniformly, even in
+    flat regions. AI-generated images either omit noise entirely or add a
+    synthetic pattern that doesn't match real sensor statistics.
+
+    Measures noise level in smooth image regions; very low or perfectly
+    uniform noise is suspicious."""
+    gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY).astype(np.float32)
+    h, w = gray.shape
+    step = max(16, min(h, w) // 20)
+    smooth_patch_noise = []
+
+    for y in range(0, h - step, step):
+        for x in range(0, w - step, step):
+            patch = gray[y : y + step, x : x + step]
+            # High-pass: remove structure, keep noise
+            hp = patch - cv2.GaussianBlur(patch, (5, 5), 0)
+            local_grad = cv2.Laplacian(patch, cv2.CV_32F).var()
+            # Only use smooth patches (little scene texture)
+            if local_grad < 200:
+                smooth_patch_noise.append(float(hp.std()))
+
+    if len(smooth_patch_noise) < 5:
+        return Signal("Sensor noise", 0.25,
+                      "Too few smooth regions to profile sensor noise.")
+
+    noise_arr = np.array(smooth_patch_noise)
+    noise_level = float(noise_arr.mean())
+    noise_consistency = float(noise_arr.std())
 
     score = 0.0
-    # Very low median noise (over-smoothed) OR very high variance of
-    # variance (uneven noise floor) both suggest manipulation.
-    if median_noise < 1.2:
-        score += 0.55
-    elif median_noise < 2.0:
+    # Too clean: AI images often have near-zero noise in flat areas
+    if noise_level < 0.4:
+        score += 0.7
+    elif noise_level < 0.9:
+        score += 0.4
+    elif noise_level < 1.5:
+        score += 0.15
+
+    # Suspicious uniformity of the noise itself
+    if noise_consistency < 0.1 and noise_level < 2.0:
         score += 0.2
-    score += min(1.0, variance_of_variance / 6.0) * 0.45
+
     score = float(np.clip(score, 0.0, 1.0))
-
     return Signal(
-        name="Noise stationarity",
-        score=score,
-        detail=f"Median high-frequency noise {median_noise:.2f}, cross-patch variance {variance_of_variance:.2f}. "
-        + (
-            "Noise floor is consistent across the frame."
-            if score < 0.4
-            else "Uneven noise distribution — a common fingerprint of inpainted or generated regions."
-        ),
+        "Sensor noise",
+        score,
+        f"Smooth-region noise level {noise_level:.3f}, consistency {noise_consistency:.3f}. "
+        + ("Suspiciously clean or uniform noise — real sensors always add "
+           "thermal and shot noise."
+           if score > 0.4
+           else "Natural sensor noise present in flat image regions."),
     )
 
 
-def _frequency_signal(cv_img: np.ndarray) -> Signal:
-    """High-frequency spectral signature. Many GAN and diffusion outputs
-    have measurably different radial spectra than camera captures."""
-    gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY).astype(np.float32)
-    gray = cv2.resize(gray, (256, 256))
-    f = np.fft.fftshift(np.fft.fft2(gray))
-    mag = np.log1p(np.abs(f))
-    cy, cx = 128, 128
-    y, x = np.indices(mag.shape)
-    r = np.sqrt((y - cy) ** 2 + (x - cx) ** 2).astype(np.int32)
-    radial = np.bincount(r.ravel(), mag.ravel()) / np.bincount(r.ravel())
-    radial = radial[: min(128, len(radial))]
-
-    # Slope of the spectrum in mid-to-high band. Flatter than expected
-    # can indicate upsampled or synthesized content.
-    lo, hi = 20, 100
-    if hi >= len(radial):
-        hi = len(radial) - 1
-    band = radial[lo:hi]
-    if len(band) < 4:
-        return Signal("Spectral falloff", 0.2, "Image too small for spectral analysis.")
-    slope = float(np.polyfit(np.arange(len(band)), band, 1)[0])
-
-    # Typical cameras: slope around -0.02 to -0.05. Flat or positive is suspicious.
-    score = float(np.clip((slope + 0.01) / 0.04 + 0.4, 0.0, 1.0))
-
-    return Signal(
-        name="Spectral falloff",
-        score=score,
-        detail=f"Radial spectrum slope {slope:.4f}. "
-        + (
-            "Spectrum falls off as expected for a lensed capture."
-            if score < 0.45
-            else "Mid-band energy is elevated — often a signature of upsampled or diffused output."
-        ),
-    )
-
+# ---------------------------------------------------------------------------
+# Signal 6 — Face-region boundary (composite / face-swap heuristic)
+# ---------------------------------------------------------------------------
 
 def _face_signal(cv_img: np.ndarray) -> Signal:
-    """Face region inspection: detect faces and measure edge
-    discontinuity around them (swap/morph boundary heuristic)."""
+    """Detects seam artifacts at face boundaries, the hallmark of face-swap
+    and face-replacement composites. Pure AI generation usually passes this;
+    it is most useful for GAN-based deepfakes and Photoshop splicing."""
     gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
     if min(gray.shape) < 80:
-        return Signal(
-            name="Face boundary",
-            score=0.0,
-            detail="Image too small for face analysis — this check does not apply.",
-        )
-    cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
-    cascade = cv2.CascadeClassifier(cascade_path)
+        return Signal("Face boundary", 0.0,
+                      "Image too small for face analysis.")
+    cascade = cv2.CascadeClassifier(
+        cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
+    )
     try:
         faces = cascade.detectMultiScale(gray, 1.2, 4, minSize=(60, 60))
     except cv2.error:
         faces = []
-
     if len(faces) == 0:
-        return Signal(
-            name="Face boundary",
-            score=0.0,
-            detail="No faces detected — this check does not apply.",
-        )
-
+        return Signal("Face boundary", 0.0,
+                      "No faces detected — this check does not apply.")
     scores = []
-    for (x, y, w, h) in faces:
-        pad = max(8, w // 10)
-        y0, y1 = max(0, y - pad), min(gray.shape[0], y + h + pad)
-        x0, x1 = max(0, x - pad), min(gray.shape[1], x + w + pad)
+    for (x, y, fw, fh) in faces:
+        pad = max(8, fw // 10)
+        y0 = max(0, y - pad); y1 = min(gray.shape[0], y + fh + pad)
+        x0 = max(0, x - pad); x1 = min(gray.shape[1], x + fw + pad)
         region = gray[y0:y1, x0:x1]
-        edges_inner = cv2.Canny(gray[y:y + h, x:x + w], 60, 160).mean()
-        edges_outer = cv2.Canny(region, 60, 160).mean()
-        # A face swapped onto a body often has a halo of edges at the boundary.
-        delta = abs(edges_outer - edges_inner)
-        scores.append(min(1.0, delta / 18.0))
+        inner = cv2.Canny(gray[y : y + fh, x : x + fw], 60, 160).mean()
+        outer = cv2.Canny(region, 60, 160).mean()
+        scores.append(min(1.0, abs(outer - inner) / 18.0))
     avg = float(np.mean(scores))
     return Signal(
-        name="Face boundary",
-        score=avg,
-        detail=f"{len(faces)} face region(s) examined. Boundary edge delta averaged {avg:.2f}. "
-        + (
-            "Transitions into skin and hair look continuous."
-            if avg < 0.4
-            else "Halo or seam artifacts near face boundaries — consistent with face-swap techniques."
-        ),
+        "Face boundary",
+        avg,
+        f"{len(faces)} face region(s). Boundary edge delta: {avg:.2f}. "
+        + ("Halo or seam at face boundary — consistent with face-swap."
+           if avg > 0.4
+           else "No seam artifacts at face boundaries."),
     )
 
 
+# ---------------------------------------------------------------------------
+# Signal 7 — EXIF / capture metadata
+# ---------------------------------------------------------------------------
+
 def _metadata_signal(img: Image.Image) -> Signal:
-    """EXIF check. Absent camera metadata isn't proof of manipulation,
-    but its presence is a mild signal in the other direction."""
     try:
         exif_obj = img.getexif()
         exif = dict(exif_obj) if exif_obj else None
@@ -220,70 +378,70 @@ def _metadata_signal(img: Image.Image) -> Signal:
         exif = None
     if not exif:
         return Signal(
-            name="Capture metadata",
-            score=0.35,
-            detail="No EXIF metadata present. Common for screenshots, web-exported images, and — sometimes — generated output.",
+            "Capture metadata",
+            0.45,
+            "No EXIF metadata. AI-generated images never carry camera EXIF; "
+            "real photographs almost always do.",
         )
     tags = {ExifTags.TAGS.get(k, k): v for k, v in exif.items()}
     make = str(tags.get("Make", "")).strip()
-    model = str(tags.get("Model", "")).strip()
+    model_name = str(tags.get("Model", "")).strip()
     software = str(tags.get("Software", "")).lower()
-    datetime = str(tags.get("DateTimeOriginal", tags.get("DateTime", "")))
+    dt = str(tags.get("DateTimeOriginal", tags.get("DateTime", "")))
 
-    suspicious_software = any(
-        s in software for s in ["stable diffusion", "midjourney", "dall", "firefly", "generated"]
-    )
-    if suspicious_software:
+    if any(s in software for s in
+           ["stable diffusion", "midjourney", "dall", "firefly",
+            "generated", "invoke", "comfy", "automatic1111"]):
+        return Signal("Capture metadata", 0.95,
+                      f"Software tag identifies a generative tool: '{software}'.")
+    if make and model_name:
         return Signal(
-            name="Capture metadata",
-            score=0.9,
-            detail=f"Software tag names a generative tool: '{software}'.",
+            "Capture metadata", 0.05,
+            f"Camera: {make} {model_name}{' @ ' + dt if dt else ''}.",
         )
-    if make and model:
-        return Signal(
-            name="Capture metadata",
-            score=0.1,
-            detail=f"Camera tags present: {make} {model}{(' @ ' + datetime) if datetime else ''}.",
-        )
-    return Signal(
-        name="Capture metadata",
-        score=0.3,
-        detail="Partial EXIF data — consistent with re-saved or edited images.",
-    )
+    return Signal("Capture metadata", 0.30,
+                  "Partial EXIF — consistent with re-saved or screen-captured images.")
 
+
+# ---------------------------------------------------------------------------
+# Verdict aggregation
+# ---------------------------------------------------------------------------
 
 def _verdict(signals: list[Signal]) -> tuple[float, str]:
-    """Weighted aggregation. Signals at the extremes dominate."""
     weights = {
-        "Error-level analysis": 1.0,
-        "Noise stationarity": 1.0,
-        "Spectral falloff": 0.9,
-        "Face boundary": 0.8,
-        "Capture metadata": 0.5,
+        "Focus variation":          1.4,
+        "Chromatic aberration":     1.3,
+        "Sensor noise":             1.2,
+        "Frequency grid artifacts": 1.1,
+        "Error-level analysis":     1.0,
+        "Capture metadata":         0.8,
+        "Face boundary":            0.7,
     }
-    num = 0.0
-    denom = 0.0
+    num = denom = 0.0
     for s in signals:
-        if s.name == "Face boundary" and s.score == 0.0 and "does not apply" in s.detail:
+        if "does not apply" in s.detail:
             continue
         w = weights.get(s.name, 0.5)
         num += s.score * w
         denom += w
-    score = num / denom if denom else 0.0
-    # Nudge: images with one very high signal should not be washed out.
+    avg = num / denom if denom else 0.0
     peak = max((s.score for s in signals), default=0.0)
-    score = 0.7 * score + 0.3 * peak
+    score = float(np.clip(0.65 * avg + 0.35 * peak, 0.0, 1.0))
 
-    if score < 0.3:
+    if score < 0.30:
         label = "likely authentic"
-    elif score < 0.55:
+    elif score < 0.50:
         label = "inconclusive"
-    elif score < 0.75:
-        label = "likely manipulated"
+    elif score < 0.72:
+        label = "likely AI-generated or manipulated"
     else:
-        label = "highly likely manipulated"
-    return float(np.clip(score, 0.0, 1.0)), label
+        label = "highly likely AI-generated or manipulated"
+    return score, label
 
+
+# ---------------------------------------------------------------------------
+# Public entry point
+# ---------------------------------------------------------------------------
 
 def analyze_image(
     data: bytes,
@@ -295,11 +453,13 @@ def analyze_image(
     cv_img = _cv_from_pil(img)
 
     signals = [
+        _focus_uniformity_signal(cv_img),
+        _chromatic_aberration_signal(cv_img),
+        _sensor_noise_signal(cv_img),
+        _grid_artifact_signal(cv_img),
         _ela_signal(img),
-        _noise_signal(cv_img),
-        _frequency_signal(cv_img),
-        _face_signal(cv_img),
         _metadata_signal(img),
+        _face_signal(cv_img),
     ]
     score, label = _verdict(signals)
     width, height = img.size
