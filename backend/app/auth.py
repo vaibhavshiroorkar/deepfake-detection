@@ -5,9 +5,9 @@ a user_id and, when applicable, the api_key row that authorized the call.
 Anonymous calls are permitted; they simply produce `Identity(None, None)`
 and the scan is not persisted.
 
-Supabase now signs JWTs with ES256 (asymmetric EC). Supply the public key
-as a JSON string in SUPABASE_JWT_PUBLIC_KEY (the JWK from
-Project Settings → API → JWT Settings → JWKS).
+Supports both HS256 (SUPABASE_JWT_SECRET — the classic shared secret) and
+ES256 (SUPABASE_JWT_PUBLIC_KEY — the JWK JSON for newer EC-signed projects).
+HS256 is tried first; ES256 is the fallback.
 """
 from __future__ import annotations
 
@@ -24,10 +24,10 @@ from fastapi import Header, HTTPException
 from .db import supabase_request
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-_JWK_JSON = os.getenv("SUPABASE_JWT_PUBLIC_KEY", "")
+_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
 
-# Build the EC public key object once at startup.
 _EC_PUBLIC_KEY = None
+_JWK_JSON = os.getenv("SUPABASE_JWT_PUBLIC_KEY", "")
 if _JWK_JSON:
     try:
         _EC_PUBLIC_KEY = ECAlgorithm.from_jwk(json.loads(_JWK_JSON))
@@ -42,20 +42,36 @@ class Identity:
 
 
 def _verify_jwt(token: str) -> str | None:
-    """Returns the Supabase user id (`sub`) if the ES256 token is valid."""
-    if _EC_PUBLIC_KEY is None:
-        return None
-    try:
-        payload = jwt.decode(
-            token,
-            _EC_PUBLIC_KEY,
-            algorithms=["ES256"],
-            audience="authenticated",
-        )
-        sub = payload.get("sub")
-        return sub if isinstance(sub, str) else None
-    except jwt.PyJWTError:
-        return None
+    """Try HS256 first (most Supabase projects), then ES256."""
+    if _JWT_SECRET:
+        try:
+            payload = jwt.decode(
+                token,
+                _JWT_SECRET,
+                algorithms=["HS256"],
+                audience="authenticated",
+            )
+            sub = payload.get("sub")
+            if isinstance(sub, str):
+                return sub
+        except jwt.PyJWTError:
+            pass
+
+    if _EC_PUBLIC_KEY is not None:
+        try:
+            payload = jwt.decode(
+                token,
+                _EC_PUBLIC_KEY,
+                algorithms=["ES256"],
+                audience="authenticated",
+            )
+            sub = payload.get("sub")
+            if isinstance(sub, str):
+                return sub
+        except jwt.PyJWTError:
+            pass
+
+    return None
 
 
 def hash_api_key(raw: str) -> str:
@@ -63,8 +79,6 @@ def hash_api_key(raw: str) -> str:
 
 
 async def _verify_api_key(raw: str) -> Identity | None:
-    """API keys look like 'vrt_<prefix>_<secret>'. We hash the full string
-    and look it up in the api_keys table."""
     if not SUPABASE_URL:
         return None
     key_hash = hash_api_key(raw)
@@ -82,7 +96,6 @@ async def _verify_api_key(raw: str) -> Identity | None:
     row = rows[0]
     if row.get("revoked_at"):
         return None
-    # Touch last_used (best-effort).
     try:
         await supabase_request(
             "PATCH",

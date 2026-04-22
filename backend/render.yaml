@@ -17,6 +17,9 @@ services:
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
-      # Paste the full JWK JSON string (one line) from Supabase → Project Settings → API → JWT Settings → JWKS
+      # Project Settings → API → JWT Settings → JWT Secret
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      # Optional: JWK JSON for ES256 (only needed if you enabled asymmetric signing)
       - key: SUPABASE_JWT_PUBLIC_KEY
         sync: false
