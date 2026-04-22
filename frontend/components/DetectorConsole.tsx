@@ -21,12 +21,15 @@ const TABS: { id: Tab; label: string; Icon: typeof ImageIcon }[] = [
 export default function DetectorConsole() {
   const [tab, setTab] = useState<Tab>("text");
   const [result, setResult] = useState<DetectionResult | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function reset() {
     setResult(null);
     setError(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
   }
 
   return (
@@ -95,6 +98,8 @@ export default function DetectorConsole() {
                     setLoading(true);
                     setError(null);
                     setResult(null);
+                    if (previewUrl) URL.revokeObjectURL(previewUrl);
+                    setPreviewUrl(tab === "image" ? URL.createObjectURL(file) : null);
                     try {
                       const { detectImage, detectVideo, detectAudio } = await import("@/lib/api");
                       const r =
@@ -137,7 +142,7 @@ export default function DetectorConsole() {
             transition={{ duration: 0.4 }}
             className="mt-6"
           >
-            <ResultPanel result={result} />
+            <ResultPanel result={result} previewUrl={previewUrl} />
           </motion.div>
         )}
       </AnimatePresence>

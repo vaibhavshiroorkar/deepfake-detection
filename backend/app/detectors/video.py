@@ -16,12 +16,22 @@ from PIL import Image
 from .image import analyze_image
 
 
-def _sample_frames(path: str, n: int = 8) -> list[tuple[float, np.ndarray]]:
+def _open_capture(path: str) -> tuple[cv2.VideoCapture | None, dict]:
     cap = cv2.VideoCapture(path)
     if not cap.isOpened():
-        return []
-    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+        return None, {}
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    if not fps or fps != fps or fps <= 0:  # 0, NaN, negative
+        fps = 25.0
+    total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH) or 0)
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT) or 0)
+    return cap, {"fps": fps, "total": total, "width": width, "height": height}
+
+
+def _sample_frames(cap: cv2.VideoCapture, meta: dict, n: int = 8) -> list[tuple[float, np.ndarray]]:
+    fps = meta["fps"]
+    total = meta["total"]
     if total <= 0:
         # Stream with unknown length — pull up to n frames linearly.
         frames = []
@@ -30,7 +40,6 @@ def _sample_frames(path: str, n: int = 8) -> list[tuple[float, np.ndarray]]:
             if not ok:
                 break
             frames.append((i / fps, frame))
-        cap.release()
         return frames
 
     indices = np.linspace(0, max(0, total - 1), num=n, dtype=int)
@@ -40,7 +49,6 @@ def _sample_frames(path: str, n: int = 8) -> list[tuple[float, np.ndarray]]:
         ok, frame = cap.read()
         if ok:
             frames.append((float(idx) / fps, frame))
-    cap.release()
     return frames
 
 
@@ -73,12 +81,25 @@ def analyze_video(data: bytes, filename: str = "video") -> dict[str, Any]:
         tmp_path = f.name
 
     try:
-        sampled = _sample_frames(tmp_path, n=8)
-        if not sampled:
+        cap, meta = _open_capture(tmp_path)
+        if cap is None:
             return {
                 "kind": "video",
                 "filename": filename,
                 "error": "Could not decode video. Try MP4, WebM, or MOV.",
+                "suspicion": 0.0,
+                "verdict": "unreadable",
+                "signals": [],
+            }
+        try:
+            sampled = _sample_frames(cap, meta, n=8)
+        finally:
+            cap.release()
+        if not sampled:
+            return {
+                "kind": "video",
+                "filename": filename,
+                "error": "Video opened but no frames could be read.",
                 "suspicion": 0.0,
                 "verdict": "unreadable",
                 "signals": [],
@@ -92,7 +113,7 @@ def analyze_video(data: bytes, filename: str = "video") -> dict[str, Any]:
             import io as _io
             buf = _io.BytesIO()
             pil.save(buf, format="JPEG", quality=92)
-            r = analyze_image(buf.getvalue(), filename=f"frame@{t:.1f}s")
+            r = analyze_image(buf.getvalue(), filename=f"frame@{t:.1f}s", with_heatmaps=False)
             per_frame.append({"timestamp": round(t, 2), "suspicion": r["suspicion"], "verdict": r["verdict"]})
             frame_images.append(frame)
 
@@ -111,15 +132,11 @@ def analyze_video(data: bytes, filename: str = "video") -> dict[str, Any]:
         else:
             label = "highly likely manipulated"
 
-        cap = cv2.VideoCapture(tmp_path)
-        duration = 0.0
-        fps = cap.get(cv2.CAP_PROP_FPS) or 0
-        frames_total = cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0
-        if fps:
-            duration = frames_total / fps
-        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        cap.release()
+        fps = meta["fps"]
+        frames_total = meta["total"]
+        duration = (frames_total / fps) if fps and frames_total > 0 else 0.0
+        width = meta["width"]
+        height = meta["height"]
 
         return {
             "kind": "video",

@@ -28,6 +28,9 @@ def _load(data: bytes) -> tuple[np.ndarray, int]:
     audio, sr = sf.read(io.BytesIO(data), always_2d=False, dtype="float32")
     if audio.ndim > 1:
         audio = audio.mean(axis=1)
+    audio = np.nan_to_num(audio, nan=0.0, posinf=0.0, neginf=0.0)
+    if not sr or sr <= 0:
+        raise ValueError("invalid sample rate")
     # Cap at 30 seconds for analysis
     max_samples = sr * 30
     if len(audio) > max_samples:
@@ -235,11 +238,29 @@ def analyze_audio(data: bytes, filename: str = "audio") -> dict[str, Any]:
         }
 
     duration = len(audio) / sr if sr else 0
+    if len(audio) == 0 or float(np.abs(audio).max()) < 1e-6:
+        return {
+            "kind": "audio",
+            "filename": filename,
+            "duration_seconds": round(duration, 2),
+            "sample_rate": sr,
+            "error": "Audio is silent or empty.",
+            "suspicion": 0.0,
+            "verdict": "unreadable",
+            "signals": [],
+        }
+
+    def _safe(fn, name: str) -> Signal:
+        try:
+            return fn(audio, sr)
+        except Exception as exc:  # noqa: BLE001
+            return Signal(name, 0.2, f"Could not compute this signal ({exc}).")
+
     signals = [
-        _pitch_signal(audio, sr),
-        _silence_floor_signal(audio, sr),
-        _spectral_signal(audio, sr),
-        _energy_rhythm_signal(audio, sr),
+        _safe(_pitch_signal, "Pitch variability"),
+        _safe(_silence_floor_signal, "Silence floor"),
+        _safe(_spectral_signal, "Spectral profile"),
+        _safe(_energy_rhythm_signal, "Energy rhythm"),
     ]
     score, label = _verdict(signals)
 

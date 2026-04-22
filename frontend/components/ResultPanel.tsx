@@ -1,10 +1,18 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { ShieldCheck, ShieldAlert } from "lucide-react";
 import { verdictTone, type DetectionResult, type Signal } from "@/lib/api";
+import HeatmapOverlay from "./HeatmapOverlay";
 import clsx from "clsx";
 
-export default function ResultPanel({ result }: { result: DetectionResult }) {
+export default function ResultPanel({
+  result,
+  previewUrl,
+}: {
+  result: DetectionResult;
+  previewUrl?: string | null;
+}) {
   const tone = verdictTone(result.suspicion);
   const pct = Math.round(result.suspicion * 100);
   const conf = Math.round(result.confidence * 100);
@@ -52,7 +60,18 @@ export default function ResultPanel({ result }: { result: DetectionResult }) {
         <p className="mt-5 text-sm leading-[1.65] text-smoke max-w-prose">
           {humanePreamble(result, pct)}
         </p>
+
+        {result.kind === "image" && result.c2pa?.present && (
+          <C2PABadge manifest={result.c2pa} />
+        )}
       </div>
+
+      {result.kind === "image" && previewUrl && result.heatmaps && (
+        <div className="px-5 py-6 md:px-7 md:py-8 border-b border-rule">
+          <div className="text-xs text-mute mb-3">Where the signal fired</div>
+          <HeatmapOverlay base={previewUrl} heatmaps={result.heatmaps} />
+        </div>
+      )}
 
       <div className="px-5 py-6 md:px-7 md:py-8">
         <div className="text-xs text-mute mb-4">Signals examined</div>
@@ -146,6 +165,40 @@ function SignalRow({ signal, index }: { signal: Signal; index: number }) {
       </div>
       <p className="mt-2 text-xs leading-[1.6] text-smoke">{signal.detail}</p>
     </motion.li>
+  );
+}
+
+function C2PABadge({
+  manifest,
+}: {
+  manifest: NonNullable<Extract<DetectionResult, { kind: "image" }>["c2pa"]>;
+}) {
+  const trusted = manifest.trusted;
+  return (
+    <div
+      className={clsx(
+        "mt-5 flex items-start gap-3 px-4 py-3 border",
+        trusted ? "border-forest/40 bg-forest/5" : "border-amber/40 bg-amber/5",
+      )}
+    >
+      {trusted ? (
+        <ShieldCheck className="size-4 text-forest mt-0.5 shrink-0" />
+      ) : (
+        <ShieldAlert className="size-4 text-amber mt-0.5 shrink-0" />
+      )}
+      <div className="text-xs leading-relaxed">
+        <div className="text-ink">
+          Content Credentials present
+          {manifest.signed_by ? ` — signed by ${manifest.signed_by}` : " (unsigned)"}
+        </div>
+        <div className="text-mute mt-0.5">
+          {manifest.claim_generator || "unknown generator"}
+          {manifest.actions && manifest.actions.length > 0 && (
+            <> · {manifest.actions.join(", ")}</>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 

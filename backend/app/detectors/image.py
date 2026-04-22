@@ -15,6 +15,9 @@ import cv2
 import numpy as np
 from PIL import Image, ImageChops, ExifTags
 
+from . import c2pa as _c2pa
+from .heatmap import ela_heatmap, noise_heatmap
+
 
 @dataclass
 class Signal:
@@ -26,7 +29,11 @@ class Signal:
 def _pil_from_bytes(data: bytes) -> Image.Image:
     img = Image.open(io.BytesIO(data))
     img.load()
-    if img.mode not in ("RGB", "L"):
+    if img.mode == "RGBA":
+        bg = Image.new("RGB", img.size, (255, 255, 255))
+        bg.paste(img, mask=img.split()[-1])
+        img = bg
+    elif img.mode not in ("RGB", "L"):
         img = img.convert("RGB")
     return img
 
@@ -79,12 +86,19 @@ def _noise_signal(cv_img: np.ndarray) -> Signal:
     h, w = gray.shape
     step = max(16, min(h, w) // 24)
     patches = []
-    for y in range(0, h - step, step):
-        for x in range(0, w - step, step):
-            patch = gray[y : y + step, x : x + step]
-            hp = patch - cv2.GaussianBlur(patch, (5, 5), 0)
-            patches.append(hp.std())
-    patches = np.array(patches) if patches else np.array([0.0])
+    if h > step and w > step:
+        for y in range(0, h - step, step):
+            for x in range(0, w - step, step):
+                patch = gray[y : y + step, x : x + step]
+                hp = patch - cv2.GaussianBlur(patch, (5, 5), 0)
+                patches.append(hp.std())
+    if not patches:
+        return Signal(
+            "Noise stationarity",
+            0.2,
+            "Image too small to sample noise patches reliably.",
+        )
+    patches = np.array(patches)
     variance_of_variance = float(patches.std())
     median_noise = float(np.median(patches))
 
@@ -152,9 +166,18 @@ def _face_signal(cv_img: np.ndarray) -> Signal:
     """Face region inspection: detect faces and measure edge
     discontinuity around them (swap/morph boundary heuristic)."""
     gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
+    if min(gray.shape) < 80:
+        return Signal(
+            name="Face boundary",
+            score=0.0,
+            detail="Image too small for face analysis — this check does not apply.",
+        )
     cascade_path = cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
     cascade = cv2.CascadeClassifier(cascade_path)
-    faces = cascade.detectMultiScale(gray, 1.2, 4, minSize=(60, 60))
+    try:
+        faces = cascade.detectMultiScale(gray, 1.2, 4, minSize=(60, 60))
+    except cv2.error:
+        faces = []
 
     if len(faces) == 0:
         return Signal(
@@ -190,7 +213,11 @@ def _face_signal(cv_img: np.ndarray) -> Signal:
 def _metadata_signal(img: Image.Image) -> Signal:
     """EXIF check. Absent camera metadata isn't proof of manipulation,
     but its presence is a mild signal in the other direction."""
-    exif = getattr(img, "_getexif", lambda: None)()
+    try:
+        exif_obj = img.getexif()
+        exif = dict(exif_obj) if exif_obj else None
+    except Exception:
+        exif = None
     if not exif:
         return Signal(
             name="Capture metadata",
@@ -258,7 +285,12 @@ def _verdict(signals: list[Signal]) -> tuple[float, str]:
     return float(np.clip(score, 0.0, 1.0)), label
 
 
-def analyze_image(data: bytes, filename: str = "image") -> dict[str, Any]:
+def analyze_image(
+    data: bytes,
+    filename: str = "image",
+    *,
+    with_heatmaps: bool = True,
+) -> dict[str, Any]:
     img = _pil_from_bytes(data)
     cv_img = _cv_from_pil(img)
 
@@ -272,7 +304,7 @@ def analyze_image(data: bytes, filename: str = "image") -> dict[str, Any]:
     score, label = _verdict(signals)
     width, height = img.size
 
-    return {
+    out: dict[str, Any] = {
         "kind": "image",
         "filename": filename,
         "dimensions": {"width": width, "height": height},
@@ -284,3 +316,18 @@ def analyze_image(data: bytes, filename: str = "image") -> dict[str, Any]:
             for s in signals
         ],
     }
+
+    if with_heatmaps:
+        try:
+            out["heatmaps"] = {
+                "ela": ela_heatmap(img),
+                "noise": noise_heatmap(cv_img),
+            }
+        except Exception:
+            out["heatmaps"] = None
+
+    manifest = _c2pa.read_manifest(data) if _c2pa.is_available() else None
+    if manifest is not None:
+        out["c2pa"] = manifest
+
+    return out

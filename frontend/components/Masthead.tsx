@@ -1,16 +1,20 @@
-"use client";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import NavMenu from "./NavMenu";
 
-export default function Masthead() {
+export default async function Masthead() {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <header className="border-b border-rule">
       <div className="mx-auto max-w-5xl px-6 h-16 flex items-center justify-between">
-        <a href="#" className="font-display text-2xl tracking-tight">
+        <Link href="/" className="font-display text-2xl tracking-tight">
           Veritas<span className="text-ember">.</span>
-        </a>
-        <nav className="hidden sm:flex items-center gap-8 text-sm text-smoke">
-          <a href="#console" className="hover:text-ink transition-colors">Detect</a>
-          <a href="#how" className="hover:text-ink transition-colors">How it works</a>
-        </nav>
+        </Link>
+        <NavMenu email={user?.email ?? null} />
       </div>
     </header>
   );

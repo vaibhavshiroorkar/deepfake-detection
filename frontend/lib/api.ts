@@ -12,10 +12,21 @@ export type BaseResult = {
   signals: Signal[];
 };
 
+export type C2PAManifest = {
+  present: boolean;
+  claim_generator?: string;
+  signed_by?: string;
+  actions?: string[];
+  trusted?: boolean;
+};
+
 export type ImageResult = BaseResult & {
   kind: "image";
   filename: string;
   dimensions: { width: number; height: number };
+  heatmaps?: { ela?: string; noise?: string } | null;
+  c2pa?: C2PAManifest;
+  id?: string;
 };
 
 export type VideoResult = BaseResult & {
@@ -24,6 +35,7 @@ export type VideoResult = BaseResult & {
   duration_seconds: number;
   dimensions: { width: number; height: number };
   timeline: { timestamp: number; suspicion: number; verdict: string }[];
+  id?: string;
 };
 
 export type AudioResult = BaseResult & {
@@ -31,21 +43,41 @@ export type AudioResult = BaseResult & {
   filename: string;
   duration_seconds: number;
   sample_rate: number;
+  id?: string;
 };
 
 export type TextResult = BaseResult & {
   kind: "text";
   length: { characters: number; words: number; sentences: number };
+  id?: string;
 };
 
 export type DetectionResult = ImageResult | VideoResult | AudioResult | TextResult;
+
+async function readError(res: Response): Promise<string> {
+  const raw = await res.text();
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed === "string") return parsed;
+    if (parsed?.detail) {
+      if (typeof parsed.detail === "string") return parsed.detail;
+      return JSON.stringify(parsed.detail);
+    }
+    if (typeof parsed?.error === "string") return parsed.error;
+    return raw || `Request failed (${res.status})`;
+  } catch {
+    return raw || `Request failed (${res.status})`;
+  }
+}
 
 async function upload(kind: "image" | "video" | "audio", file: File) {
   const fd = new FormData();
   fd.append("file", file);
   const res = await fetch(`/api/detect?kind=${kind}`, { method: "POST", body: fd });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  if (!res.ok) throw new Error(await readError(res));
+  const data = await res.json();
+  if (data?.error) throw new Error(data.error);
+  return data;
 }
 
 export async function detectImage(file: File): Promise<ImageResult> {
@@ -66,7 +98,7 @@ export async function detectText(text: string): Promise<TextResult> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text }),
   });
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) throw new Error(await readError(res));
   return res.json();
 }
 

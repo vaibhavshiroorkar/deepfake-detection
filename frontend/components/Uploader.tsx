@@ -15,7 +15,7 @@ type Props = {
 const ACCEPT: Record<Kind, string> = {
   image: "image/jpeg,image/png,image/webp,image/jpg",
   video: "video/mp4,video/webm,video/quicktime,video/x-matroska",
-  audio: "audio/mpeg,audio/mp3,audio/wav,audio/wave,audio/x-wav,audio/flac,audio/ogg,audio/mp4,audio/x-m4a",
+  audio: "audio/mpeg,audio/mp3,audio/wav,audio/wave,audio/x-wav,audio/flac,audio/ogg,audio/x-flac,audio/vorbis",
 };
 
 const LABEL: Record<Kind, { noun: string; hint: string }> = {
