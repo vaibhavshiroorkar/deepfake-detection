@@ -4,21 +4,35 @@ a user_id and, when applicable, the api_key row that authorized the call.
 
 Anonymous calls are permitted; they simply produce `Identity(None, None)`
 and the scan is not persisted.
+
+Supabase now signs JWTs with ES256 (asymmetric EC). Supply the public key
+as a JSON string in SUPABASE_JWT_PUBLIC_KEY (the JWK from
+Project Settings → API → JWT Settings → JWKS).
 """
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 from dataclasses import dataclass
 
 import httpx
 import jwt
+from jwt.algorithms import ECAlgorithm
 from fastapi import Header, HTTPException
 
 from .db import supabase_request
 
-SUPABASE_JWT_SECRET = os.getenv("SUPABASE_JWT_SECRET", "")
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+_JWK_JSON = os.getenv("SUPABASE_JWT_PUBLIC_KEY", "")
+
+# Build the EC public key object once at startup.
+_EC_PUBLIC_KEY = None
+if _JWK_JSON:
+    try:
+        _EC_PUBLIC_KEY = ECAlgorithm.from_jwk(json.loads(_JWK_JSON))
+    except Exception:
+        pass
 
 
 @dataclass
@@ -28,14 +42,14 @@ class Identity:
 
 
 def _verify_jwt(token: str) -> str | None:
-    """Returns the Supabase user id (`sub`) if the token is valid."""
-    if not SUPABASE_JWT_SECRET:
+    """Returns the Supabase user id (`sub`) if the ES256 token is valid."""
+    if _EC_PUBLIC_KEY is None:
         return None
     try:
         payload = jwt.decode(
             token,
-            SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
+            _EC_PUBLIC_KEY,
+            algorithms=["ES256"],
             audience="authenticated",
         )
         sub = payload.get("sub")
@@ -95,6 +109,4 @@ async def resolve_identity(
         sub = _verify_jwt(token)
         if sub:
             return Identity(user_id=sub)
-        # Token present but invalid — treat as anonymous rather than 401,
-        # so anonymous browse-and-scan still works if a stale cookie hangs around.
     return Identity(user_id=None)

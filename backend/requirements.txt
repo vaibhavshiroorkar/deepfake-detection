@@ -8,6 +8,7 @@ scipy>=1.14.0
 soundfile>=0.12.1
 pydantic==2.9.2
 httpx>=0.27.0
-PyJWT>=2.8.0
+PyJWT[crypto]>=2.8.0
+cryptography>=42.0.0
 # Optional: provenance reading. Comment out if the install fails on your platform.
 c2pa-python>=0.5.0
