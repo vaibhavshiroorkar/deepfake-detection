@@ -3,7 +3,7 @@
 Three services, in this order:
 
 1. **Supabase** — auth + Postgres
-2. **Render** — Python detection backend
+2. **Hugging Face Spaces** — Python detection backend (Docker SDK, free CPU)
 3. **Vercel** — Next.js frontend
 
 ## 1. Supabase
@@ -20,25 +20,40 @@ Three services, in this order:
    - Additional redirect URLs: `https://veritas.vercel.app/auth/callback`
 5. **Authentication → Providers** — enable Email (default). Optional: Google/GitHub OAuth.
 
-## 2. Render (backend)
+## 2. Hugging Face Spaces (backend)
 
-1. Push this repo to GitHub.
-2. [Render](https://render.com) → **New → Blueprint** → point at your repo.
-   `backend/render.yaml` is auto-detected.
-3. After the service is created, set environment variables (Render dashboard → service → Environment):
+1. On [huggingface.co](https://huggingface.co), create a **New Space**:
+   - SDK: **Docker**
+   - Hardware: **CPU basic (free)**
+   - Visibility: **Public** (private Spaces sleep on free tier)
+2. Push the `backend/` subtree to the Space's git remote:
+   ```bash
+   git subtree split --prefix backend -b hf-deploy
+   git push --force https://huggingface.co/spaces/<user>/<space-name> hf-deploy:main
+   ```
+   You'll need a Write-scoped access token from huggingface.co/settings/tokens.
+3. In the Space → **Settings → Variables and secrets**, add:
    - `ALLOWED_ORIGINS` = your Vercel URL (no trailing slash, comma-separated if multiple)
    - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET` from step 1
-4. Wait for first deploy (5–10 min — opencv + scipy take a while). The build will fail if `c2pa-python` can't compile on Render's Python image — that's fine, just remove it from `requirements.txt` and redeploy. C2PA is optional.
-5. Verify: `curl https://your-backend.onrender.com/health` should return `{"status":"ok","db":true}`.
+4. Wait for first build (10–15 min — torch + transformers are heavy). Watch the **Logs** tab.
+5. Verify: `curl https://<user>-<space-name>.hf.space/health` should return `{"status":"ok","db":true}`.
 
-> Free Render dynos sleep after 15 min of inactivity. First scan after sleep takes ~30s.
+> Free CPU Spaces have no persistent disk, so model weights re-download on every container restart. The first request after a restart takes 30–90s while HF caches repopulate.
+
+### Re-deploying after code changes
+
+```bash
+git branch -D hf-deploy
+git subtree split --prefix backend -b hf-deploy
+git push --force https://huggingface.co/spaces/<user>/<space-name> hf-deploy:main
+```
 
 ## 3. Vercel (frontend)
 
 1. [Vercel](https://vercel.com) → **Add New → Project** → import the repo.
 2. **Root Directory** = `frontend`.
 3. **Environment Variables**:
-   - `BACKEND_URL` = `https://your-backend.onrender.com`
+   - `BACKEND_URL` = `https://<user>-<space-name>.hf.space`
    - `NEXT_PUBLIC_SUPABASE_URL` = from step 1
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` = from step 1
 4. Deploy. Once live, go back to Supabase **Authentication → URL configuration** and confirm the Vercel URL is in the allowed list.
@@ -73,5 +88,5 @@ The site works without Supabase configured (anonymous scans only — history/key
 ## After it's live
 
 - Lock down CORS: change `ALLOWED_ORIGINS` from `*` to just your Vercel URL.
-- (Optional) Set `c2pa-python` to a known-good version once you confirm it compiles on Render.
 - Replace the synthetic histograms in `app/calibration/page.tsx` with measurements from a real labeled test set.
+- When you train a DINOv2 head, upload the weights file to the Space (via web UI or `git lfs`) and set `VERITAS_DINOV2_WEIGHTS=/home/user/app/weights/dinov2_head.pt` in Space secrets.
