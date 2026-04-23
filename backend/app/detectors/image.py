@@ -1,17 +1,19 @@
 """
-Image forensics: detecting AI-generated and manipulated images.
+Image forensics — Phase 2.
 
-Primary signal is a pretrained AI-image classifier (Swin-v2 by default,
-configurable via VERITAS_AI_IMAGE_MODEL) which gives a calibrated
-P(AI-generated). MTCNN crops faces and the same classifier is run over
-each crop separately to surface face-swap artefacts.
+Primary signal: **DINOv2-large** with a trained classification head,
+fine-tuned on FaceForensics++ and Celeb-DF datasets.  DINOv2 produces
+exceptionally rich visual features from its self-supervised pretraining,
+and the classification head maps them to a calibrated P(AI-generated).
+
+Fallback: if DINOv2 head weights are not trained yet, the system
+falls back to the existing Swin-v2 classifier (Organika/sdxl-detector).
+
+MTCNN crops faces and the classifier is run over each crop separately
+to surface face-swap artefacts.
 
 Classical signals (focus uniformity, chromatic aberration, sensor noise,
-ELA, EXIF) are kept as supporting evidence, but they are gated: when EXIF
-identifies a real camera, the camera-physics signals are weighted at full
-strength because their absence is meaningful. When EXIF is missing
-(screenshots, social-media downloads, etc.) those signals carry low weight
-because their absence is uninformative.
+ELA, EXIF) are kept as supporting evidence with gated weights.
 """
 from __future__ import annotations
 
@@ -77,11 +79,29 @@ def _is_camera_origin(tags: dict) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Primary signal — pretrained AI-image classifier (full image)
+# Primary signal — DINOv2 classifier (Phase 2), Swin-v2 fallback
 # ---------------------------------------------------------------------------
 
-def _classify_ai(pil_img: Image.Image) -> tuple[float, dict]:
-    """Returns (P(AI), info_dict). Raises on any failure."""
+def _classify_ai_dinov2(pil_img: Image.Image) -> tuple[float, dict] | None:
+    """Try DINOv2 classifier.  Returns None if unavailable."""
+    try:
+        from ..models import get_dinov2_classifier, get_device
+        from .dinov2_head import predict_image
+
+        model, processor = get_dinov2_classifier()
+        device = get_device()
+        p_fake, p_real = predict_image(pil_img, model, processor, device)
+        return p_fake, {
+            "p_ai": p_fake,
+            "p_real": p_real,
+            "model": "DINOv2-large + trained head",
+        }
+    except Exception:
+        return None
+
+
+def _classify_ai_swinv2(pil_img: Image.Image) -> tuple[float, dict]:
+    """Swin-v2 fallback classifier."""
     import torch
     from ..models import get_ai_image_classifier, get_device
 
@@ -97,6 +117,14 @@ def _classify_ai(pil_img: Image.Image) -> tuple[float, dict]:
     return p_ai, {"p_ai": p_ai, "p_real": p_real, "model": lmap["name"]}
 
 
+def _classify_ai(pil_img: Image.Image) -> tuple[float, dict]:
+    """Returns (P(AI), info_dict).  Tries DINOv2 first, falls back to Swin-v2."""
+    result = _classify_ai_dinov2(pil_img)
+    if result is not None:
+        return result
+    return _classify_ai_swinv2(pil_img)
+
+
 def _ai_classifier_signal(pil_img: Image.Image) -> Signal:
     try:
         p_ai, info = _classify_ai(pil_img)
@@ -106,8 +134,9 @@ def _ai_classifier_signal(pil_img: Image.Image) -> Signal:
             0.0,
             f"Pretrained classifier unavailable ({type(exc).__name__}); skipping.",
         )
+    model_name = info.get("model", "unknown")
     detail = (
-        f"{info['model']}: P(AI) = {p_ai:.3f}, P(real) = {info['p_real']:.3f}. "
+        f"{model_name}: P(AI) = {p_ai:.3f}, P(real) = {info['p_real']:.3f}. "
         + ("Classifier is confident the image is AI-generated."
            if p_ai > 0.75 else
            "Classifier leans toward AI-generated."
@@ -366,8 +395,6 @@ def _sensor_noise_signal(cv_img: np.ndarray) -> Signal:
 
 def _metadata_signal(tags: dict) -> Signal:
     if not tags:
-        # EXIF stripping is extremely common (social media, screenshots,
-        # messaging apps). Treat as a weak prior, not a strong signal.
         return Signal(
             "Capture metadata",
             0.20,
@@ -394,17 +421,14 @@ def _metadata_signal(tags: dict) -> Signal:
 
 
 # ---------------------------------------------------------------------------
-# Verdict aggregation
+# Verdict aggregation — Phase 2 weights
 # ---------------------------------------------------------------------------
 
 def _verdict(signals: list[Signal], camera_origin: bool) -> tuple[float, str]:
-    # Camera-physics signals only carry full weight when EXIF identifies a
-    # real camera. Otherwise their absence is uninformative (the source
-    # could simply be a screenshot or a social-media re-encode).
     physics_weight = 0.5 if not camera_origin else 1.1
     weights = {
-        "AI-image classifier":  2.0,
-        "Face classifier":      1.6,
+        "AI-image classifier":  3.0,   # Phase 2: DINOv2 gets highest weight
+        "Face classifier":      1.8,
         "Error-level analysis": 0.8,
         "Capture metadata":     0.6,
         "Face boundary":        0.5,

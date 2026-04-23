@@ -1,10 +1,19 @@
 """
-Text forensics. Detect machine-generated prose via statistical
-signatures: burstiness (sentence-length variance), lexical diversity,
-function-word rhythm, punctuation entropy, and repetition.
+Text forensics — Phase 2.
 
-These are the signals that originally motivated tools like GLTR —
-LLMs produce prose that is unusually uniform in surface statistics.
+Primary signal: **GPT-2 perplexity**.  AI-generated text is highly predictable
+to a language model, producing low overall perplexity and low per-sentence
+perplexity variance.  This single signal dramatically outperforms the Phase-1
+heuristics on its own.
+
+Supporting signals (kept from Phase 1):
+  - Burstiness (sentence-length variance)
+  - Lexical diversity (type–token ratio, function-word share)
+  - Phrase repetition (LLM tics, trigram repeats)
+  - Punctuation entropy (comma-heavy, contraction-light)
+
+Verdict weights give GPT-2 perplexity the dominant vote (2.0) while heuristic
+signals provide corroborating evidence at their original weights.
 """
 from __future__ import annotations
 
@@ -24,7 +33,7 @@ class Signal:
     detail: str
 
 
-_SENT_SPLIT = re.compile(r"(?<=[\.!?])\s+(?=[A-Z\"'\(])")
+_SENT_SPLIT = re.compile(r"(?<=[\.\!\?])\s+(?=[A-Z\"'\(])")
 _WORD = re.compile(r"[A-Za-z']+")
 
 # High-frequency function words — LLMs lean on these
@@ -58,6 +67,32 @@ def _sentences(text: str) -> list[str]:
     parts = _SENT_SPLIT.split(text)
     return [p.strip() for p in parts if p.strip()]
 
+
+# ---------------------------------------------------------------------------
+# GPT-2 Perplexity signal (Phase 2 — primary)
+# ---------------------------------------------------------------------------
+
+def _gpt2_perplexity_signal(text: str, sents: list[str]) -> Signal:
+    """Primary detection signal using GPT-2 perplexity scoring."""
+    try:
+        from ..models import get_gpt2, get_device
+        from .gpt2_perplexity import perplexity_signal
+
+        model, tokenizer = get_gpt2()
+        device = get_device()
+        score, detail, _stats = perplexity_signal(text, sents, model, tokenizer, device)
+        return Signal("GPT-2 perplexity", score, detail)
+    except Exception as exc:  # noqa: BLE001
+        return Signal(
+            "GPT-2 perplexity",
+            0.0,
+            f"GPT-2 model unavailable ({type(exc).__name__}); skipping.",
+        )
+
+
+# ---------------------------------------------------------------------------
+# Heuristic signals (Phase 1 — kept as supporting evidence)
+# ---------------------------------------------------------------------------
 
 def _burstiness_signal(sents: list[str]) -> Signal:
     """Burstiness = variance of sentence lengths. Human writing swings
@@ -186,15 +221,21 @@ def _punctuation_signal(text: str) -> Signal:
     )
 
 
+# ---------------------------------------------------------------------------
+# Verdict aggregation — Phase 2 weights
+# ---------------------------------------------------------------------------
+
 def _verdict(signals: list[Signal]) -> tuple[float, str]:
     weights = {
-        "Burstiness": 1.0,
-        "Lexical rhythm": 0.9,
-        "Phrase repetition": 0.9,
+        "GPT-2 perplexity":    2.0,   # Phase 2 primary signal
+        "Burstiness":          1.0,
+        "Lexical rhythm":      0.9,
+        "Phrase repetition":   0.9,
         "Punctuation entropy": 0.7,
     }
-    num = sum(s.score * weights.get(s.name, 0.5) for s in signals)
-    denom = sum(weights.get(s.name, 0.5) for s in signals)
+    contributing = [s for s in signals if "unavailable" not in s.detail]
+    num = sum(s.score * weights.get(s.name, 0.5) for s in contributing)
+    denom = sum(weights.get(s.name, 0.5) for s in contributing)
     score = num / denom if denom else 0.0
     if score < 0.3:
         label = "likely written by a human"
@@ -212,6 +253,7 @@ def analyze_text(text: str) -> dict[str, Any]:
     sents = _sentences(text)
     words = _WORD.findall(text)
     signals = [
+        _gpt2_perplexity_signal(text, sents),   # Phase 2 primary
         _burstiness_signal(sents),
         _lexical_signal(words),
         _repetition_signal(sents, words),

@@ -1,11 +1,18 @@
 """
-Audio forensics. Heuristic signals plus a learned spectral profile from
-Whisper-base's encoder for detecting synthesised speech.
+Audio forensics — Phase 2.
 
-Real voices carry a messy signature: pitch wanders, breath appears,
-sensor noise fills the quiet parts. TTS and voice-clone output usually
-forgets at least one of these, and Whisper's encoder picks up on the
-rest by treating successive frames of synthetic audio as nearly identical.
+Primary signal: **Whisper classifier** — a trained MLP on top of frozen
+Whisper-base encoder features.  The encoder was trained on ~680k hours of
+real speech, making it a powerful feature extractor.  The classifier head
+learns to distinguish real speech spectrograms from TTS/voice-clone outputs.
+
+Fallback: if classifier head weights are not trained yet, the system uses
+the original heuristic Whisper signal (adjacent-frame cosine similarity).
+
+Supporting signals (kept from Phase 1):
+  - Pitch variability (autocorrelation F0 tracking)
+  - Silence floor (noise floor in quiet stretches)
+  - Energy rhythm (envelope burstiness)
 """
 from __future__ import annotations
 
@@ -39,126 +46,22 @@ def _load(data: bytes) -> tuple[np.ndarray, int]:
     return audio, sr
 
 
-def _pitch_signal(audio: np.ndarray, sr: int) -> Signal:
-    """Track fundamental frequency (F0) in voiced frames via
-    autocorrelation and measure how much it varies. Human speech
-    moves pitch constantly; TTS and some clone models are flatter."""
-    frame = int(0.04 * sr)  # 40 ms
-    hop = int(0.02 * sr)
-    if len(audio) < frame * 2:
-        return Signal("Pitch variability", 0.3, "Clip too short for a pitch reading.")
+# ---------------------------------------------------------------------------
+# Whisper-based signals (Phase 2 trained classifier + Phase 1 heuristic)
+# ---------------------------------------------------------------------------
 
-    min_p, max_p = int(sr / 400), int(sr / 70)  # 70–400 Hz voiced range
-    pitches = []
-    for i in range(0, len(audio) - frame, hop):
-        seg = audio[i:i + frame]
-        if np.abs(seg).mean() < 0.01:
-            continue  # silence
-        seg = seg - seg.mean()
-        ac = np.correlate(seg, seg, mode="full")[len(seg) - 1:]
-        if ac[0] <= 0:
-            continue
-        ac = ac / ac[0]
-        if max_p >= len(ac):
-            continue
-        peak = np.argmax(ac[min_p:max_p]) + min_p
-        if ac[peak] > 0.35:
-            pitches.append(sr / peak)
-
-    if len(pitches) < 8:
-        return Signal(
-            "Pitch variability",
-            0.25,
-            "Not enough voiced frames to measure pitch movement reliably.",
-        )
-
-    pitches = np.array(pitches)
-    cv = float(pitches.std() / pitches.mean()) if pitches.mean() > 0 else 0.0
-    # Natural speech cv ~0.15–0.30. TTS tends lower.
-    if cv < 0.08:
-        score = 0.85
-    elif cv < 0.13:
-        score = 0.55
-    elif cv < 0.20:
-        score = 0.25
-    else:
-        score = 0.1
-    return Signal(
-        "Pitch variability",
-        score,
-        f"Pitch coefficient of variation {cv:.3f} across {len(pitches)} voiced frames. "
-        + (
-            "Flatter than natural speech — consistent with TTS or voice cloning."
-            if score > 0.5
-            else "Pitch moves the way a person's does when they talk."
-        ),
-    )
-
-
-def _silence_floor_signal(audio: np.ndarray, sr: int) -> Signal:
-    """Look at the noise floor during quiet stretches. Real microphones
-    pick up a continuous low-level hiss; TTS often delivers perfectly
-    clean silence or a suspiciously even synthetic noise."""
-    frame = int(0.05 * sr)
-    rms = np.array([
-        np.sqrt(np.mean(audio[i:i + frame] ** 2) + 1e-12)
-        for i in range(0, len(audio) - frame, frame)
-    ])
-    if len(rms) < 6:
-        return Signal("Silence floor", 0.3, "Clip too short to profile the silence.")
-    quiet_frames = rms[rms < np.percentile(rms, 25)]
-    if len(quiet_frames) < 3:
-        return Signal("Silence floor", 0.2, "No clear quiet sections to analyze.")
-    floor = float(quiet_frames.mean())
-    floor_var = float(quiet_frames.std())
-    # Perfect digital silence → floor near 0, variance near 0 → suspicious.
-    score = 0.0
-    if floor < 1e-4:
-        score += 0.6
-    elif floor < 5e-4:
-        score += 0.3
-    if floor_var < 1e-5:
-        score += 0.35
-    score = float(np.clip(score, 0.0, 1.0))
-    return Signal(
-        "Silence floor",
-        score,
-        f"Quiet-section RMS {floor:.5f}, variance {floor_var:.6f}. "
-        + (
-            "Silence is unnaturally clean — no microphone noise, no room tone."
-            if score > 0.45
-            else "The quiet parts carry natural room tone and microphone noise."
-        ),
-    )
-
-
-def _whisper_signal(audio: np.ndarray, sr: int) -> Signal:
-    """Whisper-base encoder embeddings as a learned spectral profile.
-
-    Whisper's encoder maps a log-mel spectrogram to a sequence of hidden
-    states learned from ~680k hours of speech. Synthesised speech tends to
-    produce embeddings with low temporal diversity and high adjacent-frame
-    cosine similarity — the encoder treats successive frames as nearly the
-    same input because the underlying mel content is too smooth.
-    """
+def _whisper_encoder_forward(audio: np.ndarray, sr: int) -> np.ndarray | None:
+    """Run Whisper encoder and return hidden states (T, 512). None on failure."""
     try:
         import torch
         from ..models import get_device, get_whisper_encoder
-    except Exception as exc:  # noqa: BLE001
-        return Signal(
-            "Whisper encoder",
-            0.0,
-            f"Whisper-base unavailable ({type(exc).__name__}); skipping.",
-        )
+    except Exception:
+        return None
 
-    # Whisper expects 16 kHz mono float32.
     if sr != 16000:
         new_len = int(round(len(audio) * 16000 / sr))
-        if new_len < 16000:  # < 1 s
-            return Signal(
-                "Whisper encoder", 0.2,
-                "Clip too short for Whisper analysis (< 1 s after resampling).",
-            )
+        if new_len < 16000:
+            return None
         audio16 = sp_signal.resample(audio, new_len).astype(np.float32)
     else:
         audio16 = audio.astype(np.float32)
@@ -171,19 +74,58 @@ def _whisper_signal(audio: np.ndarray, sr: int) -> Signal:
         ).input_features.to(device)
         with torch.no_grad():
             hidden = encoder(feats).last_hidden_state[0]  # [T, D]
-        h = hidden.detach().cpu().numpy()
-    except Exception as exc:  # noqa: BLE001
+        return hidden.detach().cpu().numpy()
+    except Exception:
+        return None
+
+
+def _whisper_classifier_signal(hidden: np.ndarray) -> Signal:
+    """Phase 2: trained classifier on Whisper encoder features."""
+    try:
+        from ..models import get_device, get_whisper_classifier
+        from .whisper_classifier import predict_audio
+
+        head = get_whisper_classifier()
+        device = get_device()
+        p_fake, p_real, stats = predict_audio(hidden, head, device)
+
+        score = float(np.clip(p_fake, 0.0, 1.0))
+        if score > 0.7:
+            detail = (
+                f"Whisper classifier: P(synthetic) = {p_fake:.3f}. "
+                "Strong confidence in synthetic audio — spectral features diverge from real speech."
+            )
+        elif score > 0.5:
+            detail = (
+                f"Whisper classifier: P(synthetic) = {p_fake:.3f}. "
+                "Classifier leans toward synthetic. Some spectral anomalies detected."
+            )
+        elif score > 0.35:
+            detail = (
+                f"Whisper classifier: P(synthetic) = {p_fake:.3f}. "
+                "Classifier is uncertain. Features are borderline."
+            )
+        else:
+            detail = (
+                f"Whisper classifier: P(synthetic) = {p_fake:.3f}. "
+                "Audio features look like real speech to the classifier."
+            )
+        return Signal("Whisper classifier", score, detail)
+    except Exception as exc:
         return Signal(
-            "Whisper encoder",
+            "Whisper classifier",
             0.0,
-            f"Whisper-base load/inference failed ({type(exc).__name__}: {exc}).",
+            f"Whisper classifier unavailable ({type(exc).__name__}); skipping.",
         )
 
+
+def _whisper_heuristic_signal(hidden: np.ndarray) -> Signal:
+    """Phase 1 heuristic: adjacent-frame cosine similarity + variance."""
+    h = hidden
     if h.shape[0] < 4:
         return Signal("Whisper encoder", 0.2,
                       "Encoder produced too few frames to analyse.")
 
-    # Per-time variance, normalised feature norms, adjacent-frame cosine.
     feat_var = float(np.mean(np.var(h, axis=0)))
     feat_norm = float(np.mean(np.linalg.norm(h, axis=-1)))
     norms = np.linalg.norm(h, axis=-1, keepdims=True)
@@ -216,9 +158,122 @@ def _whisper_signal(audio: np.ndarray, sr: int) -> Signal:
     )
 
 
+def _whisper_signal(audio: np.ndarray, sr: int) -> list[Signal]:
+    """Returns 1–2 signals: trained classifier (if available) + heuristic fallback."""
+    hidden = _whisper_encoder_forward(audio, sr)
+    if hidden is None:
+        return [Signal(
+            "Whisper encoder", 0.0,
+            "Whisper-base unavailable or clip too short; skipping.",
+        )]
+
+    signals: list[Signal] = []
+
+    # Always try the trained classifier first
+    cls_signal = _whisper_classifier_signal(hidden)
+    if "unavailable" not in cls_signal.detail:
+        signals.append(cls_signal)
+
+    # Always include the heuristic as supporting evidence
+    signals.append(_whisper_heuristic_signal(hidden))
+
+    return signals
+
+
+# ---------------------------------------------------------------------------
+# Phase 1 heuristic signals (kept as supporting evidence)
+# ---------------------------------------------------------------------------
+
+def _pitch_signal(audio: np.ndarray, sr: int) -> Signal:
+    """Track fundamental frequency (F0) in voiced frames via
+    autocorrelation and measure how much it varies."""
+    frame = int(0.04 * sr)  # 40 ms
+    hop = int(0.02 * sr)
+    if len(audio) < frame * 2:
+        return Signal("Pitch variability", 0.3, "Clip too short for a pitch reading.")
+
+    min_p, max_p = int(sr / 400), int(sr / 70)
+    pitches = []
+    for i in range(0, len(audio) - frame, hop):
+        seg = audio[i:i + frame]
+        if np.abs(seg).mean() < 0.01:
+            continue
+        seg = seg - seg.mean()
+        ac = np.correlate(seg, seg, mode="full")[len(seg) - 1:]
+        if ac[0] <= 0:
+            continue
+        ac = ac / ac[0]
+        if max_p >= len(ac):
+            continue
+        peak = np.argmax(ac[min_p:max_p]) + min_p
+        if ac[peak] > 0.35:
+            pitches.append(sr / peak)
+
+    if len(pitches) < 8:
+        return Signal(
+            "Pitch variability",
+            0.25,
+            "Not enough voiced frames to measure pitch movement reliably.",
+        )
+
+    pitches = np.array(pitches)
+    cv = float(pitches.std() / pitches.mean()) if pitches.mean() > 0 else 0.0
+    if cv < 0.08:
+        score = 0.85
+    elif cv < 0.13:
+        score = 0.55
+    elif cv < 0.20:
+        score = 0.25
+    else:
+        score = 0.1
+    return Signal(
+        "Pitch variability",
+        score,
+        f"Pitch coefficient of variation {cv:.3f} across {len(pitches)} voiced frames. "
+        + (
+            "Flatter than natural speech — consistent with TTS or voice cloning."
+            if score > 0.5
+            else "Pitch moves the way a person's does when they talk."
+        ),
+    )
+
+
+def _silence_floor_signal(audio: np.ndarray, sr: int) -> Signal:
+    """Look at the noise floor during quiet stretches."""
+    frame = int(0.05 * sr)
+    rms = np.array([
+        np.sqrt(np.mean(audio[i:i + frame] ** 2) + 1e-12)
+        for i in range(0, len(audio) - frame, frame)
+    ])
+    if len(rms) < 6:
+        return Signal("Silence floor", 0.3, "Clip too short to profile the silence.")
+    quiet_frames = rms[rms < np.percentile(rms, 25)]
+    if len(quiet_frames) < 3:
+        return Signal("Silence floor", 0.2, "No clear quiet sections to analyze.")
+    floor = float(quiet_frames.mean())
+    floor_var = float(quiet_frames.std())
+    score = 0.0
+    if floor < 1e-4:
+        score += 0.6
+    elif floor < 5e-4:
+        score += 0.3
+    if floor_var < 1e-5:
+        score += 0.35
+    score = float(np.clip(score, 0.0, 1.0))
+    return Signal(
+        "Silence floor",
+        score,
+        f"Quiet-section RMS {floor:.5f}, variance {floor_var:.6f}. "
+        + (
+            "Silence is unnaturally clean — no microphone noise, no room tone."
+            if score > 0.45
+            else "The quiet parts carry natural room tone and microphone noise."
+        ),
+    )
+
+
 def _energy_rhythm_signal(audio: np.ndarray, sr: int) -> Signal:
-    """Short-term energy skew. Natural speech has breathy attacks and
-    trailing decays. Synthesis can flatten these transients."""
+    """Short-term energy skew."""
     frame = int(0.03 * sr)
     env = np.array([
         np.abs(audio[i:i + frame]).mean()
@@ -228,7 +283,6 @@ def _energy_rhythm_signal(audio: np.ndarray, sr: int) -> Signal:
         return Signal("Energy rhythm", 0.25, "Clip too short for an envelope reading.")
     env = env / (env.max() + 1e-9)
     diffs = np.abs(np.diff(env))
-    # Natural speech has bursty transitions; TTS smooths them.
     burstiness = float(diffs.std())
     score = float(np.clip(1.0 - burstiness * 4.5, 0.0, 1.0)) * 0.7
     return Signal(
@@ -243,12 +297,17 @@ def _energy_rhythm_signal(audio: np.ndarray, sr: int) -> Signal:
     )
 
 
+# ---------------------------------------------------------------------------
+# Verdict aggregation — Phase 2 weights
+# ---------------------------------------------------------------------------
+
 def _verdict(signals: list[Signal]) -> tuple[float, str]:
     weights = {
-        "Whisper encoder": 1.5,
-        "Pitch variability": 1.0,
-        "Silence floor": 0.9,
-        "Energy rhythm": 0.7,
+        "Whisper classifier":  2.5,   # Phase 2 primary — trained model
+        "Whisper encoder":     1.2,   # Phase 1 heuristic — supporting
+        "Pitch variability":   1.0,
+        "Silence floor":       0.9,
+        "Energy rhythm":       0.7,
     }
     contributing = [s for s in signals if "unavailable" not in s.detail]
     num = sum(s.score * weights.get(s.name, 0.5) for s in contributing)
@@ -299,8 +358,12 @@ def analyze_audio(data: bytes, filename: str = "audio") -> dict[str, Any]:
         except Exception as exc:  # noqa: BLE001
             return Signal(name, 0.2, f"Could not compute this signal ({exc}).")
 
+    # Whisper signals (trained classifier + heuristic) — computed together
+    # since they share the encoder forward pass.
+    whisper_signals = _whisper_signal(audio, sr)
+
     signals = [
-        _safe(_whisper_signal, "Whisper encoder"),
+        *whisper_signals,
         _safe(_pitch_signal, "Pitch variability"),
         _safe(_silence_floor_signal, "Silence floor"),
         _safe(_energy_rhythm_signal, "Energy rhythm"),

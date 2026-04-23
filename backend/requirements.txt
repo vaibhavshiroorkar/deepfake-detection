@@ -1,21 +1,23 @@
-fastapi==0.115.0
-uvicorn[standard]==0.30.6
-python-multipart==0.0.12
-pillow>=10.4.0
-numpy>=1.26,<2.2
-opencv-python-headless>=4.10.0
-scipy>=1.14.0
-soundfile>=0.12.1
-pydantic==2.9.2
-httpx>=0.27.0
-PyJWT[crypto]>=2.8.0
-cryptography>=42.0.0
+fastapi
+uvicorn[standard]
+python-multipart
+pillow
+numpy
+opencv-python-headless
+scipy
+soundfile
+pydantic
+httpx
+PyJWT[crypto]
+cryptography
 # ML stack — DINOv2 (image), Whisper (audio), MTCNN (face cropping).
 # CPU-only torch; install matching CUDA wheels manually if a GPU is available.
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch>=2.2.0
-torchvision>=0.17.0
-transformers>=4.44.0
-facenet-pytorch>=2.6.0
+torch
+torchvision
+transformers
+facenet-pytorch
+# Model weight management
+huggingface_hub
 # Optional: provenance reading. Comment out if the install fails on your platform.
-c2pa-python>=0.5.0
+c2pa-python
