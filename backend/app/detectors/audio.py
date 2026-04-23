@@ -1,10 +1,11 @@
 """
-Audio forensics. Heuristic signals for detecting synthesized speech.
+Audio forensics. Heuristic signals plus a learned spectral profile from
+Whisper-base's encoder for detecting synthesised speech.
 
 Real voices carry a messy signature: pitch wanders, breath appears,
-sensor noise fills the quiet parts, high frequencies roll off the way
-a physical room and microphone demand. TTS and voice-clone output
-often forgets one of these.
+sensor noise fills the quiet parts. TTS and voice-clone output usually
+forgets at least one of these, and Whisper's encoder picks up on the
+rest by treating successive frames of synthetic audio as nearly identical.
 """
 from __future__ import annotations
 
@@ -131,45 +132,86 @@ def _silence_floor_signal(audio: np.ndarray, sr: int) -> Signal:
     )
 
 
-def _spectral_signal(audio: np.ndarray, sr: int) -> Signal:
-    """High-frequency roll-off and spectral flatness. A lot of neural
-    vocoders smear or clip content above 4–6 kHz in characteristic ways."""
-    # Welch PSD for stability
-    nperseg = min(2048, len(audio))
-    if nperseg < 256:
-        return Signal("Spectral profile", 0.3, "Clip too short to profile the spectrum.")
-    freqs, psd = sp_signal.welch(audio, fs=sr, nperseg=nperseg)
-    psd = np.maximum(psd, 1e-12)
+def _whisper_signal(audio: np.ndarray, sr: int) -> Signal:
+    """Whisper-base encoder embeddings as a learned spectral profile.
 
-    total = psd.sum()
-    if total <= 0:
-        return Signal("Spectral profile", 0.3, "Silent clip.")
-    # Ratio of energy above Nyquist/2 vs total — real speech has
-    # meaningful energy up there; neural vocoders often cut it off.
-    nyq = sr / 2
-    hi_cut = freqs >= nyq * 0.55
-    hi_energy_ratio = float(psd[hi_cut].sum() / total)
-    # Spectral flatness (geometric mean / arithmetic mean)
-    flatness = float(np.exp(np.mean(np.log(psd))) / psd.mean())
+    Whisper's encoder maps a log-mel spectrogram to a sequence of hidden
+    states learned from ~680k hours of speech. Synthesised speech tends to
+    produce embeddings with low temporal diversity and high adjacent-frame
+    cosine similarity — the encoder treats successive frames as nearly the
+    same input because the underlying mel content is too smooth.
+    """
+    try:
+        import torch
+        from ..models import get_device, get_whisper_encoder
+    except Exception as exc:  # noqa: BLE001
+        return Signal(
+            "Whisper encoder",
+            0.0,
+            f"Whisper-base unavailable ({type(exc).__name__}); skipping.",
+        )
+
+    # Whisper expects 16 kHz mono float32.
+    if sr != 16000:
+        new_len = int(round(len(audio) * 16000 / sr))
+        if new_len < 16000:  # < 1 s
+            return Signal(
+                "Whisper encoder", 0.2,
+                "Clip too short for Whisper analysis (< 1 s after resampling).",
+            )
+        audio16 = sp_signal.resample(audio, new_len).astype(np.float32)
+    else:
+        audio16 = audio.astype(np.float32)
+
+    try:
+        encoder, processor = get_whisper_encoder()
+        device = get_device()
+        feats = processor(
+            audio16, sampling_rate=16000, return_tensors="pt"
+        ).input_features.to(device)
+        with torch.no_grad():
+            hidden = encoder(feats).last_hidden_state[0]  # [T, D]
+        h = hidden.detach().cpu().numpy()
+    except Exception as exc:  # noqa: BLE001
+        return Signal(
+            "Whisper encoder",
+            0.0,
+            f"Whisper-base load/inference failed ({type(exc).__name__}: {exc}).",
+        )
+
+    if h.shape[0] < 4:
+        return Signal("Whisper encoder", 0.2,
+                      "Encoder produced too few frames to analyse.")
+
+    # Per-time variance, normalised feature norms, adjacent-frame cosine.
+    feat_var = float(np.mean(np.var(h, axis=0)))
+    feat_norm = float(np.mean(np.linalg.norm(h, axis=-1)))
+    norms = np.linalg.norm(h, axis=-1, keepdims=True)
+    nh = h / (norms + 1e-9)
+    adj_sim = float(np.mean(np.sum(nh[:-1] * nh[1:], axis=-1)))
 
     score = 0.0
-    if hi_energy_ratio < 0.003:
+    if adj_sim > 0.985:
         score += 0.55
-    elif hi_energy_ratio < 0.01:
-        score += 0.25
-    if flatness < 0.01:
-        score += 0.3
-    elif flatness > 0.25:
-        score += 0.25
+    elif adj_sim > 0.965:
+        score += 0.30
+    elif adj_sim > 0.940:
+        score += 0.15
+    if feat_var < 0.40:
+        score += 0.30
+    elif feat_var < 0.80:
+        score += 0.15
+
     score = float(np.clip(score, 0.0, 1.0))
     return Signal(
-        "Spectral profile",
+        "Whisper encoder",
         score,
-        f"High-band energy share {hi_energy_ratio*100:.2f}%, spectral flatness {flatness:.3f}. "
+        f"Adjacent-frame cosine {adj_sim:.4f}, per-dim variance {feat_var:.3f}, "
+        f"mean norm {feat_norm:.2f} across {h.shape[0]} encoder frames. "
         + (
-            "High frequencies roll off too sharply, or the spectrum is oddly flat — possible vocoder signature."
+            "Encoder representations are too uniform — characteristic of TTS or voice cloning."
             if score > 0.45
-            else "Frequency distribution looks like a real microphone capture."
+            else "Encoder representations vary like real speech."
         ),
     )
 
@@ -203,15 +245,16 @@ def _energy_rhythm_signal(audio: np.ndarray, sr: int) -> Signal:
 
 def _verdict(signals: list[Signal]) -> tuple[float, str]:
     weights = {
+        "Whisper encoder": 1.5,
         "Pitch variability": 1.0,
         "Silence floor": 0.9,
-        "Spectral profile": 1.0,
         "Energy rhythm": 0.7,
     }
-    num = sum(s.score * weights.get(s.name, 0.5) for s in signals)
-    denom = sum(weights.get(s.name, 0.5) for s in signals)
+    contributing = [s for s in signals if "unavailable" not in s.detail]
+    num = sum(s.score * weights.get(s.name, 0.5) for s in contributing)
+    denom = sum(weights.get(s.name, 0.5) for s in contributing)
     score = num / denom if denom else 0.0
-    peak = max((s.score for s in signals), default=0.0)
+    peak = max((s.score for s in contributing), default=0.0)
     score = 0.7 * score + 0.3 * peak
     if score < 0.3:
         label = "likely authentic"
@@ -257,9 +300,9 @@ def analyze_audio(data: bytes, filename: str = "audio") -> dict[str, Any]:
             return Signal(name, 0.2, f"Could not compute this signal ({exc}).")
 
     signals = [
+        _safe(_whisper_signal, "Whisper encoder"),
         _safe(_pitch_signal, "Pitch variability"),
         _safe(_silence_floor_signal, "Silence floor"),
-        _safe(_spectral_signal, "Spectral profile"),
         _safe(_energy_rhythm_signal, "Energy rhythm"),
     ]
     score, label = _verdict(signals)

@@ -1,7 +1,9 @@
 import Masthead from "@/components/Masthead";
 import Hero from "@/components/Hero";
-import DetectorConsole from "@/components/DetectorConsole";
+import Capabilities from "@/components/Capabilities";
 import HowItWorks from "@/components/HowItWorks";
+import Principles from "@/components/Principles";
+import CallToAction from "@/components/CallToAction";
 import Footer from "@/components/Footer";
 
 export default function Page() {
@@ -9,8 +11,10 @@ export default function Page() {
     <main>
       <Masthead />
       <Hero />
-      <DetectorConsole />
+      <Capabilities />
       <HowItWorks />
+      <Principles />
+      <CallToAction />
       <Footer />
     </main>
   );

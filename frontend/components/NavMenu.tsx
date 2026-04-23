@@ -7,7 +7,7 @@ import { ChevronDown, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 const LINKS = [
-  { href: "/#console", label: "Detect" },
+  { href: "/detect", label: "Detect" },
   { href: "/compare", label: "Compare" },
   { href: "/calibration", label: "Calibration" },
   { href: "/#how", label: "How it works" },
