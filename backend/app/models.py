@@ -41,6 +41,10 @@ _FORCE_CPU = os.getenv("VERITAS_FORCE_CPU", "0") == "1"
 # SDXL outputs vs. real photographs. Override with VERITAS_AI_IMAGE_MODEL.
 _AI_IMAGE_MODEL = os.getenv("VERITAS_AI_IMAGE_MODEL", "Organika/sdxl-detector")
 
+# Whisper variant used for audio feature extraction. On low-RAM hosts
+# (e.g. HF Spaces free tier), set to "openai/whisper-tiny".
+_WHISPER_MODEL = os.getenv("VERITAS_WHISPER_MODEL", "openai/whisper-base")
+
 # Phase-2 weight paths (set after training)
 _DINOV2_WEIGHTS = os.getenv("VERITAS_DINOV2_WEIGHTS", "")
 _WHISPER_CLS_WEIGHTS = os.getenv("VERITAS_WHISPER_WEIGHTS", "")
@@ -145,10 +149,8 @@ def get_whisper_encoder() -> tuple[Any, Any]:
         with _lock:
             if _whisper is None:
                 from transformers import WhisperFeatureExtractor, WhisperModel
-                processor = WhisperFeatureExtractor.from_pretrained(
-                    "openai/whisper-base"
-                )
-                full = WhisperModel.from_pretrained("openai/whisper-base")
+                processor = WhisperFeatureExtractor.from_pretrained(_WHISPER_MODEL)
+                full = WhisperModel.from_pretrained(_WHISPER_MODEL)
                 encoder = full.encoder.to(get_device()).eval()
                 _whisper = (encoder, processor)
     return _whisper

@@ -1,8 +1,8 @@
 FROM python:3.11-slim
 
-WORKDIR /app
+# Hugging Face Spaces mounts the repo at /home/user/app and runs as UID 1000.
+# We mirror that convention so the image works both locally and on Spaces.
 
-# Install system dependencies required for OpenCV, audio processing, etc.
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     libsm6 \
@@ -11,16 +11,24 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy only requirements first to leverage Docker cache
-COPY requirements.txt .
+RUN useradd -m -u 1000 user
+USER user
+ENV PATH="/home/user/.local/bin:$PATH" \
+    HF_HOME=/home/user/.cache/huggingface \
+    TRANSFORMERS_CACHE=/home/user/.cache/huggingface \
+    TORCH_HOME=/home/user/.cache/torch \
+    VERITAS_FORCE_CPU=1 \
+    VERITAS_WHISPER_MODEL=openai/whisper-tiny \
+    PORT=7860
+
+WORKDIR /home/user/app
+
+COPY --chown=user:user requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application
-COPY . .
+COPY --chown=user:user . .
 
-# Expose port 8000 for FastAPI
-EXPOSE 8000
+EXPOSE 7860
 
-# Run the uvicorn server
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-7860}"]

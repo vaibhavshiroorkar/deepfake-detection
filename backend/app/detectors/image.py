@@ -83,9 +83,16 @@ def _is_camera_origin(tags: dict) -> bool:
 # ---------------------------------------------------------------------------
 
 def _classify_ai_dinov2(pil_img: Image.Image) -> tuple[float, dict] | None:
-    """Try DINOv2 classifier.  Returns None if unavailable."""
+    """Try DINOv2 classifier. Returns None if weights aren't trained or load fails.
+
+    Without trained head weights the classifier emits ~50/50 noise, which is
+    worse than the Swin-v2 fallback — so we skip it entirely unless
+    VERITAS_DINOV2_WEIGHTS points at a real file.
+    """
     try:
-        from ..models import get_dinov2_classifier, get_device
+        from ..models import dinov2_weights_available, get_dinov2_classifier, get_device
+        if not dinov2_weights_available():
+            return None
         from .dinov2_head import predict_image
 
         model, processor = get_dinov2_classifier()
