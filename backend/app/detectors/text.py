@@ -91,6 +91,60 @@ def _gpt2_perplexity_signal(text: str, sents: list[str]) -> Signal:
 
 
 # ---------------------------------------------------------------------------
+# RoBERTa AI-text detector (Phase 2 — second primary signal)
+# ---------------------------------------------------------------------------
+
+def _roberta_detector_signal(text: str) -> Signal:
+    """Pretrained RoBERTa binary classifier (human vs machine-generated).
+
+    Complements GPT-2 perplexity with a dedicated discriminator —
+    perplexity catches low-entropy generations, RoBERTa catches
+    stylistic fingerprints perplexity misses.
+    """
+    if not text or len(text.split()) < 15:
+        return Signal(
+            "RoBERTa AI-text detector",
+            0.0,
+            "Text too short for the RoBERTa detector; skipping.",
+        )
+    try:
+        import torch
+        from ..models import get_device, get_text_deepfake_detector
+
+        model, tokenizer, lmap = get_text_deepfake_detector()
+        device = get_device()
+        # RoBERTa caps at 512 tokens; chunk long text and average P(fake).
+        tokens = tokenizer(
+            text, return_tensors="pt", truncation=True,
+            padding=True, max_length=512,
+        ).to(device)
+        with torch.no_grad():
+            logits = model(**tokens).logits[0]
+        probs = torch.softmax(logits, dim=-1).detach().cpu().numpy()
+        p_fake = float(probs[lmap["fake_index"]])
+
+        if p_fake > 0.75:
+            tail = "RoBERTa is confident the text is machine-generated."
+        elif p_fake > 0.55:
+            tail = "RoBERTa leans toward machine-generated."
+        elif p_fake < 0.3:
+            tail = "RoBERTa reads this as human-written."
+        else:
+            tail = "RoBERTa is undecided."
+        return Signal(
+            "RoBERTa AI-text detector",
+            p_fake,
+            f"{lmap['name']}: P(AI) = {p_fake:.3f}. {tail}",
+        )
+    except Exception as exc:  # noqa: BLE001
+        return Signal(
+            "RoBERTa AI-text detector",
+            0.0,
+            f"RoBERTa detector unavailable ({type(exc).__name__}); skipping.",
+        )
+
+
+# ---------------------------------------------------------------------------
 # Heuristic signals (Phase 1 — kept as supporting evidence)
 # ---------------------------------------------------------------------------
 
@@ -227,11 +281,12 @@ def _punctuation_signal(text: str) -> Signal:
 
 def _verdict(signals: list[Signal]) -> tuple[float, str]:
     weights = {
-        "GPT-2 perplexity":    2.0,   # Phase 2 primary signal
-        "Burstiness":          1.0,
-        "Lexical rhythm":      0.9,
-        "Phrase repetition":   0.9,
-        "Punctuation entropy": 0.7,
+        "GPT-2 perplexity":         2.0,   # Phase 2 primary: LM surprise
+        "RoBERTa AI-text detector": 2.2,   # Phase 2 primary: learned discriminator
+        "Burstiness":               1.0,
+        "Lexical rhythm":           0.9,
+        "Phrase repetition":        0.9,
+        "Punctuation entropy":      0.7,
     }
     contributing = [s for s in signals if "unavailable" not in s.detail]
     num = sum(s.score * weights.get(s.name, 0.5) for s in contributing)
@@ -253,7 +308,8 @@ def analyze_text(text: str) -> dict[str, Any]:
     sents = _sentences(text)
     words = _WORD.findall(text)
     signals = [
-        _gpt2_perplexity_signal(text, sents),   # Phase 2 primary
+        _gpt2_perplexity_signal(text, sents),   # Phase 2 primary — LM perplexity
+        _roberta_detector_signal(text),         # Phase 2 primary — learned discriminator
         _burstiness_signal(sents),
         _lexical_signal(words),
         _repetition_signal(sents, words),

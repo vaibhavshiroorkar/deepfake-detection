@@ -155,6 +155,51 @@ def _ai_classifier_signal(pil_img: Image.Image) -> Signal:
     return Signal("AI-image classifier", p_ai, detail)
 
 
+def _classify_ai_ensemble_v2(pil_img: Image.Image) -> tuple[float, dict] | None:
+    """Second pretrained classifier with different training bias.
+
+    Running two image classifiers trained on different datasets and
+    averaging reduces per-model blind spots — especially for diffusion
+    content where the primary Swin-v2 (SDXL-focused) tends to under-call.
+    """
+    try:
+        import torch
+        from ..models import get_device, get_ensemble_ai_image_classifier
+
+        model, processor, lmap = get_ensemble_ai_image_classifier()
+        device = get_device()
+        inputs = processor(images=pil_img, return_tensors="pt")
+        pixel_values = inputs["pixel_values"].to(device)
+        with torch.no_grad():
+            logits = model(pixel_values=pixel_values).logits[0]
+        probs = torch.softmax(logits, dim=-1).detach().cpu().numpy()
+        p_ai = float(probs[lmap["ai_index"]])
+        p_real = float(probs[lmap["real_index"]])
+        return p_ai, {"p_ai": p_ai, "p_real": p_real, "model": lmap["name"]}
+    except Exception:
+        return None
+
+
+def _ai_classifier_ensemble_signal(pil_img: Image.Image) -> Signal:
+    result = _classify_ai_ensemble_v2(pil_img)
+    if result is None:
+        return Signal(
+            "AI-image ensemble",
+            0.0,
+            "Second pretrained classifier unavailable; skipping.",
+        )
+    p_ai, info = result
+    detail = (
+        f"{info['model']}: P(AI) = {p_ai:.3f}, P(real) = {info['p_real']:.3f}. "
+        + ("Second classifier also flags this as synthetic."
+           if p_ai > 0.6 else
+           "Second classifier agrees this looks authentic."
+           if p_ai < 0.4 else
+           "Second classifier is undecided.")
+    )
+    return Signal("AI-image ensemble", p_ai, detail)
+
+
 # ---------------------------------------------------------------------------
 # Face detection (MTCNN) + per-face classifier rescoring
 # ---------------------------------------------------------------------------
@@ -434,7 +479,8 @@ def _metadata_signal(tags: dict) -> Signal:
 def _verdict(signals: list[Signal], camera_origin: bool) -> tuple[float, str]:
     physics_weight = 0.5 if not camera_origin else 1.1
     weights = {
-        "AI-image classifier":  3.0,   # Phase 2: DINOv2 gets highest weight
+        "AI-image classifier":  2.4,   # Primary Swin-v2 / DINOv2 classifier
+        "AI-image ensemble":    2.0,   # Second pretrained classifier (different bias)
         "Face classifier":      1.8,
         "Error-level analysis": 0.8,
         "Capture metadata":     0.6,
@@ -486,6 +532,7 @@ def analyze_image(
 
     signals = [
         _ai_classifier_signal(img),
+        _ai_classifier_ensemble_signal(img),
         _face_classifier_signal(img, faces),
         _focus_uniformity_signal(cv_img),
         _chromatic_aberration_signal(cv_img),

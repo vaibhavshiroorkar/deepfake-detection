@@ -181,6 +181,72 @@ def _whisper_signal(audio: np.ndarray, sr: int) -> list[Signal]:
 
 
 # ---------------------------------------------------------------------------
+# Pretrained deepfake audio detector (wav2vec2 binary classifier)
+# ---------------------------------------------------------------------------
+
+def _deepfake_audio_signal(audio: np.ndarray, sr: int) -> Signal:
+    """Standalone pretrained audio deepfake classifier.
+
+    Works out of the box — no custom training required. Provides a second,
+    model-level opinion on top of the Whisper-based path.
+    """
+    try:
+        import torch
+        from ..models import get_audio_deepfake_detector, get_device
+
+        if sr != 16000:
+            new_len = int(round(len(audio) * 16000 / sr))
+            if new_len < 16000:
+                return Signal(
+                    "Audio deepfake detector",
+                    0.0,
+                    "Clip is too short to resample to 16 kHz; skipping.",
+                )
+            audio16 = sp_signal.resample(audio, new_len).astype(np.float32)
+        else:
+            audio16 = audio.astype(np.float32)
+
+        model, processor, lmap = get_audio_deepfake_detector()
+        device = get_device()
+        inputs = processor(
+            audio16, sampling_rate=16000, return_tensors="pt", padding=True,
+        )
+        input_values = inputs.get("input_values", inputs.get("input_features"))
+        if input_values is None:
+            return Signal(
+                "Audio deepfake detector",
+                0.0,
+                "Detector processor returned unexpected output format.",
+            )
+        input_values = input_values.to(device)
+
+        with torch.no_grad():
+            logits = model(input_values).logits[0]
+        probs = torch.softmax(logits, dim=-1).detach().cpu().numpy()
+        p_fake = float(probs[lmap["fake_index"]])
+
+        if p_fake > 0.7:
+            detail_tail = "Strong signal that the audio is synthetic."
+        elif p_fake > 0.55:
+            detail_tail = "Leans synthetic."
+        elif p_fake < 0.3:
+            detail_tail = "Looks like real speech."
+        else:
+            detail_tail = "Classifier is uncertain."
+        return Signal(
+            "Audio deepfake detector",
+            p_fake,
+            f"{lmap['name']}: P(synthetic) = {p_fake:.3f}. {detail_tail}",
+        )
+    except Exception as exc:
+        return Signal(
+            "Audio deepfake detector",
+            0.0,
+            f"Pretrained audio detector unavailable ({type(exc).__name__}); skipping.",
+        )
+
+
+# ---------------------------------------------------------------------------
 # Phase 1 heuristic signals (kept as supporting evidence)
 # ---------------------------------------------------------------------------
 
@@ -303,11 +369,12 @@ def _energy_rhythm_signal(audio: np.ndarray, sr: int) -> Signal:
 
 def _verdict(signals: list[Signal]) -> tuple[float, str]:
     weights = {
-        "Whisper classifier":  2.5,   # Phase 2 primary — trained model
-        "Whisper encoder":     1.2,   # Phase 1 heuristic — supporting
-        "Pitch variability":   1.0,
-        "Silence floor":       0.9,
-        "Energy rhythm":       0.7,
+        "Whisper classifier":      2.5,   # Phase 2 primary — trained model
+        "Audio deepfake detector": 2.2,   # Pretrained wav2vec2 binary classifier
+        "Whisper encoder":         1.2,   # Phase 1 heuristic — supporting
+        "Pitch variability":       1.0,
+        "Silence floor":           0.9,
+        "Energy rhythm":           0.7,
     }
     contributing = [s for s in signals if "unavailable" not in s.detail]
     num = sum(s.score * weights.get(s.name, 0.5) for s in contributing)
@@ -364,6 +431,7 @@ def analyze_audio(data: bytes, filename: str = "audio") -> dict[str, Any]:
 
     signals = [
         *whisper_signals,
+        _safe(_deepfake_audio_signal, "Audio deepfake detector"),
         _safe(_pitch_signal, "Pitch variability"),
         _safe(_silence_floor_signal, "Silence floor"),
         _safe(_energy_rhythm_signal, "Energy rhythm"),

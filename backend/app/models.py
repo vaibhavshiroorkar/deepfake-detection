@@ -25,6 +25,9 @@ _device: Any = None
 
 # Existing singletons
 _ai_classifier: tuple[Any, Any, dict] | None = None
+_ai_classifier_v2: tuple[Any, Any, dict] | None = None
+_audio_df: tuple[Any, Any, dict] | None = None
+_text_df: tuple[Any, Any, dict] | None = None
 _whisper: tuple[Any, Any] | None = None
 _face_detector: Any = None
 
@@ -40,6 +43,17 @@ _FORCE_CPU = os.getenv("VERITAS_FORCE_CPU", "0") == "1"
 # Pretrained AI-image classifier. Defaults to a Swin-v2 model trained on
 # SDXL outputs vs. real photographs. Override with VERITAS_AI_IMAGE_MODEL.
 _AI_IMAGE_MODEL = os.getenv("VERITAS_AI_IMAGE_MODEL", "Organika/sdxl-detector")
+
+# Second AI-image classifier used in ensemble. A Swin-based detector
+# trained on a different mix of generative outputs — its errors are
+# uncorrelated enough with the primary that averaging the two lifts recall.
+_AI_IMAGE_MODEL_V2 = os.getenv("VERITAS_AI_IMAGE_MODEL_V2", "umm-maybe/AI-image-detector")
+
+# Pretrained audio deepfake classifier (wav2vec2-based, binary).
+_AUDIO_DF_MODEL = os.getenv("VERITAS_AUDIO_DF_MODEL", "MelodyMachine/Deepfake-audio-detection")
+
+# Pretrained AI-text classifier (RoBERTa, binary — Real vs Fake).
+_TEXT_DF_MODEL = os.getenv("VERITAS_TEXT_DF_MODEL", "roberta-base-openai-detector")
 
 # Whisper variant used for audio feature extraction. On low-RAM hosts
 # (e.g. HF Spaces free tier), set to "openai/whisper-tiny".
@@ -60,6 +74,42 @@ def get_device():
         else:
             _device = torch.device("cuda")
     return _device
+
+
+_FAKE_LABEL_KEYWORDS = (
+    "artificial", "fake", "ai", "synth", "generated", "spoof",
+    "bonafide_no", "lab", "deepfake",
+)
+_REAL_LABEL_KEYWORDS = (
+    "human", "real", "authentic", "natural", "genuine", "bonafide",
+)
+
+
+def _resolve_label_map(id2label: dict) -> dict[str, int]:
+    """Figure out which label index means 'fake' vs 'real'.
+
+    Returns {'fake_index': int, 'real_index': int}. Falls back to the
+    binary-classifier default of {0: real, 1: fake} when id2label is
+    missing or ambiguous (HF convention for most AI-detector models).
+    """
+    fake_idx = real_idx = None
+    for idx, label in (id2label or {}).items():
+        s = str(label).lower()
+        if fake_idx is None and any(k in s for k in _FAKE_LABEL_KEYWORDS):
+            fake_idx = int(idx)
+        if real_idx is None and any(k in s for k in _REAL_LABEL_KEYWORDS):
+            real_idx = int(idx)
+    if fake_idx is None and real_idx is None:
+        fake_idx, real_idx = 1, 0
+    elif fake_idx is None:
+        fake_idx = 1 - real_idx
+    elif real_idx is None:
+        real_idx = 1 - fake_idx
+    # Keep legacy ai_index alias for image-detector callers.
+    return {
+        "fake_index": fake_idx, "real_index": real_idx,
+        "ai_index": fake_idx,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -85,30 +135,92 @@ def get_ai_image_classifier() -> tuple[Any, Any, dict]:
                 model = model.to(get_device()).eval()
 
                 id2label = getattr(model.config, "id2label", {}) or {}
-                ai_idx = real_idx = None
-                for idx, label in id2label.items():
-                    s = str(label).lower()
-                    if any(k in s for k in
-                           ("artificial", "fake", "ai", "synth", "generated")):
-                        ai_idx = int(idx)
-                    elif any(k in s for k in
-                             ("human", "real", "authentic", "natural")):
-                        real_idx = int(idx)
-                # Fall back to binary assumption if labels were ambiguous.
-                if ai_idx is None and real_idx is None:
-                    ai_idx, real_idx = 0, 1
-                elif ai_idx is None:
-                    ai_idx = 1 - real_idx
-                elif real_idx is None:
-                    real_idx = 1 - ai_idx
-
-                _ai_classifier = (
-                    model,
-                    processor,
-                    {"ai_index": ai_idx, "real_index": real_idx,
-                     "id2label": id2label, "name": _AI_IMAGE_MODEL},
-                )
+                lmap = _resolve_label_map(id2label)
+                lmap["id2label"] = id2label
+                lmap["name"] = _AI_IMAGE_MODEL
+                _ai_classifier = (model, processor, lmap)
     return _ai_classifier
+
+
+# ---------------------------------------------------------------------------
+# Ensemble AI-image classifier  (second pretrained model, different training bias)
+# ---------------------------------------------------------------------------
+
+def get_ensemble_ai_image_classifier() -> tuple[Any, Any, dict]:
+    """Second pretrained image classifier for ensemble voting."""
+    global _ai_classifier_v2
+    if _ai_classifier_v2 is None:
+        with _lock:
+            if _ai_classifier_v2 is None:
+                from transformers import (
+                    AutoImageProcessor,
+                    AutoModelForImageClassification,
+                )
+                processor = AutoImageProcessor.from_pretrained(_AI_IMAGE_MODEL_V2)
+                model = AutoModelForImageClassification.from_pretrained(
+                    _AI_IMAGE_MODEL_V2
+                )
+                model = model.to(get_device()).eval()
+                id2label = getattr(model.config, "id2label", {}) or {}
+                lmap = _resolve_label_map(id2label)
+                lmap["id2label"] = id2label
+                lmap["name"] = _AI_IMAGE_MODEL_V2
+                _ai_classifier_v2 = (model, processor, lmap)
+    return _ai_classifier_v2
+
+
+# ---------------------------------------------------------------------------
+# Pretrained audio deepfake detector (wav2vec2 binary classifier)
+# ---------------------------------------------------------------------------
+
+def get_audio_deepfake_detector() -> tuple[Any, Any, dict]:
+    """Wav2Vec2-based binary classifier — real vs synthetic speech.
+
+    Works out of the box (no custom training needed) and provides a
+    second, model-level audio signal alongside the Whisper-based path.
+    """
+    global _audio_df
+    if _audio_df is None:
+        with _lock:
+            if _audio_df is None:
+                from transformers import (
+                    AutoFeatureExtractor,
+                    AutoModelForAudioClassification,
+                )
+                processor = AutoFeatureExtractor.from_pretrained(_AUDIO_DF_MODEL)
+                model = AutoModelForAudioClassification.from_pretrained(_AUDIO_DF_MODEL)
+                model = model.to(get_device()).eval()
+                id2label = getattr(model.config, "id2label", {}) or {}
+                lmap = _resolve_label_map(id2label)
+                lmap["id2label"] = id2label
+                lmap["name"] = _AUDIO_DF_MODEL
+                _audio_df = (model, processor, lmap)
+    return _audio_df
+
+
+# ---------------------------------------------------------------------------
+# Pretrained AI-text detector (RoBERTa binary classifier)
+# ---------------------------------------------------------------------------
+
+def get_text_deepfake_detector() -> tuple[Any, Any, dict]:
+    """RoBERTa-based binary classifier — human-written vs machine-generated."""
+    global _text_df
+    if _text_df is None:
+        with _lock:
+            if _text_df is None:
+                from transformers import (
+                    AutoModelForSequenceClassification,
+                    AutoTokenizer,
+                )
+                tokenizer = AutoTokenizer.from_pretrained(_TEXT_DF_MODEL)
+                model = AutoModelForSequenceClassification.from_pretrained(_TEXT_DF_MODEL)
+                model = model.to(get_device()).eval()
+                id2label = getattr(model.config, "id2label", {}) or {}
+                lmap = _resolve_label_map(id2label)
+                lmap["id2label"] = id2label
+                lmap["name"] = _TEXT_DF_MODEL
+                _text_df = (model, tokenizer, lmap)
+    return _text_df
 
 
 # ---------------------------------------------------------------------------
