@@ -18,6 +18,7 @@ ELA, EXIF) are kept as supporting evidence with gated weights.
 from __future__ import annotations
 
 import io
+import math
 from dataclasses import dataclass
 from typing import Any
 
@@ -27,6 +28,36 @@ from PIL import Image, ImageChops, ExifTags
 
 from . import c2pa as _c2pa
 from .heatmap import ela_heatmap, noise_heatmap
+
+
+# ---------------------------------------------------------------------------
+# Probability calibration — temper over-confident pretrained classifiers
+# ---------------------------------------------------------------------------
+
+def _calibrate(p: float, center: float = 0.72, slope: float = 6.0) -> float:
+    """Sigmoid calibration: pulls low/mid scores toward 0 and only amplifies
+    scores well above `center`. Counters the habit of some pretrained
+    detectors of returning 0.9+ on ordinary modern photography.
+
+    p=0.3 →0.07, p=0.5 →0.23, p=0.7 →0.47, p=0.8 →0.62,
+    p=0.9 →0.74, p=0.95 →0.80, p=0.98 →0.83, p=1.0 →0.85
+    """
+    return 1.0 / (1.0 + math.exp(-(p - center) * slope))
+
+
+def _agreement_adjust(anchor_p: float, secondary_p: float) -> float:
+    """If a secondary classifier disagrees with the anchor, pull its
+    contribution toward 0.5 (uncertain) rather than letting either model
+    dominate through an uncorroborated strong call.
+
+    When both agree (gap < 0.2), the secondary is kept as-is.
+    Large disagreements (gap > 0.6) pull secondary fully to 0.5.
+    """
+    gap = abs(anchor_p - secondary_p)
+    if gap < 0.2:
+        return secondary_p
+    pull = min(1.0, (gap - 0.2) / 0.4)
+    return secondary_p * (1 - pull) + 0.5 * pull
 
 
 @dataclass
@@ -180,7 +211,18 @@ def _classify_ai_ensemble_v2(pil_img: Image.Image) -> tuple[float, dict] | None:
         return None
 
 
-def _ai_classifier_ensemble_signal(pil_img: Image.Image) -> Signal:
+def _ai_classifier_ensemble_signal(
+    pil_img: Image.Image,
+    anchor_p_ai: float | None = None,
+) -> Signal:
+    """Second pretrained classifier, with two corrections:
+       1. Sigmoid calibration — the default `umm-maybe/AI-image-detector`
+          is known to return 0.9+ on ordinary real photos, so we shift
+          the distribution to require genuine confidence.
+       2. Agreement adjustment — if the anchor (primary) classifier
+          strongly disagrees, the ensemble's contribution is pulled toward
+          0.5 instead of letting an uncorroborated model dominate.
+    """
     result = _classify_ai_ensemble_v2(pil_img)
     if result is None:
         return Signal(
@@ -188,16 +230,28 @@ def _ai_classifier_ensemble_signal(pil_img: Image.Image) -> Signal:
             0.0,
             "Second pretrained classifier unavailable; skipping.",
         )
-    p_ai, info = result
+    raw_p, info = result
+    calibrated = _calibrate(raw_p)
+    if anchor_p_ai is not None:
+        adjusted = _agreement_adjust(anchor_p_ai, calibrated)
+        disagreement = abs(anchor_p_ai - raw_p)
+    else:
+        adjusted = calibrated
+        disagreement = 0.0
+
+    if adjusted > 0.6:
+        tail = "Second classifier also flags this as synthetic."
+    elif adjusted < 0.4:
+        tail = "Second classifier agrees this looks authentic."
+    else:
+        tail = "Second classifier is undecided."
+    if disagreement > 0.35:
+        tail += " Note: disagrees with primary classifier — score held closer to uncertain."
     detail = (
-        f"{info['model']}: P(AI) = {p_ai:.3f}, P(real) = {info['p_real']:.3f}. "
-        + ("Second classifier also flags this as synthetic."
-           if p_ai > 0.6 else
-           "Second classifier agrees this looks authentic."
-           if p_ai < 0.4 else
-           "Second classifier is undecided.")
+        f"{info['model']}: raw P(AI) = {raw_p:.3f}, calibrated = {adjusted:.3f}. "
+        + tail
     )
-    return Signal("AI-image ensemble", p_ai, detail)
+    return Signal("AI-image ensemble", adjusted, detail)
 
 
 # ---------------------------------------------------------------------------
@@ -231,10 +285,16 @@ def _face_classifier_signal(
     pil_img: Image.Image,
     faces: list[tuple[int, int, int, int, float]],
 ) -> Signal:
+    """The underlying classifier is trained on whole images, not tight face
+    crops — its scores on crops are noisier and biased high. We calibrate
+    each crop's raw P(AI) through the same sigmoid used for the ensemble
+    so a crop scoring 0.93 raw contributes ~0.77 to the verdict, not 0.93.
+    """
     if not faces:
         return Signal("Face classifier", 0.0,
                       "No faces detected — this check does not apply.")
-    per_face = []
+    raw_per_face: list[float] = []
+    cal_per_face: list[float] = []
     for (x1, y1, x2, y2, _p) in faces:
         crop = pil_img.crop((x1, y1, x2, y2))
         try:
@@ -245,17 +305,21 @@ def _face_classifier_signal(
                 0.0,
                 f"Pretrained classifier unavailable for face crops ({type(exc).__name__}).",
             )
-        per_face.append(p_ai)
-    avg = float(np.mean(per_face))
-    peak = float(np.max(per_face))
-    score = float(np.clip(0.5 * avg + 0.5 * peak, 0.0, 1.0))
+        raw_per_face.append(p_ai)
+        cal_per_face.append(_calibrate(p_ai))
+
+    raw_avg = float(np.mean(raw_per_face))
+    cal_avg = float(np.mean(cal_per_face))
+    cal_peak = float(np.max(cal_per_face))
+    score = float(np.clip(0.5 * cal_avg + 0.5 * cal_peak, 0.0, 1.0))
     return Signal(
         "Face classifier",
         score,
-        f"{len(faces)} face crop(s) classified. avg P(AI)={avg:.2f}, peak={peak:.2f}. "
-        + ("At least one face crop scores as synthetic."
+        f"{len(faces)} face crop(s). raw avg P(AI)={raw_avg:.2f}, "
+        f"calibrated={cal_avg:.2f}, peak={cal_peak:.2f}. "
+        + ("At least one face crop scores as synthetic after calibration."
            if score > 0.55
-           else "Face crops look authentic."),
+           else "Face crops look authentic after calibration."),
     )
 
 
@@ -479,9 +543,9 @@ def _metadata_signal(tags: dict) -> Signal:
 def _verdict(signals: list[Signal], camera_origin: bool) -> tuple[float, str]:
     physics_weight = 0.5 if not camera_origin else 1.1
     weights = {
-        "AI-image classifier":  2.4,   # Primary Swin-v2 / DINOv2 classifier
-        "AI-image ensemble":    2.0,   # Second pretrained classifier (different bias)
-        "Face classifier":      1.8,
+        "AI-image classifier":  2.4,   # Primary Swin-v2 / DINOv2 classifier (anchor)
+        "AI-image ensemble":    1.4,   # Second pretrained — calibrated, lower weight
+        "Face classifier":      1.2,   # Whole-image classifier on face crops — noisy
         "Error-level analysis": 0.8,
         "Capture metadata":     0.6,
         "Face boundary":        0.5,
@@ -500,13 +564,16 @@ def _verdict(signals: list[Signal], camera_origin: bool) -> tuple[float, str]:
         contributing.append(s.score)
     avg = num / denom if denom else 0.0
     peak = max(contributing, default=0.0)
-    score = float(np.clip(0.75 * avg + 0.25 * peak, 0.0, 1.0))
+    # Weighted-mean-dominant blend; a lone spike shouldn't push the verdict.
+    score = float(np.clip(0.82 * avg + 0.18 * peak, 0.0, 1.0))
 
-    if score < 0.30:
+    # Widened "inconclusive" band — real images that tickle one or two
+    # over-confident signals stay inconclusive rather than being called out.
+    if score < 0.35:
         label = "likely authentic"
-    elif score < 0.50:
+    elif score < 0.58:
         label = "inconclusive"
-    elif score < 0.72:
+    elif score < 0.78:
         label = "likely AI-generated or manipulated"
     else:
         label = "highly likely AI-generated or manipulated"
@@ -530,9 +597,14 @@ def analyze_image(
 
     faces = _detect_faces_mtcnn(img)
 
+    # Primary classifier runs first; its score anchors the ensemble so the
+    # ensemble can dampen its own contribution when the two disagree.
+    primary_signal = _ai_classifier_signal(img)
+    anchor_p = primary_signal.score if "unavailable" not in primary_signal.detail else None
+
     signals = [
-        _ai_classifier_signal(img),
-        _ai_classifier_ensemble_signal(img),
+        primary_signal,
+        _ai_classifier_ensemble_signal(img, anchor_p_ai=anchor_p),
         _face_classifier_signal(img, faces),
         _focus_uniformity_signal(cv_img),
         _chromatic_aberration_signal(cv_img),
