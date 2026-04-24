@@ -16,7 +16,7 @@
   --alert:   #b8341f;
   --amber:   #e8a33d;
 
-  /* Type scale — editorial, generous but readable. */
+  /* Type scale: editorial, generous but readable. */
   --step--1: clamp(0.95rem, 0.9rem + 0.2vw, 1.05rem);
   --step-0:  clamp(1.05rem, 1rem + 0.35vw, 1.18rem);
   --step-1:  clamp(1.25rem, 1.15rem + 0.6vw, 1.5rem);
@@ -28,7 +28,7 @@
 
 html {
   background: var(--bone);
-  /* No global smooth scroll — it animates browser-initiated scroll on
+  /* No global smooth scroll. It animates browser-initiated scroll on
      refresh/history restore and looks like random scrolling. If we want
      smooth anchor navigation later, we'll trigger it per-link. */
 }
@@ -45,7 +45,7 @@ html, body {
 
 body {
   background: var(--bone);
-  /* Subtle paper grain — SVG noise, barely there. */
+  /* Subtle paper grain. SVG noise, barely there. */
   background-image:
     radial-gradient(circle at 20% 10%, rgba(216,71,39,0.04), transparent 45%),
     radial-gradient(circle at 90% 80%, rgba(47,93,69,0.03), transparent 50%),
@@ -107,7 +107,7 @@ body {
 }
 .body-sm { font-size: var(--step--1); line-height: 1.7; color: var(--smoke); }
 
-/* Evidence-catalog eyebrow — running-head style, monospace, tracked. */
+/* Evidence-catalog eyebrow: running-head style, monospace, tracked. */
 .eyebrow {
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 0.72rem;
@@ -130,7 +130,7 @@ body {
 .hairline-ink  { height: 1px; background: var(--ink); display: block; }
 .hairline-ember{ height: 1px; background: var(--ember); display: block; }
 
-/* Screen-covering sections — uses svh to avoid mobile browser chrome issues. */
+/* Screen-covering sections. Uses svh to avoid mobile browser chrome issues. */
 .section-screen {
   min-height: 100svh;
   display: flex;
@@ -138,7 +138,7 @@ body {
   position: relative;
 }
 
-/* Page-wide inner frame — keeps content breathing on ultra-wide displays. */
+/* Page-wide inner frame. Keeps content breathing on ultra-wide displays. */
 .page-frame {
   width: 100%;
   max-width: 88rem;
@@ -191,7 +191,7 @@ body {
       var(--alert) 75%, var(--alert) 100%);
 }
 
-/* Action button — editorial block with tight corners, hover inversion. */
+/* Action button. Editorial block with tight corners, hover inversion. */
 .btn {
   display: inline-flex;
   align-items: center;

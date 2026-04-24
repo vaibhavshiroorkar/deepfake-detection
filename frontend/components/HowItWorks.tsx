@@ -7,25 +7,25 @@ const ITEMS = [
     n: "01",
     title: "Image",
     body:
-      "Two pretrained classifiers vote on synthesis: a Swin-v2 SDXL detector and an ensemble head trained on a different generative mix. MTCNN crops faces and re-runs the same classifiers per face. Camera-physics signals (focus uniformity, chromatic aberration, sensor noise, ELA) act as supporting evidence, weighted by whether EXIF identifies a real camera.",
+      "Two pretrained classifiers weigh in on the whole image. MTCNN finds faces, if any, and we run the same check on each crop. Then we look at camera physics: focus uniformity, chromatic aberration, sensor noise, error-level analysis. If EXIF matches a real camera, those signals count for more.",
   },
   {
     n: "02",
     title: "Video",
     body:
-      "Frames sampled along the timeline each pass through the image pipeline. A temporal-flicker check looks for the per-frame wobble that face-generators leave behind. The verdict folds frame-level scores into a timeline chart, where spikes get weighted more than a uniformly-high average.",
+      "We sample frames along the timeline and run each one through the image pipeline. A separate check looks for the frame-to-frame wobble face generators tend to leave behind. The timeline chart shows where suspicion spikes. Spikes count more than a flat, evenly-high average.",
   },
   {
     n: "03",
     title: "Audio",
     body:
-      "A wav2vec2 binary classifier pairs with a Whisper encoder. The Whisper encoder gives learned spectral features read by an adjacent-frame cosine heuristic. Classical signals: pitch variability, silence-floor cleanliness, energy-envelope rhythm. TTS and voice clones tend to flatten all three at once.",
+      "A wav2vec2 classifier handles the main call. Whisper features give a second, learned read. On the classical side we watch pitch variability, silence-floor cleanliness, and energy-envelope rhythm. TTS and voice clones tend to flatten all three at once, which is a tell.",
   },
   {
     n: "04",
     title: "Text",
     body:
-      "RoBERTa binary discriminator plus GPT-2 perplexity scoring. One is a dedicated detector, the other measures language-model surprise. Supporting: sentence-length burstiness, lexical rhythm, phrase-tic hit rate, punctuation signatures over-represented in AI writing.",
+      "RoBERTa says whether the writing reads machine-made. GPT-2 measures how surprising the language is. Then we look at sentence-length burstiness, lexical rhythm, scaffolding-phrase frequency, and the punctuation patterns that show up more often in AI writing.",
   },
 ];
 
@@ -52,7 +52,7 @@ export default function HowItWorks() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="running-head hidden sm:inline"
           >
-            Agreement across channels
+            Agreement between checks
           </motion.span>
         </div>
 
@@ -65,7 +65,7 @@ export default function HowItWorks() {
         >
           No single signal
           <br />
-          <span className="italic text-ink/70">is decisive.</span>
+          <span className="italic text-ink/70">decides it.</span>
         </motion.h2>
 
         <motion.p
@@ -75,9 +75,11 @@ export default function HowItWorks() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="body mt-8 md:mt-10 max-w-[56ch]"
         >
-          The verdict is the agreement across independent channels. A learned
-          classifier reads the piece as a whole, and targeted forensic
-          checks look for the artefacts each medium tends to leave behind.
+          A verdict is the agreement between independent checks. One
+          classifier reads the thing as a whole. Smaller forensic passes
+          look for the specific fingerprints each medium tends to leave
+          behind. If they line up, we say so. If they don&rsquo;t, we say
+          that too.
         </motion.p>
 
         <div className="mt-14 md:mt-20 grid md:grid-cols-2 gap-x-16 md:gap-x-20 gap-y-14">

@@ -16,7 +16,7 @@ async function authHeaders(): Promise<Record<string, string>> {
       return { Authorization: `Bearer ${session.access_token}` };
     }
   } catch {
-    // No session, no problem — backend allows anonymous scans.
+    // No session, no problem. Backend allows anonymous scans.
   }
   return {};
 }
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(data, { status: res.status });
     }
 
-    // image, video, or audio — forward multipart
+    // image, video, or audio: forward multipart
     const form = await req.formData();
     const upstream = new FormData();
     const file = form.get("file");

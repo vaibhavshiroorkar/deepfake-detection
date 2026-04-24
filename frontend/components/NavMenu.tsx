@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown, LogOut, Menu, X } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabase/client";
@@ -10,15 +10,27 @@ import { createClient } from "@/lib/supabase/client";
 const LINKS = [
   { href: "/detect", label: "Detect" },
   { href: "/compare", label: "Compare" },
+  { href: "/method", label: "Method" },
   { href: "/calibration", label: "Calibration" },
-  { href: "/#how", label: "Method" },
 ];
 
-export default function NavMenu({ email }: { email: string | null }) {
+export default function NavMenu() {
   const pathname = usePathname();
   const router = useRouter();
+  const [email, setEmail] = useState<string | null>(null);
   const [userOpen, setUserOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data }) => {
+      setEmail(data.session?.user?.email ?? null);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_, session) => {
+      setEmail(session?.user?.email ?? null);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   async function logout() {
     const supabase = createClient();
@@ -32,18 +44,19 @@ export default function NavMenu({ email }: { email: string | null }) {
     <>
       <nav className="hidden md:flex items-center gap-8 text-[0.95rem]">
         {LINKS.map((l) => {
-          const active = pathname === l.href || (l.href === "/#how" && pathname === "/");
+          const active = pathname === l.href;
           return (
             <Link
               key={l.href}
               href={l.href}
+              prefetch
               className={clsx(
                 "relative transition-colors",
                 active ? "text-ink" : "text-smoke hover:text-ink",
               )}
             >
               {l.label}
-              {active && l.href !== "/#how" && (
+              {active && (
                 <span className="absolute -bottom-1.5 left-0 right-0 h-px bg-ember" />
               )}
             </Link>
@@ -111,6 +124,7 @@ export default function NavMenu({ email }: { email: string | null }) {
               <Link
                 key={l.href}
                 href={l.href}
+                prefetch
                 onClick={() => setMobileOpen(false)}
                 className="font-display text-xl"
               >

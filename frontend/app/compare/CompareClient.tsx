@@ -38,8 +38,9 @@ export default function ComparePage() {
       <section className="mx-auto max-w-6xl px-6 py-12">
         <h1 className="font-display text-3xl">Compare</h1>
         <p className="mt-2 text-sm text-smoke max-w-prose">
-          Place a suspect image next to a known-real reference. The same forensic
-          signals run on both. Divergence is what to look for.
+          Put an image you aren&rsquo;t sure about next to one you trust.
+          Same checks run on both. Where the scores diverge is where the
+          story is.
         </p>
 
         <div className="mt-8 grid md:grid-cols-2 gap-6">

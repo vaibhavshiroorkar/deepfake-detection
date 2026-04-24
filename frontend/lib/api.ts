@@ -56,7 +56,7 @@ export type TextResult = BaseResult & {
 
 export type DetectionResult = ImageResult | VideoResult | AudioResult | TextResult;
 
-// Public backend URL — when set, the browser calls the detection service
+// Public backend URL. When set, the browser calls the detection service
 // directly, bypassing Vercel's serverless function (which would otherwise
 // time out during HF Spaces cold-starts).
 const BACKEND = (process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(/\/+$/, "");
@@ -76,7 +76,7 @@ async function authHeaders(): Promise<Record<string, string>> {
       return { Authorization: `Bearer ${session.access_token}` };
     }
   } catch {
-    // No session — backend allows anonymous scans.
+    // No session. Backend allows anonymous scans.
   }
   return {};
 }
@@ -87,7 +87,7 @@ async function parseOrThrow(res: Response): Promise<unknown> {
   try {
     parsed = raw ? JSON.parse(raw) : null;
   } catch {
-    // Non-JSON response — usually an HTML error page (gateway timeout,
+    // Non-JSON response. Usually an HTML error page (gateway timeout,
     // size-limit rejection at the proxy, CORS block, etc). Surface
     // something readable based on status.
     if (res.status === 413) {

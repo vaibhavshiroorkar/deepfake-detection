@@ -14,15 +14,16 @@ export default function DetectPage() {
       <section className="section-screen">
         <div className="page-frame flex-1 flex flex-col pt-16 pb-10">
           <div className="flex items-baseline justify-between mb-8">
-            <span className="running-head">Workspace · file a piece of evidence</span>
-            <span className="running-head hidden sm:inline">Live inference</span>
+            <span className="running-head">Workspace · drop something in</span>
+            <span className="running-head hidden sm:inline">Live check</span>
           </div>
           <h1 className="display-lg max-w-[22ch]">
-            Run an <span className="italic text-ember">examination</span>.
+            Let&rsquo;s have a <span className="italic text-ember">look</span>.
           </h1>
           <p className="body-lead mt-8 max-w-[54ch] text-smoke">
-            Pick a modality. Drop the file or paste the text. The verdict
-            appears below, with every contributing signal shown.
+            Pick the kind of thing you&rsquo;re checking. Drop the file or
+            paste the text. The answer shows up below with every signal
+            that went into it.
           </p>
           <div className="mt-12 md:mt-14 flex-1">
             <DetectorConsole />

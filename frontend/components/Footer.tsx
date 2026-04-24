@@ -22,7 +22,7 @@ export default function Footer() {
             <Link href="/compare" className="text-smoke hover:text-ink">Compare</Link>
             <Link href="/calibration" className="text-smoke hover:text-ink">Calibration</Link>
             <Link href="/history" className="text-smoke hover:text-ink">History</Link>
-            <Link href="/#method" className="text-smoke hover:text-ink">Method</Link>
+            <Link href="/method" className="text-smoke hover:text-ink">Method</Link>
             <Link href="/keys" className="text-smoke hover:text-ink">API keys</Link>
           </nav>
         </div>

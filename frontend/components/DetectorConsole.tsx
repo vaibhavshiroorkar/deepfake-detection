@@ -25,8 +25,8 @@ export default function DetectorConsole() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Wake the backend the moment the workspace opens — the free-tier HF
-  // Space can take 30–90s to cold-start, so we start the engine early.
+  // Wake the backend the moment the workspace opens. The free-tier HF
+  // Space can take 30 to 90s to cold-start, so we start the engine early.
   useEffect(() => {
     warmBackend();
   }, []);

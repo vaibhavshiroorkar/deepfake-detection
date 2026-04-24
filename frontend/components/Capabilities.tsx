@@ -10,7 +10,7 @@ const ITEMS = [
     label: "Image",
     formats: "JPEG · PNG · WEBP",
     note:
-      "Two pretrained classifiers vote on synthesis. MTCNN crops faces and re-runs them. Camera-physics signals and EXIF act as supporting evidence.",
+      "Two classifiers vote on whether the image was generated. If there are faces, we crop each one and run the same check. Camera physics and EXIF back things up when they can.",
   },
   {
     n: "02",
@@ -18,7 +18,7 @@ const ITEMS = [
     label: "Video",
     formats: "MP4 · WebM · MOV",
     note:
-      "Sampled frames run through the image pipeline. A temporal-flicker check looks for the per-frame wobble face-generators leave behind.",
+      "We sample frames along the timeline and run each one through the image pipeline. A separate pass watches for the frame-to-frame wobble face generators tend to leave behind.",
   },
   {
     n: "03",
@@ -26,7 +26,7 @@ const ITEMS = [
     label: "Audio",
     formats: "WAV · MP3 · FLAC · OGG",
     note:
-      "A wav2vec2 classifier pairs with Whisper encoder features. Classical pitch, silence-floor, and energy-rhythm signals corroborate.",
+      "A wav2vec2 classifier handles the main call. Whisper features give a second read. Pitch, silence, and energy patterns flag what TTS and voice clones flatten.",
   },
   {
     n: "04",
@@ -34,7 +34,7 @@ const ITEMS = [
     label: "Text",
     formats: "any UTF-8 paragraph",
     note:
-      "RoBERTa discriminator and GPT-2 perplexity together. Burstiness, lexical rhythm, and LLM tics provide corroborating reads.",
+      "RoBERTa says whether it reads machine-written. GPT-2 measures how surprising the language is. Burstiness, rhythm, and LLM word tics round it out.",
   },
 ];
 
@@ -61,7 +61,7 @@ export default function Capabilities() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="running-head hidden sm:inline"
           >
-            Four in, one out
+            Same answer shape, four inputs
           </motion.span>
         </div>
 
@@ -72,9 +72,9 @@ export default function Capabilities() {
           transition={{ duration: 0.7, ease: EASE }}
           className="display-xl max-w-[16ch]"
         >
-          Four modalities,
+          Four kinds of input.
           <br />
-          <span className="italic text-ink/70">one verdict format.</span>
+          <span className="italic text-ink/70">One kind of answer.</span>
         </motion.h2>
 
         <motion.p
@@ -84,9 +84,9 @@ export default function Capabilities() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="body mt-8 md:mt-10 max-w-[52ch]"
         >
-          Drop an image, a video, a voice note, or a paragraph. The output
-          schema is the same: a suspicion score, a plain-language verdict,
-          and every signal that contributed to it.
+          Upload an image, a video, a voice clip, or paste some text. You
+          always get back the same thing: a score, a plain verdict, and the
+          list of signals behind it.
         </motion.p>
 
         <div className="mt-14 md:mt-20 grid grid-cols-1 md:grid-cols-2 gap-px bg-rule border-y border-rule">

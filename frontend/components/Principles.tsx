@@ -7,19 +7,19 @@ const PRINCIPLES = [
     n: "i.",
     head: "Show the working",
     body:
-      "Every verdict comes with the underlying signals, their individual scores, and a one-line explanation of what each one measured. Nothing is taken on faith.",
+      "Every answer comes with the signals that produced it, their individual scores, and a one-line note on what each one actually checked. You don’t have to trust the result. You can audit it.",
   },
   {
     n: "ii.",
     head: "Prefer learned over guessed",
     body:
-      "Where a properly trained classifier exists, we use it. Where it doesn't, we fall back to forensic heuristics, and label them as such with low weight in the final verdict.",
+      "Trained classifiers do the heavy lifting. Hand-written heuristics fill the gaps where no good classifier exists, but they get labelled as heuristics and carry less weight in the final call.",
   },
   {
     n: "iii.",
     head: "Hedge when uncertain",
     body:
-      "The verdict has four levels: likely authentic, inconclusive, likely synthetic, highly likely synthetic. The middle two are the honest answers most of the time.",
+      "Four possible verdicts: likely real, inconclusive, likely synthetic, highly likely synthetic. The middle two are the right answer more often than anyone wants to admit, and saying so beats pretending.",
   },
 ];
 
@@ -59,7 +59,7 @@ export default function Principles() {
         >
           A detector with
           <br />
-          <span className="italic text-ink/70">a point of view.</span>
+          <span className="italic text-ink/70">an opinion.</span>
         </motion.h2>
 
         <div className="mt-16 md:mt-24 grid md:grid-cols-3 gap-14 md:gap-12">

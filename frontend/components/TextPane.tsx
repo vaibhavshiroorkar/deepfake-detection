@@ -32,7 +32,7 @@ export default function TextPane({
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Paste a paragraph. The longer, the steadier the reading. 40 words minimum."
+        placeholder="Paste a paragraph. Longer is better. At least 40 words."
         rows={10}
         className="w-full resize-y bg-bone/30 border border-rule p-5 text-[1.05rem] leading-[1.7] text-ink placeholder:text-mute focus:outline-none focus:border-ink transition-colors"
       />
@@ -51,11 +51,11 @@ export default function TextPane({
           {loading ? (
             <>
               <span className="size-1.5 rounded-full bg-paper pulse-soft" />
-              Reading, examining signals
+              Reading through it
             </>
           ) : (
             <>
-              Examine
+              Check it
               <span aria-hidden>→</span>
             </>
           )}

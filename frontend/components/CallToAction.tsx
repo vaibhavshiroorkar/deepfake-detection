@@ -39,8 +39,9 @@ export default function CallToAction() {
           transition={{ duration: 0.7, delay: 0.2 }}
           className="body-lead mt-12 max-w-[44ch] text-paper/80"
         >
-          The workspace is one click away. No account required to try it.
-          Uploads are processed in memory. Nothing is retained.
+          No account needed to try it. Uploads live in memory for as long
+          as the check takes, then get thrown out. There&rsquo;s a workspace
+          waiting one click away.
         </motion.p>
 
         <motion.div
@@ -61,12 +62,12 @@ export default function CallToAction() {
             href="/calibration"
             className="text-paper/70 hover:text-paper transition-colors border-b border-paper/30 hover:border-paper pb-0.5"
           >
-            Or read how it&rsquo;s calibrated
+            Or see how it&rsquo;s calibrated
           </Link>
         </motion.div>
       </div>
 
-      {/* Decorative grid of tick marks — like a ruler on evidence film */}
+      {/* Decorative tick marks, like a ruler on evidence film */}
       <div
         aria-hidden
         className="absolute inset-y-0 right-0 w-24 hidden md:flex flex-col justify-between py-24 opacity-30"

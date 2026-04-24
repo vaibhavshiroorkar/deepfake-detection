@@ -126,7 +126,7 @@ export default function Uploader({ kind, loading, onSubmit }: Props) {
             <p className="body-sm text-smoke">
               or{" "}
               <span className="underline decoration-ember decoration-2 underline-offset-[6px] text-ink">
-                browse your files
+                pick one from your computer
               </span>
             </p>
             <p className="font-mono text-xs tracking-widest text-mute uppercase mt-2">
@@ -170,11 +170,11 @@ export default function Uploader({ kind, loading, onSubmit }: Props) {
                   {loading ? (
                     <>
                       <span className="size-1.5 rounded-full bg-paper pulse-soft" />
-                      Examining. This may take a moment on cold start.
+                      Working on it. First check after a while can be slow.
                     </>
                   ) : (
                     <>
-                      Examine
+                      Check it
                       <span aria-hidden>→</span>
                     </>
                   )}
