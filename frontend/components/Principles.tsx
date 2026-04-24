@@ -59,7 +59,7 @@ export default function Principles() {
         >
           A detector with
           <br />
-          <span className="italic text-smoke">a point of view.</span>
+          <span className="italic text-ink/70">a point of view.</span>
         </motion.h2>
 
         <div className="mt-16 md:mt-24 grid md:grid-cols-3 gap-14 md:gap-12">
