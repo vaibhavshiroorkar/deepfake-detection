@@ -165,7 +165,9 @@ function SignalRow({ signal, index }: { signal: Signal; index: number }) {
       transition={{ delay: 0.05 + index * 0.06, duration: 0.35 }}
     >
       <div className="flex items-baseline justify-between gap-4">
-        <span className="text-sm text-ink font-medium">{signal.name}</span>
+        <span className="text-[0.95rem] text-ink font-semibold tracking-tight">
+          {signal.name}
+        </span>
         <span className="text-xs text-mute tabular-nums">{width}%</span>
       </div>
       <div className="mt-1.5 h-[2px] bg-rule relative overflow-hidden">
@@ -182,11 +184,11 @@ function SignalRow({ signal, index }: { signal: Signal; index: number }) {
           )}
         />
       </div>
-      <p className="mt-2.5 text-[0.95rem] leading-[1.55] text-ink">
+      <p className="mt-2 text-[0.8125rem] leading-[1.55] text-smoke">
         {summary}
       </p>
       {technical && (
-        <p className="mt-1.5 font-mono text-[11px] leading-[1.55] text-mute">
+        <p className="mt-1 font-mono text-[10.5px] leading-[1.5] text-mute">
           {technical}
         </p>
       )}
