@@ -1,15 +1,14 @@
 "use client";
 
-import { FileImage, FileVideo, FileAudio, AlignLeft } from "lucide-react";
+import { FileImage, FileVideo, FileAudio } from "lucide-react";
 
-type Kind = "image" | "video" | "audio" | "text";
+type Kind = "image" | "video" | "audio";
 
 type Props = {
   kind: Kind;
   previewUrl: string | null;
   fileName?: string | null;
   fileSize?: number | null;
-  textSample?: string;
 };
 
 function formatSize(bytes: number | null | undefined) {
@@ -23,11 +22,9 @@ export default function PreviewPanel({
   previewUrl,
   fileName,
   fileSize,
-  textSample,
 }: Props) {
   const prettySize = formatSize(fileSize);
   const hasFile = Boolean(previewUrl);
-  const hasText = kind === "text" && Boolean(textSample && textSample.trim());
 
   return (
     <aside className="border border-ink bg-paper sticky top-[5.5rem] self-start">
@@ -54,12 +51,6 @@ export default function PreviewPanel({
             <FileAudio className="size-10 text-ink" strokeWidth={1.2} />
             <audio src={previewUrl} controls className="w-full h-10" />
           </div>
-        ) : hasText ? (
-          <div className="w-full p-6">
-            <p className="font-display italic text-xl leading-snug text-ink/80 line-clamp-[10]">
-              &ldquo;{textSample}&rdquo;
-            </p>
-          </div>
         ) : (
           <EmptyState kind={kind} />
         )}
@@ -77,10 +68,6 @@ export default function PreviewPanel({
               </span>
             )}
           </>
-        ) : hasText ? (
-          <span className="font-mono text-xs text-mute">
-            {textSample!.trim().split(/\s+/).length} words
-          </span>
         ) : (
           <span className="font-mono text-xs text-mute">
             Nothing selected yet
@@ -93,19 +80,12 @@ export default function PreviewPanel({
 
 function EmptyState({ kind }: { kind: Kind }) {
   const Icon =
-    kind === "image"
-      ? FileImage
-      : kind === "video"
-      ? FileVideo
-      : kind === "audio"
-      ? FileAudio
-      : AlignLeft;
+    kind === "image" ? FileImage : kind === "video" ? FileVideo : FileAudio;
 
   const hint: Record<Kind, string> = {
     image: "Your image will show up here.",
     video: "Your video will play here.",
     audio: "Your clip will show up here.",
-    text: "Your writing will appear here as you type.",
   };
 
   return (

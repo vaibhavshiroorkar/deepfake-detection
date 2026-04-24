@@ -19,26 +19,19 @@ const SAMPLES: { label: string; body: string }[] = [
 export default function TextPane({
   loading,
   onSubmit,
-  onChange,
 }: {
   loading: boolean;
   onSubmit: (t: string) => void | Promise<void>;
-  onChange?: (text: string) => void;
 }) {
   const [text, setText] = useState("");
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
   const ok = text.trim().length >= 40 && !loading;
 
-  const update = (t: string) => {
-    setText(t);
-    onChange?.(t);
-  };
-
   return (
     <div>
       <textarea
         value={text}
-        onChange={(e) => update(e.target.value)}
+        onChange={(e) => setText(e.target.value)}
         placeholder="Paste a paragraph. Longer is better. At least 40 words."
         rows={10}
         className="w-full resize-y bg-bone/30 border border-rule p-5 text-[1.05rem] leading-[1.7] text-ink placeholder:text-mute focus:outline-none focus:border-ink transition-colors"
@@ -77,7 +70,7 @@ export default function TextPane({
           {SAMPLES.map((s) => (
             <button
               key={s.label}
-              onClick={() => update(s.body)}
+              onClick={() => setText(s.body)}
               className="text-smoke hover:text-ember border-b border-dotted border-mute hover:border-ember pb-0.5 transition-colors"
             >
               {s.label}

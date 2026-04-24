@@ -26,7 +26,6 @@ export default function DetectorConsole() {
   const [fileInfo, setFileInfo] = useState<{ name: string; size: number } | null>(
     null,
   );
-  const [textSample, setTextSample] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,12 +44,16 @@ export default function DetectorConsole() {
     setResult(null);
     setError(null);
     resetMediaPreview();
-    if (next !== "text") setTextSample("");
   }
 
   return (
     <section id="console" className="max-w-7xl">
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_26rem]">
+      <div
+        className={clsx(
+          "grid gap-8",
+          tab !== "text" && "lg:grid-cols-[minmax(0,1fr)_26rem]",
+        )}
+      >
         <div>
           <div className="border border-ink bg-paper shadow-[8px_8px_0_rgba(20,20,19,0.08)]">
             <div className="flex border-b border-ink">
@@ -92,7 +95,6 @@ export default function DetectorConsole() {
                   {tab === "text" ? (
                     <TextPane
                       loading={loading}
-                      onChange={setTextSample}
                       onSubmit={async (text) => {
                         setLoading(true);
                         setError(null);
@@ -186,13 +188,14 @@ export default function DetectorConsole() {
           </AnimatePresence>
         </div>
 
-        <PreviewPanel
-          kind={tab}
-          previewUrl={previewUrl}
-          fileName={fileInfo?.name ?? null}
-          fileSize={fileInfo?.size ?? null}
-          textSample={textSample}
-        />
+        {tab !== "text" && (
+          <PreviewPanel
+            kind={tab}
+            previewUrl={previewUrl}
+            fileName={fileInfo?.name ?? null}
+            fileSize={fileInfo?.size ?? null}
+          />
+        )}
       </div>
     </section>
   );
