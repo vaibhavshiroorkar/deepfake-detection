@@ -20,17 +20,11 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter
-from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
 
-
-@dataclass
-class Signal:
-    name: str
-    score: float
-    detail: str
+from .signal import Signal
 
 
 _SENT_SPLIT = re.compile(r"(?<=[\.\!\?])\s+(?=[A-Z\"'\(])")

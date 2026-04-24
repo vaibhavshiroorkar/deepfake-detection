@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import io
 import math
-from dataclasses import dataclass
 from typing import Any
 
 import cv2
@@ -28,6 +27,7 @@ from PIL import Image, ImageChops, ExifTags
 
 from . import c2pa as _c2pa
 from .heatmap import ela_heatmap, noise_heatmap
+from .signal import Signal
 
 
 # ---------------------------------------------------------------------------
@@ -58,13 +58,6 @@ def _agreement_adjust(anchor_p: float, secondary_p: float) -> float:
         return secondary_p
     pull = min(1.0, (gap - 0.2) / 0.4)
     return secondary_p * (1 - pull) + 0.5 * pull
-
-
-@dataclass
-class Signal:
-    name: str
-    score: float  # 0..1, higher = more suspicious
-    detail: str
 
 
 # ---------------------------------------------------------------------------

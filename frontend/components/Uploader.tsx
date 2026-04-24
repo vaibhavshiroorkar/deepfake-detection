@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { Upload, FileImage, FileVideo, FileAudio, X } from "lucide-react";
 import clsx from "clsx";
+import Toast from "./Toast";
 
 type Kind = "image" | "video" | "audio";
 
@@ -55,6 +56,7 @@ export default function Uploader({ kind, loading, onSubmit, onPick }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
   const pretty = useMemo(() => {
     if (!file) return null;
@@ -72,15 +74,18 @@ export default function Uploader({ kind, loading, onSubmit, onPick }: Props) {
   const pick = (f: File) => {
     const allowed = ACCEPT[kind].split(",");
     if (!allowed.some((a) => f.type === a || f.type.startsWith(a.split("/")[0] + "/"))) {
-      alert(`That file type isn't supported for ${kind}.`);
+      setToast(`That file type isn't supported for ${kind}.`);
       return;
     }
     if (f.size > MAX_BYTES[kind]) {
       const mb = (MAX_BYTES[kind] / (1024 * 1024)).toFixed(0);
       const actual = (f.size / (1024 * 1024)).toFixed(1);
-      alert(`That ${kind} is ${actual} MB. Limit is ${mb} MB. Try a smaller or shorter file.`);
+      setToast(
+        `That ${kind} is ${actual} MB. Limit is ${mb} MB. Try a smaller or shorter file.`,
+      );
       return;
     }
+    setToast(null);
     setFile(f);
     if (preview) URL.revokeObjectURL(preview);
     const url = URL.createObjectURL(f);
@@ -99,6 +104,7 @@ export default function Uploader({ kind, loading, onSubmit, onPick }: Props) {
 
   return (
     <div>
+      <Toast message={toast} onDismiss={() => setToast(null)} />
       {!file ? (
         <label
           onDragOver={(e) => {

@@ -29,6 +29,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 COPY --chown=user:user . .
 
+# Pre-download all model weights into the image layer so HF Spaces
+# cold-starts do not pay a 60 to 80 second download cost each time.
+RUN python scripts/prefetch_models.py || true
+
 EXPOSE 7860
 
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-7860}"]

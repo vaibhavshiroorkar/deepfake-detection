@@ -9,7 +9,7 @@ pinned: false
 license: mit
 ---
 
-# Veritas — Deepfake Detection API
+# Veritas Deepfake Detection API
 
 FastAPI backend for image, video, audio, and text deepfake detection.
 Served on Hugging Face Spaces from the `backend/` directory of the
@@ -17,21 +17,33 @@ Served on Hugging Face Spaces from the `backend/` directory of the
 
 ## Endpoints
 
-- `GET  /health` — service liveness
-- `POST /api/detect/image` — multipart `file`
-- `POST /api/detect/video` — multipart `file`
-- `POST /api/detect/audio` — multipart `file`
-- `POST /api/detect/text`  — JSON `{ "text": "..." }`
+- `GET  /health` service liveness
+- `POST /api/detect/image` multipart `file`
+- `POST /api/detect/video` multipart `file`
+- `POST /api/detect/audio` multipart `file`
+- `POST /api/detect/text`  JSON `{ "text": "..." }`
+
+All detection endpoints are rate-limited. Anonymous callers get 10 per
+minute per IP. Authenticated callers get 30 per minute per user id.
+Override with `VERITAS_ANON_RATE` and `VERITAS_AUTH_RATE`.
 
 ## Required Space secrets
 
-Set these in Space → Settings → Variables and secrets:
+Set these in Space, Settings, Variables and secrets.
 
-- `ALLOWED_ORIGINS` — comma-separated list of your Vercel URL(s)
+**Security:**
+- `ALLOWED_ORIGINS` comma-separated Vercel URL(s). **Do not leave as
+  the default wildcard in production.**
+
+**Auth and persistence (all optional, scans work anonymously):**
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `SUPABASE_JWT_SECRET`
-- `SUPABASE_JWT_PUBLIC_KEY` (optional, only for ES256)
+- `SUPABASE_JWT_PUBLIC_KEY` (only for ES256)
+
+**Rate limit overrides (optional):**
+- `VERITAS_ANON_RATE` default `10/minute`
+- `VERITAS_AUTH_RATE` default `30/minute`
 
 ## Model configuration
 
@@ -44,3 +56,7 @@ The primary image classifier is the pretrained Swin-v2
 (`Organika/sdxl-detector`) unless `VERITAS_DINOV2_WEIGHTS` points at a
 trained DINOv2 head. Without that file, DINOv2 is skipped entirely so
 the model load stays well under the 16 GB Space limit.
+
+Model weights are pre-fetched at image-build time via
+`scripts/prefetch_models.py`, so cold-start only pays the load cost,
+not the download cost.

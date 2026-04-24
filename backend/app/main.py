@@ -1,31 +1,74 @@
 """FastAPI entrypoint for the deepfake detection service."""
 from __future__ import annotations
 
+import logging
 import os
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+from starlette.responses import JSONResponse
 
 from .auth import Identity, resolve_identity
 from .db import insert_scan, is_configured as db_is_configured
 from .detectors import analyze_audio, analyze_image, analyze_text, analyze_video
+
+log = logging.getLogger("veritas.main")
 
 MAX_IMAGE_BYTES = 20 * 1024 * 1024   # 20 MB
 MAX_VIDEO_BYTES = 50 * 1024 * 1024   # 50 MB (HF Spaces gateway caps larger uploads)
 MAX_AUDIO_BYTES = 25 * 1024 * 1024   # 25 MB
 MAX_TEXT_CHARS = 50_000
 
-# Comma-separated list, or "*" for any (default during dev).
-_ALLOWED_ORIGINS = [
-    o.strip() for o in os.getenv("ALLOWED_ORIGINS", "*").split(",") if o.strip()
-]
+# Rate limits. Anonymous users share an IP-based bucket. Signed-in users
+# get a separate higher-ceiling bucket keyed on user id.
+ANON_LIMIT = os.getenv("VERITAS_ANON_RATE", "10/minute")
+AUTH_LIMIT = os.getenv("VERITAS_AUTH_RATE", "30/minute")
+
+# Comma-separated list of allowed origins, or "*". Explicitly defaulting
+# to wildcard is convenient in dev but a risk in production, so we log a
+# loud warning when the wildcard is in use.
+_RAW_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*")
+_ALLOWED_ORIGINS = [o.strip() for o in _RAW_ORIGINS.split(",") if o.strip()]
+if _ALLOWED_ORIGINS == ["*"]:
+    log.warning(
+        "CORS is wide open (ALLOWED_ORIGINS=*). Set ALLOWED_ORIGINS to the "
+        "production frontend URL(s) in Space secrets to lock this down."
+    )
+
+
+def _rate_limit_key(request: Request) -> str:
+    ident = getattr(request.state, "identity", None)
+    if ident and getattr(ident, "user_id", None):
+        return f"user:{ident.user_id}"
+    return get_remote_address(request)
+
+
+limiter = Limiter(key_func=_rate_limit_key)
+
 
 app = FastAPI(
-    title="Veritas — Deepfake Detection",
+    title="Veritas Deepfake Detection",
     description="Forensic signal extraction for images, video, audio, and text.",
     version="1.0.0",
 )
+app.state.limiter = limiter
+
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={
+            "detail": (
+                "Too many requests. Please wait a moment before trying again."
+            ),
+        },
+    )
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -56,7 +99,7 @@ async def _persist(result: dict, ident: Identity, kind: str, filename: str | Non
         "verdict": str(result.get("verdict", "")),
         "confidence": float(result.get("confidence", 0.0)),
         "signals": result.get("signals", []),
-        # Strip heatmaps before persisting — they are heavy and reproducible.
+        # Strip heatmaps before persisting. They are heavy and reproducible.
         "result": {k: v for k, v in result.items() if k != "heatmaps"},
     }
     scan_id = await insert_scan(row)
@@ -65,11 +108,19 @@ async def _persist(result: dict, ident: Identity, kind: str, filename: str | Non
     return result
 
 
+def _detect_limit(request: Request) -> str:
+    ident = getattr(request.state, "identity", None)
+    return AUTH_LIMIT if (ident and getattr(ident, "user_id", None)) else ANON_LIMIT
+
+
 @app.post("/api/detect/image")
+@limiter.limit(_detect_limit)
 async def detect_image(
+    request: Request,
     file: UploadFile = File(...),
     ident: Identity = Depends(resolve_identity),
 ):
+    request.state.identity = ident
     data = await file.read()
     if not data:
         raise HTTPException(400, "Empty upload.")
@@ -83,10 +134,13 @@ async def detect_image(
 
 
 @app.post("/api/detect/video")
+@limiter.limit(_detect_limit)
 async def detect_video(
+    request: Request,
     file: UploadFile = File(...),
     ident: Identity = Depends(resolve_identity),
 ):
+    request.state.identity = ident
     data = await file.read()
     if not data:
         raise HTTPException(400, "Empty upload.")
@@ -100,10 +154,13 @@ async def detect_video(
 
 
 @app.post("/api/detect/audio")
+@limiter.limit(_detect_limit)
 async def detect_audio(
+    request: Request,
     file: UploadFile = File(...),
     ident: Identity = Depends(resolve_identity),
 ):
+    request.state.identity = ident
     data = await file.read()
     if not data:
         raise HTTPException(400, "Empty upload.")
@@ -117,10 +174,13 @@ async def detect_audio(
 
 
 @app.post("/api/detect/text")
+@limiter.limit(_detect_limit)
 async def detect_text(
+    request: Request,
     payload: TextPayload,
     ident: Identity = Depends(resolve_identity),
 ):
+    request.state.identity = ident
     try:
         result = analyze_text(payload.text)
     except Exception as e:

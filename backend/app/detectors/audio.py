@@ -17,19 +17,13 @@ Supporting signals (kept from Phase 1):
 from __future__ import annotations
 
 import io
-from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
 import soundfile as sf
 from scipy import signal as sp_signal
 
-
-@dataclass
-class Signal:
-    name: str
-    score: float
-    detail: str
+from .signal import Signal
 
 
 def _load(data: bytes) -> tuple[np.ndarray, int]:

@@ -8,6 +8,7 @@ import Uploader from "./Uploader";
 import TextPane from "./TextPane";
 import ResultPanel from "./ResultPanel";
 import PreviewPanel from "./PreviewPanel";
+import ErrorBoundary from "./ErrorBoundary";
 import { warmBackend, type DetectionResult } from "@/lib/api";
 
 type Tab = "text" | "image" | "audio" | "video";
@@ -177,7 +178,9 @@ export default function DetectorConsole() {
                 transition={{ duration: 0.4 }}
                 className="mt-6"
               >
-                <ResultPanel result={result} previewUrl={previewUrl} />
+                <ErrorBoundary>
+                  <ResultPanel result={result} previewUrl={previewUrl} />
+                </ErrorBoundary>
               </motion.div>
             )}
           </AnimatePresence>
