@@ -48,12 +48,7 @@ export default function DetectorConsole() {
 
   return (
     <section id="console" className="max-w-7xl">
-      <div
-        className={clsx(
-          "grid gap-8",
-          tab !== "text" && "lg:grid-cols-[minmax(0,1fr)_26rem]",
-        )}
-      >
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_26rem]">
         <div>
           <div className="border border-ink bg-paper shadow-[8px_8px_0_rgba(20,20,19,0.08)]">
             <div className="flex border-b border-ink">
