@@ -7,80 +7,98 @@ const ITEMS = [
     n: "01",
     title: "Image",
     body:
-      "A pretrained Swin-v2 classifier returns P(AI). MTCNN crops faces and re-runs the same head per face. Camera-physics signals (focus uniformity, chromatic aberration, sensor noise, ELA) act as supporting evidence, weighted by whether EXIF identifies a real camera.",
+      "Two pretrained classifiers vote on synthesis — a Swin-v2 SDXL detector and an ensemble head trained on a different generative mix. MTCNN crops faces and re-runs the same classifiers per face. Camera-physics signals — focus uniformity, chromatic aberration, sensor noise, ELA — act as supporting evidence, weighted by whether EXIF identifies a real camera.",
   },
   {
     n: "02",
     title: "Video",
     body:
-      "Frames are sampled along the timeline, each one passes through the image pipeline, and a temporal-flicker check looks for the per-frame wobble that face-generators leave behind.",
+      "Frames sampled along the timeline each pass through the image pipeline. A temporal-flicker check looks for the per-frame wobble that face-generators leave behind. The verdict folds frame-level scores into a timeline chart — spikes get weighted more than a uniformly-high average.",
   },
   {
     n: "03",
     title: "Audio",
     body:
-      "The Whisper-base encoder produces a learned spectral profile. Adjacent-frame cosine and per-dimension variance are paired with classical pitch, silence-floor, and energy-rhythm heuristics.",
+      "A wav2vec2 binary classifier and a Whisper encoder — the latter gives learned spectral features read by an adjacent-frame cosine heuristic. Classical signals: pitch variability, silence-floor cleanliness, energy-envelope rhythm. TTS and voice clones tend to flatten all three at once.",
   },
   {
     n: "04",
     title: "Text",
     body:
-      "Sentence burstiness, lexical rhythm, phrase tics, and punctuation patterns over-represented in AI writing.",
+      "RoBERTa binary discriminator plus GPT-2 perplexity scoring — one a dedicated detector, the other measuring language-model surprise. Supporting: sentence-length burstiness, lexical rhythm, phrase-tic hit rate, punctuation signatures over-represented in AI writing.",
   },
 ];
 
+const EASE = [0.2, 0.8, 0.2, 1] as const;
+
 export default function HowItWorks() {
   return (
-    <section id="how" className="border-t border-rule bg-paper">
-      <div className="mx-auto max-w-5xl px-6 py-24 md:py-32">
+    <section id="method" className="section-screen border-t border-rule bg-paper">
+      <div className="page-frame flex-1 flex flex-col justify-center py-24">
+        <div className="flex items-baseline justify-between mb-10">
+          <motion.span
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-120px" }}
+            transition={{ duration: 0.5 }}
+            className="running-head"
+          >
+            Plate 003 — Method
+          </motion.span>
+          <motion.span
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true, margin: "-120px" }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="running-head hidden sm:inline"
+          >
+            Agreement across channels
+          </motion.span>
+        </div>
+
+        <motion.h2
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-120px" }}
+          transition={{ duration: 0.7, ease: EASE }}
+          className="display-xl max-w-[18ch]"
+        >
+          No single signal
+          <br />
+          <span className="italic text-smoke">is decisive.</span>
+        </motion.h2>
+
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.5 }}
-          className="text-xs uppercase tracking-[0.22em] text-mute"
-        >
-          The method
-        </motion.p>
-        <motion.h2
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.6, delay: 0.05 }}
-          className="font-display tracking-tight mt-3"
-          style={{ fontSize: "clamp(1.8rem, 3.6vw, 2.6rem)", lineHeight: 1.1 }}
-        >
-          No single signal is decisive.
-        </motion.h2>
-        <motion.p
-          initial={{ opacity: 0, y: 6 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="mt-4 max-w-xl text-sm text-smoke leading-[1.7]"
+          viewport={{ once: true, margin: "-120px" }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="body mt-8 md:mt-10 max-w-[56ch]"
         >
           The verdict is the agreement across independent channels — a learned
-          classifier reading the picture as a whole, plus targeted forensic
+          classifier reading the piece as a whole, plus targeted forensic
           checks for the artefacts each medium tends to leave behind.
         </motion.p>
 
-        <div className="mt-16 grid md:grid-cols-2 gap-12 md:gap-x-16 md:gap-y-14">
+        <div className="mt-14 md:mt-20 grid md:grid-cols-2 gap-x-16 md:gap-x-20 gap-y-14">
           {ITEMS.map((item, i) => (
-            <motion.div
+            <motion.article
               key={item.title}
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.5, delay: i * 0.06 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.6, delay: i * 0.08, ease: EASE }}
+              className="relative"
             >
-              <div className="text-xs text-ember tracking-[0.2em]">{item.n}</div>
-              <h3 className="font-display text-2xl tracking-tight mt-2">
-                {item.title}
-              </h3>
-              <p className="mt-3 text-sm text-smoke leading-[1.75]">
-                {item.body}
-              </p>
-            </motion.div>
+              <div className="flex items-center gap-4 mb-4">
+                <span className="font-mono text-sm text-ember tracking-[0.2em]">
+                  {item.n}
+                </span>
+                <span className="h-px bg-rule flex-1" />
+              </div>
+              <h3 className="display-md mb-4">{item.title}</h3>
+              <p className="body-sm text-smoke max-w-[48ch]">{item.body}</p>
+            </motion.article>
           ))}
         </div>
       </div>

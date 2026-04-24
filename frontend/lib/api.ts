@@ -1,3 +1,5 @@
+import { createClient } from "@/lib/supabase/client";
+
 export type Signal = {
   name: string;
   score: number;
@@ -54,52 +56,111 @@ export type TextResult = BaseResult & {
 
 export type DetectionResult = ImageResult | VideoResult | AudioResult | TextResult;
 
-async function readError(res: Response): Promise<string> {
-  const raw = await res.text();
+// Public backend URL — when set, the browser calls the detection service
+// directly, bypassing Vercel's serverless function (which would otherwise
+// time out during HF Spaces cold-starts).
+const BACKEND = (process.env.NEXT_PUBLIC_BACKEND_URL || "").replace(/\/+$/, "");
+
+function detectUrl(kind: "image" | "video" | "audio" | "text"): string {
+  return BACKEND ? `${BACKEND}/api/detect/${kind}` : `/api/detect?kind=${kind}`;
+}
+
+async function authHeaders(): Promise<Record<string, string>> {
+  if (!BACKEND) return {};
   try {
-    const parsed = JSON.parse(raw);
-    if (typeof parsed === "string") return parsed;
-    if (parsed?.detail) {
-      if (typeof parsed.detail === "string") return parsed.detail;
-      return JSON.stringify(parsed.detail);
+    const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      return { Authorization: `Bearer ${session.access_token}` };
     }
-    if (typeof parsed?.error === "string") return parsed.error;
-    return raw || `Request failed (${res.status})`;
   } catch {
-    return raw || `Request failed (${res.status})`;
+    // No session — backend allows anonymous scans.
   }
+  return {};
+}
+
+async function parseOrThrow(res: Response): Promise<unknown> {
+  const raw = await res.text();
+  let parsed: unknown = null;
+  try {
+    parsed = raw ? JSON.parse(raw) : null;
+  } catch {
+    // Non-JSON response — usually an HTML error page (gateway timeout,
+    // CORS block, Cloudflare challenge, etc). Surface something readable.
+    if (!res.ok) {
+      throw new Error(
+        `Detection service returned ${res.status} ${res.statusText}. ` +
+          "The backend may be cold-starting — try again in 30–60 seconds.",
+      );
+    }
+    throw new Error("Detection service returned a non-JSON response.");
+  }
+  if (!res.ok) {
+    const detail =
+      (parsed as { detail?: unknown; error?: unknown })?.detail ??
+      (parsed as { error?: unknown })?.error ??
+      raw;
+    throw new Error(
+      typeof detail === "string" ? detail : `Request failed (${res.status})`,
+    );
+  }
+  if (
+    parsed &&
+    typeof parsed === "object" &&
+    "error" in parsed &&
+    typeof (parsed as { error: unknown }).error === "string"
+  ) {
+    throw new Error((parsed as { error: string }).error);
+  }
+  return parsed;
 }
 
 async function upload(kind: "image" | "video" | "audio", file: File) {
   const fd = new FormData();
   fd.append("file", file);
-  const res = await fetch(`/api/detect?kind=${kind}`, { method: "POST", body: fd });
-  if (!res.ok) throw new Error(await readError(res));
-  const data = await res.json();
-  if (data?.error) throw new Error(data.error);
-  return data;
+  const headers = await authHeaders();
+  const res = await fetch(detectUrl(kind), {
+    method: "POST",
+    body: fd,
+    headers,
+  });
+  return parseOrThrow(res);
 }
 
 export async function detectImage(file: File): Promise<ImageResult> {
-  return upload("image", file);
+  return upload("image", file) as Promise<ImageResult>;
 }
 
 export async function detectVideo(file: File): Promise<VideoResult> {
-  return upload("video", file);
+  return upload("video", file) as Promise<VideoResult>;
 }
 
 export async function detectAudio(file: File): Promise<AudioResult> {
-  return upload("audio", file);
+  return upload("audio", file) as Promise<AudioResult>;
 }
 
 export async function detectText(text: string): Promise<TextResult> {
-  const res = await fetch("/api/detect?kind=text", {
+  const headers = { "Content-Type": "application/json", ...(await authHeaders()) };
+  const res = await fetch(detectUrl("text"), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({ text }),
   });
-  if (!res.ok) throw new Error(await readError(res));
-  return res.json();
+  return parseOrThrow(res) as Promise<TextResult>;
+}
+
+/** Fire-and-forget request to wake up the backend. Call on pages that are
+ *  about to issue a detection so the HF Space container is warm by the
+ *  time the user submits. */
+export function warmBackend(): void {
+  if (!BACKEND) return;
+  try {
+    fetch(`${BACKEND}/health`, { cache: "no-store" }).catch(() => {});
+  } catch {
+    // ignore
+  }
 }
 
 export function verdictTone(suspicion: number) {

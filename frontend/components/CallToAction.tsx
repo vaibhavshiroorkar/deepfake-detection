@@ -2,46 +2,82 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
+
+const EASE = [0.2, 0.8, 0.2, 1] as const;
 
 export default function CallToAction() {
   return (
-    <section className="border-t border-rule">
-      <div className="mx-auto max-w-3xl px-6 py-28 text-center">
-        <motion.h2
-          initial={{ opacity: 0, y: 8 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.6 }}
-          className="font-display tracking-tight"
-          style={{ fontSize: "clamp(2rem, 4vw, 3rem)", lineHeight: 1.1 }}
-        >
-          Ready when you are.
-        </motion.h2>
-        <motion.p
-          initial={{ opacity: 0, y: 6 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.5, delay: 0.05 }}
-          className="mt-5 text-sm text-smoke leading-[1.7]"
-        >
-          The workspace is one click away. No account required to try it.
-        </motion.p>
-        <motion.div
+    <section className="section-screen border-t border-rule bg-ink text-paper overflow-hidden relative">
+      <div className="page-frame flex-1 flex flex-col justify-center py-28 relative z-10">
+        <motion.span
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-          className="mt-10"
+          viewport={{ once: true, margin: "-120px" }}
+          transition={{ duration: 0.5 }}
+          className="running-head text-mute mb-10"
+        >
+          Plate 005 — Invitation
+        </motion.span>
+
+        <motion.h2
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-120px" }}
+          transition={{ duration: 0.9, ease: EASE }}
+          className="display-hero max-w-[22ch]"
+        >
+          Bring the
+          <br />
+          <span className="italic text-ember">questionable</span> thing.
+        </motion.h2>
+
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-120px" }}
+          transition={{ duration: 0.7, delay: 0.2 }}
+          className="body-lead mt-12 max-w-[44ch] text-paper/80"
+        >
+          The workspace is one click away. No account required to try it.
+          Uploads are processed in memory — nothing is retained.
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-120px" }}
+          transition={{ duration: 0.6, delay: 0.35 }}
+          className="mt-16 flex flex-wrap items-center gap-x-10 gap-y-5"
         >
           <Link
             href="/detect"
-            className="group inline-flex items-center gap-2 bg-ink text-white px-7 py-3.5 text-sm tracking-wide hover:bg-ember transition-colors"
+            className="group inline-flex items-center gap-3 bg-ember text-paper px-8 py-4 text-base hover:bg-paper hover:text-ink transition-colors"
           >
             Open the workspace
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+            <ArrowUpRight className="size-5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          </Link>
+          <Link
+            href="/calibration"
+            className="text-paper/70 hover:text-paper transition-colors border-b border-paper/30 hover:border-paper pb-0.5"
+          >
+            Or read how it&rsquo;s calibrated
           </Link>
         </motion.div>
+      </div>
+
+      {/* Decorative grid of tick marks — like a ruler on evidence film */}
+      <div
+        aria-hidden
+        className="absolute inset-y-0 right-0 w-24 hidden md:flex flex-col justify-between py-24 opacity-30"
+      >
+        {Array.from({ length: 24 }).map((_, i) => (
+          <span
+            key={i}
+            className="block h-px bg-paper"
+            style={{ width: i % 5 === 0 ? "2.5rem" : "1.25rem", alignSelf: "flex-end" }}
+          />
+        ))}
       </div>
     </section>
   );

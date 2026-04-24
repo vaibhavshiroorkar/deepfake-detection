@@ -11,20 +11,24 @@ export default function DetectPage() {
   return (
     <main>
       <Masthead />
-      <section className="mx-auto max-w-3xl px-6 pt-12 pb-6">
-        <p className="text-xs uppercase tracking-[0.2em] text-mute">Workspace</p>
-        <h1
-          className="font-display tracking-tight mt-2"
-          style={{ fontSize: "clamp(1.8rem, 3.4vw, 2.6rem)", lineHeight: 1.1 }}
-        >
-          Run an examination
-        </h1>
-        <p className="mt-3 max-w-xl text-sm text-smoke leading-[1.7]">
-          Pick a modality, drop the file or paste the text. The verdict appears
-          below with the underlying signals shown.
-        </p>
+      <section className="section-screen">
+        <div className="page-frame flex-1 flex flex-col pt-16 pb-10">
+          <div className="flex items-baseline justify-between mb-8">
+            <span className="running-head">Workspace — file a piece of evidence</span>
+            <span className="running-head hidden sm:inline">Live inference</span>
+          </div>
+          <h1 className="display-lg max-w-[22ch]">
+            Run an <span className="italic text-ember">examination</span>.
+          </h1>
+          <p className="body-lead mt-8 max-w-[54ch] text-smoke">
+            Pick a modality. Drop the file or paste the text. The verdict
+            appears below, with every contributing signal shown.
+          </p>
+          <div className="mt-12 md:mt-14 flex-1">
+            <DetectorConsole />
+          </div>
+        </div>
       </section>
-      <DetectorConsole />
       <Footer />
     </main>
   );

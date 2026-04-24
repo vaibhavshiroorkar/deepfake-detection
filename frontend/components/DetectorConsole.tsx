@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Image as ImageIcon, Film, AudioLines, AlignLeft } from "lucide-react";
 import clsx from "clsx";
 import Uploader from "./Uploader";
 import TextPane from "./TextPane";
 import ResultPanel from "./ResultPanel";
-import type { DetectionResult } from "@/lib/api";
+import { warmBackend, type DetectionResult } from "@/lib/api";
 
 type Tab = "text" | "image" | "audio" | "video";
 
@@ -25,6 +25,12 @@ export default function DetectorConsole() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Wake the backend the moment the workspace opens — the free-tier HF
+  // Space can take 30–90s to cold-start, so we start the engine early.
+  useEffect(() => {
+    warmBackend();
+  }, []);
+
   function reset() {
     setResult(null);
     setError(null);
@@ -33,9 +39,9 @@ export default function DetectorConsole() {
   }
 
   return (
-    <section id="console" className="mx-auto max-w-3xl px-6 pb-20">
-      <div className="border border-rule bg-paper rounded-sm">
-        <div className="flex border-b border-rule">
+    <section id="console" className="max-w-4xl">
+      <div className="border border-ink bg-paper shadow-[8px_8px_0_rgba(20,20,19,0.08)]">
+        <div className="flex border-b border-ink">
           {TABS.map(({ id, label, Icon }) => {
             const active = tab === id;
             return (
@@ -46,12 +52,12 @@ export default function DetectorConsole() {
                   reset();
                 }}
                 className={clsx(
-                  "relative flex-1 px-5 py-4 flex items-center justify-center gap-2 border-r border-rule last:border-r-0 transition-colors",
-                  active ? "text-ink" : "text-mute hover:text-smoke",
+                  "relative flex-1 px-6 py-5 flex items-center justify-center gap-2.5 border-r border-rule last:border-r-0 transition-colors",
+                  active ? "text-ink bg-bone" : "text-mute hover:text-smoke hover:bg-bone/40",
                 )}
               >
-                <Icon className="size-4" />
-                <span className="text-sm">{label}</span>
+                <Icon className="size-4" strokeWidth={1.6} />
+                <span className="text-sm font-medium tracking-wide">{label}</span>
                 {active && (
                   <motion.div
                     layoutId="tab-underline"
@@ -63,7 +69,7 @@ export default function DetectorConsole() {
           })}
         </div>
 
-        <div className="p-6 md:p-8">
+        <div className="p-7 md:p-10">
           <AnimatePresence mode="wait">
             <motion.div
               key={tab}
@@ -128,9 +134,12 @@ export default function DetectorConsole() {
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="mt-5 border border-alert/40 bg-alert/5 px-5 py-3 text-sm text-alert"
+            className="mt-6 border-l-2 border-alert bg-alert/5 px-5 py-4"
           >
-            {error}
+            <div className="eyebrow eyebrow-ember mb-1" style={{ color: "var(--alert)" }}>
+              Error
+            </div>
+            <div className="text-[0.95rem] text-ink">{error}</div>
           </motion.div>
         )}
         {result && !loading && (

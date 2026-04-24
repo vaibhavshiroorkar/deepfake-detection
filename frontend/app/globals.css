@@ -5,62 +5,220 @@
 @tailwind utilities;
 
 :root {
-  --bone: #f6f2ea;
-  --paper: #ffffff;
-  --ink: #141413;
-  --smoke: #4a4742;
-  --mute: #8a8478;
-  --rule: #e4ddd0;
-  --ember: #c94a2a;
-  --forest: #2f5d45;
-  --alert: #b8341f;
-  --amber: #c48a2a;
+  --bone:    #f4efe6;
+  --paper:   #fbf8f1;
+  --ink:     #141413;
+  --smoke:   #3a3835;
+  --mute:    #8a8478;
+  --rule:    #d9d1c2;
+  --ember:   #d84727;
+  --forest:  #2f5d45;
+  --alert:   #b8341f;
+  --amber:   #e8a33d;
+
+  /* Type scale — editorial, generous. Uses svw/svh for mobile chrome. */
+  --step--1: clamp(0.95rem, 0.9rem + 0.2vw, 1.05rem);
+  --step-0:  clamp(1.05rem, 1rem + 0.35vw, 1.18rem);
+  --step-1:  clamp(1.25rem, 1.15rem + 0.6vw, 1.5rem);
+  --step-2:  clamp(1.6rem, 1.4rem + 1.2vw, 2.1rem);
+  --step-3:  clamp(2.4rem, 1.9rem + 2.4vw, 3.6rem);
+  --step-4:  clamp(3.6rem, 2.6rem + 5vw, 6.5rem);
+  --step-5:  clamp(5rem, 3.5rem + 8vw, 10rem);
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--bone);
 }
 
 html, body {
-  background: var(--bone);
   color: var(--ink);
   font-family: "Inter Tight", system-ui, sans-serif;
+  font-size: var(--step-0);
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv11", "kern";
 }
 
-::selection {
-  background: var(--ember);
-  color: #fff;
+body {
+  background: var(--bone);
+  /* Subtle paper grain — SVG noise, barely there. */
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(216,71,39,0.04), transparent 45%),
+    radial-gradient(circle at 90% 80%, rgba(47,93,69,0.03), transparent 50%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.035 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-attachment: fixed;
+  background-size: auto, auto, 180px 180px;
 }
 
-.font-display { font-family: "Fraunces", serif; font-optical-sizing: auto; }
-.font-mono { font-family: "JetBrains Mono", monospace; }
+::selection { background: var(--ember); color: #fff; }
 
-.hairline { height: 1px; background: var(--rule); }
+/* Typography utilities */
+.font-display { font-family: "Fraunces", ui-serif, Georgia, serif; font-optical-sizing: auto; }
+.font-sans    { font-family: "Inter Tight", system-ui, sans-serif; }
+.font-mono    { font-family: "JetBrains Mono", ui-monospace, monospace; }
 
-@keyframes pulse-soft {
-  0%, 100% { opacity: 0.35; }
-  50%      { opacity: 1; }
+.display-hero {
+  font-family: "Fraunces", ui-serif, serif;
+  font-weight: 300;
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 144, "SOFT" 50;
+  font-size: var(--step-5);
+  line-height: 0.96;
+  letter-spacing: -0.035em;
 }
+.display-xl {
+  font-family: "Fraunces", ui-serif, serif;
+  font-weight: 340;
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 144;
+  font-size: var(--step-4);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+}
+.display-lg {
+  font-family: "Fraunces", ui-serif, serif;
+  font-weight: 400;
+  font-optical-sizing: auto;
+  font-size: var(--step-3);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+.display-md {
+  font-family: "Fraunces", ui-serif, serif;
+  font-weight: 500;
+  font-size: var(--step-2);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+
+.body-lead {
+  font-size: var(--step-1);
+  line-height: 1.55;
+  color: var(--ink);
+}
+.body {
+  font-size: var(--step-0);
+  line-height: 1.75;
+  color: var(--smoke);
+}
+.body-sm { font-size: var(--step--1); line-height: 1.7; color: var(--smoke); }
+
+/* Evidence-catalog eyebrow — running-head style, monospace, tracked. */
+.eyebrow {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.72rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.24em;
+  color: var(--mute);
+}
+.eyebrow-ember { color: var(--ember); }
+
+.running-head {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+
+.hairline      { height: 1px; background: var(--rule); display: block; }
+.hairline-ink  { height: 1px; background: var(--ink); display: block; }
+.hairline-ember{ height: 1px; background: var(--ember); display: block; }
+
+/* Screen-covering sections — uses svh to avoid mobile browser chrome issues. */
+.section-screen {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Page-wide inner frame — keeps content breathing on ultra-wide displays. */
+.page-frame {
+  width: 100%;
+  max-width: 88rem;
+  margin-inline: auto;
+  padding-inline: clamp(1.5rem, 4vw, 4rem);
+}
+
+/* Motion */
+@keyframes pulse-soft { 0%,100% { opacity: 0.35 } 50% { opacity: 1 } }
 .pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
 
+@keyframes scan {
+  0%   { transform: translateY(-120%); opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { transform: translateY(120%); opacity: 0; }
+}
+.scanline {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom,
+    transparent 0%, rgba(216,71,39,0.10) 48%, rgba(216,71,39,0.16) 50%,
+    rgba(216,71,39,0.10) 52%, transparent 100%);
+  pointer-events: none;
+  animation: scan 6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes draw-rule {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+.draw-rule {
+  transform-origin: left;
+  animation: draw-rule 0.9s cubic-bezier(0.87, 0, 0.13, 1) forwards;
+}
+
+/* Focus */
 :focus-visible {
   outline: 2px solid var(--ember);
-  outline-offset: 2px;
+  outline-offset: 3px;
   border-radius: 2px;
 }
 
+/* Gauge (existing component) */
 .gauge-track {
   background:
     linear-gradient(90deg,
-      var(--forest) 0%,
-      var(--forest) 30%,
-      var(--amber) 30%,
-      var(--amber) 55%,
-      var(--ember) 55%,
-      var(--ember) 75%,
-      var(--alert) 75%,
-      var(--alert) 100%);
+      var(--forest) 0%, var(--forest) 30%,
+      var(--amber) 30%, var(--amber) 55%,
+      var(--ember) 55%, var(--ember) 75%,
+      var(--alert) 75%, var(--alert) 100%);
+}
+
+/* Action button — editorial block with tight corners, hover inversion. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.95rem 1.6rem;
+  font-size: var(--step--1);
+  letter-spacing: 0.02em;
+  background: var(--ink);
+  color: var(--paper);
+  border: 1px solid var(--ink);
+  transition: all 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.btn:hover {
+  background: var(--ember);
+  border-color: var(--ember);
+  transform: translateY(-1px);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--ink);
+}
+.btn-ghost:hover {
+  background: var(--ink);
+  color: var(--paper);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pulse-soft { animation: none !important; }
+  html { scroll-behavior: auto; }
+  .pulse-soft, .scanline, .draw-rule { animation: none !important; }
   * { transition-duration: 0.01ms !important; }
 }

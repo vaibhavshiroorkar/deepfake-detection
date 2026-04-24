@@ -33,38 +33,45 @@ export default function TextPane({
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder="Paste a paragraph. The longer, the steadier the reading — 40 words minimum."
-        rows={8}
-        className="w-full resize-y bg-bone/40 border border-rule p-4 text-[1rem] leading-[1.6] text-ink placeholder:text-mute focus:outline-none focus:border-ember"
+        rows={10}
+        className="w-full resize-y bg-bone/30 border border-rule p-5 text-[1.05rem] leading-[1.7] text-ink placeholder:text-mute focus:outline-none focus:border-ink transition-colors"
       />
 
-      <div className="mt-3 flex flex-wrap items-center gap-3">
+      <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3">
         <button
           onClick={() => ok && onSubmit(text)}
           disabled={!ok}
           className={clsx(
-            "inline-flex items-center gap-2 px-4 py-2 text-sm transition-colors",
-            ok ? "bg-ink text-white hover:bg-ember" : "bg-rule text-mute cursor-not-allowed",
+            "inline-flex items-center gap-2.5 px-6 py-3 text-sm tracking-wide transition-colors border",
+            ok
+              ? "bg-ink text-paper border-ink hover:bg-ember hover:border-ember"
+              : "bg-rule/50 text-mute border-rule cursor-not-allowed",
           )}
         >
           {loading ? (
             <>
-              <span className="size-1.5 rounded-full bg-white pulse-soft" />
-              Reading
+              <span className="size-1.5 rounded-full bg-paper pulse-soft" />
+              Reading — examining signals
             </>
           ) : (
-            <>Examine<span>→</span></>
+            <>
+              Examine
+              <span aria-hidden>→</span>
+            </>
           )}
         </button>
 
-        <span className="text-xs text-mute">{wordCount} words</span>
+        <span className="font-mono text-xs text-mute tracking-wider uppercase">
+          {wordCount} {wordCount === 1 ? "word" : "words"}
+        </span>
 
-        <div className="ml-auto flex items-center gap-3 text-xs">
-          <span className="text-mute">Try:</span>
+        <div className="ml-auto flex items-center gap-4 text-sm">
+          <span className="running-head">Sample:</span>
           {SAMPLES.map((s) => (
             <button
               key={s.label}
               onClick={() => setText(s.body)}
-              className="text-smoke hover:text-ember underline decoration-dotted underline-offset-4"
+              className="text-smoke hover:text-ember border-b border-dotted border-mute hover:border-ember pb-0.5 transition-colors"
             >
               {s.label}
             </button>

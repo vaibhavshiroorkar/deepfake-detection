@@ -72,9 +72,9 @@ export default function Uploader({ kind, loading, onSubmit }: Props) {
           onDragLeave={() => setDragging(false)}
           onDrop={onDrop}
           className={clsx(
-            "relative block cursor-pointer border border-dashed transition-colors",
-            "px-8 py-12 text-center",
-            dragging ? "border-ember bg-ember/5" : "border-rule hover:border-smoke bg-bone/40",
+            "relative block cursor-pointer border-2 border-dashed transition-colors",
+            "px-10 py-20 text-center",
+            dragging ? "border-ember bg-ember/5" : "border-rule hover:border-ink bg-bone/30",
           )}
         >
           <input
@@ -86,55 +86,71 @@ export default function Uploader({ kind, loading, onSubmit }: Props) {
               if (f) pick(f);
             }}
           />
-          <div className="flex flex-col items-center gap-3">
-            <Upload className="size-5 text-smoke" />
-            <p className="text-ink">
-              Drop {LABEL[kind].noun} here,{" "}
-              <span className="underline decoration-ember underline-offset-4">or browse</span>
+          <div className="flex flex-col items-center gap-5">
+            <Upload className="size-8 text-ink" strokeWidth={1.3} />
+            <p className="font-display text-2xl tracking-tight text-ink">
+              Drop {LABEL[kind].noun} here
             </p>
-            <p className="text-xs text-mute">{LABEL[kind].hint}</p>
+            <p className="body-sm text-smoke">
+              or{" "}
+              <span className="underline decoration-ember decoration-2 underline-offset-[6px] text-ink">
+                browse your files
+              </span>
+            </p>
+            <p className="font-mono text-xs tracking-widest text-mute uppercase mt-2">
+              {LABEL[kind].hint}
+            </p>
           </div>
         </label>
       ) : (
-        <div className="border border-rule bg-bone/40 p-4">
-          <div className="flex items-start gap-4">
-            <div className="size-20 shrink-0 border border-rule bg-ink/5 overflow-hidden flex items-center justify-center">
+        <div className="border border-ink bg-bone/40 p-5 md:p-6">
+          <div className="flex items-start gap-5">
+            <div className="size-24 shrink-0 border border-ink bg-ink/5 overflow-hidden flex items-center justify-center">
               {preview && kind === "image" ? (
                 <img src={preview} alt="preview" className="size-full object-cover" />
               ) : preview && kind === "video" ? (
                 <video src={preview} className="size-full object-cover" muted />
               ) : (
-                <Icon className="size-6 text-mute" />
+                <Icon className="size-7 text-mute" strokeWidth={1.3} />
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm truncate">{file.name}</div>
-              <div className="mt-0.5 text-xs text-mute">{pretty}</div>
+              <div className="font-display text-xl tracking-tight truncate">
+                {file.name}
+              </div>
+              <div className="mt-1 font-mono text-xs text-mute tracking-wider">
+                {pretty}
+              </div>
               {preview && kind === "audio" && (
-                <audio src={preview} controls className="mt-3 w-full h-8" />
+                <audio src={preview} controls className="mt-4 w-full h-9" />
               )}
-              <div className="mt-4 flex items-center gap-3">
+              <div className="mt-6 flex items-center gap-6">
                 <button
                   onClick={() => onSubmit(file)}
                   disabled={loading}
                   className={clsx(
-                    "inline-flex items-center gap-2 px-4 py-2 text-sm transition-colors",
-                    loading ? "bg-mute text-white cursor-wait" : "bg-ink text-white hover:bg-ember",
+                    "inline-flex items-center gap-2.5 px-6 py-3 text-sm tracking-wide transition-colors border",
+                    loading
+                      ? "bg-mute text-paper border-mute cursor-wait"
+                      : "bg-ink text-paper border-ink hover:bg-ember hover:border-ember",
                   )}
                 >
                   {loading ? (
                     <>
-                      <span className="size-1.5 rounded-full bg-white pulse-soft" />
-                      Examining
+                      <span className="size-1.5 rounded-full bg-paper pulse-soft" />
+                      Examining — this may take a moment on cold start
                     </>
                   ) : (
-                    <>Examine<span>→</span></>
+                    <>
+                      Examine
+                      <span aria-hidden>→</span>
+                    </>
                   )}
                 </button>
                 <button
                   onClick={clear}
                   disabled={loading}
-                  className="inline-flex items-center gap-1.5 text-sm text-smoke hover:text-alert"
+                  className="inline-flex items-center gap-1.5 text-sm text-smoke hover:text-alert transition-colors"
                 >
                   <X className="size-3.5" />
                   Remove
