@@ -97,7 +97,7 @@ async function parseOrThrow(res: Response): Promise<unknown> {
     }
     if (res.status === 502 || res.status === 503 || res.status === 504) {
       throw new Error(
-        "The backend may be cold-starting — try again in 30–60 seconds.",
+        "The backend may be cold-starting. Try again in 30 to 60 seconds.",
       );
     }
     if (!res.ok) {

@@ -150,7 +150,7 @@ export default function KeysClient() {
         {justCreated && (
           <div className="px-5 py-4 border-b border-rule bg-amber/5">
             <div className="text-xs text-mute mb-2">
-              Copy this now — it won&apos;t be shown again.
+              Copy this now. It won&apos;t be shown again.
             </div>
             <div className="flex items-center gap-2">
               <code className="flex-1 break-all bg-paper border border-rule px-3 py-2 text-xs">

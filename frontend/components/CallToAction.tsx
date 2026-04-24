@@ -17,7 +17,7 @@ export default function CallToAction() {
           transition={{ duration: 0.5 }}
           className="running-head text-mute mb-10"
         >
-          Plate 005 — Invitation
+          Plate 005 · Invitation
         </motion.span>
 
         <motion.h2
@@ -40,7 +40,7 @@ export default function CallToAction() {
           className="body-lead mt-12 max-w-[44ch] text-paper/80"
         >
           The workspace is one click away. No account required to try it.
-          Uploads are processed in memory — nothing is retained.
+          Uploads are processed in memory. Nothing is retained.
         </motion.p>
 
         <motion.div

@@ -39,7 +39,7 @@ export default function ComparePage() {
         <h1 className="font-display text-3xl">Compare</h1>
         <p className="mt-2 text-sm text-smoke max-w-prose">
           Place a suspect image next to a known-real reference. The same forensic
-          signals run on both — divergence is what to look for.
+          signals run on both. Divergence is what to look for.
         </p>
 
         <div className="mt-8 grid md:grid-cols-2 gap-6">

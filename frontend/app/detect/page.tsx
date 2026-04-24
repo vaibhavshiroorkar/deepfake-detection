@@ -3,7 +3,7 @@ import DetectorConsole from "@/components/DetectorConsole";
 import Footer from "@/components/Footer";
 
 export const metadata = {
-  title: "Detect — Veritas",
+  title: "Detect · Veritas",
   description: "Run text, image, audio, or video through Veritas.",
 };
 
@@ -14,7 +14,7 @@ export default function DetectPage() {
       <section className="section-screen">
         <div className="page-frame flex-1 flex flex-col pt-16 pb-10">
           <div className="flex items-baseline justify-between mb-8">
-            <span className="running-head">Workspace — file a piece of evidence</span>
+            <span className="running-head">Workspace · file a piece of evidence</span>
             <span className="running-head hidden sm:inline">Live inference</span>
           </div>
           <h1 className="display-lg max-w-[22ch]">

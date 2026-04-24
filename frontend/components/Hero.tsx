@@ -17,7 +17,7 @@ export default function Hero() {
           transition={{ duration: 0.6 }}
           className="flex items-baseline justify-between mb-10 md:mb-16"
         >
-          <span className="running-head">Plate 001 — Introduction</span>
+          <span className="running-head">Plate 001 · Introduction</span>
           <span className="running-head hidden sm:inline">
             Forensic review of synthetic media
           </span>
@@ -46,7 +46,7 @@ export default function Hero() {
           className="body-lead mt-10 md:mt-14 max-w-[42ch]"
         >
           Veritas is a small, opinionated detector for AI-generated images,
-          video, audio and text — with the working shown. Every verdict is
+          video, audio and text, with the working shown. Every verdict is
           a weighted agreement across independent signals, each of them
           inspectable.
         </motion.p>

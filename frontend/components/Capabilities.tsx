@@ -52,7 +52,7 @@ export default function Capabilities() {
             transition={{ duration: 0.5 }}
             className="running-head"
           >
-            Plate 002 — Modalities
+            Plate 002 · Modalities
           </motion.span>
           <motion.span
             initial={{ opacity: 0 }}

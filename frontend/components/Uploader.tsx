@@ -18,16 +18,36 @@ const ACCEPT: Record<Kind, string> = {
   audio: "audio/mpeg,audio/mp3,audio/wav,audio/wave,audio/x-wav,audio/flac,audio/ogg,audio/x-flac,audio/vorbis",
 };
 
-const LABEL: Record<Kind, { noun: string; hint: string }> = {
-  image: { noun: "an image", hint: "JPEG · PNG · WebP · up to 20 MB" },
-  video: { noun: "a video", hint: "MP4 · WebM · MOV · up to 50 MB" },
-  audio: { noun: "a clip", hint: "MP3 · WAV · FLAC · OGG · up to 25 MB" },
-};
+// When NEXT_PUBLIC_BACKEND_URL is set the browser uploads directly to the
+// detection backend (HF Spaces, 50 MB practical cap). Otherwise we route
+// through the Vercel serverless proxy which has a 4.5 MB body limit.
+const DIRECT_BACKEND = !!(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim();
 
-const MAX_BYTES: Record<Kind, number> = {
-  image: 20 * 1024 * 1024,
-  video: 50 * 1024 * 1024,
-  audio: 25 * 1024 * 1024,
+const MAX_BYTES: Record<Kind, number> = DIRECT_BACKEND
+  ? {
+      image: 20 * 1024 * 1024,
+      video: 50 * 1024 * 1024,
+      audio: 25 * 1024 * 1024,
+    }
+  : {
+      image: 4 * 1024 * 1024,
+      video: 4 * 1024 * 1024,
+      audio: 4 * 1024 * 1024,
+    };
+
+const LABEL: Record<Kind, { noun: string; hint: string }> = {
+  image: {
+    noun: "an image",
+    hint: `JPEG · PNG · WebP · up to ${MAX_BYTES.image / (1024 * 1024)} MB`,
+  },
+  video: {
+    noun: "a video",
+    hint: `MP4 · WebM · MOV · up to ${MAX_BYTES.video / (1024 * 1024)} MB`,
+  },
+  audio: {
+    noun: "a clip",
+    hint: `MP3 · WAV · FLAC · OGG · up to ${MAX_BYTES.audio / (1024 * 1024)} MB`,
+  },
 };
 
 export default function Uploader({ kind, loading, onSubmit }: Props) {
@@ -57,7 +77,7 @@ export default function Uploader({ kind, loading, onSubmit }: Props) {
     if (f.size > MAX_BYTES[kind]) {
       const mb = (MAX_BYTES[kind] / (1024 * 1024)).toFixed(0);
       const actual = (f.size / (1024 * 1024)).toFixed(1);
-      alert(`That ${kind} is ${actual} MB — limit is ${mb} MB. Try a smaller or shorter file.`);
+      alert(`That ${kind} is ${actual} MB. Limit is ${mb} MB. Try a smaller or shorter file.`);
       return;
     }
     setFile(f);
@@ -150,7 +170,7 @@ export default function Uploader({ kind, loading, onSubmit }: Props) {
                   {loading ? (
                     <>
                       <span className="size-1.5 rounded-full bg-paper pulse-soft" />
-                      Examining — this may take a moment on cold start
+                      Examining. This may take a moment on cold start.
                     </>
                   ) : (
                     <>

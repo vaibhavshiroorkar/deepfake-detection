@@ -189,7 +189,7 @@ function C2PABadge({
       <div className="text-xs leading-relaxed">
         <div className="text-ink">
           Content Credentials present
-          {manifest.signed_by ? ` — signed by ${manifest.signed_by}` : " (unsigned)"}
+          {manifest.signed_by ? ` (signed by ${manifest.signed_by})` : " (unsigned)"}
         </div>
         <div className="text-mute mt-0.5">
           {manifest.claim_generator || "unknown generator"}
@@ -208,7 +208,7 @@ function capitalize(s: string) {
 
 function humanePreamble(r: DetectionResult, pct: number): string {
   if (r.kind === "text") {
-    if (pct < 30) return "The prose reads like a person wrote it — uneven sentences, stray contractions, the occasional sharp turn.";
+    if (pct < 30) return "The prose reads like a person wrote it: uneven sentences, stray contractions, the occasional sharp turn.";
     if (pct < 55) return "Some signs of machine drafting, but not enough to lean on. Could be a human who writes cleanly, or an AI draft that's been edited.";
     if (pct < 75) return "Several markers line up: even sentence lengths, scaffolding phrases, a comma-heavy register. Likely a language model.";
     return "Strong statistical fingerprints of LLM writing throughout.";

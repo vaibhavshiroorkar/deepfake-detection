@@ -13,7 +13,7 @@ const PRINCIPLES = [
     n: "ii.",
     head: "Prefer learned over guessed",
     body:
-      "Where a properly trained classifier exists, we use it. Where it doesn't, we fall back to forensic heuristics — and label them as such, with low weight in the final verdict.",
+      "Where a properly trained classifier exists, we use it. Where it doesn't, we fall back to forensic heuristics, and label them as such with low weight in the final verdict.",
   },
   {
     n: "iii.",
@@ -37,7 +37,7 @@ export default function Principles() {
             transition={{ duration: 0.5 }}
             className="running-head"
           >
-            Plate 004 — Principles
+            Plate 004 · Principles
           </motion.span>
           <motion.span
             initial={{ opacity: 0 }}

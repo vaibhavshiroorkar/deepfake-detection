@@ -14,7 +14,7 @@ export default function Footer() {
             </Link>
             <p className="body mt-5 max-w-[38ch]">
               An informed second opinion, not a verdict. Uploads are processed
-              in memory — nothing is retained.
+              in memory. Nothing is retained.
             </p>
           </div>
           <nav className="grid grid-cols-2 gap-x-14 gap-y-3 md:text-right">
