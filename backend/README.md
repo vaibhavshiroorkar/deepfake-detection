@@ -32,8 +32,12 @@ Override with `VERITAS_ANON_RATE` and `VERITAS_AUTH_RATE`.
 Set these in Space, Settings, Variables and secrets.
 
 **Security:**
-- `ALLOWED_ORIGINS` comma-separated Vercel URL(s). **Do not leave as
-  the default wildcard in production.**
+- `ALLOWED_ORIGINS` comma-separated Vercel URL(s), e.g.
+  `https://veritas.vercel.app,https://your-preview.vercel.app`.
+  Default is `*` (wide open) for backward compatibility, with a loud
+  startup warning.
+- `VERITAS_STRICT_CORS` default `0`. Set to `1` in prod to refuse the
+  wildcard at startup and force an explicit origin list.
 
 **Auth and persistence (all optional, scans work anonymously):**
 - `SUPABASE_URL`

@@ -13,7 +13,9 @@ keeps the Phase 1 temporal flicker heuristic as supporting evidence.
 from __future__ import annotations
 
 import io as _io
+import logging
 import os
+import subprocess
 import tempfile
 from typing import Any
 
@@ -21,7 +23,10 @@ import cv2
 import numpy as np
 from PIL import Image
 
+from .audio import analyze_audio
 from .image import analyze_image
+
+log = logging.getLogger("veritas.video")
 
 
 # ---------------------------------------------------------------------------
@@ -61,6 +66,41 @@ def _sample_frames(cap: cv2.VideoCapture, meta: dict, n: int = 8) -> list[tuple[
         if ok:
             frames.append((float(idx) / fps, frame))
     return frames
+
+
+def _extract_audio_wav(video_path: str) -> bytes | None:
+    """Pull the audio track out of the video as 16 kHz mono WAV bytes.
+
+    Returns None if ffmpeg fails or the video has no audio. The audio
+    detector tolerates short clips and noisy input, so the bar for
+    usable extracted audio is low.
+    """
+    try:
+        result = subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-i",
+                video_path,
+                "-vn",
+                "-ac",
+                "1",
+                "-ar",
+                "16000",
+                "-f",
+                "wav",
+                "pipe:1",
+            ],
+            capture_output=True,
+            timeout=30,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as exc:
+        log.warning("ffmpeg audio extraction failed: %s", exc)
+        return None
+
+    if result.returncode != 0 or len(result.stdout) < 1024:
+        return None
+    return result.stdout
 
 
 def _temporal_flicker(frames: list[np.ndarray]) -> float:
@@ -280,20 +320,58 @@ def analyze_video(data: bytes, filename: str = "video") -> dict[str, Any]:
             "detail": "Highest individual frame suspicion. A single strong frame matters.",
         })
 
+        # --- Audio-track analysis ---
+        # Lift the audio out of the video and run it through the same
+        # detectors we use for standalone audio uploads. If the video
+        # has no audio or ffmpeg fails, audio_score stays None and the
+        # final verdict weighting reverts to video-only.
+        audio_bytes = _extract_audio_wav(tmp_path)
+        audio_score = None
+        if audio_bytes is not None:
+            try:
+                audio_result = analyze_audio(audio_bytes, filename=f"{filename}#audio")
+                audio_signals = audio_result.get("signals", []) or []
+                # Prefix audio signal names so they don't collide with
+                # the video-side Frame suspicion / Temporal flicker rows.
+                for s in audio_signals:
+                    if isinstance(s, dict) and "name" in s:
+                        s["name"] = f"Audio: {s['name']}"
+                signals.extend(audio_signals)
+                audio_score = float(audio_result.get("suspicion", 0.0))
+                signals.append({
+                    "name": "Audio track overall",
+                    "score": round(audio_score, 3),
+                    "detail": (
+                        f"Aggregated audio verdict from {len(audio_signals)} signals: "
+                        f"{audio_result.get('verdict', 'unknown')}. "
+                        "Matches the standalone audio detector."
+                    ),
+                })
+            except Exception as exc:  # noqa: BLE001
+                log.warning("audio sub-analysis failed: %s", exc)
+
         # --- Final verdict ---
+        # Video-side blended score first. The audio-track score folds
+        # in afterward with a modest weight, only when present.
         if temporal_result is not None:
-            # Phase 2: temporal transformer gets significant weight
             t_score = temporal_result[0]
-            score = float(np.clip(
+            video_score = float(np.clip(
                 0.35 * t_score + 0.30 * avg + 0.20 * peak + 0.15 * flicker,
                 0.0, 1.0,
             ))
         else:
-            # Phase 1 fallback
-            score = float(np.clip(
+            video_score = float(np.clip(
                 0.5 * avg + 0.3 * peak + 0.2 * flicker,
                 0.0, 1.0,
             ))
+
+        if audio_score is not None:
+            # Audio is supporting evidence, not decisive. 0.18 weight is
+            # enough to sway borderline cases without letting a
+            # misclassified voice flip a clean video verdict.
+            score = float(np.clip(0.82 * video_score + 0.18 * audio_score, 0.0, 1.0))
+        else:
+            score = video_score
 
         if score < 0.3:
             label = "likely authentic"

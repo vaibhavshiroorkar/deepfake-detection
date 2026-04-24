@@ -28,16 +28,31 @@ MAX_TEXT_CHARS = 50_000
 ANON_LIMIT = os.getenv("VERITAS_ANON_RATE", "10/minute")
 AUTH_LIMIT = os.getenv("VERITAS_AUTH_RATE", "30/minute")
 
-# Comma-separated list of allowed origins, or "*". Explicitly defaulting
-# to wildcard is convenient in dev but a risk in production, so we log a
-# loud warning when the wildcard is in use.
-_RAW_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*")
-_ALLOWED_ORIGINS = [o.strip() for o in _RAW_ORIGINS.split(",") if o.strip()]
-if _ALLOWED_ORIGINS == ["*"]:
-    log.warning(
-        "CORS is wide open (ALLOWED_ORIGINS=*). Set ALLOWED_ORIGINS to the "
-        "production frontend URL(s) in Space secrets to lock this down."
-    )
+# Origins are read from the comma-separated ALLOWED_ORIGINS env var.
+# Default stays permissive to preserve backward compatibility. Flip
+# VERITAS_STRICT_CORS=1 and the wildcard is refused at startup, forcing
+# an explicit origin list. The loud warning stays on either way so the
+# wide-open default doesn't quietly ship to prod.
+_RAW_ORIGINS = os.getenv("ALLOWED_ORIGINS", "*").strip()
+_STRICT_CORS = os.getenv("VERITAS_STRICT_CORS", "0") == "1"
+
+_ALLOWED_ORIGINS: list[str]
+if _RAW_ORIGINS == "*":
+    if _STRICT_CORS:
+        log.error(
+            "VERITAS_STRICT_CORS=1 but ALLOWED_ORIGINS is still '*'. "
+            "Refusing all origins. Set ALLOWED_ORIGINS to your frontend URL."
+        )
+        _ALLOWED_ORIGINS = []
+    else:
+        log.warning(
+            "CORS is wide open (ALLOWED_ORIGINS=*). Safe for dev. "
+            "Set ALLOWED_ORIGINS to your production frontend URL(s) and "
+            "VERITAS_STRICT_CORS=1 for prod."
+        )
+        _ALLOWED_ORIGINS = ["*"]
+else:
+    _ALLOWED_ORIGINS = [o.strip() for o in _RAW_ORIGINS.split(",") if o.strip()]
 
 
 def _rate_limit_key(request: Request) -> str:
