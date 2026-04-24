@@ -27,8 +27,10 @@
 }
 
 html {
-  scroll-behavior: smooth;
   background: var(--bone);
+  /* No global smooth scroll — it animates browser-initiated scroll on
+     refresh/history restore and looks like random scrolling. If we want
+     smooth anchor navigation later, we'll trigger it per-link. */
 }
 
 html, body {
