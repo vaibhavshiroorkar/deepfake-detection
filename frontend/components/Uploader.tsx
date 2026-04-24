@@ -10,6 +10,7 @@ type Props = {
   kind: Kind;
   loading: boolean;
   onSubmit: (file: File) => void | Promise<void>;
+  onPick?: (info: { file: File; previewUrl: string } | null) => void;
 };
 
 const ACCEPT: Record<Kind, string> = {
@@ -50,7 +51,7 @@ const LABEL: Record<Kind, { noun: string; hint: string }> = {
   },
 };
 
-export default function Uploader({ kind, loading, onSubmit }: Props) {
+export default function Uploader({ kind, loading, onSubmit, onPick }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
@@ -82,13 +83,16 @@ export default function Uploader({ kind, loading, onSubmit }: Props) {
     }
     setFile(f);
     if (preview) URL.revokeObjectURL(preview);
-    setPreview(URL.createObjectURL(f));
+    const url = URL.createObjectURL(f);
+    setPreview(url);
+    onPick?.({ file: f, previewUrl: url });
   };
 
   const clear = () => {
     setFile(null);
     if (preview) URL.revokeObjectURL(preview);
     setPreview(null);
+    onPick?.(null);
   };
 
   const Icon = kind === "image" ? FileImage : kind === "video" ? FileVideo : FileAudio;
