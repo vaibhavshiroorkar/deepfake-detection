@@ -16,14 +16,14 @@
   --alert:   #b8341f;
   --amber:   #e8a33d;
 
-  /* Type scale — editorial, generous. Uses svw/svh for mobile chrome. */
+  /* Type scale — editorial, generous but readable. */
   --step--1: clamp(0.95rem, 0.9rem + 0.2vw, 1.05rem);
   --step-0:  clamp(1.05rem, 1rem + 0.35vw, 1.18rem);
   --step-1:  clamp(1.25rem, 1.15rem + 0.6vw, 1.5rem);
   --step-2:  clamp(1.6rem, 1.4rem + 1.2vw, 2.1rem);
-  --step-3:  clamp(2.4rem, 1.9rem + 2.4vw, 3.6rem);
-  --step-4:  clamp(3.6rem, 2.6rem + 5vw, 6.5rem);
-  --step-5:  clamp(5rem, 3.5rem + 8vw, 10rem);
+  --step-3:  clamp(2.2rem, 1.8rem + 2vw, 3.2rem);
+  --step-4:  clamp(3rem, 2.3rem + 3.8vw, 5.2rem);
+  --step-5:  clamp(4rem, 3rem + 5.5vw, 7rem);
 }
 
 html {
@@ -61,36 +61,36 @@ body {
 
 .display-hero {
   font-family: "Fraunces", ui-serif, serif;
-  font-weight: 300;
+  font-weight: 440;
   font-optical-sizing: auto;
-  font-variation-settings: "opsz" 144, "SOFT" 50;
+  font-variation-settings: "opsz" 120;
   font-size: var(--step-5);
-  line-height: 0.96;
-  letter-spacing: -0.035em;
+  line-height: 1.03;
+  letter-spacing: -0.022em;
 }
 .display-xl {
   font-family: "Fraunces", ui-serif, serif;
-  font-weight: 340;
+  font-weight: 460;
   font-optical-sizing: auto;
-  font-variation-settings: "opsz" 144;
+  font-variation-settings: "opsz" 120;
   font-size: var(--step-4);
-  line-height: 1.02;
-  letter-spacing: -0.025em;
+  line-height: 1.06;
+  letter-spacing: -0.018em;
 }
 .display-lg {
   font-family: "Fraunces", ui-serif, serif;
-  font-weight: 400;
+  font-weight: 480;
   font-optical-sizing: auto;
   font-size: var(--step-3);
-  line-height: 1.08;
-  letter-spacing: -0.02em;
+  line-height: 1.1;
+  letter-spacing: -0.014em;
 }
 .display-md {
   font-family: "Fraunces", ui-serif, serif;
-  font-weight: 500;
+  font-weight: 540;
   font-size: var(--step-2);
-  line-height: 1.15;
-  letter-spacing: -0.015em;
+  line-height: 1.18;
+  letter-spacing: -0.01em;
 }
 
 .body-lead {

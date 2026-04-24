@@ -74,7 +74,7 @@ export default function Capabilities() {
         >
           Four modalities,
           <br />
-          <span className="italic text-smoke">one verdict format.</span>
+          <span className="italic text-ink/70">one verdict format.</span>
         </motion.h2>
 
         <motion.p
