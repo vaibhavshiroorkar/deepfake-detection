@@ -246,7 +246,7 @@ def _ai_classifier_ensemble_signal(
     else:
         tail = "Second classifier is undecided."
     if disagreement > 0.35:
-        tail += " Note: disagrees with primary classifier — score held closer to uncertain."
+        tail += " Note: disagrees with primary classifier, so the score is held closer to uncertain."
     detail = (
         f"{info['model']}: raw P(AI) = {raw_p:.3f}, calibrated = {adjusted:.3f}. "
         + tail
@@ -292,7 +292,7 @@ def _face_classifier_signal(
     """
     if not faces:
         return Signal("Face classifier", 0.0,
-                      "No faces detected — this check does not apply.")
+                      "No faces detected, so this check does not apply.")
     raw_per_face: list[float] = []
     cal_per_face: list[float] = []
     for (x1, y1, x2, y2, _p) in faces:
@@ -329,7 +329,7 @@ def _face_boundary_signal(
 ) -> Signal:
     if not faces:
         return Signal("Face boundary", 0.0,
-                      "No faces detected — this check does not apply.")
+                      "No faces detected, so this check does not apply.")
     gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
     h, w = gray.shape
     scores = []
@@ -346,7 +346,7 @@ def _face_boundary_signal(
         "Face boundary",
         avg,
         f"{len(faces)} face region(s) via MTCNN. Boundary edge delta: {avg:.2f}. "
-        + ("Halo or seam at face boundary — consistent with face-swap."
+        + ("Halo or seam at face boundary, consistent with face-swap."
            if avg > 0.4
            else "No seam artifacts at face boundaries."),
     )
@@ -419,7 +419,7 @@ def _focus_uniformity_signal(cv_img: np.ndarray) -> Signal:
         "Focus variation",
         score,
         f"Sharpness CV across {len(sharpness)} patches: {cv:.2f}. "
-        + ("Unnaturally uniform sharpness — no depth-of-field blur."
+        + ("Unnaturally uniform sharpness, with no depth-of-field blur."
            if score > 0.5
            else "Sharpness varies naturally across the frame."),
     )
@@ -460,7 +460,7 @@ def _chromatic_aberration_signal(cv_img: np.ndarray) -> Signal:
         "Chromatic aberration",
         score,
         f"Channel gradient alignment {alignment:.4f}. "
-        + ("Channels in near-perfect alignment — atypical for glass optics."
+        + ("Channels in near-perfect alignment, which is atypical for glass optics."
            if score > 0.5
            else "Natural colour-channel misalignment from lens optics."),
     )
@@ -533,7 +533,7 @@ def _metadata_signal(tags: dict) -> Signal:
             f"Camera: {make} {model_name}{' @ ' + dt if dt else ''}.",
         )
     return Signal("Capture metadata", 0.20,
-                  "Partial EXIF — consistent with re-saved or screen-captured images.")
+                  "Partial EXIF, consistent with re-saved or screen-captured images.")
 
 
 # ---------------------------------------------------------------------------

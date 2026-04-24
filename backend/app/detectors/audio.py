@@ -93,7 +93,7 @@ def _whisper_classifier_signal(hidden: np.ndarray) -> Signal:
         if score > 0.7:
             detail = (
                 f"Whisper classifier: P(synthetic) = {p_fake:.3f}. "
-                "Strong confidence in synthetic audio — spectral features diverge from real speech."
+                "Strong confidence in synthetic audio. Spectral features diverge from real speech."
             )
         elif score > 0.5:
             detail = (
@@ -151,7 +151,7 @@ def _whisper_heuristic_signal(hidden: np.ndarray) -> Signal:
         f"Adjacent-frame cosine {adj_sim:.4f}, per-dim variance {feat_var:.3f}, "
         f"mean norm {feat_norm:.2f} across {h.shape[0]} encoder frames. "
         + (
-            "Encoder representations are too uniform — characteristic of TTS or voice cloning."
+            "Encoder representations are too uniform, characteristic of TTS or voice cloning."
             if score > 0.45
             else "Encoder representations vary like real speech."
         ),
@@ -297,7 +297,7 @@ def _pitch_signal(audio: np.ndarray, sr: int) -> Signal:
         score,
         f"Pitch coefficient of variation {cv:.3f} across {len(pitches)} voiced frames. "
         + (
-            "Flatter than natural speech — consistent with TTS or voice cloning."
+            "Flatter than natural speech, consistent with TTS or voice cloning."
             if score > 0.5
             else "Pitch moves the way a person's does when they talk."
         ),
@@ -331,7 +331,7 @@ def _silence_floor_signal(audio: np.ndarray, sr: int) -> Signal:
         score,
         f"Quiet-section RMS {floor:.5f}, variance {floor_var:.6f}. "
         + (
-            "Silence is unnaturally clean — no microphone noise, no room tone."
+            "Silence is unnaturally clean. No microphone noise, no room tone."
             if score > 0.45
             else "The quiet parts carry natural room tone and microphone noise."
         ),
@@ -356,7 +356,7 @@ def _energy_rhythm_signal(audio: np.ndarray, sr: int) -> Signal:
         score,
         f"Envelope burstiness {burstiness:.3f}. "
         + (
-            "Volume envelope is unusually smooth — attacks and releases aren't landing the way a human speaker's would."
+            "Volume envelope is unusually smooth. Attacks and releases aren't landing the way a human speaker's would."
             if score > 0.5
             else "Speech envelope moves in natural bursts and decays."
         ),

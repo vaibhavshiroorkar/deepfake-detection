@@ -136,9 +136,28 @@ function Gauge({ suspicion }: { suspicion: number }) {
   );
 }
 
+function splitDetail(detail: string): { summary: string; technical: string | null } {
+  const trimmed = detail.trim();
+  if (!trimmed) return { summary: "", technical: null };
+  // Backend Signal details are typically "[numbers + model refs]. [plain
+  // takeaway]." We split at the last ". " so the plain takeaway (summary)
+  // goes first in big type and the numbers drop below in mono. If the
+  // whole thing is a single sentence (e.g. error fallbacks), treat it
+  // all as the summary.
+  const lastSplit = trimmed.lastIndexOf(". ");
+  if (lastSplit === -1) {
+    return { summary: trimmed, technical: null };
+  }
+  const technical = trimmed.slice(0, lastSplit + 1).trim();
+  const summary = trimmed.slice(lastSplit + 2).trim();
+  if (!summary) return { summary: trimmed, technical: null };
+  return { summary, technical };
+}
+
 function SignalRow({ signal, index }: { signal: Signal; index: number }) {
   const width = Math.round(signal.score * 100);
   const tone = verdictTone(signal.score);
+  const { summary, technical } = splitDetail(signal.detail);
   return (
     <motion.li
       initial={{ opacity: 0, x: -6 }}
@@ -146,7 +165,7 @@ function SignalRow({ signal, index }: { signal: Signal; index: number }) {
       transition={{ delay: 0.05 + index * 0.06, duration: 0.35 }}
     >
       <div className="flex items-baseline justify-between gap-4">
-        <span className="text-sm text-ink">{signal.name}</span>
+        <span className="text-sm text-ink font-medium">{signal.name}</span>
         <span className="text-xs text-mute tabular-nums">{width}%</span>
       </div>
       <div className="mt-1.5 h-[2px] bg-rule relative overflow-hidden">
@@ -163,7 +182,14 @@ function SignalRow({ signal, index }: { signal: Signal; index: number }) {
           )}
         />
       </div>
-      <p className="mt-2 text-xs leading-[1.6] text-smoke">{signal.detail}</p>
+      <p className="mt-2.5 text-[0.95rem] leading-[1.55] text-ink">
+        {summary}
+      </p>
+      {technical && (
+        <p className="mt-1.5 font-mono text-[11px] leading-[1.55] text-mute">
+          {technical}
+        </p>
+      )}
     </motion.li>
   );
 }

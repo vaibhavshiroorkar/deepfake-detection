@@ -175,9 +175,9 @@ def _burstiness_signal(sents: list[str]) -> Signal:
         score,
         f"Coefficient of variation across sentence lengths: {cv:.2f}. "
         + (
-            "Uniform sentence rhythm — a signature of LLM drafting."
+            "Uniform sentence rhythm, a signature of LLM drafting."
             if score > 0.5
-            else "Sentence length varies freely — closer to how people write."
+            else "Sentence length varies freely, closer to how people write."
         ),
     )
 
@@ -268,7 +268,7 @@ def _punctuation_signal(text: str) -> Signal:
         float(np.clip(score, 0.0, 1.0)),
         f"Comma share {commas:.2f}, em-dash share {em_like:.2f}, contraction rate {contractions:.3f}. "
         + (
-            "Punctuation is comma-heavy and contraction-light — a common LLM register."
+            "Punctuation is comma-heavy and contraction-light, a common LLM register."
             if score > 0.45
             else "Punctuation mix reads like natural writing."
         ),

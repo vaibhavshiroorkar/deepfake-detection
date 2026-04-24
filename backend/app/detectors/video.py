@@ -214,7 +214,7 @@ def analyze_video(data: bytes, filename: str = "video") -> dict[str, Any]:
                         if score_temporal > 0.6
                         else "Cross-frame temporal patterns do not indicate manipulation."
                         if score_temporal < 0.35
-                        else "Mild temporal irregularities — could be compression or manipulation."
+                        else "Mild temporal irregularities, which could be compression or manipulation."
                     )
                 ),
             })
@@ -261,7 +261,7 @@ def analyze_video(data: bytes, filename: str = "video") -> dict[str, Any]:
             "detail": (
                 "Frame-to-frame high-frequency energy is stable."
                 if flicker < 0.35
-                else "Edges oscillate between frames — typical of per-frame face synthesis."
+                else "Edges oscillate between frames, typical of per-frame face synthesis."
             ),
         })
 

@@ -147,7 +147,7 @@ def perplexity_signal(
     if score > 0.55:
         detail = (
             f"GPT-2 perplexity {overall_ppl:.1f} (sentence CV {ppl_cv:.2f}). "
-            "Text is highly predictable to a language model — consistent with AI generation."
+            "Text is highly predictable to a language model, consistent with AI generation."
         )
     elif score > 0.35:
         detail = (
