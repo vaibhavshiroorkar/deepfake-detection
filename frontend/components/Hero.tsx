@@ -32,7 +32,7 @@ export default function Hero() {
         >
           Is it real?
           <br />
-          <span className="italic text-ink/70" style={{ fontWeight: 400 }}>
+          <span className="italic font-light text-smoke">
             Let&rsquo;s look
             <br className="hidden sm:inline" /> carefully.
           </span>

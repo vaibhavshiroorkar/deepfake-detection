@@ -65,7 +65,7 @@ export default function HowItWorks() {
         >
           No single signal
           <br />
-          <span className="italic text-ink/70">is decisive.</span>
+          <span className="italic text-smoke">is decisive.</span>
         </motion.h2>
 
         <motion.p
