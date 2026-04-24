@@ -88,11 +88,21 @@ async function parseOrThrow(res: Response): Promise<unknown> {
     parsed = raw ? JSON.parse(raw) : null;
   } catch {
     // Non-JSON response — usually an HTML error page (gateway timeout,
-    // CORS block, Cloudflare challenge, etc). Surface something readable.
+    // size-limit rejection at the proxy, CORS block, etc). Surface
+    // something readable based on status.
+    if (res.status === 413) {
+      throw new Error(
+        "File is too large for the detection service. Try a shorter clip or a smaller file.",
+      );
+    }
+    if (res.status === 502 || res.status === 503 || res.status === 504) {
+      throw new Error(
+        "The backend may be cold-starting — try again in 30–60 seconds.",
+      );
+    }
     if (!res.ok) {
       throw new Error(
-        `Detection service returned ${res.status} ${res.statusText}. ` +
-          "The backend may be cold-starting — try again in 30–60 seconds.",
+        `Detection service returned ${res.status} ${res.statusText}.`,
       );
     }
     throw new Error("Detection service returned a non-JSON response.");
@@ -102,6 +112,13 @@ async function parseOrThrow(res: Response): Promise<unknown> {
       (parsed as { detail?: unknown; error?: unknown })?.detail ??
       (parsed as { error?: unknown })?.error ??
       raw;
+    if (res.status === 413) {
+      throw new Error(
+        typeof detail === "string"
+          ? detail
+          : "File is too large for the detection service.",
+      );
+    }
     throw new Error(
       typeof detail === "string" ? detail : `Request failed (${res.status})`,
     );

@@ -19,9 +19,15 @@ const ACCEPT: Record<Kind, string> = {
 };
 
 const LABEL: Record<Kind, { noun: string; hint: string }> = {
-  image: { noun: "an image", hint: "JPEG · PNG · WebP · up to 25 MB" },
-  video: { noun: "a video", hint: "MP4 · WebM · MOV · up to 200 MB" },
-  audio: { noun: "a clip", hint: "MP3 · WAV · FLAC · OGG · up to 50 MB" },
+  image: { noun: "an image", hint: "JPEG · PNG · WebP · up to 20 MB" },
+  video: { noun: "a video", hint: "MP4 · WebM · MOV · up to 50 MB" },
+  audio: { noun: "a clip", hint: "MP3 · WAV · FLAC · OGG · up to 25 MB" },
+};
+
+const MAX_BYTES: Record<Kind, number> = {
+  image: 20 * 1024 * 1024,
+  video: 50 * 1024 * 1024,
+  audio: 25 * 1024 * 1024,
 };
 
 export default function Uploader({ kind, loading, onSubmit }: Props) {
@@ -46,6 +52,12 @@ export default function Uploader({ kind, loading, onSubmit }: Props) {
     const allowed = ACCEPT[kind].split(",");
     if (!allowed.some((a) => f.type === a || f.type.startsWith(a.split("/")[0] + "/"))) {
       alert(`That file type isn't supported for ${kind}.`);
+      return;
+    }
+    if (f.size > MAX_BYTES[kind]) {
+      const mb = (MAX_BYTES[kind] / (1024 * 1024)).toFixed(0);
+      const actual = (f.size / (1024 * 1024)).toFixed(1);
+      alert(`That ${kind} is ${actual} MB — limit is ${mb} MB. Try a smaller or shorter file.`);
       return;
     }
     setFile(f);

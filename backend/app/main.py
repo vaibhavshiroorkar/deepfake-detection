@@ -11,9 +11,9 @@ from .auth import Identity, resolve_identity
 from .db import insert_scan, is_configured as db_is_configured
 from .detectors import analyze_audio, analyze_image, analyze_text, analyze_video
 
-MAX_IMAGE_BYTES = 25 * 1024 * 1024   # 25 MB
-MAX_VIDEO_BYTES = 200 * 1024 * 1024  # 200 MB
-MAX_AUDIO_BYTES = 50 * 1024 * 1024   # 50 MB
+MAX_IMAGE_BYTES = 20 * 1024 * 1024   # 20 MB
+MAX_VIDEO_BYTES = 50 * 1024 * 1024   # 50 MB (HF Spaces gateway caps larger uploads)
+MAX_AUDIO_BYTES = 25 * 1024 * 1024   # 25 MB
 MAX_TEXT_CHARS = 50_000
 
 # Comma-separated list, or "*" for any (default during dev).
