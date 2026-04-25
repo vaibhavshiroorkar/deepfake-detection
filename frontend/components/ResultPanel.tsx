@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ShieldCheck, ShieldAlert } from "lucide-react";
 import { verdictTone, type DetectionResult, type Signal } from "@/lib/api";
+import { narrate } from "@/lib/narrate";
 import HeatmapOverlay from "./HeatmapOverlay";
 import clsx from "clsx";
 
@@ -14,7 +15,6 @@ export default function ResultPanel({
   previewUrl?: string | null;
 }) {
   const tone = verdictTone(result.suspicion);
-  const pct = Math.round(result.suspicion * 100);
   const conf = Math.round(result.confidence * 100);
 
   return (
@@ -58,7 +58,7 @@ export default function ResultPanel({
         <Gauge suspicion={result.suspicion} />
 
         <p className="mt-5 text-sm leading-[1.65] text-smoke max-w-prose">
-          {humanePreamble(result, pct)}
+          {narrate(result)}
         </p>
 
         {result.kind === "image" && result.c2pa?.present && (
@@ -234,27 +234,4 @@ function capitalize(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-function humanePreamble(r: DetectionResult, pct: number): string {
-  if (r.kind === "text") {
-    if (pct < 30) return "The prose reads like a person wrote it: uneven sentences, stray contractions, the occasional sharp turn.";
-    if (pct < 55) return "Some signs of machine drafting, but not enough to lean on. Could be a human who writes cleanly, or an AI draft that's been edited.";
-    if (pct < 75) return "Several markers line up: even sentence lengths, scaffolding phrases, a comma-heavy register. Likely a language model.";
-    return "Strong statistical fingerprints of LLM writing throughout.";
-  }
-  if (r.kind === "video") {
-    if (pct < 30) return "Grain is stable, edges hold between frames, faces sit cleanly on bodies. Nothing unusual.";
-    if (pct < 55) return "A few frames read oddly. Compression and ordinary noise can produce signals like these.";
-    if (pct < 75) return "The clip flickers where it shouldn't, and face boundaries drift across time. Signature of per-frame synthesis.";
-    return "Multiple frames fail the same tests. Treat as synthetic.";
-  }
-  if (r.kind === "audio") {
-    if (pct < 30) return "Pitch moves, silences carry room tone, the spectrum looks like a real recording.";
-    if (pct < 55) return "A couple of markers are mildly raised. Heavy compression or noise reduction can mimic them.";
-    if (pct < 75) return "The voice is too flat, or the silences are too clean, or the spectrum is missing what a microphone would give it.";
-    return "Multiple tells of synthesized speech line up. Likely TTS or a voice clone.";
-  }
-  if (pct < 30) return "Noise is uniform, the spectrum looks like a normal camera capture, no seams around faces.";
-  if (pct < 55) return "A few signals are softly raised. Heavy editing or re-compression can mimic manipulation.";
-  if (pct < 75) return "Several forensic channels disagree with the image's story. Common for composites and generator outputs.";
-  return "Fails multiple independent checks in ways that correlate. Likely manipulated.";
-}
+// humanePreamble has been replaced by narrate() in lib/narrate.ts.
