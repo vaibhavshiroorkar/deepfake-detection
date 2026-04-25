@@ -211,6 +211,8 @@ Required Space secrets are documented in [`backend/README.md`](backend/README.md
 Connect the GitHub repo, set the project root to `frontend/`. Required env vars:
 - `NEXT_PUBLIC_BACKEND_URL` — your HF Space URL, e.g. `https://your-username-deepfake-detection-api.hf.space`. Without this, uploads route through a Vercel serverless function and hit a 4.5 MB body cap.
 - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` for auth.
+- `GROQ_API_KEY` (optional) — enables AI-written verdict summaries. Free key from [console.groq.com](https://console.groq.com). Without it the frontend falls back to a template-based summary (still signal-aware, just deterministic).
+- `GROQ_MODEL` (optional) — defaults to `llama-3.3-70b-versatile`. Any chat-completion model on Groq's free tier works.
 
 ---
 
