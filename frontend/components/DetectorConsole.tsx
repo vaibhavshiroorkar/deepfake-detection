@@ -113,6 +113,10 @@ export default function DetectorConsole() {
                       kind={tab}
                       loading={loading}
                       onPick={(info) => {
+                        // Picking a new file or clearing the current one
+                        // invalidates whatever result was on screen.
+                        setResult(null);
+                        setError(null);
                         if (previewUrl) URL.revokeObjectURL(previewUrl);
                         if (info) {
                           setPreviewUrl(info.previewUrl);

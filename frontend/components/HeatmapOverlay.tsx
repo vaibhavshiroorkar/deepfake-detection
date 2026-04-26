@@ -79,20 +79,22 @@ export default function HeatmapOverlay({
         )}
       </div>
 
-      <div className="relative bg-ink/5 flex justify-center">
-        <img
-          src={base}
-          alt="scanned"
-          className="max-h-[480px] w-auto object-contain"
-        />
-        {overlayUrl && (
+      <div className="bg-ink/5 flex justify-center">
+        <div className="relative inline-block">
           <img
-            src={overlayUrl}
-            alt={`${layer} heatmap`}
-            className="absolute inset-0 max-h-[480px] w-full object-contain pointer-events-none mix-blend-screen"
-            style={{ opacity }}
+            src={base}
+            alt="scanned"
+            className="block max-h-[480px] w-auto"
           />
-        )}
+          {overlayUrl && (
+            <img
+              src={overlayUrl}
+              alt={`${layer} heatmap`}
+              className="absolute inset-0 w-full h-full pointer-events-none mix-blend-screen"
+              style={{ opacity }}
+            />
+          )}
+        </div>
       </div>
 
       {layer !== "off" && (
