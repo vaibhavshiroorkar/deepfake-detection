@@ -163,9 +163,6 @@ export default function Uploader({ kind, loading, onSubmit, onPick }: Props) {
               <div className="mt-1 font-mono text-xs text-mute tracking-wider">
                 {pretty}
               </div>
-              {preview && kind === "audio" && (
-                <audio src={preview} controls className="mt-4 w-full h-9" />
-              )}
               <div className="mt-6 flex items-center gap-6">
                 <button
                   onClick={() => onSubmit(file)}
