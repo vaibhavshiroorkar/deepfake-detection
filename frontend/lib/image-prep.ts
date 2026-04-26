@@ -42,7 +42,62 @@ export async function videoFrameToDataURL(
   url: string,
   maxSide = MAX_SIDE,
 ): Promise<string | null> {
-  if (typeof window === "undefined") return null;
+  const frames = await videoKeyframesToDataURLs(url, 1, maxSide);
+  return frames[0] ?? null;
+}
+
+/**
+ * Extract a small set of evenly-spaced keyframes from a video. Three
+ * frames at 25%, 50%, 75% of duration is enough for a vision LLM to
+ * understand what the clip is actually about, without bloating the
+ * request body or burning vision tokens. A single middle frame is
+ * unreliable (it can land on a black frame, motion blur, or a cut
+ * that misrepresents the video).
+ */
+export async function videoKeyframesToDataURLs(
+  url: string,
+  count = 3,
+  maxSide = MAX_SIDE,
+): Promise<string[]> {
+  if (typeof window === "undefined") return [];
+
+  const targets = await new Promise<number[]>((resolve) => {
+    const v = document.createElement("video");
+    v.muted = true;
+    v.playsInline = true;
+    v.preload = "metadata";
+    v.crossOrigin = "anonymous";
+    v.onloadedmetadata = () => {
+      const dur = isFinite(v.duration) && v.duration > 0 ? v.duration : 0;
+      v.removeAttribute("src");
+      v.load();
+      if (!dur) return resolve([0.1]);
+      // Avoid 0 and the very end so we don't catch boundary artefacts.
+      const list: number[] = [];
+      for (let i = 1; i <= count; i++) {
+        list.push((dur * i) / (count + 1));
+      }
+      resolve(list);
+    };
+    v.onerror = () => resolve([0.1]);
+    setTimeout(() => resolve([0.1]), 4000);
+    v.src = url;
+  });
+
+  const out: string[] = [];
+  for (const t of targets) {
+    const frame = await captureVideoFrame(url, t, maxSide);
+    if (frame) out.push(frame);
+  }
+  return out;
+}
+
+function captureVideoFrame(
+  url: string,
+  timestamp: number,
+  maxSide: number,
+): Promise<string | null> {
+  if (typeof window === "undefined") return Promise.resolve(null);
   return new Promise((resolve) => {
     const v = document.createElement("video");
     v.muted = true;
@@ -61,9 +116,9 @@ export async function videoFrameToDataURL(
       resolve(out);
     };
     v.onloadedmetadata = () => {
-      // Aim for the middle frame, capped at 1.5s for very long clips.
-      const target = Math.min(v.duration / 2 || 0.5, 1.5);
-      v.currentTime = isFinite(target) ? target : 0.1;
+      const dur = isFinite(v.duration) && v.duration > 0 ? v.duration : 0;
+      const target = dur ? Math.min(timestamp, Math.max(0, dur - 0.1)) : 0.1;
+      v.currentTime = target;
     };
     v.onseeked = () => {
       try {
@@ -84,7 +139,6 @@ export async function videoFrameToDataURL(
       }
     };
     v.onerror = () => finish(null);
-    // Some browsers won't seek without a play() nudge.
     setTimeout(() => finish(null), 6000);
     v.src = url;
   });

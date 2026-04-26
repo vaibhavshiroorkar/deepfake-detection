@@ -52,16 +52,28 @@ _AI_IMAGE_MODEL = os.getenv("VERITAS_AI_IMAGE_MODEL", "Organika/sdxl-detector")
 _AI_IMAGE_MODEL_V2 = os.getenv("VERITAS_AI_IMAGE_MODEL_V2", "umm-maybe/AI-image-detector")
 
 # Pretrained audio deepfake classifier (wav2vec2-based, binary).
-# Trained primarily on ASVspoof-style TTS. Weaker on modern voice
-# clones (ElevenLabs, XTTS). Train a Whisper head for the real lift.
-_AUDIO_DF_MODEL = os.getenv("VERITAS_AUDIO_DF_MODEL", "MelodyMachine/Deepfake-audio-detection")
+# motheecreator/Deepfake-audio-detection is a well-maintained
+# fine-tune that handles modern TTS / voice-clone families more
+# reliably than the older default. Override via VERITAS_AUDIO_DF_MODEL.
+# Fallback alternatives:
+#   "MelodyMachine/Deepfake-audio-detection"   (older, narrower)
+#   "WpythonW/ast-deepfake-detection"          (AST-based)
+_AUDIO_DF_MODEL = os.getenv(
+    "VERITAS_AUDIO_DF_MODEL",
+    "motheecreator/Deepfake-audio-detection",
+)
 
-# Pretrained AI-text classifier (RoBERTa, binary — Real vs Fake).
-# This default is the original GPT-2 era OpenAI detector and noticeably
-# under-detects modern LLM output (GPT-4, Claude, Gemini, Llama 3).
-# Override via VERITAS_TEXT_DF_MODEL when you find a head trained on
-# more recent generations, or fine-tune one yourself.
-_TEXT_DF_MODEL = os.getenv("VERITAS_TEXT_DF_MODEL", "roberta-base-openai-detector")
+# Pretrained AI-text classifier. We default to the andreas122001
+# RoBERTa head trained on a mix of GPT-2/3, ChatGPT, and other modern
+# LLMs, which handles 2023+ output noticeably better than the original
+# OpenAI GPT-2 detector. Override via VERITAS_TEXT_DF_MODEL.
+# Fallback alternatives if the default is ever unavailable:
+#   "roberta-base-openai-detector"             (GPT-2 era only)
+#   "Hello-SimpleAI/chatgpt-detector-roberta"  (ChatGPT focused)
+_TEXT_DF_MODEL = os.getenv(
+    "VERITAS_TEXT_DF_MODEL",
+    "andreas122001/roberta-mixed-detector",
+)
 
 # Whisper variant used for audio feature extraction. On low-RAM hosts
 # (e.g. HF Spaces free tier), set to "openai/whisper-tiny".

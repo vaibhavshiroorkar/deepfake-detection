@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { DetectionResult } from "./api";
 import { narrate } from "./narrate";
-import { imageToScaledDataURL, videoFrameToDataURL } from "./image-prep";
+import { imageToScaledDataURL, videoKeyframesToDataURLs } from "./image-prep";
 
 type State =
   | { status: "loading"; text: null; source: null; vision: false }
@@ -54,15 +54,21 @@ export function useNarrative(
 
     (async () => {
       let imageDataUrl: string | null = null;
+      let imageDataUrls: string[] | null = null;
       if (previewUrl) {
         try {
           if (result.kind === "image") {
             imageDataUrl = await imageToScaledDataURL(previewUrl);
           } else if (result.kind === "video") {
-            imageDataUrl = await videoFrameToDataURL(previewUrl);
+            // Three keyframes at 25/50/75% of duration so the model
+            // sees the actual content, not a single frame that might
+            // misrepresent what the clip is about.
+            imageDataUrls = await videoKeyframesToDataURLs(previewUrl, 3);
+            if (imageDataUrls.length === 0) imageDataUrls = null;
           }
         } catch {
           imageDataUrl = null;
+          imageDataUrls = null;
         }
       }
       if (cancelled) return;
@@ -78,6 +84,7 @@ export function useNarrative(
             confidence: result.confidence,
             signals: result.signals,
             image_data_url: imageDataUrl,
+            image_data_urls: imageDataUrls,
           }),
           signal: ctrl.signal,
         });

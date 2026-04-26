@@ -10,7 +10,10 @@ type Body = {
   verdict: string;
   confidence: number;
   signals: Signal[];
+  // Single image (image scans) or array of keyframes (video scans).
+  // Either may be present, never both.
   image_data_url?: string | null;
+  image_data_urls?: string[] | null;
 };
 
 const GROQ_KEY = process.env.GROQ_API_KEY;
@@ -39,7 +42,7 @@ Rules:
 
 Return the summary only. No greeting. No "Here is".`;
 
-const SYSTEM_VISION = `You are looking at an image (or a frame from a video) and explaining a deepfake check result to a regular person. You can see the picture. Your job is to point at what's actually there.
+const SYSTEM_VISION = `You are looking at an image (or a few frames from a video) and explaining a deepfake check result to a regular person. You can see the picture(s). Your job is to point at what's actually there.
 
 Voice:
 - Plain language. No jargon. Talk like a friend.
@@ -48,15 +51,16 @@ Voice:
 - "AI-generated" or "fake" or "real" are fine.
 
 What to do:
-- Look at the picture. Mention one or two specific things you actually see (skin, hair, eyes, hands, lighting, background, edges, shadows, text in the image).
-- Tie what you see to the verdict. If something looks off, say what. If it looks normal, say that.
-- Use the signal data as backup, not as the main story. The picture is the main story.
-- If the picture and the signals disagree, say so plainly.
+- First, describe what you actually see. If it's a video and the frames show a car, say "the clip shows a car" not "I see a person". Don't make up content that isn't in the frames.
+- Mention one or two specific things that look real or fake (skin, hair, eyes, hands, lighting, background, edges, shadows, text, motion blur, reflections, the way objects sit on a surface).
+- For videos: if multiple frames are shown, they're keyframes from the same clip. Treat them as one piece of evidence. If something is consistent across frames, that's a clue. If something jumps around, that's a different clue.
+- For videos: when the data includes "Audio:" signals or an "Audio track overall" signal, the audio was also analysed. Mention what the audio says (e.g., "the audio sounds clean" or "the voice has the flat quality of a clone") if it's relevant.
+- Tie what you see to the verdict. If the picture and the signals disagree, say so plainly.
 
 Rules:
 - 2 to 4 sentences. Never more.
 - Never use long dashes. Use commas, colons, or periods.
-- Don't invent details that aren't in the picture or the data.
+- Don't invent details that aren't in the frames or the data. If you don't see a person, don't talk about a person.
 - If you can't tell, say so.
 - Vary how you start. Don't begin with "This image" every time.
 - No lists. No headings. Just a short paragraph.
@@ -102,12 +106,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "bad_body" }, { status: 400 });
   }
 
-  // Use vision when we have an image and the modality is one where vision
-  // adds value (image or video frame). Audio and text stay text-only.
-  const hasImage =
+  // Collect the images we have. image_data_urls (array) takes precedence
+  // for video keyframes; image_data_url (single) is used for images.
+  const imageList: string[] = [];
+  if (Array.isArray(body.image_data_urls)) {
+    for (const u of body.image_data_urls) {
+      if (typeof u === "string" && u.startsWith("data:image/")) imageList.push(u);
+    }
+  }
+  if (
+    imageList.length === 0 &&
     typeof body.image_data_url === "string" &&
-    body.image_data_url.startsWith("data:image/");
-  const useVision = hasImage && (body.kind === "image" || body.kind === "video");
+    body.image_data_url.startsWith("data:image/")
+  ) {
+    imageList.push(body.image_data_url);
+  }
+  const useVision = imageList.length > 0 && (body.kind === "image" || body.kind === "video");
 
   const ctrl = new AbortController();
   const timeout = setTimeout(() => ctrl.abort(), 15_000);
@@ -120,10 +134,10 @@ export async function POST(req: NextRequest) {
             role: "user",
             content: [
               { type: "text", text: buildUserPrompt(body) },
-              {
-                type: "image_url",
-                image_url: { url: body.image_data_url },
-              },
+              ...imageList.map((u) => ({
+                type: "image_url" as const,
+                image_url: { url: u },
+              })),
             ],
           },
         ]

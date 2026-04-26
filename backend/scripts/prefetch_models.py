@@ -61,7 +61,9 @@ def main() -> int:
             f"{name} weights",
         )
 
-    audio_model = "MelodyMachine/Deepfake-audio-detection"
+    audio_model = os.getenv(
+        "VERITAS_AUDIO_DF_MODEL", "motheecreator/Deepfake-audio-detection"
+    )
     _safe(
         lambda: AutoFeatureExtractor.from_pretrained(audio_model),
         f"{audio_model} processor",
@@ -71,7 +73,9 @@ def main() -> int:
         f"{audio_model} weights",
     )
 
-    text_model = "roberta-base-openai-detector"
+    text_model = os.getenv(
+        "VERITAS_TEXT_DF_MODEL", "andreas122001/roberta-mixed-detector"
+    )
     _safe(lambda: AutoTokenizer.from_pretrained(text_model), f"{text_model} tokenizer")
     _safe(
         lambda: AutoModelForSequenceClassification.from_pretrained(text_model),
