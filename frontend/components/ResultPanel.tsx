@@ -58,26 +58,34 @@ export default function ResultPanel({
 
         <Gauge suspicion={result.suspicion} />
 
-        <motion.p
-          key={narrative.text}
-          initial={{ opacity: narrative.source === "ai" ? 0 : 1 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.45 }}
-          className="mt-5 text-sm leading-[1.65] text-smoke max-w-prose"
-        >
-          {narrative.text}
-        </motion.p>
-        {narrative.source === "ai" && (
-          <div className="mt-2 flex items-center gap-1.5 text-[10px] tracking-widest uppercase text-mute font-mono">
-            <Sparkles className="size-3 text-ember" strokeWidth={1.6} />
-            <span>Written by Llama 3.3</span>
+        {narrative.status === "loading" ? (
+          <div className="mt-5 max-w-prose space-y-2" aria-busy="true">
+            <div className="h-3 w-[92%] bg-ink/10 pulse-soft rounded-sm" />
+            <div className="h-3 w-[80%] bg-ink/10 pulse-soft rounded-sm" />
+            <div className="h-3 w-[60%] bg-ink/10 pulse-soft rounded-sm" />
+            <div className="mt-3 flex items-center gap-1.5 text-[10px] tracking-widest uppercase text-mute font-mono">
+              <Sparkles className="size-3 text-ember" strokeWidth={1.6} />
+              <span>Writing it up</span>
+            </div>
           </div>
-        )}
-        {narrative.loading && narrative.source === "template" && (
-          <div className="mt-2 flex items-center gap-1.5 text-[10px] tracking-widest uppercase text-mute font-mono">
-            <span className="size-1.5 rounded-full bg-ember pulse-soft" />
-            <span>Asking the model for a richer take</span>
-          </div>
+        ) : (
+          <>
+            <motion.p
+              key={narrative.text}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45 }}
+              className="mt-5 text-sm leading-[1.65] text-smoke max-w-prose"
+            >
+              {narrative.text}
+            </motion.p>
+            {narrative.source === "ai" && (
+              <div className="mt-2 flex items-center gap-1.5 text-[10px] tracking-widest uppercase text-mute font-mono">
+                <Sparkles className="size-3 text-ember" strokeWidth={1.6} />
+                <span>Written by Llama 3.3</span>
+              </div>
+            )}
+          </>
         )}
 
         {result.kind === "image" && result.c2pa?.present && (

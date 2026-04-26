@@ -34,13 +34,19 @@ from .signal import Signal
 # Probability calibration — temper over-confident pretrained classifiers
 # ---------------------------------------------------------------------------
 
-def _calibrate(p: float, center: float = 0.72, slope: float = 6.0) -> float:
-    """Sigmoid calibration: pulls low/mid scores toward 0 and only amplifies
-    scores well above `center`. Counters the habit of some pretrained
-    detectors of returning 0.9+ on ordinary modern photography.
+def _calibrate(p: float, center: float = 0.62, slope: float = 5.5) -> float:
+    """Sigmoid calibration: pulls low/mid scores toward 0 and amplifies
+    scores above `center`. Counters the habit of some pretrained
+    detectors of returning 0.9+ on ordinary modern photography, while
+    still letting confident calls through the gate.
 
-    p=0.3 →0.07, p=0.5 →0.23, p=0.7 →0.47, p=0.8 →0.62,
-    p=0.9 →0.74, p=0.95 →0.80, p=0.98 →0.83, p=1.0 →0.85
+    Center loosened from 0.72 to 0.62 and slope from 6.0 to 5.5 so
+    moderately-confident classifier outputs (around 0.7 to 0.8 raw)
+    aren't pulled all the way back into the inconclusive band. The
+    earlier values were dampening genuine fake calls too aggressively.
+
+    p=0.3 →0.05, p=0.5 →0.34, p=0.7 →0.62, p=0.8 →0.79,
+    p=0.9 →0.89, p=0.95 →0.93, p=0.98 →0.95, p=1.0 →0.96
     """
     return 1.0 / (1.0 + math.exp(-(p - center) * slope))
 

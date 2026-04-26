@@ -42,6 +42,8 @@ _FORCE_CPU = os.getenv("VERITAS_FORCE_CPU", "0") == "1"
 
 # Pretrained AI-image classifier. Defaults to a Swin-v2 model trained on
 # SDXL outputs vs. real photographs. Override with VERITAS_AI_IMAGE_MODEL.
+# Known limitation: trained on SDXL-era outputs, weaker on Flux / Midjourney
+# v6 / Sora. Real fix is training a DINOv2 head; see backend/training.
 _AI_IMAGE_MODEL = os.getenv("VERITAS_AI_IMAGE_MODEL", "Organika/sdxl-detector")
 
 # Second AI-image classifier used in ensemble. A Swin-based detector
@@ -50,9 +52,15 @@ _AI_IMAGE_MODEL = os.getenv("VERITAS_AI_IMAGE_MODEL", "Organika/sdxl-detector")
 _AI_IMAGE_MODEL_V2 = os.getenv("VERITAS_AI_IMAGE_MODEL_V2", "umm-maybe/AI-image-detector")
 
 # Pretrained audio deepfake classifier (wav2vec2-based, binary).
+# Trained primarily on ASVspoof-style TTS. Weaker on modern voice
+# clones (ElevenLabs, XTTS). Train a Whisper head for the real lift.
 _AUDIO_DF_MODEL = os.getenv("VERITAS_AUDIO_DF_MODEL", "MelodyMachine/Deepfake-audio-detection")
 
 # Pretrained AI-text classifier (RoBERTa, binary — Real vs Fake).
+# This default is the original GPT-2 era OpenAI detector and noticeably
+# under-detects modern LLM output (GPT-4, Claude, Gemini, Llama 3).
+# Override via VERITAS_TEXT_DF_MODEL when you find a head trained on
+# more recent generations, or fine-tune one yourself.
 _TEXT_DF_MODEL = os.getenv("VERITAS_TEXT_DF_MODEL", "roberta-base-openai-detector")
 
 # Whisper variant used for audio feature extraction. On low-RAM hosts
