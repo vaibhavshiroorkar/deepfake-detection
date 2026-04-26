@@ -27,6 +27,7 @@ export default function DetectorConsole() {
   const [fileInfo, setFileInfo] = useState<{ name: string; size: number } | null>(
     null,
   );
+  const [lastTextInput, setLastTextInput] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -95,6 +96,7 @@ export default function DetectorConsole() {
                         setLoading(true);
                         setError(null);
                         setResult(null);
+                        setLastTextInput(text);
                         try {
                           const { detectText } = await import("@/lib/api");
                           const r = await detectText(text);
@@ -183,7 +185,11 @@ export default function DetectorConsole() {
                 className="mt-6"
               >
                 <ErrorBoundary>
-                  <ResultPanel result={result} previewUrl={previewUrl} />
+                  <ResultPanel
+                    result={result}
+                    previewUrl={previewUrl}
+                    inputText={lastTextInput}
+                  />
                 </ErrorBoundary>
               </motion.div>
             )}
@@ -196,6 +202,11 @@ export default function DetectorConsole() {
             previewUrl={previewUrl}
             fileName={fileInfo?.name ?? null}
             fileSize={fileInfo?.size ?? null}
+            transcript={
+              result && result.kind === "audio" && result.transcript
+                ? result.transcript
+                : null
+            }
           />
         )}
       </div>

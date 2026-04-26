@@ -327,6 +327,7 @@ def analyze_video(data: bytes, filename: str = "video") -> dict[str, Any]:
         # final verdict weighting reverts to video-only.
         audio_bytes = _extract_audio_wav(tmp_path)
         audio_score = None
+        audio_transcript: dict | None = None
         if audio_bytes is not None:
             try:
                 audio_result = analyze_audio(audio_bytes, filename=f"{filename}#audio")
@@ -347,6 +348,11 @@ def analyze_video(data: bytes, filename: str = "video") -> dict[str, Any]:
                         "Matches the standalone audio detector."
                     ),
                 })
+                # Pull the transcript through so the video player can
+                # render synced subtitles.
+                t = audio_result.get("transcript")
+                if isinstance(t, dict) and (t.get("text") or t.get("chunks")):
+                    audio_transcript = t
             except Exception as exc:  # noqa: BLE001
                 log.warning("audio sub-analysis failed: %s", exc)
 
@@ -388,7 +394,7 @@ def analyze_video(data: bytes, filename: str = "video") -> dict[str, Any]:
         width = meta["width"]
         height = meta["height"]
 
-        return {
+        out: dict[str, Any] = {
             "kind": "video",
             "filename": filename,
             "duration_seconds": round(duration, 2),
@@ -399,6 +405,9 @@ def analyze_video(data: bytes, filename: str = "video") -> dict[str, Any]:
             "signals": signals,
             "timeline": per_frame,
         }
+        if audio_transcript:
+            out["transcript"] = audio_transcript
+        return out
     finally:
         try:
             os.remove(tmp_path)

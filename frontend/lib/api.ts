@@ -31,12 +31,24 @@ export type ImageResult = BaseResult & {
   id?: string;
 };
 
+export type TranscriptChunk = {
+  start: number;
+  end: number;
+  text: string;
+};
+
+export type Transcript = {
+  text: string;
+  chunks: TranscriptChunk[];
+};
+
 export type VideoResult = BaseResult & {
   kind: "video";
   filename: string;
   duration_seconds: number;
   dimensions: { width: number; height: number };
   timeline: { timestamp: number; suspicion: number; verdict: string }[];
+  transcript?: Transcript;
   id?: string;
 };
 
@@ -45,6 +57,7 @@ export type AudioResult = BaseResult & {
   filename: string;
   duration_seconds: number;
   sample_rate: number;
+  transcript?: Transcript;
   id?: string;
 };
 

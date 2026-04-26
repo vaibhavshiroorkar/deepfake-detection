@@ -29,6 +29,7 @@ _ai_classifier_v2: tuple[Any, Any, dict] | None = None
 _audio_df: tuple[Any, Any, dict] | None = None
 _text_df: tuple[Any, Any, dict] | None = None
 _whisper: tuple[Any, Any] | None = None
+_whisper_asr: tuple[Any, Any] | None = None
 _face_detector: Any = None
 
 # Phase-2 singletons
@@ -286,6 +287,28 @@ def get_whisper_encoder() -> tuple[Any, Any]:
                 encoder = full.encoder.to(get_device()).eval()
                 _whisper = (encoder, processor)
     return _whisper
+
+
+def get_whisper_transcriber() -> tuple[Any, Any]:
+    """Returns (model, processor) for full Whisper ASR (encoder + decoder).
+
+    Used for transcribing audio and video so the UI can show a subtitle
+    box with timestamps. Cached separately from the encoder-only pair
+    above because that one has the decoder stripped.
+    """
+    global _whisper_asr
+    if _whisper_asr is None:
+        with _lock:
+            if _whisper_asr is None:
+                from transformers import (
+                    WhisperForConditionalGeneration,
+                    WhisperProcessor,
+                )
+                processor = WhisperProcessor.from_pretrained(_WHISPER_MODEL)
+                model = WhisperForConditionalGeneration.from_pretrained(_WHISPER_MODEL)
+                model = model.to(get_device()).eval()
+                _whisper_asr = (model, processor)
+    return _whisper_asr
 
 
 # ---------------------------------------------------------------------------

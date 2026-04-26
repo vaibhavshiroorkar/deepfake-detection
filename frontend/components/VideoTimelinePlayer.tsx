@@ -9,7 +9,8 @@ import {
 } from "react";
 import { Play, Pause } from "lucide-react";
 import clsx from "clsx";
-import { verdictTone } from "@/lib/api";
+import { verdictTone, type Transcript } from "@/lib/api";
+import SubtitleBox from "./SubtitleBox";
 
 type TimelinePoint = {
   timestamp: number;
@@ -21,6 +22,7 @@ type Props = {
   src: string;
   timeline: TimelinePoint[];
   duration: number;
+  transcript?: Transcript;
 };
 
 function formatTime(seconds: number): string {
@@ -66,6 +68,7 @@ export default function VideoTimelinePlayer({
   src,
   timeline,
   duration,
+  transcript,
 }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -307,6 +310,22 @@ export default function VideoTimelinePlayer({
           {sortedTimeline.length} sampled frames
         </span>
       </div>
+
+      {transcript && (transcript.text || transcript.chunks?.length > 0) && (
+        <div className="border-t border-rule">
+          <SubtitleBox
+            transcript={transcript}
+            currentTime={current}
+            onSeek={(t) => {
+              const v = videoRef.current;
+              if (!v) return;
+              v.currentTime = Math.max(0, Math.min(actualDuration, t));
+              setCurrent(v.currentTime);
+            }}
+            title="Spoken transcript"
+          />
+        </div>
+      )}
     </div>
   );
 }

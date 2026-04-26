@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ShieldCheck, ShieldAlert, Sparkles } from "lucide-react";
 import { verdictTone, type DetectionResult, type Signal } from "@/lib/api";
 import { useNarrative } from "@/lib/use-narrative";
+import { useCrossCheck } from "@/lib/use-cross-check";
 import HeatmapOverlay from "./HeatmapOverlay";
 import VideoTimelinePlayer from "./VideoTimelinePlayer";
 import clsx from "clsx";
@@ -11,13 +12,20 @@ import clsx from "clsx";
 export default function ResultPanel({
   result,
   previewUrl,
+  inputText,
 }: {
   result: DetectionResult;
   previewUrl?: string | null;
+  inputText?: string;
 }) {
   const tone = verdictTone(result.suspicion);
   const conf = Math.round(result.confidence * 100);
   const narrative = useNarrative(result, previewUrl);
+  const crossCheck = useCrossCheck(result, previewUrl, inputText);
+
+  const renderedSignals: Signal[] = crossCheck.signal
+    ? [...result.signals, crossCheck.signal]
+    : result.signals;
 
   return (
     <article className="border border-rule bg-paper">
@@ -108,9 +116,30 @@ export default function ResultPanel({
       <div className="px-5 py-6 md:px-7 md:py-8">
         <div className="text-xs text-mute mb-4">Signals examined</div>
         <ul className="space-y-4">
-          {result.signals.map((s, i) => (
+          {renderedSignals.map((s, i) => (
             <SignalRow key={s.name} signal={s} index={i} />
           ))}
+          {crossCheck.status === "loading" && (
+            <li className="opacity-60">
+              <div className="flex items-baseline justify-between gap-4">
+                <span className="text-[0.95rem] text-ink font-semibold tracking-tight flex items-center gap-1.5">
+                  <Sparkles className="size-3 text-ember" strokeWidth={1.6} />
+                  {result.kind === "image"
+                    ? "Vision LLM cross-check"
+                    : result.kind === "text"
+                      ? "Language LLM cross-check"
+                      : "LLM cross-check"}
+                </span>
+                <span className="text-xs text-mute">…</span>
+              </div>
+              <div className="mt-1.5 h-[2px] bg-rule relative overflow-hidden">
+                <div className="absolute inset-y-0 left-0 w-1/3 bg-ember/40 pulse-soft" />
+              </div>
+              <p className="mt-2 text-[0.8125rem] leading-[1.55] text-mute">
+                Asking a foundation model for an independent opinion.
+              </p>
+            </li>
+          )}
         </ul>
 
         {result.kind === "video" && result.timeline && previewUrl && (
@@ -122,6 +151,7 @@ export default function ResultPanel({
               src={previewUrl}
               timeline={result.timeline}
               duration={result.duration_seconds || 0}
+              transcript={result.transcript}
             />
           </div>
         )}

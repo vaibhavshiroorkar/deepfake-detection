@@ -44,7 +44,9 @@ def main() -> int:
             GPT2LMHeadModel,
             GPT2TokenizerFast,
             WhisperFeatureExtractor,
+            WhisperForConditionalGeneration,
             WhisperModel,
+            WhisperProcessor,
         )
     except ImportError as exc:
         log.error("transformers not installed: %s", exc)
@@ -89,6 +91,15 @@ def main() -> int:
     _safe(
         lambda: WhisperModel.from_pretrained(WHISPER_MODEL),
         f"{WHISPER_MODEL} weights",
+    )
+    # Full Whisper (encoder + decoder) for transcription / subtitles.
+    _safe(
+        lambda: WhisperProcessor.from_pretrained(WHISPER_MODEL),
+        f"{WHISPER_MODEL} ASR processor",
+    )
+    _safe(
+        lambda: WhisperForConditionalGeneration.from_pretrained(WHISPER_MODEL),
+        f"{WHISPER_MODEL} ASR weights",
     )
 
     _safe(lambda: GPT2TokenizerFast.from_pretrained("gpt2"), "gpt2 tokenizer")

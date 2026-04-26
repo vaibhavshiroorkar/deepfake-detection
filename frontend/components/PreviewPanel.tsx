@@ -1,6 +1,9 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { FileImage, FileVideo, FileAudio } from "lucide-react";
+import SubtitleBox from "./SubtitleBox";
+import type { Transcript } from "@/lib/api";
 
 type Kind = "image" | "video" | "audio";
 
@@ -9,6 +12,7 @@ type Props = {
   previewUrl: string | null;
   fileName?: string | null;
   fileSize?: number | null;
+  transcript?: Transcript | null;
 };
 
 function formatSize(bytes: number | null | undefined) {
@@ -22,9 +26,26 @@ export default function PreviewPanel({
   previewUrl,
   fileName,
   fileSize,
+  transcript,
 }: Props) {
   const prettySize = formatSize(fileSize);
   const hasFile = Boolean(previewUrl);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [audioTime, setAudioTime] = useState(0);
+
+  useEffect(() => {
+    const a = audioRef.current;
+    if (!a) return;
+    const onTime = () => setAudioTime(a.currentTime);
+    a.addEventListener("timeupdate", onTime);
+    return () => a.removeEventListener("timeupdate", onTime);
+  }, [previewUrl]);
+
+  const showAudioSubtitles =
+    kind === "audio" &&
+    previewUrl &&
+    transcript &&
+    (transcript.text || (transcript.chunks && transcript.chunks.length > 0));
 
   return (
     <aside className="border border-ink bg-paper sticky top-[5.5rem] self-start">
@@ -49,12 +70,33 @@ export default function PreviewPanel({
         ) : kind === "audio" && previewUrl ? (
           <div className="w-full p-6 flex flex-col items-center gap-5">
             <FileAudio className="size-10 text-ink" strokeWidth={1.2} />
-            <audio src={previewUrl} controls className="w-full h-10" />
+            <audio
+              ref={audioRef}
+              src={previewUrl}
+              controls
+              className="w-full h-10"
+            />
           </div>
         ) : (
           <EmptyState kind={kind} />
         )}
       </div>
+
+      {showAudioSubtitles && (
+        <div className="border-b border-rule">
+          <SubtitleBox
+            transcript={transcript!}
+            currentTime={audioTime}
+            onSeek={(t) => {
+              const a = audioRef.current;
+              if (!a) return;
+              a.currentTime = Math.max(0, t);
+              setAudioTime(a.currentTime);
+            }}
+            title="Spoken transcript"
+          />
+        </div>
+      )}
 
       <footer className="px-5 py-3 flex items-center justify-between min-h-[2.75rem]">
         {hasFile && fileName ? (

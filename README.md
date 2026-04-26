@@ -41,19 +41,25 @@ For any submission, several independent checks run in parallel and each emits a 
 - A temporal-flicker check looks for the per-frame wobble face generators leave behind.
 - Optional `TemporalTransformer` (DINOv2 frame embeddings + transformer encoder) when weights are configured; otherwise per-frame DINOv2 plus the heuristic.
 - The audio track is extracted with ffmpeg and run through the standalone audio detector. It contributes 18% weight to the final score, zero when there's no audio.
-- Result includes a frame-by-frame timeline.
+- Whisper transcribes the audio track for the synced subtitle box on the player.
+- Result includes a frame-by-frame timeline plus a custom video player that paints suspicion intensity along the seek bar.
 
 ### Audio
-- `MelodyMachine/Deepfake-audio-detection` (wav2vec2-based binary classifier) is the primary signal.
+- `motheecreator/Deepfake-audio-detection` (wav2vec2-based binary classifier) is the primary signal, sigmoid-calibrated to dampen the false positives the model reports on clean studio recordings.
 - Whisper-base encoder features feed an adjacent-frame cosine heuristic.
 - Classical signals: pitch variability, silence-floor cleanliness, energy-envelope rhythm.
+- Whisper full model transcribes the clip with per-segment timestamps for the subtitle box.
 
 ### Text
-- `roberta-base-openai-detector` for binary discriminator.
+- `andreas122001/roberta-mixed-detector` for the binary discriminator (mixed GPT-2 / GPT-3 / ChatGPT / Llama / Mistral training, replaces the GPT-2-era OpenAI detector default).
 - GPT-2 perplexity, including per-sentence variance ("burstiness").
 - Heuristic signals: sentence-length burstiness, lexical rhythm, function-word frequency, scaffolding-phrase repetition, punctuation patterns.
 
-The frontend reads the signal payload and generates a narrative summary that names the strongest and quietest signals and highlights any disagreement between learned classifiers and forensic checks. See [`frontend/lib/narrate.ts`](frontend/lib/narrate.ts).
+### LLM cross-check (free, optional)
+- When `GROQ_API_KEY` is set on Vercel, every image and text scan kicks off a parallel cross-check against a foundation model (Llama 4 Scout vision for images, Llama 3.3 70B for text). The model returns a 0-1 score plus a one-sentence reason which appears as an extra signal in the result. This catches recent generators that the dedicated detectors miss because they were trained on older outputs. Audio and video aren't cross-checked this way (LLMs can't hear audio meaningfully, and video is already covered by the per-frame image pipeline).
+- The cross-check runs after the scan returns, so it doesn't slow down the verdict. It just appears as an additional signal once the LLM responds.
+
+The frontend reads the signal payload and generates a narrative summary that names the strongest and quietest signals and highlights any disagreement between learned classifiers and forensic checks. See [`frontend/lib/narrate.ts`](frontend/lib/narrate.ts) and [`frontend/lib/use-cross-check.ts`](frontend/lib/use-cross-check.ts).
 
 ---
 
@@ -92,10 +98,12 @@ Bundled and used by default (downloaded by Hugging Face Transformers, no trainin
 | Image | [`Organika/sdxl-detector`](https://huggingface.co/Organika/sdxl-detector) | Primary AI-image classifier (Swin-v2) |
 | Image | [`umm-maybe/AI-image-detector`](https://huggingface.co/umm-maybe/AI-image-detector) | Ensemble vote, different training mix |
 | Image | MTCNN via `facenet-pytorch` | Face detection for per-face classification |
-| Audio | [`MelodyMachine/Deepfake-audio-detection`](https://huggingface.co/MelodyMachine/Deepfake-audio-detection) | wav2vec2 binary classifier |
+| Audio | [`motheecreator/Deepfake-audio-detection`](https://huggingface.co/motheecreator/Deepfake-audio-detection) | wav2vec2 binary classifier (with sigmoid calibration) |
 | Audio | `openai/whisper-base` (or `whisper-tiny` on free tier) | Encoder for spectral feature extraction |
-| Text | [`roberta-base-openai-detector`](https://huggingface.co/roberta-base-openai-detector) | Binary discriminator |
+| Audio + Video | `openai/whisper-base` ASR | Transcription with per-segment timestamps for the subtitle box |
+| Text | [`andreas122001/roberta-mixed-detector`](https://huggingface.co/andreas122001/roberta-mixed-detector) | Binary discriminator (modern multi-LLM training) |
 | Text | `gpt2` | Perplexity scoring and per-sentence burstiness |
+| Image + Text | Llama 4 Scout (vision) / Llama 3.3 70B (text) on Groq free tier | Foundation-model cross-check signal, when `GROQ_API_KEY` is set |
 
 Optional, scaffolded but require trained weights to activate:
 
@@ -211,9 +219,30 @@ Required Space secrets are documented in [`backend/README.md`](backend/README.md
 Connect the GitHub repo, set the project root to `frontend/`. Required env vars:
 - `NEXT_PUBLIC_BACKEND_URL` — your HF Space URL, e.g. `https://your-username-deepfake-detection-api.hf.space`. Without this, uploads route through a Vercel serverless function and hit a 4.5 MB body cap.
 - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` for auth.
-- `GROQ_API_KEY` (optional) — enables AI-written verdict summaries. Free key from [console.groq.com](https://console.groq.com). Without it the frontend falls back to a template-based summary (still signal-aware, just deterministic).
+- `GROQ_API_KEY` (optional, free) — enables both the AI-written verdict summaries and the LLM cross-check signal that runs in parallel with the dedicated detectors. Free key from [console.groq.com](https://console.groq.com). Without it the frontend falls back to a template-based summary and skips the cross-check.
 - `GROQ_MODEL` (optional) — text-only model. Defaults to `llama-3.3-70b-versatile`.
-- `GROQ_VISION_MODEL` (optional) — vision-capable model used for image and video scans, where the LLM actually sees the picture (or middle frame) and can name specific things that look real or fake. Defaults to `meta-llama/llama-4-scout-17b-16e-instruct`. Any vision-capable Groq model works.
+- `GROQ_VISION_MODEL` (optional) — vision-capable model used for image and video scans, where the LLM actually sees the picture (or video keyframes) and can name specific things that look real or fake. Defaults to `meta-llama/llama-4-scout-17b-16e-instruct`. Any vision-capable Groq model works.
+
+---
+
+## Optional paid upgrades
+
+The free stack above is the default. If you want to push accuracy further and don't mind paying per request, these slot in cleanly:
+
+### Anthropic Claude or OpenAI as the cross-check provider
+The `/api/cross-check` route currently calls Groq because the free tier is generous. The same prompt structure works with Claude Sonnet 4.5 (vision) or GPT-4o-mini (vision). Both are slightly stronger at recent-generator detection in informal testing. To swap:
+- Add `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` to Vercel.
+- Modify the route handler to call the provider's chat-completions endpoint instead of Groq's. The OpenAI SDK works for both (Anthropic exposes an OpenAI-compatible endpoint).
+- Cost: ~$0.001 to $0.005 per scan.
+
+### Larger Whisper model for transcription
+Default is `whisper-base` (or `whisper-tiny` on the free CPU tier). Set `VERITAS_WHISPER_MODEL=openai/whisper-small` or `whisper-medium` for noticeably better transcription quality on noisy audio. `whisper-medium` is ~770 MB and adds ~5 seconds per scan on CPU; on a paid GPU Space it's instant.
+
+### Trained classification heads
+The biggest accuracy lift available for free is also paid in your time, not money: train the DINOv2, Whisper, and Temporal Transformer heads on labelled data. See [Training](#training) and [`backend/training/train_on_colab.md`](backend/training/train_on_colab.md). Once trained, set `VERITAS_DINOV2_WEIGHTS`, `VERITAS_WHISPER_WEIGHTS`, `VERITAS_TEMPORAL_WEIGHTS` on the Space.
+
+### Hugging Face GPU Space tier
+$0.40/hr for a T4 Small, $0.60/hr for an A10G Small. Inference becomes 5-10x faster, transcription becomes instant, and you can run heavier models. Worth it if the free tier's cold starts get annoying.
 
 ---
 
