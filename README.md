@@ -212,7 +212,8 @@ Connect the GitHub repo, set the project root to `frontend/`. Required env vars:
 - `NEXT_PUBLIC_BACKEND_URL` — your HF Space URL, e.g. `https://your-username-deepfake-detection-api.hf.space`. Without this, uploads route through a Vercel serverless function and hit a 4.5 MB body cap.
 - `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` for auth.
 - `GROQ_API_KEY` (optional) — enables AI-written verdict summaries. Free key from [console.groq.com](https://console.groq.com). Without it the frontend falls back to a template-based summary (still signal-aware, just deterministic).
-- `GROQ_MODEL` (optional) — defaults to `llama-3.3-70b-versatile`. Any chat-completion model on Groq's free tier works.
+- `GROQ_MODEL` (optional) — text-only model. Defaults to `llama-3.3-70b-versatile`.
+- `GROQ_VISION_MODEL` (optional) — vision-capable model used for image and video scans, where the LLM actually sees the picture (or middle frame) and can name specific things that look real or fake. Defaults to `meta-llama/llama-4-scout-17b-16e-instruct`. Any vision-capable Groq model works.
 
 ---
 

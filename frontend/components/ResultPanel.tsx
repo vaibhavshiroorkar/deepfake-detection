@@ -16,7 +16,7 @@ export default function ResultPanel({
 }) {
   const tone = verdictTone(result.suspicion);
   const conf = Math.round(result.confidence * 100);
-  const narrative = useNarrative(result);
+  const narrative = useNarrative(result, previewUrl);
 
   return (
     <article className="border border-rule bg-paper">
@@ -82,7 +82,11 @@ export default function ResultPanel({
             {narrative.source === "ai" && (
               <div className="mt-2 flex items-center gap-1.5 text-[10px] tracking-widest uppercase text-mute font-mono">
                 <Sparkles className="size-3 text-ember" strokeWidth={1.6} />
-                <span>Written by Llama 3.3</span>
+                <span>
+                  {narrative.vision
+                    ? "Written by Llama 4 (looking at the image)"
+                    : "Written by Llama 3.3"}
+                </span>
               </div>
             )}
           </>
