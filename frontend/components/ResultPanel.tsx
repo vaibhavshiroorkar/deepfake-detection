@@ -5,6 +5,7 @@ import { ShieldCheck, ShieldAlert, Sparkles } from "lucide-react";
 import { verdictTone, type DetectionResult, type Signal } from "@/lib/api";
 import { useNarrative } from "@/lib/use-narrative";
 import HeatmapOverlay from "./HeatmapOverlay";
+import VideoTimelinePlayer from "./VideoTimelinePlayer";
 import clsx from "clsx";
 
 export default function ResultPanel({
@@ -112,7 +113,20 @@ export default function ResultPanel({
           ))}
         </ul>
 
-        {"timeline" in result && result.timeline && (
+        {result.kind === "video" && result.timeline && previewUrl && (
+          <div className="mt-8">
+            <div className="text-xs text-mute mb-3">
+              Video timeline · suspicion painted along playback
+            </div>
+            <VideoTimelinePlayer
+              src={previewUrl}
+              timeline={result.timeline}
+              duration={result.duration_seconds || 0}
+            />
+          </div>
+        )}
+
+        {result.kind === "video" && result.timeline && !previewUrl && (
           <div className="mt-8">
             <div className="text-xs text-mute mb-3">Timeline</div>
             <div className="grid grid-cols-8 gap-1">
