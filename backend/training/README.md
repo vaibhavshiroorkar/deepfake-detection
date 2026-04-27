@@ -23,7 +23,8 @@ python -m training.train_image \
     --batch-size 32
 ```
 
-**Datasets:** FaceForensics++, Celeb-DF, or any directory pair of real vs fake images.
+**Datasets:** FaceForensics++, Celeb-DF, DFDC, or any directory pair of real vs fake images.
+Use `prep_datasets.py` to organise raw downloads into the expected format (see below).
 
 After training, set the environment variable:
 ```
@@ -69,12 +70,54 @@ python -m training.train_video \
 **Note:** This pre-extracts DINOv2 embeddings per frame and caches them,
 so subsequent training runs are fast (the backbone only runs once per video).
 
-**Datasets:** FaceForensics++ (video split), Celeb-DF (video split).
+**Datasets:** FaceForensics++ (video split), Celeb-DF (video split), DFDC.
+Use `prep_datasets.py` to organise raw downloads into the expected format (see below).
 
 After training:
 ```
 VERITAS_TEMPORAL_WEIGHTS=/absolute/path/to/weights/temporal_transformer.pt
 ```
+
+---
+
+---
+
+## Preparing datasets — prep_datasets.py
+
+`prep_datasets.py` reads raw downloads for FaceForensics++, Celeb-DF, and DFDC
+and symlinks (or copies) files into a `--data-real` / `--data-fake` directory pair
+ready for the training scripts above.
+
+```bash
+cd backend
+
+# DFDC (download one or more parts from Kaggle first)
+python -m training.prep_datasets \
+    --dataset dfdc \
+    --input /path/to/dfdc_train_part_0/ \
+    --output-real ./data/real \
+    --output-fake ./data/fake
+
+# FaceForensics++ (request access at github.com/ondyari/FaceForensics)
+python -m training.prep_datasets \
+    --dataset faceforensics \
+    --input /path/to/FaceForensics++/ \
+    --output-real ./data/real \
+    --output-fake ./data/fake
+
+# Celeb-DF v2 (free Google Form request)
+python -m training.prep_datasets \
+    --dataset celebdf \
+    --input /path/to/Celeb-DF-v2/ \
+    --output-real ./data/real \
+    --output-fake ./data/fake
+```
+
+Add `--copy` to copy files instead of symlinking. Add `--frames N` to extract
+N evenly-spaced frames per video as JPEG (useful for the image head).
+
+Datasets can be combined by running the script multiple times pointing at the
+same `--output-real` / `--output-fake` directories.
 
 ---
 

@@ -25,14 +25,14 @@ export default function TextPane({
 }) {
   const [text, setText] = useState("");
   const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
-  const ok = text.trim().length >= 40 && !loading;
+  const ok = text.trim().length >= 1 && !loading;
 
   return (
     <div>
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Paste a paragraph. Longer is better. At least 40 words."
+        placeholder="Paste any text. Longer gives a more reliable reading."
         rows={10}
         className="w-full resize-y bg-bone/30 border border-rule p-5 text-[1.05rem] leading-[1.7] text-ink placeholder:text-mute focus:outline-none focus:border-ink transition-colors"
       />

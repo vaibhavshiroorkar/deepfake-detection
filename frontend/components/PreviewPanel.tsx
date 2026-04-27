@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { FileImage, FileVideo, FileAudio } from "lucide-react";
 import SubtitleBox from "./SubtitleBox";
-import type { Transcript } from "@/lib/api";
+import HeatmapOverlay from "./HeatmapOverlay";
+import VideoTimelinePlayer from "./VideoTimelinePlayer";
+import type { DetectionResult, Transcript } from "@/lib/api";
 
 type Kind = "image" | "video" | "audio";
 
@@ -13,6 +15,7 @@ type Props = {
   fileName?: string | null;
   fileSize?: number | null;
   transcript?: Transcript | null;
+  result?: DetectionResult | null;
 };
 
 function formatSize(bytes: number | null | undefined) {
@@ -27,6 +30,7 @@ export default function PreviewPanel({
   fileName,
   fileSize,
   transcript,
+  result,
 }: Props) {
   const prettySize = formatSize(fileSize);
   const hasFile = Boolean(previewUrl);
@@ -41,6 +45,11 @@ export default function PreviewPanel({
     return () => a.removeEventListener("timeupdate", onTime);
   }, [previewUrl]);
 
+  const imageResult = result?.kind === "image" ? result : null;
+  const videoResult = result?.kind === "video" ? result : null;
+  const showHeatmap = Boolean(imageResult?.heatmaps && previewUrl);
+  const showTimeline = Boolean(videoResult?.timeline && previewUrl);
+
   const showAudioSubtitles =
     kind === "audio" &&
     previewUrl &&
@@ -48,14 +57,33 @@ export default function PreviewPanel({
     (transcript.text || (transcript.chunks && transcript.chunks.length > 0));
 
   return (
-    <aside className="border border-ink bg-paper sticky top-[5.5rem] self-start">
+    <aside className="border border-ink bg-paper lg:sticky lg:top-[5.5rem] lg:self-start">
       <header className="px-5 py-3 border-b border-ink flex items-baseline justify-between">
-        <span className="running-head">Preview</span>
+        <span className="running-head">
+          {showHeatmap ? "Analysis" : showTimeline ? "Timeline" : "Preview"}
+        </span>
         <span className="running-head text-mute capitalize">{kind}</span>
       </header>
 
-      <div className="min-h-[18rem] bg-bone/40 border-b border-rule flex items-center justify-center overflow-hidden">
-        {kind === "image" && previewUrl ? (
+      <div
+        className={
+          showTimeline
+            ? "border-b border-rule"
+            : "min-h-[18rem] bg-bone/40 border-b border-rule flex items-center justify-center overflow-hidden"
+        }
+      >
+        {showHeatmap ? (
+          <div className="w-full p-4">
+            <HeatmapOverlay base={previewUrl!} heatmaps={imageResult!.heatmaps!} />
+          </div>
+        ) : showTimeline ? (
+          <VideoTimelinePlayer
+            src={previewUrl!}
+            timeline={videoResult!.timeline}
+            duration={videoResult!.duration_seconds || 0}
+            transcript={videoResult!.transcript}
+          />
+        ) : kind === "image" && previewUrl ? (
           <img
             src={previewUrl}
             alt="Selected file"

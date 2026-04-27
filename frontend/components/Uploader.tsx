@@ -115,7 +115,7 @@ export default function Uploader({ kind, loading, onSubmit, onPick }: Props) {
           onDrop={onDrop}
           className={clsx(
             "relative block cursor-pointer border-2 border-dashed transition-colors",
-            "px-10 py-20 text-center",
+            "px-6 py-12 sm:px-10 sm:py-20 text-center",
             dragging ? "border-ember bg-ember/5" : "border-rule hover:border-ink bg-bone/30",
           )}
         >
@@ -189,9 +189,9 @@ export default function Uploader({ kind, loading, onSubmit, onPick }: Props) {
                 <button
                   onClick={clear}
                   disabled={loading}
-                  className="inline-flex items-center gap-1.5 text-sm text-smoke hover:text-alert transition-colors"
+                  className="inline-flex items-center gap-1.5 text-sm text-smoke hover:text-alert transition-colors min-h-[44px] px-1"
                 >
-                  <X className="size-3.5" />
+                  <X className="size-4" />
                   Remove
                 </button>
               </div>

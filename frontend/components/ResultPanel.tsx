@@ -5,8 +5,6 @@ import { ShieldCheck, ShieldAlert, Sparkles } from "lucide-react";
 import { verdictTone, type DetectionResult, type Signal } from "@/lib/api";
 import { useNarrative } from "@/lib/use-narrative";
 import { useCrossCheck } from "@/lib/use-cross-check";
-import HeatmapOverlay from "./HeatmapOverlay";
-import VideoTimelinePlayer from "./VideoTimelinePlayer";
 import clsx from "clsx";
 
 export default function ResultPanel({
@@ -23,9 +21,7 @@ export default function ResultPanel({
   const narrative = useNarrative(result, previewUrl);
   const crossCheck = useCrossCheck(result, previewUrl, inputText);
 
-  const renderedSignals: Signal[] = crossCheck.signal
-    ? [...result.signals, crossCheck.signal]
-    : result.signals;
+  const renderedSignals: Signal[] = [...result.signals, ...crossCheck.signals];
 
   return (
     <article className="border border-rule bg-paper">
@@ -106,13 +102,6 @@ export default function ResultPanel({
         )}
       </div>
 
-      {result.kind === "image" && previewUrl && result.heatmaps && (
-        <div className="px-5 py-6 md:px-7 md:py-8 border-b border-rule">
-          <div className="text-xs text-mute mb-3">Where the signal fired</div>
-          <HeatmapOverlay base={previewUrl} heatmaps={result.heatmaps} />
-        </div>
-      )}
-
       <div className="px-5 py-6 md:px-7 md:py-8">
         <div className="text-xs text-mute mb-4">Signals examined</div>
         <ul className="space-y-4">
@@ -141,20 +130,6 @@ export default function ResultPanel({
             </li>
           )}
         </ul>
-
-        {result.kind === "video" && result.timeline && previewUrl && (
-          <div className="mt-8">
-            <div className="text-xs text-mute mb-3">
-              Video timeline · suspicion painted along playback
-            </div>
-            <VideoTimelinePlayer
-              src={previewUrl}
-              timeline={result.timeline}
-              duration={result.duration_seconds || 0}
-              transcript={result.transcript}
-            />
-          </div>
-        )}
 
         {result.kind === "video" && result.timeline && !previewUrl && (
           <div className="mt-8">

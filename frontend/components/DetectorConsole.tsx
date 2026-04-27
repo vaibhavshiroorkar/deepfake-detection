@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Image as ImageIcon, Film, AudioLines, AlignLeft } from "lucide-react";
 import clsx from "clsx";
@@ -30,10 +30,18 @@ export default function DetectorConsole() {
   const [lastTextInput, setLastTextInput] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     warmBackend();
   }, []);
+
+  // Auto-scroll to results on mobile when they arrive.
+  useEffect(() => {
+    if (!result || loading) return;
+    if (window.innerWidth >= 1024) return; // lg breakpoint — desktop handles this visually
+    resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [result, loading]);
 
   function resetMediaPreview() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -48,11 +56,24 @@ export default function DetectorConsole() {
     resetMediaPreview();
   }
 
+  const previewProps = {
+    kind: tab as "image" | "audio" | "video",
+    previewUrl,
+    fileName: fileInfo?.name ?? null,
+    fileSize: fileInfo?.size ?? null,
+    transcript:
+      result && result.kind === "audio" && result.transcript
+        ? result.transcript
+        : null,
+    result,
+  };
+
   return (
     <section id="console" className="max-w-7xl">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_26rem]">
         <div>
           <div className="border border-ink bg-paper shadow-[8px_8px_0_rgba(20,20,19,0.08)]">
+            {/* Tabs */}
             <div className="flex border-b border-ink">
               {TABS.map(({ id, label, Icon }) => {
                 const active = tab === id;
@@ -61,12 +82,12 @@ export default function DetectorConsole() {
                     key={id}
                     onClick={() => switchTab(id)}
                     className={clsx(
-                      "relative flex-1 px-6 py-5 flex items-center justify-center gap-2.5 border-r border-rule last:border-r-0 transition-colors",
+                      "relative flex-1 px-3 sm:px-6 py-4 sm:py-5 flex items-center justify-center gap-1.5 sm:gap-2.5 border-r border-rule last:border-r-0 transition-colors",
                       active ? "text-ink bg-bone" : "text-mute hover:text-smoke hover:bg-bone/40",
                     )}
                   >
-                    <Icon className="size-4" strokeWidth={1.6} />
-                    <span className="text-sm font-medium tracking-wide">
+                    <Icon className="size-4 shrink-0" strokeWidth={1.6} />
+                    <span className="text-xs sm:text-sm font-medium tracking-wide">
                       {label}
                     </span>
                     {active && (
@@ -80,7 +101,7 @@ export default function DetectorConsole() {
               })}
             </div>
 
-            <div className="p-7 md:p-10">
+            <div className="p-5 sm:p-7 md:p-10">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={tab}
@@ -115,8 +136,6 @@ export default function DetectorConsole() {
                       kind={tab}
                       loading={loading}
                       onPick={(info) => {
-                        // Picking a new file or clearing the current one
-                        // invalidates whatever result was on screen.
                         setResult(null);
                         setError(null);
                         if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -175,8 +194,25 @@ export default function DetectorConsole() {
                 <div className="text-[0.95rem] text-ink">{error}</div>
               </motion.div>
             )}
+
+            {/* Mobile-only preview: appears above results after analysis */}
+            {tab !== "text" && result && !loading && (
+              <motion.div
+                key="mobile-preview"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="mt-6 lg:hidden"
+              >
+                <ErrorBoundary>
+                  <PreviewPanel {...previewProps} />
+                </ErrorBoundary>
+              </motion.div>
+            )}
+
             {result && !loading && (
               <motion.div
+                ref={resultRef}
                 key={result.kind + String(result.suspicion)}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -196,18 +232,13 @@ export default function DetectorConsole() {
           </AnimatePresence>
         </div>
 
+        {/* Desktop right column — always visible, switches to heatmap/timeline after analysis */}
         {tab !== "text" && (
-          <PreviewPanel
-            kind={tab}
-            previewUrl={previewUrl}
-            fileName={fileInfo?.name ?? null}
-            fileSize={fileInfo?.size ?? null}
-            transcript={
-              result && result.kind === "audio" && result.transcript
-                ? result.transcript
-                : null
-            }
-          />
+          <div className="hidden lg:block">
+            <ErrorBoundary>
+              <PreviewPanel {...previewProps} />
+            </ErrorBoundary>
+          </div>
         )}
       </div>
     </section>

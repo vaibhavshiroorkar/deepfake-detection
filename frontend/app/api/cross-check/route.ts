@@ -33,13 +33,14 @@ If the text is too short to judge confidently, return 0.5 with a reason saying s
 
 const SYSTEM_VISION = `You are an extra cross-check on whether an image was AI-generated.
 
-You are given the image. You return a single JSON object with two fields:
+You are given the image. You return a single JSON object with three fields:
 - "score": a number between 0 and 1, where 0 means clearly a real photograph and 1 means clearly AI-generated.
-- "reason": one short sentence (under 25 words) naming the strongest visual cue.
+- "realism": a number between 0 and 1, where 0 means the scene is physically or logically impossible (e.g. a cat in a space suit floating in space), and 1 means the scene depicts a completely plausible real-world situation. Rate the plausibility of the scenario itself, independently of whether the image looks AI-generated.
+- "reason": one short sentence (under 25 words) naming the strongest visual cue for the score field.
 
 Do not include backticks, code fences, or anything outside the JSON object.
 
-Look at:
+Look at (for the score field):
 - Skin: too smooth, perfect pores, uncanny lighting on faces.
 - Hair: melted strands, hair fading into background.
 - Hands and fingers: wrong count, bent the wrong way, fused.
@@ -49,38 +50,42 @@ Look at:
 - Edges: hair-edge halos, blur around subject that doesn't match focus.
 - Symmetry: too perfect or wrong-asymmetric.
 
-If you genuinely can't tell, return 0.5 with a reason saying so. Do not pretend.`;
+If you genuinely can't tell the AI likelihood, return 0.5 with a reason saying so. Do not pretend.`;
 
-function parseJsonResponse(raw: string): { score: number; reason: string } | null {
+type ParsedResponse = { score: number; reason: string; realism?: number };
+
+function parseJsonResponse(raw: string): ParsedResponse | null {
   // Strip code fences if the model added them anyway.
   const cleaned = raw
     .trim()
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/```\s*$/i, "")
     .trim();
-  try {
-    const obj = JSON.parse(cleaned);
-    if (typeof obj.score !== "number" || typeof obj.reason !== "string") {
-      return null;
-    }
-    const score = Math.max(0, Math.min(1, obj.score));
-    return { score, reason: obj.reason.replace(/—/g, ", ").slice(0, 200) };
-  } catch {
-    // Sometimes the model wraps the JSON in prose. Try to find a JSON
-    // blob inside.
-    const match = cleaned.match(/\{[\s\S]*\}/);
-    if (!match) return null;
+  const tryParse = (s: string): ParsedResponse | null => {
     try {
-      const obj = JSON.parse(match[0]);
+      const obj = JSON.parse(s);
       if (typeof obj.score !== "number" || typeof obj.reason !== "string") {
         return null;
       }
       const score = Math.max(0, Math.min(1, obj.score));
-      return { score, reason: obj.reason.replace(/—/g, ", ").slice(0, 200) };
+      const result: ParsedResponse = {
+        score,
+        reason: obj.reason.replace(/—/g, ", ").slice(0, 200),
+      };
+      if (typeof obj.realism === "number") {
+        result.realism = Math.max(0, Math.min(1, obj.realism));
+      }
+      return result;
     } catch {
       return null;
     }
-  }
+  };
+  const direct = tryParse(cleaned);
+  if (direct) return direct;
+  // Sometimes the model wraps the JSON in prose. Try to find a JSON blob inside.
+  const match = cleaned.match(/\{[\s\S]*\}/);
+  if (!match) return null;
+  return tryParse(match[0]);
 }
 
 export async function POST(req: NextRequest) {
@@ -138,7 +143,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: isText ? GROQ_MODEL : GROQ_VISION_MODEL,
         temperature: 0.2,
-        max_tokens: 200,
+        max_tokens: 300,
         messages,
         response_format: { type: "json_object" },
       }),
@@ -166,10 +171,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { score: parsed.score, reason: parsed.reason },
-      { status: 200 },
-    );
+    const responseBody: { score: number; reason: string; realism?: number } = {
+      score: parsed.score,
+      reason: parsed.reason,
+    };
+    if (parsed.realism !== undefined) {
+      responseBody.realism = parsed.realism;
+    }
+    return NextResponse.json(responseBody, { status: 200 });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "unknown";
     return NextResponse.json({ error: "network", detail: message }, { status: 200 });
