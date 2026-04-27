@@ -29,7 +29,7 @@ Three services, in this order:
 2. Push the `backend/` subtree to the Space's git remote:
    ```bash
    git subtree split --prefix backend -b hf-deploy
-   git push --force https://huggingface.co/spaces/<user>/<space-name> hf-deploy:main
+   git push --force https://huggingface.co/spaces/vaibhavshiroorkar/deepfake-detection-api hf-deploy:main
    ```
    You'll need a Write-scoped access token from huggingface.co/settings/tokens.
 3. In the Space → **Settings → Variables and secrets**, add:
@@ -45,7 +45,7 @@ Three services, in this order:
 ```bash
 git branch -D hf-deploy
 git subtree split --prefix backend -b hf-deploy
-git push --force https://huggingface.co/spaces/<user>/<space-name> hf-deploy:main
+git push --force https://huggingface.co/spaces/vaibhavshiroorkar/deepfake-detection-api hf-deploy:main
 ```
 
 ## 3. Vercel (frontend)
