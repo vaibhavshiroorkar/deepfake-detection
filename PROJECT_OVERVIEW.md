@@ -24,7 +24,7 @@ The system has two kinds of components, combined by fusion. **Five streams total
 
 - Xception, catches low-level artifacts like blending edges and colour inconsistencies
 - EfficientNet, a second artifact-focused view using a different architecture
-- DINOv2, a higher-level view that generalizes better to unseen fakes
+- DINOv2, a higher-level view that generalizes better to unseen fakes (fallback: a Swin Transformer, if DINOv2's self-supervised math/integration is too heavy for the deadline — but note Swin is *supervised* and won't match DINOv2's generalization to unseen fakes, so it's a lower-effort substitute, not an equal one; see [docs/math/dinov2.md](docs/math/dinov2.md))
 
 These three are purely visual. They never see the audio. Their math is what we are presenting.
 

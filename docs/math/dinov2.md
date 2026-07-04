@@ -6,6 +6,10 @@
 
 > Draft here, keep notation consistent with the other two writeups — Person 1 merges all three into one document on Days 4–5.
 
+> **Fallback option — Swin Transformer.** If integrating DINOv2 or writing up its self-supervised math (self-distillation, EMA teacher, multi-crop, centering/sharpening, iBOT, KoLeo) proves too heavy for the deadline, a **Swin Transformer** (`timm.create_model("swin_base_patch4_window7_224")`) is a lower-effort substitute: its math (windowed + shifted-window attention, hierarchical patch merging) is cleaner to explain, and in-distribution performance is comparable.
+>
+> **The trade-off is real, so treat this as a fallback, not an equal swap.** Swin is *supervised* (ImageNet-pretrained), so it does not fill DINOv2's actual role here — the *self-supervised* stream that generalizes to unseen fakes (§4). Replacing DINOv2 with Swin makes all three visual streams supervised, which (a) likely costs out-of-distribution generalization on the Phase 5 tests (Deepfake-Eval-2024, held-out manipulations) that were DINOv2's whole reason for selection, and (b) raises the redundancy risk the Phase 3 ablation is meant to catch. Prefer keeping DINOv2 primary; use Swin only if forced, and record the generalization hit if so.
+
 ## 1. Self-distillation: student and teacher
 
 <!-- A student network learns to match a teacher network's output distribution
