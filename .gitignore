@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.ipynb_checkpoints/
+
+# Datasets and media — data/ holds only manifests and splits in git.
+# Raw videos/audio/frames stay local. Un-ignore specific manifest files as needed.
+data/*
+!data/.gitkeep
+!data/*.csv
+!data/*.json
+!data/*.md
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+*.wav
+*.flac
+*.mp3
+
+# Extracted frames and features
+frames/
+features/
+*.npy
+*.npz
+
+# Model artifacts
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.safetensors
+checkpoints/
+runs/
+
+# IDE / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
