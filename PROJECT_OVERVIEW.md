@@ -164,17 +164,17 @@ deepfake-detection/
 
 **Phase 0.5, Foundations (Days 1 to 5):** Learn the skills and build a tiny working prototype. By the end: all three of us can train and test a model, the preprocessing pipeline is frozen, dataset requests are in, and all three visual architecture math writeups are drafted (split one per person to hit the deadline). Building the foundation, not the real system yet. Full day-by-day breakdown: [docs/phase-0.5-plan.md](docs/phase-0.5-plan.md).
 
-**Phase 1, First stream end to end:** Build one visual stream (Xception) fully on real FakeAVCeleb data and get a real AUC number. Proves the whole pipeline before scaling.
+**Phase 1, First stream end to end:** Build one visual stream (Xception) fully on real FakeAVCeleb data and get a real AUC number. Proves the whole pipeline before scaling. Full day-by-day breakdown: [docs/phase-1-plan.md](docs/phase-1-plan.md).
 
-**Phase 2, Add remaining streams:** Add the other visual streams (EfficientNet, DINOv2), then the cross-modal streams (lip-sync/semantic, emotion), each reusing the proven pipeline and writing scores into the shared feature store.
+**Phase 2, Add remaining streams:** Add the other visual streams (EfficientNet, DINOv2), then the cross-modal streams (lip-sync/semantic, emotion), each reusing the proven pipeline and writing scores into the shared feature store. Milestone breakdown: [docs/phase-2-plan.md](docs/phase-2-plan.md).
 
-**Phase 3, Fusion:** Combine stream scores into one decision. Start with weighted average, then learned logistic regression. Run the ablation to see which streams earn their place and which combination performs best.
+**Phase 3, Fusion:** Combine stream scores into one decision. Start with weighted average, then learned logistic regression. Run the ablation to see which streams earn their place and which combination performs best. Milestone breakdown: [docs/phase-3-plan.md](docs/phase-3-plan.md).
 
-**Phase 4, Self-supervised pretraining (stretch):** Optionally boost generalization by pretraining the cross-modal components on real-only videos before fine-tuning, in the spirit of AVFF.
+**Phase 4, Self-supervised pretraining (stretch):** Optionally boost generalization by pretraining the cross-modal components on real-only videos before fine-tuning, in the spirit of AVFF. Milestone breakdown: [docs/phase-4-plan.md](docs/phase-4-plan.md).
 
-**Phase 5, Full evaluation:** Test in-distribution (FakeAVCeleb), real-world (Deepfake-Eval-2024), held-out manipulation types, and robustness under compression and noise.
+**Phase 5, Full evaluation:** Test in-distribution (FakeAVCeleb), real-world (Deepfake-Eval-2024), held-out manipulation types, and robustness under compression and noise. Milestone breakdown: [docs/phase-5-plan.md](docs/phase-5-plan.md).
 
-**Phase 6, Explainability and write-up:** Add visualizations (which stream caught which fake, Grad-CAM on visual streams), then assemble the final report and presentation.
+**Phase 6, Explainability and write-up:** Add visualizations (which stream caught which fake, Grad-CAM on visual streams), then assemble the final report and presentation. Milestone breakdown: [docs/phase-6-plan.md](docs/phase-6-plan.md).
 
 ---
 
@@ -190,8 +190,9 @@ deepfake-detection/
 ## 12. Current Status
 
 - Phase 0.5 is fully detailed day by day in [docs/phase-0.5-plan.md](docs/phase-0.5-plan.md).
-- Phases 1 through 6 exist at summary level only. They still need to be built out day by day with the same role-balanced detail when ready.
+- Phase 1 is fully detailed day by day in [docs/phase-1-plan.md](docs/phase-1-plan.md).
+- Phases 2 through 6 are detailed at the milestone level (role-balanced, with "done when" gates) in [docs/phase-2-plan.md](docs/phase-2-plan.md) … [docs/phase-6-plan.md](docs/phase-6-plan.md). Each milestone gets expanded into day-by-day detail when that phase is actually started, using the Phase 0.5 / Phase 1 plans as the pattern.
 
 ---
 
-Note: only Phase 0.5 has a full day-by-day breakdown so far. When starting any later phase, expand it to the same daily, role-balanced detail before beginning.
+Note: Phase 0.5 and Phase 1 have full day-by-day breakdowns; Phases 2–6 are planned at milestone level and get expanded to daily detail when begun. Later phases depend on real-world unknowns (dataset access timing, stream results), so their day-level detail is deliberately deferred until those unknowns resolve.
