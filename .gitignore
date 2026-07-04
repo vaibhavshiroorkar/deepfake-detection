@@ -45,7 +45,5 @@ Thumbs.db
 .DS_Store
 
 # Local Project Overrides
-bin/
-temp/
 output_crops/
 sample_videos/

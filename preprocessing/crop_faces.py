@@ -1,16 +1,9 @@
-import os
 import sys
 import argparse
 from pathlib import Path
 import cv2
 from PIL import Image
 import numpy as np
-
-# Ensure local FFmpeg bin directory is in PATH
-PROJECT_DIR = Path(__file__).parent.resolve()
-BIN_DIR = PROJECT_DIR / "bin"
-if BIN_DIR.exists():
-    os.environ["PATH"] = str(BIN_DIR) + os.pathsep + os.environ.get("PATH", "")
 
 # Try importing dependencies
 try:
@@ -19,7 +12,7 @@ try:
     from tqdm import tqdm
 except ImportError as e:
     print(f"Error importing dependencies: {e}")
-    print("Please make sure you have run setup_env.py and activated the virtual environment.")
+    print("Please make sure you've set up the environment (see README.md: uv venv + uv pip install -r requirements.txt) and activated it.")
     sys.exit(1)
 
 def crop_and_resize_face(frame_rgb, box, target_size=(224, 224), margin_percentage=0.2):
@@ -66,7 +59,7 @@ def process_video(video_path, output_dir, frame_stride=1, confidence_threshold=0
     
     if not video_path.exists():
         print(f"Error: Video file not found at {video_path}")
-        return
+        sys.exit(1)
         
     output_dir.mkdir(parents=True, exist_ok=True)
     
@@ -81,7 +74,7 @@ def process_video(video_path, output_dir, frame_stride=1, confidence_threshold=0
     cap = cv2.VideoCapture(str(video_path))
     if not cap.isOpened():
         print(f"Error: Could not open video file {video_path}")
-        return
+        sys.exit(1)
         
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     fps = cap.get(cv2.CAP_PROP_FPS)
