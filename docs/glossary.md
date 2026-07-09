@@ -1,6 +1,6 @@
 # Shared Glossary & Prerequisites
 
-**Owner:** Person 1 (Research lead) — Phase 0.5 Day 1 deliverable.
+**Owner:** Research workstream.
 
 **Canonical living copy:** the "Research" doc in the team's Google Drive research folder — <https://drive.google.com/drive/folders/1rWDoC-Qm73uaeEU8-x_svNoLr3s3fnHP>. That copy keeps evolving (survey abstracts, math, etc.); this file is a synced Markdown snapshot of the glossary sections for anyone working in the repo.
 
@@ -50,16 +50,15 @@ How it works:
 Types:
 
 - **Visual streams** — look at video frames only. They catch fakes where the pixels are wrong: blending errors around a swapped face, colour mismatch, artifacts left by the AI. Examples: **Xception**, **EfficientNet**, **DINOv2**.
-- **Cross-modal streams** — take audio and video *together* to catch the mismatch between them.
-  - **Lip-sync stream** compares what the lips appear to say against what the audio actually says. Mismatch → suspicion score rises.
-  - **Emotion stream** compares the emotion in the voice against the emotion on the face. Mismatch → suspicion score rises.
+- **Cross-modal streams** — take audio and video *together* to catch the mismatch between them, using **cross-attention on embeddings** (no transcription or lip-reading-to-text anywhere; everything is vectors).
+  - **Lip-sync stream** — a video encoder embeds mouth-region motion (Key/Value), an audio encoder embeds the audio track (Query), and cross-attention compares them. Mismatch → suspicion score rises.
+  - **Emotion stream** — a face-emotion encoder embeds facial expression (Key/Value), a voice-emotion encoder embeds vocal affect (Query), and cross-attention compares them. Mismatch → suspicion score rises.
 
 ### What is fusion?
 
-Each stream produces its own real/fake probability, so we have multiple results — but the system needs one final answer. **Fusion** combines the streams' outputs once each has finished. It works at two levels:
+Each stream produces its own embedding vector, so we have multiple independent views of the same clip — but the system needs one final answer. **Fusion** combines them. This project uses **feature-level fusion**: all stream embeddings are concatenated into one long vector, passed through a small MLP (a few fully-connected layers), and squashed to a `[0,1]` fake-probability by a **sigmoid**.
 
-1. **Weighted average** — add up the stream scores and average them.
-2. **Learned weighting** — a small model at the fusion stage learns from the data which streams to trust more, weighting them for the best result.
+This is a deliberate choice over the simpler alternative, **late (score-level) fusion** — where each stream would output its own probability and those probabilities get averaged, or combined by a small learned model (logistic regression). Late fusion is easier to build and its learned weights are directly interpretable ("how much does the system trust each stream"); feature-level fusion is more powerful but loses that particular interpretability — which is why an **ablation** (running subsets of streams and comparing the fused result) matters more here, not less.
 
 ---
 
@@ -93,7 +92,8 @@ Maintained in full on the Drive doc; summarized here for orientation.
 
 - **Surveys:** Hashmi et al. (2024); Khan, Khan & Ahmad (2025).
 - **Datasets:** FaceForensics++ (Rössler et al. 2019); FakeAVCeleb (Khalid et al. 2022); Celeb-DF (Li et al. 2020); Deepfake-Eval-2024 (Chandra et al. 2026).
-- **Models:** Xception (Chollet 2016); EfficientNet; DINOv2.
-- **Methods:** Zhou & Lim (2021); AVFF (Oorloff et al. 2024); Bohacek & Farid (2024); Mittal et al. (2020).
+- **Models:** Xception (Chollet 2016); EfficientNet; DINOv2 (Oquab et al. 2023).
+- **Methods (implemented):** Vaswani et al. (2017), cross-attention; Chung & Zisserman (2016, SyncNet), lip-sync embedding lineage; Mittal et al. (2020), emotion mismatch concept.
+- **Methods (read-only comparison):** Zhou & Lim (2021); AVFF (Oorloff et al. 2024); Bohacek & Farid (2024) — their transcription-based semantic lip-sync method is not implemented here; our lip-sync stream uses embeddings and cross-attention instead.
 
-> **Survey Paper 1 & 2 outlines** and the math/novelty sections are in progress on the Drive doc (reported on Day 2).
+> **Survey Paper 1 & 2 outlines** and the math/novelty sections are in progress on the Drive doc.

@@ -1,16 +1,10 @@
 # DINOv2: Architecture Math
 
-**Owner:** Person 3 (ML lead)
-**Paper:** Oquab, M. et al. (2023). *DINOv2: Learning Robust Visual Features without Supervision.* <https://arxiv.org/abs/2304.07193> (background: DINO, Caron et al. 2021, <https://arxiv.org/abs/2104.14294>)
-**Deadline:** solid first draft Day 3, polished Day 4 (see [phase-0.5-plan.md](../phase-0.5-plan.md))
+**Owner:** ML workstream
+**Paper:** Oquab, M. et al. (2023). *DINOv2: Learning Robust Visual Features without Supervision.* <https://arxiv.org/abs/2304.07193> (background: DINO, Caron et al. 2021, <https://arxiv.org/abs/2104.14294>; ViT, Dosovitskiy et al. 2020, <https://arxiv.org/abs/2010.11929>)
+**Status:** built now, the third visual stream (Stage 3).
 
-> Draft here, keep notation consistent with the other two writeups — Person 1 merges all three into one document on Days 4–5.
-
-> **Fallback option — Swin Transformer (full note: [swin.md](swin.md)).** If integrating DINOv2 or writing up its self-supervised math (self-distillation, EMA teacher, multi-crop, centering/sharpening, iBOT, KoLeo) proves too heavy for the deadline, a **Swin Transformer** (`timm.create_model("swin_base_patch4_window7_224")`) is a lower-effort substitute: its math (windowed + shifted-window attention, hierarchical patch merging) is cleaner to explain, and in-distribution performance is comparable.
->
-> **The trade-off is real, so treat this as a fallback, not an equal swap.** Swin is *supervised* (ImageNet-pretrained), so it does not fill DINOv2's actual role here — the *self-supervised* stream that generalizes to unseen fakes (§4). Replacing DINOv2 with Swin makes all three visual streams supervised, which (a) likely costs out-of-distribution generalization on the Phase 5 tests (Deepfake-Eval-2024, held-out manipulations) that were DINOv2's whole reason for selection, and (b) raises the redundancy risk the Phase 3 ablation is meant to catch. Prefer keeping DINOv2 primary; use Swin only if forced, and record the generalization hit if so.
-
-> **Shared foundation.** DINOv2 and Swin are both ViT-based. The patch-embedding and self-attention basics are written up once in [swin.md](swin.md) §1–2 — reuse them here rather than re-deriving. What is unique to DINOv2 is the *training* (self-distillation), covered below.
+DINOv2 is the third visual backbone, chosen over a supervised alternative specifically because it is *self-supervised* — see §4 for why that matters for generalizing to unseen fakes. It is ViT-based: patch embedding splits the image into fixed-size patches, each linearly projected to a token, then processed by standard self-attention layers. What's unique to DINOv2 is the *training* (self-distillation), covered below.
 
 ## 1. Self-distillation: student and teacher
 

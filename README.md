@@ -1,10 +1,10 @@
 # Audio-Visual Deepfake Detection
 
-A deepfake detector that fuses five signals, three visual models (Xception, EfficientNet, DINOv2) and two cross-modal mismatch checks (lip-sync/semantic, emotion), into one real-or-fake decision. Partial fakes like lip-sync deepfakes barely change the video frames; the giveaway is usually a mismatch between audio and video, which is what the cross-modal streams catch.
+A deepfake detector that fuses five signals into one real-or-fake decision: three visual streams (Xception, EfficientNet, DINOv2) and two cross-modal streams (lip-sync, emotion) that use cross-attention over embeddings to catch mismatches between audio and video. Partial fakes like lip-sync deepfakes barely change the video frames; the giveaway is usually a mismatch between audio and video, which is what the cross-modal streams catch. Fusion is feature-level: stream embeddings are concatenated and passed through an MLP + sigmoid.
 
-**Start here:** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) - architecture, datasets, phases, team roles.
+**Start here:** [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md) - architecture, datasets, stages, team setup.
 
-**Current phase:** Phase 0.5 (foundations) - see [docs/phase-0.5-plan.md](docs/phase-0.5-plan.md).
+**Current stage:** Stage 1 (data pipeline) - see [docs/stage-1-plan.md](docs/stage-1-plan.md).
 
 ## Setup
 
@@ -49,7 +49,7 @@ preprocessing/   face + audio extraction
 models/baseline/ early practice models
 evaluation/      metrics, ablation, robustness tests
 notebooks/       exploration and training
-docs/            glossary, math writeups, phase plans
+docs/            glossary, math writeups, stage plans
 ```
 
-Stream, fusion, and feature-store folders get added as those phases start, see PROJECT_OVERVIEW.md.
+Stream, fusion, and feature-store folders get added as those stages start, see PROJECT_OVERVIEW.md.

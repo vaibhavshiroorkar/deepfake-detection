@@ -1,10 +1,10 @@
 # EfficientNet: Architecture Math
 
-**Owner:** Person 2 (Data lead)
+**Owner:** Data workstream
 **Paper:** Tan, M. & Le, Q. (2019). *EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks.* ICML 2019. <https://arxiv.org/abs/1905.11946>
-**Deadline:** solid first draft Day 3, polished Day 4 (see [phase-0.5-plan.md](../phase-0.5-plan.md))
+**Status:** built now, second visual stream (Stage 3).
 
-> Draft here, keep notation consistent with the other two writeups — Person 1 merges all three into one document on Days 4–5.
+> Draft here, keep notation consistent with the other writeups — merge into one combined architecture document once all are drafted.
 
 ## 1. The scaling problem
 
