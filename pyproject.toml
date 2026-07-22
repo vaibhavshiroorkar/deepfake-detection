@@ -1,0 +1,79 @@
+[project]
+name = "deepfake-detection"
+version = "0.1.0"
+description = "Audio-visual deepfake detector fusing three visual streams and two cross-modal streams."
+readme = "README.md"
+requires-python = "==3.13.*"
+
+# Pinned versions, resolved and verified together on Python 3.13.
+# torch/torchvision/torchaudio are NOT here — they live in the cpu/cu130
+# extras below so the same lockfile serves both CPU and CUDA machines.
+#
+# Note: facenet-pytorch is pinned to 2.5.3 deliberately — 2.6.0 pins torch<2.3,
+# which has no Python 3.13 wheels. 2.5.3 has unpinned deps and works with
+# modern torch/numpy (verified: MTCNN runs).
+dependencies = [
+    "numpy==2.4.6",
+    "opencv-python==5.0.0.93",
+    "av==16.1.0",
+    "librosa==0.11.0",
+    "ffmpeg-python==0.2.0",
+    "pillow==12.2.0",
+    "transformers==5.13.0",
+    "timm==1.0.27",
+    "facenet-pytorch==2.5.3",
+    "scikit-learn==1.9.0",
+    "pandas==3.0.3",
+    "matplotlib==3.11.0",
+    "jupyter==1.1.1",
+    "tqdm==4.68.3",
+]
+
+# Exactly one of these must be selected: `uv sync --extra cpu` or
+# `uv sync --extra cu130`. They pull the same versions from different indexes.
+[project.optional-dependencies]
+cpu = [
+    "torch==2.12.1",
+    "torchvision==0.27.1",
+    "torchaudio==2.11.0",
+]
+cu130 = [
+    "torch==2.12.1",
+    "torchvision==0.27.1",
+    "torchaudio==2.11.0",
+]
+
+[tool.uv]
+# Scripts are run from the repo root (each entry point puts the repo root on
+# sys.path itself), so there is nothing to build or install — deps only.
+package = false
+
+# cpu and cu130 resolve torch to different wheels, so they can never be
+# installed together; this lets both be locked in one uv.lock.
+conflicts = [[{ extra = "cpu" }, { extra = "cu130" }]]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu130", extra = "cu130" },
+]
+torchvision = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu130", extra = "cu130" },
+]
+torchaudio = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu130", extra = "cu130" },
+]
+
+# `explicit = true` means these indexes are used ONLY for the packages routed
+# to them above — everything else still comes from PyPI.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true

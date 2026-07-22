@@ -1,6 +1,6 @@
 # Stage 9: Full Evaluation — Milestone Plan
 
-**Goal:** Stress-test the fused system beyond the clean in-distribution number. Four evaluations: in-distribution (FakeAVCeleb), real-world in-the-wild (Deepfake-Eval-2024), held-out manipulation types, and robustness under compression and noise. This is where we find out whether the system actually generalizes or just memorized FakeAVCeleb's quirks — and it is a large part of what makes the project novel (PROJECT_OVERVIEW §7).
+**Goal:** Stress-test the fused system beyond the clean in-distribution number. Four evaluations: in-distribution (FakeAVCeleb), real-world in-the-wild (Deepfake-Eval-2024), held-out manipulation types, and robustness under compression and noise. This is where we find out whether the system actually generalizes or just memorized FakeAVCeleb's quirks — and it is a large part of what makes the project novel (PROJECT_OVERVIEW §12).
 
 **Why milestone-level:** each evaluation is an independent, well-defined experiment; sequence them as you go.
 

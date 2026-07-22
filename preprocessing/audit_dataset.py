@@ -32,7 +32,7 @@ try:
     import cv2
 except ImportError as e:
     print(f"Error importing dependencies: {e}")
-    print("Run: pip install opencv-python pandas")
+    print("Run: uv sync --extra cpu (or --extra cu130 for GPU), see README.md")
     sys.exit(1)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

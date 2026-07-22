@@ -57,5 +57,5 @@ The system's most compelling explainability story, and nearly free — the featu
 ## Risks and notes
 
 - **This stage is cheap only if the report was written as you went** (PROJECT_OVERVIEW §9). If drafts were skipped, budget real time here — do not discover that on the last day.
-- **Explainability is a differentiator, not a footnote** (PROJECT_OVERVIEW §7). The "which stream caught which fake" story is a large part of what makes the project stand out — give it real space.
+- **Explainability is a differentiator, not a footnote** (PROJECT_OVERVIEW §12). The "which stream caught which fake" story is a large part of what makes the project stand out — give it real space.
 - **Show a failure case.** A report that only shows wins reads as less credible than one that shows where the system breaks and why.

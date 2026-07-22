@@ -12,7 +12,7 @@
 
 - **Data:** Assemble a real-only corpus (the `RealVideo-RealAudio` clips, optionally augmented with other real talking-head footage). No fakes at this stage — the point is to learn the genuine audio-visual joint distribution.
 - **ML:** Set up a self-supervised objective for the cross-modal component — e.g. predicting/contrasting whether an audio window and a video window are genuinely aligned, or masked-reconstruction across modalities (AVFF-style). No fake/real labels used here.
-- **Research:** Summarize AVFF's two-stage recipe and pin down exactly which piece we are borrowing and which we are not (we are not reproducing AVFF wholesale — no public official code, heavy pretraining; it is a benchmark we compare against, per PROJECT_OVERVIEW §6).
+- **Research:** Summarize AVFF's two-stage recipe and pin down exactly which piece we are borrowing and which we are not (we are not reproducing AVFF wholesale — no public official code, heavy pretraining; it is a benchmark we compare against, per PROJECT_OVERVIEW §11).
 - **Done when:** a pretraining run completes and produces reusable cross-modal weights.
 
 ---

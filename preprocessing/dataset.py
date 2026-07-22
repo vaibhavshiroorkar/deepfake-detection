@@ -30,7 +30,7 @@ try:
     from torch.utils.data import Dataset, DataLoader
 except ImportError as e:
     print(f"Error importing dependencies: {e}")
-    print("Run: pip install torch")
+    print("Run: uv sync --extra cpu (or --extra cu130 for GPU), see README.md")
     sys.exit(1)
 
 from preprocessing.extract_clip import extract_clip, NUM_FRAMES, AUDIO_SR

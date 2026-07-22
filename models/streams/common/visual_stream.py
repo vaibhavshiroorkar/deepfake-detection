@@ -32,7 +32,7 @@ try:
     import timm
 except ImportError as e:
     print(f"Error importing dependencies: {e}")
-    print("Run: pip install torch timm")
+    print("Run: uv sync --extra cpu (or --extra cu130 for GPU), see README.md")
     sys.exit(1)
 
 from models.streams.common.config import StreamConfig

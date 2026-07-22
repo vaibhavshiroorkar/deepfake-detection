@@ -25,14 +25,14 @@
 
 **Research:**
 - Compare fused vs. best-single-stream (using each stream's Stage 2–5 standalone AUC as the baseline).
-- Reproduce the worked-example logic from [PROJECT_OVERVIEW.md §3](../PROJECT_OVERVIEW.md) on real clips: find actual partial fakes (especially `RealVideo-FakeAudio`) where the visual streams' standalone signal was weak but fusion still catches them.
+- Reproduce the worked-example logic from [PROJECT_OVERVIEW.md §3](PROJECT_OVERVIEW.md) on real clips: find actual partial fakes (especially `RealVideo-FakeAudio`) where the visual streams' standalone signal was weak but fusion still catches them.
 - Done when: fused-vs-single comparison recorded, with at least one concrete worked example.
 
 ---
 
 ## Optional comparison (later, not required) — late fusion
 
-If time allows, also build the simpler alternative: each stream's temporary head recalibrated as a proper score, combined by weighted average and then logistic regression, evaluated the same way (val-fit, test-report). Comparing feature-level fusion against this gives a genuine reportable result — see [PROJECT_OVERVIEW.md §3](../PROJECT_OVERVIEW.md). Treat as stretch; do not block Stage 9 (evaluation) on it.
+If time allows, also build the simpler alternative: each stream's temporary head recalibrated as a proper score, combined by weighted average and then logistic regression, evaluated the same way (val-fit, test-report). Comparing feature-level fusion against this gives a genuine reportable result — see [PROJECT_OVERVIEW.md §3](PROJECT_OVERVIEW.md). Treat as stretch; do not block Stage 9 (evaluation) on it.
 
 ---
 

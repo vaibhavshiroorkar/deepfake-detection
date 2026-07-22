@@ -16,7 +16,7 @@
 
 ## Why this method, not transcription
 
-The project previously planned this stream around Bohacek & Farid's method (lip-read video → text, transcribe audio → text, compare words). That is deliberately not implemented — see [PROJECT_OVERVIEW.md §6](../PROJECT_OVERVIEW.md) for the reasoning and where that citation now lives (read-only comparison). This stream is closer in spirit to SyncNet-style embedding/temporal sync checking.
+The project previously planned this stream around Bohacek & Farid's method (lip-read video → text, transcribe audio → text, compare words). That is deliberately not implemented — see [PROJECT_OVERVIEW.md §11](PROJECT_OVERVIEW.md) for the reasoning and where that citation now lives (read-only comparison). This stream is closer in spirit to SyncNet-style embedding/temporal sync checking.
 
 ---
 

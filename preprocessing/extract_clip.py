@@ -43,7 +43,7 @@ try:
     from preprocessing.crop_faces import crop_and_resize_face
 except ImportError as e:
     print(f"Error importing dependencies: {e}")
-    print("Run: pip install opencv-python av librosa facenet-pytorch torch")
+    print("Run: uv sync --extra cpu (or --extra cu130 for GPU), see README.md")
     sys.exit(1)
 
 NUM_FRAMES = 16

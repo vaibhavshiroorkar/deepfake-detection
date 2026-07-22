@@ -24,7 +24,7 @@
 - Done when: three manifest files exist, verified zero identity overlap, known class balance.
 
 **Feature-store schema (ML workstream):**
-- Define and stub the shared feature store: schema `clip_id, stream_name, embedding, split, label, manipulation_type` (embeddings, not scores — see [PROJECT_OVERVIEW.md §3](../PROJECT_OVERVIEW.md)). Write reader/writer helpers (start with Parquet in `feature_store/`).
+- Define and stub the shared feature store: schema `clip_id, stream_name, embedding, split, label, manipulation_type` (embeddings, not scores — see [PROJECT_OVERVIEW.md §3](PROJECT_OVERVIEW.md)). Write reader/writer helpers (start with Parquet in `feature_store/`).
 - Done when: feature-store read/write round-trips a dummy embedding row.
 
 **Dataset / DataLoader (ML workstream):**
