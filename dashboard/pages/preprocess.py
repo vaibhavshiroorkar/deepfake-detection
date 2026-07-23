@@ -206,9 +206,12 @@ else:
         l, r = st.columns([1, 2])
         l.markdown("**1 · Mono downmix**")
         do_downmix = l.checkbox("Enable downmix", value=True)
-        wav = A.downmix(wav) if do_downmix else raw2d.mean(axis=0)
-        (r.pyplot(waveform_fig(wav, sr, "Mono")) if do_downmix else skipped(r))
-        if not do_downmix:
+        if do_downmix:
+            wav = A.downmix(wav)
+            r.pyplot(waveform_fig(wav, sr, "Mono"))
+        else:
+            wav = raw2d.mean(axis=0)
+            skipped(r)
             r.pyplot(waveform_fig(wav, sr, "Channel-averaged for display"))
 
     # Stage: resample
