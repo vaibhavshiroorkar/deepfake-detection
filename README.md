@@ -4,7 +4,23 @@ A deepfake detector that fuses five signals into one real-or-fake decision: thre
 
 **Start here:** [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md) - the project's single main document: architecture, data, tooling, compute assumptions, build order, current status.
 
-**Current stage:** Stage 3 (remaining visual streams). Stages 1-2 are done - see [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md) §14.
+**Current stage:** Stage 1 (data pipeline), being rebuilt from scratch after a deliberate reset. The previous Stage 1-2 implementation is preserved in commit `926624a` for reference - see [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md) §14.
+
+## Dataset
+
+Unzip `FakeAVCeleb_v1.2.zip` into `data/raw/` so you end up with:
+
+```
+data/raw/FakeAVCeleb_v1.2/
+├── meta_data.csv
+├── RealVideo-RealAudio/
+├── RealVideo-FakeAudio/
+├── FakeVideo-RealAudio/
+└── FakeVideo-FakeAudio/
+        └── <race>/<gender>/<identity>/*.mp4
+```
+
+`data/*` is gitignored, so the media never enters git.
 
 ## Setup
 
@@ -37,7 +53,7 @@ uv run --extra cu130 python -c "import torch; print(torch.cuda.is_available(), t
 ```bash
 .venv\Scripts\activate          # Windows
 source .venv/bin/activate       # macOS/Linux
-python training/train_visual_stream.py
+python -c "import torch; print(torch.__version__)"
 ```
 
 > **Careful:** if you use `uv run` instead, you must pass the extra **every single time**:
@@ -49,7 +65,7 @@ python training/train_visual_stream.py
 
 To add or change a dependency, edit `pyproject.toml`, then run `uv lock` and commit the updated `uv.lock`.
 
-Note: PyAV (`av`) bundles its own ffmpeg libraries, so no system ffmpeg is needed for clip extraction. A system [ffmpeg](https://ffmpeg.org/download.html) on PATH (Windows: `winget install Gyan.FFmpeg`) is only required for the `ffmpeg-python` paths in `preprocessing/crop_faces.py`.
+Note: PyAV (`av`) bundles its own ffmpeg libraries, so no system ffmpeg is needed for clip extraction. A system [ffmpeg](https://ffmpeg.org/download.html) on PATH (Windows: `winget install Gyan.FFmpeg`) is only required if you use `ffmpeg-python` directly during preprocessing.
 
 ### Google Colab
 
@@ -62,12 +78,8 @@ Torch is preinstalled, just add the extras:
 ## Repo layout
 
 ```
-data/            datasets, splits, manifests (raw media is git-ignored)
-preprocessing/   face + audio extraction
-models/baseline/ early practice models
-evaluation/      metrics, ablation, robustness tests
-notebooks/       exploration and training
-docs/            glossary, math writeups, stage plans
+data/raw/        the FakeAVCeleb dataset (git-ignored)
+docs/            main project document, glossary, math writeups, stage plans
 ```
 
-Stream, fusion, and feature-store folders get added as those stages start, see [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md).
+Everything else - `preprocessing/`, `models/`, `training/`, `evaluation/`, `feature_store/` - gets created as the work that needs it starts. See [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md) §13 for the target layout.

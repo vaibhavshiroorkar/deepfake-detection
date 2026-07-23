@@ -129,7 +129,6 @@ def render_selection():
     if st.session_state.get("sel_context") != ctx:
         st.session_state["sel_context"] = ctx
         st.session_state.pop("sel_clip_id", None)
-        st.session_state["show_picker"] = False
 
     # Default to the first clip so the page isn't empty on first load.
     sel_id = st.session_state.get("sel_clip_id")
@@ -142,35 +141,63 @@ def render_selection():
     tag = "real" if int(crow["label"]) == 0 else "fake"
     mtype = crow["manipulation_type"] if "manipulation_type" in df.columns else ""
     b1.success(f"**{sel_id}** — {mtype} ({tag})")
-    if b2.button("Choose clip", key="open_picker_btn"):
-        st.session_state["show_picker"] = True
+    # Call the dialog directly on the click. A persistent flag would re-open it
+    # on every rerun (e.g. switching to the Config tab) after a dismiss.
+    open_clicked = b2.button("Choose clip", key="open_picker_btn")
 
     @st.dialog("Choose a clip", width="large")
     def _picker():
-        query = st.text_input("Search clip id / identity", key="pick_search")
-        has_type = "manipulation_type" in df.columns
-        has_method = "method" in df.columns
-        f1, f2, f3 = st.columns(3)
-        manip = (f1.multiselect("Type", MANIP_TYPES, key="pick_types") if has_type else [])
-        methods = (f2.multiselect("Method", sorted(df["method"].dropna().unique().tolist()),
-                                  key="pick_methods") if has_method else [])
-        label_filter = f3.radio("Label", ["all", "real", "fake"], horizontal=True, key="pick_label")
+        left, right = st.columns([3, 2])
+        with left:
+            query = st.text_input("Search clip id / identity", key="pick_search")
+            has_type = "manipulation_type" in df.columns
+            has_method = "method" in df.columns
+            f1, f2, f3 = st.columns(3)
+            manip = (f1.multiselect("Type", MANIP_TYPES, key="pick_types") if has_type else [])
+            methods = (f2.multiselect("Method", sorted(df["method"].dropna().unique().tolist()),
+                                      key="pick_methods") if has_method else [])
+            label_filter = f3.radio("Label", ["all", "real", "fake"], horizontal=True,
+                                    key="pick_label")
+            filtered = group_by_identity(search_manifest(
+                filter_manifest(df, manip, methods, label_filter), query))
+            st.caption(f"{len(filtered)} clips — variants of one identity are grouped. "
+                       "Select a row to preview it on the right.")
+            view_cols = [c for c in ["clip_id", "source", "manipulation_type", "method", "label"]
+                         if c in filtered.columns]
+            event = st.dataframe(filtered[view_cols], height=340, hide_index=True,
+                                 on_select="rerun", selection_mode="single-row", key="pick_table")
+            rows = event.selection["rows"]
+        candidate = filtered.iloc[rows[0]] if rows else None
+        with right:
+            if candidate is None:
+                st.info("Select a clip on the left to preview it.")
+            else:
+                ctag = "real" if int(candidate["label"]) == 0 else "fake"
+                cmt = candidate["manipulation_type"] if "manipulation_type" in candidate else ""
+                st.markdown(f"**{candidate['clip_id']}**")
+                st.caption(f"{cmt} ({ctag})")
+                _preview_frames(st, DATA_DIR / candidate["video_path"])
+                if st.button("Use this clip", type="primary", key="pick_confirm"):
+                    st.session_state["sel_clip_id"] = candidate["clip_id"]
+                    st.rerun()
 
-        filtered = group_by_identity(search_manifest(
-            filter_manifest(df, manip, methods, label_filter), query))
-        st.caption(f"{len(filtered)} clips — variants of the same identity are grouped. "
-                   "Click a row to use it.")
-        view_cols = [c for c in ["clip_id", "source", "manipulation_type", "method", "label"]
-                     if c in filtered.columns]
-        event = st.dataframe(filtered[view_cols], height=380, hide_index=True,
-                             on_select="rerun", selection_mode="single-row", key="pick_table")
-        rows = event.selection["rows"]
-        if rows:
-            st.session_state["sel_clip_id"] = filtered.iloc[rows[0]]["clip_id"]
-            st.session_state["show_picker"] = False
-            st.rerun()
-
-    if st.session_state.get("show_picker"):
+    if open_clicked:
         _picker()
 
     return df[df["clip_id"] == sel_id].iloc[0]
+
+
+def _preview_frames(st, video_path, n: int = 4):
+    """Show a few raw frames of a clip inside the picker (no MTCNN)."""
+    import cv2
+    from dashboard.lib import media
+
+    if not Path(video_path).exists():
+        st.caption("Video not found on disk.")
+        return
+    duration, _ = media.frame_meta(str(video_path))
+    ts = media.sample_timestamps(duration, n, 0.35)
+    frames = [cv2.resize(f, (150, 150)) for f in media.decode_frames(str(video_path), ts)]
+    cols = st.columns(2)
+    for k, im in enumerate(frames):
+        cols[k % 2].image(im, width="stretch")

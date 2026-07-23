@@ -157,15 +157,18 @@ else:
             do_detect = l.checkbox("Enable MTCNN crop", value=True, key="v_detect")
             conf = l.slider("Confidence", 0.50, 0.99, 0.90, 0.01, disabled=not do_detect, key="v_conf")
             margin = l.slider("Crop margin", 0.0, 0.6, 0.20, 0.05, disabled=not do_detect, key="v_margin")
+            mouth_crops = None
             if do_detect:
                 detector, device = media.get_detector()
                 l.caption(f"Detector on {device}.")
-                out, flags = [], []
+                faces, mouths, flags = [], [], []
                 for f in full_frames:
-                    crop, det = media.detect_and_crop(f, detector, conf, margin)
-                    out.append(crop)
+                    face, mouth, det = media.detect_face_and_mouth(f, detector, conf, margin)
+                    faces.append(face)
+                    mouths.append(mouth)
                     flags.append(det)
-                cur = out
+                cur = faces
+                mouth_crops = mouths          # parallel branch, kept for the mouth stage
                 l.metric("Faces detected", f"{sum(flags)}/{n_frames}")
                 show_frames(r, cur, "Cropped")
             else:
@@ -212,19 +215,7 @@ else:
 
         with st.container(border=True):
             l, r = st.columns([1, 2])
-            l.markdown("**3 · Mouth-region crop (96²)**")
-            do_mouth = l.checkbox("Enable mouth crop", key="v_mouth")
-            l.caption("For the lip-sync stream later. Approximated from the face crop.")
-            if do_mouth:
-                cur = [V.mouth_region(img, 96) for img in cur]
-                show_frames(r, cur, "Mouth 96²")
-            else:
-                skipped(r)
-                show_frames(r, cur, "Face crop")
-
-        with st.container(border=True):
-            l, r = st.columns([1, 2])
-            l.markdown("**4 · ImageNet normalize**")
+            l.markdown("**3 · ImageNet normalize** (face path)")
             do_norm = l.checkbox("Enable normalize", value=True, key="v_norm")
             l.caption("Zero-centers pixels the way the pretrained backbones expect.")
             if do_norm:
@@ -240,6 +231,26 @@ else:
                 show_frames(r, cur, "Raw [0,255]")
                 model_faces = np.stack([np.transpose(img.astype(np.float32) / 255.0, (2, 0, 1))
                                         for img in cur])
+
+        # Parallel branch: the mouth crop is a SEPARATE output for the lip-sync
+        # stream (AV-HuBERT). It does not replace the face — the visual and
+        # emotion streams still consume the face crop above.
+        model_mouth = None
+        with st.container(border=True):
+            l, r = st.columns([1, 2])
+            l.markdown("**⑃ Mouth branch** (lip-sync input, parallel)")
+            do_mouth = l.checkbox("Produce 96² mouth crop", key="v_mouth")
+            l.caption("Landmark-derived mouth region for the lip-sync stream. Runs "
+                      "alongside the face crop — the visual/emotion streams keep the face.")
+            if do_mouth:
+                if mouth_crops is None:
+                    r.warning("Enable face detection above to derive landmark mouth crops.")
+                else:
+                    show_frames(r, mouth_crops, "Mouth 96² (from mouth-corner landmarks)")
+                    model_mouth = np.stack([np.transpose(m.astype(np.float32) / 255.0, (2, 0, 1))
+                                            for m in mouth_crops]).astype(np.float32)
+            else:
+                skipped(r)
 
         st.divider()
         st.header("Visual model input")
@@ -258,6 +269,19 @@ else:
                     col.image(disp_model[start + j], width="stretch")
         st.code(f"faces : shape={tuple(model_faces.shape)} dtype={model_faces.dtype} "
                 f"range=[{model_faces.min():.3f}, {model_faces.max():.3f}]", language="text")
+
+        if model_mouth is not None:
+            st.divider()
+            st.header("Mouth model input")
+            st.caption(f"Mouth tensor `{tuple(model_mouth.shape)}` → lip-sync stream "
+                       "(AV-HuBERT). Separate from the face tensor above.")
+            for start in range(0, len(mouth_crops), 8):
+                cols = st.columns(8)
+                for j, col in enumerate(cols):
+                    if start + j < len(mouth_crops):
+                        col.image(mouth_crops[start + j], width="stretch")
+            st.code(f"mouth : shape={tuple(model_mouth.shape)} dtype={model_mouth.dtype} "
+                    f"range=[{model_mouth.min():.3f}, {model_mouth.max():.3f}]", language="text")
 
     else:  # Audio
         st.header("Audio pipeline")

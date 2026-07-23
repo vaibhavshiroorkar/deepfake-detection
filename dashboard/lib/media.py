@@ -93,3 +93,39 @@ def detect_and_crop(frame_rgb, detector, conf_thresh: float, margin: float):
         if crop is not None:
             return cv2.cvtColor(crop, cv2.COLOR_BGR2RGB), True  # crop_* returns BGR
     return cv2.resize(frame_rgb, (FRAME_SIZE, FRAME_SIZE), interpolation=cv2.INTER_CUBIC), False
+
+
+def detect_face_and_mouth(frame_rgb, detector, conf_thresh: float, margin: float,
+                          mouth_size: int = 96):
+    """Detect once; return (face_224_rgb, mouth_96_rgb, detected).
+
+    The face crop feeds the visual + emotion streams; the mouth crop is a
+    PARALLEL output for the lip-sync stream — derived from MTCNN's two mouth-
+    corner landmarks, not by chopping the face crop. Both come from one detect
+    call so the two branches stay aligned.
+    """
+    boxes, probs, points = detector.detect(frame_rgb, landmarks=True)
+    ok = (boxes is not None and probs is not None
+          and probs[0] is not None and probs[0] >= conf_thresh)
+    if not ok:
+        face = cv2.resize(frame_rgb, (FRAME_SIZE, FRAME_SIZE), interpolation=cv2.INTER_CUBIC)
+        mouth = cv2.resize(frame_rgb, (mouth_size, mouth_size), interpolation=cv2.INTER_CUBIC)
+        return face, mouth, False
+
+    crop = crop_and_resize_face(frame_rgb, boxes[0], (FRAME_SIZE, FRAME_SIZE),
+                                margin_percentage=margin)
+    face = (cv2.cvtColor(crop, cv2.COLOR_BGR2RGB) if crop is not None
+            else cv2.resize(frame_rgb, (FRAME_SIZE, FRAME_SIZE), interpolation=cv2.INTER_CUBIC))
+
+    # Mouth region from the two mouth-corner landmarks (points 3 and 4).
+    ml, mr = points[0][3], points[0][4]
+    cx, cy = (ml[0] + mr[0]) / 2.0, (ml[1] + mr[1]) / 2.0
+    corner_dist = float(np.hypot(mr[0] - ml[0], mr[1] - ml[1]))
+    half = max(corner_dist * 0.9, 20.0)          # square half-size around the mouth
+    h_img, w_img = frame_rgb.shape[:2]
+    x1, x2 = int(max(0, cx - half)), int(min(w_img, cx + half))
+    y1, y2 = int(max(0, cy - half)), int(min(h_img, cy + half))
+    region = frame_rgb[y1:y2, x1:x2]
+    mouth = (cv2.resize(region, (mouth_size, mouth_size), interpolation=cv2.INTER_CUBIC)
+             if region.size else cv2.resize(face, (mouth_size, mouth_size)))
+    return face, mouth, True
