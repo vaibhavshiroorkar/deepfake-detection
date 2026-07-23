@@ -509,7 +509,8 @@ dataset path no longer drags `ffmpeg-python`. Verified this session:
 - `ClipDataset` DataLoader yields `faces [B,16,3,224,224]`, `audio [B,16,5600]`,
   `label [B]`, ImageNet-normalized — shapes printed.
 - `feature_store.store` round-trips a dummy embedding.
-- `preprocess_dashboard.py` boots clean under Streamlit `AppTest` (16/16 faces on a sample clip).
+- The multi-page dashboard (`dashboard/app.py`) boots clean under Streamlit `AppTest`
+  (all four pages, 16/16 faces on a sample clip).
 - Full precache of all three splits (~2000 clips) run via `preprocessing.precache`.
 
 **Next: Stage 2** — the first visual stream (EfficientNet-B0 + BiLSTM), rebuilt toward
@@ -539,13 +540,18 @@ rest are "not built yet, build it this way."
    previous build used a hand-maintained `evaluation/experiments.csv` instead, and
    `wandb` is still not in `pyproject.toml`. Add it when the first training script
    appears.
-4. **Streamlit dashboard — BUILT 2026-07-23.** `dashboard/preprocess_dashboard.py`,
-   the §7 preprocessing dashboard: a small-sample viewer that reuses the pipeline's own
-   crop logic to preview face crops + aligned audio waveforms as you drag the
-   preprocessing knobs (frames, crop margin, MTCNN confidence, audio window,
-   leading-silence trim). Read-only — it never writes `data/processed/` and never
-   trains. `streamlit==1.60.0` added to `pyproject.toml` (1.55+ needed for pillow 12).
-   Run: `uv run streamlit run dashboard/preprocess_dashboard.py`.
+4. **Streamlit dashboard — BUILT 2026-07-23, restructured to multi-page.** Entry point
+   `dashboard/app.py` (`st.navigation`). Two sections: **Data Preprocessing** (Visual,
+   Audio) where every preprocessing step is an independent on/off toggle shown
+   **original-vs-processed** — Core (detect/crop/resample/window), Representation
+   (ImageNet normalize, mouth crop, mel-spectrogram) and Quality & robustness (sharpen,
+   denoise, CLAHE, blur, JPEG re-compress, downscale, add-noise, bandpass) — with a
+   shared Dataset/Target/Clip selector; and **Streams** (Visual, Audiovisual) read-only
+   scaffolds showing planned architecture + a W&B placeholder, no compute. Pure ops in
+   `dashboard/lib/` are unit-tested; pages are AppTest-smoked. Read-only — never writes
+   `data/processed/`, never trains. `streamlit==1.60.0` (1.55+ needed for pillow 12).
+   Run: `uv run streamlit run dashboard/app.py`. Spec + plan in
+   `docs/superpowers/{specs,plans}/2026-07-23-preprocessing-experiment-dashboard*`.
 5. **Per-category logging.** §7 requires per-category val accuracy every epoch
    (`val_acc_FVFA-WL`, …). The previous trainer logged aggregate metrics only. Build it
    in from the start this time — it is the project's headline claim.
