@@ -16,12 +16,19 @@ if str(_REPO_ROOT) not in sys.path:
 st.set_page_config(page_title="Preprocessing dashboard", layout="wide")
 
 nav = st.navigation({
-    "Data Preprocessing": [
+    "Data Pre-processing": [
         st.Page("pages/preprocess.py", title="Preprocessing"),
     ],
     "Streams": [
-        st.Page("pages/stream_visual.py", title="Visual stream"),
-        st.Page("pages/stream_audiovisual.py", title="Audiovisual stream"),
+        st.Page("pages/stream_visual.py", title="Visual"),
+        st.Page("pages/stream_lipsync.py", title="LipSync"),
+        st.Page("pages/stream_emotions.py", title="Emotions"),
+    ],
+    "Fusion": [
+        st.Page("pages/fusion.py", title="Fusion"),
+    ],
+    "Explainability": [
+        st.Page("pages/explainability.py", title="Explainability"),
     ],
 })
 nav.run()

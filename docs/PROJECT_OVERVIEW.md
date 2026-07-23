@@ -552,6 +552,12 @@ rest are "not built yet, build it this way."
    `data/processed/`, never trains. `streamlit==1.60.0` (1.55+ needed for pillow 12).
    Run: `uv run streamlit run dashboard/app.py`. Spec + plan in
    `docs/superpowers/{specs,plans}/2026-07-23-preprocessing-experiment-dashboard*`.
+   Nav sections: **Data Pre-processing** (single page, Config/Visual/Audio slider with a
+   modal clip picker), **Streams** (Visual — real configurable Xception + EfficientNet
+   model boxes via `models/streams/common/`; LipSync and Emotions scaffolds), **Fusion**
+   and **Explainability** scaffolds. The Visual page's "Build & inspect" instantiates the
+   real `VisualStream` and forward-passes a dummy clip (inference only) — training stays a
+   background script per this section.
 5. **Per-category logging.** §7 requires per-category val accuracy every epoch
    (`val_acc_FVFA-WL`, …). The previous trainer logged aggregate metrics only. Build it
    in from the start this time — it is the project's headline claim.

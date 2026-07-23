@@ -1,23 +1,46 @@
-"""Static architecture text for the read-only Streams scaffolds (no compute)."""
+"""Static architecture text for the Streams / Fusion / Explainability pages.
 
-VISUAL_STREAM = {
-    "title": "Visual stream",
-    "status": "Not trained yet — this page fills in after Stage 2/3 training.",
-    "architecture": [
-        "Backbones: Xception, EfficientNet, DINOv2 (config-driven, one at a time)",
-        "Temporal model: BiLSTM over per-frame embeddings",
-        "Output: one clip-level embedding (projected to common_dim=256 for fusion)",
-        "Never sees audio — labels are the video track's authenticity.",
+The visual page builds real models; the cross-modal, fusion and explainability
+pages are read-only scaffolds for work still in the plans (no compute).
+"""
+
+LIPSYNC_STREAM = {
+    "title": "Lip-sync stream",
+    "status": "Not built yet — Stage 4. This page scaffolds its model box.",
+    "models": [
+        ("AV-HuBERT", "video encoder — reads mouth-region motion into an embedding (Key/Value)"),
+        ("Whisper", "audio encoder — reads the audio track into an embedding (Query)"),
     ],
+    "note": "Scaled dot-product cross-attention (audio attends to video) yields a "
+            "synchronization-mismatch vector. No transcription anywhere — everything is vectors.",
 }
 
-AUDIOVISUAL_STREAM = {
-    "title": "Audiovisual stream",
-    "status": "Not trained yet — this page fills in after Stage 4/5 training.",
-    "architecture": [
-        "Lip-sync: AV-HuBERT (video) + Whisper (audio), scaled dot-product cross-attention",
-        "Emotion: HSEmotions (video) + Wav2Vec2 (audio), cross-attention",
-        "Each outputs a fixed-size mismatch feature vector (not a standalone score)",
-        "Cross-modal by construction — catches audio/video disagreement.",
+EMOTION_STREAM = {
+    "title": "Emotion stream",
+    "status": "Not built yet — Stage 5. This page scaffolds its model box.",
+    "models": [
+        ("HSEmotions", "face-emotion encoder — reads expression into an embedding (Key/Value)"),
+        ("Wav2Vec2", "voice-emotion encoder — reads vocal affect into an embedding (Query)"),
+    ],
+    "note": "Cross-attention (voice attends to face) yields an emotional-consistency "
+            "mismatch vector — a fixed-size feature for fusion, not a standalone score.",
+}
+
+FUSION = {
+    "title": "Fusion",
+    "status": "Not built yet — Stage 6. This page scaffolds the fusion configuration.",
+    "note": "Feature-level fusion (NOT score averaging): each enabled stream's clip "
+            "embedding is projected to common_dim=256, written to the feature store, then "
+            "concatenated and passed through an MLP + sigmoid for the fake probability. "
+            "Which streams to include is a Stage-7 ablation decision.",
+}
+
+EXPLAINABILITY = {
+    "title": "Explainability",
+    "status": "Not built yet — Stage 10. This page scaffolds the explainability views.",
+    "views": [
+        ("Grad-CAM", "where each visual backbone looks on a frame when it calls fake"),
+        ("Embedding shift", "which stream's embedding moves most on which manipulation type"),
+        ("Per-category / per-method", "accuracy broken down by FakeAVCeleb category and method"),
     ],
 }
