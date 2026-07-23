@@ -29,6 +29,15 @@ def test_audio_view_renders_after_config_selects_a_clip():
     assert "Audio pipeline" in [h.value for h in at.header]
 
 
+def test_clip_picker_modal_opens_with_search_and_table():
+    at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180).run()
+    at.session_state["show_picker"] = True   # open the modal on the next run
+    at.run()
+    assert not at.exception
+    assert len(at.dataframe) == 1            # the scrollable, selectable clip table
+    assert any("Search" in t.label for t in at.text_input)
+
+
 def test_visual_without_selection_prompts_for_config():
     # Force Visual with no cached clip → friendly prompt, no crash.
     at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180)

@@ -81,13 +81,32 @@ def filter_manifest(df: pd.DataFrame, manip_types: list[str],
     return out.reset_index(drop=True)
 
 
+def search_manifest(df: pd.DataFrame, query: str) -> pd.DataFrame:
+    """Substring search over clip_id and (if present) the source identity."""
+    q = query.strip().lower()
+    if not q:
+        return df
+    cols = ["clip_id"] + (["source"] if "source" in df.columns else [])
+    mask = None
+    for c in cols:
+        hit = df[c].astype(str).str.lower().str.contains(q, regex=False)
+        mask = hit if mask is None else (mask | hit)
+    return df[mask]
+
+
+def group_by_identity(df: pd.DataFrame) -> pd.DataFrame:
+    """Sort so all variants of one identity sit together (source, then type)."""
+    group_col = "source" if "source" in df.columns else "clip_id"
+    sort_cols = [group_col] + (["manipulation_type"] if "manipulation_type" in df.columns else [])
+    return df.sort_values(sort_cols).reset_index(drop=True)
+
+
 def render_selection():
-    """Render shared Dataset/Split/Target/Clip controls; return the selected clip row."""
+    """Render Dataset/Split + a modal Clip picker; return the selected clip row."""
     import streamlit as st
 
     st.header("Selection")
-    c1, c2, c3 = st.columns(3)
-
+    c1, c2 = st.columns(2)
     with c1:
         def _fmt_dataset(name):
             return name if available_splits(name) else f"{name} (not available)"
@@ -102,41 +121,56 @@ def render_selection():
 
     with c2:
         split = st.selectbox("Split", splits, key="sel_split")
-    with c3:
-        sample_n = st.slider("Sample size", 5, 40, 15, key="sel_sample_n")
 
     df = load_manifest(dataset, split)
 
-    # Target filters — only shown for columns this dataset actually has.
-    has_type = "manipulation_type" in df.columns
-    has_method = "method" in df.columns
-    t1, t2, t3 = st.columns(3)
-    manip, methods = [], []
-    with t1:
-        if has_type:
-            manip = st.multiselect("Target: manipulation type", MANIP_TYPES, key="sel_types")
-    with t2:
-        if has_method:
-            methods_present = sorted(df["method"].dropna().unique().tolist())
-            methods = st.multiselect("Target: method", methods_present, key="sel_methods")
-    with t3:
-        label_filter = st.radio("Target: label", ["all", "real", "fake"], key="sel_label")
+    # Reset the chosen clip whenever the dataset/split changes.
+    ctx = f"{dataset}/{split}"
+    if st.session_state.get("sel_context") != ctx:
+        st.session_state["sel_context"] = ctx
+        st.session_state.pop("sel_clip_id", None)
+        st.session_state["show_picker"] = False
 
-    seed = st.number_input("Sample seed", value=42, step=1, key="sel_seed")
+    # Default to the first clip so the page isn't empty on first load.
+    sel_id = st.session_state.get("sel_clip_id")
+    if sel_id is None or not (df["clip_id"] == sel_id).any():
+        sel_id = df.iloc[0]["clip_id"]
+        st.session_state["sel_clip_id"] = sel_id
 
-    filtered = filter_manifest(df, manip, methods, label_filter)
-    if len(filtered) == 0:
-        st.warning("No clips match the current target filters.")
-        return None
+    crow = df[df["clip_id"] == sel_id].iloc[0]
+    b1, b2 = st.columns([3, 1])
+    tag = "real" if int(crow["label"]) == 0 else "fake"
+    mtype = crow["manipulation_type"] if "manipulation_type" in df.columns else ""
+    b1.success(f"**{sel_id}** — {mtype} ({tag})")
+    if b2.button("Choose clip", key="open_picker_btn"):
+        st.session_state["show_picker"] = True
 
-    sample = filtered.sample(n=min(int(sample_n), len(filtered)),
-                             random_state=int(seed)).reset_index(drop=True)
+    @st.dialog("Choose a clip", width="large")
+    def _picker():
+        query = st.text_input("Search clip id / identity", key="pick_search")
+        has_type = "manipulation_type" in df.columns
+        has_method = "method" in df.columns
+        f1, f2, f3 = st.columns(3)
+        manip = (f1.multiselect("Type", MANIP_TYPES, key="pick_types") if has_type else [])
+        methods = (f2.multiselect("Method", sorted(df["method"].dropna().unique().tolist()),
+                                  key="pick_methods") if has_method else [])
+        label_filter = f3.radio("Label", ["all", "real", "fake"], horizontal=True, key="pick_label")
 
-    def _label(i):
-        r = sample.iloc[i]
-        tag = "REAL" if r["label"] == 0 else "fake"
-        mtype = r["manipulation_type"] if has_type else ""
-        return f"[{tag}] {mtype} — {r['clip_id']}".replace("—  —", "—")
+        filtered = group_by_identity(search_manifest(
+            filter_manifest(df, manip, methods, label_filter), query))
+        st.caption(f"{len(filtered)} clips — variants of the same identity are grouped. "
+                   "Click a row to use it.")
+        view_cols = [c for c in ["clip_id", "source", "manipulation_type", "method", "label"]
+                     if c in filtered.columns]
+        event = st.dataframe(filtered[view_cols], height=380, hide_index=True,
+                             on_select="rerun", selection_mode="single-row", key="pick_table")
+        rows = event.selection["rows"]
+        if rows:
+            st.session_state["sel_clip_id"] = filtered.iloc[rows[0]]["clip_id"]
+            st.session_state["show_picker"] = False
+            st.rerun()
 
-    idx = st.selectbox("Clip", range(len(sample)), format_func=_label, key="sel_clip_idx")
-    return sample.iloc[idx]
+    if st.session_state.get("show_picker"):
+        _picker()
+
+    return df[df["clip_id"] == sel_id].iloc[0]
