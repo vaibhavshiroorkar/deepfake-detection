@@ -17,8 +17,7 @@ st.set_page_config(page_title="Preprocessing dashboard", layout="wide")
 
 nav = st.navigation({
     "Data Preprocessing": [
-        st.Page("pages/preprocess_visual.py", title="Visual"),
-        st.Page("pages/preprocess_audio.py", title="Audio"),
+        st.Page("pages/preprocess.py", title="Preprocessing"),
     ],
     "Streams": [
         st.Page("pages/stream_visual.py", title="Visual stream"),
