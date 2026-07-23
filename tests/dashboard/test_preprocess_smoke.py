@@ -1,14 +1,18 @@
 from streamlit.testing.v1 import AppTest
 
 
-def test_config_view_default_runs():
+def test_config_view_default_shows_selection_and_contract():
     at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180).run()
     assert not at.exception
-    assert "Configuration" in [h.value for h in at.header]
+    headers = [h.value for h in at.header]
+    assert "Configuration" in headers          # Config is the default view
+    subs = [s.value for s in at.subheader]
+    assert "Selection" in subs                  # Selection now lives under Config
 
 
-def test_visual_view_renders_pipeline_and_model_input():
-    at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180)
+def test_visual_view_renders_after_config_selects_a_clip():
+    at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180).run()
+    # first (Config) run cached the selected clip; now switch to Visual
     at.session_state["pp_view"] = "Visual"
     at.run()
     assert not at.exception
@@ -17,10 +21,18 @@ def test_visual_view_renders_pipeline_and_model_input():
     assert "Visual model input" in headers
 
 
-def test_audio_view_renders_pipeline_and_model_input():
-    at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180)
+def test_audio_view_renders_after_config_selects_a_clip():
+    at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180).run()
     at.session_state["pp_view"] = "Audio"
     at.run()
     assert not at.exception
-    headers = [h.value for h in at.header]
-    assert "Audio pipeline" in headers
+    assert "Audio pipeline" in [h.value for h in at.header]
+
+
+def test_visual_without_selection_prompts_for_config():
+    # Force Visual with no cached clip → friendly prompt, no crash.
+    at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180)
+    at.session_state["pp_view"] = "Visual"
+    at.run()
+    assert not at.exception
+    assert any("Config" in m.value for m in at.info)
