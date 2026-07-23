@@ -108,13 +108,14 @@ if view == "Config":
     prev = [cv2.resize(f, (224, 224), interpolation=cv2.INTER_CUBIC)
             for f in media.decode_frames(str(video_path), timestamps)]
 
-    # Compact preview: up to 8 evenly-spaced thumbnails in a narrow column.
+    # Compact preview: all N frames, 8 per row, in a narrow column (keeps the
+    # thumbnail size fixed by always laying out 8 columns per row).
     left, _ = st.columns([3, 2])
-    step = max(1, len(prev) // 8)
-    thumbs = prev[::step][:8]
-    tcols = left.columns(len(thumbs))
-    for col, im in zip(tcols, thumbs):
-        col.image(im, width="stretch")
+    for start in range(0, len(prev), 8):
+        cols = left.columns(8)
+        for j, col in enumerate(cols):
+            if start + j < len(prev):
+                col.image(prev[start + j], width="stretch")
 
     raw2d, native_sr = media.decode_audio(str(video_path))
     if raw2d.size:
