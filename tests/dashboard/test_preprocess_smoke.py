@@ -1,13 +1,13 @@
 from streamlit.testing.v1 import AppTest
 
 
-def test_config_view_default_shows_selection_and_contract():
+def test_config_view_default_shows_selection_and_preview():
     at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180).run()
     assert not at.exception
     headers = [h.value for h in at.header]
-    assert "Configuration" in headers          # Config is the default view
-    subs = [s.value for s in at.subheader]
-    assert "Selection" in subs                  # Selection now lives under Config
+    # Selection and Preview are both full headers (same size as the pipelines).
+    assert "Selection" in headers
+    assert "Preview" in headers
 
 
 def test_visual_view_renders_after_config_selects_a_clip():

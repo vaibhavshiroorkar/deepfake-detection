@@ -93,23 +93,24 @@ if view == "Config":
     st.session_state["pp_video_path"] = str(video_path)
 
     st.divider()
-    st.header("Configuration")
-    st.caption("The model-input contract for the current settings. Set the step toggles "
-               "in the Visual and Audio tabs; their summaries appear below.")
+    st.header("Preview")
+    tag = "real" if int(row["label"]) == 0 else "fake"
+    st.caption(f"Clip `{row['clip_id']}` — {tag}. Raw frames and audio for the current "
+               "N and window, before any preprocessing.")
 
-    win_samples = int(window_sec * media.AUDIO_SR)
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Faces", f"[{n_frames}, 3, 224, 224]")
-    c2.metric("Audio", f"[{n_frames}, {win_samples}]")
-    c3.metric("Label", f"{int(row['label'])}  ({'real' if row['label'] == 0 else 'fake'})")
+    duration, fps = media.frame_meta(str(video_path))
+    timestamps = media.sample_timestamps(duration, n_frames, window_sec)
+    prev = [cv2.resize(f, (224, 224), interpolation=cv2.INTER_CUBIC)
+            for f in media.decode_frames(str(video_path), timestamps)]
+    show_frames(st, prev, f"{n_frames} frames across {duration:.2f}s @ {fps:.1f} fps")
 
-    st.markdown(f"**Clip:** `{row['clip_id']}`")
-    st.markdown("**Visual steps**")
-    st.code(st.session_state.get("pp_visual_cfg", "open the Visual tab to configure"),
-            language="python")
-    st.markdown("**Audio steps**")
-    st.code(st.session_state.get("pp_audio_cfg", "open the Audio tab to configure"),
-            language="python")
+    raw2d, native_sr = media.decode_audio(str(video_path))
+    if raw2d.size:
+        mono = A.downmix(raw2d)
+        st.pyplot(waveform_fig(mono, native_sr, f"Audio waveform ({native_sr} Hz)"))
+        st.audio(mono, sample_rate=native_sr)
+    else:
+        st.caption("No audio stream in this clip.")
 
 # ========================= VISUAL / AUDIO ================================== #
 else:
@@ -225,14 +226,6 @@ else:
                 show_frames(r, cur, "Raw [0,255]")
                 model_faces = np.stack([np.transpose(img.astype(np.float32) / 255.0, (2, 0, 1))
                                         for img in cur])
-
-        st.session_state["pp_visual_cfg"] = {
-            "frames": n_frames, "detect": do_detect, "conf": conf, "margin": margin,
-            "mouth": do_mouth, "imagenet_norm": do_norm,
-            "sharpen": do_sharpen and sharpen_amt, "denoise": do_denoise and denoise_str,
-            "clahe": do_clahe and clahe_clip, "blur": do_blur and blur_k,
-            "jpeg": do_jpeg and jpeg_q, "downscale": do_ds and ds_factor,
-        }
 
         st.divider()
         st.header("Visual model input")
@@ -360,13 +353,6 @@ else:
                 r.pyplot(fig)
             else:
                 skipped(r)
-
-        st.session_state["pp_audio_cfg"] = {
-            "downmix": do_downmix, "resample": do_resample and target_sr, "window_s": window_sec,
-            "trim": do_trim and top_db, "mel": do_mel and (n_mels, hop),
-            "denoise": do_aden and aden_str, "rms": do_rms and rms_db,
-            "bandpass": do_band and band, "add_noise": do_addnoise and snr,
-        }
 
         st.divider()
         st.header("Audio model input")

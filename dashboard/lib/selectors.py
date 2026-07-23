@@ -85,7 +85,7 @@ def render_selection():
     """Render shared Dataset/Split/Target/Clip controls; return the selected clip row."""
     import streamlit as st
 
-    st.subheader("Selection")
+    st.header("Selection")
     c1, c2, c3 = st.columns(3)
 
     with c1:
