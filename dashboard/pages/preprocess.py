@@ -49,8 +49,8 @@ def skipped(container):
     container.caption("skipped — passthrough")
 
 
-def waveform_fig(y, rate, title):
-    fig, ax = plt.subplots(figsize=(10, 1.9))
+def waveform_fig(y, rate, title, figsize=(10, 1.9)):
+    fig, ax = plt.subplots(figsize=figsize)
     if y.size:
         ax.plot(np.arange(y.size) / rate, y, linewidth=0.5, color="#3b82f6")
     ax.set_title(title, fontsize=9)
@@ -94,21 +94,34 @@ if view == "Config":
 
     st.divider()
     st.header("Preview")
-    tag = "real" if int(row["label"]) == 0 else "fake"
-    st.caption(f"Clip `{row['clip_id']}` — {tag}. Raw frames and audio for the current "
-               "N and window, before any preprocessing.")
+
+    # The values the old Configuration section showed: the model-input contract.
+    win_samples = int(window_sec * media.AUDIO_SR)
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Faces", f"[{n_frames}, 3, 224, 224]")
+    m2.metric("Audio", f"[{n_frames}, {win_samples}]")
+    m3.metric("Label", f"{int(row['label'])}  ({'real' if row['label'] == 0 else 'fake'})")
+    st.caption(f"Clip `{row['clip_id']}` — raw frames and audio before any preprocessing.")
 
     duration, fps = media.frame_meta(str(video_path))
     timestamps = media.sample_timestamps(duration, n_frames, window_sec)
     prev = [cv2.resize(f, (224, 224), interpolation=cv2.INTER_CUBIC)
             for f in media.decode_frames(str(video_path), timestamps)]
-    show_frames(st, prev, f"{n_frames} frames across {duration:.2f}s @ {fps:.1f} fps")
+
+    # Compact preview: up to 8 evenly-spaced thumbnails in a narrow column.
+    left, _ = st.columns([3, 2])
+    step = max(1, len(prev) // 8)
+    thumbs = prev[::step][:8]
+    tcols = left.columns(len(thumbs))
+    for col, im in zip(tcols, thumbs):
+        col.image(im, width="stretch")
 
     raw2d, native_sr = media.decode_audio(str(video_path))
     if raw2d.size:
         mono = A.downmix(raw2d)
-        st.pyplot(waveform_fig(mono, native_sr, f"Audio waveform ({native_sr} Hz)"))
-        st.audio(mono, sample_rate=native_sr)
+        aleft, _ = st.columns([3, 2])
+        aleft.pyplot(waveform_fig(mono, native_sr, f"Audio ({native_sr} Hz)", figsize=(6, 1.3)))
+        aleft.audio(mono, sample_rate=native_sr)
     else:
         st.caption("No audio stream in this clip.")
 
