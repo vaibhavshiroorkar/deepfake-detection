@@ -35,29 +35,24 @@ if not video_path.exists():
     st.error(f"Video not found: {video_path}")
     st.stop()
 
-s1, s2, s3 = st.columns(3)
+s1, s2 = st.columns(2)
 with s1:
     n_frames = st.slider("Frames (N)", 4, 32, 16)
 with s2:
     window_sec = st.slider("Audio window (s)", 0.10, 1.00, 0.35, 0.05)
-with s3:
-    preview_i = st.slider("Preview frame", 0, n_frames - 1, min(8, n_frames - 1))
 
 duration, fps = media.frame_meta(str(video_path))
 timestamps = media.sample_timestamps(duration, n_frames, window_sec)
 
 
 def show_frames(container, frames, caption):
-    """Render the preview frame big, all N behind an expander."""
-    idx = min(preview_i, len(frames) - 1)
-    container.image(frames[idx], caption=f"{caption} — frame {idx} (t={timestamps[idx]:.2f}s)",
-                    width="stretch")
-    with container.expander(f"all {len(frames)} frames"):
-        for start in range(0, len(frames), 8):
-            cols = st.columns(8)
-            for j, col in enumerate(cols):
-                if start + j < len(frames):
-                    col.image(frames[start + j], width="stretch")
+    """Render all N frames as a compact grid (no single large preview)."""
+    container.caption(caption)
+    for start in range(0, len(frames), 8):
+        cols = container.columns(8)
+        for j, col in enumerate(cols):
+            if start + j < len(frames):
+                col.image(frames[start + j], width="stretch")
 
 
 def skipped(container):
@@ -161,7 +156,7 @@ with st.container(border=True):
     norm_frames = cur  # what the visual backbone actually consumes
     if do_norm:
         arrs = [V.imagenet_normalize(img) for img in cur]
-        lo, hi = V.normalized_range(arrs[min(preview_i, len(arrs) - 1)])
+        lo, hi = V.normalized_range(arrs[len(arrs) // 2])
         l.metric("Pixel range", f"[{lo:.2f}, {hi:.2f}]")
         # De-normalize purely for display (grids stay uint8).
         disp = [np.clip((a * V.IMAGENET_STD + V.IMAGENET_MEAN) * 255, 0, 255).astype(np.uint8)
