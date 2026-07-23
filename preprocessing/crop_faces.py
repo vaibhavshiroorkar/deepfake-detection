@@ -5,18 +5,14 @@ import cv2
 from PIL import Image
 import numpy as np
 
-# Try importing dependencies
-try:
-    import torch
-    from facenet_pytorch import MTCNN
-    from tqdm import tqdm
-    import ffmpeg
-    import librosa
-    import pandas as pd
-except ImportError as e:
-    print(f"Error importing dependencies: {e}")
-    print("Please make sure you've set up the environment (see README.md: uv sync --extra cpu, or --extra cu130 for GPU) and activated it.")
-    sys.exit(1)
+# NOTE: crop_and_resize_face() below needs only cv2 + numpy, and it is what the
+# shared dataset path (extract_clip.py -> dataset.py -> precache.py) imports.
+# The heavy deps (torch/MTCNN/ffmpeg/librosa/pandas) are only used by this
+# module's standalone CLI (process_video). Importing them at module top coupled
+# the whole dataset pipeline to ffmpeg-python for no reason -- a missing
+# ffmpeg-python then crashed precache even though it decodes audio via `av`.
+# They are imported lazily inside the CLI functions instead. See README.md
+# (uv sync --extra cpu / --extra cu130) if any of these are missing.
 
 def crop_and_resize_face(frame_rgb, box, target_size=(224, 224), margin_percentage=0.2):
     """
@@ -57,6 +53,7 @@ def extract_audio(video_path, output_dir, sample_rate=16000):
     Extracts the video's audio track to a mono WAV file via ffmpeg.
     Returns None (after printing a warning) if the video has no audio stream.
     """
+    import ffmpeg  # lazy: CLI-only, see module header
     audio_path = output_dir / "audio.wav"
     try:
         (
@@ -109,15 +106,22 @@ def process_video(video_path, output_dir, frame_stride=1, confidence_threshold=0
     Also extracts the video's audio and syncs a centered audio window to each
     processed frame (see sync_audio_to_frames).
     """
+    # lazy: CLI-only heavy deps, see module header
+    import torch
+    from facenet_pytorch import MTCNN
+    from tqdm import tqdm
+    import librosa
+    import pandas as pd
+
     video_path = Path(video_path)
     output_dir = Path(output_dir)
-    
+
     if not video_path.exists():
         print(f"Error: Video file not found at {video_path}")
         sys.exit(1)
-        
+
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Initialize MTCNN
     # Run on GPU if CUDA is available, otherwise CPU
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

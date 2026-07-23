@@ -35,6 +35,8 @@ except ImportError as e:
     print("Run: uv sync --extra cpu (or --extra cu130 for GPU), see README.md")
     sys.exit(1)
 
+from preprocessing.manifest import clip_label
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_ROOT = REPO_ROOT / "data" / "raw" / "FakeAVCeleb_v1.2"
 META_CSV = DATA_ROOT / "meta_data.csv"
@@ -45,8 +47,6 @@ OUT_MANIFEST = REPO_ROOT / "data" / "full_manifest.csv"
 # positionally to reflect the real content.
 META_COLUMNS = ["source", "target1", "target2", "method", "category",
                 "manipulation_type", "race", "gender", "filename", "dirpath"]
-
-REAL_TYPE = "RealVideo-RealAudio"
 
 
 def resolve_video_path(row) -> Path:
@@ -87,7 +87,7 @@ def audit(sample_check_n: int = 200):
         if not vp.exists():
             missing += 1
             continue
-        label = 0 if r["manipulation_type"] == REAL_TYPE else 1
+        label = clip_label(r["manipulation_type"])
         clip_id = f"{r['category']}__{r['source']}__{Path(r['filename']).stem}"
         rows.append({
             "clip_id": clip_id,

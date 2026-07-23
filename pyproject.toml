@@ -27,7 +27,25 @@ dependencies = [
     "matplotlib==3.11.0",
     "jupyter==1.1.1",
     "tqdm==4.68.3",
+    # Streamlit is the preprocessing dashboard (PROJECT_OVERVIEW.md section 7):
+    # a small-sample iteration loop for preprocessing params. It never trains.
+    # >=1.55 is required so it accepts pillow 12 (older caps were pillow<12).
+    "streamlit==1.60.0",
 ]
+
+# Test-only. Kept in a dependency-group (PEP 735) rather than `dependencies`
+# so it installs by default for developers but is not part of the project's
+# runtime requirements.
+[dependency-groups]
+dev = [
+    "pytest==9.0.2",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Run pytest from the repo root; this puts the root on sys.path so tests can
+# `import preprocessing...` exactly the way the scripts do.
+addopts = "-q"
 
 # Exactly one of these must be selected: `uv sync --extra cpu` or
 # `uv sync --extra cu130`. They pull the same versions from different indexes.

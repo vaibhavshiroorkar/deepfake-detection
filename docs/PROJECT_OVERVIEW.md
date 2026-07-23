@@ -190,9 +190,15 @@ point is catching lip-sync fakes specifically, not aggregate accuracy.
 
 ---
 
-## 6. Preprocessing — ALREADY BUILT, DO NOT REDO
+## 6. Preprocessing — the Contract
 
-The data pipeline is done. Do not rebuild it. It produces:
+> **Status:** this pipeline was fully built once, then removed in the 2026-07-23 reset
+> (§14) to be rebuilt step by step. It is preserved in commit `926624a` — read it with
+> `git show 926624a:preprocessing/<file>.py` rather than reinventing the decisions.
+> **This section is the specification the rebuild must satisfy.** The output contract
+> below is what every later stage depends on; the internals are yours to rewrite.
+
+What it must produce:
 
 | Artifact | What it is |
 |---|---|
@@ -202,16 +208,19 @@ The data pipeline is done. Do not rebuild it. It produces:
 | mono audio @ 16 kHz | extracted per clip, QC'd for FakeAVCeleb's known **leading-silence shortcut bug** (fake-audio clips carry extra silence at t=0 that models can cheat on) |
 | face + mouth crops | MTCNN face crops (224×224) and landmark-derived mouth crops (96×96), with per-frame detection confidence |
 
-Scripts in `preprocessing/`:
+The scripts that did this, in dependency order — a reasonable rebuild order too, one
+script at a time:
 
-- `audit_dataset.py` — dataset integrity + the silence-shortcut audit
-- `build_splits.py` — identity-disjoint train/val/test splits
-- `crop_faces.py` — MTCNN face and mouth-region cropping
-- `extract_clip.py` — per-clip frame + aligned-audio extraction and disk cache
-- `dataset.py` — the shared PyTorch `Dataset`/`DataLoader`
-- `precache.py` — one-time parallel pre-caching so epoch 1 isn't crippled by lazy extraction
-- `verify_splits.py` — asserts no identity leaks across splits
-- `download_samples.py` — small sample fetch for local iteration
+| # | Script | Job |
+|---|---|---|
+| 1 | `audit_dataset.py` | walk `data/raw/`, build `full_manifest.csv`, integrity + silence-shortcut audit |
+| 2 | `build_splits.py` | identity-disjoint train/val/test splits (see reconciliation 2 first) |
+| 3 | `verify_splits.py` | assert no identity leaks across splits |
+| 4 | `extract_clip.py` | per-clip frame + aligned-audio extraction, with disk cache |
+| 5 | `crop_faces.py` | MTCNN face and mouth-region cropping |
+| 6 | `dataset.py` | the shared PyTorch `Dataset`/`DataLoader` |
+| 7 | `precache.py` | one-time parallel pre-caching so epoch 1 isn't crippled by lazy extraction |
+| — | `download_samples.py` | small sample fetch for local iteration (optional) |
 
 **Shared dataloader contract** (`preprocessing/dataset.py`) — every stream imports this,
 nobody writes their own:
@@ -273,15 +282,23 @@ a notebook cell that cannot survive a disconnect.
 
 - **Local environment** — Jupyter and plain scripts. **Not Colab**: no Drive-mounted
   paths, no Colab-specific assumptions.
-- **Primary GPU: NVIDIA RTX 3060 Laptop, 6 GB VRAM (CUDA 13).** This is the binding
-  constraint. It is what drove batch size 2 with gradient accumulation to an effective
-  16, CPU-side MTCNN in the pre-cache workers, and building the lightest visual backbone
-  first.
+- **Primary GPU (this machine): NVIDIA RTX 5070 Ti, 15.9 GB VRAM, compute capability
+  12.0, CUDA 13.0.** Verified 2026-07-23.
+- **Secondary machine: RTX 3060 Laptop, 6 GB VRAM.** The Stage 2 results in §14 were
+  produced here, by a teammate. Its 6 GB is what forced batch size 2 with gradient
+  accumulation to an effective 16, CPU-side MTCNN in the pre-cache workers, and building
+  the lightest visual backbone first.
 - Python 3.13, `uv`-managed. `uv sync --extra cu130` for GPU, `--extra cpu` otherwise —
   exactly one, never both. See [../README.md](../README.md).
 
-> Earlier drafts of this document claimed "no compute limit." That was never true of the
-> machine the work actually runs on. Plan against 6 GB unless a bigger box is confirmed.
+> **Plan against 6 GB for anything the team must reproduce**, and treat the 16 GB box as
+> headroom for the expensive stages (cross-modal streams, end-to-end fusion fine-tuning)
+> rather than as the baseline. A batch size that only fits in 16 GB will silently fail
+> on the laptop.
+>
+> Earlier drafts of this document claimed "no compute limit," then "6 GB, this is the
+> binding constraint." Both were wrong: the first was aspirational, the second read a
+> teammate's hardware off `experiments.csv` and assumed it was universal.
 
 **Team:** three people, starting from zero on deep learning (comfortable with Python and
 basic math). Work is labelled by broad workstream — Research (literature, math, report),
@@ -310,14 +327,16 @@ description of the *kind* of work in each stage plan, not a fixed person assignm
 
 ## 10. Work Order
 
+> Items 1 and 2 were completed once and then removed in the 2026-07-23 reset (§14).
+> They are being rebuilt step by step. Item 1 is the current work.
+
 1. **Shared PyTorch Dataset/DataLoader** over the manifest + cached crops + audio,
    returning time-aligned face frames, mouth frames, and audio segments as fixed-length
-   windows. Built once; all five streams import it. ✅ **done** —
-   `preprocessing/dataset.py`.
+   windows. Built once; all five streams import it. ← **current work**, spec in §6.
 2. **First visual stream end to end, as the validated template:** dataloader → backbone
    → temporal modeling (state which: mean-pool / LSTM / temporal attention, and why) →
    binary head → tracked training loop → eval on val including per-category breakdown.
-   ✅ **done with EfficientNet-B0**, not Xception — see §14.
+   Previously reached AUC 0.994 with EfficientNet-B0 — that is the bar (§14).
 3. **Remaining visual streams** cloning the validated pattern: Xception and DINOv2.
 4. **Cross-modal streams:** Lip-sync (AV-HuBERT + Whisper) and Emotion (HSEmotions +
    Wav2Vec2), each consuming aligned audio+video from the shared dataloader,
@@ -398,69 +417,138 @@ EfficientNet (compound scaling), DINOv2 (self-supervised self-distillation).
 
 ## 13. Repo Layout
 
-Grows as each stream is earned; stream folders are added when that stream starts, not
-upfront.
+**The repo is at a deliberate reset** (2026-07-23) — see §14. The directory skeleton
+exists as a map of where things go; **every folder is empty of logic**, and code is
+written into it one script at a time as the work that needs it starts.
 
 ```
 deepfake-detection/
-├── data/                     # manifests + splits in git; raw media and caches local only
-├── preprocessing/            # frozen face + audio extraction, splits, shared DataLoader
-├── models/
-│   ├── streams/
-│   │   ├── common/           # the shared, config-driven visual-stream template
-│   │   ├── efficientnet/     # built
-│   │   ├── xception/         # planned
-│   │   ├── dinov2/           # planned
-│   │   ├── lipsync/          # planned — AV-HuBERT + Whisper cross-attention
-│   │   └── emotion/          # planned — HSEmotions + Wav2Vec2 cross-attention
-│   └── baseline/             # early practice / first slice
+├── data/
+│   ├── raw/FakeAVCeleb_v1.2/ # the dataset (gitignored) — 21,544 clips
+│   └── processed/            # per-clip frame + audio cache (gitignored)
+├── preprocessing/            # face + audio extraction, splits, shared DataLoader
+├── models/streams/
+│   ├── common/               # the shared, config-driven visual-stream template
+│   ├── xception/  efficientnet/  dinov2/
+│   ├── lipsync/              # AV-HuBERT + Whisper cross-attention
+│   └── emotion/              # HSEmotions + Wav2Vec2 cross-attention
 ├── training/                 # background training scripts (never notebooks)
-├── fusion/                   # planned — feature-level fusion (concat + MLP + sigmoid)
-├── evaluation/               # metrics, ablation, robustness tests, experiments.csv
+├── fusion/                   # feature-level fusion (concat + MLP + sigmoid)
+├── evaluation/               # metrics, ablation, robustness tests
 ├── feature_store/            # shared table: clip_id -> per-stream embeddings
 ├── notebooks/                # exploration and inspection only
 └── docs/                     # this file, glossary, math writeups, stage plans
 ```
 
+Each Python directory holds an empty `__init__.py` so it is an importable package —
+scripts run from the repo root (`python -m preprocessing.audit_dataset`) and can import
+each other (`from preprocessing.dataset import ClipDataset`). `pyproject.toml` sets
+`package = false`, so there is nothing to install or build; the repo root just needs to
+be the working directory.
+
+### Where the dataset goes
+
+Unzip `FakeAVCeleb_v1.2.zip` so the layout is:
+
+```
+data/raw/FakeAVCeleb_v1.2/
+├── meta_data.csv
+├── RealVideo-RealAudio/
+├── RealVideo-FakeAudio/
+├── FakeVideo-RealAudio/
+└── FakeVideo-FakeAudio/
+        └── <race>/<gender>/<identity>/*.mp4
+```
+
+`data/*` is gitignored, so the media never enters git. Manifests written to `data/*.csv`
+(top level) *are* tracked.
+
 ---
 
-## 14. Current Status and Open Reconciliations
+## 14. Current Status
 
-### Done
+### Deliberate reset — 2026-07-23
 
-- **Stage 1 — data pipeline:** manifests, identity-disjoint splits, per-clip cache, and
-  the shared `ClipDataset` are complete and verified.
-- **Stage 2 — first visual stream:** **EfficientNet-B0**
-  (`tf_efficientnet_b0.ns_jft_in1k`) + BiLSTM + temporary head, trained and evaluated on
-  the held-out test set: **accuracy 0.963, AUC 0.994, F1 0.974, EER 0.018** (val AUC
-  0.999). Recorded in `evaluation/experiments.csv` and
-  `models/streams/efficientnet/RESULTS.md`. Stability required gradient clipping and
-  frozen BatchNorm during fine-tuning. In-distribution only; cross-dataset evaluation is
-  deferred to Stage 9.
+The Stage 1–2 implementation was **removed on purpose** so it can be rebuilt slowly,
+step by step, with each piece understood as it is added. Nothing was lost: the full
+prior implementation is preserved in commit
+**`926624a` — "Snapshot Stage 1-2 pipeline and consolidate docs before restart."**
+
+What was deleted: `preprocessing/`, `models/`, `training/`, `evaluation/`,
+`feature_store/`, `notebooks/`, and the derived manifests `data/*.csv`.
+What was kept: the pinned environment (`pyproject.toml`, `uv.lock`, `.venv`), this
+document and the stage plans, and `README.md`.
+
+To consult the old implementation while rebuilding:
+
+```bash
+git show 926624a --stat                          # everything that existed
+git show 926624a:preprocessing/dataset.py        # read one file
+git checkout 926624a -- preprocessing/dataset.py # restore one file
+```
+
+### What the previous implementation achieved (the bar to rebuild toward)
+
+- **Stage 1:** manifests, identity-disjoint splits, per-clip cache, shared `ClipDataset`.
+- **Stage 2:** EfficientNet-B0 (`tf_efficientnet_b0.ns_jft_in1k`) + BiLSTM + temporary
+  head. Held-out test: **accuracy 0.963, AUC 0.994, F1 0.974, EER 0.018** (val AUC
+  0.999). Stability required gradient clipping and frozen BatchNorm during fine-tuning.
+  In-distribution only. Measured under the 1:3 val/test ratio — see reconciliation 2.
+
+### Next step
+
+**Stage 1 is rebuilt and verified (2026-07-23).** The dataset is extracted to
+`data/raw/FakeAVCeleb_v1.2/` (21,544 clips, 0 corrupt in a 200-clip spot-check). The
+pipeline scripts were restored from snapshot `926624a`, with `audit_dataset.py` now
+routing its label through the tested `preprocessing/manifest.clip_label`, and
+`crop_faces.py`'s heavy CLI-only imports (ffmpeg/librosa/pandas/torch) made lazy so the
+dataset path no longer drags `ffmpeg-python`. Verified this session:
+
+- `full_manifest.csv` (21,544 rows) + identity-disjoint `train/val/test.csv` (1400/300/300).
+- `verify_splits.py` PASS — zero identity and zero file overlap across splits.
+- `ClipDataset` DataLoader yields `faces [B,16,3,224,224]`, `audio [B,16,5600]`,
+  `label [B]`, ImageNet-normalized — shapes printed.
+- `feature_store.store` round-trips a dummy embedding.
+- `preprocess_dashboard.py` boots clean under Streamlit `AppTest` (16/16 faces on a sample clip).
+- Full precache of all three splits (~2000 clips) run via `preprocessing.precache`.
+
+**Next: Stage 2** — the first visual stream (EfficientNet-B0 + BiLSTM), rebuilt toward
+the AUC 0.994 bar. See [stage-2-plan.md](stage-2-plan.md). Add `wandb` to
+`pyproject.toml` when that first training script appears (reconciliation 3).
 
 ### Open reconciliations — decide these, then edit this document
 
-Places where the stated plan and the shipped code disagree. Each needs a decision
-recorded here.
+Decisions the rebuild has to make. The first two are the ones that change results; the
+rest are "not built yet, build it this way."
 
-1. **Which backbone is the template.** The plan names Xception as the validated
-   template; the repo built **EfficientNet-B0 first**, deliberately, because it is the
-   lightest of the three and suits the 6 GB GPU. The template is backbone-agnostic and
-   config-driven, so this cost nothing — Xception and DINOv2 clone it in Stage 3 by
-   supplying a different `StreamConfig.backbone_name`. *Recommendation: keep
-   EfficientNet as the validated template, treat Xception as a Stage 3 clone.*
-2. **Val/test class distribution.** Plan: val/test stay at the natural ~40:1
-   distribution. Code: `build_splits.py` undersamples fakes to 1:3 in *every* split.
-   This changes every reported precision/recall/F1 number and must be settled before
-   Stage 9.
-3. **Experiment tracking.** The decision is W&B (`wandb.init` / `wandb.log` / Sweeps),
-   but nothing in the repo uses it — tracking today is a hand-maintained
-   `evaluation/experiments.csv`, and `wandb` is not in `pyproject.toml`. Migrating
-   `training/train_visual_stream.py` to W&B is unstarted work.
-4. **Streamlit dashboard.** Decided in §7, does not exist yet; `streamlit` is not a
-   dependency.
+1. **Which backbone is the template.** §10 names Xception; the previous build used
+   **EfficientNet-B0 first**, deliberately, because it is the lightest of the three and
+   suits the 6 GB GPU. The template is backbone-agnostic and config-driven, so the
+   choice costs nothing — the other two clone it by supplying a different
+   `StreamConfig.backbone_name`. *Recommendation: build EfficientNet first again, treat
+   Xception as a Stage 3 clone.*
+2. **Val/test class distribution — DECIDED 2026-07-23: 1:3 in every split.** §5's
+   natural ~40:1 was considered and rejected for val/test. Rationale: it keeps
+   precision/recall/F1 meaningful on 300-clip eval sets, and it keeps the rebuilt
+   numbers directly comparable to the previous build's 0.963/0.994 bar (also measured
+   under 1:3). `build_splits.py` undersamples fakes to `REAL_TO_FAKE_RATIO = 1/3` per
+   split; train-time class weighting still layers on top. The rebuilt splits are
+   train=1400 (350r/1050f), val=300 (75r/225f), test=300 (75r/225f), all
+   identity-disjoint over 500 `source` identities (verified by `verify_splits.py`).
+3. **Experiment tracking.** §7 decides W&B (`wandb.init` / `wandb.log` / Sweeps). The
+   previous build used a hand-maintained `evaluation/experiments.csv` instead, and
+   `wandb` is still not in `pyproject.toml`. Add it when the first training script
+   appears.
+4. **Streamlit dashboard — BUILT 2026-07-23.** `dashboard/preprocess_dashboard.py`,
+   the §7 preprocessing dashboard: a small-sample viewer that reuses the pipeline's own
+   crop logic to preview face crops + aligned audio waveforms as you drag the
+   preprocessing knobs (frames, crop margin, MTCNN confidence, audio window,
+   leading-silence trim). Read-only — it never writes `data/processed/` and never
+   trains. `streamlit==1.60.0` added to `pyproject.toml` (1.55+ needed for pillow 12).
+   Run: `uv run streamlit run dashboard/preprocess_dashboard.py`.
 5. **Per-category logging.** §7 requires per-category val accuracy every epoch
-   (`val_acc_FVFA-WL`, …). The current trainer logs aggregate metrics only.
+   (`val_acc_FVFA-WL`, …). The previous trainer logged aggregate metrics only. Build it
+   in from the start this time — it is the project's headline claim.
 
 ---
 
