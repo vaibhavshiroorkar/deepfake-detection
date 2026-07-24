@@ -200,27 +200,36 @@ point is catching lip-sync fakes specifically, not aggregate accuracy.
 
 What it must produce:
 
+> **Step-by-step reference: [preprocessing.md](preprocessing.md).** Each main
+> step is an individual pure function in `preprocessing/ops/`, imported by both
+> the batch pipeline and the dashboard (one implementation, not two). Enhancement/
+> degradation ops ("extras") are a separate, off-by-default layer.
+
 | Artifact | What it is |
 |---|---|
-| `data/full_manifest.csv` | every clip: `clip_id`, `video_path`, `label`, `manipulation_type`, `method`, `source`, `target1`, `target2`, `race`, `gender` |
+| `data/full_manifest.csv` | every clip: `clip_id`, `video_path`, `label`, `manipulation_type`, `method`, `source`, `target1`, `target2`, `race`, `gender`, `leading_silence_sec` |
 | `data/train.csv`, `val.csv`, `test.csv` | the **identity-based** split, one file per split (each row also carries its split name) |
-| `data/processed/<clip_id>/` | per-clip cache of face crops + time-aligned audio windows, written on first access and reused every epoch |
-| mono audio @ 16 kHz | extracted per clip, QC'd for FakeAVCeleb's known **leading-silence shortcut bug** (fake-audio clips carry extra silence at t=0 that models can cheat on) |
-| face + mouth crops | MTCNN face crops (224×224) and landmark-derived mouth crops (96×96), with per-frame detection confidence |
+| `data/processed/<clip_id>/` | per-clip cache of face crops + time-aligned audio windows + a `version.txt` (`PIPELINE_VERSION`); written on first access, reused every epoch, transparently re-extracted when the version bumps |
+| mono audio @ 16 kHz | extracted per clip. FakeAVCeleb's **leading-silence shortcut bug** (fake-audio clips carry extra silence at t=0) is measured (`leading_silence_sec`) and neutralized by starting frame+audio sampling past it, keeping the two modalities aligned |
+| face + mouth crops | MTCNN face crops (224×224), **5-point aligned** to a canonical template (pose-normalized), and landmark-derived mouth crops (96×96), with per-frame detection confidence |
 
 The scripts that did this, in dependency order — a reasonable rebuild order too, one
 script at a time:
 
 | # | Script | Job |
 |---|---|---|
-| 1 | `audit_dataset.py` | walk `data/raw/`, build `full_manifest.csv`, integrity + silence-shortcut audit |
+| 1 | `audit_dataset.py` | walk `data/raw/`, build `full_manifest.csv`, integrity + leading-silence-shortcut audit |
 | 2 | `build_splits.py` | identity-disjoint train/val/test splits (see reconciliation 2 first) |
 | 3 | `verify_splits.py` | assert no identity leaks across splits |
-| 4 | `extract_clip.py` | per-clip frame + aligned-audio extraction, with disk cache |
-| 5 | `crop_faces.py` | MTCNN face and mouth-region cropping |
-| 6 | `dataset.py` | the shared PyTorch `Dataset`/`DataLoader` |
-| 7 | `precache.py` | one-time parallel pre-caching so epoch 1 isn't crippled by lazy extraction |
+| 4 | `extract_clip.py` | per-clip aligned-face + aligned-audio extraction, with versioned disk cache |
+| — | `ops/` | the shared per-step functions (detect/align/crop/mouth, decode/window, extras) used by 4 **and** the dashboard |
+| 5 | `dataset.py` | the shared PyTorch `Dataset`/`DataLoader` |
+| 6 | `precache.py` | one-time parallel pre-caching so epoch 1 isn't crippled by lazy extraction |
 | — | `download_samples.py` | small sample fetch for local iteration (optional) |
+
+> The old standalone `crop_faces.py` CLI (and its `ffmpeg-python` dependency) was
+> removed; its face-crop logic now lives in `ops/faces.py`. All decoding goes
+> through PyAV, so no system ffmpeg is required.
 
 **Shared dataloader contract** (`preprocessing/dataset.py`) — every stream imports this,
 nobody writes their own:
@@ -232,7 +241,10 @@ label              : scalar int, 1 = fake / 0 = real
 ```
 
 Normalization is ImageNet mean/std, applied once here rather than per-stream, because
-all three visual backbones are ImageNet-pretrained in `timm`.
+all three visual backbones are ImageNet-pretrained in `timm`. Face crops are now
+**5-point aligned** before normalization (pose-normalized); this changes the cached
+pixels, so `data/processed/` must be re-precached and the visual stream re-validated
+against the AUC-0.994 bar.
 
 **Label semantics matter per stream.** A visual-only stream sees the *video track's*
 authenticity, not the clip's: `FakeVideo-*` → fake, `RealVideo-*` → real — including
@@ -512,6 +524,30 @@ dataset path no longer drags `ffmpeg-python`. Verified this session:
 - The multi-page dashboard (`dashboard/app.py`) boots clean under Streamlit `AppTest`
   (all four pages, 16/16 faces on a sample clip).
 - Full precache of all three splits (~2000 clips) run via `preprocessing.precache`.
+
+### Preprocessing made state-of-the-art — 2026-07-24
+
+The main preprocessing steps were rebuilt as individual, shared, pure functions in
+`preprocessing/ops/` (imported by both the batch pipeline and the dashboard — no
+more parallel reimplementation), and upgraded:
+
+- **5-point face alignment** (`ops/faces.align_face`) is now the default, pose-
+  normalizing every face crop onto a canonical ArcFace-style template — the main
+  SOTA gain, done with MTCNN's own landmarks (no new dependency).
+- **Leading-silence shortcut** (§6) is now handled: `audit_dataset.py` records
+  `leading_silence_sec` per clip and `extract_clip.py` offsets frame+audio
+  sampling past it, removing the shortcut while keeping frame↔audio alignment.
+- **Extras** (sharpen/denoise/CLAHE/blur/JPEG/downscale, audio noise/bandpass/
+  RMS/spectral-denoise/mel) are isolated in `ops/extras_*` — off by default.
+- **Redundancy removed**: deleted the legacy `crop_faces.py` CLI + `ffmpeg-python`,
+  the duplicate `dashboard/lib/{visual,audio}_ops.py`, the unused `mouth_region`,
+  and the 4 copied ImageNet constants (now one home in `ops/constants.py`).
+- Cache is versioned (`PIPELINE_VERSION`) so stale unaligned caches re-extract.
+
+Full reference in [preprocessing.md](preprocessing.md); design/plan under
+`docs/superpowers/{specs,plans}/2026-07-24-sota-preprocessing-refactor*`. 63 tests
+green. **Follow-up before training: re-precache all splits and re-validate the
+visual stream against the AUC-0.994 bar** (alignment changed the cached pixels).
 
 **Next: Stage 2** — the first visual stream (EfficientNet-B0 + BiLSTM), rebuilt toward
 the AUC 0.994 bar. See [stage-2-plan.md](stage-2-plan.md). Add `wandb` to

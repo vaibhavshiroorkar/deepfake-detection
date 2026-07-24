@@ -6,9 +6,13 @@ StreamConfigs with a different `backbone_name` (see the preset helpers below).
 """
 from dataclasses import dataclass
 
-# timm model ids for the two visual backbones the dashboard exposes.
+# timm model ids for the visual backbones the dashboard exposes.
 EFFICIENTNET_B0 = "tf_efficientnet_b0.ns_jft_in1k"   # ~5M params, light, 1280-dim
 XCEPTION = "legacy_xception"                          # ~22M params, 2048-dim
+# Not wired into the stream yet — the dashboard renders a disabled DINOv2 box
+# until this backbone is integrated. The timm id is kept here so the box can
+# display it; nothing instantiates it while it stays disabled.
+DINOV2 = "vit_small_patch14_dinov2.lvd142m"          # ~22M params, 384-dim
 
 
 @dataclass

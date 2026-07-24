@@ -33,12 +33,10 @@ except ImportError as e:
     print("Run: uv sync --extra cpu (or --extra cu130 for GPU), see README.md")
     sys.exit(1)
 
-from preprocessing.extract_clip import extract_clip, NUM_FRAMES, AUDIO_SR
+from preprocessing.extract_clip import extract_clip
+from preprocessing.ops.constants import NUM_FRAMES, AUDIO_SR, IMAGENET_MEAN, IMAGENET_STD
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
-
-IMAGENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
-IMAGENET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 
 # A VISUAL stream sees only frames, so its label is the video track's
 # authenticity: FakeVideo-* -> fake, RealVideo-* -> real (even

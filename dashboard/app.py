@@ -15,20 +15,14 @@ if str(_REPO_ROOT) not in sys.path:
 
 st.set_page_config(page_title="Preprocessing dashboard", layout="wide")
 
-nav = st.navigation({
-    "Data Pre-processing": [
-        st.Page("pages/preprocess.py", title="Preprocessing"),
-    ],
-    "Streams": [
-        st.Page("pages/stream_visual.py", title="Visual"),
-        st.Page("pages/stream_lipsync.py", title="LipSync"),
-        st.Page("pages/stream_emotions.py", title="Emotions"),
-    ],
-    "Fusion": [
-        st.Page("pages/fusion.py", title="Fusion"),
-    ],
-    "Explainability": [
-        st.Page("pages/explainability.py", title="Explainability"),
-    ],
-})
+# Flat page list in pipeline order — no sidebar sections. The three streams live
+# as tabs inside the single Streams page (pages/streams.py).
+# Fusion and Explainability are disabled for now — re-add their st.Page lines to
+# restore them (the page files are still in pages/).
+nav = st.navigation([
+    st.Page("pages/preprocess.py", title="Preprocessing"),
+    st.Page("pages/streams.py", title="Streams"),
+    # st.Page("pages/fusion.py", title="Fusion"),
+    # st.Page("pages/explainability.py", title="Explainability"),
+])
 nav.run()

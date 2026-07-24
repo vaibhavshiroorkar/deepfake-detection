@@ -1,14 +1,12 @@
-"""Pure per-step visual preprocessing ops (RGB uint8 in, RGB uint8 out).
+"""EXTRAS — visual enhancement/degradation ops (RGB uint8 in, RGB uint8 out).
 
-No Streamlit, no I/O — unit-testable and reusable. Enhancement steps (sharpen,
-denoise, clahe) and degradation/robustness steps (blur, jpeg, downscale) share
-this signature so pages can toggle them independently.
+These are NOT part of the stored preprocessing contract. They are robustness /
+augmentation probes toggled independently in the dashboard (baseline = all off =
+the real pipeline). Enhancement: sharpen, denoise, clahe. Degradation: blur,
+jpeg_recompress, downscale_upscale. See docs/preprocessing.md.
 """
 import cv2
 import numpy as np
-
-IMAGENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
-IMAGENET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)
 
 
 def sharpen(img, amount: float):
@@ -44,18 +42,3 @@ def downscale_upscale(img, factor: float):
     small = cv2.resize(img, (max(1, int(w * factor)), max(1, int(h * factor))),
                        interpolation=cv2.INTER_AREA)
     return cv2.resize(small, (w, h), interpolation=cv2.INTER_CUBIC)
-
-
-def mouth_region(face_224, size: int = 96):
-    h, w = face_224.shape[:2]
-    crop = face_224[int(h * 0.60):int(h * 0.95), int(w * 0.25):int(w * 0.75)]
-    return cv2.resize(crop, (size, size), interpolation=cv2.INTER_CUBIC)
-
-
-def imagenet_normalize(img_uint8) -> np.ndarray:
-    arr = img_uint8.astype(np.float32) / 255.0
-    return (arr - IMAGENET_MEAN) / IMAGENET_STD
-
-
-def normalized_range(arr) -> tuple[float, float]:
-    return float(arr.min()), float(arr.max())

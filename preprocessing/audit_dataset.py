@@ -28,6 +28,10 @@ import sys
 from pathlib import Path
 import pandas as pd
 
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 try:
     import cv2
 except ImportError as e:
@@ -36,6 +40,13 @@ except ImportError as e:
     sys.exit(1)
 
 from preprocessing.manifest import clip_label
+from preprocessing.ops import audio as A
+from preprocessing.ops.constants import AUDIO_SR
+
+# Clips whose AUDIO track is fake, per FakeAVCeleb's manipulation_type. The
+# leading-silence shortcut bug lives here: these carry extra silence at t=0.
+FAKE_AUDIO_TYPES = ("RealVideo-FakeAudio", "FakeVideo-FakeAudio")
+SILENCE_TOP_DB = 30.0
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_ROOT = REPO_ROOT / "data" / "raw" / "FakeAVCeleb_v1.2"
@@ -73,7 +84,24 @@ def check_readable(video_path: Path) -> bool:
     return ok
 
 
-def audit(sample_check_n: int = 200):
+def measure_leading_silence(video_path: Path) -> float:
+    """Seconds of leading silence in a clip's audio (float('nan') if undecodable).
+
+    This is the FakeAVCeleb shortcut measurement: fake-audio clips tend to carry
+    extra silence at t=0, which a model can cheat on. extract_clip.py neutralizes
+    it by starting frame+audio sampling past this offset; here we just measure it.
+    """
+    try:
+        raw2d, native_sr = A.decode(str(video_path))
+        if raw2d.size == 0:
+            return float("nan")
+        wav = A.resample(A.downmix(raw2d), native_sr, AUDIO_SR)
+        return A.leading_silence_sec(wav, AUDIO_SR, top_db=SILENCE_TOP_DB)
+    except Exception:
+        return float("nan")
+
+
+def audit(sample_check_n: int = 200, measure_silence: bool = True):
     if not META_CSV.exists():
         raise FileNotFoundError(f"Expected {META_CSV} -- is the dataset extracted?")
 
@@ -129,10 +157,38 @@ def audit(sample_check_n: int = 200):
     for b in bad:
         print(f"  UNREADABLE: {b}")
 
+    # Leading-silence audit (the §6 shortcut). Decode every clip's audio and
+    # record its leading silence, then compare real-audio vs fake-audio clips --
+    # a large gap is the shortcut a model would exploit if we didn't offset
+    # sampling past it (extract_clip.py does).
+    if measure_silence:
+        try:
+            from tqdm import tqdm
+            it = tqdm(df["video_path"], desc="leading-silence")
+        except ImportError:
+            it = df["video_path"]
+        df["leading_silence_sec"] = [
+            measure_leading_silence(REPO_ROOT / "data" / vp) for vp in it
+        ]
+        fake_audio = df["manipulation_type"].isin(FAKE_AUDIO_TYPES)
+        real_ls = df.loc[~fake_audio, "leading_silence_sec"].mean()
+        fake_ls = df.loc[fake_audio, "leading_silence_sec"].mean()
+        n_undecodable = int(df["leading_silence_sec"].isna().sum())
+        print(f"\nLeading-silence audit (top_db={SILENCE_TOP_DB}):")
+        print(f"  real-audio clips: mean {real_ls:.3f}s")
+        print(f"  fake-audio clips: mean {fake_ls:.3f}s "
+              f"(gap {fake_ls - real_ls:+.3f}s -- the shortcut)")
+        print(f"  undecodable audio: {n_undecodable}")
+
     OUT_MANIFEST.parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(OUT_MANIFEST, index=False)
     print(f"\nWrote full manifest ({len(df)} rows) to {OUT_MANIFEST}")
 
 
 if __name__ == "__main__":
-    audit()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--no-silence", action="store_true",
+                        help="Skip the (slow) per-clip leading-silence audit.")
+    args = parser.parse_args()
+    audit(measure_silence=not args.no_silence)

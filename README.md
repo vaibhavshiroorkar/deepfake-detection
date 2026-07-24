@@ -65,14 +65,14 @@ python -c "import torch; print(torch.__version__)"
 
 To add or change a dependency, edit `pyproject.toml`, then run `uv lock` and commit the updated `uv.lock`.
 
-Note: PyAV (`av`) bundles its own ffmpeg libraries, so no system ffmpeg is needed for clip extraction. A system [ffmpeg](https://ffmpeg.org/download.html) on PATH (Windows: `winget install Gyan.FFmpeg`) is only required if you use `ffmpeg-python` directly during preprocessing.
+Note: PyAV (`av`) bundles its own ffmpeg libraries, so no system ffmpeg is needed for clip extraction or audio decoding. The whole preprocessing pipeline decodes through `av`; there is no `ffmpeg-python` / system-ffmpeg dependency.
 
 ### Google Colab
 
 Torch is preinstalled, just add the extras:
 
 ```python
-!pip install opencv-python av librosa ffmpeg-python timm facenet-pytorch
+!pip install opencv-python av librosa timm facenet-pytorch
 ```
 
 ## Repo layout

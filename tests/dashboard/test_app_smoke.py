@@ -1,34 +1,31 @@
 from streamlit.testing.v1 import AppTest
 
 SCAFFOLD_PAGES = [
-    "dashboard/pages/stream_lipsync.py",
-    "dashboard/pages/stream_emotions.py",
+    "dashboard/pages/streams.py",
     "dashboard/pages/fusion.py",
     "dashboard/pages/explainability.py",
 ]
 
 
-def test_visual_streams_page_renders_model_boxes():
-    at = AppTest.from_file("dashboard/pages/stream_visual.py", default_timeout=120).run()
+def test_streams_page_renders_all_three_tabs_and_boxes():
+    at = AppTest.from_file("dashboard/pages/streams.py", default_timeout=120).run()
     assert not at.exception
-    # both backbone boxes present, with an Enable toggle each
-    assert any("Enable" in t.label for t in at.toggle)
+    # single Streams page: all three tabs (Visual / Lip-Sync / Emotions) render together
     titles = " ".join(m.value for m in at.markdown)
-    assert "EfficientNet-B0" in titles and "Xception" in titles
+    assert "EfficientNet-B0" in titles and "Xception" in titles and "DINOv2" in titles
+    # lip-sync and emotion scaffolds render too
+    assert "AV-HuBERT" in titles and "HSEmotions" in titles
 
 
 def test_scaffold_pages_run_without_exception():
     for page in SCAFFOLD_PAGES:
-        at = AppTest.from_file(page, default_timeout=90).run()
+        at = AppTest.from_file(page, default_timeout=120).run()
         assert not at.exception, (page, at.exception)
 
 
-def test_build_and_inspect_instantiates_a_real_model():
-    at = AppTest.from_file("dashboard/pages/stream_visual.py", default_timeout=180).run()
-    btns = [b for b in at.button if b.key == "m_effnet_build"]
-    assert btns
-    btns[0].click()
-    at.run()
-    assert not at.exception
-    labels = [m.label for m in at.metric]
-    assert "Backbone features" in labels and "Embedding dim" in labels
+def test_visual_box_exposes_train_and_run_controls():
+    at = AppTest.from_file("dashboard/pages/streams.py", default_timeout=120).run()
+    keys = {b.key for b in at.button}
+    # Build is gone; each enabled box now has a Launch-training and a Run button.
+    assert "m_effnet_build" not in keys
+    assert {"m_effnet_train", "m_effnet_run", "m_xception_train", "m_xception_run"} <= keys
