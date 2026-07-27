@@ -1,6 +1,6 @@
 """MAIN visual ops: detection, 5-point alignment, crop, mouth ROI, normalize.
 
-Alignment is tested without loading MTCNN — align/crop/mouth take explicit
+Alignment is tested without loading MTCNN, align/crop/mouth take explicit
 landmarks, and detect_align_crop is driven by a duck-typed fake detector.
 """
 import cv2

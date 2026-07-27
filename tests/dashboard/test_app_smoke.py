@@ -16,11 +16,15 @@ def test_locked_pages_run_without_exception():
 
 
 def test_locked_pages_say_they_are_locked():
-    """A locked page has to announce it, or it reads as a page that is just empty."""
+    """A locked page must show the lock and give a reason, or it reads as merely empty.
+
+    The reason lives in the callout and the lock lives in the title; the word
+    "Locked" is deliberately not also repeated in the prose.
+    """
     for page in LOCKED_PAGES:
         at = AppTest.from_file(page, default_timeout=120).run()
-        assert any("Locked" in i.value for i in at.info), page
         assert at.title[0].value.startswith(":material/lock:"), page
+        assert at.info and at.info[0].value.strip(), page
 
 
 def test_streams_page_describes_all_three_streams():

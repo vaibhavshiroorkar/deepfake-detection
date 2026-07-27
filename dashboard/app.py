@@ -15,7 +15,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 st.set_page_config(page_title="Preprocessing dashboard", layout="wide")
 
-# Flat page list in pipeline order — no sidebar sections. Overview is the landing
+# Flat page list in pipeline order, no sidebar sections. Overview is the landing
 # page (short, static, no compute) and Preprocessing is the one page that
 # computes. Streams, Fusion and Explainability stay visible but locked (lock icon
 # + a locked notice in the page body), so the shape of the system is legible

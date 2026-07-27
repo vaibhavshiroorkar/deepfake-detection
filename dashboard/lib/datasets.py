@@ -1,4 +1,4 @@
-"""Discovery of whatever datasets happen to sit under data/ — nothing hardcoded.
+"""Discovery of whatever datasets happen to sit under data/, nothing hardcoded.
 
 The dashboard used to carry a fixed registry of dataset names and manifest
 paths, so a new drop only appeared after editing code and a stale entry showed
@@ -9,7 +9,7 @@ as "not available" forever. Instead we scan data/ on every refresh and infer:
     a freshly extracted drop is usable before audit_dataset.py has ever run.
   - a MANIFEST is any CSV under data/ carrying clip_id/video_path/label. It is
     attached to the dataset its video_path column points into, which is how the
-    pipeline's flat data/train.csv finds its way onto data/<drop>/ — not by
+    pipeline's flat data/train.csv finds its way onto data/<drop>/, not by
     filename convention.
 
 Pure and Streamlit-free so it can be unit-tested against a tmp_path tree; the

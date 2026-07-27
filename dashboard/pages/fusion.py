@@ -1,9 +1,8 @@
-"""Fusion — locked until Stage 6.
+"""Fusion: locked until Stage 6.
 
-Visible in the sidebar so the shape of the system is obvious, but nothing here
-is interactive: the fusion MLP does not exist yet. The controls that will live
-here are described, not stubbed, so there is no half-working UI to mistake for
-the real thing. Design rationale lives on the Documentation page.
+Visible in the sidebar so the shape of the system stays legible, but the fusion
+MLP does not exist yet, so the controls that will live here are described rather
+than stubbed. Design rationale is on the Documentation page.
 """
 import sys
 from pathlib import Path
@@ -12,16 +11,10 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 import streamlit as st
-from dashboard.lib.stream_spec import FUSION as S
 
-st.title(f":material/lock: {S['title']}")
-st.info(f"**Locked.** {S['status']}")
-st.caption(S["note"])
+from dashboard.lib import locked
+from dashboard.lib.stream_spec import FUSION
 
-st.subheader("What lands here")
-st.markdown("""
-- **Stream selection** — which of the five streams are concatenated into the fusion input.
-- **Fusion MLP** — hidden sizes, dropout, and the resulting input dimension (streams × 256).
-- **Ablation view** — fused metrics across stream subsets, the Stage-7 result.
-""")
-st.caption("Read the fusion design on the **Documentation** page → *Fusion & evaluation*.")
+locked.render(st, FUSION)
+st.caption("The fusion design is documented in full on the Documentation page, under "
+           "*Fusion & evaluation*.")

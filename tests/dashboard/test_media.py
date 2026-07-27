@@ -76,7 +76,7 @@ def test_video_codec_names_the_stream(tmp_path):
 
 
 def test_browser_codec_is_passed_through_untouched(tmp_path):
-    """An h264 clip must not be re-encoded — that would be pure wasted latency."""
+    """An h264 clip must not be re-encoded, that would be pure wasted latency."""
     path = _write_clip(tmp_path / "ok.mp4", "libx264")
     data, reencoded_from = media.playable_video_bytes(path)
     assert reencoded_from is None
@@ -94,7 +94,7 @@ def test_mpeg4_clip_is_reencoded_to_h264(tmp_path):
 
 
 def test_reencode_keeps_the_audio_track(tmp_path):
-    """A silent player is as broken as a blank one — the clip must keep sound."""
+    """A silent player is as broken as a blank one, the clip must keep sound."""
     path = _write_clip(tmp_path / "av.mp4", "mpeg4", with_audio=True)
     data, _ = media.playable_video_bytes(path)
     assert _streams(data) == {"video": "h264", "audio": "aac"}

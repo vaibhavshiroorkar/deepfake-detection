@@ -3,11 +3,11 @@
 Two sources, chosen by a segmented control and returning the same shape of row
 either way, so callers do not care which was used:
 
-  - **Dataset** — pick a DATASET, then a SPLIT within it, then a clip through the
+  - **Dataset**: pick a DATASET, then a SPLIT within it, then a clip through the
     picker dialog. Neither list is hardcoded: datasets.discover() scans data/ on
     load, so dropping a dataset folder in and hitting ↻ is all it takes (see
     dashboard/lib/datasets.py for the detection rules).
-  - **Upload** — hand it any mp4. It is written to a temp directory so OpenCV and
+  - **Upload**: hand it any mp4. It is written to a temp directory so OpenCV and
     PyAV have a real path to open, and never into data/.
 
 Callers must resolve a row's clip through clip_path(), not by joining DATA_DIR
@@ -38,7 +38,7 @@ MANIP_TYPES = ["RealVideo-RealAudio", "RealVideo-FakeAudio",
 SOURCE_DATASET = "Dataset"
 SOURCE_UPLOAD = "Upload a video"
 
-# Uploads land outside the repo on purpose — data/ belongs to the dataset, and
+# Uploads land outside the repo on purpose: data/ belongs to the dataset, and
 # the dashboard is read-only with respect to it.
 UPLOAD_DIR = Path(tempfile.gettempdir()) / "deepfake_dashboard_uploads"
 
@@ -59,7 +59,7 @@ def clip_path(row) -> Path:
 
 
 def label_text(row) -> str:
-    """'real' / 'fake' / 'unknown' — uploads have no ground truth."""
+    """'real', 'fake', or 'unknown' for an upload with no ground truth."""
     label = int(row["label"])
     if label == LABEL_UNKNOWN:
         return "unknown"
@@ -86,7 +86,7 @@ def load_manifest(dataset: str, split: str) -> pd.DataFrame:
 
     ds = registry().get(dataset)
     if ds is None:
-        raise KeyError(f"Unknown dataset {dataset!r} — not found under {DATA_DIR}")
+        raise KeyError(f"Unknown dataset {dataset!r}, not found under {DATA_DIR}")
     cache = st.session_state.setdefault("ds_manifests", {})
     key = (dataset, split)
     if key not in cache:
@@ -200,7 +200,7 @@ def _render_dataset(st):
     if not found:
         st.info(f"No datasets found in `{DATA_DIR}`. Drop a dataset folder there "
                 "(a FakeAVCeleb-style `meta_data.csv`, or manifest CSVs with "
-                "clip_id/video_path/label columns) and hit ↻ — or switch to "
+                "clip_id/video_path/label columns) and hit ↻. Or switch to "
                 f"**{SOURCE_UPLOAD}** to preview a single file.")
         return None
 
@@ -215,7 +215,7 @@ def _render_dataset(st):
         split = st.selectbox("Split", splits, key="sel_split")
 
     df = load_manifest(dataset, split)
-    st.caption(f"`{found[dataset].root}` — {len(df)} clips in *{split}*.")
+    st.caption(f"`{found[dataset].root}` · {len(df)} clips in *{split}*.")
     if df.empty:
         st.warning("This split has no clips on disk.")
         return None
@@ -264,8 +264,8 @@ def _selected_card(st, row, action_label: str | None):
         info, action = ((st.container(), None) if action_label is None
                         else st.columns([5, 1], vertical_alignment="center"))
         info.markdown(f"**{row['clip_id']}**")
-        mtype = row["manipulation_type"] if "manipulation_type" in row else "—"
-        method = row["method"] if "method" in row else "—"
+        mtype = row["manipulation_type"] if "manipulation_type" in row else "unknown"
+        method = row["method"] if "method" in row else "unknown"
         info.caption(f"{mtype}  ·  {method}  ·  label **{label_text(row)}**")
         if action is None:
             return False
@@ -290,7 +290,7 @@ def _picker(st, df):
                                     key="pick_label")
             filtered = group_by_identity(search_manifest(
                 filter_manifest(df, manip, methods, label_filter), query))
-            st.caption(f"{len(filtered)} clips — variants of one identity are grouped. "
+            st.caption(f"{len(filtered)} clips. Variants of one identity are grouped. "
                        "Select a row to preview it on the right.")
             view_cols = [c for c in ["clip_id", "source", "manipulation_type", "method", "label"]
                          if c in filtered.columns]
@@ -313,7 +313,7 @@ def _picker(st, df):
                              width="stretch"):
                     st.session_state["sel_clip_id"] = candidate["clip_id"]
                 if st.session_state.get("sel_clip_id") == candidate["clip_id"]:
-                    st.caption("Selected — close this dialog to preview it on the page.")
+                    st.caption("Selected. Close this dialog to preview it on the page.")
 
     _body()
 

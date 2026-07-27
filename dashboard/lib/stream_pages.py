@@ -4,9 +4,9 @@ All three used to be separate sidebar pages; they now live as tabs on the single
 Streams page (dashboard/pages/streams.py). Keeping the bodies here as functions
 (rather than module-level page scripts) lets one page render all three tabs.
 
-  * Visual  — Xception / EfficientNet as configurable model boxes (plus a
+  * Visual: Xception / EfficientNet as configurable model boxes (plus a
     not-yet-wired DINOv2 box). Real: builds and runs the config-driven stream.
-  * Lip-Sync / Emotions — read-only scaffolds until Stages 4 / 5.
+  * Lip-Sync / Emotions: read-only scaffolds until Stages 4 / 5.
 
 The dashboard never trains in-process (§7); Train tabs only emit the trainer
 command, and Run forward-passes a clip with untrained weights.
@@ -32,7 +32,7 @@ def inherited_clip():
     Run inference is a single forward pass over one clip, and the clip you want
     is invariably the one you were just inspecting. Reading the Preprocessing
     page's selection instead of rendering a second picker also means an uploaded
-    video flows straight through — there is only one place a clip is chosen.
+    video flows straight through, and there is only one place a clip is chosen.
     """
     row = st.session_state.get("pp_row")
     path = st.session_state.get("pp_video_path")
@@ -91,7 +91,7 @@ def _visual_model_box(name: str, backbone_name: str, key: str, default_on: bool,
 
 
 def _visual_disabled_box(name: str, backbone_name: str, key: str, note: str):
-    """A backbone that isn't wired into the stream yet — everything greyed out."""
+    """A backbone that isn't wired into the stream yet, so everything is greyed out."""
     with st.container(border=True):
         head, cfg = st.columns([1, 2])
         with head:
@@ -109,12 +109,12 @@ def _visual_disabled_box(name: str, backbone_name: str, key: str, note: str):
 
 
 def render_visual():
-    st.caption("Artifact-focused backbones that read the face-crop sequence (never audio). "
-               "Configure each, then Train (emits the background-trainer command — this page "
-               "never trains, §7) or Run it on a clip to forward-pass a real sequence.")
+    st.caption("Artifact-focused backbones that read the face-crop sequence, never audio. "
+               "Configure each, then Train to get the background-trainer command, or Run to "
+               "forward-pass a real sequence.")
 
     # The clip is inherited from the Preprocessing page rather than picked again
-    # here — one selection, one place to change it.
+    # here: one selection, one place to change it.
     video_path = _render_inherited_clip(st)
 
     st.session_state["stream_visual_enabled"] = {
@@ -124,7 +124,7 @@ def render_visual():
     }
     _visual_disabled_box(
         "DINOv2 (ViT-S/14)", DINOV2, "m_dinov2",
-        "Not wired into the visual stream yet — the DINOv2 backbone lands in a later stage.")
+        "Not wired into the visual stream yet; the DINOv2 backbone lands in a later stage.")
 
 
 def _scaffold_stream(spec: dict, key_prefix: str, stage_note: str):
@@ -145,9 +145,8 @@ def _scaffold_stream(spec: dict, key_prefix: str, stage_note: str):
                           key=f"{key_prefix}_{model_name}_dim", disabled=True)
             stream_ui.render_disabled_train_run(st, f"{key_prefix}_{model_name}", stage_note)
     st.divider()
-    st.caption(f"Read-only scaffold — the cross-attention model, its Train/Run controls and "
-               f"metrics become live after {stage_note.rsplit('(', 1)[-1].rstrip(').')}. "
-               f"This page never trains in-process (§7).")
+    st.caption(f"Read-only scaffold. The cross-attention model, its Train/Run controls and "
+               f"metrics become live after {stage_note.rsplit('(', 1)[-1].rstrip(').')}.")
 
 
 def render_lipsync():

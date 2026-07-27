@@ -1,4 +1,4 @@
-"""EXTRAS audio ops — noise, RMS, bandpass, spectral denoise, mel view."""
+"""EXTRAS audio ops, noise, RMS, bandpass, spectral denoise, mel view."""
 import numpy as np
 
 from preprocessing.ops import extras_audio as AX

@@ -2,7 +2,7 @@
 
 The dashboard's contract is *never trains in-process* (app.py, PROJECT_OVERVIEW
 .md §7), so the Train tab only gathers hyperparameters and emits the exact
-background-trainer command to launch on a GPU box — it never runs a training
+background-trainer command to launch on a GPU box. It never runs a training
 loop here. The Run tab performs real-clip inference via dashboard.lib.inference.
 
 train_command is a pure function (no Streamlit) so it stays unit-testable.
@@ -62,7 +62,7 @@ def render_train_data_picker(st, key: str, enabled: bool) -> dict:
 
     found = selectors.registry()
     if not found:
-        st.info("No datasets discovered under `data/` — the trainer needs one. "
+        st.info("No datasets discovered under `data/`, and the trainer needs one. "
                 "Drop a dataset in and rescan on the Preprocessing page.")
         return dict(DATA_DEFAULTS)
 
@@ -81,8 +81,7 @@ def render_train_data_picker(st, key: str, enabled: bool) -> dict:
 
 def render_train_tab(st, key: str, stream_name: str, backbone_name: str, enabled: bool):
     """Training hyperparameters + a Launch button that emits the trainer command."""
-    st.caption("Configures the background trainer. The dashboard never trains in-process (§7) — "
-               "Launch emits the command to run on your training box.")
+    st.caption("Launch emits the command to run on your training box.")
     st.markdown("**Data**")
     data = render_train_data_picker(st, key, enabled)
     st.markdown("**Hyperparameters**")
@@ -106,7 +105,7 @@ def render_train_tab(st, key: str, stream_name: str, backbone_name: str, enabled
         settings = {"epochs": epochs, "batch_size": batch, "grad_accum_steps": accum,
                     "lr_head": lr_head, "lr_backbone": lr_backbone, "weight_decay": weight_decay,
                     "grad_clip_norm": grad_clip, "seed": seed, **data}
-        st.success("Queued — run this on your training box:")
+        st.success("Run this on your training box:")
         st.code(train_command(stream_name, backbone_name, settings), language="bash")
         st.caption("The `training.train_visual` entrypoint lands in a later stage; the dashboard "
                    "never trains itself.")
@@ -119,10 +118,10 @@ def render_run_tab(st, key: str, make_config, video_path, enabled: bool):
     click. video_path is the selected clip's path (or None if none is selected).
     """
     st.caption("Builds the config-driven model, reports its architecture, then forward-passes the "
-               "selected clip's face-crop sequence. Weights are untrained — no checkpoint exists "
-               "yet — so the probability is a plumbing check, not a real detection.")
+               "selected clip's face-crop sequence. Weights are untrained, since no checkpoint "
+               "exists yet, so the probability is a plumbing check and not a real detection.")
     c1, c2 = st.columns(2)
-    c1.selectbox("Checkpoint", ["(untrained — random weights)"], key=f"{key}_ckpt",
+    c1.selectbox("Checkpoint", ["(untrained, random weights)"], key=f"{key}_ckpt",
                  disabled=True, help="No trained checkpoints exist yet; trained weights load here later.")
     fixed_seed = c2.checkbox(
         "Fixed seed", value=True, key=f"{key}_run_fixed", disabled=not enabled,

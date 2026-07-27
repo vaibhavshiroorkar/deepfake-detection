@@ -23,10 +23,11 @@ def test_documentation_renders_every_section():
         "The five streams",
         "Visual path",
         "Audio path",
-        "Visual streams — one template, three backbones",
-        "Cross-modal streams — measuring disagreement",
-        "Fusion — feature-level, not score averaging",
-        "Splits — identity-disjoint, built once, never re-split",
+        "Input to tensors",
+        "Visual streams",
+        "Cross-modal streams",
+        "Fusion",
+        "Splits",
     ]:
         assert heading in headers, heading
 
@@ -35,7 +36,7 @@ def test_documentation_explains_mechanisms_not_just_names():
     at = _page()
     body = " ".join([m.value for m in at.markdown] + [w.value for w in at.warning]).lower()
     # The page's job is explaining how things work, so the mechanism names are
-    # what make it useful — a rewrite that drops them is a regression.
+    # what make it useful, a rewrite that drops them is a regression.
     for term in ["p-net", "r-net", "o-net", "non-maximum suppression", "image pyramid",
                  "similarity transform", "compound scaling", "depthwise separable",
                  "leading_silence_sec", "softmax", "build_splits.py"]:
@@ -52,7 +53,7 @@ def test_documentation_carries_the_tensor_contract():
 def test_documentation_has_no_ascii_diagrams():
     """Code blocks are for code and tensor shapes; structure is tables and the diagram.
 
-    The page does use st.code — for python snippets and shape listings — so this
+    The page does use st.code, for python snippets and shape listings, so this
     checks for box-drawing characters rather than for the absence of code.
     """
     blocks = " ".join(c.value for c in _page().code)
@@ -64,7 +65,7 @@ def test_documentation_has_no_ascii_diagrams():
 def test_pipeline_tab_walks_every_stage_in_order():
     """The end-to-end flow is the deep dive; its stage order is the point of it."""
     at = _page()
-    assert "Input to tensors — the whole preprocessing flow" in [h.value for h in at.header]
+    assert "Input to tensors" in [h.value for h in at.header]
     body = " ".join([m.value for m in at.markdown] + [w.value for w in at.warning]
                     + [i.value for i in at.info] + [c.value for c in at.code])
     # the real call order, which is not the obvious one: audio before any frame
@@ -101,7 +102,7 @@ def test_documentation_records_the_mixed_codec_gotcha():
 
 
 def test_documentation_describes_dataset_discovery_not_a_fixed_path():
-    """data/raw/ is no longer required — the drop is discovered by its meta_data.csv."""
+    """data/raw/ is no longer required, the drop is discovered by its meta_data.csv."""
     body = " ".join(m.value for m in _page().markdown)
     assert "meta_data.csv" in body
     assert "find_dataset_root" in body

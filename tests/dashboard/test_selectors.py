@@ -107,7 +107,7 @@ def test_upload_row_writes_the_file_and_reads_back_as_a_clip(monkeypatch, tmp_pa
     assert label_text(row) == "unknown"
     written = clip_path(row)
     assert written.is_file() and written.read_bytes() == b"not-really-video"
-    # never into data/ — the dashboard is read-only with respect to the dataset
+    # never into data/, the dashboard is read-only with respect to the dataset
     assert selectors.DATA_DIR not in written.parents
 
 

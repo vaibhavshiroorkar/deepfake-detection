@@ -9,8 +9,8 @@ Tabs switch which section shows:
   - Audio: the audio pipeline, same treatment, ending in the audio windows.
 
 Note: st.tabs renders all three tab bodies every run, so Visual/Audio recompute
-whenever anything changes — the "select a clip first" guards keep them cheap
-until a clip is chosen in Config. Read-only — never writes data/processed/,
+whenever anything changes. The "select a clip first" guards keep them cheap
+until a clip is chosen in Config. Read-only: never writes data/processed/ and
 never trains. Reuses dashboard/lib ops.
 """
 import sys
@@ -33,9 +33,8 @@ DATA_DIR = _REPO_ROOT / "data"
 PREVIEW_COLS = 8          # thumbnails per row in the half-width Config preview
 
 st.title("Preprocessing")
-st.caption("Pick a clip and settings under Config; inspect the Visual and Audio "
-           "pipelines step by step. Each step is applied cumulatively and shows the "
-           "result after it runs. Read-only — never writes data/processed/, never trains.")
+st.caption("Pick a clip under Config, then step through the Visual and Audio pipelines. "
+           "Each step is applied cumulatively and shows the result after it runs.")
 
 
 def show_frames(container, frames, caption):
@@ -49,7 +48,7 @@ def show_frames(container, frames, caption):
 
 
 def skipped(container):
-    container.caption("skipped — passthrough")
+    container.caption("skipped (passthrough)")
 
 
 def waveform_fig(y, rate, title, figsize=(10, 1.9)):
@@ -121,7 +120,7 @@ def render_config():
     m1.metric("Faces", f"[{n_frames}, 3, 224, 224]")
     m2.metric("Audio", f"[{n_frames}, {win_samples}]")
     m3.metric("Label", selectors.label_text(row))
-    st.caption(f"Clip `{row['clip_id']}` — raw frames and audio before any preprocessing.")
+    st.caption(f"Clip `{row['clip_id']}`: raw frames and audio, before any preprocessing.")
 
     duration, fps = media.frame_meta(str(video_path))
     timestamps = media.sample_timestamps(duration, n_frames, window_sec)
@@ -129,13 +128,13 @@ def render_config():
             for f in media.decode_frames(str(video_path), timestamps)]
 
     # 3:2 rather than 3:1. The sampled frames stay 8-per-row and simply get
-    # smaller — the row is there to show temporal order, which survives shrinking
-    # — while the player gets enough width to actually watch the clip, which is
+    # smaller, since that row exists to show temporal order and survives
+    # shrinking. The player gets the width, because watching the clip is
     # the one thing on this page you look at rather than scan.
     left, right = st.columns([3, 2], gap="medium", vertical_alignment="top")
 
     with left:
-        st.caption(f"**Sampled frames** — the {n_frames} timestamps the pipeline reads.")
+        st.caption(f"**Sampled frames**: the {n_frames} timestamps the pipeline reads.")
         # 8 per row: smaller thumbnails, but the whole sampled sequence fits in
         # one or two rows so the temporal order is readable at a glance.
         for start in range(0, len(prev), PREVIEW_COLS):
@@ -144,8 +143,8 @@ def render_config():
                 if start + j < len(prev):
                     col.image(prev[start + j], width="stretch")
 
-        st.caption("**Audio** — full track, before downmix/resample "
-                   "(windows are cut in the Audio tab).")
+        st.caption("**Audio**: full track, before downmix and resample. "
+                   "Windows are cut in the Audio tab.")
         raw2d, native_sr = media.decode_audio(str(video_path))
         if raw2d.size:
             mono = AF.downmix(raw2d)
@@ -155,20 +154,20 @@ def render_config():
             st.caption("No audio stream in this clip.")
 
     with right:
-        st.caption("**Clip** — plays with sound.")
+        st.caption("**Clip**, with sound.")
         # Hand Streamlit the bytes, not the path: the clips live outside the app
         # directory, and st.video only serves a path it is allowed to reach.
         # Bytes come via media.cached_playable_video because a browser cannot
-        # decode the mpeg4-encoded wav2lip clips at all — passing those through
+        # decode the mpeg4-encoded wav2lip clips at all; passing those through
         # raw is what left this player blank on every FakeVideo-FakeAudio clip.
         with st.spinner("Preparing clip…"):
             video_bytes, reencoded_from = media.cached_playable_video(video_path)
         st.video(video_bytes, format="video/mp4")
         if reencoded_from:
-            st.caption(f"Re-encoded from `{reencoded_from}` to H.264 for playback — "
-                       "display only, the pipeline still reads the original file.")
-        mtype = row["manipulation_type"] if "manipulation_type" in row else "—"
-        method = row["method"] if "method" in row else "—"
+            st.caption(f"Re-encoded from `{reencoded_from}` to H.264 for playback. Display only; "
+                       "the pipeline still reads the original file.")
+        mtype = row["manipulation_type"] if "manipulation_type" in row else "unknown"
+        method = row["method"] if "method" in row else "unknown"
         st.caption(
             f"`{duration:.2f}s` @ `{fps:.1f} fps`  \n"
             f"type `{mtype}`  \n"
@@ -203,7 +202,7 @@ def render_visual():
         l.caption("Alignment warps the face onto a canonical 5-point template "
                   "(pose-normalized). Off = plain bbox crop.")
         conf = l.slider("Confidence", 0.50, 0.99, 0.90, 0.01, disabled=not do_detect, key="v_conf")
-        # Two different context knobs — the bbox crop clamps to the frame, the
+        # Two different context knobs. The bbox crop clamps to the frame, the
         # aligned canvas cannot, so whatever it reaches past the edge is padded
         # black. Insetting on already-tight frames just buys more padding.
         margin = l.slider("Crop margin (bbox path)", 0.0, 0.6, 0.20, 0.05,
@@ -287,7 +286,7 @@ def render_visual():
                                     for img in cur])
 
     # Parallel branch: the mouth crop is a SEPARATE output for the lip-sync
-    # stream (AV-HuBERT). It does not replace the face — the visual and
+    # stream (AV-HuBERT). It does not replace the face: the visual and
     # emotion streams still consume the face crop above.
     model_mouth = None
     with st.container(border=True):
@@ -295,7 +294,7 @@ def render_visual():
         l.markdown("**⑃ Mouth branch** (lip-sync input, parallel)")
         do_mouth = l.checkbox("Produce 96² mouth crop", key="v_mouth")
         l.caption("Landmark-derived mouth region for the lip-sync stream. Runs "
-                  "alongside the face crop — the visual/emotion streams keep the face.")
+                  "alongside the face crop; the visual and emotion streams keep the face.")
         if do_mouth:
             if mouth_crops is None:
                 r.warning("Enable face detection above to derive landmark mouth crops.")
@@ -308,8 +307,8 @@ def render_visual():
 
     st.divider()
     st.header("Visual model input")
-    st.caption(f"Face tensor `{tuple(model_faces.shape)}` — the exact input to the "
-               "visual stream (shown de-normalized).")
+    st.caption(f"Face tensor `{tuple(model_faces.shape)}`: the exact input to the "
+               "visual stream, shown de-normalized.")
     disp_model = []
     for f in model_faces:
         hwc = np.transpose(f, (1, 2, 0))
@@ -327,7 +326,7 @@ def render_visual():
     if model_mouth is not None:
         st.divider()
         st.header("Mouth model input")
-        st.caption(f"Mouth tensor `{tuple(model_mouth.shape)}` → lip-sync stream "
+        st.caption(f"Mouth tensor `{tuple(model_mouth.shape)}` feeds the lip-sync stream "
                    "(AV-HuBERT). Separate from the face tensor above.")
         for start in range(0, len(mouth_crops), 8):
             cols = st.columns(8)
@@ -455,7 +454,7 @@ def render_audio():
 
     st.divider()
     st.header("Audio model input")
-    st.caption(f"Audio windows `{tuple(model_audio.shape)}` @ {media.AUDIO_SR} Hz — the "
+    st.caption(f"Audio windows `{tuple(model_audio.shape)}` @ {media.AUDIO_SR} Hz: the "
                "exact input to the cross-modal streams.")
     st.code(f"audio : shape={tuple(model_audio.shape)} dtype={model_audio.dtype} "
             f"range=[{model_audio.min():.3f}, {model_audio.max():.3f}]", language="text")

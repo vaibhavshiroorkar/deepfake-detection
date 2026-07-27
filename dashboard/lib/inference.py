@@ -1,4 +1,4 @@
-"""Real-clip inference for the visual streams — the dashboard's Run action.
+"""Real-clip inference for the visual streams: the dashboard's Run action.
 
 Decodes a clip to a face-crop sequence (reusing dashboard.lib.media, so it
 mirrors the preprocessing pipeline) and forward-passes the config-driven
@@ -18,7 +18,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-# ImageNet statistics — the default timm backbones (EfficientNet-NS, Xception)
+# ImageNet statistics. The default timm backbones (EfficientNet-NS, Xception)
 # were pretrained with these. Single source of truth in preprocessing.ops.
 from preprocessing.ops.constants import IMAGENET_MEAN, IMAGENET_STD
 

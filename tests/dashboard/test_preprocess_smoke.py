@@ -1,6 +1,6 @@
 from streamlit.testing.v1 import AppTest
 
-# The page now renders Config / Visual / Audio as tabs — all three tab bodies
+# The page now renders Config / Visual / Audio as tabs, all three tab bodies
 # execute on every run, so a single .run() (Config auto-selects the first clip)
 # renders every section. There is no longer a pp_view switch.
 

@@ -1,4 +1,4 @@
-"""Discovery of datasets under data/ — the dashboard has no hardcoded registry,
+"""Discovery of datasets under data/, the dashboard has no hardcoded registry,
 so these pin down what counts as a dataset and which manifest belongs to which.
 """
 import pandas as pd
@@ -26,7 +26,7 @@ def _make_drop(data_dir, name="FakeAVCeleb_v1.2"):
         META_HEADER
         + _meta_row("id00076", "real", "A", "RealVideo-RealAudio", "00109.mp4", rel)
         + _meta_row("id00076", "real", "A", "RealVideo-RealAudio", "00110.mp4", rel)
-        # listed in meta but never downloaded — must not reach the manifest
+        # listed in meta but never downloaded, must not reach the manifest
         + _meta_row("id00099", "wav2lip", "D", "FakeVideo-FakeAudio", "00001.mp4", rel)
     )
     return root

@@ -5,7 +5,7 @@ from streamlit.testing.v1 import AppTest
 # The Overview page is the landing page: the problem, the architecture as one
 # diagram, an honest build status, and how to use the dashboard. The in-depth
 # reference lives on the Documentation page (see test_documentation_smoke.py).
-# Overview must stay static — no model loads, no decoding, no data/ access.
+# Overview must stay static, no model loads, no decoding, no data/ access.
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -18,8 +18,7 @@ def _page():
 
 def test_overview_has_the_four_landing_sections():
     headers = [h.value for h in _page().header]
-    assert headers == ["The problem", "Architecture", "Where the project stands",
-                       "Using this dashboard"]
+    assert headers == ["The problem", "Architecture", "Status", "The pages"]
 
 
 def test_architecture_diagram_is_present_and_rendered():
@@ -38,7 +37,7 @@ def test_overview_carries_the_tensor_contract():
 
 def test_overview_states_build_status_without_overclaiming():
     body = " ".join(m.value for m in _page().markdown)
-    # The streams are named, but training is stated as not written — the honest
+    # The streams are named, but training is stated as not written, the honest
     # status is the point of the section.
     assert "EfficientNet-B0" in body and "Xception" in body and "DINOv2" in body
     assert "Not written" in body

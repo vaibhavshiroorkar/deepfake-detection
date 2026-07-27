@@ -31,7 +31,7 @@ sample_timestamps = _audio.sample_timestamps
 # Video codecs that every current browser can decode natively. FakeAVCeleb is
 # NOT uniformly one of them: the wav2lip generator wrote its output with an
 # MPEG-4 Part 2 encoder, so every FakeVideo-FakeAudio clip (and some
-# FakeVideo-RealAudio ones) is `mpeg4` — which no browser will play. Those are
+# FakeVideo-RealAudio ones) is `mpeg4`, which no browser will play. Those are
 # exactly the lip-sync forgeries this project is built around, so the clip
 # player has to re-encode rather than shrug.
 BROWSER_VIDEO_CODECS = frozenset({"h264", "vp8", "vp9", "av1"})
@@ -126,7 +126,7 @@ def playable_video_bytes(video_path) -> tuple[bytes, str | None]:
 
 
 def cached_playable_video(video_path) -> tuple[bytes, str | None]:
-    """playable_video_bytes memoized on (path, mtime, size) — the page-facing entry.
+    """playable_video_bytes memoized on (path, mtime, size): the page-facing entry.
 
     Re-encoding a clip costs a few hundred milliseconds, which is fine once but
     not on every Streamlit rerun (each slider nudge triggers one).
@@ -166,7 +166,7 @@ def decode_frames(video_path: str, timestamps: np.ndarray) -> list[np.ndarray]:
 
 
 def decode_audio(video_path: str) -> tuple[np.ndarray, int]:
-    """([channels, samples] float32, native_sr) — thin wrapper over ops.audio.decode."""
+    """([channels, samples] float32, native_sr). Thin wrapper over ops.audio.decode."""
     return _audio.decode(str(video_path))
 
 
@@ -186,7 +186,7 @@ def detect_face_and_mouth(frame_rgb, detector, conf_thresh: float, margin: float
     The face crop feeds the visual + emotion streams; the mouth crop is a
     PARALLEL output for the lip-sync stream (Stage 4), derived from MTCNN's two
     mouth-corner landmarks. `margin` pads the bbox crop, `align_inset` insets the
-    alignment template — only one applies, depending on `align`.
+    alignment template. Only one applies, depending on `align`.
     """
     return _faces.detect_align_crop(
         frame_rgb, detector, conf_thresh=conf_thresh, margin=margin,

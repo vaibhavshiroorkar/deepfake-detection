@@ -1,12 +1,12 @@
-"""Documentation — the long-form reference for the whole system.
+"""Documentation: the long-form reference for the whole system.
 
-Six tabs, ordered the way a clip moves through the system: the problem, the two
-preprocessing paths, the stream models that consume them, fusion and evaluation,
-then the data and splits underneath it all.
+Seven tabs, ordered the way a clip moves through the system: the problem, the
+end-to-end flow, the two preprocessing paths in detail, the stream models that
+consume them, fusion and evaluation, then the data and splits underneath it all.
 
-Division of labour with the Overview page: Overview is the map — what is
-detected, the architecture in one diagram, what is built. This page is the
-territory, and is the only place a mechanism is explained in full. The first tab
+Division of labour with the Overview page: Overview is the map, covering what is
+detected, the architecture in one diagram, and what is built. This page is the
+territory, and the only place a mechanism is explained in full. The first tab
 repeats just enough of Overview to stand on its own.
 
 It is documentation, not compute: nothing here loads a model, decodes a clip or
@@ -16,7 +16,7 @@ Sources of truth it mirrors: docs/PROJECT_OVERVIEW.md (§2 architecture, §3
 fusion, §5 data, §6 preprocessing contract) and docs/preprocessing.md (per-step
 reference). When those change, this page changes with them.
 
-Plain Streamlit components throughout — no custom CSS, no ASCII diagrams. Detail
+Plain Streamlit components throughout: no custom CSS, no ASCII diagrams. Detail
 lives inside expanders so each section reads as an outline first and a reference
 second.
 """
@@ -32,9 +32,8 @@ import streamlit as st
 DIAGRAM = _REPO_ROOT / "assets" / "flow.png"
 
 st.title("Documentation")
-st.caption("The in-depth reference: the problem, every processing step, every model, and the "
-           "reasoning behind the decisions that are easy to get wrong. Read-only — this page "
-           "loads no models and decodes nothing.")
+st.caption("The problem, every processing step, every model, and the reasoning behind the "
+           "decisions that are easy to get wrong.")
 
 
 # ====================== 1 · PROBLEM AND ARCHITECTURE ======================= #
@@ -56,13 +55,12 @@ The forgery is nonetheless obvious once you stop looking at the video in isolati
 recording contains two views of the same physical event: light reflected off a moving mouth, and
 pressure waves produced by that same mouth. The two views are causally locked together.
 Synthesis breaks the lock. The generated mouth is plausible on its own and the audio is
-plausible on its own, but their *joint* behaviour — the timing, and the correspondence between
-visible articulation and the sound produced — no longer belongs to one event.
+plausible on its own, but their *joint* behaviour, the timing and the correspondence between
+visible articulation and the sound produced, no longer belongs to one event.
 
-That is the signal this project targets, and it is why there is deliberately no standalone
-audio-only classifier anywhere in the design. An audio model can report that a voice sounds
-synthetic; it cannot report that the voice disagrees with the face, and the disagreement is the
-part that survives compression, resolution loss and a well-trained generator.
+Hence no standalone audio-only classifier anywhere in the design. An audio model can report that a
+voice sounds synthetic; it cannot report that the voice disagrees with the face, and only the
+disagreement survives compression, resolution loss and a well-trained generator.
 """)
 
     st.header("The signal chain")
@@ -98,14 +96,12 @@ pipeline instead of the forgery.
 """)
 
     st.header("The five streams")
-    st.caption("What each stream is for, at a glance. How each one works is the **Stream models** "
-               "tab; every stream emits a 256-dimensional embedding and never a score, which is "
-               "what lets fusion learn interactions between them.")
+    st.caption("What each stream is for. How each one works is the *Stream models* tab.")
     st.markdown("""
 | Stream | Inputs | What it contributes | Stage |
 |---|---|---|---|
 | **Xception** | faces | Low-level blending and colour artifacts. The long-standing FaceForensics++ baseline, strongest of the classic CNNs on manipulation residue. | 3 |
-| **EfficientNet-B0** | faces | A second artifact view from a different architecture family, and the lightest of the three — which is why it was built first and set the AUC 0.994 bar. | 2 |
+| **EfficientNet-B0** | faces | A second artifact view from a different architecture family, and the lightest of the three, which is why it was built first and set the AUC 0.994 bar. | 2 |
 | **DINOv2 (ViT-S/14)** | faces | Self-supervised features, learned with no fake/real labels at all. The bet is that generic visual structure transfers to manipulation methods never seen in training. | 3 |
 | **Lip-sync** | mouth + audio | Cross-attention between AV-HuBERT (video) and Whisper (audio): a synchronisation-mismatch vector. | 4 |
 | **Emotion** | faces + audio | Cross-attention between HSEmotions (face) and Wav2Vec2 (voice): an affect-consistency mismatch vector. | 5 |
@@ -125,7 +121,7 @@ embeddings.
 
 # ===================== 2 · END-TO-END PREPROCESSING ======================== #
 def render_pipeline():
-    st.header("Input to tensors — the whole preprocessing flow")
+    st.header("Input to tensors")
     st.caption("Every stage between a video file arriving and a batch reaching a model, in the "
                "order the code actually runs them. The *Visual path* and *Audio path* tabs explain "
                "how each individual operation works; this one is the control flow that calls them.")
@@ -159,7 +155,7 @@ you can see each intermediate result. There is no second implementation to drift
         st.markdown("""
 Nothing about the dataset's location is configured. `find_dataset_root` globs `data/` up to three
 levels deep for a `meta_data.csv` and takes the directory that holds it, which is the same rule the
-dashboard's picker uses — so the two cannot disagree about where the clips are.
+dashboard's picker uses, so the two cannot disagree about where the clips are.
 
 `manifest_from_meta` turns FakeAVCeleb's metadata into the manifest the rest of the system reads.
 The label comes from the category through `manifest.clip_label`, not from the filename or the
@@ -169,7 +165,7 @@ rather than by filename.
 
 `build_splits.py` then splits on the `source` identity, never on the clip. The same person appears
 across all four categories, so a random clip-level split puts a real clip of someone in train and a
-forgery of that same person in test — after which a model can score spectacularly by recognising the
+forgery of that same person in test, after which a model can score spectacularly by recognising the
 person. `verify_splits.py` asserts zero identity overlap and zero file overlap, and is the gate that
 makes the numbers mean anything.
 """)
@@ -204,11 +200,10 @@ every window stays inside the recording:
                  r"\mathrm{lo} = \max\!\left(\text{offset} + \tfrac{w}{2},\ \tfrac{w}{2}\right), "
                  r"\quad \mathrm{hi} = \max\!\left(T - \tfrac{w}{2},\ \mathrm{lo}\right)")
         st.markdown("""
-This single array is the join between the modalities. Frames are seeked by *timestamp*, not by frame
-index, and audio windows are centred on the same numbers, so frame *i* and window *i* describe the
-same instant even though clips differ in frame rate and the audio path has no concept of frames at
-all. The correction for the silence shortcut is applied to **both** paths through that one array,
-which is what stops the fix from introducing the desynchronisation it exists to prevent.
+Frames are seeked by *timestamp* rather than by frame index, which is what lets clips of differing
+frame rates share an index with an audio path that has no concept of frames. The silence correction
+enters through that same array, so it moves both paths together and cannot introduce the
+desynchronisation it exists to prevent.
 """)
         st.info("The trim is never applied to the waveform itself. Shortening the audio while the "
                 "frame timestamps stay put would desynchronise exactly the signal the cross-modal "
@@ -232,7 +227,7 @@ zero-padded to a fixed length so the result is rectangular: 5600 samples at 16 k
 """)
         st.warning("""**The mouth crop is computed and then thrown away.** `detect_align_crop`
 returns it, but `extract_clip` binds it to `_mouth` and never writes it, so the cache holds faces and
-audio only. Nothing consumes it yet — the lip-sync stream is Stage 4 — and the dashboard derives it
+audio only. Nothing consumes it yet, since the lip-sync stream is Stage 4, and the dashboard derives it
 live for inspection. Caching it is a known item for Stage 4, not an oversight, and it will need a
 `PIPELINE_VERSION` bump when it lands.""")
 
@@ -247,7 +242,7 @@ timestamps.npy  [16]               float64
 version.txt     "3"                            # PIPELINE_VERSION""", language="text")
         st.markdown("""
 Storing uint8 rather than normalised floats is a deliberate four-fold saving in cache size, and it
-keeps the expensive part — decode plus 16 MTCNN detections — separate from the cheap part.
+keeps the expensive part, decode plus 16 MTCNN detections, separate from the cheap part.
 Normalisation happens per batch in `ClipDataset.__getitem__`, which divides by 255, applies the
 ImageNet mean and standard deviation, and transposes HWC to CHW:
 """)
@@ -270,12 +265,12 @@ thing.
     st.markdown("""
 | | Batch pipeline | Preprocessing page |
 |---|---|---|
-| Leading-silence offset | Applied — `start_offset=leading_silence` | **Not applied**; timestamps start at half a window |
+| Leading-silence offset | Applied, `start_offset=leading_silence` | **Not applied**; timestamps start at half a window |
 | Frame count and window | Fixed at `NUM_FRAMES=16`, `0.35 s` | Sliders, 4–32 frames and 0.10–1.00 s |
 | Normalisation | Always, in `ClipDataset` | A toggle, so the un-normalised tensor is inspectable |
 | Enhancement / degradation extras | Never | Available, all off by default |
 | Mouth crop | Computed, discarded | Shown when enabled |
-| Cache | Written to `data/processed/` | Never written — the page is read-only |
+| Cache | Written to `data/processed/` | Never written; the page is read-only |
 """)
     st.caption("With every extra switched off, the page reproduces the batch pipeline's operations "
                "step for step; the silence offset and the fixed 16/0.35 contract are the two "
@@ -288,7 +283,7 @@ def render_visual():
     st.caption("Five steps, applied per sampled frame, producing one [16, 3, 224, 224] tensor per "
                "clip plus a parallel mouth tensor.")
 
-    with st.expander("**1 · Frame sampling** — choosing 16 moments", expanded=True):
+    with st.expander("**1 · Frame sampling**: choosing 16 moments", expanded=True):
         st.markdown("""
 Sixteen evenly spaced timestamps across the clip, inset at both ends by half an audio window so
 every frame's ±0.175 s of audio still lies inside the recording. Without the inset, the first and
@@ -305,21 +300,21 @@ enough that a backbone runs over the whole batch on a 6 GB GPU. It is a knob on 
 so the cost of changing it is visible immediately.
 """)
 
-    with st.expander("**2 · Face detection** — how MTCNN actually works"):
+    with st.expander("**2 · Face detection**: how MTCNN actually works"):
         st.markdown("""
 MTCNN (Zhang et al., 2016) is a **cascade of three small convolutional networks** that get
 progressively more expensive and progressively more selective. The design assumption is that the
 overwhelming majority of image regions are obviously not faces, so they should be rejected by
 something cheap, and only the survivors should be shown to something accurate.
 
-The image is first resized repeatedly by a factor of about 0.709 — one half-octave — down to the
+The image is first resized repeatedly by a factor of about 0.709, one half-octave, down to the
 minimum detectable face size, producing an **image pyramid**. This lets a single detector with a
 fixed 12×12 receptive field find faces at any scale: rather than searching for faces of many
 sizes, the network searches for one size in many images.
 
 | Stage | Input | Job | Emits |
 |---|---|---|---|
-| **P-Net** | each pyramid level | Fully convolutional, so it sweeps a whole level in one pass and proposes candidate windows. Deliberately shallow and permissive — tuned for recall, and expected to return many false positives. | face score, 4 box offsets |
+| **P-Net** | each pyramid level | Fully convolutional, so it sweeps a whole level in one pass and proposes candidate windows. Deliberately shallow and permissive, tuned for recall and expected to return many false positives. | face score, 4 box offsets |
 | **R-Net** | 24×24 crops | A fully-connected refinement network. Rejects the bulk of P-Net's false positives and tightens the boxes that survive. | face score, 4 box offsets |
 | **O-Net** | 48×48 crops | The deepest of the three, and the only one whose landmarks are used. Produces the final decision and the 5 facial landmarks alignment depends on. | face score, 4 box offsets, **5 landmarks** |
 
@@ -331,13 +326,13 @@ cluster of overlapping detections around each face into one.
 
 The three networks are trained jointly with a multi-task loss: cross-entropy for the
 face/not-face decision, squared error for the box offsets, and squared error for the landmark
-coordinates, each weighted differently per stage — P-Net and R-Net weight detection heavily,
+coordinates, each weighted differently per stage. P-Net and R-Net weight detection heavily,
 O-Net weights landmark accuracy heavily, because landmarks are its distinctive output. Training
 also uses online hard example mining: within each mini-batch only the highest-loss samples
 contribute gradients, so capacity is spent on cases the network is currently failing rather than
 on background it already rejects.
 
-The five landmarks are the left eye, right eye, nose tip, and the two mouth corners — ten
+The five landmarks are the left eye, right eye, nose tip, and the two mouth corners: ten
 coordinates, and everything downstream depends on them.
 
 **How this pipeline uses it.** The detector runs with `keep_all=False`, returning only the
@@ -351,11 +346,11 @@ failing detection is visible rather than silently degraded.
 `facenet-pytorch`; it returns the five landmarks the next step needs from the same forward pass
 rather than requiring a second model; and it is fast enough to run CPU-side inside pre-caching
 workers while the GPU is busy. The honest costs: it is a 2016 detector that struggles with
-profile views and heavy occlusion, and five landmarks is the minimum alignment can work with —
+profile views and heavy occlusion, and five landmarks is the minimum alignment can work with.
 AV-HuBERT's own preprocessing would prefer 68.
 """)
 
-    with st.expander("**3 · Five-point alignment** — the largest quality gain available"):
+    with st.expander("**3 · Five-point alignment**: the largest quality gain available"):
         st.markdown("""
 The five detected landmarks are mapped onto a canonical ArcFace-style template with a
 **similarity transform**: rotation, uniform scale and translation, and nothing else.
@@ -369,7 +364,7 @@ face cannot be made to match the template by rotating and scaling alone. The res
 matrix is applied with bilinear interpolation to produce the 224×224 crop.
 
 **Why not a full affine transform.** Six degrees of freedom would add shear and non-uniform
-scale, and would therefore fit the template more exactly — by deforming the face. Facial geometry
+scale, and would therefore fit the template more exactly, by deforming the face. Facial geometry
 is evidence. A transform that can squash a wide face into a narrow template is destroying part of
 what the detector should be looking at, so the extra two degrees of freedom are given up on
 purpose.
@@ -385,7 +380,7 @@ here without adopting a heavier detector.
 
 **Border padding.** An aligned canvas usually reaches past the edge of the source frame, and what
 it reaches for has to come from somewhere. It is now filled **black**. It used to be *reflected*,
-which pasted a mirrored, upside-down second face into essentially every FakeAVCeleb crop — these
+which pasted a mirrored, upside-down second face into essentially every FakeAVCeleb crop. These
 clips are already tight face crops, so the canvas always overshoots, measured at 14–45% of it.
 Padding must be inert, never synthesised, or the model learns the padding.
 
@@ -396,7 +391,7 @@ path's `margin`, which clamps to the frame and is therefore safe; feeding one va
 what made aligned crops a quarter empty. Raise it only for datasets whose frames are whole
 scenes.""")
 
-    with st.expander("**4 · Mouth ROI** — a parallel output, not a substitute"):
+    with st.expander("**4 · Mouth ROI**: a parallel output, not a substitute"):
         st.markdown("""
 A 96×96 crop centred between the two mouth-corner landmarks, produced from the *same* detect call
 as the face, so it costs no additional detection. It is a parallel output: the visual and emotion
@@ -412,7 +407,7 @@ therefore a new dependency. Today's landmark-centred RGB crop is the best availa
 five points, and the gap is a known item rather than an oversight.
 """)
 
-    with st.expander("**5 · ImageNet normalisation** — once, here, for everyone"):
+    with st.expander("**5 · ImageNet normalisation**: once, here, for everyone"):
         st.latex(r"x_{\text{norm}} = \frac{x/255 - \mu}{\sigma}, \qquad "
                  r"\mu = (0.485,\,0.456,\,0.406), \quad \sigma = (0.229,\,0.224,\,0.225)")
         st.markdown("""
@@ -427,7 +422,7 @@ is why they differ slightly between R, G and B. Normalisation is applied once, i
 rather than inside each stream, so it is impossible for two streams to disagree about the scaling
 of their inputs.
 
-On the Visual tab this step displays de-normalised frames — the transform inverted — purely so the
+On the Visual tab this step displays de-normalised frames, the transform inverted, purely so the
 result is viewable. The tensor handed to the model is the normalised one, and the printed value
 range underneath it is the honest check.
 """)
@@ -439,7 +434,7 @@ def render_audio():
     st.caption("Short, but it contains the single most important correctness detail in the whole "
                "preprocessing stage.")
 
-    with st.expander("**1 · Decode** — PyAV", expanded=True):
+    with st.expander("**1 · Decode**: PyAV", expanded=True):
         st.markdown("""
 Decoding goes through PyAV, which binds ffmpeg's libraries directly and bundles them, so no
 system ffmpeg installation is required and the same code runs on every machine in the team. The
@@ -454,8 +449,8 @@ unreproducible.
 
     with st.expander("**2 · Mono downmix and 16 kHz resample**"):
         st.markdown("""
-The downmix is a channel mean. Stereo separation in this dataset carries no forgery signal — the
-fakes are generated as mono speech and mixed identically — so keeping two channels would double
+The downmix is a channel mean. Stereo separation in this dataset carries no forgery signal, since
+the fakes are generated as mono speech and mixed identically, so keeping two channels would double
 the data for no information, and every downstream audio encoder expects mono anyway.
 
 Resampling is a filtered operation, not a subsampling one. Dropping every other sample would fold
@@ -468,7 +463,7 @@ carries very little energy above 8 kHz, so the higher native rate costs samples 
 without adding usable signal.
 """)
 
-    with st.expander("**3 · Leading silence** — FakeAVCeleb's shortcut"):
+    with st.expander("**3 · Leading silence**: FakeAVCeleb's shortcut"):
         st.markdown("""
 In FakeAVCeleb, clips with fake audio carry additional near-silence at t=0. It is an artifact of
 how the dataset was assembled, not a property of forgery. Left alone, a model learns "silence at
@@ -497,7 +492,7 @@ future analysis can check the correction rather than trust it.
 
     with st.expander("**4 · Window extraction**"):
         st.markdown("""
-One window of `window_sec` — 0.35 s by default — centred on each of the 16 frame timestamps,
+One window of `window_sec`, 0.35 s by default, centred on each of the 16 frame timestamps,
 clamped to the bounds of the clip and zero-padded to a fixed length so the result is rectangular.
 At 16 kHz that is 5600 samples per window, giving `[16, 5600]`.
 
@@ -508,14 +503,15 @@ short enough that a synchronisation error of order 100 ms shows up as a visible 
 than being averaged away.
 """)
 
-    st.subheader("Extras — off by default, and deliberately separate")
+    st.subheader("Extras")
+    st.caption("Off by default, and deliberately separate from the stored contract.")
     st.markdown("""
 None of these are part of the stored contract. With every one disabled, the dashboard reproduces
 the batch pipeline exactly.
 
 **Enhancement** (sharpen, denoise, CLAHE) asks whether cleaning an input helps or merely removes
 the artifacts the detector was relying on. CLAHE in particular equalises contrast in local tiles,
-which can amplify precisely the blending seams a visual stream is hunting for — or wash them out.
+which can amplify precisely the blending seams a visual stream is hunting for, or wash them out.
 
 **Degradation** (Gaussian blur, JPEG re-compression, downscale-then-upscale, additive noise at a
 target SNR, bandpass filtering) is the more important half. Real-world video has been re-encoded
@@ -535,7 +531,7 @@ artifacts of a vocoder are far easier to see in a spectrogram than in a waveform
 
 # ============================= 4 · STREAMS ================================= #
 def render_streams():
-    st.header("Visual streams — one template, three backbones")
+    st.header("Visual streams")
     st.caption("All three are the same config-driven module with a different backbone name, so "
                "adding a fourth is a configuration change rather than an engineering project.")
     st.markdown("""
@@ -563,19 +559,19 @@ being overwritten at each step. With 256 hidden units per direction, the concate
 512-dimensional before projection.
 
 **Frozen or fine-tuned.** Freezing the backbone means the pretrained weights do not move and only
-the temporal model and head are trained. It is dramatically cheaper — per-frame embeddings can be
-computed once and cached, after which an epoch costs almost nothing — and it is the realistic
+the temporal model and head are trained. It is dramatically cheaper, because per-frame embeddings
+can be computed once and cached, after which an epoch costs almost nothing, and it is the realistic
 default on a 6 GB GPU. Fine-tuning lets the backbone specialise on forgery artifacts and
 generally scores better, at a cost that scales with five backbones. The decision is deliberately
 left open until Stage 6 rather than assumed.
 """)
 
-    with st.expander("**Xception** — depthwise separable convolutions"):
+    with st.expander("**Xception**: depthwise separable convolutions"):
         st.markdown("""
 Xception replaces the standard convolution with a **depthwise separable** pair: first a single
 k×k kernel per input channel, applied independently and mixing nothing across channels; then a
-1×1 convolution that mixes channels and mixes nothing spatially. The hypothesis in the name —
-"extreme Inception" — is that spatial correlation and cross-channel correlation are separable
+1×1 convolution that mixes channels and mixes nothing spatially. The hypothesis in the name,
+"extreme Inception", is that spatial correlation and cross-channel correlation are separable
 enough to be modelled by two dedicated operations rather than one entangled one.
 """)
         st.latex(r"\frac{\text{separable cost}}{\text{standard cost}} = "
@@ -588,7 +584,7 @@ outperformed the alternatives on manipulation detection, which is why it is in t
 than a newer general-purpose classifier.
 """)
 
-    with st.expander("**EfficientNet-B0** — compound scaling"):
+    with st.expander("**EfficientNet-B0**: compound scaling"):
         st.markdown("""
 EfficientNet's contribution is the observation that depth, width and input resolution should not
 be scaled independently. Deeper networks with narrow layers underuse their capacity; wider
@@ -605,15 +601,15 @@ MBConv blocks with squeeze-and-excitation, at about 5.3M parameters.
 
 It was built first for a practical reason: it is the lightest of the three and it fit the 6 GB
 laptop that produced the earlier results. That build reached test accuracy 0.963, AUC 0.994,
-F1 0.974 and EER 0.018, in-distribution — the bar the rebuild has to clear.
+F1 0.974 and EER 0.018, in-distribution: the bar the rebuild has to clear.
 """)
 
-    with st.expander("**DINOv2 (ViT-S/14)** — self-supervised, and the generalisation bet"):
+    with st.expander("**DINOv2 (ViT-S/14)**: self-supervised, and the generalisation bet"):
         st.markdown("""
 DINOv2 is a vision transformer trained with **no labels of any kind**. Two networks are involved:
 a student, and a teacher whose weights are an exponential moving average of the student's. Both
-see different augmented crops of the same image — the teacher gets large global crops, the student
-gets global and small local ones — and the student is trained to match the teacher's output
+see different augmented crops of the same image, the teacher getting large global crops and the
+student global and small local ones, and the student is trained to match the teacher's output
 distribution. Learning to predict a global view from a local one forces the representation to
 encode what the object *is*, not where the crop was taken.
 
@@ -630,7 +626,7 @@ methods. Whether that expectation survives contact with the ablation is one of t
 project is meant to produce.
 """)
 
-    st.header("Cross-modal streams — measuring disagreement")
+    st.header("Cross-modal streams")
     st.caption("Both streams share one mechanism: one modality asks the questions, the other "
                "supplies the evidence, and how cleanly the evidence answers is the signal.")
     st.latex(r"\text{Attention}(Q,K,V) = \text{softmax}\!\left(\frac{QK^{\top}}"
@@ -647,13 +643,13 @@ saturates into a near one-hot distribution, and its gradient approaches zero. Di
 standard deviation keeps the distribution in a regime where learning is possible.
 
 The forensic intuition: in a genuine recording the attention mass concentrates near the diagonal
-with a small, consistent lag — sound arrives at a fixed offset from the articulation that produced
-it. In a re-synthesised clip the correspondence is smeared or drifts, because the mouth was
+with a small, consistent lag, because sound arrives at a fixed offset from the articulation that
+produced it. In a re-synthesised clip the correspondence is smeared or drifts, because the mouth was
 generated to match the audio only in aggregate. The stream does not decide anything about this; it
 hands the resulting vector to fusion, which learns what to do with it.
 """)
 
-    with st.expander("**Lip-sync stream** — AV-HuBERT + Whisper (Stage 4)"):
+    with st.expander("**Lip-sync stream**: AV-HuBERT + Whisper (Stage 4)"):
         st.markdown("""
 **AV-HuBERT** encodes the mouth-crop sequence and supplies Key and Value. It was pretrained by
 masking parts of an audio-visual input and predicting cluster assignments of the hidden features,
@@ -673,7 +669,7 @@ matching audio and video windows are close together and offset ones are far apar
 generalises the same idea with cross-attention over a full clip.
 """)
 
-    with st.expander("**Emotion stream** — HSEmotions + Wav2Vec2 (Stage 5)"):
+    with st.expander("**Emotion stream**: HSEmotions + Wav2Vec2 (Stage 5)"):
         st.markdown("""
 **HSEmotions** reads facial expression from the face crops and supplies Key and Value.
 **Wav2Vec2** reads vocal affect from the waveform and supplies Query; its convolutional feature
@@ -690,7 +686,8 @@ rarely also matches affect: the voice carries stress the face does not show.
 
 # ====================== 5 · FUSION AND EVALUATION ========================== #
 def render_fusion():
-    st.header("Fusion — feature-level, not score averaging")
+    st.header("Fusion")
+    st.caption("Feature-level, not score averaging.")
     st.markdown("""
 Each stream produces a clip-level embedding. Each embedding is projected with a linear layer and
 layer normalisation to a shared `common_dim` of 256, so streams with different native widths
@@ -702,7 +699,7 @@ Threshold at 0.5 for the label.
 **Why not average scores.** Score averaging can only combine five opinions after each stream has
 already discarded everything except a number. Feature fusion lets the MLP learn *interactions*.
 "Artifact evidence is weak **but** lip-sync mismatch is strong" is the exact signature of a
-wav2lip forgery, and it is a conjunction no weighted average of scores can express — averaging a
+wav2lip forgery, and it is a conjunction no weighted average of scores can express: averaging a
 low score with a high one produces a middling score regardless of which stream said what.
 
 The feature store also has a practical consequence. With frozen backbones, each stream's
@@ -715,7 +712,8 @@ regression's weights would give for free. That interpretability has to be recove
 way: by running the ablation and comparing fused metrics across stream subsets, not by reading
 fusion weights. This is a real cost of the design, not an oversight.""")
 
-    st.header("Evaluation — what gets measured, and what would hide a failure")
+    st.header("Evaluation")
+    st.caption("What gets measured, and what would hide a failure.")
     st.markdown("""
 **Ablation.** Every stream is evaluated alone and in combination. Because fusion is feature-level,
 removing a stream means changing the MLP's input dimension and retraining the head, not masking a
@@ -730,8 +728,8 @@ broken down by FakeAVCeleb category and manipulation method, logged every epoch 
 computed once at the end.
 
 **Which metrics.** Accuracy alone is unreliable under class imbalance. AUC measures ranking
-quality independently of any threshold choice. EER — the point where the false accept and false
-reject rates are equal — is the standard single number in forensic biometrics and is directly
+quality independently of any threshold choice. EER, the point where the false accept and false
+reject rates are equal, is the standard single number in forensic biometrics and is directly
 comparable with published work. F1 keeps precision and recall visible, which is where an
 imbalanced test set does its damage.
 
@@ -743,7 +741,7 @@ evaluated on Deepfake-Eval-2024, an in-the-wild collection never used for traini
 
 # ========================== 6 · DATA AND SPLITS ============================ #
 def render_data():
-    st.header("Dataset — FakeAVCeleb v1.2")
+    st.header("Dataset: FakeAVCeleb v1.2")
     st.markdown("""
 Chosen over FaceForensics++ and Celeb-DF for one decisive reason: it contains genuinely
 manipulated audio. Visual-only datasets cannot test cross-modal mismatch at all, so they cannot
@@ -756,19 +754,21 @@ validate the central claim of this project.
 | **FVRA** | fake | real | Manipulated face against the original audio. |
 | **FVFA** | fake | fake | Both tracks manipulated. Produced by wav2lip, this is the headline lip-sync case the system is built for. |
 
-The manipulation *method* is a separate column from the category — `real`, `faceswap`, `fsgan`,
-`wav2lip` — and both breakdowns are reported, because a system that handles face swaps well and
+The manipulation *method* is a separate column from the category (`real`, `faceswap`, `fsgan`,
+`wav2lip`), and both breakdowns are reported, because a system that handles face swaps well and
 wav2lip badly has failed at the task even if its category-level numbers look acceptable.
 """)
 
-    st.header("Labels — authenticity is per stream, not per clip")
+    st.header("Labels")
+    st.caption("Authenticity is per stream, not per clip.")
     st.warning("""A visual-only stream is judged on the **video track's** authenticity, not the
 clip's. `FakeVideo-*` is fake and `RealVideo-*` is real, **including RealVideo-FakeAudio**, whose
 forgery is audio-only and therefore correctly invisible to a model that never hears it. This looks
 like a labelling bug and is not one. It is the reason the cross-modal streams exist, and a visual
 stream that appeared to catch RVFA would be reading a dataset artifact.""")
 
-    st.header("Splits — identity-disjoint, built once, never re-split")
+    st.header("Splits")
+    st.caption("Identity-disjoint, built once, never re-split.")
     st.markdown("""
 The same identities appear across all four categories. If a real clip of a person lands in train
 while a forgery derived from that same person lands in test, the two share background, lighting,
@@ -798,7 +798,7 @@ optimised.
 | `data/*.csv` | `full_manifest.csv` and the `train` / `val` / `test` splits. |
 
 The dataset's location is **not** configured. Anything under `data/` holding a `meta_data.csv` is a
-drop — `data/FakeAVCeleb_v1.2/` and `data/raw/FakeAVCeleb_v1.2/` both work, and two drops can sit
+drop. `data/FakeAVCeleb_v1.2/` and `data/raw/FakeAVCeleb_v1.2/` both work, and two drops can sit
 side by side. `preprocessing/audit_dataset.find_dataset_root` and the dashboard's picker apply the
 same rule, so neither can disagree with the other about where the clips are.
 """)
@@ -806,7 +806,7 @@ same rule, so neither can disagree with the other about where the clips are.
 the wav2lip generator wrote its output with an MPEG-4 Part 2 encoder, so every `FakeVideo-FakeAudio`
 clip and some `FakeVideo-RealAudio` clips are `mpeg4`.
 
-This is invisible to the pipeline — OpenCV and PyAV decode both without comment — but no browser can
+This is invisible to the pipeline, since OpenCV and PyAV decode both without comment, but no browser can
 play `mpeg4`, so `st.video` rendered a blank player for precisely the lip-sync forgeries this project
 exists to detect. The Preprocessing page therefore re-encodes to H.264 on the way to the player
 (`dashboard/lib/media.playable_video_bytes`), captions the clip when it has done so, and leaves the
@@ -826,6 +826,19 @@ is derived in memory from its `meta_data.csv`, so a freshly unzipped dataset is 
 """)
 
 
+def _measured(render):
+    """Render a tab body inside a bounded column.
+
+    app.py sets layout="wide" for the Preprocessing page's frame grids, and
+    Streamlit has no per-page override, so a reference page of paragraphs would
+    otherwise be set across 1200px. 7:2 is wider than the Overview page's column
+    because several tabs carry four-column tables that need the room.
+    """
+    body, _ = st.columns([7, 2], gap="large")
+    with body:
+        render()
+
+
 # Ordered the way a clip moves through the system. "Input → tensors" is the
 # end-to-end control flow; "Visual path" and "Audio path" are the per-operation
 # reference it calls into. "Stream models", not "Streams": the architecture tab
@@ -833,17 +846,7 @@ is derived in memory from its `meta_data.csv`, so a freshly unzipped dataset is 
 # what made this page hard to navigate.
 tabs = st.tabs(["Problem & architecture", "Input → tensors", "Visual path", "Audio path",
                 "Stream models", "Fusion & evaluation", "Data & splits"])
-with tabs[0]:
-    render_architecture()
-with tabs[1]:
-    render_pipeline()
-with tabs[2]:
-    render_visual()
-with tabs[3]:
-    render_audio()
-with tabs[4]:
-    render_streams()
-with tabs[5]:
-    render_fusion()
-with tabs[6]:
-    render_data()
+for tab, render in zip(tabs, [render_architecture, render_pipeline, render_visual, render_audio,
+                              render_streams, render_fusion, render_data]):
+    with tab:
+        _measured(render)

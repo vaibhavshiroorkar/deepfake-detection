@@ -10,8 +10,8 @@ once as the sound that mouth made, and synthesis breaks the correspondence in a 
 compression.
 
 So this detector measures disagreement between modalities rather than asking whether a voice sounds
-synthetic. Five streams read one clip — three visual (EfficientNet-B0, Xception, DINOv2) and two
-cross-modal (lip-sync, emotion) — and each emits an embedding rather than a score. Fusion
+synthetic. Five streams read one clip, three visual (EfficientNet-B0, Xception, DINOv2) and two
+cross-modal (lip-sync, emotion), and each emits an embedding rather than a score. Fusion
 concatenates the embeddings and learns from the combination, so it can represent "artifact evidence
 is weak but lip-sync mismatch is strong", which is the signature of a lip-sync forgery and something
 no average of five scores can express.
@@ -29,7 +29,7 @@ mouth  [16, 3,  96,  96]   ->  lip-sync stream
 audio  [16, 5600]          ->  lip-sync stream, emotion stream
 ```
 
-The full design — architecture, data, tooling, compute assumptions, build order — is in
+The full design, covering architecture, data, tooling, compute assumptions and build order, is in
 [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md), which is the project's single main document.
 
 ## Status
@@ -103,7 +103,7 @@ python -c "import torch; print(torch.__version__)"
 To add or change a dependency, edit `pyproject.toml`, run `uv lock`, and commit the updated
 `uv.lock`.
 
-PyAV (`av`) bundles its own ffmpeg libraries, so no system ffmpeg is needed anywhere — clip
+PyAV (`av`) bundles its own ffmpeg libraries, so no system ffmpeg is needed anywhere. Clip
 extraction, audio decoding and the dashboard's clip player all go through it.
 
 On Colab, torch is preinstalled and only the extras are needed:
@@ -125,8 +125,8 @@ streamlit run dashboard/app.py
 **Overview** is the landing page. **Preprocessing** is the page that computes: pick a clip, then
 step through the visual and audio pipelines with every step as a toggle, applied cumulatively,
 ending in the exact tensor a model would receive. **Streams**, **Fusion** and **Explainability** are
-locked — each says what will land there and what unlocks it, rather than showing controls that do
-not work. **Documentation** is the in-depth reference for every step, model and design decision.
+locked, and each says what will land there and what unlocks it rather than showing controls that
+do not work. **Documentation** is the in-depth reference for every step, model and design decision.
 
 In VS Code, `.vscode/launch.json` makes this the default run target, so <kbd>F5</kbd> launches the
 dashboard with the debugger attached (`justMyCode: false`, so you can step into `dashboard/lib/` and

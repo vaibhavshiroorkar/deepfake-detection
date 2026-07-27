@@ -1,4 +1,4 @@
-"""EXTRAS visual ops — shape/dtype preservation and expected effects."""
+"""EXTRAS visual ops, shape/dtype preservation and expected effects."""
 import numpy as np
 import pytest
 

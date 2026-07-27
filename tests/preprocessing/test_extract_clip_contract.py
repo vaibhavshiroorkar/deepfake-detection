@@ -1,7 +1,7 @@
 """End-to-end contract check for extract_clip on a real sample clip.
 
 Skips when the dataset isn't extracted (CI without data), so it never blocks a
-run — but when clips are present it verifies the aligned pipeline still emits the
+run, but when clips are present it verifies the aligned pipeline still emits the
 exact tensors every downstream stage depends on.
 """
 from pathlib import Path
@@ -51,7 +51,7 @@ def test_extract_clip_contract(sample_clip):
 
 def test_alignment_changes_pixels_vs_bbox_crop(sample_clip):
     """When a face is found, 5-point alignment yields different pixels than the
-    plain bbox crop — i.e. alignment is actually doing something."""
+    plain bbox crop, i.e. alignment is actually doing something."""
     clip_id, video_path = sample_clip
     aligned = extract_clip(video_path, clip_id, force=True, device="cpu", align=True)
     if aligned["num_faces_detected"] == 0:
