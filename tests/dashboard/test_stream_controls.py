@@ -1,7 +1,7 @@
 """Unit tests for the pure/testable pieces behind the Train and Run tabs."""
 import numpy as np
 
-from dashboard.lib.stream_ui import TRAIN_DEFAULTS, train_command
+from dashboard.lib.stream_ui import DATA_DEFAULTS, TRAIN_DEFAULTS, train_command
 from dashboard.lib.inference import frames_to_tensor
 
 
@@ -13,6 +13,26 @@ def test_train_command_includes_hyperparameters():
     assert "--epochs 8" in cmd
     assert "--lr-backbone 5e-06" in cmd     # scientific formatting, no trailing zeros
     assert "--seed 42" in cmd
+
+
+def test_train_command_carries_the_chosen_dataset_and_splits():
+    """What to train on is a training decision, so it must be in the command."""
+    settings = {**TRAIN_DEFAULTS, "dataset": "FakeAVCeleb_v1.2",
+                "train_split": "train", "val_split": "val"}
+    cmd = train_command("xception", "legacy_xception", settings)
+    assert "--dataset FakeAVCeleb_v1.2" in cmd
+    assert "--train-split train" in cmd
+    assert "--val-split val" in cmd
+    # data flags precede the hyperparameters, so the command reads in that order
+    assert cmd.index("--dataset") < cmd.index("--epochs")
+
+
+def test_train_command_omits_data_flags_when_no_dataset_chosen():
+    """No dataset discovered is not the same as an empty --dataset argument."""
+    cmd = train_command("xception", "legacy_xception", {**TRAIN_DEFAULTS, **DATA_DEFAULTS})
+    assert "--dataset" not in cmd
+    assert "--train-split" not in cmd
+    assert "--epochs 8" in cmd
 
 
 def test_frames_to_tensor_shape_and_normalization():

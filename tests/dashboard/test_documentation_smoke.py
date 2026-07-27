@@ -50,9 +50,38 @@ def test_documentation_carries_the_tensor_contract():
 
 
 def test_documentation_has_no_ascii_diagrams():
-    # The signal chain, the stream module and the on-disk layout are tables, and
-    # the architecture is the assets/flow.png image — never ASCII art.
-    assert not _page().code
+    """Code blocks are for code and tensor shapes; structure is tables and the diagram.
+
+    The page does use st.code — for python snippets and shape listings — so this
+    checks for box-drawing characters rather than for the absence of code.
+    """
+    blocks = " ".join(c.value for c in _page().code)
+    assert blocks, "expected the pipeline walkthrough to show code and shapes"
+    box_drawing = set("─│┌┐└┘├┤┬┴┼━┃┏┓┗┛╔╗╚╝═║▄▀█")
+    assert not set(blocks) & box_drawing, sorted(set(blocks) & box_drawing)
+
+
+def test_pipeline_tab_walks_every_stage_in_order():
+    """The end-to-end flow is the deep dive; its stage order is the point of it."""
+    at = _page()
+    assert "Input to tensors — the whole preprocessing flow" in [h.value for h in at.header]
+    body = " ".join([m.value for m in at.markdown] + [w.value for w in at.warning]
+                    + [i.value for i in at.info] + [c.value for c in at.code])
+    # the real call order, which is not the obvious one: audio before any frame
+    for fn in ["find_dataset_root", "manifest_from_meta", "build_splits.py",
+               "ops.audio.decode", "leading_silence_sec", "sample_timestamps",
+               "detect_align_crop", "extract_windows", "PIPELINE_VERSION",
+               "ClipDataset"]:
+        assert fn in body, fn
+    assert body.index("leading_silence_sec") < body.index("detect_align_crop")
+
+
+def test_pipeline_tab_records_the_dashboard_vs_batch_differences():
+    """Reading a number off the page and assuming training saw it is the trap."""
+    body = " ".join(m.value for m in _page().markdown)
+    assert "Where the dashboard differs from the batch pipeline" in \
+        [h.value for h in _page().subheader]
+    assert "Not applied" in body          # the leading-silence offset
 
 
 def test_architecture_diagram_is_present_and_rendered():

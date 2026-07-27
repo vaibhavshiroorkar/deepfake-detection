@@ -22,9 +22,35 @@ import streamlit as st
 
 from models.streams.common.config import StreamConfig, EFFICIENTNET_B0, XCEPTION, DINOV2
 from dashboard.lib import stream_ui
-from dashboard.lib.selectors import DATA_DIR, render_selection
 
 TEMPORAL = {"BiLSTM": ("lstm", True), "GRU": ("gru", True), "Mean-pool": ("mean", False)}
+
+
+def inherited_clip():
+    """(clip_id, absolute path) of the clip chosen on the Preprocessing page, or None.
+
+    Run inference is a single forward pass over one clip, and the clip you want
+    is invariably the one you were just inspecting. Reading the Preprocessing
+    page's selection instead of rendering a second picker also means an uploaded
+    video flows straight through — there is only one place a clip is chosen.
+    """
+    row = st.session_state.get("pp_row")
+    path = st.session_state.get("pp_video_path")
+    if not row or not path:
+        return None
+    return row.get("clip_id", "clip"), str(path)
+
+
+def _render_inherited_clip(st):
+    """Show the inherited clip read-only; return its path, or None."""
+    clip = inherited_clip()
+    if clip is None:
+        st.info("No clip selected. Choose one on the **Preprocessing** page (dataset clip or your "
+                "own upload) and it appears here for Run inference.")
+        return None
+    clip_id, path = clip
+    st.caption(f"Run inference uses the clip selected on the Preprocessing page: **{clip_id}**")
+    return path
 
 
 def _visual_model_box(name: str, backbone_name: str, key: str, default_on: bool,
@@ -87,10 +113,9 @@ def render_visual():
                "Configure each, then Train (emits the background-trainer command — this page "
                "never trains, §7) or Run it on a clip to forward-pass a real sequence.")
 
-    # One clip selection for the whole tab — every box's Run tab forward-passes it.
-    with st.expander("Clip for Run inference (shared across boxes)", expanded=False):
-        clip_row = render_selection()
-    video_path = (str(DATA_DIR / clip_row["video_path"]) if clip_row is not None else None)
+    # The clip is inherited from the Preprocessing page rather than picked again
+    # here — one selection, one place to change it.
+    video_path = _render_inherited_clip(st)
 
     st.session_state["stream_visual_enabled"] = {
         "efficientnet": _visual_model_box("EfficientNet-B0", EFFICIENTNET_B0, "m_effnet", True,

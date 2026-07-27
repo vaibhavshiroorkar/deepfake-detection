@@ -1,6 +1,10 @@
+from pathlib import Path
+
 import pandas as pd
+from dashboard.lib import selectors
 from dashboard.lib.selectors import (
-    filter_manifest, search_manifest, group_by_identity,
+    filter_manifest, search_manifest, group_by_identity, clip_path, label_text,
+    upload_row, LABEL_UNKNOWN,
 )
 
 
@@ -68,3 +72,53 @@ def test_group_by_identity_keeps_same_source_adjacent():
     # every source's rows form one contiguous block
     assert sources == sorted(sources)
     assert sources.count("id1") == 3 and sources[0] == "id1"
+
+
+# ------------------------------------------------- clip paths and uploaded rows
+#
+# A dataset row's video_path is relative to data/; an uploaded clip's is absolute
+# and outside it. Both flow through the same pages, so clip_path is the only
+# place that difference is allowed to matter.
+
+def test_clip_path_resolves_a_dataset_row_under_data_dir():
+    row = {"video_path": "FakeAVCeleb_v1.2/RealVideo-RealAudio/x/00109.mp4"}
+    assert clip_path(row) == selectors.DATA_DIR / row["video_path"]
+
+
+def test_clip_path_leaves_an_absolute_upload_path_alone(tmp_path):
+    absolute = tmp_path / "my_clip.mp4"
+    assert clip_path({"video_path": str(absolute)}) == absolute
+    # and it must NOT have been reparented under data/
+    assert selectors.DATA_DIR not in clip_path({"video_path": str(absolute)}).parents
+
+
+def test_label_text_covers_real_fake_and_unknown():
+    assert label_text({"label": 0}) == "real"
+    assert label_text({"label": 1}) == "fake"
+    assert label_text({"label": LABEL_UNKNOWN}) == "unknown"
+
+
+def test_upload_row_writes_the_file_and_reads_back_as_a_clip(monkeypatch, tmp_path):
+    monkeypatch.setattr(selectors, "UPLOAD_DIR", tmp_path / "uploads")
+    row = upload_row("Holiday Clip.mp4", b"not-really-video", "fid123")
+
+    assert row["clip_id"] == "Holiday Clip"
+    assert row["label"] == LABEL_UNKNOWN
+    assert label_text(row) == "unknown"
+    written = clip_path(row)
+    assert written.is_file() and written.read_bytes() == b"not-really-video"
+    # never into data/ — the dashboard is read-only with respect to the dataset
+    assert selectors.DATA_DIR not in written.parents
+
+
+def test_upload_row_is_idempotent_and_keyed_by_file_id(monkeypatch, tmp_path):
+    monkeypatch.setattr(selectors, "UPLOAD_DIR", tmp_path / "uploads")
+    first = upload_row("a.mp4", b"one", "fid1")
+    again = upload_row("a.mp4", b"IGNORED", "fid1")
+    assert clip_path(again) == clip_path(first)
+    assert clip_path(again).read_bytes() == b"one"      # not rewritten on rerun
+
+    # same filename, different upload: must not collide
+    other = upload_row("a.mp4", b"two", "fid2")
+    assert clip_path(other) != clip_path(first)
+    assert clip_path(other).read_bytes() == b"two"

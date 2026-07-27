@@ -1,15 +1,25 @@
-"""Shared Dataset -> Split -> Target -> Clip selection for the preprocessing page.
+"""Clip selection: a dataset clip, or a video you upload.
 
-Selection is two-level: pick a DATASET, then a SPLIT within it. Neither is
-hardcoded — datasets.discover() scans data/ on load, so dropping a dataset
-folder in and hitting the ↻ button is all it takes to work with it (see
-dashboard/lib/datasets.py for the detection rules).
+Two sources, chosen by a segmented control and returning the same shape of row
+either way, so callers do not care which was used:
 
-Pure filtering (filter_manifest) is separated from the Streamlit widgets
-(render_selection) so the filter logic stays unit-testable without a running
-app. All shared st.session_state keys are owned here.
+  - **Dataset** — pick a DATASET, then a SPLIT within it, then a clip through the
+    picker dialog. Neither list is hardcoded: datasets.discover() scans data/ on
+    load, so dropping a dataset folder in and hitting ↻ is all it takes (see
+    dashboard/lib/datasets.py for the detection rules).
+  - **Upload** — hand it any mp4. It is written to a temp directory so OpenCV and
+    PyAV have a real path to open, and never into data/.
+
+Callers must resolve a row's clip through clip_path(), not by joining DATA_DIR
+themselves: an uploaded clip's video_path is absolute and lives outside data/.
+
+Pure filtering (filter_manifest, search_manifest, group_by_identity) is separated
+from the Streamlit widgets (render_selection) so the filter logic stays
+unit-testable without a running app. All shared st.session_state keys are owned
+here.
 """
 import sys
+import tempfile
 from pathlib import Path
 
 import pandas as pd
@@ -24,6 +34,36 @@ DATA_DIR = _REPO_ROOT / "data"
 
 MANIP_TYPES = ["RealVideo-RealAudio", "RealVideo-FakeAudio",
                "FakeVideo-RealAudio", "FakeVideo-FakeAudio"]
+
+SOURCE_DATASET = "Dataset"
+SOURCE_UPLOAD = "Upload a video"
+
+# Uploads land outside the repo on purpose — data/ belongs to the dataset, and
+# the dashboard is read-only with respect to it.
+UPLOAD_DIR = Path(tempfile.gettempdir()) / "deepfake_dashboard_uploads"
+
+# An uploaded clip has no ground truth. -1 keeps the column integer-typed while
+# staying an obvious non-label; label_text() renders it as "unknown".
+LABEL_UNKNOWN = -1
+
+
+def clip_path(row) -> Path:
+    """Absolute path to a selected clip, dataset row or upload alike.
+
+    A dataset row's video_path is relative to data/; an upload's is already
+    absolute. Joining DATA_DIR unconditionally happens to work on Windows, but
+    only by accident of pathlib's absolute-path rule, so it is done explicitly.
+    """
+    path = Path(row["video_path"])
+    return path if path.is_absolute() else DATA_DIR / path
+
+
+def label_text(row) -> str:
+    """'real' / 'fake' / 'unknown' — uploads have no ground truth."""
+    label = int(row["label"])
+    if label == LABEL_UNKNOWN:
+        return "unknown"
+    return "real" if label == 0 else "fake"
 
 
 def registry(refresh: bool = False) -> dict[str, datasets.Dataset]:
@@ -89,6 +129,27 @@ def group_by_identity(df: pd.DataFrame) -> pd.DataFrame:
     return df.sort_values(sort_cols).reset_index(drop=True)
 
 
+def upload_row(name: str, data: bytes, file_id: str) -> pd.Series:
+    """A selection row for an uploaded video, written to UPLOAD_DIR.
+
+    Takes the bytes rather than a Streamlit UploadedFile so it is unit-testable.
+    file_id keys the temp copy, so a rerun does not rewrite it and two uploads
+    sharing a filename do not collide.
+    """
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    dest = UPLOAD_DIR / f"{file_id}_{Path(name).name}"
+    if not dest.exists():
+        dest.write_bytes(data)
+    return pd.Series({
+        "clip_id": Path(name).stem,
+        "video_path": str(dest),
+        "label": LABEL_UNKNOWN,
+        "manipulation_type": "uploaded",
+        "method": "unknown",
+        "source": "upload",
+    })
+
+
 def _keep_valid(key: str, options: list[str]):
     """Drop a stored widget choice that a rescan removed, so the widget resets."""
     import streamlit as st
@@ -98,10 +159,37 @@ def _keep_valid(key: str, options: list[str]):
 
 
 def render_selection():
-    """Render Dataset/Split + a modal Clip picker; return the selected clip row."""
+    """Render the clip source controls; return the selected clip row, or None."""
     import streamlit as st
 
     st.header("Selection")
+    source = st.segmented_control(
+        "Clip source", [SOURCE_DATASET, SOURCE_UPLOAD], default=SOURCE_DATASET,
+        key="sel_source", help="Browse a discovered dataset, or bring your own video.")
+    if source == SOURCE_UPLOAD:
+        return _render_upload(st)
+    return _render_dataset(st)
+
+
+# --------------------------------------------------------------------- upload
+
+def _render_upload(st):
+    uploaded = st.file_uploader(
+        "Video file", type=["mp4", "mov", "mkv", "webm", "avi"], key="sel_upload",
+        help="Decoded and previewed exactly like a dataset clip. Never copied into data/.")
+    if uploaded is None:
+        st.caption("Upload a video to run it through the same preprocessing steps. It carries no "
+                   "ground-truth label, so its label reads *unknown*.")
+        return None
+
+    row = upload_row(uploaded.name, uploaded.getvalue(), str(uploaded.file_id))
+    _selected_card(st, row, action_label=None)
+    return row
+
+
+# -------------------------------------------------------------------- dataset
+
+def _render_dataset(st):
     c1, c2, c3 = st.columns([6, 6, 1], vertical_alignment="bottom")
     with c3:
         if st.button("↻", key="sel_refresh", help="Rescan data/ for datasets"):
@@ -112,7 +200,8 @@ def render_selection():
     if not found:
         st.info(f"No datasets found in `{DATA_DIR}`. Drop a dataset folder there "
                 "(a FakeAVCeleb-style `meta_data.csv`, or manifest CSVs with "
-                "clip_id/video_path/label columns) and hit ↻.")
+                "clip_id/video_path/label columns) and hit ↻ — or switch to "
+                f"**{SOURCE_UPLOAD}** to preview a single file.")
         return None
 
     names = list(found)
@@ -144,16 +233,50 @@ def render_selection():
         st.session_state["sel_clip_id"] = sel_id
 
     crow = df[df["clip_id"] == sel_id].iloc[0]
-    b1, b2 = st.columns([3, 1])
-    tag = "real" if int(crow["label"]) == 0 else "fake"
-    mtype = crow["manipulation_type"] if "manipulation_type" in df.columns else ""
-    b1.success(f"**{sel_id}** — {mtype} ({tag})")
-    # Call the dialog directly on the click. A persistent flag would re-open it
-    # on every rerun (e.g. switching to the Config tab) after a dismiss.
-    open_clicked = b2.button("Choose clip", key="open_picker_btn")
+    if _selected_card(st, crow, action_label="Choose clip"):
+        st.session_state["sel_picker_open"] = True
 
-    @st.dialog("Choose a clip", width="large")
-    def _picker():
+    # The dialog's open state lives in session_state rather than being driven by
+    # the button click directly. A widget inside a dialog reruns the script, and
+    # a dialog that is not re-invoked on that rerun disappears. on_dismiss clears
+    # the flag, so an X or ESC does not leave it set to pop the dialog open again
+    # at the next unrelated interaction.
+    if st.session_state.get("sel_picker_open"):
+        _picker(st, df)
+
+    return df[df["clip_id"] == sel_id].iloc[0]
+
+
+def _close_picker():
+    import streamlit as st
+
+    st.session_state["sel_picker_open"] = False
+
+
+def _selected_card(st, row, action_label: str | None):
+    """The current selection, shown plainly. Returns True if the action was clicked.
+
+    A bordered container rather than st.success: the selection is a statement of
+    fact, not an achievement, and a full-width green banner reads as one on every
+    single rerun.
+    """
+    with st.container(border=True):
+        info, action = ((st.container(), None) if action_label is None
+                        else st.columns([5, 1], vertical_alignment="center"))
+        info.markdown(f"**{row['clip_id']}**")
+        mtype = row["manipulation_type"] if "manipulation_type" in row else "—"
+        method = row["method"] if "method" in row else "—"
+        info.caption(f"{mtype}  ·  {method}  ·  label **{label_text(row)}**")
+        if action is None:
+            return False
+        return action.button(action_label, key="open_picker_btn", width="stretch")
+
+
+def _picker(st, df):
+    """The clip picker dialog. Stays open until dismissed, so several can be tried."""
+
+    @st.dialog("Choose a clip", width="large", on_dismiss=_close_picker)
+    def _body():
         left, right = st.columns([3, 2])
         with left:
             query = st.text_input("Search clip id / identity", key="pick_search")
@@ -179,19 +302,20 @@ def render_selection():
             if candidate is None:
                 st.info("Select a clip on the left to preview it.")
             else:
-                ctag = "real" if int(candidate["label"]) == 0 else "fake"
-                cmt = candidate["manipulation_type"] if "manipulation_type" in candidate else ""
                 st.markdown(f"**{candidate['clip_id']}**")
-                st.caption(f"{cmt} ({ctag})")
-                _preview_frames(st, DATA_DIR / candidate["video_path"])
-                if st.button("Use this clip", type="primary", key="pick_confirm"):
+                cmt = candidate["manipulation_type"] if "manipulation_type" in candidate else ""
+                st.caption(f"{cmt} ({label_text(candidate)})")
+                _preview_frames(st, clip_path(candidate))
+                # Applying does NOT close the dialog. Comparing a few clips in one
+                # sitting is how this actually gets used, and reopening the picker
+                # for each one threw away the filters and the scroll position.
+                if st.button("Use this clip", type="primary", key="pick_confirm",
+                             width="stretch"):
                     st.session_state["sel_clip_id"] = candidate["clip_id"]
-                    st.rerun()
+                if st.session_state.get("sel_clip_id") == candidate["clip_id"]:
+                    st.caption("Selected — close this dialog to preview it on the page.")
 
-    if open_clicked:
-        _picker()
-
-    return df[df["clip_id"] == sel_id].iloc[0]
+    _body()
 
 
 def _preview_frames(st, video_path, n: int = 4):

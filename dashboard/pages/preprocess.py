@@ -95,7 +95,9 @@ def render_config():
     if row is None:
         return
 
-    video_path = DATA_DIR / row["video_path"]
+    # Via the helper, not DATA_DIR / ...: an uploaded clip's path is absolute and
+    # lives outside data/.
+    video_path = selectors.clip_path(row)
     if not video_path.exists():
         st.error(f"Video not found: {video_path}")
         return
@@ -118,7 +120,7 @@ def render_config():
     m1, m2, m3 = st.columns(3)
     m1.metric("Faces", f"[{n_frames}, 3, 224, 224]")
     m2.metric("Audio", f"[{n_frames}, {win_samples}]")
-    m3.metric("Label", f"{int(row['label'])}  ({'real' if row['label'] == 0 else 'fake'})")
+    m3.metric("Label", selectors.label_text(row))
     st.caption(f"Clip `{row['clip_id']}` — raw frames and audio before any preprocessing.")
 
     duration, fps = media.frame_meta(str(video_path))
@@ -126,10 +128,11 @@ def render_config():
     prev = [cv2.resize(f, (224, 224), interpolation=cv2.INTER_CUBIC)
             for f in media.decode_frames(str(video_path), timestamps)]
 
-    # Most of the width goes to what the model samples; the player is a narrow
-    # side column so its height lands near the frames+waveform stack instead of
-    # towering over it (st.video always fills its container's width).
-    left, right = st.columns([3, 1], gap="medium", vertical_alignment="top")
+    # 3:2 rather than 3:1. The sampled frames stay 8-per-row and simply get
+    # smaller — the row is there to show temporal order, which survives shrinking
+    # — while the player gets enough width to actually watch the clip, which is
+    # the one thing on this page you look at rather than scan.
+    left, right = st.columns([3, 2], gap="medium", vertical_alignment="top")
 
     with left:
         st.caption(f"**Sampled frames** — the {n_frames} timestamps the pipeline reads.")

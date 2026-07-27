@@ -16,13 +16,30 @@ TRAIN_DEFAULTS = {
     "grad_clip_norm": 1.0, "seed": 42,
 }
 
+# Which data to train on is a training decision, so it belongs in the emitted
+# command rather than being implied by whatever the dashboard happened to have
+# selected. Splits default to the pipeline's names.
+DATA_DEFAULTS = {"dataset": "", "train_split": "train", "val_split": "val"}
+
 
 def train_command(stream_name: str, backbone_name: str, settings: dict) -> str:
-    """Build the background-trainer CLI string for the chosen hyperparameters."""
-    return " ".join([
+    """Build the background-trainer CLI string for the chosen hyperparameters.
+
+    Data flags are emitted only when a dataset was chosen, so a command built
+    without the picker stays exactly as short as it used to be.
+    """
+    parts = [
         "uv run python -m training.train_visual",
         f"--stream {stream_name}",
         f"--backbone {backbone_name}",
+    ]
+    if settings.get("dataset"):
+        parts += [
+            f"--dataset {settings['dataset']}",
+            f"--train-split {settings.get('train_split', DATA_DEFAULTS['train_split'])}",
+            f"--val-split {settings.get('val_split', DATA_DEFAULTS['val_split'])}",
+        ]
+    parts += [
         f"--epochs {int(settings['epochs'])}",
         f"--batch-size {int(settings['batch_size'])}",
         f"--grad-accum {int(settings['grad_accum_steps'])}",
@@ -31,13 +48,44 @@ def train_command(stream_name: str, backbone_name: str, settings: dict) -> str:
         f"--weight-decay {settings['weight_decay']:g}",
         f"--grad-clip {settings['grad_clip_norm']:g}",
         f"--seed {int(settings['seed'])}",
-    ])
+    ]
+    return " ".join(parts)
+
+
+def render_train_data_picker(st, key: str, enabled: bool) -> dict:
+    """Dataset + train/val split selects for the Train tab.
+
+    Independent of the Run tab's clip: training reads whole splits, and the clip
+    chosen for a single forward pass has nothing to do with what to train on.
+    """
+    from dashboard.lib import selectors
+
+    found = selectors.registry()
+    if not found:
+        st.info("No datasets discovered under `data/` — the trainer needs one. "
+                "Drop a dataset in and rescan on the Preprocessing page.")
+        return dict(DATA_DEFAULTS)
+
+    names = list(found)
+    c1, c2, c3 = st.columns(3)
+    dataset = c1.selectbox("Dataset", names, key=f"{key}_ds", disabled=not enabled)
+    splits = found[dataset].splits
+    train_split = c2.selectbox(
+        "Train split", splits, key=f"{key}_train_split", disabled=not enabled,
+        index=splits.index("train") if "train" in splits else 0)
+    val_split = c3.selectbox(
+        "Val split", splits, key=f"{key}_val_split", disabled=not enabled,
+        index=splits.index("val") if "val" in splits else 0)
+    return {"dataset": dataset, "train_split": train_split, "val_split": val_split}
 
 
 def render_train_tab(st, key: str, stream_name: str, backbone_name: str, enabled: bool):
     """Training hyperparameters + a Launch button that emits the trainer command."""
     st.caption("Configures the background trainer. The dashboard never trains in-process (§7) — "
                "Launch emits the command to run on your training box.")
+    st.markdown("**Data**")
+    data = render_train_data_picker(st, key, enabled)
+    st.markdown("**Hyperparameters**")
     c1, c2, c3 = st.columns(3)
     d = TRAIN_DEFAULTS
     epochs = c1.number_input("Epochs", 1, 100, d["epochs"], key=f"{key}_epochs", disabled=not enabled)
@@ -57,7 +105,7 @@ def render_train_tab(st, key: str, stream_name: str, backbone_name: str, enabled
     if st.button("Launch training", key=f"{key}_train", disabled=not enabled, type="primary"):
         settings = {"epochs": epochs, "batch_size": batch, "grad_accum_steps": accum,
                     "lr_head": lr_head, "lr_backbone": lr_backbone, "weight_decay": weight_decay,
-                    "grad_clip_norm": grad_clip, "seed": seed}
+                    "grad_clip_norm": grad_clip, "seed": seed, **data}
         st.success("Queued — run this on your training box:")
         st.code(train_command(stream_name, backbone_name, settings), language="bash")
         st.caption("The `training.train_visual` entrypoint lands in a later stage; the dashboard "
@@ -105,8 +153,8 @@ def render_run_tab(st, key: str, make_config, video_path, enabled: bool):
     m4.metric("Trainable params", f"{counts['trainable'] / 1e6:.1f}M")
 
     if video_path is None:
-        st.info("Architecture shown above. Pick a clip in **Clip for Run inference** to forward-pass "
-                "a real sequence.")
+        st.info("Architecture shown above. Select a clip on the **Preprocessing** page to "
+                "forward-pass a real sequence.")
         return
     from pathlib import Path
     if not Path(video_path).exists():
