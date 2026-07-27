@@ -1,8 +1,9 @@
 """
 Stage 1 - dataset audit (authoritative, driven by meta_data.csv).
 
-FakeAVCeleb ships data/raw/FakeAVCeleb_v1.2/meta_data.csv, which is the source
-of truth for labels and identities. We use it instead of parsing folder paths
+FakeAVCeleb ships a meta_data.csv (found under data/ wherever the drop was
+extracted), which is the source of truth for labels and identities. We use it
+instead of parsing folder paths
 because it also gives us the deepfake `method` and the `source`/`target1`/
 `target2` identities, which matter for a leakage-safe split (see below).
 
@@ -39,7 +40,7 @@ except ImportError as e:
     print("Run: uv sync --extra cpu (or --extra cu130 for GPU), see README.md")
     sys.exit(1)
 
-from preprocessing.manifest import clip_label
+from preprocessing.manifest import manifest_from_meta
 from preprocessing.ops import audio as A
 from preprocessing.ops.constants import AUDIO_SR
 
@@ -49,29 +50,23 @@ FAKE_AUDIO_TYPES = ("RealVideo-FakeAudio", "FakeVideo-FakeAudio")
 SILENCE_TOP_DB = 30.0
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DATA_ROOT = REPO_ROOT / "data" / "raw" / "FakeAVCeleb_v1.2"
-META_CSV = DATA_ROOT / "meta_data.csv"
-OUT_MANIFEST = REPO_ROOT / "data" / "full_manifest.csv"
-
-# meta_data.csv has a trailing comma in its header, producing an unnamed final
-# column; and its 9th header "path" actually holds the filename. We rename
-# positionally to reflect the real content.
-META_COLUMNS = ["source", "target1", "target2", "method", "category",
-                "manipulation_type", "race", "gender", "filename", "dirpath"]
+DATA_DIR = REPO_ROOT / "data"
+OUT_MANIFEST = DATA_DIR / "full_manifest.csv"
 
 
-def resolve_video_path(row) -> Path:
+def find_dataset_root() -> Path:
     """
-    meta dirpath looks like 'FakeAVCeleb/<type>/<race>/<gender>/<id>'. The real
-    extracted tree drops the leading 'FakeAVCeleb/' and lives under
-    data/raw/FakeAVCeleb_v1.2/. Append the filename to get the actual file.
+    The directory holding FakeAVCeleb's meta_data.csv, wherever it was extracted.
+
+    Looked up instead of hardcoded because the drop lands in different places
+    (data/FakeAVCeleb_v1.2/ or data/raw/FakeAVCeleb_v1.2/). Same rule the
+    dashboard's dataset discovery uses.
     """
-    dirpath = row["dirpath"]
-    # strip the leading 'FakeAVCeleb/' component if present
-    parts = Path(dirpath).parts
-    if parts and parts[0] == "FakeAVCeleb":
-        parts = parts[1:]
-    return DATA_ROOT.joinpath(*parts, row["filename"])
+    for pattern in ("meta_data.csv", "*/meta_data.csv", "*/*/meta_data.csv"):
+        for meta in sorted(DATA_DIR.glob(pattern)):
+            return meta.parent
+    raise FileNotFoundError(
+        f"No meta_data.csv found under {DATA_DIR} -- is the dataset extracted?")
 
 
 def check_readable(video_path: Path) -> bool:
@@ -102,49 +97,19 @@ def measure_leading_silence(video_path: Path) -> float:
 
 
 def audit(sample_check_n: int = 200, measure_silence: bool = True):
-    if not META_CSV.exists():
-        raise FileNotFoundError(f"Expected {META_CSV} -- is the dataset extracted?")
-
-    meta = pd.read_csv(META_CSV)
-    meta.columns = META_COLUMNS  # positional rename (see note above)
-
-    rows = []
-    missing = 0
-    for _, r in meta.iterrows():
-        vp = resolve_video_path(r)
-        if not vp.exists():
-            missing += 1
-            continue
-        label = clip_label(r["manipulation_type"])
-        clip_id = f"{r['category']}__{r['source']}__{Path(r['filename']).stem}"
-        rows.append({
-            "clip_id": clip_id,
-            "video_path": str(vp.relative_to(REPO_ROOT / "data")),  # relative to data/
-            "label": label,
-            "manipulation_type": r["manipulation_type"],
-            "method": r["method"],
-            "source": r["source"],
-            "target1": r["target1"],
-            "target2": r["target2"],
-            "race": r["race"],
-            "gender": r["gender"],
-        })
-
-    df = pd.DataFrame(rows)
-    # meta_data.csv lists ~22 physical files twice with conflicting `method`
-    # labels (e.g. 'wav2lip' vs 'faceswap-wav2lip' for the same .mp4). Dedupe
-    # on the actual file path, keeping the first, so each file appears once.
-    before = len(df)
-    df = df.drop_duplicates(subset="video_path", keep="first").reset_index(drop=True)
-    if before != len(df):
-        print(f"Deduped {before - len(df)} rows that pointed at the same physical file.")
+    dataset_root = find_dataset_root()
+    meta = pd.read_csv(dataset_root / "meta_data.csv")
+    # Resolution, labelling, path-relativisation and dedupe all live in
+    # manifest.py so the dashboard builds the identical frame in memory.
+    df = manifest_from_meta(meta, dataset_root, DATA_DIR)
 
     # clip_id must be unique for the feature store to key on it; assert it.
     dupes = df["clip_id"].duplicated().sum()
     if dupes:
         raise RuntimeError(f"{dupes} duplicate clip_ids -- clip_id scheme is not unique!")
 
-    print(f"Meta rows: {len(meta)}, resolved to existing files: {len(df)}, missing: {missing}")
+    print(f"Dataset root: {dataset_root}")
+    print(f"Meta rows: {len(meta)}, manifest rows (existing files, deduped): {len(df)}")
     print(f"Label balance: real={(df['label']==0).sum()}, fake={(df['label']==1).sum()}")
     print(f"manipulation_type counts:\n{df['manipulation_type'].value_counts().to_string()}")
     print(f"Unique source identities: {df['source'].nunique()}")

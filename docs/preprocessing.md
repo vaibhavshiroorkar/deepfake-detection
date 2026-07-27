@@ -46,11 +46,23 @@ Applied per sampled frame; the result is stacked into `[16, 3, 224, 224]`.
 3. **5-point face alignment** — `faces.align_face` **(the SOTA upgrade).** A
    partial-affine (rotation + scale + translation, no shear) transform warps the
    detected landmarks onto a canonical ArcFace-style 5-point template
-   (`ARCFACE_TEMPLATE_112`, inset by a `margin` for hairline/jaw context). This
-   **pose-normalizes** the face so the temporal model sees a stable face across
-   frames instead of one that rolls and rescales with head motion — the single
-   biggest quality win available without a heavier detector. When detection fails
-   or the transform can't be estimated, the pipeline falls back to step 4.
+   (`ARCFACE_TEMPLATE_112`). This **pose-normalizes** the face so the temporal
+   model sees a stable face across frames instead of one that rolls and rescales
+   with head motion — the single biggest quality win available without a heavier
+   detector. When detection fails or the transform can't be estimated, the
+   pipeline falls back to step 4.
+
+   Whatever the aligned canvas samples from beyond the frame edge is padded
+   **black**, never synthesized. Until 2026-07-24 it was reflected, which pasted
+   a mirrored upside-down second face into essentially every FakeAVCeleb crop
+   (the clips are already tight 224×224 face crops, so the canvas always
+   overshoots — measured 14–45% of it). Related: `align_inset` (shrink the
+   template for extra hairline/jaw context) defaults to **0**, because insetting
+   asks the frame for context further out than the face and a tight frame answers
+   with more padding. It is a separate knob from `crop_and_resize`'s bbox
+   `margin`, which clamps to the frame; feeding one value to both is what made
+   aligned crops a quarter empty. Raise `align_inset` only for datasets whose
+   frames are whole scenes.
 
 4. **Crop + resize (fallback / alignment-off)** — `faces.crop_and_resize`. A
    margin-padded bbox crop resized to 224×224. This is the `align=False` path and
@@ -133,4 +145,6 @@ old caches so they are transparently re-extracted.
 
 > **Because alignment changes the cached pixels, `data/processed/` must be
 > re-precached and the visual stream re-validated against the previous AUC-0.994
-> bar after this change.** See `preprocessing/precache.py` and stage-2.
+> bar after this change.** See `preprocessing/precache.py` and stage-2. Current
+> value: **3** (v3 = black padding + no template inset; v2 = alignment + silence-
+> aware sampling; v1 = plain MTCNN crop).

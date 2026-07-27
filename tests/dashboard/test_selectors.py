@@ -1,7 +1,6 @@
 import pandas as pd
 from dashboard.lib.selectors import (
-    filter_manifest, available_splits, load_manifest, DATASETS,
-    search_manifest, group_by_identity,
+    filter_manifest, search_manifest, group_by_identity,
 )
 
 
@@ -34,25 +33,6 @@ def test_type_and_method_and_together():
 def test_empty_result_is_empty_frame_not_error():
     out = filter_manifest(_df(), ["FakeVideo-FakeAudio"], ["faceswap"], "all")
     assert len(out) == 0
-
-
-def test_all_four_datasets_are_registered():
-    assert set(DATASETS) == {
-        "FakeAVCeleb", "Deepfake-Eval-2024", "FaceForensics++", "Celeb-DF",
-    }
-
-
-def test_fakeavceleb_splits_available_others_not():
-    # FakeAVCeleb manifests exist (built by the pipeline); the rest have none yet.
-    assert set(available_splits("FakeAVCeleb")) >= {"train", "val", "test"}
-    assert available_splits("Celeb-DF") == []
-    assert available_splits("FaceForensics++") == []
-
-
-def test_load_manifest_reads_fakeavceleb_train():
-    df = load_manifest("FakeAVCeleb", "train")
-    assert len(df) > 0
-    assert "clip_id" in df.columns and "label" in df.columns
 
 
 def test_filter_skips_missing_columns_gracefully():

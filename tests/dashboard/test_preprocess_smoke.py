@@ -28,6 +28,19 @@ def test_audio_tab_renders_after_config_selects_a_clip():
     assert "Audio pipeline" in [h.value for h in at.header]
 
 
+def test_dataset_is_discovered_and_refresh_rescans():
+    # Nothing is hardcoded: the dataset list comes from scanning data/, and ↻
+    # rescans it (dropping the cached registry) without breaking the page.
+    at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180).run()
+    assert at.session_state["ds_registry"], "data/ should yield at least one dataset"
+    refresh = [b for b in at.button if b.key == "sel_refresh"]
+    assert refresh, "the refresh button should exist"
+    refresh[0].click()
+    at.run()
+    assert not at.exception
+    assert at.session_state["ds_registry"]
+
+
 def test_clip_picker_modal_opens_on_button_click():
     at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180).run()
     btns = [b for b in at.button if b.key == "open_picker_btn"]

@@ -582,16 +582,26 @@ rest are "not built yet, build it this way."
    **original-vs-processed** — Core (detect/crop/resample/window), Representation
    (ImageNet normalize, mouth crop, mel-spectrogram) and Quality & robustness (sharpen,
    denoise, CLAHE, blur, JPEG re-compress, downscale, add-noise, bandpass) — with a
-   shared Dataset/Target/Clip selector; and **Streams** (Visual, Audiovisual) read-only
+   shared Dataset/Target/Clip selector — the dataset list is **discovered** by scanning
+   `data/` (`dashboard/lib/datasets.py`: a raw drop is any dir with a `meta_data.csv`,
+   whose manifest is built in memory before `audit_dataset.py` has run; a manifest CSV
+   attaches to the dataset its `video_path` points into), with a ↻ button to rescan;
+   and **Streams** (Visual, Audiovisual) read-only
    scaffolds showing planned architecture + a W&B placeholder, no compute. Pure ops in
    `dashboard/lib/` are unit-tested; pages are AppTest-smoked. Read-only — never writes
    `data/processed/`, never trains. `streamlit==1.60.0` (1.55+ needed for pillow 12).
    Run: `uv run streamlit run dashboard/app.py`. Spec + plan in
    `docs/superpowers/{specs,plans}/2026-07-23-preprocessing-experiment-dashboard*`.
-   Nav sections: **Data Pre-processing** (single page, Config/Visual/Audio slider with a
+   Nav sections: **Overview** (`pages/overview.py`, the landing page — short and static:
+   what is detected, the three-stage build, and a one-line-per-page guide; no compute,
+   loads no models),
+   **Data Pre-processing** (single page, Config/Visual/Audio slider with a
    modal clip picker), **Streams** (Visual — real configurable Xception + EfficientNet
    model boxes via `models/streams/common/`; LipSync and Emotions scaffolds), **Fusion**
-   and **Explainability** scaffolds. The Visual page's "Build & inspect" instantiates the
+   and **Explainability** (locked — listed with a lock icon, no interactive controls until
+   Stages 6 and 10), and **Documentation** (`pages/documentation.py`, the long-form
+   reference — architecture, every preprocessing step, every model, fusion/evaluation
+   design, data and splits; static, no compute). The Visual page's "Build & inspect" instantiates the
    real `VisualStream` and forward-passes a dummy clip (inference only) — training stays a
    background script per this section.
 5. **Per-category logging.** §7 requires per-category val accuracy every epoch

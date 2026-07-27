@@ -15,14 +15,17 @@ if str(_REPO_ROOT) not in sys.path:
 
 st.set_page_config(page_title="Preprocessing dashboard", layout="wide")
 
-# Flat page list in pipeline order — no sidebar sections. The three streams live
-# as tabs inside the single Streams page (pages/streams.py).
-# Fusion and Explainability are disabled for now — re-add their st.Page lines to
-# restore them (the page files are still in pages/).
+# Flat page list in pipeline order — no sidebar sections. Overview is the landing
+# page (short, static, no compute). The three streams live as tabs inside the
+# single Streams page (pages/streams.py). Fusion and Explainability stay visible
+# but locked (lock icon + a locked notice in the page body) until Stages 6 and
+# 10 build them. Documentation is last: the long-form reference.
 nav = st.navigation([
+    st.Page("pages/overview.py", title="Overview", default=True),
     st.Page("pages/preprocess.py", title="Preprocessing"),
     st.Page("pages/streams.py", title="Streams"),
-    # st.Page("pages/fusion.py", title="Fusion"),
-    # st.Page("pages/explainability.py", title="Explainability"),
+    st.Page("pages/fusion.py", title="Fusion", icon=":material/lock:"),
+    st.Page("pages/explainability.py", title="Explainability", icon=":material/lock:"),
+    st.Page("pages/documentation.py", title="Documentation"),
 ])
 nav.run()

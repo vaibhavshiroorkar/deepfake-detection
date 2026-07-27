@@ -75,6 +75,19 @@ Torch is preinstalled, just add the extras:
 !pip install opencv-python av librosa timm facenet-pytorch
 ```
 
+## Dashboard
+
+The multi-page Streamlit dashboard (`dashboard/app.py`) is the small-sample iteration loop for preprocessing parameters and stream inspection. It reads `data/processed/`; it never trains and never writes processed data (see [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md) §7).
+
+```bash
+uv run streamlit run dashboard/app.py     # or, with .venv activated:
+streamlit run dashboard/app.py
+```
+
+Pages: **Overview** (short landing page), **Preprocessing**, **Streams**, **Fusion** 🔒 and **Explainability** 🔒 (visible but locked until Stages 6 and 10), and **Documentation** (the in-depth reference for every step, model and design decision).
+
+In VS Code, `.vscode/launch.json` makes this the default run target, so <kbd>F5</kbd> launches the dashboard with the debugger attached (`justMyCode: false`, so you can step into `dashboard/lib/` and `preprocessing/`). Note `.vscode/` is gitignored, so each clone needs its own copy.
+
 ## Repo layout
 
 ```

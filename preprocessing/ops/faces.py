@@ -17,17 +17,21 @@ from preprocessing.ops.constants import (
 )
 
 
-def face_template(size: int = FRAME_SIZE, margin: float = 0.2) -> np.ndarray:
-    """The 5-point destination template at `size`, inset by `margin` for context.
+def face_template(size: int = FRAME_SIZE, inset: float = 0.0) -> np.ndarray:
+    """The 5-point destination template at `size`, optionally inset for context.
 
-    margin=0.2 shrinks the ArcFace template toward the center so the aligned face
-    fills ~80% of the crop, leaving a border of hairline/jaw context (the old
-    crop path used a 0.2 bbox margin for the same reason).
+    `inset` shrinks the ArcFace template toward the center (0.2 => the face fills
+    ~80% of the crop, leaving a border of hairline/jaw context). It defaults to
+    0 -- the canonical ArcFace framing -- because insetting asks the source frame
+    for context further out than the face, and a frame that cannot supply it just
+    yields padding: on FakeAVCeleb's pre-cropped 224x224 frames, inset=0.2 leaves
+    25% of the crop empty vs 14% at inset=0. Raise it only for datasets whose
+    frames are whole scenes. NOT the same knob as crop_and_resize's bbox margin.
     """
     t = ARCFACE_TEMPLATE_112 * (size / 112.0)
-    if margin:
+    if inset:
         c = size / 2.0
-        t = (t - c) * (1.0 - margin) + c
+        t = (t - c) * (1.0 - inset) + c
     return t.astype(np.float32)
 
 
@@ -49,20 +53,27 @@ def detect(frame_rgb, detector, conf_thresh: float):
 
 
 def align_face(frame_rgb, landmarks5, size: int = FRAME_SIZE,
-               margin: float = 0.2):
+               inset: float = 0.0):
     """Similarity-align a face onto the 5-point template. Returns size×size RGB.
 
     Uses a partial-affine (rotation+scale+translation, no shear) estimate from
     the detected landmarks to the template, then warps. Returns None if the
     transform can't be estimated (caller falls back to a plain crop).
+
+    Whatever the canvas samples from beyond the frame edge is padded with BLACK,
+    never synthesized. Reflecting it (the previous behaviour) mirrored the face
+    back into the crop as an upside-down second face — on a dataset of tight face
+    crops, where the aligned canvas always overshoots, that fabricated facial
+    structure in every frame. Padding is honest and constant; the model can learn
+    "no data" from it, not a phantom face. Same choice as ArcFace's norm_crop.
     """
     src = np.asarray(landmarks5, dtype=np.float32)
-    dst = face_template(size, margin)
+    dst = face_template(size, inset)
     M, _ = cv2.estimateAffinePartial2D(src, dst, method=cv2.LMEDS)
     if M is None:
         return None
-    return cv2.warpAffine(frame_rgb, M, (size, size),
-                          flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT)
+    return cv2.warpAffine(frame_rgb, M, (size, size), flags=cv2.INTER_CUBIC,
+                          borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0))
 
 
 def crop_and_resize(frame_rgb, box, size: int = FRAME_SIZE, margin: float = 0.2):
@@ -104,6 +115,7 @@ def mouth_roi(frame_rgb, landmarks5, size: int = MOUTH_SIZE):
 
 def detect_align_crop(frame_rgb, detector, conf_thresh: float = 0.9,
                       margin: float = 0.2, align: bool = True,
+                      align_inset: float = 0.0,
                       size: int = FRAME_SIZE, mouth_size: int = MOUTH_SIZE):
     """One detect call → (face size×size, mouth mouth_size×mouth_size, detected).
 
@@ -111,12 +123,17 @@ def detect_align_crop(frame_rgb, detector, conf_thresh: float = 0.9,
     outputs fall back to a plain resize of the frame and detected=False, so the
     caller always gets fixed-shape crops (shape must stay fixed for batching).
     When align=True the face is 5-point aligned; align=False uses the bbox crop.
+
+    The two context knobs are deliberately separate: `margin` pads the bbox crop
+    (and can clamp to the frame), `align_inset` insets the alignment template
+    (and cannot — it pads instead). Feeding one value to both is what made
+    aligned crops a quarter empty.
     """
     box, landmarks5, _ = detect(frame_rgb, detector, conf_thresh)
     if box is None:
         return _resize(frame_rgb, size), _resize(frame_rgb, mouth_size), False
 
-    face = align_face(frame_rgb, landmarks5, size, margin) if align else None
+    face = align_face(frame_rgb, landmarks5, size, align_inset) if align else None
     if face is None:
         face = crop_and_resize(frame_rgb, box, size, margin)
     if face is None:

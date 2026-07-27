@@ -1,9 +1,9 @@
 """Shared Dataset -> Split -> Target -> Clip selection for the preprocessing page.
 
-Selection is two-level: pick a DATASET (FakeAVCeleb, Deepfake-Eval-2024,
-FaceForensics++, Celeb-DF), then a SPLIT within it. Only FakeAVCeleb has
-manifests today; the others render as "not available" until their split CSVs
-exist on disk (see DATASETS for where each is expected).
+Selection is two-level: pick a DATASET, then a SPLIT within it. Neither is
+hardcoded — datasets.discover() scans data/ on load, so dropping a dataset
+folder in and hitting the ↻ button is all it takes to work with it (see
+dashboard/lib/datasets.py for the detection rules).
 
 Pure filtering (filter_manifest) is separated from the Streamlit widgets
 (render_selection) so the filter logic stays unit-testable without a running
@@ -18,53 +18,41 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-DATA_DIR = _REPO_ROOT / "data"
+from dashboard.lib import datasets
 
-# dataset -> {split_name: manifest path relative to data/}. FakeAVCeleb's
-# manifests are flat in data/ (written by the preprocessing pipeline). The other
-# datasets are declared here with their expected locations but have no manifests
-# yet, so they surface as "not available". Deepfake-Eval-2024 is a held-out eval
-# set (PROJECT_OVERVIEW.md §5), so it has only a test split.
-DATASETS = {
-    "FakeAVCeleb": {
-        "train": "train.csv",
-        "val": "val.csv",
-        "test": "test.csv",
-        "full_manifest": "full_manifest.csv",
-    },
-    "Deepfake-Eval-2024": {
-        "test": "deepfake_eval/test.csv",
-    },
-    "FaceForensics++": {
-        "train": "faceforensics/train.csv",
-        "val": "faceforensics/val.csv",
-        "test": "faceforensics/test.csv",
-    },
-    "Celeb-DF": {
-        "train": "celebdf/train.csv",
-        "val": "celebdf/val.csv",
-        "test": "celebdf/test.csv",
-    },
-}
+DATA_DIR = _REPO_ROOT / "data"
 
 MANIP_TYPES = ["RealVideo-RealAudio", "RealVideo-FakeAudio",
                "FakeVideo-RealAudio", "FakeVideo-FakeAudio"]
 
 
-def available_splits(dataset: str) -> list[str]:
-    """Splits of a dataset whose manifest file actually exists on disk."""
-    splits = DATASETS.get(dataset, {})
-    return [name for name, rel in splits.items() if (DATA_DIR / rel).exists()]
+def registry(refresh: bool = False) -> dict[str, datasets.Dataset]:
+    """Discovered datasets, scanned once per session (or on ↻)."""
+    import streamlit as st
+
+    if refresh or "ds_registry" not in st.session_state:
+        st.session_state["ds_registry"] = datasets.discover(DATA_DIR)
+        st.session_state["ds_manifests"] = {}
+    return st.session_state["ds_registry"]
 
 
 def load_manifest(dataset: str, split: str) -> pd.DataFrame:
-    rel = DATASETS.get(dataset, {}).get(split)
-    if rel is None:
-        raise KeyError(f"Unknown dataset/split {dataset!r}/{split!r}")
-    path = DATA_DIR / rel
-    if not path.exists():
-        raise FileNotFoundError(f"{path} not found — this split has no manifest yet.")
-    return pd.read_csv(path)
+    """Manifest frame for a discovered dataset/split, memoized per session.
+
+    Worth memoizing: a raw drop's manifest is derived from meta_data.csv and
+    stats ~21k files, which is far too slow to redo on every Streamlit rerun.
+    """
+    import streamlit as st
+
+    ds = registry().get(dataset)
+    if ds is None:
+        raise KeyError(f"Unknown dataset {dataset!r} — not found under {DATA_DIR}")
+    cache = st.session_state.setdefault("ds_manifests", {})
+    key = (dataset, split)
+    if key not in cache:
+        with st.spinner(f"Reading {dataset} / {split}…"):
+            cache[key] = datasets.load_split(ds, split, DATA_DIR)
+    return cache[key]
 
 
 def filter_manifest(df: pd.DataFrame, manip_types: list[str],
@@ -101,28 +89,47 @@ def group_by_identity(df: pd.DataFrame) -> pd.DataFrame:
     return df.sort_values(sort_cols).reset_index(drop=True)
 
 
+def _keep_valid(key: str, options: list[str]):
+    """Drop a stored widget choice that a rescan removed, so the widget resets."""
+    import streamlit as st
+
+    if key in st.session_state and st.session_state[key] not in options:
+        del st.session_state[key]
+
+
 def render_selection():
     """Render Dataset/Split + a modal Clip picker; return the selected clip row."""
     import streamlit as st
 
     st.header("Selection")
-    c1, c2 = st.columns(2)
-    with c1:
-        def _fmt_dataset(name):
-            return name if available_splits(name) else f"{name} (not available)"
+    c1, c2, c3 = st.columns([6, 6, 1], vertical_alignment="bottom")
+    with c3:
+        if st.button("↻", key="sel_refresh", help="Rescan data/ for datasets"):
+            registry(refresh=True)
+            st.rerun()
 
-        dataset = st.selectbox("Dataset", list(DATASETS.keys()),
-                               format_func=_fmt_dataset, key="sel_dataset")
-
-    splits = available_splits(dataset)
-    if not splits:
-        st.info(f"'{dataset}' has no manifests yet. Only FakeAVCeleb is built so far.")
+    found = registry()
+    if not found:
+        st.info(f"No datasets found in `{DATA_DIR}`. Drop a dataset folder there "
+                "(a FakeAVCeleb-style `meta_data.csv`, or manifest CSVs with "
+                "clip_id/video_path/label columns) and hit ↻.")
         return None
 
+    names = list(found)
+    _keep_valid("sel_dataset", names)
+    with c1:
+        dataset = st.selectbox("Dataset", names, key="sel_dataset")
+
+    splits = found[dataset].splits
+    _keep_valid("sel_split", splits)
     with c2:
         split = st.selectbox("Split", splits, key="sel_split")
 
     df = load_manifest(dataset, split)
+    st.caption(f"`{found[dataset].root}` — {len(df)} clips in *{split}*.")
+    if df.empty:
+        st.warning("This split has no clips on disk.")
+        return None
 
     # Reset the chosen clip whenever the dataset/split changes.
     ctx = f"{dataset}/{split}"

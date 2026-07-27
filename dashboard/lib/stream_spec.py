@@ -1,7 +1,8 @@
 """Static architecture text for the Streams / Fusion / Explainability pages.
 
-The visual page builds real models; the cross-modal, fusion and explainability
-pages are read-only scaffolds for work still in the plans (no compute).
+The visual page builds real models; the cross-modal stream tabs are read-only
+scaffolds, and the Fusion and Explainability pages are locked, for work still in
+the plans (no compute).
 """
 
 LIPSYNC_STREAM = {
@@ -28,7 +29,7 @@ EMOTION_STREAM = {
 
 FUSION = {
     "title": "Fusion",
-    "status": "Not built yet — Stage 6. This page scaffolds the fusion configuration.",
+    "status": "Not built yet — Stage 6, when the fusion MLP is trained.",
     "note": "Feature-level fusion (NOT score averaging): each enabled stream's clip "
             "embedding is projected to common_dim=256, written to the feature store, then "
             "concatenated and passed through an MLP + sigmoid for the fake probability. "
@@ -37,7 +38,7 @@ FUSION = {
 
 EXPLAINABILITY = {
     "title": "Explainability",
-    "status": "Not built yet — Stage 10. This page scaffolds the explainability views.",
+    "status": "Not built yet — Stage 10, after the streams and fusion are trained.",
     "views": [
         ("Grad-CAM", "where each visual backbone looks on a frame when it calls fake"),
         ("Embedding shift", "which stream's embedding moves most on which manipulation type"),

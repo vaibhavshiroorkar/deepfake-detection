@@ -74,13 +74,15 @@ def detect_and_crop(frame_rgb, detector, conf_thresh: float, margin: float,
 
 
 def detect_face_and_mouth(frame_rgb, detector, conf_thresh: float, margin: float,
-                          mouth_size: int = MOUTH_SIZE, align: bool = True):
+                          mouth_size: int = MOUTH_SIZE, align: bool = True,
+                          align_inset: float = 0.0):
     """(face_224_rgb, mouth_96_rgb, detected) from one detect call.
 
     The face crop feeds the visual + emotion streams; the mouth crop is a
     PARALLEL output for the lip-sync stream (Stage 4), derived from MTCNN's two
-    mouth-corner landmarks.
+    mouth-corner landmarks. `margin` pads the bbox crop, `align_inset` insets the
+    alignment template — only one applies, depending on `align`.
     """
     return _faces.detect_align_crop(
         frame_rgb, detector, conf_thresh=conf_thresh, margin=margin,
-        align=align, mouth_size=mouth_size)
+        align=align, align_inset=align_inset, mouth_size=mouth_size)

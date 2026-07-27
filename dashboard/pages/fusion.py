@@ -1,3 +1,10 @@
+"""Fusion — locked until Stage 6.
+
+Visible in the sidebar so the shape of the system is obvious, but nothing here
+is interactive: the fusion MLP does not exist yet. The controls that will live
+here are described, not stubbed, so there is no half-working UI to mistake for
+the real thing. Design rationale lives on the Documentation page.
+"""
 import sys
 from pathlib import Path
 _REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -7,27 +14,14 @@ if str(_REPO_ROOT) not in sys.path:
 import streamlit as st
 from dashboard.lib.stream_spec import FUSION as S
 
-st.title(S["title"])
-st.info(S["status"])
+st.title(f":material/lock: {S['title']}")
+st.info(f"**Locked.** {S['status']}")
 st.caption(S["note"])
 
-# Reflect the toggles set on the Visual streams page (best-effort — scaffold).
-visual = st.session_state.get("stream_visual_enabled", {})
-enabled = [name for name, on in visual.items() if on] or ["efficientnet", "xception"]
-
-st.subheader("Streams to fuse")
-all_streams = ["efficientnet", "xception", "dinov2", "lipsync", "emotion"]
-built = {"efficientnet", "xception"}
-for s in all_streams:
-    with st.container(border=True):
-        c1, c2 = st.columns([1, 3])
-        on = c1.toggle(s, value=(s in enabled and s in built), key=f"fuse_{s}",
-                       disabled=s not in built)
-        status = "built" if s in built else "not built yet"
-        c2.caption(f"clip embedding (256-d) → concat → MLP → sigmoid  ·  {status}")
-
-st.divider()
-n = sum(1 for s in all_streams if st.session_state.get(f"fuse_{s}"))
-st.metric("Fusion MLP input dim", f"{n} × 256 = {n * 256}")
-st.caption("Read-only scaffold — the fusion MLP is built in Stage 6; the ablation over "
-           "stream subsets is Stage 7. This page never trains (§7).")
+st.subheader("What lands here")
+st.markdown("""
+- **Stream selection** — which of the five streams are concatenated into the fusion input.
+- **Fusion MLP** — hidden sizes, dropout, and the resulting input dimension (streams × 256).
+- **Ablation view** — fused metrics across stream subsets, the Stage-7 result.
+""")
+st.caption("Read the fusion design on the **Documentation** page → *Fusion & evaluation*.")

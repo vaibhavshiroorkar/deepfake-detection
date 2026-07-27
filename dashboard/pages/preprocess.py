@@ -30,6 +30,7 @@ from preprocessing.ops import (
 )
 
 DATA_DIR = _REPO_ROOT / "data"
+PREVIEW_COLS = 8          # thumbnails per row in the half-width Config preview
 
 st.title("Preprocessing")
 st.caption("Pick a clip and settings under Config; inspect the Visual and Audio "
@@ -125,23 +126,44 @@ def render_config():
     prev = [cv2.resize(f, (224, 224), interpolation=cv2.INTER_CUBIC)
             for f in media.decode_frames(str(video_path), timestamps)]
 
-    # Compact preview: all N frames, 8 per row, in a narrow column (keeps the
-    # thumbnail size fixed by always laying out 8 columns per row).
-    left, _ = st.columns([3, 2])
-    for start in range(0, len(prev), 8):
-        cols = left.columns(8)
-        for j, col in enumerate(cols):
-            if start + j < len(prev):
-                col.image(prev[start + j], width="stretch")
+    # Most of the width goes to what the model samples; the player is a narrow
+    # side column so its height lands near the frames+waveform stack instead of
+    # towering over it (st.video always fills its container's width).
+    left, right = st.columns([3, 1], gap="medium", vertical_alignment="top")
 
-    raw2d, native_sr = media.decode_audio(str(video_path))
-    if raw2d.size:
-        mono = AF.downmix(raw2d)
-        aleft, _ = st.columns([3, 2])
-        aleft.pyplot(waveform_fig(mono, native_sr, f"Audio ({native_sr} Hz)", figsize=(6, 1.3)))
-        aleft.audio(mono, sample_rate=native_sr)
-    else:
-        st.caption("No audio stream in this clip.")
+    with left:
+        st.caption(f"**Sampled frames** — the {n_frames} timestamps the pipeline reads.")
+        # 8 per row: smaller thumbnails, but the whole sampled sequence fits in
+        # one or two rows so the temporal order is readable at a glance.
+        for start in range(0, len(prev), PREVIEW_COLS):
+            cols = st.columns(PREVIEW_COLS)
+            for j, col in enumerate(cols):
+                if start + j < len(prev):
+                    col.image(prev[start + j], width="stretch")
+
+        st.caption("**Audio** — full track, before downmix/resample "
+                   "(windows are cut in the Audio tab).")
+        raw2d, native_sr = media.decode_audio(str(video_path))
+        if raw2d.size:
+            mono = AF.downmix(raw2d)
+            st.pyplot(waveform_fig(mono, native_sr, f"Audio ({native_sr} Hz)", figsize=(9, 1.2)))
+            st.audio(mono, sample_rate=native_sr)
+        else:
+            st.caption("No audio stream in this clip.")
+
+    with right:
+        st.caption("**Clip** — plays with sound.")
+        # Hand Streamlit the bytes, not the path: the clips live outside the app
+        # directory, and st.video only serves a path it is allowed to reach.
+        st.video(video_path.read_bytes(), format="video/mp4")
+        mtype = row["manipulation_type"] if "manipulation_type" in row else "—"
+        method = row["method"] if "method" in row else "—"
+        st.caption(
+            f"`{duration:.2f}s` @ `{fps:.1f} fps`  \n"
+            f"type `{mtype}`  \n"
+            f"method `{method}`  \n"
+            f"window `±{window_sec / 2:.3f}s` per frame"
+        )
 
 
 # ============================== VISUAL ===================================== #
@@ -170,7 +192,13 @@ def render_visual():
         l.caption("Alignment warps the face onto a canonical 5-point template "
                   "(pose-normalized). Off = plain bbox crop.")
         conf = l.slider("Confidence", 0.50, 0.99, 0.90, 0.01, disabled=not do_detect, key="v_conf")
-        margin = l.slider("Crop margin", 0.0, 0.6, 0.20, 0.05, disabled=not do_detect, key="v_margin")
+        # Two different context knobs — the bbox crop clamps to the frame, the
+        # aligned canvas cannot, so whatever it reaches past the edge is padded
+        # black. Insetting on already-tight frames just buys more padding.
+        margin = l.slider("Crop margin (bbox path)", 0.0, 0.6, 0.20, 0.05,
+                          disabled=not do_detect or do_align, key="v_margin")
+        align_inset = l.slider("Align inset (aligned path)", 0.0, 0.4, 0.0, 0.05,
+                               disabled=not do_detect or not do_align, key="v_inset")
         mouth_crops = None
         if do_detect:
             detector, device = media.get_detector()
@@ -178,7 +206,7 @@ def render_visual():
             faces, mouths, flags = [], [], []
             for f in full_frames:
                 face, mouth, det = media.detect_face_and_mouth(
-                    f, detector, conf, margin, align=do_align)
+                    f, detector, conf, margin, align=do_align, align_inset=align_inset)
                 faces.append(face)
                 mouths.append(mouth)
                 flags.append(det)
