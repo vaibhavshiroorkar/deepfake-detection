@@ -1,17 +1,58 @@
 # Audio-Visual Deepfake Detection
 
-A deepfake detector that fuses five signals into one real-or-fake decision: three visual streams (Xception, EfficientNet, DINOv2) and two cross-modal streams (lip-sync, emotion) that use cross-attention over embeddings to catch mismatches between audio and video. Partial fakes like lip-sync deepfakes barely change the video frames; the giveaway is usually a mismatch between audio and video, which is what the cross-modal streams catch. Fusion is feature-level: stream embeddings are concatenated and passed through an MLP + sigmoid.
+Detecting lip-sync deepfakes by checking whether a face and a voice belong to the same event.
 
-**Start here:** [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md) - the project's single main document: architecture, data, tooling, compute assumptions, build order, current status.
+A wav2lip forgery repaints the mouth and leaves the rest of the video untouched. Almost every pixel
+is genuine, so there is very little manufacturing residue for a vision-only detector to find, and
+compression removes most of what there is. What the forgery cannot repair is agreement between the
+two tracks: a real recording captures one physical event twice, once as light off a moving mouth and
+once as the sound that mouth made, and synthesis breaks the correspondence in a way that survives
+compression.
 
-**Current stage:** Stage 1 (data pipeline), being rebuilt from scratch after a deliberate reset. The previous Stage 1-2 implementation is preserved in commit `926624a` for reference - see [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md) §14.
+So this detector measures disagreement between modalities rather than asking whether a voice sounds
+synthetic. Five streams read one clip — three visual (EfficientNet-B0, Xception, DINOv2) and two
+cross-modal (lip-sync, emotion) — and each emits an embedding rather than a score. Fusion
+concatenates the embeddings and learns from the combination, so it can represent "artifact evidence
+is weak but lip-sync mismatch is strong", which is the signature of a lip-sync forgery and something
+no average of five scores can express.
+
+<p align="center">
+  <img src="assets/flow.png" alt="System architecture: preprocessing into three tensors, five streams, feature-level fusion, decision" width="460">
+</p>
+
+Preprocessing samples 16 timestamps per clip and runs a video path and an audio path over the same
+timestamps, so frame *i* and audio window *i* describe the same instant:
+
+```
+faces  [16, 3, 224, 224]   ->  visual streams, emotion stream
+mouth  [16, 3,  96,  96]   ->  lip-sync stream
+audio  [16, 5600]          ->  lip-sync stream, emotion stream
+```
+
+The full design — architecture, data, tooling, compute assumptions, build order — is in
+[docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md), which is the project's single main document.
+
+## Status
+
+| Component | State |
+|---|---|
+| Preprocessing | Built. Shared pure functions in `preprocessing/ops/`, called by both the batch pipeline and the dashboard. |
+| Manifests and splits | Built. Identity-disjoint splits from `build_splits.py`, verified by `verify_splits.py`. |
+| Visual stream module | Built. One config-driven module in `models/streams/common/`; EfficientNet-B0 and Xception wired, DINOv2 not yet. |
+| Training | Not written. The streams are defined, but nothing has been trained since the preprocessing rebuild. |
+| Lip-sync and emotion streams | Designed, not built (stages 4 and 5). |
+| Fusion, evaluation, explainability | Designed, not built (stages 6, 7 and 10). |
+
+An earlier build of the visual stream reached test accuracy 0.963 and AUC 0.994 in-distribution.
+Five-point face alignment has since changed the cached pixels, so that is the bar to re-clear rather
+than a current result. The pre-rebuild implementation is preserved in commit `926624a`.
 
 ## Dataset
 
-Unzip `FakeAVCeleb_v1.2.zip` into `data/raw/` so you end up with:
+Unzip `FakeAVCeleb_v1.2.zip` anywhere under `data/`:
 
 ```
-data/raw/FakeAVCeleb_v1.2/
+data/FakeAVCeleb_v1.2/
 ├── meta_data.csv
 ├── RealVideo-RealAudio/
 ├── RealVideo-FakeAudio/
@@ -20,27 +61,24 @@ data/raw/FakeAVCeleb_v1.2/
         └── <race>/<gender>/<identity>/*.mp4
 ```
 
-`data/*` is gitignored, so the media never enters git.
+The exact location is not hardcoded. Both the pipeline and the dashboard find a dataset by looking
+for a `meta_data.csv` under `data/`, so `data/raw/FakeAVCeleb_v1.2/` works equally well and a second
+drop can sit alongside the first. `data/*` is gitignored, so the media never enters git.
 
 ## Setup
 
-Requires [uv](https://docs.astral.sh/uv/getting-started/installation/). Dependencies are pinned in `pyproject.toml` and locked in `uv.lock`, so every machine resolves to identical versions.
+Requires [uv](https://docs.astral.sh/uv/getting-started/installation/). Dependencies are pinned in
+`pyproject.toml` and locked in `uv.lock`, so every machine resolves to identical versions.
 
-Pick **exactly one** of the two extras — they install the same torch version from different indexes and cannot be combined.
-
-### CPU
-
-```bash
-uv sync --extra cpu
-```
-
-### GPU (NVIDIA / CUDA)
+Pick **exactly one** of the two extras. They install the same torch version from different indexes
+and cannot be combined.
 
 ```bash
-uv sync --extra cu130
+uv sync --extra cpu       # CPU
+uv sync --extra cu130     # NVIDIA / CUDA, needs a recent driver
 ```
 
-Requires a recent NVIDIA driver. Verify with:
+Verify a CUDA install with:
 
 ```bash
 uv run --extra cu130 python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
@@ -48,7 +86,7 @@ uv run --extra cu130 python -c "import torch; print(torch.cuda.is_available(), t
 
 ### Running things
 
-`uv sync` creates `.venv` for you. The simplest safe workflow is to activate it once per shell and then use plain `python`:
+`uv sync` creates `.venv`. Activate it once per shell and then use plain `python`:
 
 ```bash
 .venv\Scripts\activate          # Windows
@@ -56,20 +94,19 @@ source .venv/bin/activate       # macOS/Linux
 python -c "import torch; print(torch.__version__)"
 ```
 
-> **Careful:** if you use `uv run` instead, you must pass the extra **every single time**:
-> `uv run --extra cu130 python ...`. A bare `uv run python ...` re-syncs the
-> environment to the no-extra state, which silently swaps your CUDA torch for the
-> CPU build — `torch.cuda.is_available()` starts returning `False` and training
-> quietly drops to CPU. Activating the venv avoids this entirely, because plain
-> `python` never re-syncs.
+> **Watch out for `uv run`.** If you use it instead of activating, you must pass the extra *every
+> single time*: `uv run --extra cu130 python ...`. A bare `uv run python ...` re-syncs the
+> environment to the no-extra state, which silently swaps CUDA torch for the CPU build.
+> `torch.cuda.is_available()` starts returning `False` and training quietly drops to CPU. Activating
+> the venv avoids this, because plain `python` never re-syncs.
 
-To add or change a dependency, edit `pyproject.toml`, then run `uv lock` and commit the updated `uv.lock`.
+To add or change a dependency, edit `pyproject.toml`, run `uv lock`, and commit the updated
+`uv.lock`.
 
-Note: PyAV (`av`) bundles its own ffmpeg libraries, so no system ffmpeg is needed for clip extraction or audio decoding. The whole preprocessing pipeline decodes through `av`; there is no `ffmpeg-python` / system-ffmpeg dependency.
+PyAV (`av`) bundles its own ffmpeg libraries, so no system ffmpeg is needed anywhere — clip
+extraction, audio decoding and the dashboard's clip player all go through it.
 
-### Google Colab
-
-Torch is preinstalled, just add the extras:
+On Colab, torch is preinstalled and only the extras are needed:
 
 ```python
 !pip install opencv-python av librosa timm facenet-pytorch
@@ -77,22 +114,39 @@ Torch is preinstalled, just add the extras:
 
 ## Dashboard
 
-The multi-page Streamlit dashboard (`dashboard/app.py`) is the small-sample iteration loop for preprocessing parameters and stream inspection. It reads `data/processed/`; it never trains and never writes processed data (see [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md) §7).
+The Streamlit dashboard is the small-sample iteration loop for preprocessing parameters. It never
+trains and never writes `data/processed/`.
 
 ```bash
 uv run streamlit run dashboard/app.py     # or, with .venv activated:
 streamlit run dashboard/app.py
 ```
 
-Pages: **Overview** (short landing page), **Preprocessing**, **Streams**, **Fusion** 🔒 and **Explainability** 🔒 (visible but locked until Stages 6 and 10), and **Documentation** (the in-depth reference for every step, model and design decision).
+**Overview** is the landing page. **Preprocessing** is the page that computes: pick a clip, then
+step through the visual and audio pipelines with every step as a toggle, applied cumulatively,
+ending in the exact tensor a model would receive. **Streams**, **Fusion** and **Explainability** are
+locked — each says what will land there and what unlocks it, rather than showing controls that do
+not work. **Documentation** is the in-depth reference for every step, model and design decision.
 
-In VS Code, `.vscode/launch.json` makes this the default run target, so <kbd>F5</kbd> launches the dashboard with the debugger attached (`justMyCode: false`, so you can step into `dashboard/lib/` and `preprocessing/`). Note `.vscode/` is gitignored, so each clone needs its own copy.
+In VS Code, `.vscode/launch.json` makes this the default run target, so <kbd>F5</kbd> launches the
+dashboard with the debugger attached (`justMyCode: false`, so you can step into `dashboard/lib/` and
+`preprocessing/`). `.vscode/` is gitignored, so each clone needs its own copy.
 
 ## Repo layout
 
 ```
-data/raw/        the FakeAVCeleb dataset (git-ignored)
+assets/          diagrams used by the docs and the dashboard
+dashboard/       Streamlit app: app.py, lib/ (pure, unit-tested), pages/
+data/            the dataset and derived manifests (git-ignored)
 docs/            main project document, glossary, math writeups, stage plans
+evaluation/      metrics and ablation reporting (not built yet)
+feature_store/   per-clip embedding cache that fusion reads
+fusion/          the fusion MLP (not built yet)
+models/streams/  one config-driven stream module, cloned per backbone
+preprocessing/   manifests, splits, the ops/ functions, per-clip cache
+tests/           pytest suite mirroring the package layout
+training/        training scripts (not written yet)
 ```
 
-Everything else - `preprocessing/`, `models/`, `training/`, `evaluation/`, `feature_store/` - gets created as the work that needs it starts. See [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md) §13 for the target layout.
+See [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md) §13 for the target layout and §10 for the
+build order.

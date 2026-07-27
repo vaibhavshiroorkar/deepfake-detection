@@ -1,9 +1,13 @@
 """Documentation — the long-form reference for the whole system.
 
-Everything that used to crowd the Overview page lives here: why lip-sync
-forgeries defeat vision-only detectors, how every preprocessing step and every
-model actually works, how fusion and evaluation are designed, and how the data
-is split. Overview stays short and points here.
+Six tabs, ordered the way a clip moves through the system: the problem, the two
+preprocessing paths, the stream models that consume them, fusion and evaluation,
+then the data and splits underneath it all.
+
+Division of labour with the Overview page: Overview is the map — what is
+detected, the architecture in one diagram, what is built. This page is the
+territory, and is the only place a mechanism is explained in full. The first tab
+repeats just enough of Overview to stand on its own.
 
 It is documentation, not compute: nothing here loads a model, decodes a clip or
 touches data/, so the page opens instantly.
@@ -24,6 +28,8 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 import streamlit as st
+
+DIAGRAM = _REPO_ROOT / "assets" / "flow.png"
 
 st.title("Documentation")
 st.caption("The in-depth reference: the problem, every processing step, every model, and the "
@@ -62,6 +68,17 @@ part that survives compression, resolution loss and a well-trained generator.
     st.header("The signal chain")
     st.caption("Two parallel paths turn a clip into tensors, five streams turn those tensors into "
                "embeddings, one fusion head turns the embeddings into a decision.")
+
+    # The diagram is the fastest way into the rest of this page; the tables below
+    # give it the exact shapes it cannot carry.
+    _, diagram_col, _ = st.columns([1, 3, 1])
+    with diagram_col:
+        if DIAGRAM.exists():
+            st.image(str(DIAGRAM), width="stretch")
+        else:
+            st.warning(f"Architecture diagram not found at "
+                       f"`{DIAGRAM.relative_to(_REPO_ROOT)}`.")
+
     st.markdown("""
 | Path | Steps applied in order | Tensor produced |
 |---|---|---|
@@ -81,8 +98,9 @@ pipeline instead of the forgery.
 """)
 
     st.header("The five streams")
-    st.caption("Every stream emits a 256-dimensional embedding and never a score. Keeping them at "
-               "the feature level is what lets fusion learn interactions between them.")
+    st.caption("What each stream is for, at a glance. How each one works is the **Stream models** "
+               "tab; every stream emits a 256-dimensional embedding and never a score, which is "
+               "what lets fusion learn interactions between them.")
     st.markdown("""
 | Stream | Inputs | What it contributes | Stage |
 |---|---|---|---|
@@ -601,7 +619,7 @@ projects produce results that do not survive contact with new data.
 
 Splits are therefore constructed once, on the `source` identity, by `build_splits.py`, checked by
 `verify_splits.py` which asserts zero identity and zero file overlap, and never re-split randomly
-downstream. The current split is 1400 / 300 / 300 clips over 500 source identities.
+downstream. As configured, that yields 1400 / 300 / 300 clips over 500 source identities.
 
 **Class balance** is handled by two independent mechanisms that are easy to confuse. The natural
 distribution is about 40:1 fake:real. `build_splits.py` undersamples fakes to a 1:3 real:fake ratio
@@ -616,24 +634,43 @@ optimised.
     st.markdown("""
 | Path | Contents |
 |---|---|
-| `data/raw/FakeAVCeleb_v1.2/` | The dataset, gitignored — 21,544 clips, plus `meta_data.csv`. Clips are nested `<category>/<race>/<gender>/<identity>/*.mp4`. |
+| `data/<drop>/` | A dataset, gitignored. FakeAVCeleb v1.2 is 21,544 clips plus `meta_data.csv`, nested `<category>/<race>/<gender>/<identity>/*.mp4`. |
 | `data/processed/<clip_id>/` | Per-clip cache: `frames.npy`, `audio.npy`, `timestamps.npy`, `version.txt`. |
 | `data/*.csv` | `full_manifest.csv` and the `train` / `val` / `test` splits. |
 
+The dataset's location is **not** configured. Anything under `data/` holding a `meta_data.csv` is a
+drop — `data/FakeAVCeleb_v1.2/` and `data/raw/FakeAVCeleb_v1.2/` both work, and two drops can sit
+side by side. `preprocessing/audit_dataset.find_dataset_root` and the dashboard's picker apply the
+same rule, so neither can disagree with the other about where the clips are.
+""")
+    st.warning("""**The clips are not all the same codec.** FakeAVCeleb's real footage is H.264, but
+the wav2lip generator wrote its output with an MPEG-4 Part 2 encoder, so every `FakeVideo-FakeAudio`
+clip and some `FakeVideo-RealAudio` clips are `mpeg4`.
+
+This is invisible to the pipeline — OpenCV and PyAV decode both without comment — but no browser can
+play `mpeg4`, so `st.video` rendered a blank player for precisely the lip-sync forgeries this project
+exists to detect. The Preprocessing page therefore re-encodes to H.264 on the way to the player
+(`dashboard/lib/media.playable_video_bytes`), captions the clip when it has done so, and leaves the
+file on disk untouched. Worth remembering before trusting any tool that assumes one codec per
+dataset.""")
+    st.markdown("""
 The per-clip cache carries a `version.txt` stamped with `PIPELINE_VERSION`. Bumping that constant
 invalidates every stale cache so it is transparently re-extracted on next access, which is what
 makes a change like switching on face alignment safe: the pixels changed, so the cache must not be
 trusted, and nothing has to be deleted by hand.
 
-The dataset picker discovers what is available rather than being configured. A raw drop is any
-directory containing a `meta_data.csv`, and its manifest is derived in memory, so a freshly
-unzipped dataset is usable before `audit_dataset.py` has ever run. A manifest CSV attaches to
-whichever dataset its `video_path` column points into. Nothing is hardcoded, and the rescan button
-re-runs the whole discovery.
+Two consequences of that discovery rule are worth knowing while using the picker. A drop's manifest
+is derived in memory from its `meta_data.csv`, so a freshly unzipped dataset is selectable before
+`audit_dataset.py` has ever run. And a manifest CSV is attached to whichever dataset its
+`video_path` column points into rather than by filename, which is how the pipeline's flat
+`data/train.csv` finds its way onto the right drop. The rescan button re-runs the whole discovery.
 """)
 
 
-tabs = st.tabs(["Problem & architecture", "Visual path", "Audio path", "Streams",
+# "Stream models", not "Streams": the first tab already lists what the five
+# streams are for, and two tabs with the same name is what made this page hard to
+# navigate. This one is the per-model deep dive.
+tabs = st.tabs(["Problem & architecture", "Visual path", "Audio path", "Stream models",
                 "Fusion & evaluation", "Data & splits"])
 with tabs[0]:
     render_architecture()

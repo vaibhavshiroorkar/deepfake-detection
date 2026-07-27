@@ -1,8 +1,15 @@
-"""Single Streams page — Visual, Lip-Sync and Emotions as in-page tabs.
+"""Streams — locked for now.
 
-Replaces the old three-page "Streams" sidebar section: one nav entry, with the
-three feature streams switched via tabs. Each tab's body lives in
-dashboard/lib/stream_pages.py.
+The three stream tabs (Visual, Lip-Sync, Emotions) and the configurable model
+boxes behind them are built and still unit-tested; they are just not reachable
+while the visual stream is being re-validated after alignment changed the cached
+pixels. Unlocking is a two-line change: drop the icon from app.py's nav entry
+and call stream_pages.render_visual/render_lipsync/render_emotions from here
+again, in the tabs they used to live in.
+
+Locked the same way as Fusion and Explainability: visible in the sidebar so the
+shape of the system stays obvious, with what lands here described rather than
+stubbed as dead controls.
 """
 import sys
 from pathlib import Path
@@ -11,17 +18,14 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 import streamlit as st
+from dashboard.lib.stream_spec import STREAMS as S
 
-from dashboard.lib import stream_pages
+st.title(f":material/lock: {S['title']}")
+st.info(f"**Locked.** {S['status']}")
+st.caption(S["note"])
 
-st.title("Streams")
-st.caption("Three feature streams feeding fusion — each produces a 256-d clip embedding, never a "
-           "standalone score. Switch between them below.")
+st.subheader("What lands here")
+st.markdown("\n".join(f"- **{name}** — {desc}" for name, desc in S["views"]))
 
-visual_tab, lipsync_tab, emotion_tab = st.tabs(["Visual", "Lip-Sync", "Emotions"])
-with visual_tab:
-    stream_pages.render_visual()
-with lipsync_tab:
-    stream_pages.render_lipsync()
-with emotion_tab:
-    stream_pages.render_emotions()
+st.caption("The stream designs are documented in full on the **Documentation** page → "
+           "*Streams*.")

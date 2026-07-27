@@ -1,8 +1,12 @@
+from pathlib import Path
+
 from streamlit.testing.v1 import AppTest
 
 # The Documentation page is the long-form reference, built from plain Streamlit
 # components: no custom CSS, no ASCII diagrams, no model loads, no decoding. It
 # must render fast, raise nothing, and never touch data/.
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _page():
@@ -46,8 +50,32 @@ def test_documentation_carries_the_tensor_contract():
 
 
 def test_documentation_has_no_ascii_diagrams():
-    # The signal chain, the stream module and the on-disk layout are tables now.
+    # The signal chain, the stream module and the on-disk layout are tables, and
+    # the architecture is the assets/flow.png image — never ASCII art.
     assert not _page().code
+
+
+def test_architecture_diagram_is_present_and_rendered():
+    assert (REPO_ROOT / "assets" / "flow.png").is_file()
+    # The only st.warning on the architecture tab would be the missing-asset
+    # fallback; the dataset-codec warning lives on the Data & splits tab, so a
+    # missing diagram is still distinguishable by its message.
+    warnings = " ".join(w.value for w in _page().warning)
+    assert "diagram not found" not in warnings
+
+
+def test_documentation_records_the_mixed_codec_gotcha():
+    """The mpeg4 wav2lip clips broke the clip player; the reason must stay written down."""
+    body = " ".join([m.value for m in _page().markdown] + [w.value for w in _page().warning])
+    assert "mpeg4" in body
+    assert "playable_video_bytes" in body
+
+
+def test_documentation_describes_dataset_discovery_not_a_fixed_path():
+    """data/raw/ is no longer required — the drop is discovered by its meta_data.csv."""
+    body = " ".join(m.value for m in _page().markdown)
+    assert "meta_data.csv" in body
+    assert "find_dataset_root" in body
 
 
 def test_documentation_is_static_and_touches_no_data():

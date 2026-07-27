@@ -1,9 +1,32 @@
 """Static architecture text for the Streams / Fusion / Explainability pages.
 
-The visual page builds real models; the cross-modal stream tabs are read-only
-scaffolds, and the Fusion and Explainability pages are locked, for work still in
-the plans (no compute).
+All three pages are currently locked — they describe what lands there rather
+than stubbing controls, so there is no half-working UI to mistake for the real
+thing. The machinery behind the Streams page (dashboard/lib/stream_pages.py and
+stream_ui.py, both still unit-tested) is intact and unreferenced, so unlocking
+it is a matter of calling the render functions again.
 """
+
+STREAMS = {
+    "title": "Streams",
+    "status": "Locked while the visual stream is re-validated. Five-point face alignment "
+              "changed the cached pixels, so the precached splits have to be rebuilt and "
+              "EfficientNet-B0 re-measured against its AUC 0.994 bar before the model "
+              "boxes here mean anything.",
+    "note": "Three feature streams feed fusion. Each one emits a 256-d clip embedding and "
+            "never a standalone score, which is what lets fusion learn interactions between "
+            "them rather than averaging opinions.",
+    "views": [
+        ("Visual", "EfficientNet-B0, Xception and DINOv2 over the face-crop sequence — each a "
+                   "configurable box (temporal model, hidden size, embedding dim, freeze) with "
+                   "Train, which emits the background-trainer command, and Run, which "
+                   "forward-passes one clip to check shapes, device and speed."),
+        ("Lip-Sync", "AV-HuBERT over the mouth crop against Whisper over the audio, compared by "
+                     "cross-attention — the synchronisation-mismatch vector. Stage 4."),
+        ("Emotions", "HSEmotions over the face against Wav2Vec2 over the voice, same mechanism — "
+                     "an affect-consistency mismatch vector. Stage 5."),
+    ],
+}
 
 LIPSYNC_STREAM = {
     "title": "Lip-sync stream",

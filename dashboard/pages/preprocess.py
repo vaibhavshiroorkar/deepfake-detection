@@ -155,7 +155,15 @@ def render_config():
         st.caption("**Clip** — plays with sound.")
         # Hand Streamlit the bytes, not the path: the clips live outside the app
         # directory, and st.video only serves a path it is allowed to reach.
-        st.video(video_path.read_bytes(), format="video/mp4")
+        # Bytes come via media.cached_playable_video because a browser cannot
+        # decode the mpeg4-encoded wav2lip clips at all — passing those through
+        # raw is what left this player blank on every FakeVideo-FakeAudio clip.
+        with st.spinner("Preparing clip…"):
+            video_bytes, reencoded_from = media.cached_playable_video(video_path)
+        st.video(video_bytes, format="video/mp4")
+        if reencoded_from:
+            st.caption(f"Re-encoded from `{reencoded_from}` to H.264 for playback — "
+                       "display only, the pipeline still reads the original file.")
         mtype = row["manipulation_type"] if "manipulation_type" in row else "—"
         method = row["method"] if "method" in row else "—"
         st.caption(

@@ -1,12 +1,12 @@
-"""Overview — the short landing page.
+"""Overview — the landing page.
 
-Answers three questions and nothing more: what the system detects, what it is
-built out of, and what each page of this dashboard does. Every explanation of
-*how* a step or a model works now lives on the Documentation page; this page
-links there rather than reproducing it.
+Says what the project detects, shows the architecture as one diagram, and states
+honestly what is built and what is not. Everything about *how* a step or a model
+works lives on the Documentation page; this page links there instead of
+reproducing it.
 
-Static by construction: no model loads, no decoding, no data/ access, so it
-opens instantly and is safe as the default page.
+Static by construction: no model loads, no decoding, no data/ access, so it opens
+instantly and is safe as the default page.
 """
 import sys
 from pathlib import Path
@@ -17,58 +17,86 @@ if str(_REPO_ROOT) not in sys.path:
 
 import streamlit as st
 
-st.title("Overview")
-st.caption("Detecting lip-sync deepfakes by measuring whether the face and the voice belong to "
-           "the same event. Read-only page — nothing is loaded or decoded here.")
+DIAGRAM = _REPO_ROOT / "assets" / "flow.png"
 
-st.header("What this detects")
+st.title("Audio-Visual Deepfake Detection")
+st.caption("Detecting lip-sync forgeries by measuring whether a face and a voice belong to the "
+           "same event.")
+
+st.header("The problem")
 st.markdown("""
-A wav2lip-style forgery repaints only the mouth region of a genuine video so the lips appear to
-speak new words. Almost every pixel is real, so the manufacturing residue that vision-only
-detectors hunt for is tiny and largely destroyed by compression.
+A wav2lip forgery repaints the mouth and leaves the rest of the video alone. Almost every pixel is
+genuine, so there is very little manufacturing residue for a vision-only detector to find, and
+compression destroys most of what there is. Detectors that score well on full face swaps do poorly
+here for a straightforward reason: there is barely anything to see.
 
-What the forgery cannot hide is the relationship between the two modalities. In a real recording
-the moving mouth and the sound it produces are two views of one physical event. Synthesis breaks
-that lock, and the mismatch survives compression, resolution loss and a well-trained generator.
+What the forgery cannot repair is agreement between the two tracks. A real recording captures one
+physical event twice, as light reflected off a moving mouth and as the sound that mouth produced.
+Synthesis breaks the correspondence between them, and it stays broken after compression and
+resolution loss.
 
-That is why the design has no standalone audio classifier: the signal is not "this voice sounds
-synthetic", it is "this voice disagrees with this face".
+So this system is built to measure disagreement between face and voice. That is also why it has no
+standalone audio classifier: the useful question is not whether a voice sounds synthetic, but
+whether it matches the face it is paired with.
 """)
 
-st.header("How the system is built")
+st.header("Architecture")
+st.caption("A clip becomes three tensors, five streams turn those into embeddings, and one fusion "
+           "head turns the embeddings into a decision.")
+
+# Portrait diagram, so it goes in a middle column — at full container width it
+# renders absurdly tall on a wide screen.
+_, diagram_col, _ = st.columns([1, 3, 1])
+with diagram_col:
+    if DIAGRAM.exists():
+        st.image(str(DIAGRAM), width="stretch")
+    else:
+        st.warning(f"Architecture diagram not found at `{DIAGRAM.relative_to(_REPO_ROOT)}`.")
+
 st.markdown("""
-Each clip becomes three tensors, which feed five streams, which fuse into one decision.
-
-| Stage | What happens | Result |
-|---|---|---|
-| **Preprocessing** | 16 timestamps per clip; the video path detects, aligns and crops faces, the audio path decodes to 16 kHz and cuts one window per timestamp | `faces [16, 3, 224, 224]`, `mouth [16, 3, 96, 96]`, `audio [16, 5600]` |
-| **Streams** | five models read those tensors — three visual, two cross-modal | one 256-d embedding each |
-| **Fusion** | the embeddings are concatenated and passed through an MLP | P(fake) |
-
-Both paths are indexed by the **same 16 timestamps**, so frame *i* and audio window *i* describe
-the same instant. Every stream emits an embedding and never a score, which is what lets fusion
-learn interactions between them instead of averaging opinions.
-
-| Stream | Reads | Looks for | Status |
-|---|---|---|---|
-| **EfficientNet-B0** | faces | manipulation artifacts | built |
-| **Xception** | faces | manipulation artifacts | built |
-| **DINOv2 (ViT-S/14)** | faces | self-supervised features, for generalisation | Stage 3 |
-| **Lip-sync** | mouth + audio | audio–video synchronisation mismatch | Stage 4 |
-| **Emotion** | faces + audio | affect mismatch between face and voice | Stage 5 |
+Preprocessing samples 16 timestamps per clip and runs two paths over them. The video path detects,
+aligns and crops faces, and derives a mouth region from the same detection. The audio path decodes
+to 16 kHz and cuts one window centred on each timestamp. Both paths are indexed by the **same 16
+timestamps**, so frame *i* and audio window *i* describe the same instant. Without that, every clip
+would look desynchronised and the cross-modal streams would be measuring the pipeline rather than
+the forgery.
+""")
+st.code("""faces  [16, 3, 224, 224]   ->  visual streams, emotion stream
+mouth  [16, 3,  96,  96]   ->  lip-sync stream
+audio  [16, 5600]          ->  lip-sync stream, emotion stream""", language="text")
+st.markdown("""
+Each stream emits a 256-dimensional embedding and never a score. Fusion concatenates them and
+learns from the combination, which lets it represent a conjunction like "artifact evidence is weak
+but lip-sync mismatch is strong" — the signature of a wav2lip forgery, and something no weighted
+average of five scores can express.
 """)
 
-st.header("The pages")
-st.info("**This dashboard never trains and never writes `data/processed/`.** Training always runs "
-        "as a background script; where a page offers to train, it hands you the command to run in "
-        "a terminal.")
+st.header("Where the project stands")
 st.markdown("""
-| Page | What it does |
+| Component | State |
 |---|---|
-| **Overview** | This page. |
-| **Preprocessing** | Live compute. *Config* picks the dataset, split and clip and sets `N` frames and the audio window; *Visual* and *Audio* show each pipeline step cumulatively, ending in the exact tensor the model receives. Calls the same `preprocessing/ops/` functions as the batch pipeline, so there is no second implementation to drift. |
-| **Streams** | Live inference. *Visual* gives EfficientNet-B0 and Xception real model boxes — temporal model, hidden size, embedding dim, freeze — with Train (emits a terminal command) and Run (forward-passes one clip on untrained weights, to check shapes, device and speed). *Lip-Sync* and *Emotions* are scaffolds until Stages 4 and 5. |
-| **Fusion** 🔒 | Locked until Stage 6. |
-| **Explainability** 🔒 | Locked until Stage 10. |
-| **Documentation** | The in-depth reference: every preprocessing step, every model, the fusion and evaluation design, and the dataset and splits. |
+| Preprocessing | Built. Shared pure functions in `preprocessing/ops/`, called by both the batch pipeline and this dashboard, so there is no second implementation to drift. |
+| Manifests and splits | Built. Identity-disjoint splits from `build_splits.py`, checked by `verify_splits.py`. |
+| Visual stream module | Built. One config-driven module in `models/streams/common/`; EfficientNet-B0 and Xception are wired, DINOv2 is not yet. |
+| Training | Not written. The streams are defined, but nothing has been trained since the preprocessing rebuild. |
+| Lip-sync and emotion streams | Designed, not built. Stages 4 and 5. |
+| Fusion, evaluation, explainability | Designed, not built. Stages 6, 7 and 10. |
 """)
+st.caption("An earlier build of the visual stream reached test accuracy 0.963 and AUC 0.994 "
+           "in-distribution. Face alignment has since changed the cached pixels, so that is the "
+           "bar to re-clear rather than a current result.")
+
+st.header("Using this dashboard")
+st.markdown("""
+**Preprocessing** is the working page. Pick a dataset, split and clip under *Config*, then step
+through the *Visual* and *Audio* tabs: every step is a toggle, applied cumulatively, ending in the
+exact tensor a model would receive.
+
+**Streams**, **Fusion** and **Explainability** are locked. Each lists what will land there and what
+unlocks it, rather than showing controls that do not work.
+
+**Documentation** is the reference: how every preprocessing step works, what each model does and
+why it was chosen, and how fusion, evaluation and the splits are designed.
+""")
+st.info("This dashboard never trains and never writes `data/processed/`. Training runs as a "
+        "background script; pages that offer to train hand you a command to run in a terminal.")
