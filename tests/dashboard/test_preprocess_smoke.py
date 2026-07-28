@@ -1,31 +1,75 @@
+from pathlib import Path
+
+import pandas as pd
 from streamlit.testing.v1 import AppTest
 
-# The page now renders Config / Visual / Audio as tabs, all three tab bodies
-# execute on every run, so a single .run() (Config auto-selects the first clip)
-# renders every section. There is no longer a pp_view switch.
+# The page renders Config / Visual / Audio as tabs and all three bodies execute on
+# every run. Nothing is selected for you, so a bare .run() stops after Selection;
+# the pipeline sections need a clip in session_state first.
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+MANIFEST = REPO_ROOT / "data" / "FakeAVCeleb_v1.2" / "meta_data.csv"
 
 
-def test_config_tab_shows_selection_and_preview():
+def _a_clip() -> tuple[str, str]:
+    """(sel_context, clip_id) for a real clip in the discovered dataset.
+
+    The context matters: the page clears the selection whenever dataset/split
+    changes, and on a fresh run sel_context is unset, so seeding only the clip id
+    would be wiped before the preview is reached.
+    """
+    at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180).run()
+    # AppTest's session_state proxy has no .get(), so index it.
+    manifests = at.session_state["ds_manifests"]
+    assert manifests, "the page should have loaded a manifest for the default dataset"
+    (dataset, split), frame = next(iter(manifests.items()))
+    assert isinstance(frame, pd.DataFrame) and len(frame)
+    return f"{dataset}/{split}", frame.iloc[0]["clip_id"]
+
+
+def _with_clip(**session):
+    """The page with a clip already selected, as if picked from the modal."""
+    context, clip_id = _a_clip()
+    at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180)
+    at.session_state["sel_context"] = context
+    at.session_state["sel_clip_id"] = clip_id
+    for key, value in session.items():
+        at.session_state[key] = value
+    at.run()
+    assert not at.exception
+    return at
+
+
+def test_nothing_is_selected_on_first_load():
+    """Picking a clip is the user's call, so the page must not choose one."""
     at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180).run()
     assert not at.exception
+    assert "sel_clip_id" not in at.session_state
     headers = [h.value for h in at.header]
-    # Selection and Preview are both full headers (same size as the pipelines).
+    assert headers == ["Selection"], headers      # nothing past Selection yet
+    assert any("No clip selected" in m.value for m in at.markdown)
+
+
+def test_the_other_tabs_prompt_instead_of_erroring_when_nothing_is_selected():
+    at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180).run()
+    assert not at.exception
+    assert any("Config" in i.value for i in at.info)
+
+
+def test_config_shows_the_preview_once_a_clip_is_selected():
+    headers = [h.value for h in _with_clip().header]
     assert "Selection" in headers
     assert "Preview" in headers
 
 
-def test_visual_tab_renders_after_config_selects_a_clip():
-    at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180).run()
-    assert not at.exception
-    headers = [h.value for h in at.header]
+def test_visual_tab_renders_once_a_clip_is_selected():
+    headers = [h.value for h in _with_clip().header]
     assert "Visual pipeline" in headers
     assert "Visual model input" in headers
 
 
-def test_audio_tab_renders_after_config_selects_a_clip():
-    at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180).run()
-    assert not at.exception
-    assert "Audio pipeline" in [h.value for h in at.header]
+def test_audio_tab_renders_once_a_clip_is_selected():
+    assert "Audio pipeline" in [h.value for h in _with_clip().header]
 
 
 def test_dataset_is_discovered_and_refresh_rescans():
@@ -60,10 +104,7 @@ def test_config_click_does_not_reopen_a_dismissed_picker():
 
 
 def test_visual_mouth_branch_adds_separate_mouth_model_input():
-    at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180)
-    at.session_state["v_mouth"] = True       # detection defaults on; enable the mouth branch
-    at.run()
-    assert not at.exception
+    at = _with_clip(v_mouth=True)             # detection defaults on
     headers = [h.value for h in at.header]
-    assert "Visual model input" in headers   # face output still present
-    assert "Mouth model input" in headers    # mouth is a separate, parallel output
+    assert "Visual model input" in headers    # face output still present
+    assert "Mouth model input" in headers     # mouth is a separate, parallel output

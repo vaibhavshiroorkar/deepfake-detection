@@ -226,13 +226,13 @@ def _render_dataset(st):
         st.session_state["sel_context"] = ctx
         st.session_state.pop("sel_clip_id", None)
 
-    # Default to the first clip so the page isn't empty on first load.
+    # Nothing is chosen for you. Picking a clip out of 21k is a decision, and
+    # quietly landing on whichever row the manifest happens to list first invites
+    # you to read the page as though you had chosen it.
     sel_id = st.session_state.get("sel_clip_id")
-    if sel_id is None or not (df["clip_id"] == sel_id).any():
-        sel_id = df.iloc[0]["clip_id"]
-        st.session_state["sel_clip_id"] = sel_id
+    match = df[df["clip_id"] == sel_id] if sel_id is not None else df.iloc[0:0]
+    crow = match.iloc[0] if len(match) else None
 
-    crow = df[df["clip_id"] == sel_id].iloc[0]
     if _selected_card(st, crow, action_label="Choose clip"):
         st.session_state["sel_picker_open"] = True
 
@@ -244,7 +244,7 @@ def _render_dataset(st):
     if st.session_state.get("sel_picker_open"):
         _picker(st, df)
 
-    return df[df["clip_id"] == sel_id].iloc[0]
+    return crow
 
 
 def _close_picker():
@@ -254,22 +254,28 @@ def _close_picker():
 
 
 def _selected_card(st, row, action_label: str | None):
-    """The current selection, shown plainly. Returns True if the action was clicked.
+    """The current selection, or the empty state. True if the action was clicked.
 
     A bordered container rather than st.success: the selection is a statement of
     fact, not an achievement, and a full-width green banner reads as one on every
-    single rerun.
+    single rerun. The card keeps the same shape when nothing is chosen, so opening
+    the picker does not move.
     """
     with st.container(border=True):
         info, action = ((st.container(), None) if action_label is None
                         else st.columns([5, 1], vertical_alignment="center"))
-        info.markdown(f"**{row['clip_id']}**")
-        mtype = row["manipulation_type"] if "manipulation_type" in row else "unknown"
-        method = row["method"] if "method" in row else "unknown"
-        info.caption(f"{mtype}  ·  {method}  ·  label **{label_text(row)}**")
+        if row is None:
+            info.markdown("**No clip selected**")
+            info.caption("Choose a clip to run the pipeline over.")
+        else:
+            info.markdown(f"**{row['clip_id']}**")
+            mtype = row["manipulation_type"] if "manipulation_type" in row else "unknown"
+            method = row["method"] if "method" in row else "unknown"
+            info.caption(f"{mtype}  ·  {method}  ·  label **{label_text(row)}**")
         if action is None:
             return False
-        return action.button(action_label, key="open_picker_btn", width="stretch")
+        return action.button(action_label, key="open_picker_btn", width="stretch",
+                             type="primary" if row is None else "secondary")
 
 
 def _picker(st, df):
@@ -317,15 +323,14 @@ def _picker(st, df):
                 st.session_state["sel_clip_id"] = picked
                 st.rerun()
 
-        # With nothing clicked yet, preview whatever is already active, which on
-        # first open is the dataset's first clip. Better than an empty pane telling
-        # you to go and click something.
-        active = df[df["clip_id"] == st.session_state.get("sel_clip_id")]
+        # Whatever is currently loaded, which is nothing until you click a row.
+        active_id = st.session_state.get("sel_clip_id")
+        active = df[df["clip_id"] == active_id] if active_id is not None else df.iloc[0:0]
         candidate = active.iloc[0] if len(active) else None
 
         with right:
             if candidate is None:
-                st.info("No clip selected yet.")
+                st.info("Click a clip on the left to load it.")
             else:
                 st.markdown(f"**{candidate['clip_id']}**")
                 cmt = candidate["manipulation_type"] if "manipulation_type" in candidate else ""
