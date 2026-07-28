@@ -507,7 +507,8 @@ than being averaged away.
     st.caption("Off by default, and deliberately separate from the stored contract.")
     st.markdown("""
 None of these are part of the stored contract. With every one disabled, the dashboard reproduces
-the batch pipeline exactly.
+the batch pipeline exactly. They sit together under the **Enhancement** step on the Preprocessing
+page, and split into two kinds:
 
 **Enhancement** (sharpen, denoise, CLAHE) asks whether cleaning an input helps or merely removes
 the artifacts the detector was relying on. CLAHE in particular equalises contrast in local tiles,

@@ -580,7 +580,7 @@ rest are "not built yet, build it this way."
    `dashboard/app.py` (`st.navigation`). Two sections: **Data Preprocessing** (Visual,
    Audio) where every preprocessing step is an independent on/off toggle shown
    **original-vs-processed** — Core (detect/crop/resample/window), Representation
-   (ImageNet normalize, mouth crop, mel-spectrogram) and Quality & robustness (sharpen,
+   (ImageNet normalize, mouth crop, mel-spectrogram) and Enhancement (sharpen,
    denoise, CLAHE, blur, JPEG re-compress, downscale, add-noise, bandpass) — with a
    shared Dataset/Target/Clip selector — the dataset list is **discovered** by scanning
    `data/` (`dashboard/lib/datasets.py`: a raw drop is any dir with a `meta_data.csv`,

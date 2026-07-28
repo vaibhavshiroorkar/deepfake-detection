@@ -231,7 +231,7 @@ def render_visual():
 
     with st.container(border=True):
         l, r = st.columns([1, 2])
-        l.markdown("**2 · Quality & robustness**")
+        l.markdown("**2 · Enhancement**")
         do_sharpen = l.checkbox("Sharpen", key="v_sharpen_on")
         sharpen_amt = l.slider("amount", 0.0, 3.0, 1.0, disabled=not do_sharpen, key="v_sharp")
         do_denoise = l.checkbox("Denoise", key="v_denoise_on")
@@ -262,7 +262,7 @@ def render_visual():
                     img = VX.downscale_upscale(img, ds_factor)
                 out.append(img)
             cur = out
-            show_frames(r, cur, "After quality steps")
+            show_frames(r, cur, "After enhancement")
         else:
             show_frames(r, cur, "Unchanged" + SKIPPED)
 
@@ -397,7 +397,7 @@ def render_audio():
 
     with st.container(border=True):
         l, r = st.columns([1, 2])
-        l.markdown("**4 · Quality & robustness**")
+        l.markdown("**4 · Enhancement**")
         do_aden = l.checkbox("Noise reduction", key="a_denoise_on")
         aden_str = l.slider("strength", 0.5, 3.0, 1.0, disabled=not do_aden, key="a_den")
         do_rms = l.checkbox("RMS normalize", key="a_rms_on")
@@ -415,7 +415,7 @@ def render_audio():
                 wav = AX.bandpass(wav, sr, float(band[0]), float(band[1]))
             if do_addnoise:
                 wav = AX.add_noise(wav, snr, rng=np.random.default_rng(0))
-            r.pyplot(waveform_fig(wav, sr, "After quality steps"))
+            r.pyplot(waveform_fig(wav, sr, "After enhancement"))
         else:
             r.pyplot(waveform_fig(wav, sr, "Unchanged"))
 
