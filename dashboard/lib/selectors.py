@@ -273,7 +273,18 @@ def _selected_card(st, row, action_label: str | None):
 
 
 def _picker(st, df):
-    """The clip picker dialog. Stays open until dismissed, so several can be tried."""
+    """The clip picker dialog. Clicking a row applies it immediately.
+
+    There is no confirm step. Clicking a row sets the clip and reruns, which
+    rebuilds the page underneath with the new clip while the dialog stays open, so
+    you can keep clicking through clips and adjusting the sliders behind without
+    closing anything.
+
+    st.rerun() inside a dialog normally closes it. It does not here, because the
+    dialog is re-invoked from the sel_picker_open flag on the way back up: the
+    rerun refreshes the page and re-renders the dialog on top of it. Every widget
+    in here is keyed, so the search text, filters and row selection all survive.
+    """
 
     @st.dialog("Choose a clip", width="large", on_dismiss=_close_picker)
     def _body():
@@ -291,29 +302,38 @@ def _picker(st, df):
             filtered = group_by_identity(search_manifest(
                 filter_manifest(df, manip, methods, label_filter), query))
             st.caption(f"{len(filtered)} clips. Variants of one identity are grouped. "
-                       "Select a row to preview it on the right.")
+                       "Click a row to load it straight into the page behind.")
             view_cols = [c for c in ["clip_id", "source", "manipulation_type", "method", "label"]
                          if c in filtered.columns]
             event = st.dataframe(filtered[view_cols], height=340, hide_index=True,
                                  on_select="rerun", selection_mode="single-row", key="pick_table")
             rows = event.selection["rows"]
-        candidate = filtered.iloc[rows[0]] if rows else None
+
+        # Apply on click, then rerun so the page behind rebuilds around the new
+        # clip. Guarded on an actual change, or this would rerun forever.
+        if rows:
+            picked = filtered.iloc[rows[0]]["clip_id"]
+            if st.session_state.get("sel_clip_id") != picked:
+                st.session_state["sel_clip_id"] = picked
+                st.rerun()
+
+        # With nothing clicked yet, preview whatever is already active, which on
+        # first open is the dataset's first clip. Better than an empty pane telling
+        # you to go and click something.
+        active = df[df["clip_id"] == st.session_state.get("sel_clip_id")]
+        candidate = active.iloc[0] if len(active) else None
+
         with right:
             if candidate is None:
-                st.info("Select a clip on the left to preview it.")
+                st.info("No clip selected yet.")
             else:
                 st.markdown(f"**{candidate['clip_id']}**")
                 cmt = candidate["manipulation_type"] if "manipulation_type" in candidate else ""
-                st.caption(f"{cmt} ({label_text(candidate)})")
+                st.caption(f"{cmt} ({label_text(candidate)}) · live on the page behind")
                 _preview_frames(st, clip_path(candidate))
-                # Applying does NOT close the dialog. Comparing a few clips in one
-                # sitting is how this actually gets used, and reopening the picker
-                # for each one threw away the filters and the scroll position.
-                if st.button("Use this clip", type="primary", key="pick_confirm",
-                             width="stretch"):
-                    st.session_state["sel_clip_id"] = candidate["clip_id"]
-                if st.session_state.get("sel_clip_id") == candidate["clip_id"]:
-                    st.caption("Selected. Close this dialog to preview it on the page.")
+            if st.button("Done", key="pick_done", width="stretch"):
+                _close_picker()
+                st.rerun()
 
     _body()
 

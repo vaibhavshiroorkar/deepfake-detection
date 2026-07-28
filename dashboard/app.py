@@ -13,20 +13,25 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
+from dashboard.lib import locked
+
 st.set_page_config(page_title="Preprocessing dashboard", layout="wide")
 
-# Flat page list in pipeline order, no sidebar sections. Overview is the landing
-# page (short, static, no compute) and Preprocessing is the one page that
-# computes. Streams, Fusion and Explainability stay visible but locked (lock icon
-# + a locked notice in the page body), so the shape of the system is legible
-# without offering controls that do not work yet; each page says what unlocks it.
-# Documentation is last: the long-form reference.
+# Only the three working pages are registered, in pipeline order: Overview is the
+# landing page (static, no compute), Preprocessing is the page that computes, and
+# Documentation is the long-form reference.
+#
+# Streams, Fusion and Explainability are NOT pages. They were previously
+# registered with a lock icon, which meant they opened perfectly well and simply
+# announced that they were locked; that is a label, not a lock. They are now
+# listed in the sidebar as plain text, so the shape of the system stays legible
+# while there is genuinely nothing to open. Their page bodies do not exist under
+# pages/ either, because Streamlit will serve anything in that directory by URL
+# whether or not st.navigation lists it.
 nav = st.navigation([
     st.Page("pages/overview.py", title="Overview", default=True),
     st.Page("pages/preprocess.py", title="Preprocessing"),
-    st.Page("pages/streams.py", title="Streams", icon=":material/lock:"),
-    st.Page("pages/fusion.py", title="Fusion", icon=":material/lock:"),
-    st.Page("pages/explainability.py", title="Explainability", icon=":material/lock:"),
     st.Page("pages/documentation.py", title="Documentation"),
 ])
+locked.render_sidebar(st)
 nav.run()

@@ -47,8 +47,10 @@ def show_frames(container, frames, caption):
                 col.image(frames[start + j], width="stretch")
 
 
-def skipped(container):
-    container.caption("skipped (passthrough)")
+# Suffix rather than a caption of its own: every step must render exactly ONE
+# caption row whether it ran or not, or the rows below shift each time a toggle
+# moves. Callers append this to the caption they were already passing.
+SKIPPED = "  ·  skipped"
 
 
 def waveform_fig(y, rate, title, figsize=(10, 1.9)):
@@ -225,8 +227,7 @@ def render_visual():
             l.metric("Faces detected", f"{sum(flags)}/{n_frames}")
             show_frames(r, cur, "Cropped")
         else:
-            skipped(r)
-            show_frames(r, cur, "Full frame")
+            show_frames(r, cur, "Full frame" + SKIPPED)
 
     with st.container(border=True):
         l, r = st.columns([1, 2])
@@ -263,8 +264,7 @@ def render_visual():
             cur = out
             show_frames(r, cur, "After quality steps")
         else:
-            skipped(r)
-            show_frames(r, cur, "Unchanged")
+            show_frames(r, cur, "Unchanged" + SKIPPED)
 
     with st.container(border=True):
         l, r = st.columns([1, 2])
@@ -280,8 +280,7 @@ def render_visual():
             show_frames(r, disp, "Normalized (shown de-normalized)")
             model_faces = np.stack([np.transpose(a, (2, 0, 1)) for a in arrs]).astype(np.float32)
         else:
-            skipped(r)
-            show_frames(r, cur, "Raw [0,255]")
+            show_frames(r, cur, "Raw [0,255]" + SKIPPED)
             model_faces = np.stack([np.transpose(img.astype(np.float32) / 255.0, (2, 0, 1))
                                     for img in cur])
 
@@ -303,7 +302,7 @@ def render_visual():
                 model_mouth = np.stack([np.transpose(m.astype(np.float32) / 255.0, (2, 0, 1))
                                         for m in mouth_crops]).astype(np.float32)
         else:
-            skipped(r)
+            r.caption("Not produced" + SKIPPED)
 
     st.divider()
     st.header("Visual model input")
@@ -369,7 +368,6 @@ def render_audio():
             r.pyplot(waveform_fig(wav, sr, "Mono"))
         else:
             wav = raw2d.mean(axis=0)
-            skipped(r)
             r.pyplot(waveform_fig(wav, sr, "Channel-averaged for display"))
 
     with st.container(border=True):
@@ -383,7 +381,6 @@ def render_audio():
             sr = target_sr
             r.pyplot(waveform_fig(wav, sr, f"Resampled to {sr} Hz"))
         else:
-            skipped(r)
             r.pyplot(waveform_fig(wav, sr, f"Native {sr} Hz"))
 
     with st.container(border=True):
@@ -396,7 +393,6 @@ def render_audio():
             l.metric("Dropped", f"{dropped:.3f}s")
             r.pyplot(waveform_fig(wav, sr, "Trimmed"))
         else:
-            skipped(r)
             r.pyplot(waveform_fig(wav, sr, "Untrimmed"))
 
     with st.container(border=True):
@@ -421,7 +417,6 @@ def render_audio():
                 wav = AX.add_noise(wav, snr, rng=np.random.default_rng(0))
             r.pyplot(waveform_fig(wav, sr, "After quality steps"))
         else:
-            skipped(r)
             r.pyplot(waveform_fig(wav, sr, "Unchanged"))
 
     with st.container(border=True):
@@ -450,7 +445,8 @@ def render_audio():
             ax.set_title(f"Mel ({n_mels} mels)", fontsize=9)
             r.pyplot(fig)
         else:
-            skipped(r)
+            # The only audio step with no plot of its own when off, so it says so.
+            r.caption("Mel-spectrogram" + SKIPPED)
 
     st.divider()
     st.header("Audio model input")
