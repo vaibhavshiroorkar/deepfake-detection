@@ -14,24 +14,36 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from dashboard.lib import locked
+from dashboard.lib.stream_spec import EXPLAINABILITY, FUSION, STREAMS
 
 st.set_page_config(page_title="Preprocessing dashboard", layout="wide")
 
-# Only the three working pages are registered, in pipeline order: Overview is the
-# landing page (static, no compute), Preprocessing is the page that computes, and
-# Documentation is the long-form reference.
+# One flat list in pipeline order. The spec beside a page marks it locked:
+# Streams, Fusion and Explainability show in place, dimmed with a lock icon, and
+# do not respond to a click.
 #
-# Streams, Fusion and Explainability are NOT pages. They were previously
-# registered with a lock icon, which meant they opened perfectly well and simply
-# announced that they were locked; that is a label, not a lock. They are now
-# listed in the sidebar as plain text, so the shape of the system stays legible
-# while there is genuinely nothing to open. Their page bodies do not exist under
-# pages/ either, because Streamlit will serve anything in that directory by URL
-# whether or not st.navigation lists it.
-nav = st.navigation([
-    st.Page("pages/overview.py", title="Overview", default=True),
-    st.Page("pages/preprocess.py", title="Preprocessing"),
-    st.Page("pages/documentation.py", title="Documentation"),
-])
-locked.render_sidebar(st)
+# The nav is drawn by hand because st.navigation has no disabled entry, so the
+# built-in one is hidden and st.page_link renders the list instead, with
+# disabled=True on the locked three. Registering them still keeps their routes
+# alive, which is deliberate: a direct visit lands on a body that says what the
+# section will hold and what unlocks it, rather than a dead end.
+PAGES = [
+    (st.Page("pages/overview.py", title="Overview", default=True), None),
+    (st.Page("pages/preprocess.py", title="Preprocessing"), None),
+    (st.Page("pages/streams.py", title="Streams"), STREAMS),
+    (st.Page("pages/fusion.py", title="Fusion"), FUSION),
+    (st.Page("pages/explainability.py", title="Explainability"), EXPLAINABILITY),
+    (st.Page("pages/documentation.py", title="Documentation"), None),
+]
+
+nav = st.navigation([page for page, _ in PAGES], position="hidden")
+
+with st.sidebar:
+    for page, spec in PAGES:
+        if spec is None:
+            st.page_link(page, width="stretch")
+        else:
+            st.page_link(page, icon=":material/lock:", disabled=True,
+                         help=locked.tooltip(spec), width="stretch")
+
 nav.run()

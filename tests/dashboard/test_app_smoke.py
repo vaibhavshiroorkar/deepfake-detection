@@ -1,47 +1,62 @@
-from pathlib import Path
-
 from streamlit.testing.v1 import AppTest
 
 from dashboard.lib import locked
 
-# Streams, Fusion and Explainability are locked, and locked here means genuinely
-# unreachable: they are not registered as pages and no file for them exists under
-# dashboard/pages/. They appear in the sidebar as inert text only.
+# Streams, Fusion and Explainability stay in their pipeline positions in the
+# sidebar, dimmed with a lock icon and not clickable. app.py hides Streamlit's
+# built-in nav and draws the list with st.page_link so it can pass disabled=True,
+# which st.navigation has no way to express.
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-PAGES_DIR = REPO_ROOT / "dashboard" / "pages"
+LOCKED_PAGES = [
+    "dashboard/pages/streams.py",
+    "dashboard/pages/fusion.py",
+    "dashboard/pages/explainability.py",
+]
 
-OPEN_PAGES = ["overview.py", "preprocess.py", "documentation.py"]
-
-
-def test_only_the_working_pages_exist_under_pages():
-    """A file in pages/ is servable by URL, so a locked section must not have one."""
-    present = sorted(p.name for p in PAGES_DIR.glob("*.py") if p.name != "__init__.py")
-    assert present == sorted(OPEN_PAGES)
-
-
-def test_locked_sections_have_no_page_file():
-    for title in locked.locked_titles():
-        assert not (PAGES_DIR / f"{title.lower()}.py").exists(), title
+EXPECTED_NAV_ORDER = ["Overview", "Preprocessing", "Streams", "Fusion",
+                      "Explainability", "Documentation"]
 
 
-def test_app_runs_without_exception():
+def _nav_links():
+    """The sidebar nav entries. AppTest has no .page_link accessor, hence .get()."""
     at = AppTest.from_file("dashboard/app.py", default_timeout=120).run()
     assert not at.exception
+    return at.get("page_link")
 
 
-def test_locked_sections_are_listed_in_the_sidebar():
-    """Visible, so the shape of the system is legible, but not as links."""
-    at = AppTest.from_file("dashboard/app.py", default_timeout=120).run()
-    assert not at.exception
-    sidebar_text = " ".join(m.value for m in at.sidebar.markdown)
+def test_nav_keeps_every_section_in_pipeline_order():
+    """The locked sections are not moved or hidden, just disabled in place."""
+    labels = [link.label for link in _nav_links()]
+    assert labels == EXPECTED_NAV_ORDER
+
+
+def test_exactly_the_locked_sections_are_disabled():
+    links = {link.label: link for link in _nav_links()}
     for title in locked.locked_titles():
-        assert title in sidebar_text, title
-    assert any("Locked" in c.value for c in at.sidebar.caption)
+        assert links[title].disabled, title
+    for title in ["Overview", "Preprocessing", "Documentation"]:
+        assert not links[title].disabled, title
+
+
+def test_disabled_entries_explain_themselves_on_hover():
+    """Dimmed with no explanation is just broken-looking, so each carries a tooltip."""
+    links = {link.label: link for link in _nav_links()}
+    for spec in locked.LOCKED:
+        help_text = links[spec["title"]].help
+        assert spec["status"] in help_text
+        assert "Will contain" in help_text
+
+
+def test_locked_page_bodies_still_render():
+    """Their routes stay alive, so a direct visit must land on a real explanation."""
+    for page in LOCKED_PAGES:
+        at = AppTest.from_file(page, default_timeout=120).run()
+        assert not at.exception, (page, at.exception)
+        assert at.title[0].value.startswith(":material/lock:"), page
+        assert at.info and at.info[0].value.strip(), page
 
 
 def test_every_locked_section_states_why_and_what_lands_there():
-    """The reason becomes the tooltip, so it has to be non-empty in the spec."""
     for spec in locked.LOCKED:
         assert spec["status"].strip(), spec["title"]
         assert spec["views"], spec["title"]

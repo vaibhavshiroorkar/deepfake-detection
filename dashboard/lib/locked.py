@@ -1,18 +1,15 @@
-"""The locked sections, listed in the sidebar but not openable.
+"""The locked sections: dimmed, unclickable, but still in the nav where they belong.
 
-Streams, Fusion and Explainability used to be real pages carrying a lock icon and
-a "Locked." notice. That is a label rather than a lock: the page opened, and the
-notice was the only thing stopping you. They are now not pages at all, so there is
-nothing to navigate to, and they appear here as inert sidebar text.
+Streams, Fusion and Explainability sit in their pipeline positions in the sidebar,
+greyed out with a lock icon, and clicking them does nothing. app.py hides
+Streamlit's built-in nav and draws the list itself with st.page_link, passing
+disabled=True for these three, because st.navigation has no notion of a disabled
+entry.
 
-Kept visible rather than hidden because the shape of the system is worth seeing
-from the landing page, and because a section that silently does not exist is
-harder to reason about than one that says why it is closed. Hovering an entry
-gives the reason.
-
-When a stage lands, add a file under dashboard/pages/, register it in app.py's
-st.navigation, and drop its spec from LOCKED below. The "what lands here" copy
-already lives in stream_spec.py, so nothing has to be rewritten.
+They keep a page body (render below) for the case where someone reaches the route
+directly, and because that body becomes the real page when the stage lands. To
+unlock one: drop its spec from LOCKED so app.py stops disabling it, then replace
+the body with the real controls. The copy already lives in stream_spec.py.
 """
 import sys
 from pathlib import Path
@@ -23,23 +20,27 @@ if str(_REPO_ROOT) not in sys.path:
 
 from dashboard.lib.stream_spec import EXPLAINABILITY, FUSION, STREAMS
 
-# Pipeline order, matching where they would sit in the nav once unlocked.
+# Pipeline order, matching where they sit in the nav.
 LOCKED = [STREAMS, FUSION, EXPLAINABILITY]
 
 
 def locked_titles() -> list[str]:
-    """Names of the sections that are not reachable."""
+    """Titles of the sections that are dimmed and unclickable."""
     return [spec["title"] for spec in LOCKED]
 
 
-def render_sidebar(st):
-    """List the locked sections under the nav, as text rather than links."""
-    with st.sidebar:
-        st.markdown("")
-        st.caption("Locked")
-        for spec in LOCKED:
-            lands = ", ".join(name for name, _ in spec["views"])
-            st.markdown(
-                f":material/lock: &nbsp;{spec['title']}",
-                help=f"{spec['status']}\n\nWill contain: {lands}.",
-            )
+def tooltip(spec: dict) -> str:
+    """Hover text for a dimmed nav entry: why it is locked, and what lands there."""
+    lands = ", ".join(name for name, _ in spec["views"])
+    return f"{spec['status']}\n\nWill contain: {lands}."
+
+
+def render(st, spec: dict):
+    """The page body, for a direct visit to a locked route."""
+    st.title(f":material/lock: {spec['title']}")
+    st.caption(spec["note"])
+    st.info(spec["status"])
+
+    st.subheader("What lands here")
+    for name, description in spec["views"]:
+        st.markdown(f"**{name}.** {description}")
