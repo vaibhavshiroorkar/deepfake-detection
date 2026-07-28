@@ -53,14 +53,42 @@ def show_frames(container, frames, caption):
 SKIPPED = "  ·  skipped"
 
 
-def waveform_fig(y, rate, title, figsize=(10, 1.9)):
+def waveform_fig(y, rate, title, figsize=(10, 1.9), xlabel="s"):
+    """Waveform against a real time axis.
+
+    Mono only, and it says so loudly: the x axis is y.size/rate, so handing this a
+    [channels, samples] array would silently stretch time by the channel count.
+    """
+    y = np.asarray(y)
+    if y.ndim != 1:
+        raise ValueError(f"waveform_fig needs a mono 1-D signal, got shape {y.shape}")
     fig, ax = plt.subplots(figsize=figsize)
     if y.size:
         ax.plot(np.arange(y.size) / rate, y, linewidth=0.5, color="#3b82f6")
     ax.set_title(title, fontsize=9)
-    ax.set_xlabel("s", fontsize=8)
+    ax.set_xlabel(xlabel, fontsize=8)
     ax.margins(x=0)
     return fig
+
+
+def _centring_error(timestamps, n_samples: int, rate: int, window_sec: float):
+    """Per-window signed offset, in seconds, between actual centre and timestamp.
+
+    Mirrors the clamping in preprocessing.ops.audio.extract_windows: a window that
+    would run off either end slides inward instead, so it stops being centred on
+    its frame. Returned rather than asserted, because the Audio tab reports it.
+    """
+    win = int(window_sec * rate)
+    out = []
+    for t in np.asarray(timestamps, dtype=float):
+        centre = int(t * rate)
+        start = max(0, centre - win // 2)
+        end = start + win
+        if end > n_samples:
+            end = n_samples
+            start = max(0, end - win)
+        out.append((start + end) / 2 / rate - t)
+    return np.asarray(out, dtype=float)
 
 
 def cached_clip():
@@ -363,12 +391,18 @@ def render_audio():
         l, r = st.columns([1, 2])
         l.markdown("**1 · Mono downmix**")
         do_downmix = l.checkbox("Enable downmix", value=True, key="a_downmix")
+        n_channels = raw2d.shape[0]
+        # Off used to run raw2d.mean(axis=0), which is exactly what downmix does,
+        # so the toggle changed nothing at all. Off now takes channel 0, which is
+        # a real alternative; every later step is mono, so it cannot keep both.
+        l.caption(f"Source has {n_channels} channel(s). Off keeps channel 0 rather than "
+                  "mixing, since the rest of the path is mono either way.")
         if do_downmix:
-            wav = AF.downmix(wav)
-            r.pyplot(waveform_fig(wav, sr, "Mono"))
+            wav = AF.downmix(raw2d)
+            r.pyplot(waveform_fig(wav, sr, "Mono (mean of channels)"))
         else:
-            wav = raw2d.mean(axis=0)
-            r.pyplot(waveform_fig(wav, sr, "Channel-averaged for display"))
+            wav = np.asarray(raw2d[0], dtype=np.float32)
+            r.pyplot(waveform_fig(wav, sr, "Channel 0 only, no mixing"))
 
     with st.container(border=True):
         l, r = st.columns([1, 2])
@@ -385,15 +419,22 @@ def render_audio():
 
     with st.container(border=True):
         l, r = st.columns([1, 2])
-        l.markdown("**3 · Trim leading silence**")
-        do_trim = l.checkbox("Enable trim", key="a_trim")
-        top_db = l.slider("top_db", 10.0, 60.0, 30.0, disabled=not do_trim, key="a_topdb")
-        if do_trim:
-            wav, dropped = AF.trim_leading_silence(wav, sr, top_db)
-            l.metric("Dropped", f"{dropped:.3f}s")
-            r.pyplot(waveform_fig(wav, sr, "Trimmed"))
-        else:
-            r.pyplot(waveform_fig(wav, sr, "Untrimmed"))
+        l.markdown("**3 · Leading silence**")
+        # This step used to cut the waveform. The frame timestamps are fixed, so
+        # cutting the head slid every audio window later in real time: measured at
+        # 64 ms on a clip with 64 ms of silence, which is a desynchronisation of
+        # exactly the kind the cross-modal streams are built to detect. The
+        # waveform is now left intact and the silence is only measured.
+        top_db = l.slider("top_db", 10.0, 60.0, 30.0, key="a_topdb")
+        silence = AF.leading_silence_sec(wav, sr, top_db)
+        l.metric("Leading silence", f"{silence:.3f}s")
+        l.caption("Measured, not trimmed. `audit_dataset.py` records this per clip and "
+                  "`extract_clip.py` offsets frame *and* audio sampling past it together. "
+                  "This page samples from t=0, so the shaded head is still included.")
+        fig = waveform_fig(wav, sr, "Full waveform, nothing removed")
+        if silence > 0:
+            fig.axes[0].axvspan(0, silence, color="#ef4444", alpha=0.22)
+        r.pyplot(fig)
 
     with st.container(border=True):
         l, r = st.columns([1, 2])
@@ -422,14 +463,36 @@ def render_audio():
     with st.container(border=True):
         l, r = st.columns([1, 2])
         l.markdown("**5 · Window extraction**")
-        l.caption(f"One {window_sec:.2f}s window centered on each of the {n_frames} frames.")
+        l.caption(f"One {window_sec:.2f}s window per frame timestamp, clamped to the "
+                  "waveform and zero-padded to a fixed length.")
         windows = AF.extract_windows(wav, sr, timestamps, window_sec)
         if sr != media.AUDIO_SR:
             model_audio = np.stack([AF.resample(w, sr, media.AUDIO_SR) for w in windows])
         else:
             model_audio = windows
         l.metric("Windows", f"{windows.shape[0]} × {windows.shape[1]}")
-        r.pyplot(waveform_fig(windows.reshape(-1), sr, "Windows concatenated"))
+
+        # A window near either edge cannot be centred, so it slides inward. The
+        # frame timestamps come from the video duration (frame_count/fps), which
+        # routinely runs slightly longer than the audio track, so the last window
+        # is the one that moves. Reported rather than hidden: it is a real
+        # frame-to-audio offset, and 60 ms is inside the range this project cares
+        # about.
+        off_by = _centring_error(timestamps, len(wav), sr, window_sec)
+        worst = float(np.abs(off_by).max()) if len(off_by) else 0.0
+        l.metric("Worst off-centre", f"{worst * 1000:.0f} ms",
+                 help="How far the least-centred window sits from its frame timestamp. "
+                      "Non-zero means the audio track is shorter than the video duration "
+                      "the timestamps were derived from.")
+        if worst > 0.005:
+            n_off = int((np.abs(off_by) > 1e-6).sum())
+            l.warning(f"{n_off} of {len(off_by)} windows are not centred on their frame.")
+
+        total = windows.size / sr
+        r.pyplot(waveform_fig(
+            windows.reshape(-1), sr,
+            f"{windows.shape[0]} windows end to end ({total:.2f}s of audio, not clip time)",
+            xlabel="s within the concatenation"))
 
     with st.container(border=True):
         l, r = st.columns([1, 2])
@@ -440,9 +503,14 @@ def render_audio():
         if do_mel:
             mel = AX.mel_spectrogram(wav, sr, n_mels, hop)
             fig, ax = plt.subplots(figsize=(10, 2.2))
-            im = ax.imshow(mel, aspect="auto", origin="lower", cmap="magma")
+            # extent, or the x axis reads as STFT frame index while looking like
+            # seconds. One frame is hop/sr seconds.
+            im = ax.imshow(mel, aspect="auto", origin="lower", cmap="magma",
+                           extent=[0, mel.shape[1] * hop / sr, 0, n_mels])
             fig.colorbar(im, ax=ax, format="%+.0f dB")
-            ax.set_title(f"Mel ({n_mels} mels)", fontsize=9)
+            ax.set_title(f"Mel ({n_mels} bands, hop {hop})", fontsize=9)
+            ax.set_xlabel("s", fontsize=8)
+            ax.set_ylabel("mel band", fontsize=8)
             r.pyplot(fig)
         else:
             # The only audio step with no plot of its own when off, so it says so.

@@ -82,7 +82,10 @@ def test_pipeline_tab_records_the_dashboard_vs_batch_differences():
     body = " ".join(m.value for m in _page().markdown)
     assert "Where the dashboard differs from the batch pipeline" in \
         [h.value for h in _page().subheader]
-    assert "Not applied" in body          # the leading-silence offset
+    # The leading-silence offset: the page measures and shows it, the batch
+    # pipeline actually applies it.
+    assert "not applied" in body.lower()
+    assert "start_offset=leading_silence" in body
 
 
 def test_architecture_diagram_is_present_and_rendered():

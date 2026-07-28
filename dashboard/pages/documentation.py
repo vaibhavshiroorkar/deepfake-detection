@@ -265,7 +265,7 @@ thing.
     st.markdown("""
 | | Batch pipeline | Preprocessing page |
 |---|---|---|
-| Leading-silence offset | Applied, `start_offset=leading_silence` | **Not applied**; timestamps start at half a window |
+| Leading-silence offset | Applied, `start_offset=leading_silence` | **Measured and shown, not applied**; sampling starts at half a window |
 | Frame count and window | Fixed at `NUM_FRAMES=16`, `0.35 s` | Sliders, 4–32 frames and 0.10–1.00 s |
 | Normalisation | Always, in `ClipDataset` | A toggle, so the un-normalised tensor is inspectable |
 | Enhancement / degradation extras | Never | Available, all off by default |
@@ -494,7 +494,10 @@ future analysis can check the correction rather than trust it.
         st.markdown("""
 One window of `window_sec`, 0.35 s by default, centred on each of the 16 frame timestamps,
 clamped to the bounds of the clip and zero-padded to a fixed length so the result is rectangular.
-At 16 kHz that is 5600 samples per window, giving `[16, 5600]`.
+At 16 kHz that is 5600 samples per window, giving `[16, 5600]`. A window that would run off either
+end slides inward rather than being centred, so the last window is off-centre by however much the
+video duration (`frame_count / fps`) exceeds the audio track: about 60 ms on a typical FakeAVCeleb
+clip. The Audio tab reports this as *Worst off-centre*.
 
 Windows are centred per frame rather than concatenated into one long track because the
 cross-modal streams compare frame *i*'s mouth shape against the sound that occurred at that
