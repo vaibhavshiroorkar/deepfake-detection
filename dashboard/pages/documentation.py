@@ -122,159 +122,292 @@ embeddings.
 # ===================== 2 · END-TO-END PREPROCESSING ======================== #
 def render_pipeline():
     st.header("Input to tensors")
-    st.caption("Every stage between a video file arriving and a batch reaching a model, in the "
-               "order the code actually runs them. The *Visual path* and *Audio path* tabs explain "
-               "how each individual operation works; this one is the control flow that calls them.")
+    st.caption("Every stage between an mp4 arriving and a batch reaching a model, in the order the "
+               "code runs them, with the exact data representation at each handoff. The *Visual "
+               "path* and *Audio path* tabs explain how the individual operations work; this tab is "
+               "the control flow and the contract.")
 
     st.markdown("""
 Two entry points share one implementation. `preprocessing/extract_clip.extract_clip` is the batch
-path, called per clip by `ClipDataset` and warmed in bulk by `preprocessing/precache.py`. The
-dashboard's Preprocessing page calls the same `preprocessing/ops/` functions, one step at a time, so
-you can see each intermediate result. There is no second implementation to drift.
+path, called per clip by `dataset.ClipDataset` and warmed in bulk by `preprocessing/precache.py`.
+The Preprocessing page calls the same `preprocessing/ops/` functions one step at a time so each
+intermediate result is visible. There is no second implementation to drift.
 """)
 
     st.subheader("Stage map")
     st.markdown("""
-| # | Stage | Code | Out |
+| # | Stage | Code | Result |
 |---|---|---|---|
-| 0 | Find the dataset | `audit_dataset.find_dataset_root` | the directory holding `meta_data.csv` |
-| 1 | Build the manifest | `manifest.manifest_from_meta`, `manifest.clip_label` | one row per clip: `clip_id`, `video_path`, `label`, `manipulation_type`, `method`, `source` |
-| 2 | Split by identity | `build_splits.py` → `verify_splits.py` | `train/val/test.csv`, identity-disjoint |
-| 3 | Decode audio | `ops.audio.decode` (PyAV) | `[channels, samples]` float32 at native rate |
-| 4 | Mono + 16 kHz | `ops.audio.downmix`, `ops.audio.resample` | `[samples]` float32 @ 16 kHz |
+| 0 | Locate the dataset | `audit_dataset.find_dataset_root` | the directory holding `meta_data.csv` |
+| 1 | Build the manifest | `manifest.manifest_from_meta`, `manifest.clip_label` | one row per clip |
+| 2 | Split on identity | `build_splits.py`, `verify_splits.py` | `train/val/test.csv` |
+| 3 | Decode audio | `ops.audio.decode` (PyAV) | `[channels, samples]` float32, native rate |
+| 4 | Mono and 16 kHz | `ops.audio.downmix`, `ops.audio.resample` | `[samples]` float32 @ 16 kHz |
 | 5 | Measure leading silence | `ops.audio.leading_silence_sec` | one float, seconds |
-| 6 | Probe the video | `cv2.VideoCapture` properties | `fps`, `frame_count` → `duration` |
-| 7 | Choose 16 timestamps | `ops.audio.sample_timestamps` | `[16]` float, **shared by both paths** |
-| 8 | Per frame: seek, detect, align, crop | `ops.faces.detect_align_crop` | face `[16, 224, 224, 3]` uint8 (+ a mouth crop) |
+| 6 | Probe the video | `cv2.VideoCapture` properties | `fps`, `frame_count`, `duration` |
+| 7 | Choose 16 timestamps | `ops.audio.sample_timestamps` | `[16]` float64, **shared by both paths** |
+| 8 | Per frame: seek, detect, align, crop | `ops.faces.detect_align_crop` | `[16, 224, 224, 3]` uint8 (+ mouth) |
 | 9 | Cut audio windows | `ops.audio.extract_windows` | `[16, 5600]` float32 |
-| 10 | Write the cache | `extract_clip` | `frames.npy`, `audio.npy`, `timestamps.npy`, `version.txt` |
-| 11 | Normalise into a batch | `dataset.ClipDataset.__getitem__` | `faces [B, 16, 3, 224, 224]`, `audio [B, 16, 5600]`, `label [B]` |
+| 10 | Write the cache | `extract_clip` | four files under `data/processed/<clip_id>/` |
+| 11 | Normalise into a batch | `dataset.ClipDataset.__getitem__` | the tensors the model sees |
+
+Fixed by `ops/constants.py`: `NUM_FRAMES=16`, `FRAME_SIZE=224`, `MOUTH_SIZE=96`, `AUDIO_SR=16000`,
+`AUDIO_WINDOW_SEC=0.35`, `PIPELINE_VERSION=3`.
 """)
 
-    with st.expander("**Stages 0–2 · From a folder of mp4s to identity-disjoint splits**"):
+    st.subheader("Representation at every boundary")
+    st.caption("No image or audio file format is involved after decode. Frames never become PNGs "
+               "and audio never becomes a WAV; everything is NumPy in memory and `.npy` on disk.")
+    st.markdown("""
+| Boundary | Type | Shape | dtype | Range |
+|---|---|---|---|---|
+| On disk (source) | mp4 container | 224x224 video + mono audio | h264 or mpeg4, aac or mp3 | n/a |
+| After `cv2` decode | `ndarray` | `(224, 224, 3)` HWC, **RGB** | `uint8` | `[0, 255]` |
+| After PyAV audio decode | `ndarray` | `(channels, samples)` | `float32` | about `[-1, 1]` |
+| After downmix and resample | `ndarray` | `(samples,)` | `float32` | about `[-1, 1]` |
+| `frames.npy` | `ndarray` | `(16, 224, 224, 3)` HWC | `uint8` | `[0, 255]` |
+| `audio.npy` | `ndarray` | `(16, 5600)` | `float32` | source level, **not normalised** |
+| `timestamps.npy` | `ndarray` | `(16,)` | `float64` | seconds |
+| Model input, faces | `Tensor` | `(B, 16, 3, 224, 224)` CHW | `float32` | about `[-2.1, +2.6]` |
+| Model input, audio | `Tensor` | `(B, 16, 5600)` | `float32` | source level |
+| Model input, label | `Tensor` | `(B,)` | `int64` | `{0, 1}` |
+""")
+
+    with st.expander("**Stage 0 · What actually arrives**", expanded=True):
         st.markdown("""
-Nothing about the dataset's location is configured. `find_dataset_root` globs `data/` up to three
-levels deep for a `meta_data.csv` and takes the directory that holds it, which is the same rule the
-dashboard's picker uses, so the two cannot disagree about where the clips are.
+21,544 clips, each a single mp4 holding both tracks. There are no loose frame images and no separate
+audio files anywhere in the dataset.
 
-`manifest_from_meta` turns FakeAVCeleb's metadata into the manifest the rest of the system reads.
-The label comes from the category through `manifest.clip_label`, not from the filename or the
-directory: `RealVideo-RealAudio` is 0 and the other three categories are 1. `video_path` is written
-**relative to `data/`**, which is what lets a manifest be attached to whichever drop it points into
-rather than by filename.
-
-`build_splits.py` then splits on the `source` identity, never on the clip. The same person appears
-across all four categories, so a random clip-level split puts a real clip of someone in train and a
-forgery of that same person in test, after which a model can score spectacularly by recognising the
-person. `verify_splits.py` asserts zero identity overlap and zero file overlap, and is the gate that
-makes the numbers mean anything.
+Location is discovered, not configured: `find_dataset_root` globs `data/` three levels deep for a
+`meta_data.csv` and takes its directory, which is the same rule the dashboard's picker uses, so the
+two cannot disagree. `data/FakeAVCeleb_v1.2/` and `data/raw/FakeAVCeleb_v1.2/` both work, and clips
+are nested `<category>/<race>/<gender>/<identity>/*.mp4`.
 """)
-        st.warning("""**Two labels, not one.** The manifest's `label` is the *clip* label. A
-visual-only stream must instead be judged on the **video track**, which is why
-`dataset.ClipDataset` takes `label_mode`: `'visual'` derives the label from `manipulation_type`
-(`FakeVideo-*` → fake), so `RealVideo-FakeAudio` counts as **real** for a model that never hears the
-audio. `'clip'` uses the manifest label and is for the cross-modal streams and fusion, which do hear
-it. Using the clip label for a visual stream would ask it to detect a forgery that leaves no trace
-in its input.""")
+        st.warning("""**The dataset is not uniformly encoded.** Verified with ffprobe:
 
-    with st.expander("**Stages 3–7 · Why audio is decoded before a single frame is read**",
+| Category | Video codec | Audio codec |
+|---|---|---|
+| RealVideo-RealAudio | h264 | aac |
+| RealVideo-FakeAudio | h264 | **mp3** |
+| FakeVideo-RealAudio | h264, some **mpeg4** | aac |
+| FakeVideo-FakeAudio | **mpeg4** | aac |
+
+The wav2lip generator wrote its output with an MPEG-4 Part 2 encoder. OpenCV and PyAV decode all of
+it identically, so the arrays are unaffected and the pipeline never notices. It matters only where
+the file itself is handed to something pickier: no browser plays `mpeg4`, which is why the clip
+player re-encodes (`dashboard/lib/media.playable_video_bytes`).""")
+
+    with st.expander("**Stages 1-2 · Manifest and identity-disjoint splits**"):
+        st.markdown("""
+`manifest_from_meta` turns FakeAVCeleb's metadata into the table everything else reads:
+
+```
+clip_id, video_path, label, manipulation_type, method, source, target1, target2, race, gender
+```
+
+`video_path` is stored **relative to `data/`**, which is what lets a manifest attach to whichever
+drop it points into rather than by filename.
+
+The label comes from the category through `manifest.clip_label`, never from a filename: only
+`RealVideo-RealAudio` is 0, the other three are 1.
+
+`build_splits.py` splits on the `source` identity, never on the clip. The same person appears across
+all four categories, so a clip-level split puts a real clip of someone in train and a forgery of
+that same person in test, after which a model scores well by recognising the person.
+`verify_splits.py` asserts zero identity overlap and zero file overlap, and is the gate that makes
+the numbers mean anything. As configured: 1400 / 300 / 300 clips over 500 identities, undersampled
+to a 1:3 real:fake ratio in every split.
+""")
+        st.warning("""**There are two labels, and they disagree on one category.** The manifest's
+`label` is the *clip* label. A visual-only stream must be judged on the **video track**, so
+`ClipDataset` takes `label_mode`:
+
+- `'visual'` derives the label from `manipulation_type` (`FakeVideo-*` is fake), which makes
+  `RealVideo-FakeAudio` count as **real**. Correct: its forgery is audio-only and leaves no trace in
+  the frames.
+- `'clip'` uses the manifest label, for the cross-modal streams and fusion, which do hear the audio.
+
+Training a visual stream on the clip label asks it to detect a forgery absent from its input.""")
+
+    with st.expander("**Stages 3-5 · Audio first, because the timestamps depend on it**",
                      expanded=True):
         st.markdown("""
-The ordering here looks backwards and is deliberate. `extract_clip` decodes and resamples the whole
-audio track *first*, because the frame timestamps depend on a measurement taken from the audio.
+The ordering looks backwards and is deliberate: the whole audio track is decoded and resampled
+*before* a single frame is read, because the frame timestamps depend on a measurement taken from the
+audio.
 
-FakeAVCeleb's fake-audio clips carry extra near-silence at `t=0`. It is an artifact of how the
-dataset was assembled, not a property of forgery, and a model left alone with it learns "silence at
-the start means fake" and reports an excellent AUC that transfers to nothing. So the silence is
-measured with an energy gate, and the measurement becomes the `start_offset` for sampling:
+**Decode** goes through PyAV, which binds ffmpeg's libraries and bundles them, so no system ffmpeg
+is needed. The result is `[channels, samples]` float32 at the file's native rate. This dataset
+decodes as `fltp` (planar float), already in about `[-1, 1]`; the integer-PCM branch in
+`ops.audio.decode` divides by `iinfo(dtype).max` and is simply not hit here.
+
+**Downmix** is a channel mean. Stereo separation carries no forgery signal in this dataset and every
+downstream audio encoder expects mono.
+
+**Resample to 16 kHz** is filtered, not decimated: librosa low-pass filters with a windowed sinc
+kernel before dropping samples, or everything above the new Nyquist frequency folds back as aliasing.
+16 kHz is the rate Whisper and Wav2Vec2 were pretrained at, and speech carries little energy above
+8 kHz.
+
+**Leading silence** is measured with an energy gate at `top_db = 30`, meaning frames whose level sits
+more than 30 dB below the clip's reference count as silence:
 """)
-        st.code("""waveform  = resample(downmix(decode(video)), native_sr, 16_000)
-silence   = leading_silence_sec(waveform, 16_000, top_db=30.0)
-duration  = frame_count / fps                      # from cv2.VideoCapture
-timestamps = sample_timestamps(duration, 16, 0.35, start_offset=silence)""", language="python")
+        st.latex(r"\text{dB} = 20\,\log_{10}\!\left(\frac{a}{a_{\text{ref}}}\right)"
+                 r"\quad\Longrightarrow\quad -30\,\text{dB} \approx \tfrac{1}{32}"
+                 r"\ \text{of reference amplitude}")
         st.markdown("""
-`sample_timestamps` places 16 evenly spaced instants, inset at both ends by half an audio window so
-every window stays inside the recording:
+FakeAVCeleb's fake-audio clips carry extra near-silence at `t=0`. It is an artifact of assembly, not
+of forgery, and a model left alone with it learns "silence at the start means fake", reports an
+excellent AUC, and has learned nothing transferable. The measurement becomes the `start_offset` for
+sampling:
+""")
+        st.code("""waveform   = resample(downmix(decode(video)), native_sr, 16_000)
+silence    = leading_silence_sec(waveform, 16_000, top_db=30.0)
+duration   = frame_count / fps                     # from cv2.VideoCapture
+timestamps = sample_timestamps(duration, 16, 0.35, start_offset=silence)""", language="python")
+        st.info("The waveform is never cut. Trimming shortens the audio while the frame timestamps "
+                "stay put, which slides every window later in real time and manufactures exactly "
+                "the desynchronisation the cross-modal streams exist to detect. "
+                "`audit_dataset.py` also records the measurement per clip as `leading_silence_sec`, "
+                "so later analysis can check the correction instead of trusting it.")
+
+    with st.expander("**Stages 6-7 · The shared timestamp array**"):
+        st.markdown("""
+Video metadata comes from OpenCV: `CAP_PROP_FPS` and `CAP_PROP_FRAME_COUNT`, with
+`duration = frame_count / fps`. `sample_timestamps` then places 16 evenly spaced instants, inset at
+both ends by half an audio window so every window stays inside the recording:
 """)
         st.latex(r"t_i = \mathrm{lo} + \frac{i}{N-1}\,(\mathrm{hi} - \mathrm{lo}), \qquad "
-                 r"\mathrm{lo} = \max\!\left(\text{offset} + \tfrac{w}{2},\ \tfrac{w}{2}\right), "
+                 r"\mathrm{lo} = \max\!\left(\text{offset} + \tfrac{w}{2},\ \tfrac{w}{2}\right),"
                  r"\quad \mathrm{hi} = \max\!\left(T - \tfrac{w}{2},\ \mathrm{lo}\right)")
         st.markdown("""
-Frames are seeked by *timestamp* rather than by frame index, which is what lets clips of differing
-frame rates share an index with an audio path that has no concept of frames. The silence correction
-enters through that same array, so it moves both paths together and cannot introduce the
-desynchronisation it exists to prevent.
+This single array is the join between the modalities. Frames are seeked by *timestamp*, not by frame
+index, which is what lets clips of differing frame rates share an index with an audio path that has
+no concept of frames. The silence correction enters through the same array, so it moves both paths
+together and cannot introduce the desynchronisation it exists to prevent.
 """)
-        st.info("The trim is never applied to the waveform itself. Shortening the audio while the "
-                "frame timestamps stay put would desynchronise exactly the signal the cross-modal "
-                "streams measure. `audit_dataset.py` also records the measurement per clip as "
-                "`leading_silence_sec`, so any later analysis can check the correction instead of "
-                "trusting it.")
+        st.warning("""**The duration is the video's, and the audio is often shorter.**
+`frame_count / fps` measured 10.120 s on a clip whose audio track is 10.058 s. Windows are clamped
+to the waveform, so the final window slides inward instead of staying centred on its frame: **62 ms
+off** on that clip, while the other fifteen are exact. 62 ms is inside the range this project cares
+about, since the 0.35 s window was chosen so that an error of order 100 ms is visible. The Audio tab
+reports it as *Worst off-centre*. `extract_clip.py` behaves identically, so correcting it would
+change every cached tensor.""")
 
-    with st.expander("**Stages 8–9 · The two paths, run over the shared timestamps**"):
+    with st.expander("**Stage 8 · The visual path, per timestamp**"):
         st.markdown("""
-For each of the 16 timestamps the video path seeks with `cap.set(cv2.CAP_PROP_POS_MSEC, t*1000)`,
-converts BGR to RGB, and calls `detect_align_crop`, which does the whole visual front-end in one
-detection: MTCNN detect → confidence gate at 0.90 → 5-point similarity-transform align →
-224² crop → a 96² mouth ROI from the two mouth-corner landmarks. A frame that fails the gate falls
-back to the whole frame rather than to a guess, and the count of successes is returned as
-`num_faces_detected` so a clip that is quietly failing detection is visible rather than silently
-degraded.
+For each of the 16 timestamps: `cap.set(cv2.CAP_PROP_POS_MSEC, t * 1000)`, read, convert BGR to RGB,
+then one call to `detect_align_crop` does the whole front-end from a single detection.
 
-The audio path then cuts one 0.35 s window centred on each timestamp, clamped to the waveform and
-zero-padded to a fixed length so the result is rectangular: 5600 samples at 16 kHz, giving
-`[16, 5600]`.
-""")
-        st.warning("""**The mouth crop is computed and then thrown away.** `detect_align_crop`
-returns it, but `extract_clip` binds it to `_mouth` and never writes it, so the cache holds faces and
-audio only. Nothing consumes it yet, since the lip-sync stream is Stage 4, and the dashboard derives it
-live for inspection. Caching it is a known item for Stage 4, not an oversight, and it will need a
-`PIPELINE_VERSION` bump when it lands.""")
+| Step | What happens | Default |
+|---|---|---|
+| Detect | MTCNN, `keep_all=False`, so the highest-scoring face only | conf 0.90 |
+| Gate | below threshold falls back to the **whole frame**, never a guess | counted in `num_faces_detected` |
+| Align | 5-point similarity transform onto an ArcFace template | on |
+| Crop | 224x224, bilinear | `margin=0.20` on the bbox path |
+| Mouth | 96x96 ROI centred between the two mouth-corner landmarks | derived from the same detection |
 
-    with st.expander("**Stages 10–11 · The cache, and what the model finally receives**"):
-        st.markdown("""
-The cache is written per clip to `data/processed/<clip_id>/` and holds **un-normalised uint8**
-frames:
+Alignment uses rotation, uniform scale and translation only: four unknowns from ten equations,
+solved least-squares. A full affine would add shear and fit the template better *by deforming the
+face*, and facial geometry is evidence.
+
+A clip that is quietly failing detection is visible rather than silently degraded, because the hit
+rate is reported as "faces detected k/16".
 """)
-        st.code("""frames.npy      [16, 224, 224, 3]  uint8      # HWC, RGB, NOT normalised
-audio.npy       [16, 5600]         float32
-timestamps.npy  [16]               float64
-version.txt     "3"                            # PIPELINE_VERSION""", language="text")
+        st.warning("""**The mouth crop is computed and then discarded.** `detect_align_crop` returns
+it, but `extract_clip` binds it to `_mouth` and never writes it, so the cache holds faces and audio
+only. Nothing consumes it yet, since the lip-sync stream is Stage 4, and the dashboard derives it
+live for inspection. Caching it will need a `PIPELINE_VERSION` bump.""")
+
+    with st.expander("**Stage 9 · The audio path, per timestamp**"):
         st.markdown("""
-Storing uint8 rather than normalised floats is a deliberate four-fold saving in cache size, and it
-keeps the expensive part, decode plus 16 MTCNN detections, separate from the cheap part.
-Normalisation happens per batch in `ClipDataset.__getitem__`, which divides by 255, applies the
-ImageNet mean and standard deviation, and transposes HWC to CHW:
+One window of `AUDIO_WINDOW_SEC = 0.35` per timestamp, clamped to the waveform and zero-padded to a
+fixed length so the result is rectangular: 5600 samples at 16 kHz, giving `[16, 5600]`.
+
+Windows are centred per frame rather than concatenated into one track because the cross-modal
+streams compare frame *i*'s mouth shape against the sound at that instant. The length is a
+compromise: long enough to contain a phoneme and its transition, short enough that a synchronisation
+error of order 100 ms shows as a mismatch rather than being averaged away.
 """)
-        st.code("""faces  [B, 16, 3, 224, 224]  float32   # ImageNet-normalised
-audio  [B, 16, 5600]         float32   # 16 kHz windows
-label  [B]                   int64     # per label_mode""", language="text")
+
+    with st.expander("**Stage 10 · The cache**"):
         st.markdown("""
-`version.txt` carries `PIPELINE_VERSION`, currently **3**. Bumping that constant invalidates every
-stale cache, which is what made switching on face alignment safe: the pixels changed, so the old
-cache must not be trusted, and nothing has to be deleted by hand. `preprocessing/precache.py` warms
-the whole cache in parallel worker processes, pinning MTCNN to CPU so several workers do not contend
-over one GPU.
+Written per clip to `data/processed/<clip_id>/`, holding **un-normalised uint8** frames:
 """)
+        st.code("""frames.npy      (16, 224, 224, 3)  uint8      # HWC, RGB, NOT normalised
+audio.npy       (16, 5600)         float32    # 16 kHz windows, source level
+timestamps.npy  (16,)              float64    # seconds
+version.txt     "3"                           # PIPELINE_VERSION""", language="text")
+        st.markdown("""
+Storing uint8 rather than normalised float32 is a deliberate four-fold saving, and it keeps the
+expensive part (decode plus 16 MTCNN detections) separate from the cheap part (a divide and a
+subtract). It also means the cached pixels are directly viewable.
+
+`version.txt` carries `PIPELINE_VERSION`, currently **3**. Bumping it invalidates every stale cache,
+which is what made switching on alignment safe: the pixels changed, so the old cache must not be
+trusted, and nothing has to be deleted by hand. The history is recorded in `ops/constants.py`: v1 was
+a plain MTCNN crop, v2 added alignment and silence-aware sampling, v3 pads aligned crops with black
+instead of reflecting, which had been mirroring a second face into essentially every crop.
+
+`precache.py` warms the whole cache in parallel worker processes, pinning MTCNN to CPU so several
+workers do not contend over one GPU.
+""")
+
+    with st.expander("**Stage 11 · Normalisation, and the tensors the model sees**", expanded=True):
+        st.markdown("""
+Normalisation happens per batch in `ClipDataset.__getitem__`, not at cache time. Two operations,
+then a transpose:
+""")
+        st.latex(r"x_{\text{norm}} = \frac{x/255 - \mu}{\sigma}, \qquad "
+                 r"\mu = (0.485,\,0.456,\,0.406), \quad \sigma = (0.229,\,0.224,\,0.225)")
+        st.markdown("""
+The constants are the per-channel mean and standard deviation of the ImageNet training set, which is
+why they differ between R, G and B: natural images carry more red and less blue. All three visual
+backbones are ImageNet-pretrained through `timm`, and a pretrained network's early filters are
+calibrated to the distribution they were trained on. Raw `[0, 255]` input shifts every activation in
+the first layers, and the network spends its early budget correcting an offset that costs nothing to
+remove here.
+
+**The output is not `[0, 1]` or `[-1, 1]`.** Subtracting a mean puts everything darker than that mean
+below zero, which is the point of centring:
+
+| Input pixel | R | G | B |
+|---|---|---|---|
+| 0 (black) | −2.118 | −2.036 | −1.804 |
+| 128 (mid grey) | +0.074 | +0.205 | +0.426 |
+| 255 (white) | +2.249 | +2.429 | +2.640 |
+| **maps to exactly 0.0** | **124** | **116** | **104** |
+
+So on a dark indoor face crop most values are negative: one measured crop with a raw mean of 62 came
+out 86% negative. That is expected, and it does not trouble the network, because the first operation
+is a convolution with signed weights and ReLU comes after it, not before the input.
+""")
+        st.code("""faces  (B, 16, 3, 224, 224)  float32   # ImageNet-normalised, HWC -> CHW
+audio  (B, 16, 5600)         float32   # 16 kHz windows, NOT normalised
+label  (B,)                  int64     # per label_mode""", language="text")
+        st.info("**The audio is never normalised in the contract.** Nothing in `ops/audio.py` or "
+                "`extract_clip.py` touches amplitude, so `audio.npy` keeps whatever level the source "
+                "had. `rms_normalize` exists but sits in the extras, off by default. Defensible, "
+                "since Whisper and Wav2Vec2 both normalise internally, but worth being deliberate "
+                "about: if real and fake audio differ systematically in loudness, that is an "
+                "exploitable shortcut sitting in the input, exactly like the leading silence was.")
 
     st.subheader("Where the dashboard differs from the batch pipeline")
-    st.markdown("""
-Worth knowing before reading a number off the Preprocessing page and assuming training saw the same
-thing.
-""")
+    st.caption("Worth knowing before reading a number off the Preprocessing page and assuming "
+               "training saw the same thing.")
     st.markdown("""
 | | Batch pipeline | Preprocessing page |
 |---|---|---|
-| Leading-silence offset | Applied, `start_offset=leading_silence` | **Measured and shown, not applied**; sampling starts at half a window |
-| Frame count and window | Fixed at `NUM_FRAMES=16`, `0.35 s` | Sliders, 4–32 frames and 0.10–1.00 s |
-| Normalisation | Always, in `ClipDataset` | A toggle, so the un-normalised tensor is inspectable |
-| Enhancement / degradation extras | Never | Available, all off by default |
+| Leading-silence offset | Applied, `start_offset=leading_silence` | Measured and shown, **not applied**; sampling starts at half a window |
+| Frame count and window | Fixed at 16 and 0.35 s | Sliders, 4-32 frames and 0.10-1.00 s |
+| Normalisation | Always | A toggle, so the un-normalised tensor is inspectable |
+| Enhancement extras | Never | Available, all off by default |
 | Mouth crop | Computed, discarded | Shown when enabled |
 | Cache | Written to `data/processed/` | Never written; the page is read-only |
+
+With every extra switched off, the page reproduces the batch pipeline's operations step for step.
+The silence offset and the fixed 16 / 0.35 contract are the two differences that remain by design.
 """)
-    st.caption("With every extra switched off, the page reproduces the batch pipeline's operations "
-               "step for step; the silence offset and the fixed 16/0.35 contract are the two "
-               "differences that remain by design.")
 
 
 # ========================== 3 · VISUAL PATH ================================ #

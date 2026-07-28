@@ -111,5 +111,53 @@ def test_documentation_describes_dataset_discovery_not_a_fixed_path():
     assert "find_dataset_root" in body
 
 
+def test_pipeline_tab_documents_the_data_representation_at_each_boundary():
+    """The formats are the part people actually need; drift here is silent."""
+    at = _page()
+    body = " ".join([m.value for m in at.markdown] + [w.value for w in at.warning]
+                    + [i.value for i in at.info] + [c.value for c in at.code])
+    assert "Representation at every boundary" in [s.value for s in at.subheader]
+    for fact in [
+        "(16, 224, 224, 3)",      # cached frames
+        "(16, 5600)",             # cached audio
+        "(B, 16, 3, 224, 224)",   # model input
+        "uint8",
+        "float32",
+        "int64",
+        "HWC",
+        "frames.npy", "audio.npy", "timestamps.npy", "version.txt",
+    ]:
+        assert fact in body, fact
+
+
+def test_pipeline_tab_states_the_normalisation_constants_and_output_range():
+    at = _page()
+    # The formula is st.latex, which is not part of at.markdown.
+    body = " ".join([m.value for m in at.markdown] + [i.value for i in at.info]
+                    + [str(x.value) for x in at.get("latex")])
+    for value in ["0.485", "0.456", "0.406", "0.229", "0.224", "0.225"]:
+        assert value in body, value
+    # the negative output range is the counterintuitive part, so it is spelled out
+    assert "2.118" in body
+    # and that the audio is deliberately left alone
+    assert "never normalised" in body or "NOT normalised" in body
+
+
+def test_pipeline_tab_records_the_dataset_codec_variance():
+    body = " ".join(w.value for w in _page().warning)
+    assert "mpeg4" in body and "mp3" in body
+    assert "wav2lip" in body
+
+
+def test_pipeline_tab_keeps_the_known_caveats_visible():
+    """Three things a reader would otherwise trust wrongly."""
+    at = _page()
+    body = " ".join([m.value for m in at.markdown] + [w.value for w in at.warning]
+                    + [i.value for i in at.info])
+    assert "62 ms" in body                    # last window is not centred
+    assert "_mouth" in body                   # mouth crop computed then discarded
+    assert "label_mode" in body               # clip label vs visual label
+
+
 def test_documentation_is_static_and_touches_no_data():
     assert "ds_registry" not in _page().session_state
