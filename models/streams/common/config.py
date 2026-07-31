@@ -35,9 +35,19 @@ class StreamConfig:
     # --- data ---
     num_frames: int = 16
     image_size: int = 224
+    num_workers: int = 0                        # DataLoader workers; 0 = load in the main process
 
     # --- training (used by the background trainer, not by the dashboard) ---
     freeze_backbone: bool = True
+    # Two-phase freeze schedule (see train_visual_stream.py): the backbone stays
+    # frozen for the first `freeze_backbone_epochs`, then unfreezes to fine-tune.
+    # Set == epochs to keep the backbone frozen for the WHOLE run (the "keep
+    # frozen default" choice), or 0 to fine-tune from the start.
+    freeze_backbone_epochs: int = 8
+    # Even once the backbone is trainable, keep its BatchNorm running stats fixed
+    # (eval mode) so tiny fine-tune batches don't corrupt ImageNet stats.
+    freeze_batchnorm_on_finetune: bool = True
+    use_amp: bool = True                        # mixed-precision (AMP) to fit in ~6GB VRAM
     lr_head: float = 1e-3
     lr_backbone: float = 5e-6
     grad_clip_norm: float = 1.0
