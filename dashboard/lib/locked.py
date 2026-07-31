@@ -1,15 +1,15 @@
 """The locked sections: dimmed, unclickable, but still in the nav where they belong.
 
-Streams, Fusion and Explainability sit in their pipeline positions in the sidebar,
-greyed out with a lock icon, and clicking them does nothing. app.py hides
-Streamlit's built-in nav and draws the list itself with st.page_link, passing
-disabled=True for these three, because st.navigation has no notion of a disabled
-entry.
+Fusion and Explainability sit in their pipeline positions in the sidebar, greyed
+out with a lock icon, and clicking them does nothing. app.py hides Streamlit's
+built-in nav and draws the list itself with st.page_link, passing disabled=True
+for these two, because st.navigation has no notion of a disabled entry.
 
 They keep a page body (render below) for the case where someone reaches the route
 directly, and because that body becomes the real page when the stage lands. To
 unlock one: drop its spec from LOCKED so app.py stops disabling it, then replace
 the body with the real controls. The copy already lives in stream_spec.py.
+Streams went through exactly that and is no longer here.
 """
 import sys
 from pathlib import Path
@@ -18,10 +18,10 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from dashboard.lib.stream_spec import EXPLAINABILITY, FUSION, STREAMS
+from dashboard.lib.stream_spec import EXPLAINABILITY, FUSION
 
 # Pipeline order, matching where they sit in the nav.
-LOCKED = [STREAMS, FUSION, EXPLAINABILITY]
+LOCKED = [FUSION, EXPLAINABILITY]
 
 
 def locked_titles() -> list[str]:

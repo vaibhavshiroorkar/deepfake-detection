@@ -9,9 +9,10 @@ from dataclasses import dataclass
 # timm model ids for the visual backbones the dashboard exposes.
 EFFICIENTNET_B0 = "tf_efficientnet_b0.ns_jft_in1k"   # ~5M params, light, 1280-dim
 XCEPTION = "legacy_xception"                          # ~22M params, 2048-dim
-# Not wired into the stream yet — the dashboard renders a disabled DINOv2 box
-# until this backbone is integrated. The timm id is kept here so the box can
-# display it; nothing instantiates it while it stays disabled.
+# A ViT, unlike the two above, so it is built with an explicit img_size: its
+# pretrained config is 518 pixels and this pipeline feeds 224 (see
+# visual_stream._create_backbone). 224/14 = 16, so a face crop becomes a 16x16
+# patch grid.
 DINOV2 = "vit_small_patch14_dinov2.lvd142m"          # ~22M params, 384-dim
 
 
@@ -60,5 +61,11 @@ def efficientnet_config(**overrides) -> StreamConfig:
 
 def xception_config(**overrides) -> StreamConfig:
     base = dict(stream_name="xception", backbone_name=XCEPTION)
+    base.update(overrides)
+    return StreamConfig(**base)
+
+
+def dinov2_config(**overrides) -> StreamConfig:
+    base = dict(stream_name="dinov2", backbone_name=DINOV2)
     base.update(overrides)
     return StreamConfig(**base)

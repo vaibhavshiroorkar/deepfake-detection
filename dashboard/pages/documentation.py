@@ -671,6 +671,9 @@ def render_streams():
     st.header("Visual streams")
     st.caption("All three are the same config-driven module with a different backbone name, so "
                "adding a fourth is a configuration change rather than an engineering project.")
+    st.info("This tab is the design. The **Streams** section is the same thing running: pick a "
+            "clip on Preprocessing, open Streams and run it, and every stage in the table below "
+            "appears as the activations it actually produced on that clip.")
     st.markdown("""
 | Stage in the module | Operation | Shape out |
 |---|---|---|

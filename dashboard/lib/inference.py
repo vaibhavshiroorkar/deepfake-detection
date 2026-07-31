@@ -1,13 +1,13 @@
-"""Real-clip inference for the visual streams: the dashboard's Run action.
+"""Turning a clip on disk into the tensor a visual stream takes.
 
 Decodes a clip to a face-crop sequence (reusing dashboard.lib.media, so it
-mirrors the preprocessing pipeline) and forward-passes the config-driven
-VisualStream. There is no training and no checkpoint loading here: no trained
-weights exist on disk yet, so the returned probability is a plumbing check on an
-untrained head, not a real detection.
+mirrors the preprocessing pipeline) and normalizes it the way the pretrained
+backbones expect. Both functions are free of Streamlit so they stay testable
+without a running app.
 
-The tensor/normalization logic is factored out of the Streamlit page (frames_to_
-tensor) so it stays unit-testable without a running app or a video on disk.
+What happens to the tensor afterwards lives elsewhere: the Streams pages build a
+model, load a checkpoint if one exists, and trace the forward pass through
+models/streams/common/introspect.py.
 """
 import sys
 from pathlib import Path
@@ -42,24 +42,3 @@ def decode_face_clip(video_path: str, num_frames: int, detector,
     timestamps = media.sample_timestamps(duration, num_frames, 0.35)
     frames = media.decode_frames(video_path, timestamps)
     return [media.detect_and_crop(f, detector, conf_thresh, margin)[0] for f in frames]
-
-
-def run_visual_stream(config, video_path: str, detector,
-                      conf_thresh: float = 0.9, margin: float = 0.3) -> dict:
-    """Build the model, run the real clip through it, and report what came out."""
-    import torch
-
-    from models.streams.common.visual_stream import build_visual_stream
-
-    model = build_visual_stream(config).eval()
-    faces = decode_face_clip(video_path, config.num_frames, detector, conf_thresh, margin)
-    x = frames_to_tensor(faces)
-    with torch.no_grad():
-        logit, embedding = model(x)
-    return {
-        "counts": model.param_counts(),
-        "logit": float(logit.item()),
-        "prob": float(torch.sigmoid(logit).item()),
-        "embed_shape": tuple(embedding.shape),
-        "num_frames": len(faces),
-    }

@@ -1,54 +1,58 @@
-"""Static text for the locked Streams, Fusion and Explainability pages.
+"""Static text for the Streams section and for the two sections still locked.
 
-All three describe what will land there rather than stubbing controls, so there
-is no half-working UI to mistake for the real thing. The machinery behind the
-Streams page (stream_pages.py and stream_ui.py, both still unit-tested) is intact
-and unreferenced, so unlocking it means calling the render functions again.
+Fusion and Explainability describe what will land there rather than stubbing
+controls, so there is no half-working UI to mistake for the real thing. Streams
+is live and its entry describes what the section *is*.
 
-Copy rules for this file, since it is the source for three pages: say what
-unlocks the page and what it will contain, and nothing else. Claims that apply to
-the whole system (embeddings rather than scores, no training in this dashboard)
-are stated once on the Overview page.
+Copy rules for this file: a locked entry says what unlocks the page and what it
+will contain, and nothing else. Claims that apply to the whole system (embeddings
+rather than scores, no training in this dashboard) are stated once on the
+Overview page.
 """
 
 STREAMS = {
     "title": "Streams",
-    "status": "Locked while the visual stream is re-validated. Five-point face alignment changed "
-              "the cached pixels, so the precached splits have to be rebuilt and EfficientNet-B0 "
-              "re-measured against its AUC 0.994 bar before the model boxes here mean anything.",
-    "note": "Three feature streams feed fusion.",
+    "note": "Three feature streams feed fusion. Each has its own page, where one clip is walked "
+            "through the model a stage at a time.",
     "views": [
-        ("Visual", "EfficientNet-B0, Xception and DINOv2 over the face-crop sequence. Each is a "
-                   "configurable box (temporal model, hidden size, embedding dim, freeze) with "
-                   "Train, which emits the background-trainer command, and Run, which "
-                   "forward-passes one clip to check shapes, device and speed."),
+        ("Visual", "Xception, EfficientNet-B0 and DINOv2 over the face-crop sequence. Configure "
+                   "the temporal model, hidden size, embedding dim and freezing, then run a clip "
+                   "and watch the activations at every backbone stage."),
         ("Lip-Sync", "AV-HuBERT over the mouth crop against Whisper over the audio, compared by "
                      "cross-attention. Produces the synchronisation-mismatch vector. Stage 4."),
-        ("Emotions", "HSEmotions over the face against Wav2Vec2 over the voice, same mechanism. "
-                     "Produces an affect-consistency mismatch vector. Stage 5."),
+        ("Emotion", "HSEmotions over the face against Wav2Vec2 over the voice, same mechanism. "
+                    "Produces an affect-consistency mismatch vector. Stage 5."),
     ],
 }
 
 LIPSYNC_STREAM = {
     "title": "Lip-sync stream",
-    "status": "Not built yet. Stage 4. This page scaffolds its model box.",
+    "status": "The two encoders are Stage 4 and are not built. What this page shows today is the "
+              "real input they will read and the mechanism that will compare them.",
     "models": [
         ("AV-HuBERT", "video encoder. Reads mouth-region motion into an embedding (Key/Value)"),
         ("Whisper", "audio encoder. Reads the audio track into an embedding (Query)"),
     ],
     "note": "Scaled dot-product cross-attention, audio attending to video, yields a "
             "synchronisation-mismatch vector. Nothing is transcribed; everything stays vectors.",
+    "stage": 4,
+    "query": "audio",
+    "keyvalue": "mouth motion",
 }
 
 EMOTION_STREAM = {
     "title": "Emotion stream",
-    "status": "Not built yet. Stage 5. This page scaffolds its model box.",
+    "status": "The two encoders are Stage 5 and are not built. What this page shows today is the "
+              "real input they will read and the mechanism that will compare them.",
     "models": [
         ("HSEmotions", "face-emotion encoder. Reads expression into an embedding (Key/Value)"),
         ("Wav2Vec2", "voice-emotion encoder. Reads vocal affect into an embedding (Query)"),
     ],
     "note": "Cross-attention, voice attending to face, yields an emotional-consistency mismatch "
             "vector for fusion to read.",
+    "stage": 5,
+    "query": "voice",
+    "keyvalue": "facial expression",
 }
 
 FUSION = {

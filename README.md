@@ -124,9 +124,11 @@ streamlit run dashboard/app.py
 
 **Overview** is the landing page. **Preprocessing** is the page that computes: pick a clip, then
 step through the visual and audio pipelines with every step as a toggle, applied cumulatively,
-ending in the exact tensor a model would receive. **Streams**, **Fusion** and **Explainability** are
-locked, and each says what will land there and what unlocks it rather than showing controls that
-do not work. **Documentation** is the in-depth reference for every step, model and design decision.
+ending in the exact tensor a model would receive. **Streams** takes that tensor into the model: a
+hub that configures all three streams, and a page per stream that walks one clip through it stage
+by stage, showing the real activations at every step. **Fusion** and **Explainability** are locked,
+and each says what will land there and what unlocks it rather than showing controls that do not
+work. **Documentation** is the in-depth reference for every step, model and design decision.
 
 In VS Code, `.vscode/launch.json` makes this the default run target, so <kbd>F5</kbd> launches the
 dashboard with the debugger attached (`justMyCode: false`, so you can step into `dashboard/lib/` and
@@ -136,6 +138,7 @@ dashboard with the debugger attached (`justMyCode: false`, so you can step into 
 
 ```
 assets/          diagrams used by the docs and the dashboard
+checkpoints/     trained weights, one folder per stream (git-ignored)
 dashboard/       Streamlit app: app.py, lib/ (pure, unit-tested), pages/
 data/            the dataset and derived manifests (git-ignored)
 docs/            main project document, glossary, math writeups, stage plans

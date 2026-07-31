@@ -98,12 +98,15 @@ average of five scores can express it.
 visual and audio tabs. Every step is a toggle, applied cumulatively, ending in the exact tensor a
 model would receive.
 
-**Streams**, **Fusion** and **Explainability** are locked. Each says what will land there and what
-unlocks it.
+**Streams** picks that tensor up. The hub configures all three streams at once, and a page per
+stream walks one clip through the model a stage at a time: what each backbone stage responded to,
+how the frame sequence collapses into one vector, and what fusion ends up reading.
+
+**Fusion** and **Explainability** are locked. Each says what will land there and what unlocks it.
 
 **Documentation** covers how every step works, what each model does, and how fusion, evaluation and
 the splits are designed.
 """)
     st.info("Nothing in this dashboard trains a model or writes to `data/processed/`. Training runs "
-            "as a background script, and pages that offer to train hand you a command to run in a "
-            "terminal.")
+            "elsewhere as a background script or a Kaggle run, tracked in W&B; what comes back here "
+            "is a checkpoint the Streams pages can load.")

@@ -30,6 +30,11 @@ dependencies = [
     # a small-sample iteration loop for preprocessing params. It never trains.
     # >=1.55 is required so it accepts pillow 12 (older caps were pillow<12).
     "streamlit==1.60.0",
+    # Tracks every training run (PROJECT_OVERVIEW.md section 7). Training itself
+    # happens off this machine; the dashboard only reads back, pulling a trained
+    # checkpoint from an artifact. dashboard/lib/checkpoints.py imports it lazily
+    # so the app still starts in an environment that predates this line.
+    "wandb==0.24.2",
 ]
 
 # Test-only. Kept in a dependency-group (PEP 735) rather than `dependencies`

@@ -1,15 +1,15 @@
-"""Render functions for the three feature streams.
+"""Shared state and controls for the Streams section.
 
-All three used to be separate sidebar pages; they now live as tabs on the single
-Streams page (dashboard/pages/streams.py). Keeping the bodies here as functions
-(rather than module-level page scripts) lets one page render all three tabs.
+The section is a hub plus three subpages. The hub (dashboard/pages/streams.py)
+gives quick control over all three streams at once; each subpage takes one stream
+and walks a clip through it step by step. Both need the same architecture
+controls and the same idea of which streams are enabled, so both come from here.
 
-  * Visual: Xception / EfficientNet as configurable model boxes (plus a
-    not-yet-wired DINOv2 box). Real: builds and runs the config-driven stream.
-  * Lip-Sync / Emotions: read-only scaffolds until Stages 4 / 5.
-
-The dashboard never trains in-process (§7); Train tabs only emit the trainer
-command, and Run forward-passes a clip with untrained weights.
+Configuration is stored in plain session_state dicts (`stream_cfg_<key>`) rather
+than read off the widgets. Streamlit discards widget state for widgets that were
+not rendered on the current run, so a hub setting would reset itself the moment
+you navigated to a subpage and back. The dicts survive; the widgets initialise
+from them and write back.
 """
 import sys
 from pathlib import Path
@@ -20,16 +20,91 @@ if str(_REPO_ROOT) not in sys.path:
 
 import streamlit as st
 
-from models.streams.common.config import StreamConfig, EFFICIENTNET_B0, XCEPTION, DINOV2
-from dashboard.lib import stream_ui
+from models.streams.common.config import (
+    StreamConfig, DINOV2, EFFICIENTNET_B0, XCEPTION,
+)
 
+# Label -> (temporal_type, bidirectional), the three ways to collapse a frame
+# sequence into one clip vector.
 TEMPORAL = {"BiLSTM": ("lstm", True), "GRU": ("gru", True), "Mean-pool": ("mean", False)}
+
+# The three visual backbones, in the order the Documentation page introduces
+# them. Each is the same module with a different backbone name.
+VISUAL_MODELS = {
+    "xception": ("Xception", XCEPTION),
+    "efficientnet": ("EfficientNet-B0", EFFICIENTNET_B0),
+    "dinov2": ("DINOv2 (ViT-S/14)", DINOV2),
+}
+
+DEFAULTS = {"enabled": True, "temporal": "BiLSTM", "hidden": 256, "dim": 256, "freeze": True}
+
+# Only the visual streams are configurable: the cross-modal encoders are Stage
+# 4 and 5, so there is nothing yet to configure for them.
+CROSS_MODAL = {
+    "lipsync": ("Lip-Sync", "AV-HuBERT + Whisper", 4),
+    "emotion": ("Emotion", "HSEmotions + Wav2Vec2", 5),
+}
+
+
+def settings(key: str) -> dict:
+    """The stored architecture settings for one model, created on first use."""
+    return st.session_state.setdefault(f"stream_cfg_{key}", dict(DEFAULTS))
+
+
+def build_config(key: str) -> StreamConfig:
+    """A StreamConfig from the stored settings, ready to build.
+
+    pretrained=False because no weights are downloaded here; a trained checkpoint
+    is loaded afterwards when one exists. grad_checkpointing off because it only
+    saves memory during a backward pass, and there is never one in this app.
+
+    num_frames follows the Preprocessing page's slider rather than the config
+    default, so the sequence a stream reads here is the sequence that page just
+    showed you. The batch pipeline fixes it at 16.
+    """
+    current = settings(key)
+    temporal_type, bidirectional = TEMPORAL[current["temporal"]]
+    return StreamConfig(
+        stream_name=key, backbone_name=VISUAL_MODELS[key][1], pretrained=False,
+        temporal_type=temporal_type, temporal_bidirectional=bidirectional,
+        temporal_hidden=int(current["hidden"]), common_dim=int(current["dim"]),
+        freeze_backbone=bool(current["freeze"]), grad_checkpointing=False,
+        frame_chunk_size=0, num_frames=int(st.session_state.get("pp_n_frames", 16)),
+    )
+
+
+def render_config_controls(container, key: str, ns: str) -> dict:
+    """The four architecture controls, writing back into the stored settings.
+
+    `ns` namespaces the widget keys, so the hub and a subpage can both render the
+    controls for the same model without colliding.
+    """
+    current = settings(key)
+    labels = list(TEMPORAL)
+    c1, c2 = container.columns(2)
+    temporal = c1.selectbox("Temporal model", labels, key=f"{ns}_{key}_temporal",
+                            index=labels.index(current["temporal"]))
+    hidden = c1.slider("Temporal hidden", 64, 512, int(current["hidden"]), step=64,
+                       key=f"{ns}_{key}_hidden", disabled=temporal == "Mean-pool",
+                       help="Ignored when mean-pooling, which has no hidden state.")
+    dim = c2.select_slider("Embedding dim", [128, 256, 512], int(current["dim"]),
+                           key=f"{ns}_{key}_dim",
+                           help="The width every stream is projected to before fusion.")
+    freeze = c2.checkbox("Freeze backbone", value=bool(current["freeze"]),
+                         key=f"{ns}_{key}_freeze")
+    current.update(temporal=temporal, hidden=hidden, dim=dim, freeze=freeze)
+    return current
+
+
+def enabled_streams() -> list[str]:
+    """Keys of the visual streams currently marked for inclusion in fusion."""
+    return [key for key in VISUAL_MODELS if settings(key)["enabled"]]
 
 
 def inherited_clip():
     """(clip_id, absolute path) of the clip chosen on the Preprocessing page, or None.
 
-    Run inference is a single forward pass over one clip, and the clip you want
+    Running a stream means one forward pass over one clip, and the clip you want
     is invariably the one you were just inspecting. Reading the Preprocessing
     page's selection instead of rendering a second picker also means an uploaded
     video flows straight through, and there is only one place a clip is chosen.
@@ -41,121 +116,13 @@ def inherited_clip():
     return row.get("clip_id", "clip"), str(path)
 
 
-def _render_inherited_clip(st):
+def render_inherited_clip(container) -> str | None:
     """Show the inherited clip read-only; return its path, or None."""
     clip = inherited_clip()
     if clip is None:
-        st.info("No clip selected. Choose one on the **Preprocessing** page (dataset clip or your "
-                "own upload) and it appears here for Run inference.")
+        container.info("No clip selected. Choose one on the **Preprocessing** page (a dataset "
+                       "clip or your own upload) and it appears here.")
         return None
     clip_id, path = clip
-    st.caption(f"Run inference uses the clip selected on the Preprocessing page: **{clip_id}**")
+    container.caption(f"Clip inherited from the Preprocessing page: **{clip_id}**")
     return path
-
-
-def _visual_model_box(name: str, backbone_name: str, key: str, default_on: bool,
-                      video_path) -> bool:
-    with st.container(border=True):
-        head, cfg = st.columns([1, 2])
-        with head:
-            enabled = st.toggle("Enable", value=default_on, key=f"{key}_enabled")
-            st.markdown(f"### {name}")
-            st.caption(f"`{backbone_name}`")
-            st.caption("Included in fusion" if enabled else "Excluded from fusion")
-        with cfg:
-            c1, c2 = st.columns(2)
-            temporal_label = c1.selectbox("Temporal model", list(TEMPORAL), key=f"{key}_temporal",
-                                          disabled=not enabled)
-            hidden = c1.slider("Temporal hidden", 64, 512, 256, step=64, key=f"{key}_hidden",
-                               disabled=not enabled or temporal_label == "Mean-pool")
-            common_dim = c2.select_slider("Embedding dim", [128, 256, 512], 256, key=f"{key}_dim",
-                                          disabled=not enabled)
-            freeze = c2.checkbox("Freeze backbone", value=True, key=f"{key}_freeze",
-                                 disabled=not enabled)
-
-        def make_config() -> StreamConfig:
-            ttype, bidir = TEMPORAL[temporal_label]
-            return StreamConfig(
-                stream_name=key, backbone_name=backbone_name, pretrained=False,
-                temporal_type=ttype, temporal_bidirectional=bidir, temporal_hidden=hidden,
-                common_dim=common_dim, freeze_backbone=freeze, grad_checkpointing=False,
-                frame_chunk_size=0,
-            )
-
-        train_tab, run_tab = st.tabs(["Train", "Run"])
-        with train_tab:
-            stream_ui.render_train_tab(st, key, key, backbone_name, enabled)
-        with run_tab:
-            stream_ui.render_run_tab(st, key, make_config, video_path, enabled)
-    return enabled
-
-
-def _visual_disabled_box(name: str, backbone_name: str, key: str, note: str):
-    """A backbone that isn't wired into the stream yet, so everything is greyed out."""
-    with st.container(border=True):
-        head, cfg = st.columns([1, 2])
-        with head:
-            st.toggle("Enable", value=False, key=f"{key}_enabled", disabled=True)
-            st.markdown(f"### {name}")
-            st.caption(f"`{backbone_name}`")
-            st.caption("Not wired yet")
-        with cfg:
-            c1, c2 = st.columns(2)
-            c1.selectbox("Temporal model", list(TEMPORAL), key=f"{key}_temporal", disabled=True)
-            c1.slider("Temporal hidden", 64, 512, 256, step=64, key=f"{key}_hidden", disabled=True)
-            c2.select_slider("Embedding dim", [128, 256, 512], 256, key=f"{key}_dim", disabled=True)
-            c2.checkbox("Freeze backbone", value=True, key=f"{key}_freeze", disabled=True)
-        stream_ui.render_disabled_train_run(st, key, note)
-
-
-def render_visual():
-    st.caption("Artifact-focused backbones that read the face-crop sequence, never audio. "
-               "Configure each, then Train to get the background-trainer command, or Run to "
-               "forward-pass a real sequence.")
-
-    # The clip is inherited from the Preprocessing page rather than picked again
-    # here: one selection, one place to change it.
-    video_path = _render_inherited_clip(st)
-
-    st.session_state["stream_visual_enabled"] = {
-        "efficientnet": _visual_model_box("EfficientNet-B0", EFFICIENTNET_B0, "m_effnet", True,
-                                          video_path),
-        "xception": _visual_model_box("Xception", XCEPTION, "m_xception", True, video_path),
-    }
-    _visual_disabled_box(
-        "DINOv2 (ViT-S/14)", DINOV2, "m_dinov2",
-        "Not wired into the visual stream yet; the DINOv2 backbone lands in a later stage.")
-
-
-def _scaffold_stream(spec: dict, key_prefix: str, stage_note: str):
-    st.info(spec["status"])
-    st.caption(spec["note"])
-    for model_name, desc in spec["models"]:
-        with st.container(border=True):
-            head, cfg = st.columns([1, 2])
-            with head:
-                st.toggle("Enable", value=True, key=f"{key_prefix}_{model_name}_enabled",
-                          disabled=True)
-                st.markdown(f"### {model_name}")
-                st.caption(desc)
-            with cfg:
-                st.selectbox("Weights", ["(not downloaded)"],
-                             key=f"{key_prefix}_{model_name}_weights", disabled=True)
-                st.slider("Embedding dim", 128, 512, 256, step=64,
-                          key=f"{key_prefix}_{model_name}_dim", disabled=True)
-            stream_ui.render_disabled_train_run(st, f"{key_prefix}_{model_name}", stage_note)
-    st.divider()
-    st.caption(f"Read-only scaffold. The cross-attention model, its Train/Run controls and "
-               f"metrics become live after {stage_note.rsplit('(', 1)[-1].rstrip(').')}.")
-
-
-def render_lipsync():
-    from dashboard.lib.stream_spec import LIPSYNC_STREAM
-    _scaffold_stream(LIPSYNC_STREAM, "lipsync",
-                     "Available once the lip-sync stream is built (Stage 4).")
-
-
-def render_emotions():
-    from dashboard.lib.stream_spec import EMOTION_STREAM
-    _scaffold_stream(EMOTION_STREAM, "emotion",
-                     "Available once the emotion stream is built (Stage 5).")

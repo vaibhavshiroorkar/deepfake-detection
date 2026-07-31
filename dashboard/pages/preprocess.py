@@ -25,6 +25,8 @@ import streamlit as st
 import matplotlib.pyplot as plt
 
 from dashboard.lib import selectors, media
+# Shared with the Streams pages so both walks through a clip lay frames out alike.
+from dashboard.lib.trace_ui import show_frames
 from preprocessing.ops import (
     faces as VF, audio as AF, extras_visual as VX, extras_audio as AX, constants as C,
 )
@@ -35,16 +37,6 @@ PREVIEW_COLS = 8          # thumbnails per row in the half-width Config preview
 st.title("Preprocessing")
 st.caption("Pick a clip under Config, then step through the Visual and Audio pipelines. "
            "Each step is applied cumulatively and shows the result after it runs.")
-
-
-def show_frames(container, frames, caption):
-    """Render all N frames as a compact grid."""
-    container.caption(caption)
-    for start in range(0, len(frames), 8):
-        cols = container.columns(8)
-        for j, col in enumerate(cols):
-            if start + j < len(frames):
-                col.image(frames[start + j], width="stretch")
 
 
 # Suffix rather than a caption of its own: every step must render exactly ONE

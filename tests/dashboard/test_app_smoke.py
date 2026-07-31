@@ -2,19 +2,22 @@ from streamlit.testing.v1 import AppTest
 
 from dashboard.lib import locked
 
-# Streams, Fusion and Explainability stay in their pipeline positions in the
-# sidebar, dimmed with a lock icon and not clickable. app.py hides Streamlit's
-# built-in nav and draws the list with st.page_link so it can pass disabled=True,
-# which st.navigation has no way to express.
+# Fusion and Explainability stay in their pipeline positions in the sidebar,
+# dimmed with a lock icon and not clickable. app.py hides Streamlit's built-in
+# nav and draws the list with st.page_link so it can pass disabled=True, which
+# st.navigation has no way to express.
+#
+# Streams is live, and its three per-stream pages are indented beneath it.
 
 LOCKED_PAGES = [
-    "dashboard/pages/streams.py",
     "dashboard/pages/fusion.py",
     "dashboard/pages/explainability.py",
 ]
 
-EXPECTED_NAV_ORDER = ["Overview", "Preprocessing", "Streams", "Fusion",
-                      "Explainability", "Documentation"]
+EXPECTED_NAV_ORDER = ["Overview", "Preprocessing", "Streams", "Visual", "Lip-Sync", "Emotion",
+                      "Fusion", "Explainability", "Documentation"]
+
+STREAM_CHILDREN = ["Visual", "Lip-Sync", "Emotion"]
 
 
 def _nav_links():
@@ -34,7 +37,7 @@ def test_exactly_the_locked_sections_are_disabled():
     links = {link.label: link for link in _nav_links()}
     for title in locked.locked_titles():
         assert links[title].disabled, title
-    for title in ["Overview", "Preprocessing", "Documentation"]:
+    for title in ["Overview", "Preprocessing", "Streams", "Documentation", *STREAM_CHILDREN]:
         assert not links[title].disabled, title
 
 
@@ -60,3 +63,11 @@ def test_every_locked_section_states_why_and_what_lands_there():
     for spec in locked.LOCKED:
         assert spec["status"].strip(), spec["title"]
         assert spec["views"], spec["title"]
+
+
+def test_streams_is_no_longer_locked():
+    """The unlock has to be complete: the nav entry, the spec list and the page body."""
+    assert "Streams" not in locked.locked_titles()
+    at = AppTest.from_file("dashboard/pages/streams.py", default_timeout=180).run()
+    assert not at.exception, at.exception
+    assert at.title[0].value == "Streams"

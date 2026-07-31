@@ -444,6 +444,7 @@ deepfake-detection/
 │   ├── xception/  efficientnet/  dinov2/
 │   ├── lipsync/              # AV-HuBERT + Whisper cross-attention
 │   └── emotion/              # HSEmotions + Wav2Vec2 cross-attention
+├── checkpoints/<stream>/     # trained weights coming back from Kaggle/W&B (gitignored)
 ├── training/                 # background training scripts (never notebooks)
 ├── fusion/                   # feature-level fusion (concat + MLP + sigmoid)
 ├── evaluation/               # metrics, ablation, robustness tests
@@ -550,8 +551,34 @@ green. **Follow-up before training: re-precache all splits and re-validate the
 visual stream against the AUC-0.994 bar** (alignment changed the cached pixels).
 
 **Next: Stage 2** — the first visual stream (EfficientNet-B0 + BiLSTM), rebuilt toward
-the AUC 0.994 bar. See [stage-2-plan.md](stage-2-plan.md). Add `wandb` to
-`pyproject.toml` when that first training script appears (reconciliation 3).
+the AUC 0.994 bar. See [stage-2-plan.md](stage-2-plan.md).
+
+### Streams unlocked in the dashboard — 2026-07-31
+
+The Streams section is live: a hub that configures all three visual streams, and a page
+per stream that walks one clip through the model stage by stage. The pictures on those
+pages are real — `models/streams/common/introspect.py` hooks the backbone's
+`feature_info` stages, runs one forward pass, and returns the activations — so the
+architecture in the Documentation tab and the thing that runs are visibly the same
+object. DINOv2 is wired in alongside Xception and EfficientNet-B0 (a ViT, so it is
+built with an explicit `img_size=224`; its stages are token matrices, not channel maps).
+
+**This did not change §7: the dashboard still never trains.** It went further the other
+way. The Train tab that emitted a background-trainer command is deleted, because a
+command builder is not a training feature and having one there implied the section was
+where training lived. Training happens on Kaggle or a GPU box, tracked in W&B; what
+comes back is a checkpoint, and `dashboard/lib/checkpoints.py` loads it from
+`checkpoints/<stream>/` or a W&B artifact. `wandb` is now a dependency
+(reconciliation 3), imported lazily so the dashboard starts without it.
+
+A constraint this puts on the trainer when it lands: **save the config as a plain dict**,
+not a `StreamConfig` instance. The dashboard reads checkpoints with
+`weights_only=True`, which refuses to unpickle arbitrary objects.
+
+Two bugs surfaced and were fixed on the way: `grad_checkpointing` defaults to True but
+`legacy_xception` asserts on it (now caught and recorded rather than fatal), and a
+checkpointed backbone runs as one flattened segment in timm, so stage hooks never fire
+(the trace disables it for the duration of the pass).
 
 ### Open reconciliations — decide these, then edit this document
 
@@ -572,10 +599,10 @@ rest are "not built yet, build it this way."
    split; train-time class weighting still layers on top. The rebuilt splits are
    train=1400 (350r/1050f), val=300 (75r/225f), test=300 (75r/225f), all
    identity-disjoint over 500 `source` identities (verified by `verify_splits.py`).
-3. **Experiment tracking.** §7 decides W&B (`wandb.init` / `wandb.log` / Sweeps). The
-   previous build used a hand-maintained `evaluation/experiments.csv` instead, and
-   `wandb` is still not in `pyproject.toml`. Add it when the first training script
-   appears.
+3. **Experiment tracking — SETTLED 2026-07-31.** §7 decides W&B (`wandb.init` /
+   `wandb.log` / Sweeps). The previous build used a hand-maintained
+   `evaluation/experiments.csv` instead. `wandb` is now in `pyproject.toml`, pulled in
+   by the dashboard's checkpoint loader, so the first training script has it already.
 4. **Streamlit dashboard — BUILT 2026-07-23, restructured to multi-page.** Entry point
    `dashboard/app.py` (`st.navigation`). Two sections: **Data Preprocessing** (Visual,
    Audio) where every preprocessing step is an independent on/off toggle shown

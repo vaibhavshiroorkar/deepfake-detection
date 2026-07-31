@@ -27,24 +27,49 @@ import timm
 from models.streams.common.config import StreamConfig
 
 
+def _create_backbone(config: StreamConfig) -> nn.Module:
+    """The timm backbone, built at the config's input resolution.
+
+    A ViT needs `img_size` to be told: DINOv2 ships a 518-pixel pretrained config,
+    and this pipeline feeds 224-pixel face crops, so without it the positional
+    embedding is sized for an input that never arrives. A CNN has no such
+    parameter and raises TypeError on the keyword, which is the signal to build
+    it plainly rather than a list of which backbones are transformers.
+    """
+    kwargs = dict(pretrained=config.pretrained, num_classes=0, global_pool="avg")
+    try:
+        return timm.create_model(config.backbone_name, img_size=config.image_size, **kwargs)
+    except TypeError:
+        pass
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to build backbone '{config.backbone_name}' from timm: {e}") from e
+    try:
+        return timm.create_model(config.backbone_name, **kwargs)
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to build backbone '{config.backbone_name}' from timm: {e}") from e
+
+
 class VisualStream(nn.Module):
     def __init__(self, config: StreamConfig):
         super().__init__()
         self.config = config
 
-        try:
-            self.backbone = timm.create_model(
-                config.backbone_name, pretrained=config.pretrained,
-                num_classes=0, global_pool="avg",
-            )
-        except Exception as e:
-            raise RuntimeError(
-                f"Failed to build backbone '{config.backbone_name}' from timm: {e}"
-            ) from e
+        self.backbone = _create_backbone(config)
         self.feature_dim = self.backbone.num_features
 
+        # Gradient checkpointing is a VRAM trade, not a correctness requirement,
+        # and legacy_xception does not implement it: timm's method is present but
+        # asserts on enable. Losing it costs memory, so it is recorded rather
+        # than swallowed, and never fatal.
+        self.grad_checkpointing = False
         if config.grad_checkpointing and hasattr(self.backbone, "set_grad_checkpointing"):
-            self.backbone.set_grad_checkpointing(True)
+            try:
+                self.backbone.set_grad_checkpointing(True)
+                self.grad_checkpointing = True
+            except (AssertionError, NotImplementedError, TypeError):
+                self.grad_checkpointing = False
 
         ttype = config.temporal_type.lower()
         if ttype == "mean":
