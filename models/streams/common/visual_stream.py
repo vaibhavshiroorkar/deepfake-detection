@@ -35,8 +35,13 @@ def _create_backbone(config: StreamConfig) -> nn.Module:
     embedding is sized for an input that never arrives. A CNN has no such
     parameter and raises TypeError on the keyword, which is the signal to build
     it plainly rather than a list of which backbones are transformers.
+
+    Pooling comes from the config for the same reason it cannot be hardcoded to
+    "avg": that choice makes timm build `fc_norm` in place of `norm`, and
+    DINOv2's released weights carry `norm`, so the pretrained load fails.
     """
-    kwargs = dict(pretrained=config.pretrained, num_classes=0, global_pool="avg")
+    kwargs = dict(pretrained=config.pretrained, num_classes=0,
+                  global_pool=config.global_pool)
     try:
         return timm.create_model(config.backbone_name, img_size=config.image_size, **kwargs)
     except TypeError:
