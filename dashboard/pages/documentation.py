@@ -38,29 +38,34 @@ st.caption("The problem, every processing step, every model, and the reasoning b
 
 # ====================== 1 · PROBLEM AND ARCHITECTURE ======================= #
 def render_architecture():
-    st.header("Why lip-sync forgeries defeat vision-only detectors")
+    st.header("Three manipulation families, three places to look")
     st.markdown("""
 Most deepfake detectors are trained to notice manufacturing residue: the seam where a generated
 face was blended onto a real head, colour statistics that drift between the face and the neck,
 warping around the jaw, upsampling patterns left by a GAN's decoder. Against a full-face swap
-this works well, because the whole face is synthetic and the residue is everywhere.
+this works well, because the whole face is synthetic and the residue is everywhere. Nearly a
+quarter of FakeAVCeleb's fakes are exactly that, `fsgan` and `faceswap` with no audio-visual
+manipulation at all, and the three visual streams are the only part of this system that can
+catch them.
 
-A wav2lip-style forgery gives them far less to work with. The generator is handed a genuine
-video and a target audio track, and it repaints only the mouth region, frame by frame, so the
-lips appear to speak the new words. Everything outside a small patch is the original recording.
-The artifact budget is tiny, it sits in a region that moves and blurs naturally, and video
-compression erases much of what is left.
+A wav2lip-style forgery gives an artifact detector far less to work with. The generator is
+handed a genuine video and a target audio track, and it repaints only the mouth region, frame by
+frame, so the lips appear to speak the new words. Everything outside a small patch is the
+original recording. The artifact budget is tiny, it sits in a region that moves and blurs
+naturally, and video compression erases much of what is left. An `rtvc` voice clone is more
+extreme still: the video track is untouched, so there is no visual evidence whatsoever.
 
-The forgery is nonetheless obvious once you stop looking at the video in isolation. A real
+Both are nonetheless catchable once you stop looking at the two tracks in isolation. A real
 recording contains two views of the same physical event: light reflected off a moving mouth, and
 pressure waves produced by that same mouth. The two views are causally locked together.
 Synthesis breaks the lock. The generated mouth is plausible on its own and the audio is
 plausible on its own, but their *joint* behaviour, the timing and the correspondence between
 visible articulation and the sound produced, no longer belongs to one event.
 
-Hence no standalone audio-only classifier anywhere in the design. An audio model can report that a
-voice sounds synthetic; it cannot report that the voice disagrees with the face, and only the
-disagreement survives compression, resolution loss and a well-trained generator.
+Hence the design: artifact analysis for the swaps, cross-modal comparison for the rest, and no
+standalone audio-only classifier anywhere. An audio model can report that a voice sounds
+synthetic; it cannot report that the voice disagrees with the face, and only the disagreement
+survives compression, resolution loss and a well-trained generator.
 """)
 
     st.header("The signal chain")
@@ -80,7 +85,7 @@ disagreement survives compression, resolution loss and a well-trained generator.
     st.markdown("""
 | Path | Steps applied in order | Tensor produced |
 |---|---|---|
-| **Video** | 16 timestamps → MTCNN detect → 5-point align → 224² crop → ImageNet normalise | `faces [16, 3, 224, 224]` |
+| **Video** | 16 timestamps → MTCNN detect → margin-padded 224² crop → ImageNet normalise | `faces [16, 3, 224, 224]` |
 | **Mouth** *(parallel, lip-sync only)* | mouth-corner landmarks from the same detect call → 96² ROI | `mouth [16, 3, 96, 96]` |
 | **Audio** | PyAV decode → mono downmix → 16 kHz resample → leading-silence offset → 16 windows | `audio [16, 5600]` |
 
@@ -146,7 +151,7 @@ intermediate result is visible. There is no second implementation to drift.
 | 5 | Measure leading silence | `ops.audio.leading_silence_sec` | one float, seconds |
 | 6 | Probe the video | `cv2.VideoCapture` properties | `fps`, `frame_count`, `duration` |
 | 7 | Choose 16 timestamps | `ops.audio.sample_timestamps` | `[16]` float64, **shared by both paths** |
-| 8 | Per frame: seek, detect, align, crop | `ops.faces.detect_align_crop` | `[16, 224, 224, 3]` uint8 (+ mouth) |
+| 8 | Per frame: seek, detect, crop | `ops.faces.detect_crop` | `[16, 224, 224, 3]` uint8 (+ mouth) |
 | 9 | Cut audio windows | `ops.audio.extract_windows` | `[16, 5600]` float32 |
 | 10 | Write the cache | `extract_clip` | four files under `data/processed/<clip_id>/` |
 | 11 | Normalise into a batch | `dataset.ClipDataset.__getitem__` | the tensors the model sees |
@@ -297,24 +302,23 @@ change every cached tensor.""")
     with st.expander("**Stage 8 · The visual path, per timestamp**"):
         st.markdown("""
 For each of the 16 timestamps: `cap.set(cv2.CAP_PROP_POS_MSEC, t * 1000)`, read, convert BGR to RGB,
-then one call to `detect_align_crop` does the whole front-end from a single detection.
+then one call to `detect_crop` does the whole front-end from a single detection.
 
 | Step | What happens | Default |
 |---|---|---|
 | Detect | MTCNN, `keep_all=False`, so the highest-scoring face only | conf 0.90 |
 | Gate | below threshold falls back to the **whole frame**, never a guess | counted in `num_faces_detected` |
-| Align | 5-point similarity transform onto an ArcFace template | on |
-| Crop | 224x224, bilinear | `margin=0.20` on the bbox path |
+| Crop | margin-padded bounding box, resized to 224x224 | `margin=0.20` |
 | Mouth | 96x96 ROI centred between the two mouth-corner landmarks | derived from the same detection |
 
-Alignment uses rotation, uniform scale and translation only: four unknowns from ten equations,
-solved least-squares. A full affine would add shear and fit the template better *by deforming the
-face*, and facial geometry is evidence.
+The crop clamps to the frame, so it never pads. Framing follows the detector, which means head
+roll and off-centre framing survive into the tensor; five-point alignment used to remove them and is
+parked in `docs/ideas.md`.
 
 A clip that is quietly failing detection is visible rather than silently degraded, because the hit
 rate is reported as "faces detected k/16".
 """)
-        st.warning("""**The mouth crop is computed and then discarded.** `detect_align_crop` returns
+        st.warning("""**The mouth crop is computed and then discarded.** `detect_crop` returns
 it, but `extract_clip` binds it to `_mouth` and never writes it, so the cache holds faces and audio
 only. Nothing consumes it yet, since the lip-sync stream is Stage 4, and the dashboard derives it
 live for inspection. Caching it will need a `PIPELINE_VERSION` bump.""")
@@ -343,11 +347,11 @@ Storing uint8 rather than normalised float32 is a deliberate four-fold saving, a
 expensive part (decode plus 16 MTCNN detections) separate from the cheap part (a divide and a
 subtract). It also means the cached pixels are directly viewable.
 
-`version.txt` carries `PIPELINE_VERSION`, currently **3**. Bumping it invalidates every stale cache,
-which is what made switching on alignment safe: the pixels changed, so the old cache must not be
-trusted, and nothing has to be deleted by hand. The history is recorded in `ops/constants.py`: v1 was
-a plain MTCNN crop, v2 added alignment and silence-aware sampling, v3 pads aligned crops with black
-instead of reflecting, which had been mirroring a second face into essentially every crop.
+`version.txt` carries `PIPELINE_VERSION`, currently **4**. Bumping it invalidates every stale cache,
+so a change to the crop is safe: the pixels changed, the old cache must not be trusted, and nothing
+has to be deleted by hand. The history in `ops/constants.py` is the record of what moved: v1 plain
+MTCNN crop, v2 added alignment and silence-aware sampling, v3 padded aligned crops with black
+instead of reflecting a second face into them, v4 removed alignment and returned to the bbox crop.
 
 `precache.py` warms the whole cache in parallel worker processes, pinning MTCNN to CPU so several
 workers do not contend over one GPU.
@@ -479,50 +483,25 @@ failing detection is visible rather than silently degraded.
 `facenet-pytorch`; it returns the five landmarks the next step needs from the same forward pass
 rather than requiring a second model; and it is fast enough to run CPU-side inside pre-caching
 workers while the GPU is busy. The honest costs: it is a 2016 detector that struggles with
-profile views and heavy occlusion, and five landmarks is the minimum alignment can work with.
-AV-HuBERT's own preprocessing would prefer 68.
+profile views and heavy occlusion, and its five landmarks are the minimum the mouth ROI can work
+from. AV-HuBERT's own preprocessing would prefer 68.
 """)
 
-    with st.expander("**3 · Five-point alignment**: the largest quality gain available"):
+    with st.expander("**3 · Crop**: a margin-padded bounding box"):
         st.markdown("""
-The five detected landmarks are mapped onto a canonical ArcFace-style template with a
-**similarity transform**: rotation, uniform scale and translation, and nothing else.
+The detected box is padded by `margin` (0.20 by default) on each side, clamped to the frame, and
+resized to 224x224 with cubic interpolation. Because it clamps, it can never introduce padding of
+its own: every pixel in the crop came from the source frame.
+
+Framing therefore follows the detector, so a rolled or off-centre head stays rolled and off-centre,
+and the temporal model sees rigid head motion on top of expression and articulation.
 """)
-        st.latex(r"\begin{bmatrix} x' \\ y' \end{bmatrix} = s\,R(\theta)\begin{bmatrix} x \\ y "
-                 r"\end{bmatrix} + t \qquad \text{4 unknowns, 10 equations}")
-        st.markdown("""
-Five point correspondences give ten equations for four unknowns, so the system is
-over-determined and solved in the least-squares sense; the residual is the extent to which this
-face cannot be made to match the template by rotating and scaling alone. The resulting 2×3
-matrix is applied with bilinear interpolation to produce the 224×224 crop.
-
-**Why not a full affine transform.** Six degrees of freedom would add shear and non-uniform
-scale, and would therefore fit the template more exactly, by deforming the face. Facial geometry
-is evidence. A transform that can squash a wide face into a narrow template is destroying part of
-what the detector should be looking at, so the extra two degrees of freedom are given up on
-purpose.
-
-**What alignment buys.** Without it, the temporal model receives a face that rolls, drifts and
-rescales as the head moves, and must spend capacity undoing rigid motion before it can look at
-anything else. With it, the eyes and mouth land on approximately the same pixels in every frame,
-so what varies frame to frame is expression, articulation and artifacts. That is exactly the
-signal the sequence model exists to read, and it is the single biggest quality gain available
-here without adopting a heavier detector.
-""")
-        st.warning("""**Two traps, both already fixed.**
-
-**Border padding.** An aligned canvas usually reaches past the edge of the source frame, and what
-it reaches for has to come from somewhere. It is now filled **black**. It used to be *reflected*,
-which pasted a mirrored, upside-down second face into essentially every FakeAVCeleb crop. These
-clips are already tight face crops, so the canvas always overshoots, measured at 14–45% of it.
-Padding must be inert, never synthesised, or the model learns the padding.
-
-**Template inset.** `align_inset` shrinks the template to buy hairline and jaw context, and
-defaults to **0**. Insetting asks the source frame for context further out than the face, and a
-frame that is already a tight crop answers with more padding. It is a separate knob from the bbox
-path's `margin`, which clamps to the frame and is therefore safe; feeding one value to both is
-what made aligned crops a quarter empty. Raise it only for datasets whose frames are whole
-scenes.""")
+        st.info("**Five-point alignment used to sit here and was removed.** It warped the face onto "
+                "a canonical ArcFace template so eyes and mouth landed on the same pixels in every "
+                "frame. It is parked in `docs/ideas.md` along with the two traps it carried, the "
+                "black-padding fix and the template inset, so bringing it back does not start from "
+                "scratch. Removing it bumped `PIPELINE_VERSION` to 4, since the cached crop pixels "
+                "changed.")
 
     with st.expander("**4 · Mouth ROI**: a parallel output, not a substitute"):
         st.markdown("""
@@ -892,11 +871,16 @@ validate the central claim of this project.
 | **RVRA** | real | real | The only genuine class, and the scarce one: roughly 500 clips against 19,500 fakes. |
 | **RVFA** | real | fake | Real footage with a synthesised voice. Invisible to every visual-only stream by construction. |
 | **FVRA** | fake | real | Manipulated face against the original audio. |
-| **FVFA** | fake | fake | Both tracks manipulated. Produced by wav2lip, this is the headline lip-sync case the system is built for. |
+| **FVFA** | fake | fake | Both tracks manipulated. The largest category, and the one where all three detection principles have something to find. |
 
-The manipulation *method* is a separate column from the category (`real`, `faceswap`, `fsgan`,
-`wav2lip`), and both breakdowns are reported, because a system that handles face swaps well and
-wav2lip badly has failed at the task even if its category-level numbers look acceptable.
+The manipulation *method* is a separate column from the category, and it is the axis that maps onto
+the three detection principles: `faceswap` (730) and `fsgan` (3,964) are pure swaps, `wav2lip`
+(9,602) plus `fsgan-wav2lip` (3,553) and `faceswap-wav2lip` (2,717) are lip-sync repaints, `rtvc`
+(500) is a voice clone over genuine video, and `real` (500) is the genuine class.
+
+Both breakdowns are reported. Aggregate accuracy is dominated by the 15,872 wav2lip-derived clips,
+so a system that handles those well and pure face swaps badly, or the reverse, has failed at the
+task even when its headline number looks acceptable.
 """)
 
     st.header("Labels")
@@ -955,7 +939,7 @@ dataset.""")
     st.markdown("""
 The per-clip cache carries a `version.txt` stamped with `PIPELINE_VERSION`. Bumping that constant
 invalidates every stale cache so it is transparently re-extracted on next access, which is what
-makes a change like switching on face alignment safe: the pixels changed, so the cache must not be
+makes a change to the crop safe: the pixels changed, so the cache must not be
 trusted, and nothing has to be deleted by hand.
 
 Two consequences of that discovery rule are worth knowing while using the picker. A drop's manifest

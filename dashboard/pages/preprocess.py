@@ -24,7 +24,7 @@ import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
 
-from dashboard.lib import selectors, media
+from dashboard.lib import selectors, media, sticky
 # Shared with the Streams pages so both walks through a clip lay frames out alike.
 from dashboard.lib.trace_ui import show_frames
 from preprocessing.ops import (
@@ -87,11 +87,12 @@ def cached_clip():
     """(row_dict, video_path, n_frames, window_sec) from the Config selection, or None."""
     if "pp_row" not in st.session_state:
         return None
+    cfg = sticky.clip_settings()
     return (
         st.session_state["pp_row"],
         Path(st.session_state["pp_video_path"]),
-        int(st.session_state.get("pp_n_frames", 16)),
-        float(st.session_state.get("pp_window", 0.35)),
+        int(cfg["n_frames"]),
+        float(cfg["window"]),
     )
 
 
@@ -123,11 +124,17 @@ def render_config():
         st.error(f"Video not found: {video_path}")
         return
 
+    # Seeded from and written back to sticky.clip_settings(), because the Streams
+    # pages read these two numbers and Streamlit would have discarded the widget
+    # state behind them by the time those pages run.
+    clip_cfg = sticky.clip_settings()
     g1, g2 = st.columns(2)
     with g1:
-        n_frames = st.slider("Frames (N)", 4, 32, 16, key="pp_n_frames")
+        n_frames = st.slider("Frames (N)", 4, 32, int(clip_cfg["n_frames"]), key="pp_n_frames")
     with g2:
-        window_sec = st.slider("Audio window (s)", 0.10, 1.00, 0.35, 0.05, key="pp_window")
+        window_sec = st.slider("Audio window (s)", 0.10, 1.00, float(clip_cfg["window"]), 0.05,
+                               key="pp_window")
+    clip_cfg.update(n_frames=int(n_frames), window=float(window_sec))
 
     # Cache the selection so the Visual and Audio tabs can read it.
     st.session_state["pp_row"] = row.to_dict()
@@ -218,27 +225,23 @@ def render_visual():
 
     with st.container(border=True):
         l, r = st.columns([1, 2])
-        l.markdown("**1 · Face detection + align + crop**")
+        l.markdown("**1 · Face detection + crop**")
         do_detect = l.checkbox("Enable MTCNN crop", value=True, key="v_detect")
-        do_align = l.checkbox("5-point align", value=True, disabled=not do_detect, key="v_align")
-        l.caption("Alignment warps the face onto a canonical 5-point template "
-                  "(pose-normalized). Off = plain bbox crop.")
+        l.caption("Highest-scoring face only. Below the confidence threshold the step falls "
+                  "back to the whole frame rather than to a guess.")
         conf = l.slider("Confidence", 0.50, 0.99, 0.90, 0.01, disabled=not do_detect, key="v_conf")
-        # Two different context knobs. The bbox crop clamps to the frame, the
-        # aligned canvas cannot, so whatever it reaches past the edge is padded
-        # black. Insetting on already-tight frames just buys more padding.
-        margin = l.slider("Crop margin (bbox path)", 0.0, 0.6, 0.20, 0.05,
-                          disabled=not do_detect or do_align, key="v_margin")
-        align_inset = l.slider("Align inset (aligned path)", 0.0, 0.4, 0.0, 0.05,
-                               disabled=not do_detect or not do_align, key="v_inset")
+        # margin pads the box and clamps to the frame, so it can never introduce
+        # padding of its own. Five-point alignment used to be the alternative
+        # here; it is parked in docs/ideas.md.
+        margin = l.slider("Crop margin", 0.0, 0.6, 0.20, 0.05,
+                          disabled=not do_detect, key="v_margin")
         mouth_crops = None
         if do_detect:
             detector, device = media.get_detector()
             l.caption(f"Detector on {device}.")
             faces, mouths, flags = [], [], []
             for f in full_frames:
-                face, mouth, det = media.detect_face_and_mouth(
-                    f, detector, conf, margin, align=do_align, align_inset=align_inset)
+                face, mouth, det = media.detect_face_and_mouth(f, detector, conf, margin)
                 faces.append(face)
                 mouths.append(mouth)
                 flags.append(det)

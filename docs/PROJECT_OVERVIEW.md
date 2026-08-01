@@ -9,18 +9,28 @@ detail, but they follow this document, they don't override it.
 
 ## 1. What We're Building
 
-A deepfake detector that catches **lip-sync manipulations** — forgeries where only the
-mouth is altered to match a fabricated audio track, while the rest of the face and
-lighting stay untouched. Vision-only detectors miss these because most of the frame is
-genuine.
+An **audio-visual deepfake detector**: one that examines the video track, the audio track,
+and the relationship between them. It applies **three detection principles** to every clip,
+because "deepfake" covers manipulations that leave evidence in completely different places.
+
+| Principle | Question it asks | Streams | Best against |
+|---|---|---|---|
+| Visual artifacts | Does this face show manufacturing residue? | Xception, EfficientNet-B0, DINOv2 | Face swaps (`faceswap`, `fsgan`) — 4,694 clips |
+| Audio-visual synchrony | Do the mouth's movements and the sound belong to one event? | Lip-sync | Lip-sync repaints (`wav2lip` and its combinations) — 15,872 clips |
+| Audio-visual affect | Does the emotion on the face match the emotion in the voice? | Emotion | Voice clones on genuine video (`rtvc`) — 500 clips |
+
+Counts are FakeAVCeleb v1.2 `meta_data.csv`. None of the three families is a corner case,
+and **no single principle covers all three**: a face swap has residue everywhere and is the
+tractable case; a wav2lip repaint alters a few percent of the frame and compression erases
+most of what it leaves; a cloned voice over untouched video alters no pixels at all.
 
 **Core idea:** fuse visual artifact detection with cross-modal audio-visual consistency
-checking, so even if the visual stream is fooled by clean pixels, an audio-video
-mismatch still gets caught.
+checking, so a manipulation that defeats one principle is still caught by another.
 
-**The insight restated:** the fake often does not live inside the video alone or the
-audio alone. It lives in the *mismatch* between them — lips that do not line up with
-the sound, or a voice emotion that does not match the face.
+**The insight restated:** for the harder families the fake does not live inside the video
+alone or the audio alone. It lives in the *mismatch* between them — lips that do not line
+up with the sound, or a voice emotion that does not match the face. The visual streams
+remain essential, since a pure face swap has no cross-modal mismatch to find.
 
 **Correction from earlier research (kept as a warning):** we do NOT split into separate
 spatial, temporal, and standalone audio models. A standalone audio model cannot tell
@@ -164,11 +174,16 @@ applies only to the visual half of the system.
 | FakeVideo-RealAudio (FVRA) | fake | real | |
 | FakeVideo-FakeAudio (FVFA) | fake | fake | |
 
-The manipulation *method* is a separate column (`real`, `faceswap`, `fsgan`, `wav2lip`).
-The headline "mouth altered to match fake audio" case is **FakeVideo-FakeAudio produced
-by wav2lip (`FVFA-WL`)**; `FVFA-FS`/GAN denotes the face-swap/GAN-generated variants.
-Per-category *and* per-method accuracy both get reported, because the project's whole
-point is catching lip-sync fakes specifically, not aggregate accuracy.
+The manipulation *method* is a separate column, and it is the axis that maps onto §1's
+three detection principles: `real` (500), `rtvc` (500, voice clone over genuine video),
+`faceswap` (730) and `fsgan` (3,964) for pure swaps, and `wav2lip` (9,602),
+`fsgan-wav2lip` (3,553) and `faceswap-wav2lip` (2,717) for lip-sync repaints, the last two
+layered on top of a swap.
+
+Per-category *and* per-method accuracy both get reported. Aggregate accuracy is dominated
+by the 15,872 wav2lip-derived clips and can look excellent while an entire family — the
+4,694 pure swaps or the 500 voice clones — is being missed. Per-method numbers are how we
+show all three principles work.
 
 ### Hard constraints on splitting
 
@@ -211,7 +226,7 @@ What it must produce:
 | `data/train.csv`, `val.csv`, `test.csv` | the **identity-based** split, one file per split (each row also carries its split name) |
 | `data/processed/<clip_id>/` | per-clip cache of face crops + time-aligned audio windows + a `version.txt` (`PIPELINE_VERSION`); written on first access, reused every epoch, transparently re-extracted when the version bumps |
 | mono audio @ 16 kHz | extracted per clip. FakeAVCeleb's **leading-silence shortcut bug** (fake-audio clips carry extra silence at t=0) is measured (`leading_silence_sec`) and neutralized by starting frame+audio sampling past it, keeping the two modalities aligned |
-| face + mouth crops | MTCNN face crops (224×224), **5-point aligned** to a canonical template (pose-normalized), and landmark-derived mouth crops (96×96), with per-frame detection confidence |
+| face + mouth crops | MTCNN face crops (224×224), margin-padded bounding box, and landmark-derived mouth crops (96×96), with per-frame detection confidence |
 
 The scripts that did this, in dependency order — a reasonable rebuild order too, one
 script at a time:
@@ -221,8 +236,8 @@ script at a time:
 | 1 | `audit_dataset.py` | walk `data/raw/`, build `full_manifest.csv`, integrity + leading-silence-shortcut audit |
 | 2 | `build_splits.py` | identity-disjoint train/val/test splits (see reconciliation 2 first) |
 | 3 | `verify_splits.py` | assert no identity leaks across splits |
-| 4 | `extract_clip.py` | per-clip aligned-face + aligned-audio extraction, with versioned disk cache |
-| — | `ops/` | the shared per-step functions (detect/align/crop/mouth, decode/window, extras) used by 4 **and** the dashboard |
+| 4 | `extract_clip.py` | per-clip face-crop + aligned-audio extraction, with versioned disk cache |
+| — | `ops/` | the shared per-step functions (detect/crop/mouth, decode/window, extras) used by 4 **and** the dashboard |
 | 5 | `dataset.py` | the shared PyTorch `Dataset`/`DataLoader` |
 | 6 | `precache.py` | one-time parallel pre-caching so epoch 1 isn't crippled by lazy extraction |
 | — | `download_samples.py` | small sample fetch for local iteration (optional) |
@@ -241,10 +256,10 @@ label              : scalar int, 1 = fake / 0 = real
 ```
 
 Normalization is ImageNet mean/std, applied once here rather than per-stream, because
-all three visual backbones are ImageNet-pretrained in `timm`. Face crops are now
-**5-point aligned** before normalization (pose-normalized); this changes the cached
-pixels, so `data/processed/` must be re-precached and the visual stream re-validated
-against the AUC-0.994 bar.
+all three visual backbones are ImageNet-pretrained in `timm`. Face crops are a
+**margin-padded bounding box** (5-point alignment was removed, see docs/ideas.md);
+this changes the cached pixels, so `data/processed/` must be re-precached and the
+visual stream re-validated against the AUC-0.994 bar.
 
 **Label semantics matter per stream.** A visual-only stream sees the *video track's*
 authenticity, not the clip's: `FakeVideo-*` → fake, `RealVideo-*` → real — including
@@ -277,7 +292,8 @@ produce them.
   those are being compared. Anything left out of config cannot be compared later.
 - `wandb.log({...})` every epoch: train/val loss, `val_accuracy`, **and per-category
   accuracy** (`val_acc_FVFA-WL`, `val_acc_FVFA-FS`, …) — aggregate accuracy alone hides
-  whether lip-sync fakes are actually being caught.
+  whether all three detection principles are working, or whether one family carries the
+  number while another is missed entirely.
 - **W&B Sweeps** (`sweep.yaml` + `wandb agent`) for the real "test all combinations"
   search across backbone / freeze / lr — not a hand-built toggle UI.
 
@@ -532,7 +548,7 @@ The main preprocessing steps were rebuilt as individual, shared, pure functions 
 `preprocessing/ops/` (imported by both the batch pipeline and the dashboard — no
 more parallel reimplementation), and upgraded:
 
-- **5-point face alignment** (`ops/faces.align_face`) is now the default, pose-
+- **5-point face alignment** was added here and later REMOVED (see docs/ideas.md), pose-
   normalizing every face crop onto a canonical ArcFace-style template — the main
   SOTA gain, done with MTCNN's own landmarks (no new dependency).
 - **Leading-silence shortcut** (§6) is now handled: `audit_dataset.py` records
@@ -543,12 +559,12 @@ more parallel reimplementation), and upgraded:
 - **Redundancy removed**: deleted the legacy `crop_faces.py` CLI + `ffmpeg-python`,
   the duplicate `dashboard/lib/{visual,audio}_ops.py`, the unused `mouth_region`,
   and the 4 copied ImageNet constants (now one home in `ops/constants.py`).
-- Cache is versioned (`PIPELINE_VERSION`) so stale unaligned caches re-extract.
+- Cache is versioned (`PIPELINE_VERSION`) so stale caches re-extract.
 
 Full reference in [preprocessing.md](preprocessing.md); design/plan under
 `docs/superpowers/{specs,plans}/2026-07-24-sota-preprocessing-refactor*`. 63 tests
 green. **Follow-up before training: re-precache all splits and re-validate the
-visual stream against the AUC-0.994 bar** (alignment changed the cached pixels).
+visual stream against the AUC-0.994 bar** (the crop changed the cached pixels).
 
 **Next: Stage 2** — the first visual stream (EfficientNet-B0 + BiLSTM), rebuilt toward
 the AUC 0.994 bar. See [stage-2-plan.md](stage-2-plan.md).

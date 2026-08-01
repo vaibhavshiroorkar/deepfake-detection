@@ -10,6 +10,11 @@ than read off the widgets. Streamlit discards widget state for widgets that were
 not rendered on the current run, so a hub setting would reset itself the moment
 you navigated to a subpage and back. The dicts survive; the widgets initialise
 from them and write back.
+
+dashboard/lib/sticky.py applies the same rule to the other two things that cross
+pages: the Preprocessing page's frame count and audio window, and each backbone's
+last run. Anything read on a page other than the one whose widget wrote it
+belongs in one of these stores.
 """
 import sys
 from pathlib import Path
@@ -20,6 +25,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 import streamlit as st
 
+from dashboard.lib import sticky
 from models.streams.common.config import (
     StreamConfig, DINOV2, EFFICIENTNET_B0, XCEPTION,
 )
@@ -69,7 +75,7 @@ def build_config(key: str) -> StreamConfig:
         temporal_type=temporal_type, temporal_bidirectional=bidirectional,
         temporal_hidden=int(current["hidden"]), common_dim=int(current["dim"]),
         freeze_backbone=bool(current["freeze"]), grad_checkpointing=False,
-        frame_chunk_size=0, num_frames=int(st.session_state.get("pp_n_frames", 16)),
+        frame_chunk_size=0, num_frames=int(sticky.clip_settings()["n_frames"]),
     )
 
 

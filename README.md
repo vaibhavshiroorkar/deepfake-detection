@@ -1,20 +1,26 @@
 # Audio-Visual Deepfake Detection
 
-Detecting lip-sync deepfakes by checking whether a face and a voice belong to the same event.
+Three detection principles over one clip: visual artifacts, audio-visual synchrony, and
+audio-visual affect.
 
-A wav2lip forgery repaints the mouth and leaves the rest of the video untouched. Almost every pixel
-is genuine, so there is very little manufacturing residue for a vision-only detector to find, and
-compression removes most of what there is. What the forgery cannot repair is agreement between the
-two tracks: a real recording captures one physical event twice, once as light off a moving mouth and
-once as the sound that mouth made, and synthesis breaks the correspondence in a way that survives
-compression.
+"Deepfake" is not one thing, and the three kinds hide in different places. A face swap rewrites the
+whole face, so manufacturing residue is everywhere and a good CNN finds it. A wav2lip repaint alters
+only the mouth, leaving almost every pixel genuine and almost nothing for a vision-only detector to
+see once compression has run. A cloned voice over untouched video alters no pixels at all. In
+FakeAVCeleb those families are 4,694, 15,872 and 500 clips respectively, so none of them is a corner
+case, and no single detector covers all three.
 
-So this detector measures disagreement between modalities rather than asking whether a voice sounds
-synthetic. Five streams read one clip, three visual (EfficientNet-B0, Xception, DINOv2) and two
-cross-modal (lip-sync, emotion), and each emits an embedding rather than a score. Fusion
-concatenates the embeddings and learns from the combination, so it can represent "artifact evidence
-is weak but lip-sync mismatch is strong", which is the signature of a lip-sync forgery and something
-no average of five scores can express.
+What the last two cannot repair is agreement between the tracks: a real recording captures one
+physical event twice, once as light off a moving mouth and once as the sound that mouth made, and
+synthesis breaks the correspondence in a way that survives compression. So alongside the artifact
+detectors, this system measures disagreement between modalities rather than asking whether a voice
+sounds synthetic.
+
+Five streams read one clip, three visual (EfficientNet-B0, Xception, DINOv2) and two cross-modal
+(lip-sync, emotion), and each emits an embedding rather than a score. Fusion concatenates the
+embeddings and learns from the combination, so it can represent "artifact evidence is weak but
+synchrony evidence is strong", which is what separates one manipulation family from another and is
+something no average of five scores can express.
 
 <p align="center">
   <img src="assets/flow.png" alt="System architecture: preprocessing into three tensors, five streams, feature-level fusion, decision" width="460">
@@ -44,8 +50,8 @@ The full design, covering architecture, data, tooling, compute assumptions and b
 | Fusion, evaluation, explainability | Designed, not built (stages 6, 7 and 10). |
 
 An earlier build of the visual stream reached test accuracy 0.963 and AUC 0.994 in-distribution.
-Five-point face alignment has since changed the cached pixels, so that is the bar to re-clear rather
-than a current result. The pre-rebuild implementation is preserved in commit `926624a`.
+Removing five-point face alignment has since changed the cached pixels, so that is the bar to
+re-clear rather than a current result. The pre-rebuild implementation is preserved in commit `926624a`.
 
 ## Dataset
 

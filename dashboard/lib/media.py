@@ -1,7 +1,7 @@
 """Media decoding for the dashboard: frames at timestamps, audio, face detection.
 
 Frame decoding and the Streamlit-cached MTCNN loader live here; the actual
-per-step ops (detect/align/crop/mouth, audio decode/window, timestamps) come from
+per-step ops (detect/crop/mouth, audio decode/window, timestamps) come from
 preprocessing.ops so the dashboard and the real pipeline run the SAME code.
 NEVER writes data/processed/.
 
@@ -170,24 +170,21 @@ def decode_audio(video_path: str) -> tuple[np.ndarray, int]:
     return _audio.decode(str(video_path))
 
 
-def detect_and_crop(frame_rgb, detector, conf_thresh: float, margin: float,
-                    align: bool = True):
+def detect_and_crop(frame_rgb, detector, conf_thresh: float, margin: float):
     """(face_224_rgb, detected). The visual/emotion face path."""
-    face, _mouth, detected = _faces.detect_align_crop(
-        frame_rgb, detector, conf_thresh=conf_thresh, margin=margin, align=align)
+    face, _mouth, detected = _faces.detect_crop(
+        frame_rgb, detector, conf_thresh=conf_thresh, margin=margin)
     return face, detected
 
 
 def detect_face_and_mouth(frame_rgb, detector, conf_thresh: float, margin: float,
-                          mouth_size: int = MOUTH_SIZE, align: bool = True,
-                          align_inset: float = 0.0):
+                          mouth_size: int = MOUTH_SIZE):
     """(face_224_rgb, mouth_96_rgb, detected) from one detect call.
 
     The face crop feeds the visual + emotion streams; the mouth crop is a
     PARALLEL output for the lip-sync stream (Stage 4), derived from MTCNN's two
-    mouth-corner landmarks. `margin` pads the bbox crop, `align_inset` insets the
-    alignment template. Only one applies, depending on `align`.
+    mouth-corner landmarks. `margin` pads the bbox crop.
     """
-    return _faces.detect_align_crop(
+    return _faces.detect_crop(
         frame_rgb, detector, conf_thresh=conf_thresh, margin=margin,
-        align=align, align_inset=align_inset, mouth_size=mouth_size)
+        mouth_size=mouth_size)

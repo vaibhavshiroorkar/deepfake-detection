@@ -10,7 +10,7 @@
 
 - Environment working, GPU confirmed.
 - FakeAVCeleb access granted and downloaded locally (request early if not already in progress — it can take time to arrive).
-- The per-step preprocessing ops live in `preprocessing/ops/` (detect → 5-point align → crop, decode → downmix → resample → window). `extract_clip.py` composes them and caches per clip; Stage 1 consumes this rather than redoing it. Full reference: [preprocessing.md](preprocessing.md).
+- The per-step preprocessing ops live in `preprocessing/ops/` (detect → crop, decode → downmix → resample → window). `extract_clip.py` composes them and caches per clip; Stage 1 consumes this rather than redoing it. Full reference: [preprocessing.md](preprocessing.md).
 
 ---
 
@@ -29,7 +29,7 @@
 
 **Dataset / DataLoader (ML workstream):**
 - Build the `Dataset`/`DataLoader` reading face-crop sequences + audio + labels from the manifests.
-- **Frame sampling:** uniformly sample a fixed **N=16 frames per clip** so every batch has shape `[batch, 16, 3, 224, 224]`. Faces are **5-point aligned** (pose-normalized) before ImageNet normalization.
+- **Frame sampling:** uniformly sample a fixed **N=16 frames per clip** so every batch has shape `[batch, 16, 3, 224, 224]`. Faces are a **margin-padded bbox crop** before ImageNet normalization.
 - **Audio alignment:** frame *i* and its audio window share the same timestamp `t_i` (`ops.audio.extract_windows`). Sampling starts past the measured leading silence (`leading_silence_sec`) so FakeAVCeleb's silence shortcut is removed without desyncing audio from frames — do not build a separate alignment mechanism.
 - Sanity-check a batch: tensor shapes, label balance, normalization, and that a few decoded frames/audio windows look right. **Print the shapes** — this is the concrete stage-1 verification artifact.
 - Done when: a batch loads with correct shapes (`[B, 16, 3, 224, 224]` for frames, matching audio tensors, `[B]` labels) traceable back to `clip_id`.
@@ -58,5 +58,5 @@
 
 - **Identity leakage** is the #1 risk. If a later stage's AUC looks suspiciously high (>0.98 on unseen fakes), suspect leakage before celebrating.
 - **Frame count (N=16)** is a real design decision — if GPU memory is tight, this is the first knob to revisit; record if it changes.
-- **5-point alignment changed the cached crops.** After the 2026-07-24 preprocessing upgrade, `data/processed/` must be re-precached (`PIPELINE_VERSION` bump forces this) and the Stage-2 visual stream re-validated against the AUC-0.994 bar before its numbers are comparable.
+- **Removing 5-point alignment changed the cached crops.** After the 2026-07-28 removal (see [ideas.md](ideas.md)), `data/processed/` must be re-precached (`PIPELINE_VERSION` bump forces this) and the Stage-2 visual stream re-validated against the AUC-0.994 bar before its numbers are comparable.
 - **Dataset access delay** can push this stage. Do the leakage-proof split design early regardless, on whatever sample is available.
