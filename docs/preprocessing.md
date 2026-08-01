@@ -22,8 +22,8 @@ batch pipeline (`preprocessing/extract_clip.py`) and the inspection dashboard
 
 | Module | Contents |
 |---|---|
-| `constants.py` | The single home for `NUM_FRAMES=16`, `FRAME_SIZE=224`, `MOUTH_SIZE=96`, `AUDIO_SR=16000`, `AUDIO_WINDOW_SEC=0.35`, `PIPELINE_VERSION`, `IMAGENET_MEAN/STD`, and the 5-point `ARCFACE_TEMPLATE_112`. |
-| `faces.py` | **Main visual**: `detect`, `crop_and_resize`, `mouth_roi`, `imagenet_normalize`, and the composed `detect_align_crop`. |
+| `constants.py` | The single home for `NUM_FRAMES=16`, `FRAME_SIZE=224`, `MOUTH_SIZE=96`, `AUDIO_SR=16000`, `AUDIO_WINDOW_SEC=0.35`, `PIPELINE_VERSION`, and `IMAGENET_MEAN/STD`. |
+| `faces.py` | **Main visual**: `detect`, `crop_and_resize`, `mouth_roi`, `imagenet_normalize`, and the composed `detect_crop`. |
 | `audio.py` | **Main audio**: `sample_timestamps`, `decode`, `downmix`, `resample`, `leading_silence_sec` / `trim_leading_silence`, `extract_windows`. |
 | `extras_visual.py` | sharpen, denoise, clahe, gaussian_blur, jpeg_recompress, downscale_upscale. |
 | `extras_audio.py` | spectral_denoise, rms_normalize, bandpass, add_noise, mel_spectrogram. |

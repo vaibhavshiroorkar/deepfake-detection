@@ -276,7 +276,7 @@ and the inspection dashboard. There is exactly one implementation, never two.
 ### The output contract
 
 ```
-faces  [16, 3, 224, 224]  float32, 5-point aligned, ImageNet-normalized
+faces  [16, 3, 224, 224]  float32, margin-padded bbox crop, ImageNet-normalized
 mouth  [16, 3,  96,  96]  float32, landmark-centered crop (for lip-sync, Stage 4)
 audio  [16, 5600]         float32 waveform windows, 16 kHz, 0.35 s each
 label  scalar int         1 = fake, 0 = real
@@ -292,12 +292,11 @@ seconds at 16 kHz. Frame *i* and audio window *i* describe the same instant.
 2. **Face detection** (`faces.detect`). MTCNN from `facenet-pytorch`, most-confident face
    only, returning box, 5 landmarks and probability. A face must clear a confidence
    threshold, default 0.90.
-3. **5-point alignment** (`faces.align_face`). A partial-affine transform (rotation, scale,
-   translation, no shear) warps the detected landmarks onto a canonical ArcFace-style
-   template. This pose-normalizes the face so the temporal model sees a stable face across
-   frames rather than one that rolls and rescales with head motion. This was the single
-   largest quality upgrade available without adding a heavier detector, and it used MTCNN's
-   own landmarks, so it cost no new dependency.
+3. **Crop** (`faces.crop_and_resize`). The detected box, padded by a margin (default 0.20)
+   and clamped to the frame, resized to 224x224. Five-point alignment used to sit here: it
+   warped the landmarks onto a canonical ArcFace template to pose-normalize the face. It was
+   removed because its benefit was argued on this dataset rather than measured, and it
+   carried two traps that cost real time. The reasoning is parked in [ideas.md](ideas.md).
 4. **Crop and resize** (`faces.crop_and_resize`), the fallback path when alignment is off
    or landmarks are missing. Margin-padded bbox crop to 224x224. Everything stays RGB end
    to end.
@@ -755,8 +754,8 @@ plus BiLSTM plus a temporary head, reached on the held-out test split:
 In-distribution only, measured under the 1:3 real:fake val/test ratio. Stability required
 gradient clipping and frozen BatchNorm during fine-tuning.
 
-**Read this number carefully.** It is the bar to re-clear, not a current result. Five-point
-face alignment has since changed the cached pixels, so `data/processed/` must be
+**Read this number carefully.** It is the bar to re-clear, not a current result. Removing
+five-point face alignment has since changed the cached pixels, so `data/processed/` must be
 re-precached and the visual stream re-validated before any comparison is meaningful. The
 pre-rebuild implementation is preserved in commit `926624a`.
 
@@ -960,7 +959,7 @@ the one point it must land.
 | 6 | Three principles, five streams | Visual artifacts, audio-visual synchrony, audio-visual affect. The §3 principle table, then the system diagram from §6. The most important pair of slides in the deck. |
 | 7 | Why embeddings, not scores | Averaging five opinions cannot express "artifacts weak, sync mismatch strong". Feature-level fusion can. |
 | 8 | Preprocessing | 16 timestamps, one video path and one audio path, three tensors. Show the contract shapes. |
-| 9 | Preprocessing done right | Two war stories: 5-point alignment, and the reflection-padding bug that pasted a mirrored second face into every crop. |
+| 9 | Preprocessing done right | Two war stories: the reflection-padding bug that pasted a mirrored second face into every crop, and why 5-point alignment was then removed rather than kept on argument alone. |
 | 10 | The data | FakeAVCeleb: four categories on one axis, seven manipulation methods on the other, and why we report per-method accuracy rather than one number. |
 | 11 | Identity-disjoint splits | The one slide that says "our numbers are honest". Include the split table. |
 | 12 | The three visual streams | Table of backbone, size, character. Highlight why DINOv2 is trained frozen. |
@@ -1015,8 +1014,8 @@ is good report material.
 The team is learning deep learning from zero on this project. The Stage 1 to 2 code was
 removed deliberately so it could be rebuilt with each piece understood as it was added, and
 the original is preserved in git at commit `926624a`. The rebuild also produced real
-upgrades: 5-point alignment, the leading-silence fix, and one shared implementation of every
-preprocessing step instead of two divergent ones.
+upgrades: the leading-silence fix, and one shared implementation of every preprocessing step
+instead of two divergent ones.
 
 **How do you know your results are not leakage?**
 Splits are grouped on the `source` identity, built once, and verified by a separate script

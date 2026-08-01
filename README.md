@@ -50,8 +50,8 @@ The full design, covering architecture, data, tooling, compute assumptions and b
 | Fusion, evaluation, explainability | Designed, not built (stages 6, 7 and 10). |
 
 An earlier build of the visual stream reached test accuracy 0.963 and AUC 0.994 in-distribution.
-Five-point face alignment has since changed the cached pixels, so that is the bar to re-clear rather
-than a current result. The pre-rebuild implementation is preserved in commit `926624a`.
+Removing five-point face alignment has since changed the cached pixels, so that is the bar to
+re-clear rather than a current result. The pre-rebuild implementation is preserved in commit `926624a`.
 
 ## Dataset
 

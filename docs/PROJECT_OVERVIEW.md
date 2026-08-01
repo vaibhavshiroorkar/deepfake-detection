@@ -256,10 +256,10 @@ label              : scalar int, 1 = fake / 0 = real
 ```
 
 Normalization is ImageNet mean/std, applied once here rather than per-stream, because
-all three visual backbones are ImageNet-pretrained in `timm`. Face crops are now
-**5-point aligned** before normalization (pose-normalized); this changes the cached
-pixels, so `data/processed/` must be re-precached and the visual stream re-validated
-against the AUC-0.994 bar.
+all three visual backbones are ImageNet-pretrained in `timm`. Face crops are a
+**margin-padded bounding box** (5-point alignment was removed, see docs/ideas.md);
+this changes the cached pixels, so `data/processed/` must be re-precached and the
+visual stream re-validated against the AUC-0.994 bar.
 
 **Label semantics matter per stream.** A visual-only stream sees the *video track's*
 authenticity, not the clip's: `FakeVideo-*` → fake, `RealVideo-*` → real — including

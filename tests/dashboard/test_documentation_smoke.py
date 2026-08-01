@@ -38,7 +38,7 @@ def test_documentation_explains_mechanisms_not_just_names():
     # The page's job is explaining how things work, so the mechanism names are
     # what make it useful, a rewrite that drops them is a regression.
     for term in ["p-net", "r-net", "o-net", "non-maximum suppression", "image pyramid",
-                 "similarity transform", "compound scaling", "depthwise separable",
+                 "compound scaling", "depthwise separable",
                  "leading_silence_sec", "softmax", "build_splits.py"]:
         assert term in body, term
 
@@ -71,10 +71,10 @@ def test_pipeline_tab_walks_every_stage_in_order():
     # the real call order, which is not the obvious one: audio before any frame
     for fn in ["find_dataset_root", "manifest_from_meta", "build_splits.py",
                "ops.audio.decode", "leading_silence_sec", "sample_timestamps",
-               "detect_align_crop", "extract_windows", "PIPELINE_VERSION",
+               "detect_crop", "extract_windows", "PIPELINE_VERSION",
                "ClipDataset"]:
         assert fn in body, fn
-    assert body.index("leading_silence_sec") < body.index("detect_align_crop")
+    assert body.index("leading_silence_sec") < body.index("detect_crop")
 
 
 def test_pipeline_tab_records_the_dashboard_vs_batch_differences():

@@ -142,7 +142,7 @@ def render(st, spec: dict, key: str, video_source: str):
     visual = data[video_source]
     visual_label = ("Mouth crops, 96 pixels, derived from the two mouth-corner landmarks"
                     if video_source == "mouths" else
-                    "Face crops, 224 pixels, aligned to the five-point template")
+                    "Face crops, 224 pixels, margin-padded bounding box")
 
     with st.container(border=True):
         left, right = st.columns([1, 2])
