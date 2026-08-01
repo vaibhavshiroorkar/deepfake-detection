@@ -13,9 +13,11 @@ Two-phase freezing (Stage 2 plan):
     BatchNorm stats don't drift; train only temporal + projection + head.
   Phase 2: unfreeze backbone, fine-tune end-to-end at a much smaller LR.
 
-Best checkpoint is chosen by validation AUC (threshold-free), not loss.
+Best checkpoint is chosen by validation AUC (threshold-free), not loss, with
+logloss breaking AUC ties that fall inside AUC_TIE_TOL -- see
+is_better_checkpoint for why calibration decides when ranking cannot.
 
-Run:  python -m training.train_visual_stream            # full run (asks nothing)
+Run:  python -m training.train_visual_stream --stream xception
       python -m training.train_visual_stream --smoke    # tiny run to prove the loop
       python -m training.train_visual_stream --resume   # continue an interrupted run
 
@@ -40,7 +42,9 @@ except ImportError as e:
     print(f"Error importing dependencies: {e}")
     sys.exit(1)
 
-from models.streams.common.config import StreamConfig
+from models.streams.common.config import (
+    StreamConfig, efficientnet_config, xception_config, dinov2_config,
+)
 from models.streams.common.visual_stream import VisualStream
 from preprocessing.dataset import ClipDataset
 from evaluation.metrics import compute_metrics, format_metrics
@@ -51,6 +55,14 @@ CKPT_DIR = _REPO_ROOT / "models" / "streams"
 # Deliberately not best.pt: that holds whichever epoch scored the highest AUC,
 # which is usually not the last one trained, and it carries no optimizer state.
 RESUME_NAME = "last.pt"
+
+# Two epochs whose val AUC differ by less than this are tied as far as a 300-clip
+# validation set can tell, so calibration decides instead. Without it, selection
+# on AUC alone kept EfficientNet's epoch 7 (AUC 0.9988, logloss 0.143) over its
+# epoch 8 (AUC 0.9982, logloss 0.047) -- a 0.0006 AUC edge bought with 3x the
+# logloss and 1.3 points of accuracy. A stream that only ever emits 0.9998 or
+# 0.0001 carries almost no information into fusion.
+AUC_TIE_TOL = 1e-3
 
 
 def _collate(batch):
@@ -117,7 +129,31 @@ def set_backbone_phase(model: VisualStream, trainable: bool, freeze_bn_on_finetu
         _set_batchnorm_eval(model.backbone)
 
 
-def save_resume_point(path, model, optimizer, scaler, config, epoch, best_auc):
+def is_better_checkpoint(auc, logloss, best_auc, best_logloss) -> bool:
+    """Select on AUC, but break within-noise AUC ties on calibration.
+
+    A clear AUC win always takes it. Inside AUC_TIE_TOL the two epochs rank
+    equally well as far as 300 validation clips can resolve, so the better
+    calibrated one (lower logloss) is the more useful checkpoint downstream.
+    """
+    if np.isnan(auc):
+        return False
+    if auc > best_auc + AUC_TIE_TOL:
+        return True
+    if auc < best_auc - AUC_TIE_TOL:
+        return False
+    # Tied on AUC, so calibration decides. NaN needs handling on both sides:
+    # every comparison against it is False, so a NaN incumbent would otherwise
+    # lock the tiebreak out permanently rather than losing to a real value.
+    if np.isnan(logloss):
+        return False
+    if np.isnan(best_logloss):
+        return True
+    return logloss < best_logloss
+
+
+def save_resume_point(path, model, optimizer, scaler, config, epoch, best_auc,
+                      best_logloss=float("inf")):
     """Everything needed to continue this run, and nothing that isn't.
 
     Only tensors and primitives go in, so the file still loads under
@@ -133,6 +169,7 @@ def save_resume_point(path, model, optimizer, scaler, config, epoch, best_auc):
         "config": config.__dict__,
         "epoch": epoch,               # the epoch just finished, 0-based
         "best_auc": best_auc,
+        "best_logloss": best_logloss,   # the logloss of the epoch best.pt holds
         "torch_rng": torch.get_rng_state(),
     }
     if torch.cuda.is_available():
@@ -140,8 +177,8 @@ def save_resume_point(path, model, optimizer, scaler, config, epoch, best_auc):
     torch.save(state, path)
 
 
-def load_resume_point(path, model, optimizer, scaler, device) -> tuple[int, float]:
-    """Restore a run from `path`; returns (next epoch to run, best AUC so far).
+def load_resume_point(path, model, optimizer, scaler, device) -> tuple[int, float, float]:
+    """Restore a run from `path`; returns (next epoch, best AUC, its logloss).
 
     Restoring the optimizer matters more than it might look: AdamW carries
     per-parameter moment estimates, and dropping them restarts the moment
@@ -157,8 +194,12 @@ def load_resume_point(path, model, optimizer, scaler, device) -> tuple[int, floa
         torch.cuda.set_rng_state(state["cuda_rng"].cpu())
     start_epoch = int(state["epoch"]) + 1
     best_auc = float(state["best_auc"])
+    # Resume points written before the logloss tiebreak existed have no such key.
+    # inf is the right fallback: any real logloss beats it, so the tiebreak stays
+    # available rather than being locked out by a missing value.
+    best_logloss = float(state.get("best_logloss", float("inf")))
     print(f"Resumed from {path.name}: {start_epoch} epoch(s) done, best AUC so far {best_auc:.3f}")
-    return start_epoch, best_auc
+    return start_epoch, best_auc, best_logloss
 
 
 @torch.no_grad()
@@ -199,6 +240,7 @@ def train_stream(config: StreamConfig, smoke: bool = False, resume: bool = False
     scaler = torch.amp.GradScaler(enabled=config.use_amp)
 
     best_auc = -1.0
+    best_logloss = float("inf")
     ckpt_dir = CKPT_DIR / config.stream_name
     ckpt_dir.mkdir(parents=True, exist_ok=True)
 
@@ -210,7 +252,7 @@ def train_stream(config: StreamConfig, smoke: bool = False, resume: bool = False
     resume_path = ckpt_dir / RESUME_NAME
     if resume and not smoke:
         if resume_path.exists():
-            start_epoch, best_auc = load_resume_point(
+            start_epoch, best_auc, best_logloss = load_resume_point(
                 resume_path, model, optimizer, scaler, device)
             if start_epoch >= epochs:
                 print(f"Nothing to do: {start_epoch} epoch(s) already done of {epochs}.")
@@ -269,23 +311,27 @@ def train_stream(config: StreamConfig, smoke: bool = False, resume: bool = False
         print("  val: " + format_metrics(val_metrics))
 
         auc = val_metrics["auc_roc"]
-        if not np.isnan(auc) and auc > best_auc:
-            best_auc = auc
+        logloss = val_metrics["log_loss"]
+        if is_better_checkpoint(auc, logloss, best_auc, best_logloss):
+            tie = abs(auc - best_auc) <= AUC_TIE_TOL and best_auc >= 0
+            best_auc, best_logloss = auc, logloss
             # smoke saves to a throwaway name so a quick test can't clobber a
             # real checkpoint.
             ckpt_path = ckpt_dir / ("best_smoke.pt" if smoke else "best.pt")
             torch.save({"model_state": model.state_dict(), "config": config.__dict__,
                         "val_metrics": val_metrics, "epoch": epoch}, ckpt_path)
-            print(f"  saved new best (AUC={auc:.3f}) -> {ckpt_path}")
+            why = "better calibrated at tied AUC" if tie else f"AUC={auc:.4f}"
+            print(f"  saved new best ({why}, logloss={logloss:.3f}) -> {ckpt_path}")
 
         # After the best-checkpoint decision, so best_auc is current: a resume
         # must not re-save a checkpoint for an epoch it has already beaten.
         # Smoke runs are excluded so a quick test cannot leave a resume point
         # that a later real run would pick up.
         if not smoke:
-            save_resume_point(resume_path, model, optimizer, scaler, config, epoch, best_auc)
+            save_resume_point(resume_path, model, optimizer, scaler, config, epoch,
+                              best_auc, best_logloss)
 
-    print(f"\nDone. Best val AUC: {best_auc:.3f}")
+    print(f"\nDone. Best val AUC: {best_auc:.3f} (logloss {best_logloss:.3f})")
     return best_auc
 
 
@@ -304,11 +350,43 @@ def _evaluate_capped(model, loader, device, use_amp, max_batches):
     return compute_metrics(np.concatenate(all_logits), np.concatenate(all_labels))
 
 
+# Which preset each --stream name builds. Adding a visual stream means adding a
+# preset in config.py and one line here, not touching the training loop.
+STREAM_PRESETS = {
+    "efficientnet": efficientnet_config,
+    "xception": xception_config,
+    "dinov2": dinov2_config,
+}
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("--stream", default="efficientnet", choices=sorted(STREAM_PRESETS),
+                        help="Which visual stream to train (default: efficientnet).")
     parser.add_argument("--smoke", action="store_true",
                         help="Tiny run (few batches) to prove the loop works, not real training.")
     parser.add_argument("--resume", action="store_true",
                         help=f"Continue from models/streams/<stream>/{RESUME_NAME} if it exists.")
+    # Overrides for the knobs that differ per run. freeze-epochs matters most:
+    # the default equals `epochs`, which keeps the backbone frozen the whole run.
+    parser.add_argument("--epochs", type=int, default=None)
+    parser.add_argument("--batch-size", type=int, default=None)
+    parser.add_argument("--grad-accum-steps", type=int, default=None)
+    parser.add_argument("--freeze-epochs", type=int, default=None,
+                        help="Epochs to keep the backbone frozen before fine-tuning.")
+    parser.add_argument("--num-workers", type=int, default=None,
+                        help="DataLoader workers. Keep 0 on Windows: spawned workers "
+                             "have died mid-run here and take the run with them.")
     args = parser.parse_args()
-    train_stream(StreamConfig(), smoke=args.smoke, resume=args.resume)
+
+    overrides = {}
+    for cli_name, field in (("epochs", "epochs"), ("batch_size", "batch_size"),
+                            ("grad_accum_steps", "grad_accum_steps"),
+                            ("freeze_epochs", "freeze_backbone_epochs"),
+                            ("num_workers", "num_workers")):
+        value = getattr(args, cli_name)
+        if value is not None:
+            overrides[field] = value
+
+    config = STREAM_PRESETS[args.stream](**overrides)
+    train_stream(config, smoke=args.smoke, resume=args.resume)

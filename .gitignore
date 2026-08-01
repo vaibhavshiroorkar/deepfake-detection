@@ -47,3 +47,6 @@ Thumbs.db
 # Local Project Overrides
 output_crops/
 sample_videos/
+
+# Training run logs -- reproducible output, not source
+logs/
