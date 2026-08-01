@@ -17,6 +17,11 @@ Best checkpoint is chosen by validation AUC (threshold-free), not loss.
 
 Run:  python -m training.train_visual_stream            # full run (asks nothing)
       python -m training.train_visual_stream --smoke    # tiny run to prove the loop
+      python -m training.train_visual_stream --resume   # continue an interrupted run
+
+A resume point (last.pt) is written after every epoch, holding model, optimizer,
+GradScaler and RNG state. Without the optimizer state a resumed run restarts
+AdamW's moment estimates from zero, which shows up as a loss spike.
 """
 import sys
 import argparse
@@ -41,6 +46,11 @@ from preprocessing.dataset import ClipDataset
 from evaluation.metrics import compute_metrics, format_metrics
 
 CKPT_DIR = _REPO_ROOT / "models" / "streams"
+
+# Written after every epoch so an interrupted run can pick up where it stopped.
+# Deliberately not best.pt: that holds whichever epoch scored the highest AUC,
+# which is usually not the last one trained, and it carries no optimizer state.
+RESUME_NAME = "last.pt"
 
 
 def _collate(batch):
@@ -107,6 +117,50 @@ def set_backbone_phase(model: VisualStream, trainable: bool, freeze_bn_on_finetu
         _set_batchnorm_eval(model.backbone)
 
 
+def save_resume_point(path, model, optimizer, scaler, config, epoch, best_auc):
+    """Everything needed to continue this run, and nothing that isn't.
+
+    Only tensors and primitives go in, so the file still loads under
+    weights_only=True like every other checkpoint here. numpy's RNG state is
+    left out on purpose: it would need pickling to survive, and nothing in the
+    training loop draws from it -- the augmentation flip and the sampler both
+    use torch's generator.
+    """
+    state = {
+        "model_state": model.state_dict(),
+        "optimizer_state": optimizer.state_dict(),
+        "scaler_state": scaler.state_dict(),
+        "config": config.__dict__,
+        "epoch": epoch,               # the epoch just finished, 0-based
+        "best_auc": best_auc,
+        "torch_rng": torch.get_rng_state(),
+    }
+    if torch.cuda.is_available():
+        state["cuda_rng"] = torch.cuda.get_rng_state()
+    torch.save(state, path)
+
+
+def load_resume_point(path, model, optimizer, scaler, device) -> tuple[int, float]:
+    """Restore a run from `path`; returns (next epoch to run, best AUC so far).
+
+    Restoring the optimizer matters more than it might look: AdamW carries
+    per-parameter moment estimates, and dropping them restarts the moment
+    accumulation from zero, which produces a visible loss spike on the first
+    resumed step. The GradScaler's scale factor is the same story for AMP.
+    """
+    state = torch.load(path, map_location=device, weights_only=True)
+    model.load_state_dict(state["model_state"])
+    optimizer.load_state_dict(state["optimizer_state"])
+    scaler.load_state_dict(state["scaler_state"])
+    torch.set_rng_state(state["torch_rng"].cpu())
+    if "cuda_rng" in state and torch.cuda.is_available():
+        torch.cuda.set_rng_state(state["cuda_rng"].cpu())
+    start_epoch = int(state["epoch"]) + 1
+    best_auc = float(state["best_auc"])
+    print(f"Resumed from {path.name}: {start_epoch} epoch(s) done, best AUC so far {best_auc:.3f}")
+    return start_epoch, best_auc
+
+
 @torch.no_grad()
 def evaluate(model, loader, device, use_amp) -> dict:
     model.eval()
@@ -120,7 +174,7 @@ def evaluate(model, loader, device, use_amp) -> dict:
     return compute_metrics(np.concatenate(all_logits), np.concatenate(all_labels))
 
 
-def train_stream(config: StreamConfig, smoke: bool = False):
+def train_stream(config: StreamConfig, smoke: bool = False, resume: bool = False):
     torch.manual_seed(config.seed)
     np.random.seed(config.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -152,7 +206,19 @@ def train_stream(config: StreamConfig, smoke: bool = False):
     max_val_batches = 6 if smoke else None
     epochs = 1 if smoke else config.epochs
 
-    for epoch in range(epochs):
+    start_epoch = 0
+    resume_path = ckpt_dir / RESUME_NAME
+    if resume and not smoke:
+        if resume_path.exists():
+            start_epoch, best_auc = load_resume_point(
+                resume_path, model, optimizer, scaler, device)
+            if start_epoch >= epochs:
+                print(f"Nothing to do: {start_epoch} epoch(s) already done of {epochs}.")
+                return best_auc
+        else:
+            print(f"--resume given but {resume_path} does not exist; starting from scratch.")
+
+    for epoch in range(start_epoch, epochs):
         # --- flip freeze phase at the boundary ---
         frozen = epoch < config.freeze_backbone_epochs and not smoke
         set_backbone_phase(model, trainable=not frozen,
@@ -212,6 +278,13 @@ def train_stream(config: StreamConfig, smoke: bool = False):
                         "val_metrics": val_metrics, "epoch": epoch}, ckpt_path)
             print(f"  saved new best (AUC={auc:.3f}) -> {ckpt_path}")
 
+        # After the best-checkpoint decision, so best_auc is current: a resume
+        # must not re-save a checkpoint for an epoch it has already beaten.
+        # Smoke runs are excluded so a quick test cannot leave a resume point
+        # that a later real run would pick up.
+        if not smoke:
+            save_resume_point(resume_path, model, optimizer, scaler, config, epoch, best_auc)
+
     print(f"\nDone. Best val AUC: {best_auc:.3f}")
     return best_auc
 
@@ -235,5 +308,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--smoke", action="store_true",
                         help="Tiny run (few batches) to prove the loop works, not real training.")
+    parser.add_argument("--resume", action="store_true",
+                        help=f"Continue from models/streams/<stream>/{RESUME_NAME} if it exists.")
     args = parser.parse_args()
-    train_stream(StreamConfig(), smoke=args.smoke)
+    train_stream(StreamConfig(), smoke=args.smoke, resume=args.resume)
