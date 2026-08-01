@@ -20,22 +20,34 @@ if str(_REPO_ROOT) not in sys.path:
 from dashboard.lib import checkpoints
 
 
-def render_checkpoint_picker(st, stream_name: str, ns: str) -> Path | None:
+def render_checkpoint_picker(st, stream_name: str, ns: str, store: dict | None = None
+                             ) -> Path | None:
     """Choose trained weights for a stream. Returns the chosen file, or None.
 
     None means untrained random weights, which is the honest default until a
     training run comes back: nothing on disk is a normal state, not an error.
+
+    `store` is a sticky.run_state dict. When given, the selection survives a page
+    switch, which Streamlit would otherwise reset by discarding the widget state.
+    A remembered file that has since left the disk drops back to untrained.
     """
     found = checkpoints.discover(stream_name)
     labels = {checkpoints.UNTRAINED: None} | {p.name: p for p in found}
 
+    names = list(labels)
+    remembered = (store or {}).get("ckpt_choice")
+    index = names.index(remembered) if remembered in names else 0
+
     c1, c2 = st.columns([2, 3])
-    choice = c1.selectbox("Checkpoint", list(labels), key=f"{ns}_ckpt",
+    choice = c1.selectbox("Checkpoint", names, index=index, key=f"{ns}_ckpt",
                           help=f"Files under `checkpoints/{stream_name}/`, newest first.")
     reference = c2.text_input(
-        "or a W&B artifact", key=f"{ns}_wandb", placeholder="entity/project/name:v0",
+        "or a W&B artifact", key=f"{ns}_wandb", value=(store or {}).get("wandb_ref", ""),
+        placeholder="entity/project/name:v0",
         help="Pulled with the W&B API and cached under checkpoints/_wandb/. "
              "Takes precedence over the selection on the left.")
+    if store is not None:
+        store.update(ckpt_choice=choice, wandb_ref=reference)
 
     if reference.strip():
         try:

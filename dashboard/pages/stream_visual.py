@@ -11,6 +11,11 @@ Nothing runs until Run is clicked. A trace is a full forward pass over sixteen
 result is parked in session_state and the page redraws from it. Changing the
 architecture invalidates it, and the page says so instead of showing stale
 pictures beside new settings.
+
+The trace and the controls that produced it are kept PER BACKBONE, in
+dashboard/lib/sticky.py, so flipping between Xception and DINOv2 shows each one's
+own last run rather than the other's flagged stale, and leaving the page for the
+Preprocessing tab and coming back does not reset anything.
 """
 import sys
 from pathlib import Path
@@ -21,11 +26,9 @@ if str(_REPO_ROOT) not in sys.path:
 import numpy as np
 import streamlit as st
 
-from dashboard.lib import stream_pages, stream_ui, trace_ui
+from dashboard.lib import stream_pages, stream_ui, sticky, trace_ui
 from models.streams.common import introspect
 
-TRACE_KEY = "visual_trace"
-SIG_KEY = "visual_trace_signature"
 TOP_CHANNELS = 8
 
 st.title("Visual stream")
@@ -51,9 +54,14 @@ with st.container(border=True):
                "back there.")
     stream_pages.render_config_controls(st, key, ns="visual")
 
+# Everything below is stored against THIS backbone, so switching backbone swaps
+# the whole run: its controls, its checkpoint and its trace.
+run_store = sticky.run_state(key)
+
 with st.container(border=True):
     st.markdown("**Weights**")
-    checkpoint = stream_ui.render_checkpoint_picker(st, key, ns=f"visual_{key}")
+    checkpoint = stream_ui.render_checkpoint_picker(st, key, ns=f"visual_{key}",
+                                                    store=run_store)
 
 with st.container(border=True):
     st.markdown("**Run**")
@@ -63,23 +71,29 @@ with st.container(border=True):
     # there can strand this value above its own maximum, which Streamlit treats
     # as an error rather than clamping.
     last_frame = config.num_frames - 1
-    if st.session_state.get("visual_detail", 0) > last_frame:
-        st.session_state["visual_detail"] = last_frame
+    # The widget keys carry the backbone, so switching backbone renders a
+    # different set of widgets and each seeds from its own stored run rather than
+    # inheriting whatever the previous backbone was showing.
+    detail_key = f"visual_detail_{key}"
+    if run_store["detail"] > last_frame:
+        run_store["detail"] = last_frame
+        st.session_state.pop(detail_key, None)
     c1, c2, c3 = st.columns([2, 2, 3])
-    # Streamlit warns when a widget is given both a default and a session_state
-    # value, so the default is only offered on the first run.
-    first_run = {} if "visual_detail" in st.session_state else {"value": 0}
     detail_frame = c1.number_input(
-        "Detail frame", 0, last_frame, key="visual_detail", **first_run,
+        "Detail frame", 0, last_frame, key=detail_key,
+        **sticky.widget_default(run_store, "detail", detail_key),
         help="Which frame keeps its full activations. Every frame gets a summary map; "
              "holding all channels of all frames would cost a few hundred megabytes.")
     fixed_seed = c2.checkbox(
-        "Fixed seed", value=True, key="visual_fixed_seed",
+        "Fixed seed", value=bool(run_store["fixed_seed"]), key=f"visual_fixed_seed_{key}",
         help="Seed before building, so an untrained model gives the same answer twice. "
              "Ignored once a checkpoint is loaded.")
-    seed = c2.number_input("Seed", 0, 999999, 42, key="visual_seed", disabled=not fixed_seed)
+    seed = c2.number_input("Seed", 0, 999999, int(run_store["seed"]),
+                           key=f"visual_seed_{key}", disabled=not fixed_seed)
     run = c3.button("Run this clip through the model", type="primary", width="stretch",
                     disabled=video_path is None, key="visual_run")
+
+run_store.update(detail=int(detail_frame), fixed_seed=bool(fixed_seed), seed=int(seed))
 
 signature = (key, config.temporal_type, config.temporal_hidden, config.common_dim,
              config.freeze_backbone, str(checkpoint), video_path, int(detail_frame),
@@ -113,15 +127,16 @@ def _run_trace():
 
 
 if run:
-    st.session_state[TRACE_KEY] = _run_trace()
-    st.session_state[SIG_KEY] = signature
+    run_store["trace"] = _run_trace()
+    run_store["signature"] = signature
 
-result = st.session_state.get(TRACE_KEY)
+result = run_store["trace"]
 if result is None:
-    st.info("Pick a clip on the **Preprocessing** page, then run it here. Every picture below "
-            "is measured from that forward pass, so there is nothing to show until one happens.")
+    st.info(f"Pick a clip on the **Preprocessing** page, then run it here. Every picture below "
+            f"is measured from that forward pass, so there is nothing to show until you run "
+            f"**{names[key]}**. Each backbone keeps its own run.")
     st.stop()
-if st.session_state.get(SIG_KEY) != signature:
+if run_store["signature"] != signature:
     st.warning("These settings have changed since the trace below was captured. Run again to "
                "see the model you have configured now.")
 

@@ -79,10 +79,15 @@ def diagonal_mass(weights: np.ndarray, band: int = 1) -> float:
     return float(weights[np.abs(r * (cols / rows) - c) <= band].sum() / rows)
 
 
-def clip_settings(st) -> tuple[int, float]:
-    """(frames, audio window seconds) as chosen on the Preprocessing page."""
-    return (int(st.session_state.get("pp_n_frames", 16)),
-            float(st.session_state.get("pp_window", 0.35)))
+def clip_settings() -> tuple[int, float]:
+    """(frames, audio window seconds) as chosen on the Preprocessing page.
+
+    Imported locally to keep this module importable without Streamlit, the same
+    reason render() defers its dashboard imports.
+    """
+    from dashboard.lib import sticky
+    cfg = sticky.clip_settings()
+    return int(cfg["n_frames"]), float(cfg["window"])
 
 
 def decode_inputs(video_path: str, num_frames: int, window_sec: float, conf: float = 0.9,
@@ -128,7 +133,7 @@ def render(st, spec: dict, key: str, video_source: str):
     st.info(spec["status"])
 
     video_path = stream_pages.render_inherited_clip(st)
-    num_frames, window_sec = clip_settings(st)
+    num_frames, window_sec = clip_settings()
 
     st.subheader("1 · Inputs")
     st.caption("Produced by `preprocessing.ops`, the same code the batch pipeline runs. These "

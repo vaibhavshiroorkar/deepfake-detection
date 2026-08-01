@@ -24,7 +24,7 @@ import numpy as np
 import streamlit as st
 import matplotlib.pyplot as plt
 
-from dashboard.lib import selectors, media
+from dashboard.lib import selectors, media, sticky
 # Shared with the Streams pages so both walks through a clip lay frames out alike.
 from dashboard.lib.trace_ui import show_frames
 from preprocessing.ops import (
@@ -87,11 +87,12 @@ def cached_clip():
     """(row_dict, video_path, n_frames, window_sec) from the Config selection, or None."""
     if "pp_row" not in st.session_state:
         return None
+    cfg = sticky.clip_settings()
     return (
         st.session_state["pp_row"],
         Path(st.session_state["pp_video_path"]),
-        int(st.session_state.get("pp_n_frames", 16)),
-        float(st.session_state.get("pp_window", 0.35)),
+        int(cfg["n_frames"]),
+        float(cfg["window"]),
     )
 
 
@@ -123,11 +124,17 @@ def render_config():
         st.error(f"Video not found: {video_path}")
         return
 
+    # Seeded from and written back to sticky.clip_settings(), because the Streams
+    # pages read these two numbers and Streamlit would have discarded the widget
+    # state behind them by the time those pages run.
+    clip_cfg = sticky.clip_settings()
     g1, g2 = st.columns(2)
     with g1:
-        n_frames = st.slider("Frames (N)", 4, 32, 16, key="pp_n_frames")
+        n_frames = st.slider("Frames (N)", 4, 32, int(clip_cfg["n_frames"]), key="pp_n_frames")
     with g2:
-        window_sec = st.slider("Audio window (s)", 0.10, 1.00, 0.35, 0.05, key="pp_window")
+        window_sec = st.slider("Audio window (s)", 0.10, 1.00, float(clip_cfg["window"]), 0.05,
+                               key="pp_window")
+    clip_cfg.update(n_frames=int(n_frames), window=float(window_sec))
 
     # Cache the selection so the Visual and Audio tabs can read it.
     st.session_state["pp_row"] = row.to_dict()
