@@ -38,29 +38,34 @@ st.caption("The problem, every processing step, every model, and the reasoning b
 
 # ====================== 1 · PROBLEM AND ARCHITECTURE ======================= #
 def render_architecture():
-    st.header("Why lip-sync forgeries defeat vision-only detectors")
+    st.header("Three manipulation families, three places to look")
     st.markdown("""
 Most deepfake detectors are trained to notice manufacturing residue: the seam where a generated
 face was blended onto a real head, colour statistics that drift between the face and the neck,
 warping around the jaw, upsampling patterns left by a GAN's decoder. Against a full-face swap
-this works well, because the whole face is synthetic and the residue is everywhere.
+this works well, because the whole face is synthetic and the residue is everywhere. Nearly a
+quarter of FakeAVCeleb's fakes are exactly that, `fsgan` and `faceswap` with no audio-visual
+manipulation at all, and the three visual streams are the only part of this system that can
+catch them.
 
-A wav2lip-style forgery gives them far less to work with. The generator is handed a genuine
-video and a target audio track, and it repaints only the mouth region, frame by frame, so the
-lips appear to speak the new words. Everything outside a small patch is the original recording.
-The artifact budget is tiny, it sits in a region that moves and blurs naturally, and video
-compression erases much of what is left.
+A wav2lip-style forgery gives an artifact detector far less to work with. The generator is
+handed a genuine video and a target audio track, and it repaints only the mouth region, frame by
+frame, so the lips appear to speak the new words. Everything outside a small patch is the
+original recording. The artifact budget is tiny, it sits in a region that moves and blurs
+naturally, and video compression erases much of what is left. An `rtvc` voice clone is more
+extreme still: the video track is untouched, so there is no visual evidence whatsoever.
 
-The forgery is nonetheless obvious once you stop looking at the video in isolation. A real
+Both are nonetheless catchable once you stop looking at the two tracks in isolation. A real
 recording contains two views of the same physical event: light reflected off a moving mouth, and
 pressure waves produced by that same mouth. The two views are causally locked together.
 Synthesis breaks the lock. The generated mouth is plausible on its own and the audio is
 plausible on its own, but their *joint* behaviour, the timing and the correspondence between
 visible articulation and the sound produced, no longer belongs to one event.
 
-Hence no standalone audio-only classifier anywhere in the design. An audio model can report that a
-voice sounds synthetic; it cannot report that the voice disagrees with the face, and only the
-disagreement survives compression, resolution loss and a well-trained generator.
+Hence the design: artifact analysis for the swaps, cross-modal comparison for the rest, and no
+standalone audio-only classifier anywhere. An audio model can report that a voice sounds
+synthetic; it cannot report that the voice disagrees with the face, and only the disagreement
+survives compression, resolution loss and a well-trained generator.
 """)
 
     st.header("The signal chain")
@@ -892,11 +897,16 @@ validate the central claim of this project.
 | **RVRA** | real | real | The only genuine class, and the scarce one: roughly 500 clips against 19,500 fakes. |
 | **RVFA** | real | fake | Real footage with a synthesised voice. Invisible to every visual-only stream by construction. |
 | **FVRA** | fake | real | Manipulated face against the original audio. |
-| **FVFA** | fake | fake | Both tracks manipulated. Produced by wav2lip, this is the headline lip-sync case the system is built for. |
+| **FVFA** | fake | fake | Both tracks manipulated. The largest category, and the one where all three detection principles have something to find. |
 
-The manipulation *method* is a separate column from the category (`real`, `faceswap`, `fsgan`,
-`wav2lip`), and both breakdowns are reported, because a system that handles face swaps well and
-wav2lip badly has failed at the task even if its category-level numbers look acceptable.
+The manipulation *method* is a separate column from the category, and it is the axis that maps onto
+the three detection principles: `faceswap` (730) and `fsgan` (3,964) are pure swaps, `wav2lip`
+(9,602) plus `fsgan-wav2lip` (3,553) and `faceswap-wav2lip` (2,717) are lip-sync repaints, `rtvc`
+(500) is a voice clone over genuine video, and `real` (500) is the genuine class.
+
+Both breakdowns are reported. Aggregate accuracy is dominated by the 15,872 wav2lip-derived clips,
+so a system that handles those well and pure face swaps badly, or the reverse, has failed at the
+task even when its headline number looks acceptable.
 """)
 
     st.header("Labels")

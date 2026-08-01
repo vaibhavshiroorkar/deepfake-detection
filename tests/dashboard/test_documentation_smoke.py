@@ -18,7 +18,7 @@ def _page():
 def test_documentation_renders_every_section():
     headers = [h.value for h in _page().header]
     for heading in [
-        "Why lip-sync forgeries defeat vision-only detectors",
+        "Three manipulation families, three places to look",
         "The signal chain",
         "The five streams",
         "Visual path",

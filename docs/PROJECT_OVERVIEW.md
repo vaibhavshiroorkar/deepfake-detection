@@ -9,18 +9,28 @@ detail, but they follow this document, they don't override it.
 
 ## 1. What We're Building
 
-A deepfake detector that catches **lip-sync manipulations** — forgeries where only the
-mouth is altered to match a fabricated audio track, while the rest of the face and
-lighting stay untouched. Vision-only detectors miss these because most of the frame is
-genuine.
+An **audio-visual deepfake detector**: one that examines the video track, the audio track,
+and the relationship between them. It applies **three detection principles** to every clip,
+because "deepfake" covers manipulations that leave evidence in completely different places.
+
+| Principle | Question it asks | Streams | Best against |
+|---|---|---|---|
+| Visual artifacts | Does this face show manufacturing residue? | Xception, EfficientNet-B0, DINOv2 | Face swaps (`faceswap`, `fsgan`) — 4,694 clips |
+| Audio-visual synchrony | Do the mouth's movements and the sound belong to one event? | Lip-sync | Lip-sync repaints (`wav2lip` and its combinations) — 15,872 clips |
+| Audio-visual affect | Does the emotion on the face match the emotion in the voice? | Emotion | Voice clones on genuine video (`rtvc`) — 500 clips |
+
+Counts are FakeAVCeleb v1.2 `meta_data.csv`. None of the three families is a corner case,
+and **no single principle covers all three**: a face swap has residue everywhere and is the
+tractable case; a wav2lip repaint alters a few percent of the frame and compression erases
+most of what it leaves; a cloned voice over untouched video alters no pixels at all.
 
 **Core idea:** fuse visual artifact detection with cross-modal audio-visual consistency
-checking, so even if the visual stream is fooled by clean pixels, an audio-video
-mismatch still gets caught.
+checking, so a manipulation that defeats one principle is still caught by another.
 
-**The insight restated:** the fake often does not live inside the video alone or the
-audio alone. It lives in the *mismatch* between them — lips that do not line up with
-the sound, or a voice emotion that does not match the face.
+**The insight restated:** for the harder families the fake does not live inside the video
+alone or the audio alone. It lives in the *mismatch* between them — lips that do not line
+up with the sound, or a voice emotion that does not match the face. The visual streams
+remain essential, since a pure face swap has no cross-modal mismatch to find.
 
 **Correction from earlier research (kept as a warning):** we do NOT split into separate
 spatial, temporal, and standalone audio models. A standalone audio model cannot tell
@@ -164,11 +174,16 @@ applies only to the visual half of the system.
 | FakeVideo-RealAudio (FVRA) | fake | real | |
 | FakeVideo-FakeAudio (FVFA) | fake | fake | |
 
-The manipulation *method* is a separate column (`real`, `faceswap`, `fsgan`, `wav2lip`).
-The headline "mouth altered to match fake audio" case is **FakeVideo-FakeAudio produced
-by wav2lip (`FVFA-WL`)**; `FVFA-FS`/GAN denotes the face-swap/GAN-generated variants.
-Per-category *and* per-method accuracy both get reported, because the project's whole
-point is catching lip-sync fakes specifically, not aggregate accuracy.
+The manipulation *method* is a separate column, and it is the axis that maps onto §1's
+three detection principles: `real` (500), `rtvc` (500, voice clone over genuine video),
+`faceswap` (730) and `fsgan` (3,964) for pure swaps, and `wav2lip` (9,602),
+`fsgan-wav2lip` (3,553) and `faceswap-wav2lip` (2,717) for lip-sync repaints, the last two
+layered on top of a swap.
+
+Per-category *and* per-method accuracy both get reported. Aggregate accuracy is dominated
+by the 15,872 wav2lip-derived clips and can look excellent while an entire family — the
+4,694 pure swaps or the 500 voice clones — is being missed. Per-method numbers are how we
+show all three principles work.
 
 ### Hard constraints on splitting
 
@@ -277,7 +292,8 @@ produce them.
   those are being compared. Anything left out of config cannot be compared later.
 - `wandb.log({...})` every epoch: train/val loss, `val_accuracy`, **and per-category
   accuracy** (`val_acc_FVFA-WL`, `val_acc_FVFA-FS`, …) — aggregate accuracy alone hides
-  whether lip-sync fakes are actually being caught.
+  whether all three detection principles are working, or whether one family carries the
+  number while another is missed entirely.
 - **W&B Sweeps** (`sweep.yaml` + `wandb agent`) for the real "test all combinations"
   search across backbone / freeze / lr — not a hand-built toggle UI.
 

@@ -31,21 +31,26 @@ body, _ = st.columns([5, 3], gap="large")
 
 with body:
     st.title("Audio-Visual Deepfake Detection")
-    st.caption("Detecting lip-sync forgeries by checking whether a face and a voice belong to the "
-               "same event.")
+    st.caption("Three detection principles over one clip: visual artifacts, audio-visual "
+               "synchrony, and audio-visual affect.")
 
     st.header("The problem")
     st.markdown("""
-A wav2lip forgery repaints the mouth and leaves the rest of the video alone. Almost every pixel is
-genuine, so there is very little manufacturing residue for a vision-only detector to find, and
-compression destroys most of what remains. Detectors that score well on full face swaps do poorly
-here for a simple reason: there is barely anything to see.
+"Deepfake" is not one thing, and the kinds hide in different places. FakeAVCeleb contains three
+families, none of them a corner case:
 
-What the forgery cannot repair is agreement between the two tracks. A real recording captures one
-physical event twice, as light off a moving mouth and as the sound that mouth made. Synthesis breaks
-the correspondence, and it stays broken after compression and resolution loss. So this system
-measures disagreement between face and voice rather than asking whether a voice sounds synthetic,
-which is why it has no standalone audio classifier.
+| Family | Methods | Clips | Where the evidence is |
+|---|---|---|---|
+| **Face swap** | `fsgan`, `faceswap` | 4,694 | In the pixels. The whole face is synthetic, so blending seams, colour drift and warping are everywhere. The tractable case. |
+| **Lip-sync repaint** | `wav2lip` and its combinations | 15,872 | Barely in the pixels. Only the mouth is repainted, so the artifact budget is tiny and compression erases most of it. |
+| **Voice clone** | `rtvc` | 500 | Nowhere in the pixels. The video track is genuine. |
+
+No single detector covers all three. What the last two cannot repair is agreement between the two
+tracks. A real recording captures one physical event twice, as light off a moving mouth and as the
+sound that mouth made. Synthesis breaks the correspondence, and it stays broken after compression
+and resolution loss. So alongside the artifact detectors this system measures disagreement between
+face and voice, rather than asking whether a voice sounds synthetic, which is why it has no
+standalone audio classifier.
 """)
 
     st.header("Architecture")
@@ -73,8 +78,8 @@ measure the pipeline rather than the forgery.
 
 Each of the five streams emits a 256-dimensional embedding rather than a score. Fusion concatenates
 them and learns from the combination, so it can represent a conjunction like "artifact evidence is
-weak but lip-sync mismatch is strong". That is the signature of a lip-sync forgery, and no weighted
-average of five scores can express it.
+weak but synchrony evidence is strong". That conjunction is what separates one manipulation family
+from another, and no weighted average of five scores can express it.
 """)
 
     st.header("Status")
