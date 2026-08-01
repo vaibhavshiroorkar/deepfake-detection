@@ -218,27 +218,23 @@ def render_visual():
 
     with st.container(border=True):
         l, r = st.columns([1, 2])
-        l.markdown("**1 · Face detection + align + crop**")
+        l.markdown("**1 · Face detection + crop**")
         do_detect = l.checkbox("Enable MTCNN crop", value=True, key="v_detect")
-        do_align = l.checkbox("5-point align", value=True, disabled=not do_detect, key="v_align")
-        l.caption("Alignment warps the face onto a canonical 5-point template "
-                  "(pose-normalized). Off = plain bbox crop.")
+        l.caption("Highest-scoring face only. Below the confidence threshold the step falls "
+                  "back to the whole frame rather than to a guess.")
         conf = l.slider("Confidence", 0.50, 0.99, 0.90, 0.01, disabled=not do_detect, key="v_conf")
-        # Two different context knobs. The bbox crop clamps to the frame, the
-        # aligned canvas cannot, so whatever it reaches past the edge is padded
-        # black. Insetting on already-tight frames just buys more padding.
-        margin = l.slider("Crop margin (bbox path)", 0.0, 0.6, 0.20, 0.05,
-                          disabled=not do_detect or do_align, key="v_margin")
-        align_inset = l.slider("Align inset (aligned path)", 0.0, 0.4, 0.0, 0.05,
-                               disabled=not do_detect or not do_align, key="v_inset")
+        # margin pads the box and clamps to the frame, so it can never introduce
+        # padding of its own. Five-point alignment used to be the alternative
+        # here; it is parked in docs/ideas.md.
+        margin = l.slider("Crop margin", 0.0, 0.6, 0.20, 0.05,
+                          disabled=not do_detect, key="v_margin")
         mouth_crops = None
         if do_detect:
             detector, device = media.get_detector()
             l.caption(f"Detector on {device}.")
             faces, mouths, flags = [], [], []
             for f in full_frames:
-                face, mouth, det = media.detect_face_and_mouth(
-                    f, detector, conf, margin, align=do_align, align_inset=align_inset)
+                face, mouth, det = media.detect_face_and_mouth(f, detector, conf, margin)
                 faces.append(face)
                 mouths.append(mouth)
                 flags.append(det)

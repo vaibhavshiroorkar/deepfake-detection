@@ -1,5 +1,5 @@
 """
-Stage 1 - per-clip extraction: N=16 aligned face crops + their aligned audio windows.
+Stage 1 - per-clip extraction: N=16 face crops + their aligned audio windows.
 
 This is the "frame <-> audio-window sync" mechanism referenced in
 docs/stage-1-plan.md. For one video we:
@@ -8,7 +8,7 @@ docs/stage-1-plan.md. For one video we:
      PAST that silence so a model can't cheat on it.
   2. Sample 16 frame timestamps, evenly spaced across the remaining duration.
   3. At each timestamp, decode that video frame, detect the face (MTCNN) and
-     5-point ALIGN it to a canonical template (preprocessing/ops/faces.py), then
+     CROP it with a margin-padded bounding box (preprocessing/ops/faces.py), then
      crop+resize to 224x224.
   4. At each timestamp, cut a fixed-duration (default 0.35s) audio window
      CENTERED on that timestamp from the clip's audio track.
@@ -64,7 +64,7 @@ def _get_mtcnn(device: str) -> "MTCNN":
 
 def _cache_valid(out_dir: Path) -> bool:
     """A cache hit requires all arrays AND a matching PIPELINE_VERSION stamp, so
-    caches written by an older pipeline (e.g. unaligned crops) are re-extracted."""
+    caches written by an older pipeline (e.g. aligned crops) are re-extracted."""
     needed = ["frames.npy", "audio.npy", "timestamps.npy", "version.txt"]
     if not all((out_dir / n).exists() for n in needed):
         return False
@@ -75,15 +75,14 @@ def _cache_valid(out_dir: Path) -> bool:
 
 
 def extract_clip(video_path: Path, clip_id: str, force: bool = False,
-                 device: str | None = None, align: bool = True,
+                 device: str | None = None,
                  conf_thresh: float = 0.90, margin: float = 0.20) -> dict:
     """
-    Extract and cache 16 aligned face crops + aligned audio windows for one clip.
+    Extract and cache 16 face crops + aligned audio windows for one clip.
 
     device: force MTCNN onto "cpu" or "cuda". Default None auto-selects CUDA if
     available. Pre-caching (preprocessing/precache.py) passes "cpu" so multiple
     worker processes don't contend over the single GPU.
-    align: 5-point align the face (default). False falls back to a bbox crop.
 
     Returns a dict: {"frames": [N,224,224,3] uint8, "audio": [N, window_samples]
     float32, "timestamps": [N] float, "num_faces_detected": int,
@@ -132,7 +131,7 @@ def extract_clip(video_path: Path, clip_id: str, force: bool = False,
             device = "cuda" if torch.cuda.is_available() else "cpu"
         mtcnn = _get_mtcnn(device)
 
-        # --- Per-frame detect + align + crop. ---
+        # --- Per-frame detect + crop. ---
         frame_crops = []
         num_faces_detected = 0
         for t in timestamps:
@@ -141,9 +140,9 @@ def extract_clip(video_path: Path, clip_id: str, force: bool = False,
             if not ok:
                 raise RuntimeError(f"Failed to read frame at t={t:.2f}s in {video_path}")
             frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
-            face, _mouth, detected = F.detect_align_crop(
+            face, _mouth, detected = F.detect_crop(
                 frame_rgb, mtcnn, conf_thresh=conf_thresh, margin=margin,
-                align=align, size=FRAME_SIZE, mouth_size=MOUTH_SIZE)
+                size=FRAME_SIZE, mouth_size=MOUTH_SIZE)
             frame_crops.append(face)
             num_faces_detected += int(detected)
         cap.release()

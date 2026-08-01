@@ -23,7 +23,7 @@ batch pipeline (`preprocessing/extract_clip.py`) and the inspection dashboard
 | Module | Contents |
 |---|---|
 | `constants.py` | The single home for `NUM_FRAMES=16`, `FRAME_SIZE=224`, `MOUTH_SIZE=96`, `AUDIO_SR=16000`, `AUDIO_WINDOW_SEC=0.35`, `PIPELINE_VERSION`, `IMAGENET_MEAN/STD`, and the 5-point `ARCFACE_TEMPLATE_112`. |
-| `faces.py` | **Main visual**: `detect`, `align_face`, `crop_and_resize`, `mouth_roi`, `imagenet_normalize`, and the composed `detect_align_crop`. |
+| `faces.py` | **Main visual**: `detect`, `crop_and_resize`, `mouth_roi`, `imagenet_normalize`, and the composed `detect_align_crop`. |
 | `audio.py` | **Main audio**: `sample_timestamps`, `decode`, `downmix`, `resample`, `leading_silence_sec` / `trim_leading_silence`, `extract_windows`. |
 | `extras_visual.py` | sharpen, denoise, clahe, gaussian_blur, jpeg_recompress, downscale_upscale. |
 | `extras_audio.py` | spectral_denoise, rms_normalize, bandpass, add_noise, mel_spectrogram. |
@@ -43,36 +43,24 @@ Applied per sampled frame; the result is stacked into `[16, 3, 224, 224]`.
    must clear the confidence threshold (default 0.90). MTCNN is the only detector
    the pinned environment ships, so it is used throughout.
 
-3. **5-point face alignment** — `faces.align_face` **(the SOTA upgrade).** A
-   partial-affine (rotation + scale + translation, no shear) transform warps the
-   detected landmarks onto a canonical ArcFace-style 5-point template
-   (`ARCFACE_TEMPLATE_112`). This **pose-normalizes** the face so the temporal
-   model sees a stable face across frames instead of one that rolls and rescales
-   with head motion — the single biggest quality win available without a heavier
-   detector. When detection fails or the transform can't be estimated, the
-   pipeline falls back to step 4.
+3. **Crop + resize** — `faces.crop_and_resize`. A margin-padded bbox crop
+   (`margin=0.20`) resized to 224×224, cubic. The margin clamps to the frame, so
+   the crop can never introduce padding of its own: every pixel came from the
+   source. Everything stays RGB end-to-end (no BGR round-trips). Framing follows
+   the detector, so head roll and off-centre framing survive into the tensor.
 
-   Whatever the aligned canvas samples from beyond the frame edge is padded
-   **black**, never synthesized. Until 2026-07-24 it was reflected, which pasted
-   a mirrored upside-down second face into essentially every FakeAVCeleb crop
-   (the clips are already tight 224×224 face crops, so the canvas always
-   overshoots — measured 14–45% of it). Related: `align_inset` (shrink the
-   template for extra hairline/jaw context) defaults to **0**, because insetting
-   asks the frame for context further out than the face and a tight frame answers
-   with more padding. It is a separate knob from `crop_and_resize`'s bbox
-   `margin`, which clamps to the frame; feeding one value to both is what made
-   aligned crops a quarter empty. Raise `align_inset` only for datasets whose
-   frames are whole scenes.
+   > **5-point alignment was removed from this step.** It warped the detected
+   > landmarks onto a canonical ArcFace template, pose-normalizing the face. It is
+   > parked in [ideas.md](ideas.md) together with the two traps it carried (border
+   > padding had to be black, not reflected; and `align_inset` had to stay at 0),
+   > so re-adding it does not start from scratch. Removal bumped
+   > `PIPELINE_VERSION` to 4.
 
-4. **Crop + resize (fallback / alignment-off)** — `faces.crop_and_resize`. A
-   margin-padded bbox crop resized to 224×224. This is the `align=False` path and
-   the no-landmark fallback. Everything stays RGB end-to-end (no BGR round-trips).
-
-5. **ImageNet normalization** — `faces.imagenet_normalize`. `(x/255 − mean)/std`
+4. **ImageNet normalization** — `faces.imagenet_normalize`. `(x/255 − mean)/std`
    with the ImageNet stats the timm backbones were pretrained on. Applied once,
    here, for all three visual streams.
 
-`faces.detect_align_crop` composes steps 2–4 (plus the mouth ROI) in **one**
+`faces.detect_crop` composes the detect/crop/mouth steps in **one**
 detect call and is the single code path shared by the pipeline and dashboard.
 
 ### Mouth ROI (parallel output, for lip-sync — Stage 4)
@@ -132,7 +120,7 @@ off) reproduces the real pipeline.
 ## Output contract (unchanged — see PROJECT_OVERVIEW.md §6)
 
 ```
-face_crop_sequence : [16, 3, 224, 224] float32, ImageNet-normalized (now aligned)
+face_crop_sequence : [16, 3, 224, 224] float32, ImageNet-normalized
 audio              : [16, 5600]        float32 waveform windows @ 16 kHz
 mouth (parallel)   : [96, 96, 3]       per frame, for the lip-sync stream (Stage 4)
 label              : scalar int, 1 = fake / 0 = real
@@ -140,11 +128,11 @@ label              : scalar int, 1 = fake / 0 = real
 
 `extract_clip.py` caches `frames.npy` / `audio.npy` / `timestamps.npy` under
 `data/processed/<clip_id>/` plus a `version.txt` stamped with `PIPELINE_VERSION`.
-Bumping `PIPELINE_VERSION` (e.g. because alignment changed the pixels) invalidates
+Bumping `PIPELINE_VERSION` (e.g. because the crop changed the pixels) invalidates
 old caches so they are transparently re-extracted.
 
-> **Because alignment changes the cached pixels, `data/processed/` must be
-> re-precached and the visual stream re-validated against the previous AUC-0.994
-> bar after this change.** See `preprocessing/precache.py` and stage-2. Current
-> value: **3** (v3 = black padding + no template inset; v2 = alignment + silence-
-> aware sampling; v1 = plain MTCNN crop).
+> **Because removing alignment changes the cached pixels, `data/processed/` must
+> be re-precached and the visual stream re-validated against the previous AUC-0.994
+> bar.** See `preprocessing/precache.py` and stage-2. Current value: **4**
+> (v4 = alignment removed, margin-padded bbox crop; v3 = black padding + no
+> template inset; v2 = alignment + silence-aware sampling; v1 = plain MTCNN crop).

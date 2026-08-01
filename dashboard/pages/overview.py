@@ -94,8 +94,8 @@ from another, and no weighted average of five scores can express it.
 | Fusion, evaluation, explainability | Designed. Stages 6, 7 and 10. |
 """)
     st.caption("An earlier build of the visual stream reached test accuracy 0.963 and AUC 0.994 "
-               "in-distribution. Face alignment has since changed the cached pixels, so that is "
-               "the bar to re-clear rather than a current result.")
+               "in-distribution. The crop has changed since then, so that is the bar to re-clear "
+               "rather than a current result.")
 
     st.header("The pages")
     st.markdown("""
