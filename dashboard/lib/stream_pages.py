@@ -44,6 +44,13 @@ VISUAL_MODELS = {
 
 DEFAULTS = {"enabled": True, "temporal": "BiLSTM", "hidden": 256, "dim": 256, "freeze": True}
 
+# How each backbone reduces its per-frame output to one vector. Not a tuning
+# choice and not exposed as a control: DINOv2 must pool over the CLS token, and
+# the trained checkpoints were written under these values. Building a stream
+# with the wrong one still loads every tensor -- the shapes match either way --
+# and then quietly computes a different vector than the one that was trained.
+GLOBAL_POOL = {"xception": "avg", "efficientnet": "avg", "dinov2": "token"}
+
 # Only the visual streams are configurable: the cross-modal encoders are Stage
 # 4 and 5, so there is nothing yet to configure for them.
 CROSS_MODAL = {
@@ -75,6 +82,7 @@ def build_config(key: str) -> StreamConfig:
         temporal_type=temporal_type, temporal_bidirectional=bidirectional,
         temporal_hidden=int(current["hidden"]), common_dim=int(current["dim"]),
         freeze_backbone=bool(current["freeze"]), grad_checkpointing=False,
+        global_pool=GLOBAL_POOL[key],
         frame_chunk_size=0, num_frames=int(sticky.clip_settings()["n_frames"]),
     )
 
