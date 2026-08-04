@@ -1,0 +1,83 @@
+=== Held-out test-set evaluation, all three visual streams ===
+Run:      2026-08-04
+Command:  python -m evaluation.evaluate_stream --stream <name> --split test
+Split:    data/test.csv, 300 clips, identity- and file-disjoint from train/val
+          (verified by preprocessing.verify_splits, PASS, same day)
+Cache:    data/processed/ (v4, post-alignment-removal)
+Weights:  models/streams/<name>/best.pt, from the v4 retrain of 2026-08-02
+Labels:   label_mode="visual" -- RealVideo-FakeAudio counts as real (80 real / 220 fake)
+
+SUMMARY
+                   acc        auc      eer   logloss   saturated   mid-band
+  efficientnet   0.97667   0.99580   0.0176   0.10726      95.0%       1.3%
+  xception       0.94333   0.98960   0.0324   0.17848      84.0%       5.0%
+  dinov2         1.00000   1.00000   0.0000   0.00009     100.0%       0.0%
+
+  saturated = fraction of clips at p>0.99 or p<0.01
+  mid-band  = fraction in 0.1-0.9
+
+NOTE: all three streams are saturated, so every one of them is closer to emitting a
+hard label than a calibrated probability, and 0.5 is nowhere near the real decision
+boundary. Fit temperature scaling (one scalar per stream, on the val split, no
+retraining) BEFORE wiring the Stage 6 fusion MLP. It does not change AUC, only
+calibration. DINOv2's perfect score is an in-distribution ceiling, not evidence of
+generalization -- Stage 9 (held-out manipulation method + external OOD set) is the
+test that would show otherwise.
+
+---------------------------------------------------------------------------
+########## efficientnet ##########
+Stream: efficientnet | split: test | device: cuda
+Checkpoint: models\streams\efficientnet\best.pt
+  trained through epoch 5
+  300 clips
+
+acc=0.977 auc=0.996 eer=0.018 logloss=0.107 P=0.995 R=0.973 F1=0.984
+           pred_real pred_fake
+true_real         79         1
+true_fake          6       214
+
+full precision: auc=0.99580 acc=0.97667 eer=0.01761 logloss=0.10726
+
+probability distribution:
+  real n=80   p5=0.0013  median=0.0019  p95=0.0254  (min 0.0011, max 0.9830)
+  fake n=220  p5=0.9848  median=0.9994  p95=0.9994  (min 0.0022, max 0.9994)
+  saturated (p>0.99 or p<0.01):  95.0% of all clips
+  in the middle band (0.1-0.9):    1.3%
+
+########## xception ##########
+Stream: xception | split: test | device: cuda
+Checkpoint: models\streams\xception\best.pt
+  trained through epoch 6
+  300 clips
+
+acc=0.943 auc=0.990 eer=0.032 logloss=0.178 P=0.986 R=0.936 F1=0.960
+           pred_real pred_fake
+true_real         77         3
+true_fake         14       206
+
+full precision: auc=0.98960 acc=0.94333 eer=0.03239 logloss=0.17848
+
+probability distribution:
+  real n=80   p5=0.0027  median=0.0041  p95=0.0792  (min 0.0022, max 0.9984)
+  fake n=220  p5=0.3147  median=0.9996  p95=0.9997  (min 0.0060, max 0.9997)
+  saturated (p>0.99 or p<0.01):  84.0% of all clips
+  in the middle band (0.1-0.9):    5.0%
+
+########## dinov2 ##########
+Stream: dinov2 | split: test | device: cuda
+Checkpoint: models\streams\dinov2\best.pt
+  trained through epoch 8
+  300 clips
+
+acc=1.000 auc=1.000 eer=0.000 logloss=0.000 P=1.000 R=1.000 F1=1.000
+           pred_real pred_fake
+true_real         80         0
+true_fake          0       220
+
+full precision: auc=1.00000 acc=1.00000 eer=0.00000 logloss=0.00009
+
+probability distribution:
+  real n=80   p5=0.0001  median=0.0001  p95=0.0001  (min 0.0001, max 0.0001)
+  fake n=220  p5=0.9999  median=0.9999  p95=0.9999  (min 0.9999, max 0.9999)
+  saturated (p>0.99 or p<0.01): 100.0% of all clips
+  in the middle band (0.1-0.9):    0.0%

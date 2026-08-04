@@ -1,0 +1,392 @@
+﻿Device: cuda | stream: dinov2 | backbone: vit_small_patch14_dinov2.lvd142m
+.\.venv\Scripts\python.exe : Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits 
+and faster downloads.
+At line:1 char:446
++ ... mm')) ==="; .\.venv\Scripts\python.exe -u -m training.train_visual_st ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Warning: You ar...ster downloads.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Train class counts (visual labels): real=373, fake=1027
+
+Epoch 1/8 (FROZEN backbone)
+  batch 20: loss=1.7168
+  batch 40: loss=1.5895
+  batch 60: loss=1.3450
+  batch 80: loss=1.1964
+  batch 100: loss=1.0911
+  batch 120: loss=1.0186
+  batch 140: loss=0.9688
+  batch 160: loss=0.9261
+  batch 180: loss=0.8962
+  batch 200: loss=0.8879
+  batch 220: loss=0.8867
+  batch 240: loss=0.8733
+  batch 260: loss=0.8644
+  batch 280: loss=0.8501
+  batch 300: loss=0.8307
+  batch 320: loss=0.8238
+  batch 340: loss=0.8166
+  batch 360: loss=0.8034
+  batch 380: loss=0.7900
+  batch 400: loss=0.7815
+  batch 420: loss=0.7756
+  batch 440: loss=0.7634
+  batch 460: loss=0.7576
+  batch 480: loss=0.7490
+  batch 500: loss=0.7517
+  batch 520: loss=0.7482
+  batch 540: loss=0.7438
+  batch 560: loss=0.7370
+  batch 580: loss=0.7327
+  batch 600: loss=0.7263
+=== START dinov2 Sun, Aug  2, 2026  2:57:55 PM ===
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Device: cuda | stream: dinov2 | backbone: vit_small_patch14_dinov2.lvd142m
+Train class counts (visual labels): real=373, fake=1027
+
+Epoch 1/8 (FROZEN backbone)
+  batch 20: loss=1.7168
+  batch 40: loss=1.5895
+  batch 60: loss=1.3450
+  batch 80: loss=1.1964
+  batch 100: loss=1.0911
+  batch 120: loss=1.0186
+  batch 140: loss=0.9688
+  batch 160: loss=0.9261
+  batch 180: loss=0.8962
+  batch 200: loss=0.8879
+  batch 220: loss=0.8867
+  batch 240: loss=0.8733
+  batch 260: loss=0.8644
+  batch 280: loss=0.8501
+  batch 300: loss=0.8307
+  batch 320: loss=0.8238
+  batch 340: loss=0.8166
+  batch 360: loss=0.8034
+  batch 380: loss=0.7900
+  batch 400: loss=0.7815
+  batch 420: loss=0.7756
+  batch 440: loss=0.7634
+  batch 460: loss=0.7576
+  batch 480: loss=0.7490
+  batch 500: loss=0.7517
+  batch 520: loss=0.7482
+  batch 540: loss=0.7438
+  batch 560: loss=0.7370
+  batch 580: loss=0.7327
+  batch 600: loss=0.7263
+  batch 620: loss=0.7220
+  batch 640: loss=0.7183
+  batch 660: loss=0.7129
+  batch 680: loss=0.7081
+  batch 700: loss=0.7043
+  train_loss=0.7043
+  val: acc=0.733 auc=0.813 eer=0.281 logloss=0.521 P=0.869 R=0.740 F1=0.799
+           pred_real pred_fake
+true_real         61        24
+true_fake         56       159
+  saved new best (AUC=0.8129, logloss=0.521) -> D:\Projects\deepfake-detection\models\streams\dinov2\best.pt
+
+Epoch 2/8 (FROZEN backbone)
+  batch 20: loss=0.5304
+  batch 40: loss=0.4913
+  batch 60: loss=0.4819
+  batch 80: loss=0.5520
+  batch 100: loss=0.5398
+  batch 120: loss=0.5383
+  batch 140: loss=0.5185
+  batch 160: loss=0.5252
+  batch 180: loss=0.5342
+  batch 200: loss=0.5348
+  batch 220: loss=0.5367
+  batch 240: loss=0.5423
+  batch 260: loss=0.5405
+  batch 280: loss=0.5506
+  batch 300: loss=0.5477
+  batch 320: loss=0.5401
+  batch 340: loss=0.5444
+  batch 360: loss=0.5441
+  batch 380: loss=0.5416
+  batch 400: loss=0.5395
+  batch 420: loss=0.5316
+  batch 440: loss=0.5239
+  batch 460: loss=0.5151
+  batch 480: loss=0.5111
+  batch 500: loss=0.5112
+  batch 520: loss=0.5067
+  batch 540: loss=0.5227
+  batch 560: loss=0.5342
+  batch 580: loss=0.5338
+  batch 600: loss=0.5324
+  batch 620: loss=0.5339
+  batch 640: loss=0.5349
+  batch 660: loss=0.5334
+  batch 680: loss=0.5317
+  batch 700: loss=0.5310
+  train_loss=0.5310
+  val: acc=0.847 auc=0.879 eer=0.173 logloss=0.403 P=0.889 R=0.898 F1=0.894
+           pred_real pred_fake
+true_real         61        24
+true_fake         22       193
+  saved new best (AUC=0.8790, logloss=0.403) -> D:\Projects\deepfake-detection\models\streams\dinov2\best.pt
+
+Epoch 3/8 (fine-tuning end-to-end)
+  batch 20: loss=0.3484
+  batch 40: loss=0.6537
+  batch 60: loss=0.5428
+  batch 80: loss=0.4711
+  batch 100: loss=0.4319
+  batch 120: loss=0.3863
+  batch 140: loss=0.3430
+  batch 160: loss=0.3048
+  batch 180: loss=0.2986
+  batch 200: loss=0.3024
+  batch 220: loss=0.2842
+  batch 240: loss=0.2655
+  batch 260: loss=0.2588
+  batch 280: loss=0.2432
+  batch 300: loss=0.2299
+  batch 320: loss=0.2166
+  batch 340: loss=0.2114
+  batch 360: loss=0.2001
+  batch 380: loss=0.1946
+  batch 400: loss=0.1888
+  batch 420: loss=0.1976
+  batch 440: loss=0.1898
+  batch 460: loss=0.1826
+  batch 480: loss=0.1816
+  batch 500: loss=0.1754
+  batch 520: loss=0.1687
+  batch 540: loss=0.1626
+  batch 560: loss=0.1611
+  batch 580: loss=0.1556
+  batch 600: loss=0.1619
+  batch 620: loss=0.1568
+  batch 640: loss=0.1564
+  batch 660: loss=0.1517
+  batch 680: loss=0.1566
+  batch 700: loss=0.1580
+  train_loss=0.1580
+  val: acc=0.997 auc=1.000 eer=0.002 logloss=0.023 P=1.000 R=0.995 F1=0.998
+           pred_real pred_fake
+true_real         85         0
+true_fake          1       214
+  saved new best (AUC=0.9997, logloss=0.023) -> D:\Projects\deepfake-detection\models\streams\dinov2\best.pt
+
+Epoch 4/8 (fine-tuning end-to-end)
+  batch 20: loss=0.0012
+  batch 40: loss=0.0012
+  batch 60: loss=0.0011
+  batch 80: loss=0.0010
+  batch 100: loss=0.0347
+  batch 120: loss=0.0290
+  batch 140: loss=0.1076
+  batch 160: loss=0.1120
+  batch 180: loss=0.1001
+  batch 200: loss=0.0908
+  batch 220: loss=0.0990
+  batch 240: loss=0.1045
+  batch 260: loss=0.0965
+  batch 280: loss=0.0896
+  batch 300: loss=0.0842
+  batch 320: loss=0.0789
+  batch 340: loss=0.0743
+  batch 360: loss=0.0702
+  batch 380: loss=0.0666
+  batch 400: loss=0.0663
+  batch 420: loss=0.0632
+  batch 440: loss=0.0603
+  batch 460: loss=0.0659
+  batch 480: loss=0.0632
+  batch 500: loss=0.0607
+  batch 520: loss=0.0584
+  batch 540: loss=0.0562
+  batch 560: loss=0.0542
+  batch 580: loss=0.0524
+  batch 600: loss=0.0506
+  batch 620: loss=0.0490
+  batch 640: loss=0.0475
+  batch 660: loss=0.0461
+  batch 680: loss=0.0482
+  batch 700: loss=0.0468
+  train_loss=0.0468
+  val: acc=0.997 auc=1.000 eer=0.000 logloss=0.006 P=1.000 R=0.995 F1=0.998
+           pred_real pred_fake
+true_real         85         0
+true_fake          1       214
+  saved new best (better calibrated at tied AUC, logloss=0.006) -> D:\Projects\deepfake-detection\models\streams\dinov2\best.pt
+
+Epoch 5/8 (fine-tuning end-to-end)
+  batch 20: loss=0.0004
+  batch 40: loss=0.0004
+  batch 60: loss=0.0004
+  batch 80: loss=0.0481
+  batch 100: loss=0.0385
+  batch 120: loss=0.0662
+  batch 140: loss=0.0568
+  batch 160: loss=0.0498
+  batch 180: loss=0.0443
+  batch 200: loss=0.0590
+  batch 220: loss=0.0536
+  batch 240: loss=0.0492
+  batch 260: loss=0.0455
+  batch 280: loss=0.0423
+  batch 300: loss=0.0395
+  batch 320: loss=0.0370
+  batch 340: loss=0.0349
+  batch 360: loss=0.0330
+  batch 380: loss=0.0313
+  batch 400: loss=0.0297
+  batch 420: loss=0.0283
+  batch 440: loss=0.0271
+  batch 460: loss=0.0260
+  batch 480: loss=0.0249
+  batch 500: loss=0.0239
+  batch 520: loss=0.0280
+  batch 540: loss=0.0269
+  batch 560: loss=0.0306
+  batch 580: loss=0.0295
+  batch 600: loss=0.0349
+  batch 620: loss=0.0339
+  batch 640: loss=0.0336
+  batch 660: loss=0.0326
+  batch 680: loss=0.0317
+  batch 700: loss=0.0308
+  train_loss=0.0308
+  val: acc=1.000 auc=1.000 eer=0.000 logloss=0.000 P=1.000 R=1.000 F1=1.000
+           pred_real pred_fake
+true_real         85         0
+true_fake          0       215
+  saved new best (better calibrated at tied AUC, logloss=0.000) -> D:\Projects\deepfake-detection\models\streams\dinov2\best.pt
+
+Epoch 6/8 (fine-tuning end-to-end)
+  batch 20: loss=0.0004
+  batch 40: loss=0.0004
+  batch 60: loss=0.0638
+  batch 80: loss=0.0480
+  batch 100: loss=0.0384
+  batch 120: loss=0.0321
+  batch 140: loss=0.0278
+  batch 160: loss=0.0264
+  batch 180: loss=0.0362
+  batch 200: loss=0.0741
+  batch 220: loss=0.0674
+  batch 240: loss=0.0618
+  batch 260: loss=0.0664
+  batch 280: loss=0.0617
+  batch 300: loss=0.0576
+  batch 320: loss=0.0540
+  batch 340: loss=0.0508
+  batch 360: loss=0.0604
+  batch 380: loss=0.0573
+  batch 400: loss=0.0697
+  batch 420: loss=0.0753
+  batch 440: loss=0.0720
+  batch 460: loss=0.0688
+  batch 480: loss=0.0660
+  batch 500: loss=0.0715
+  batch 520: loss=0.0688
+  batch 540: loss=0.0662
+  batch 560: loss=0.0639
+  batch 580: loss=0.0617
+  batch 600: loss=0.0596
+  batch 620: loss=0.0577
+  batch 640: loss=0.0559
+  batch 660: loss=0.0542
+  batch 680: loss=0.0527
+  batch 700: loss=0.0512
+  train_loss=0.0512
+  val: acc=0.987 auc=1.000 eer=0.002 logloss=0.082 P=1.000 R=0.981 F1=0.991
+           pred_real pred_fake
+true_real         85         0
+true_fake          4       211
+
+Epoch 7/8 (fine-tuning end-to-end)
+  batch 20: loss=0.1744
+  batch 40: loss=0.0873
+  batch 60: loss=0.0583
+  batch 80: loss=0.0438
+  batch 100: loss=0.0350
+  batch 120: loss=0.0292
+  batch 140: loss=0.0251
+  batch 160: loss=0.0220
+  batch 180: loss=0.0196
+  batch 200: loss=0.0263
+  batch 220: loss=0.0240
+  batch 240: loss=0.0220
+  batch 260: loss=0.0203
+  batch 280: loss=0.0189
+  batch 300: loss=0.0176
+  batch 320: loss=0.0165
+  batch 340: loss=0.0156
+  batch 360: loss=0.0147
+  batch 380: loss=0.0139
+  batch 400: loss=0.0133
+  batch 420: loss=0.0126
+  batch 440: loss=0.0121
+  batch 460: loss=0.0115
+  batch 480: loss=0.0111
+  batch 500: loss=0.0106
+  batch 520: loss=0.0102
+  batch 540: loss=0.0099
+  batch 560: loss=0.0095
+  batch 580: loss=0.0092
+  batch 600: loss=0.0089
+  batch 620: loss=0.0086
+  batch 640: loss=0.0083
+  batch 660: loss=0.0081
+  batch 680: loss=0.0079
+  batch 700: loss=0.0076
+  train_loss=0.0076
+  val: acc=1.000 auc=1.000 eer=0.000 logloss=0.000 P=1.000 R=1.000 F1=1.000
+           pred_real pred_fake
+true_real         85         0
+true_fake          0       215
+  saved new best (better calibrated at tied AUC, logloss=0.000) -> D:\Projects\deepfake-detection\models\streams\dinov2\best.pt
+
+Epoch 8/8 (fine-tuning end-to-end)
+  batch 20: loss=0.0001
+  batch 40: loss=0.0001
+  batch 60: loss=0.0001
+  batch 80: loss=0.0001
+  batch 100: loss=0.0001
+  batch 120: loss=0.0001
+  batch 140: loss=0.0001
+  batch 160: loss=0.0001
+  batch 180: loss=0.0001
+  batch 200: loss=0.0001
+  batch 220: loss=0.0001
+  batch 240: loss=0.0001
+  batch 260: loss=0.0001
+  batch 280: loss=0.0001
+  batch 300: loss=0.0001
+  batch 320: loss=0.0001
+  batch 340: loss=0.0001
+  batch 360: loss=0.0001
+  batch 380: loss=0.0001
+  batch 400: loss=0.0001
+  batch 420: loss=0.0001
+  batch 440: loss=0.0001
+  batch 460: loss=0.0001
+  batch 480: loss=0.0001
+  batch 500: loss=0.0001
+  batch 520: loss=0.0001
+  batch 540: loss=0.0001
+  batch 560: loss=0.0001
+  batch 580: loss=0.0001
+  batch 600: loss=0.0001
+  batch 620: loss=0.0001
+  batch 640: loss=0.0001
+  batch 660: loss=0.0001
+  batch 680: loss=0.0001
+  batch 700: loss=0.0001
+  train_loss=0.0001
+  val: acc=1.000 auc=1.000 eer=0.000 logloss=0.000 P=1.000 R=1.000 F1=1.000
+           pred_real pred_fake
+true_real         85         0
+true_fake          0       215
+  saved new best (better calibrated at tied AUC, logloss=0.000) -> D:\Projects\deepfake-detection\models\streams\dinov2\best.pt
+
+Done. Best val AUC: 1.000 (logloss 0.000)
+=== EXIT 0 Sun, Aug  2, 2026  3:45:42 PM ===
