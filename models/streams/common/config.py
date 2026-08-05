@@ -32,12 +32,28 @@ class StreamConfig:
     # --- projection to the shared space every stream writes into ---
     common_dim: int = 256                       # PROJECT_OVERVIEW.md fixes this at 256
 
+    # How the backbone reduces its spatial/token output to one vector per frame.
+    # "avg" suits CNNs and is timm's usual choice. DINOv3 must use "token": its
+    # released weights carry `norm`, but timm swaps that for `fc_norm` whenever
+    # global_pool="avg", so a strict pretrained load fails outright.
+    global_pool: str = "avg"
+
     # --- data ---
     num_frames: int = 16
     image_size: int = 224
+    num_workers: int = 0                        # DataLoader workers; 0 = load in the main process
 
     # --- training (used by the background trainer, not by the dashboard) ---
     freeze_backbone: bool = True
+    # Two-phase freeze schedule (see train_visual_stream.py): the backbone stays
+    # frozen for the first `freeze_backbone_epochs`, then unfreezes to fine-tune.
+    # Set == epochs to keep the backbone frozen for the WHOLE run (the "keep
+    # frozen default" choice), or 0 to fine-tune from the start.
+    freeze_backbone_epochs: int = 8
+    # Even once the backbone is trainable, keep its BatchNorm running stats fixed
+    # (eval mode) so tiny fine-tune batches don't corrupt ImageNet stats.
+    freeze_batchnorm_on_finetune: bool = True
+    use_amp: bool = True                        # mixed-precision (AMP) to fit in ~6GB VRAM
     lr_head: float = 1e-3
     lr_backbone: float = 5e-6
     grad_clip_norm: float = 1.0
@@ -66,6 +82,8 @@ def xception_config(**overrides) -> StreamConfig:
 
 
 def dinov3_config(**overrides) -> StreamConfig:
-    base = dict(stream_name="dinov3", backbone_name=DINOV3)
+    # global_pool="token" is not a tuning choice: with "avg" the pretrained
+    # weights refuse to load at all (see StreamConfig.global_pool).
+    base = dict(stream_name="dinov3", backbone_name=DINOV3, global_pool="token")
     base.update(overrides)
     return StreamConfig(**base)

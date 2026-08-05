@@ -31,7 +31,10 @@ UNTRAINED = "(untrained, random weights)"
 # Keys a checkpoint might nest its weights under. A file that is just a
 # state_dict is also accepted, which is what `torch.save(model.state_dict())`
 # produces and what anyone hand-saving from a notebook will write.
-STATE_KEYS = ("state_dict", "model_state_dict", "model", "weights")
+# "model_state" is what training/train_visual_stream.py writes, so it comes
+# first: every checkpoint this project produces is nested under it. The rest are
+# the conventions other trainers use, kept so a checkpoint from elsewhere loads.
+STATE_KEYS = ("model_state", "state_dict", "model_state_dict", "model", "weights")
 
 
 def discover(stream_name: str, root: Path | None = None) -> list[Path]:

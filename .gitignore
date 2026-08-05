@@ -29,13 +29,18 @@ features/
 *.npy
 *.npz
 
-# Model artifacts
+# Model artifacts. The selected checkpoint of each stream is the exception: it
+# is tracked through Git LFS (see .gitattributes) so a clone can run the
+# dashboard without retraining. Everything else -- last.pt, the superseded
+# best_*.pt -- stays local, and last.pt could not be pushed anyway at ~300 MB.
 *.pt
 *.pth
 *.ckpt
 *.onnx
 *.safetensors
-checkpoints/
+checkpoints/**
+!checkpoints/*/
+!checkpoints/*/best.pt
 runs/
 
 # IDE / OS
@@ -47,3 +52,6 @@ Thumbs.db
 # Local Project Overrides
 output_crops/
 sample_videos/
+
+# Training run logs. Tracked: they are the record of how the checkpoints beside
+# them were produced, which is worth keeping now that the checkpoints ship too.

@@ -1,0 +1,347 @@
+=== START efficientnet Sun, Aug  2, 2026  4:18:11 PM ===
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Device: cuda | stream: efficientnet | backbone: tf_efficientnet_b0.ns_jft_in1k
+Train class counts (visual labels): real=373, fake=1027
+
+Epoch 1/8 (FROZEN backbone)
+  batch 20: loss=1.0268
+  batch 40: loss=0.9004
+  batch 60: loss=0.8586
+  batch 80: loss=0.8371
+  batch 100: loss=0.7929
+  batch 120: loss=0.7817
+  batch 140: loss=0.7715
+  batch 160: loss=0.7672
+  batch 180: loss=0.7483
+  batch 200: loss=0.7472
+  batch 220: loss=0.7418
+  batch 240: loss=0.7401
+  batch 260: loss=0.7396
+  batch 280: loss=0.7363
+  batch 300: loss=0.7287
+  batch 320: loss=0.7203
+  batch 340: loss=0.7157
+  batch 360: loss=0.7105
+  batch 380: loss=0.6976
+  batch 400: loss=0.6888
+  batch 420: loss=0.6860
+  batch 440: loss=0.6753
+  batch 460: loss=0.6613
+  batch 480: loss=0.6526
+  batch 500: loss=0.6550
+  batch 520: loss=0.6430
+  batch 540: loss=0.6360
+  batch 560: loss=0.6385
+  batch 580: loss=0.6324
+  batch 600: loss=0.6286
+  batch 620: loss=0.6210
+  batch 640: loss=0.6103
+  batch 660: loss=0.6016
+  batch 680: loss=0.5952
+  batch 700: loss=0.5917
+  train_loss=0.5917
+  val: acc=0.783 auc=0.894 eer=0.177 logloss=0.475 P=0.931 R=0.753 F1=0.833
+           pred_real pred_fake
+true_real         73        12
+true_fake         53       162
+  saved new best (AUC=0.8936, logloss=0.475) -> D:\Projects\deepfake-detection\models\streams\efficientnet\best.pt
+
+Epoch 2/8 (FROZEN backbone)
+  batch 20: loss=0.6051
+  batch 40: loss=0.5205
+  batch 60: loss=0.5856
+  batch 80: loss=0.5547
+  batch 100: loss=0.5669
+  batch 120: loss=0.5468
+  batch 140: loss=0.5142
+  batch 160: loss=0.5311
+  batch 180: loss=0.5065
+  batch 200: loss=0.4823
+  batch 220: loss=0.4615
+  batch 240: loss=0.4521
+  batch 260: loss=0.4348
+  batch 280: loss=0.4259
+  batch 300: loss=0.4247
+  batch 320: loss=0.4251
+  batch 340: loss=0.4289
+  batch 360: loss=0.4240
+  batch 380: loss=0.4250
+  batch 400: loss=0.4236
+  batch 420: loss=0.4159
+  batch 440: loss=0.4117
+  batch 460: loss=0.4167
+  batch 480: loss=0.4088
+  batch 500: loss=0.4133
+  batch 520: loss=0.4260
+  batch 540: loss=0.4208
+  batch 560: loss=0.4222
+  batch 580: loss=0.4193
+  batch 600: loss=0.4208
+  batch 620: loss=0.4190
+  batch 640: loss=0.4113
+  batch 660: loss=0.4111
+  batch 680: loss=0.4059
+  batch 700: loss=0.4050
+  train_loss=0.4050
+  val: acc=0.847 auc=0.915 eer=0.161 logloss=0.386 P=0.854 R=0.949 F1=0.899
+           pred_real pred_fake
+true_real         50        35
+true_fake         11       204
+  saved new best (AUC=0.9146, logloss=0.386) -> D:\Projects\deepfake-detection\models\streams\efficientnet\best.pt
+
+Epoch 3/8 (fine-tuning end-to-end)
+  batch 20: loss=0.4048
+  batch 40: loss=0.4566
+  batch 60: loss=0.3721
+  batch 80: loss=0.3743
+  batch 100: loss=0.3847
+  batch 120: loss=0.3810
+  batch 140: loss=0.3838
+  batch 160: loss=0.3663
+  batch 180: loss=0.3636
+  batch 200: loss=0.3475
+  batch 220: loss=0.3365
+  batch 240: loss=0.3245
+  batch 260: loss=0.3188
+  batch 280: loss=0.3226
+  batch 300: loss=0.3160
+  batch 320: loss=0.3109
+  batch 340: loss=0.2989
+  batch 360: loss=0.3167
+  batch 380: loss=0.3163
+  batch 400: loss=0.3128
+  batch 420: loss=0.3007
+  batch 440: loss=0.2928
+  batch 460: loss=0.2910
+  batch 480: loss=0.2809
+  batch 500: loss=0.2724
+  batch 520: loss=0.2716
+  batch 540: loss=0.2634
+  batch 560: loss=0.2616
+  batch 580: loss=0.2550
+  batch 600: loss=0.2496
+  batch 620: loss=0.2462
+  batch 640: loss=0.2400
+  batch 660: loss=0.2336
+  batch 680: loss=0.2276
+  batch 700: loss=0.2264
+  train_loss=0.2264
+  val: acc=0.990 auc=0.999 eer=0.019 logloss=0.060 P=1.000 R=0.986 F1=0.993
+           pred_real pred_fake
+true_real         85         0
+true_fake          3       212
+  saved new best (AUC=0.9985, logloss=0.060) -> D:\Projects\deepfake-detection\models\streams\efficientnet\best.pt
+
+Epoch 4/8 (fine-tuning end-to-end)
+  batch 20: loss=0.0124
+  batch 40: loss=0.1167
+  batch 60: loss=0.1724
+  batch 80: loss=0.1352
+  batch 100: loss=0.1088
+  batch 120: loss=0.1229
+  batch 140: loss=0.1057
+  batch 160: loss=0.1132
+  batch 180: loss=0.1280
+  batch 200: loss=0.1253
+  batch 220: loss=0.1285
+  batch 240: loss=0.1219
+  batch 260: loss=0.1196
+  batch 280: loss=0.1165
+  batch 300: loss=0.1263
+  batch 320: loss=0.1411
+  batch 340: loss=0.1411
+  batch 360: loss=0.1334
+  batch 380: loss=0.1310
+  batch 400: loss=0.1268
+  batch 420: loss=0.1285
+  batch 440: loss=0.1413
+  batch 460: loss=0.1354
+  batch 480: loss=0.1299
+  batch 500: loss=0.1327
+  batch 520: loss=0.1281
+  batch 540: loss=0.1259
+  batch 560: loss=0.1226
+  batch 580: loss=0.1228
+  batch 600: loss=0.1281
+  batch 620: loss=0.1294
+  batch 640: loss=0.1258
+  batch 660: loss=0.1223
+  batch 680: loss=0.1237
+  batch 700: loss=0.1209
+  train_loss=0.1209
+  val: acc=0.980 auc=0.998 eer=0.013 logloss=0.079 P=0.982 R=0.991 F1=0.986
+           pred_real pred_fake
+true_real         81         4
+true_fake          2       213
+
+Epoch 5/8 (fine-tuning end-to-end)
+  batch 20: loss=0.0111
+  batch 40: loss=0.1625
+  batch 60: loss=0.1326
+  batch 80: loss=0.1208
+  batch 100: loss=0.1263
+  batch 120: loss=0.1168
+  batch 140: loss=0.1004
+  batch 160: loss=0.0883
+  batch 180: loss=0.0786
+  batch 200: loss=0.0717
+  batch 220: loss=0.0657
+  batch 240: loss=0.0604
+  batch 260: loss=0.0560
+  batch 280: loss=0.0524
+  batch 300: loss=0.0603
+  batch 320: loss=0.0631
+  batch 340: loss=0.0601
+  batch 360: loss=0.0568
+  batch 380: loss=0.0599
+  batch 400: loss=0.0612
+  batch 420: loss=0.0660
+  batch 440: loss=0.0631
+  batch 460: loss=0.0784
+  batch 480: loss=0.0763
+  batch 500: loss=0.0789
+  batch 520: loss=0.0776
+  batch 540: loss=0.0758
+  batch 560: loss=0.0779
+  batch 580: loss=0.0754
+  batch 600: loss=0.0814
+  batch 620: loss=0.0789
+  batch 640: loss=0.0766
+  batch 660: loss=0.0743
+  batch 680: loss=0.0806
+  batch 700: loss=0.0826
+  train_loss=0.0826
+  val: acc=0.993 auc=0.999 eer=0.005 logloss=0.037 P=1.000 R=0.991 F1=0.995
+           pred_real pred_fake
+true_real         85         0
+true_fake          2       213
+  saved new best (better calibrated at tied AUC, logloss=0.037) -> D:\Projects\deepfake-detection\models\streams\efficientnet\best.pt
+
+Epoch 6/8 (fine-tuning end-to-end)
+  batch 20: loss=0.0030
+  batch 40: loss=0.0027
+  batch 60: loss=0.0027
+  batch 80: loss=0.0751
+  batch 100: loss=0.0889
+  batch 120: loss=0.0744
+  batch 140: loss=0.0641
+  batch 160: loss=0.0661
+  batch 180: loss=0.0590
+  batch 200: loss=0.0668
+  batch 220: loss=0.0618
+  batch 240: loss=0.0571
+  batch 260: loss=0.0528
+  batch 280: loss=0.0608
+  batch 300: loss=0.0568
+  batch 320: loss=0.0674
+  batch 340: loss=0.0635
+  batch 360: loss=0.0673
+  batch 380: loss=0.0638
+  batch 400: loss=0.0660
+  batch 420: loss=0.0630
+  batch 440: loss=0.0676
+  batch 460: loss=0.0647
+  batch 480: loss=0.0630
+  batch 500: loss=0.0607
+  batch 520: loss=0.0584
+  batch 540: loss=0.0563
+  batch 560: loss=0.0546
+  batch 580: loss=0.0528
+  batch 600: loss=0.0562
+  batch 620: loss=0.0544
+  batch 640: loss=0.0527
+  batch 660: loss=0.0564
+  batch 680: loss=0.0618
+  batch 700: loss=0.0629
+  train_loss=0.0629
+  val: acc=0.993 auc=0.999 eer=0.005 logloss=0.043 P=1.000 R=0.991 F1=0.995
+           pred_real pred_fake
+true_real         85         0
+true_fake          2       213
+
+Epoch 7/8 (fine-tuning end-to-end)
+  batch 20: loss=0.0005
+  batch 40: loss=0.0006
+  batch 60: loss=0.0005
+  batch 80: loss=0.0761
+  batch 100: loss=0.0928
+  batch 120: loss=0.0880
+  batch 140: loss=0.0844
+  batch 160: loss=0.0740
+  batch 180: loss=0.0658
+  batch 200: loss=0.0593
+  batch 220: loss=0.0540
+  batch 240: loss=0.0560
+  batch 260: loss=0.0517
+  batch 280: loss=0.0481
+  batch 300: loss=0.0449
+  batch 320: loss=0.0537
+  batch 340: loss=0.0542
+  batch 360: loss=0.0513
+  batch 380: loss=0.0486
+  batch 400: loss=0.0611
+  batch 420: loss=0.0594
+  batch 440: loss=0.0567
+  batch 460: loss=0.0543
+  batch 480: loss=0.0521
+  batch 500: loss=0.0500
+  batch 520: loss=0.0484
+  batch 540: loss=0.0467
+  batch 560: loss=0.0451
+  batch 580: loss=0.0436
+  batch 600: loss=0.0421
+  batch 620: loss=0.0485
+  batch 640: loss=0.0471
+  batch 660: loss=0.0457
+  batch 680: loss=0.0443
+  batch 700: loss=0.0431
+  train_loss=0.0431
+  val: acc=0.993 auc=0.999 eer=0.005 logloss=0.048 P=1.000 R=0.991 F1=0.995
+           pred_real pred_fake
+true_real         85         0
+true_fake          2       213
+
+Epoch 8/8 (fine-tuning end-to-end)
+  batch 20: loss=0.0354
+  batch 40: loss=0.1047
+  batch 60: loss=0.0699
+  batch 80: loss=0.0525
+  batch 100: loss=0.0421
+  batch 120: loss=0.0352
+  batch 140: loss=0.0302
+  batch 160: loss=0.0265
+  batch 180: loss=0.0235
+  batch 200: loss=0.0212
+  batch 220: loss=0.0193
+  batch 240: loss=0.0179
+  batch 260: loss=0.0165
+  batch 280: loss=0.0154
+  batch 300: loss=0.0144
+  batch 320: loss=0.0135
+  batch 340: loss=0.0127
+  batch 360: loss=0.0120
+  batch 380: loss=0.0114
+  batch 400: loss=0.0108
+  batch 420: loss=0.0103
+  batch 440: loss=0.0193
+  batch 460: loss=0.0185
+  batch 480: loss=0.0177
+  batch 500: loss=0.0171
+  batch 520: loss=0.0165
+  batch 540: loss=0.0159
+  batch 560: loss=0.0205
+  batch 580: loss=0.0201
+  batch 600: loss=0.0194
+  batch 620: loss=0.0188
+  batch 640: loss=0.0182
+  batch 660: loss=0.0177
+  batch 680: loss=0.0172
+  batch 700: loss=0.0225
+  train_loss=0.0225
+  val: acc=0.993 auc=0.999 eer=0.005 logloss=0.052 P=1.000 R=0.991 F1=0.995
+           pred_real pred_fake
+true_real         85         0
+true_fake          2       213
+
+Done. Best val AUC: 0.999 (logloss 0.037)
+=== EXIT 0 Sun, Aug  2, 2026  7:56:47 PM ===
