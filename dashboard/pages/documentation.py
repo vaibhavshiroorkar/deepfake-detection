@@ -85,7 +85,7 @@ survives compression, resolution loss and a well-trained generator.
     st.markdown("""
 | Path | Steps applied in order | Tensor produced |
 |---|---|---|
-| **Video** | 16 timestamps → MTCNN detect → margin-padded 224² crop → ImageNet normalise | `faces [16, 3, 224, 224]` |
+| **Video** | 16 timestamps → face detect → margin-padded 224² crop → ImageNet normalise | `faces [16, 3, 224, 224]` |
 | **Mouth** *(parallel, lip-sync only)* | mouth-corner landmarks from the same detect call → 96² ROI | `mouth [16, 3, 96, 96]` |
 | **Audio** | PyAV decode → mono downmix → 16 kHz resample → leading-silence offset → 16 windows | `audio [16, 5600]` |
 
@@ -306,7 +306,7 @@ then one call to `detect_crop` does the whole front-end from a single detection.
 
 | Step | What happens | Default |
 |---|---|---|
-| Detect | MTCNN, `keep_all=False`, so the highest-scoring face only | conf 0.90 |
+| Detect | MTCNN or YuNet, the highest-scoring face only | conf 0.90, detector `mtcnn` |
 | Gate | below threshold falls back to the **whole frame**, never a guess | counted in `num_faces_detected` |
 | Crop | margin-padded bounding box, resized to 224x224 | `margin=0.20` |
 | Mouth | 96x96 ROI centred between the two mouth-corner landmarks | derived from the same detection |
@@ -341,20 +341,26 @@ Written per clip to `data/processed/<clip_id>/`, holding **un-normalised uint8**
         st.code("""frames.npy      (16, 224, 224, 3)  uint8      # HWC, RGB, NOT normalised
 audio.npy       (16, 5600)         float32    # 16 kHz windows, source level
 timestamps.npy  (16,)              float64    # seconds
-version.txt     "3"                           # PIPELINE_VERSION""", language="text")
+version.txt     "4:mtcnn"                     # PIPELINE_VERSION:detector""", language="text")
         st.markdown("""
 Storing uint8 rather than normalised float32 is a deliberate four-fold saving, and it keeps the
-expensive part (decode plus 16 MTCNN detections) separate from the cheap part (a divide and a
+expensive part (decode plus 16 detections) separate from the cheap part (a divide and a
 subtract). It also means the cached pixels are directly viewable.
 
-`version.txt` carries `PIPELINE_VERSION`, currently **4**. Bumping it invalidates every stale cache,
-so a change to the crop is safe: the pixels changed, the old cache must not be trusted, and nothing
-has to be deleted by hand. The history in `ops/constants.py` is the record of what moved: v1 plain
-MTCNN crop, v2 added alignment and silence-aware sampling, v3 padded aligned crops with black
-instead of reflecting a second face into them, v4 removed alignment and returned to the bbox crop.
+`version.txt` carries `PIPELINE_VERSION` and the detector that produced the crops, so `4:mtcnn`.
+Bumping either invalidates every stale cache, so a change to the crop is safe: the pixels changed,
+the old cache must not be trusted, and nothing has to be deleted by hand. The history in
+`ops/constants.py` is the record of what moved: v1 plain MTCNN crop, v2 added alignment and
+silence-aware sampling, v3 padded aligned crops with black instead of reflecting a second face
+into them, v4 removed alignment and returned to the bbox crop.
 
-`precache.py` warms the whole cache in parallel worker processes, pinning MTCNN to CPU so several
-workers do not contend over one GPU.
+There is one slot per clip, not one per detector, so extracting with the other detector
+overwrites rather than sitting alongside. A bare `4` with no detector reads as `4:mtcnn`: every
+cache written before the second detector existed can only have come from MTCNN.
+
+`precache.py` warms the whole cache in parallel worker processes, pinning the detector to CPU so
+several workers do not contend over one GPU. With `--detector yunet` that pinning is moot, since
+YuNet has no GPU path in the first place.
 """)
 
     with st.expander("**Stage 11 · Normalisation, and the tensors the model sees**", expanded=True):
@@ -437,9 +443,32 @@ enough that a backbone runs over the whole batch on a 6 GB GPU. It is a knob on 
 so the cost of changing it is visible immediately.
 """)
 
-    with st.expander("**2 · Face detection**: how MTCNN actually works"):
+    with st.expander("**2 · Face detection**: MTCNN, YuNet, and how they work"):
         st.markdown("""
-MTCNN (Zhang et al., 2016) is a **cascade of three small convolutional networks** that get
+Two detectors are available and either can drive the whole pipeline. Pick one from the
+**Detector** dropdown on the Visual tab; it times both, so the comparison below is one you
+can reproduce on whichever clip you are looking at.
+
+| | `mtcnn` | `yunet` |
+|---|---|---|
+| Paper | Zhang et al., 2016 | Wu et al., 2023 |
+| Shipped by | `facenet-pytorch` | OpenCV, weights in `checkpoints/yunet/` |
+| Device | CPU or CUDA | CPU only |
+| Measured, 16 frames | ~357 ms (22 ms/frame) | ~39 ms (2.4 ms/frame) |
+| Landmarks | 5, from the same forward pass | 5, from the same forward pass |
+
+`mtcnn` is the default and every trained checkpoint so far used it. `yunet` is roughly 9x
+faster on the same clip and needs no GPU at all, which matters most in the pre-caching
+workers, where the GPU is busy training.
+
+Their confidences are not strictly comparable, but both are roughly 0-to-1 and YuNet's own
+default threshold is also 0.90, so the pipeline applies one `conf_thresh` to both rather
+than inventing a second default. Whichever runs, the crops differ, so the detector is
+stamped into the cache and the two never read each other's work.
+
+### How MTCNN works
+
+MTCNN is a **cascade of three small convolutional networks** that get
 progressively more expensive and progressively more selective. The design assumption is that the
 overwhelming majority of image regions are obviously not faces, so they should be rejected by
 something cheap, and only the survivors should be shown to something accurate.
@@ -472,19 +501,39 @@ on background it already rejects.
 The five landmarks are the left eye, right eye, nose tip, and the two mouth corners: ten
 coordinates, and everything downstream depends on them.
 
-**How this pipeline uses it.** The detector runs with `keep_all=False`, returning only the
-highest-scoring face; these clips are single-speaker, so taking the most confident detection
-avoids a policy decision about which face matters. A detection must clear a confidence
-threshold, 0.90 by default. Frames below it fall back to the whole frame rather than to a guess,
-and the Visual tab reports the hit rate as "faces detected k/16", so a clip that is quietly
-failing detection is visible rather than silently degraded.
+### How YuNet works
 
-**Why MTCNN and not something newer.** It ships with the pinned environment via
-`facenet-pytorch`; it returns the five landmarks the next step needs from the same forward pass
-rather than requiring a second model; and it is fast enough to run CPU-side inside pre-caching
-workers while the GPU is busy. The honest costs: it is a 2016 detector that struggles with
-profile views and heavy occlusion, and its five landmarks are the minimum the mouth ROI can work
-from. AV-HuBERT's own preprocessing would prefer 68.
+YuNet is a **single-shot anchor-free detector**, which is to say it does in one forward pass
+what MTCNN spends three networks and an image pyramid on. A small backbone produces a feature
+map at several strides, and every cell on every map predicts directly: is there a face
+centred here, where are its edges, and where are its five landmarks. There is no proposal
+stage to refine and nothing to re-crop and re-run, which is where the order-of-magnitude
+comes from. It is about 75k parameters and 232 KB on disk.
+
+Anchor-free means a cell regresses the distance from itself to each box edge rather than
+choosing among pre-set box shapes. That removes the anchor hyperparameters MTCNN's pyramid
+is effectively standing in for, and it is why one input size has to be declared up front:
+the anchor grid is built for that resolution, so the adapter calls `setInputSize` whenever
+the frame shape changes.
+
+### What they share
+
+Both return the highest-scoring face only. These clips are single-speaker, so taking the most
+confident detection avoids a policy decision about which face matters. A detection must clear
+the confidence threshold, 0.90 by default. Frames below it fall back to the whole frame rather
+than to a guess, and the Visual tab reports the hit rate as "faces detected k/16", so a clip
+that is quietly failing detection is visible rather than silently degraded.
+
+Both also return their five landmarks in the same order, image-left eye first. YuNet's own
+documentation calls its first point the right eye, but that is the subject's right, which is
+the point on the left of the image that MTCNN calls the left eye. Same physical order,
+opposite naming convention, and reversing either would mirror every face without changing a
+single tensor shape, so a test pins it.
+
+**The honest costs.** MTCNN is a 2016 detector that struggles with profile views and heavy
+occlusion. YuNet is faster and more recent but has no GPU path at all, so it cannot be
+accelerated further. Both give five landmarks, the minimum the mouth ROI can work from;
+AV-HuBERT's own preprocessing would prefer 68.
 """)
 
     with st.expander("**3 · Crop**: a margin-padded bounding box"):
@@ -515,8 +564,8 @@ skin texture, and a smaller crop keeps a video transformer's sequence length aff
 
 A caveat worth carrying into Stage 4: AV-HuBERT's published preprocessing expects a grayscale,
 68-landmark, mean-face-aligned mouth ROI. Matching that exactly requires a 68-landmark model and
-therefore a new dependency. Today's landmark-centred RGB crop is the best available from MTCNN's
-five points, and the gap is a known item rather than an oversight.
+therefore a new dependency. Today's landmark-centred RGB crop is the best available from either
+detector's five points, and the gap is a known item rather than an oversight.
 """)
 
     with st.expander("**5 · ImageNet normalisation**: once, here, for everyone"):
@@ -928,6 +977,7 @@ optimised.
 | `data/<drop>/` | A dataset, gitignored. FakeAVCeleb v1.2 is 21,544 clips plus `meta_data.csv`, nested `<category>/<race>/<gender>/<identity>/*.mp4`. |
 | `data/processed/<clip_id>/` | Per-clip cache: `frames.npy`, `audio.npy`, `timestamps.npy`, `version.txt`. |
 | `data/*.csv` | `full_manifest.csv` and the `train` / `val` / `test` splits. |
+| `checkpoints/yunet/` | YuNet's ONNX weights, 232 KB, vendored so detection works offline and every run uses the same file. |
 
 The dataset's location is **not** configured. Anything under `data/` holding a `meta_data.csv` is a
 drop. `data/FakeAVCeleb_v1.2/` and `data/raw/FakeAVCeleb_v1.2/` both work, and two drops can sit

@@ -17,6 +17,10 @@ AUDIO_WINDOW_SEC = 0.35     # duration of the audio window centered on each fram
 # aligned crops pad with black instead of reflecting (v2 mirrored a second face
 # into every crop) and drop the template inset; v4 = alignment removed, back to a
 # margin-padded bbox crop (parked in docs/ideas.md).
+#
+# The detector is NOT a version. It varies per run rather than moving forward, so
+# it is stamped beside this number in version.txt ("4:mtcnn") instead of bumping
+# it. Adding a second detector therefore left this at 4.
 PIPELINE_VERSION = 4
 
 # ImageNet statistics — all three visual backbones (Xception/EfficientNet/DINOv3)

@@ -35,7 +35,7 @@ def frames_to_tensor(faces: list[np.ndarray]):
 
 def decode_face_clip(video_path: str, num_frames: int, detector,
                      conf_thresh: float = 0.9, margin: float = 0.3) -> list[np.ndarray]:
-    """Sample num_frames timestamps, decode, MTCNN-crop each to a 224 face crop."""
+    """Sample num_frames timestamps, decode, detect-and-crop each to a 224 face crop."""
     from dashboard.lib import media
 
     duration, _ = media.frame_meta(video_path)

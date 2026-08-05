@@ -38,10 +38,28 @@ Applied per sampled frame; the result is stacked into `[16, 3, 224, 224]`.
    inset by half an audio window so every frame's ±0.175 s audio window stays in
    the clip. The start is offset past leading silence (see the audio section).
 
-2. **Face detection** — `faces.detect`. MTCNN (`facenet-pytorch`, `keep_all=False`)
-   returns the most-confident face's box, 5 landmarks, and probability; a face
-   must clear the confidence threshold (default 0.90). MTCNN is the only detector
-   the pinned environment ships, so it is used throughout.
+2. **Face detection** — `faces.detect`. Returns the most-confident face's box,
+   5 landmarks, and confidence; a face must clear the threshold (default 0.90).
+   Two detectors are available behind one interface in `ops/detectors.py`:
+
+   | | `mtcnn` | `yunet` |
+   |---|---|---|
+   | Source | `facenet-pytorch`, `keep_all=False` | OpenCV `FaceDetectorYN`, weights in `checkpoints/yunet/` |
+   | Year | 2016 | 2023 |
+   | Device | CPU or CUDA | CPU only |
+   | Speed | ~22 ms/frame CPU | ~2.4 ms/frame |
+
+   `mtcnn` is the default and everything trained so far used it. `yunet` is
+   roughly 9x faster on the same clip and needs no GPU, which matters most in the
+   pre-cache workers. Their confidences are not strictly comparable, but both are
+   roughly 0-to-1 and YuNet's own default threshold is also 0.90, so one
+   `conf_thresh` is applied to both rather than inventing a second default.
+
+   Both return their 5 landmarks in the same order: eye, eye, nose, mouth corner,
+   mouth corner, **image-left first**. YuNet's documentation calls its first point
+   the right eye, but that is the subject's right, which is the image-left point
+   MTCNN calls the left eye. `test_detectors.py` pins this, because reversing
+   either would mirror every face without changing a single shape.
 
 3. **Crop + resize** — `faces.crop_and_resize`. A margin-padded bbox crop
    (`margin=0.20`) resized to 224×224, cubic. The margin clamps to the frame, so
@@ -73,7 +91,7 @@ visual and emotion streams keep the face. It is the single mouth implementation
 > Note: AV-HuBERT's own preprocessing expects a grayscale, 68-landmark mean-face
 > aligned mouth ROI. Matching that exactly needs a 68-landmark model (a new
 > dependency) and is deferred to Stage 4; today's landmark-centered RGB crop is
-> the best available with MTCNN's 5 points.
+> the best available from either detector's 5 points.
 
 ---
 
@@ -127,9 +145,15 @@ label              : scalar int, 1 = fake / 0 = real
 ```
 
 `extract_clip.py` caches `frames.npy` / `audio.npy` / `timestamps.npy` under
-`data/processed/<clip_id>/` plus a `version.txt` stamped with `PIPELINE_VERSION`.
-Bumping `PIPELINE_VERSION` (e.g. because the crop changed the pixels) invalidates
-old caches so they are transparently re-extracted.
+`data/processed/<clip_id>/` plus a `version.txt` stamped `<PIPELINE_VERSION>:<detector>`,
+for example `4:mtcnn`. Bumping `PIPELINE_VERSION` (e.g. because the crop changed
+the pixels) invalidates old caches so they are transparently re-extracted, and so
+does switching detector, since the two produce different crops from the same frame.
+
+There is one cache slot per clip, not one per detector: extracting with the other
+detector overwrites. Keeping both means keeping two copies of `data/processed/`.
+A bare `4` with no detector is read as `4:mtcnn`, because every cache written
+before the second detector existed can only have come from MTCNN.
 
 > **Because removing alignment changes the cached pixels, `data/processed/` must
 > be re-precached and the visual stream re-validated against the previous AUC-0.994

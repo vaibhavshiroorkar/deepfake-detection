@@ -41,6 +41,10 @@ features/
 checkpoints/**
 !checkpoints/*/
 !checkpoints/*/best.pt
+# YuNet's weights are a dependency, not a training artifact: 232 KB, never
+# retrained, and detection cannot run without them. Tracked in git directly
+# rather than LFS at that size.
+!checkpoints/yunet/*.onnx
 runs/
 
 # IDE / OS

@@ -4,6 +4,9 @@ Each step is a standalone, pure function so pages/tests can call them in
 isolation; `detect_crop` composes them into the single face+mouth path that both
 extract_clip.py (the real pipeline) and the dashboard use.
 
+Which detector runs is not decided here. These functions take one, and the
+choice between MTCNN and YuNet lives in preprocessing/ops/detectors.py.
+
 The face crop is a margin-padded bounding box. Five-point similarity alignment
 used to sit here and was removed; it is parked in docs/ideas.md with the two
 traps it carried, so re-adding it does not start from scratch.
@@ -21,16 +24,17 @@ def _resize(img, size: int) -> np.ndarray:
 
 
 def detect(frame_rgb, detector, conf_thresh: float):
-    """MTCNN detect. Returns (box, landmarks5, prob) or (None, None, None).
+    """Run a detector. Returns (box, landmarks5, prob) or (None, None, None).
 
-    Only the single most-confident face is considered (the detector is built
-    with keep_all=False); it must clear conf_thresh.
+    `detector` is anything from preprocessing/ops/detectors.py. Only the single
+    most-confident face is considered, and it must clear conf_thresh. This is the
+    one place the threshold is applied, so it means the same thing whichever
+    detector is loaded.
     """
-    boxes, probs, points = detector.detect(frame_rgb, landmarks=True)
-    if (boxes is None or probs is None or probs[0] is None
-            or float(probs[0]) < conf_thresh):
+    box, landmarks5, prob = detector.detect(frame_rgb)
+    if box is None or prob < conf_thresh:
         return None, None, None
-    return boxes[0], points[0], float(probs[0])
+    return box, landmarks5, prob
 
 
 def crop_and_resize(frame_rgb, box, size: int = FRAME_SIZE, margin: float = 0.2):

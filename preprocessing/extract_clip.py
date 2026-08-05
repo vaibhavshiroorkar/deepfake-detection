@@ -7,9 +7,9 @@ docs/stage-1-plan.md. For one video we:
      shortcut bug — fake-audio clips carry extra silence at t=0). Sampling starts
      PAST that silence so a model can't cheat on it.
   2. Sample 16 frame timestamps, evenly spaced across the remaining duration.
-  3. At each timestamp, decode that video frame, detect the face (MTCNN) and
-     CROP it with a margin-padded bounding box (preprocessing/ops/faces.py), then
-     crop+resize to 224x224.
+  3. At each timestamp, decode that video frame, detect the face (MTCNN or
+     YuNet, see preprocessing/ops/detectors.py) and CROP it with a margin-padded
+     bounding box (preprocessing/ops/faces.py), then crop+resize to 224x224.
   4. At each timestamp, cut a fixed-duration (default 0.35s) audio window
      CENTERED on that timestamp from the clip's audio track.
   5. Cache both to disk under data/processed/<clip_id>/ so re-running a stage
@@ -24,6 +24,8 @@ there is one implementation of each, not two.
 """
 import sys
 from pathlib import Path
+from time import perf_counter
+
 import numpy as np
 
 # Make `from preprocessing.xxx import ...` resolve whether this file is run as
@@ -35,8 +37,7 @@ if str(_REPO_ROOT) not in sys.path:
 try:
     import cv2
     import torch
-    from facenet_pytorch import MTCNN
-    from preprocessing.ops import faces as F, audio as A
+    from preprocessing.ops import faces as F, audio as A, detectors as D
     from preprocessing.ops.constants import (
         NUM_FRAMES, FRAME_SIZE, MOUTH_SIZE, AUDIO_SR, AUDIO_WINDOW_SEC, PIPELINE_VERSION,
     )
@@ -50,43 +51,65 @@ SILENCE_TOP_DB = 30.0
 
 PROCESSED_DIR = Path(__file__).resolve().parent.parent / "data" / "processed"
 
-_mtcnn = None          # lazy singleton -- loading MTCNN weights per-clip would be very slow
-_mtcnn_device = None   # remember which device the singleton was built on
+_detector = None       # lazy singleton -- loading detector weights per-clip would be very slow
+_detector_key = None   # (name, device) the singleton was built for
 
 
-def _get_mtcnn(device: str) -> "MTCNN":
-    global _mtcnn, _mtcnn_device
-    if _mtcnn is None or _mtcnn_device != device:
-        _mtcnn = MTCNN(keep_all=False, device=device)  # keep_all=False: just the most confident face
-        _mtcnn_device = device
-    return _mtcnn
+def _get_detector(name: str, device: str):
+    global _detector, _detector_key
+    if _detector is None or _detector_key != (name, device):
+        _detector = D.build(name, device=device)
+        _detector_key = (name, device)
+    return _detector
 
 
-def _cache_valid(out_dir: Path) -> bool:
-    """A cache hit requires all arrays AND a matching PIPELINE_VERSION stamp, so
-    caches written by an older pipeline (e.g. aligned crops) are re-extracted."""
+def _version_stamp(detector: str) -> str:
+    """What goes in version.txt. Crops depend on the detector as much as on the
+    pipeline version, so both are stamped."""
+    return f"{PIPELINE_VERSION}:{detector}"
+
+
+def _cache_valid(out_dir: Path, detector: str) -> bool:
+    """A cache hit needs every array AND a stamp matching this version+detector,
+    so caches written by an older pipeline, or by the other detector, are
+    re-extracted rather than silently reused.
+
+    A bare "4" counts as MTCNN's. Every such cache predates the second detector,
+    so MTCNN is the only thing that can have written it, and reading it that way
+    saves re-extracting the whole set for a rename.
+    """
     needed = ["frames.npy", "audio.npy", "timestamps.npy", "version.txt"]
     if not all((out_dir / n).exists() for n in needed):
         return False
     try:
-        return (out_dir / "version.txt").read_text().strip() == str(PIPELINE_VERSION)
+        stamp = (out_dir / "version.txt").read_text().strip()
     except OSError:
         return False
+    if stamp == str(PIPELINE_VERSION):
+        stamp = _version_stamp(D.MTCNN_NAME)
+    return stamp == _version_stamp(detector)
 
 
 def extract_clip(video_path: Path, clip_id: str, force: bool = False,
                  device: str | None = None,
-                 conf_thresh: float = 0.90, margin: float = 0.20) -> dict:
+                 conf_thresh: float = 0.90, margin: float = 0.20,
+                 detector: str = D.DEFAULT_DETECTOR) -> dict:
     """
     Extract and cache 16 face crops + aligned audio windows for one clip.
 
-    device: force MTCNN onto "cpu" or "cuda". Default None auto-selects CUDA if
-    available. Pre-caching (preprocessing/precache.py) passes "cpu" so multiple
-    worker processes don't contend over the single GPU.
+    detector: "mtcnn" or "yunet" (preprocessing/ops/detectors.py). It is stamped
+    into the cache, so the two never read each other's crops.
+
+    device: force the detector onto "cpu" or "cuda". Default None auto-selects
+    CUDA if available. Pre-caching (preprocessing/precache.py) passes "cpu" so
+    multiple worker processes don't contend over the single GPU. YuNet is
+    CPU-only and ignores this.
 
     Returns a dict: {"frames": [N,224,224,3] uint8, "audio": [N, window_samples]
     float32, "timestamps": [N] float, "num_faces_detected": int,
-    "leading_silence_sec": float}.
+    "leading_silence_sec": float, "detect_ms": float}. On a cache hit only the
+    arrays and "cached" are present -- nothing was detected, so there is no
+    honest time to report.
 
     Raises RuntimeError with a clear message on any I/O or detection failure --
     caller (batch driver) decides whether to skip and log, or abort.
@@ -96,7 +119,7 @@ def extract_clip(video_path: Path, clip_id: str, force: bool = False,
     audio_path = out_dir / "audio.npy"
     ts_path = out_dir / "timestamps.npy"
 
-    if not force and _cache_valid(out_dir):
+    if not force and _cache_valid(out_dir, detector):
         return {
             "frames": np.load(frames_path),
             "audio": np.load(audio_path),
@@ -129,20 +152,26 @@ def extract_clip(video_path: Path, clip_id: str, force: bool = False,
 
         if device is None:
             device = "cuda" if torch.cuda.is_available() else "cpu"
-        mtcnn = _get_mtcnn(device)
+        det = _get_detector(detector, device)
 
         # --- Per-frame detect + crop. ---
+        # detect_ms times the detect+crop calls only. Frame seeking and decoding
+        # are the same work whichever detector is loaded, so folding them in
+        # would flatter the slow one.
         frame_crops = []
         num_faces_detected = 0
+        detect_ms = 0.0
         for t in timestamps:
             cap.set(cv2.CAP_PROP_POS_MSEC, float(t) * 1000)
             ok, frame_bgr = cap.read()
             if not ok:
                 raise RuntimeError(f"Failed to read frame at t={t:.2f}s in {video_path}")
             frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+            t0 = perf_counter()
             face, _mouth, detected = F.detect_crop(
-                frame_rgb, mtcnn, conf_thresh=conf_thresh, margin=margin,
+                frame_rgb, det, conf_thresh=conf_thresh, margin=margin,
                 size=FRAME_SIZE, mouth_size=MOUTH_SIZE)
+            detect_ms += (perf_counter() - t0) * 1000.0
             frame_crops.append(face)
             num_faces_detected += int(detected)
         cap.release()
@@ -157,7 +186,7 @@ def extract_clip(video_path: Path, clip_id: str, force: bool = False,
         np.save(frames_path, frames_arr)
         np.save(audio_path, audio_arr)
         np.save(ts_path, timestamps)
-        (out_dir / "version.txt").write_text(str(PIPELINE_VERSION))
+        (out_dir / "version.txt").write_text(_version_stamp(detector))
 
         return {
             "frames": frames_arr,
@@ -165,6 +194,8 @@ def extract_clip(video_path: Path, clip_id: str, force: bool = False,
             "timestamps": timestamps,
             "num_faces_detected": num_faces_detected,
             "leading_silence_sec": leading_silence,
+            "detector": detector,
+            "detect_ms": detect_ms,
             "cached": False,
         }
     except Exception as e:

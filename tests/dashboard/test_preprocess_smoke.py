@@ -104,9 +104,13 @@ def test_config_click_does_not_reopen_a_dismissed_picker():
 
 
 def test_done_closes_the_picker():
-    # Done runs through an on_click callback, so the one rerun the click already
-    # causes is the rerun that closes the dialog. Closing it in the button body
-    # instead cost a second full rerun of the page behind.
+    # Only the flag is asserted, because that is all AppTest can speak to. It
+    # runs dialogs as plain script with no fragment scoping, so it cannot see
+    # whether the rerun Done triggers is app-scoped (which closes the dialog) or
+    # fragment-scoped (which leaves it on screen), and it does not follow the
+    # st.rerun() to a second run. The run after that rerun is what actually drops
+    # the picker; test_config_click_does_not_reopen_a_dismissed_picker covers
+    # that a clear flag draws no picker table.
     at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180).run()
     [b for b in at.button if b.key == "open_picker_btn"][0].click()
     at.run()
@@ -118,7 +122,6 @@ def test_done_closes_the_picker():
     at.run()
     assert not at.exception
     assert not at.session_state["sel_picker_open"]
-    assert len(at.dataframe) == 0             # the picker table is gone
 
 
 def test_visual_mouth_branch_adds_separate_mouth_model_input():

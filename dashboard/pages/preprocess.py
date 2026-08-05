@@ -11,7 +11,7 @@ Tabs switch which section shows:
 Note: st.tabs renders all three tab bodies every run, so Visual/Audio recompute
 whenever anything changes, including an interaction that touches neither. The
 "select a clip first" guards keep them cheap until a clip is chosen, and frame
-decoding and MTCNN go through the memoized entry points in dashboard/lib/media
+decoding and detection go through the memoized entry points in dashboard/lib/media
 so the two slow steps are paid for once per (clip, setting) rather than per
 rerun. Read-only: never writes data/processed/ and never trains.
 """
@@ -44,6 +44,45 @@ st.caption("Steps are applied cumulatively; each panel shows the result after it
 # caption row whether it ran or not, or the rows below shift each time a toggle
 # moves. Callers append this to the caption they were already passing.
 SKIPPED = "  ·  skipped"
+
+DETECTOR_LABELS = {"mtcnn": "MTCNN (facenet-pytorch)", "yunet": "YuNet (OpenCV)"}
+
+
+def _record_timing(detector: str, detect_ms: float, n_frames: int):
+    """Remember what this detector cost, keyed by name.
+
+    Each swap overwrites only its own entry, so the other detector's last number
+    survives and the two can be read side by side. The time comes from inside
+    media.cached_face_mouth's memoized body, so it stays the measured detection
+    cost even when this render was a cache hit.
+    """
+    st.session_state.setdefault("v_detect_timings", {})[detector] = {
+        "ms": float(detect_ms), "frames": int(n_frames),
+    }
+
+
+def _show_timings(col, selected: str):
+    """The per-detector timing rows. Nothing until at least one has run.
+
+    Each row is that detector's last measured time, which is not always this
+    render: with the crop toggled off nothing re-times, and a repeat render is a
+    cache hit. So the marker says "selected", not "current" -- it points at the
+    dropdown, and claiming recency it cannot vouch for is how a stale number gets
+    read as a fresh one.
+    """
+    timings = st.session_state.get("v_detect_timings", {})
+    if not timings:
+        return
+    col.caption("**Detection time**  ·  last measured")
+    for name in media.DETECTOR_NAMES:
+        entry = timings.get(name)
+        mark = "  ·  **selected**" if name == selected else ""
+        if entry is None:
+            col.caption(f"`{name}`  ·  not run yet{mark}")
+            continue
+        per_frame = entry["ms"] / max(entry["frames"], 1)
+        col.caption(f"`{name}`  ·  **{entry['ms']:.0f} ms** for {entry['frames']} frames "
+                    f"({per_frame:.1f} ms/frame){mark}")
 
 
 def waveform_fig(y, rate, title, figsize=(10, 1.9), xlabel="s"):
@@ -226,7 +265,10 @@ def render_visual():
     with st.container(border=True):
         l, r = st.columns([1, 2])
         l.markdown("**1 · Face detection + crop**")
-        do_detect = l.checkbox("Enable MTCNN crop", value=True, key="v_detect")
+        do_detect = l.checkbox("Enable face crop", value=True, key="v_detect")
+        detector = l.selectbox("Detector", media.DETECTOR_NAMES, key="v_detector",
+                               format_func=DETECTOR_LABELS.get,
+                               help="Swap to compare. Timings for both are shown below.")
         l.caption("Highest-scoring face only. Below the threshold the step falls back to the "
                   "whole frame rather than to a guess.")
         conf = l.slider("Confidence", 0.50, 0.99, 0.90, 0.01, key="v_conf")
@@ -237,16 +279,19 @@ def render_visual():
 
         # Neither slider is disabled with the crop off: the mouth branch runs its
         # own detection off these same two numbers. Both branches go through
-        # cached_face_mouth, memoized on (clip, timestamps, conf, margin), so the
-        # two calls are one MTCNN pass.
+        # cached_face_mouth, memoized on (clip, timestamps, conf, margin,
+        # detector), so the two calls are one detection pass.
         if do_detect:
-            faces, _mouths, n_detected = media.cached_face_mouth(
-                video_path, timestamps, conf, margin)
+            faces, _mouths, n_detected, detect_ms = media.cached_face_mouth(
+                video_path, timestamps, conf, margin, detector=detector)
             cur = faces
             l.metric("Faces detected", f"{n_detected}/{n_frames}")
+            _record_timing(detector, detect_ms, n_frames)
             show_frames(r, cur, "Cropped")
         else:
             show_frames(r, cur, "Full frame" + SKIPPED)
+
+        _show_timings(l, detector)
 
     with st.container(border=True):
         l, r = st.columns([1, 2])
@@ -312,14 +357,14 @@ def render_visual():
         l, r = st.columns([1, 2])
         l.markdown("**⑃ Mouth branch** (lip-sync input, parallel)")
         do_mouth = l.checkbox("Produce 96² mouth crop", key="v_mouth")
-        l.caption("MTCNN mouth-corner landmarks, cropped at 96². Independent of the face "
-                  "crop above, which the visual and emotion streams keep.")
+        l.caption("Mouth-corner landmarks from the detector above, cropped at 96². "
+                  "Independent of the face crop, which the visual and emotion streams keep.")
         if do_mouth:
-            # Its own MTCNN pass rather than a hand-off from step 1, so the mouth
-            # crop is produced whether or not the face crop is enabled. Same
-            # cache entry as step 1 when both run, so it costs one detect pass.
-            _faces, mouth_crops, mouth_detected = media.cached_face_mouth(
-                video_path, timestamps, conf, margin)
+            # Its own call rather than a hand-off from step 1, so the mouth crop
+            # is produced whether or not the face crop is enabled. Same cache
+            # entry as step 1 when both run, so it costs one detect pass.
+            _faces, mouth_crops, mouth_detected, _ms = media.cached_face_mouth(
+                video_path, timestamps, conf, margin, detector=detector)
             l.metric("Landmarks found", f"{mouth_detected}/{n_frames}")
             show_frames(r, mouth_crops, "Mouth 96²")
             model_mouth = np.stack([np.transpose(m.astype(np.float32) / 255.0, (2, 0, 1))

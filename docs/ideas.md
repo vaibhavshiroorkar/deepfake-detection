@@ -35,7 +35,12 @@ ARCFACE_TEMPLATE_112 = np.array([
 ```
 
 That landmark order is exactly what `facenet-pytorch`'s MTCNN returns, so no
-reordering was needed.
+reordering was needed. It is also what YuNet returns, despite documentation that
+reads otherwise: both put the image-left eye first, and `test_detectors.py` pins
+it. So this template still works whichever detector is selected, and bringing
+alignment back does not need a per-detector branch. Do re-read that test first,
+though, since alignment is the one step that reads landmarks by index rather than
+as an unordered pair.
 
 **Why it was worth having.** Without alignment the temporal model receives a face
 that rolls, drifts and rescales as the head moves, and has to spend capacity

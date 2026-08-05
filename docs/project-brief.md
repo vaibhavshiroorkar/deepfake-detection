@@ -289,9 +289,13 @@ seconds at 16 kHz. Frame *i* and audio window *i* describe the same instant.
 
 1. **Frame sampling** (`audio.sample_timestamps`). 16 evenly spaced timestamps, inset by
    half an audio window so every frame's plus/minus 0.175 s of audio stays inside the clip.
-2. **Face detection** (`faces.detect`). MTCNN from `facenet-pytorch`, most-confident face
-   only, returning box, 5 landmarks and probability. A face must clear a confidence
-   threshold, default 0.90.
+2. **Face detection** (`faces.detect`). Most-confident face only, returning box, 5 landmarks
+   and confidence. A face must clear a confidence threshold, default 0.90. Two detectors sit
+   behind one interface in `ops/detectors.py`: MTCNN from `facenet-pytorch` (2016, the
+   default, runs on CPU or GPU) and YuNet from OpenCV (2023, CPU-only, about 9x faster per
+   frame). The choice is a flag on `extract_clip`/`precache` and a dropdown on the dashboard's
+   Visual tab, which times both so they can be compared on a real clip. It is stamped into
+   the cache, so the two never read each other's crops.
 3. **Crop** (`faces.crop_and_resize`). The detected box, padded by a margin (default 0.20)
    and clamped to the frame, resized to 224x224. Five-point alignment used to sit here: it
    warped the landmarks onto a canonical ArcFace template to pose-normalize the face. It was
@@ -317,7 +321,8 @@ dataset, caught by looking at the pictures in the dashboard.
 *parallel* output, not a replacement: the visual and emotion streams keep the full face.
 Note for Stage 4: AV-HuBERT-style preprocessing expects a grayscale, 68-landmark mean-face
 aligned mouth ROI. Matching that exactly needs a 68-landmark model, a new dependency, so it
-is deferred; today's landmark-centred RGB crop is the best available from MTCNN's 5 points.
+is deferred; today's landmark-centred RGB crop is the best available from either detector's
+5 points.
 
 ### Audio path
 

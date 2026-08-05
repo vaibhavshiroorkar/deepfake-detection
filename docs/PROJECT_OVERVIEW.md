@@ -226,7 +226,7 @@ What it must produce:
 | `data/train.csv`, `val.csv`, `test.csv` | the **identity-based** split, one file per split (each row also carries its split name) |
 | `data/processed/<clip_id>/` | per-clip cache of face crops + time-aligned audio windows + a `version.txt` (`PIPELINE_VERSION`); written on first access, reused every epoch, transparently re-extracted when the version bumps |
 | mono audio @ 16 kHz | extracted per clip. FakeAVCeleb's **leading-silence shortcut bug** (fake-audio clips carry extra silence at t=0) is measured (`leading_silence_sec`) and neutralized by starting frame+audio sampling past it, keeping the two modalities aligned |
-| face + mouth crops | MTCNN face crops (224×224), margin-padded bounding box, and landmark-derived mouth crops (96×96), with per-frame detection confidence |
+| face + mouth crops | Face crops (224×224) from a margin-padded bounding box, and landmark-derived mouth crops (96×96), with per-frame detection confidence. Detector is MTCNN or YuNet, selectable and stamped into the cache |
 
 The scripts that did this, in dependency order — a reasonable rebuild order too, one
 script at a time:

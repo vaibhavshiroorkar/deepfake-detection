@@ -1,6 +1,6 @@
 """Media decoding for the dashboard: frames at timestamps, audio, face detection.
 
-Frame decoding and the Streamlit-cached MTCNN loader live here; the actual
+Frame decoding and the Streamlit-cached detector loader live here; the actual
 per-step ops (detect/crop/mouth, audio decode/window, timestamps) come from
 preprocessing.ops so the dashboard and the real pipeline run the SAME code.
 NEVER writes data/processed/.
@@ -12,6 +12,7 @@ rest of this module handles fine can still arrive at st.video as a blank player.
 import sys
 import tempfile
 from pathlib import Path
+from time import perf_counter
 
 import numpy as np
 
@@ -22,11 +23,13 @@ if str(_REPO_ROOT) not in sys.path:
 import av
 import cv2
 
-from preprocessing.ops import faces as _faces, audio as _audio
+from preprocessing.ops import faces as _faces, audio as _audio, detectors as _detectors
 from preprocessing.ops.constants import AUDIO_SR, FRAME_SIZE, MOUTH_SIZE
 
 # Re-exported so pages/tests can keep importing them from dashboard.lib.media.
 sample_timestamps = _audio.sample_timestamps
+DETECTOR_NAMES = _detectors.DETECTOR_NAMES
+DEFAULT_DETECTOR = _detectors.DEFAULT_DETECTOR
 
 # Video codecs that every current browser can decode natively. FakeAVCeleb is
 # NOT uniformly one of them: the wav2lip generator wrote its output with an
@@ -37,17 +40,18 @@ sample_timestamps = _audio.sample_timestamps
 BROWSER_VIDEO_CODECS = frozenset({"h264", "vp8", "vp9", "av1"})
 
 
-def get_detector():
+def get_detector(name: str = _detectors.DEFAULT_DETECTOR):
+    """The named detector, loaded once per session. Returns (detector, device)."""
     import streamlit as st
 
-    @st.cache_resource(show_spinner="Loading MTCNN face detector...")
-    def _load():
+    @st.cache_resource(show_spinner="Loading face detector...")
+    def _load(detector_name: str):
         import torch
-        from facenet_pytorch import MTCNN
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        return MTCNN(keep_all=False, device=device), device
+        det = _detectors.build(detector_name, device=device)
+        return det, det.device
 
-    return _load()
+    return _load(name)
 
 
 def video_codec(video_path) -> str | None:
@@ -189,31 +193,40 @@ def cached_decode_frames(video_path, timestamps) -> list[np.ndarray]:
 
 
 def cached_face_mouth(video_path, timestamps, conf_thresh: float, margin: float,
-                      mouth_size: int = MOUTH_SIZE):
-    """(faces, mouths, n_detected) for a clip, memoized on the detector settings.
+                      mouth_size: int = MOUTH_SIZE,
+                      detector: str = _detectors.DEFAULT_DETECTOR):
+    """(faces, mouths, n_detected, detect_ms), memoized on the detector settings.
 
-    MTCNN over 16 frames is the slowest thing either the Preprocessing page or a
-    stream page does, and it is pure with respect to (clip, timestamps, conf,
-    margin). Cached under those, so only a change that can alter the crops pays
-    for it.
+    Detection over 16 frames is the slowest thing either the Preprocessing page
+    or a stream page does, and it is pure with respect to (clip, timestamps,
+    conf, margin, detector). Cached under those, so only a change that can alter
+    the crops pays for it.
+
+    detect_ms is measured inside the memoized body and cached with the crops, so
+    a cache hit reports the time detection really took rather than the ~0 ms the
+    cache hit itself cost. It covers the detect+crop calls only, not the frame
+    decode, which is the same work whichever detector is loaded.
     """
     import streamlit as st
 
     @st.cache_data(show_spinner="Detecting faces...", max_entries=8)
     def _run(path: str, _mtime: float, ts: tuple[float, ...], conf: float, mrg: float,
-             msize: int):
-        detector, _device = get_detector()
+             msize: int, det_name: str):
+        det, _device = get_detector(det_name)
+        frames = cached_decode_frames(path, ts)
         faces, mouths, found = [], [], 0
-        for frame in cached_decode_frames(path, ts):
-            face, mouth, detected = detect_face_and_mouth(frame, detector, conf, mrg, msize)
+        t0 = perf_counter()
+        for frame in frames:
+            face, mouth, detected = detect_face_and_mouth(frame, det, conf, mrg, msize)
             faces.append(face)
             mouths.append(mouth)
             found += int(detected)
-        return faces, mouths, found
+        detect_ms = (perf_counter() - t0) * 1000.0
+        return faces, mouths, found, detect_ms
 
     stat = Path(video_path).stat()
     return _run(str(video_path), stat.st_mtime, tuple(float(t) for t in timestamps),
-                float(conf_thresh), float(margin), int(mouth_size))
+                float(conf_thresh), float(margin), int(mouth_size), str(detector))
 
 
 def detect_and_crop(frame_rgb, detector, conf_thresh: float, margin: float):
@@ -228,8 +241,8 @@ def detect_face_and_mouth(frame_rgb, detector, conf_thresh: float, margin: float
     """(face_224_rgb, mouth_96_rgb, detected) from one detect call.
 
     The face crop feeds the visual + emotion streams; the mouth crop is a
-    PARALLEL output for the lip-sync stream (Stage 4), derived from MTCNN's two
-    mouth-corner landmarks. `margin` pads the bbox crop.
+    PARALLEL output for the lip-sync stream (Stage 4), derived from the
+    detector's two mouth-corner landmarks. `margin` pads the bbox crop.
     """
     return _faces.detect_crop(
         frame_rgb, detector, conf_thresh=conf_thresh, margin=margin,

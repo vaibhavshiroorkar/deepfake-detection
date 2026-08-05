@@ -236,10 +236,11 @@ def _render_dataset(st):
         st.session_state["sel_picker_open"] = True
 
     # The dialog's open state lives in session_state rather than being driven by
-    # the button click directly. A widget inside a dialog reruns the script, and
-    # a dialog that is not re-invoked on that rerun disappears. on_dismiss clears
-    # the flag, so an X or ESC does not leave it set to pop the dialog open again
-    # at the next unrelated interaction.
+    # the button click directly. A dialog disappears only on a full script run
+    # that does not re-invoke it, so this line is the single place that decides
+    # whether it is on screen. on_dismiss clears the flag, so an X or ESC does
+    # not leave it set to pop the dialog open again at the next unrelated
+    # interaction.
     if st.session_state.get("sel_picker_open"):
         _picker(st, df)
 
@@ -335,13 +336,15 @@ def _picker(st, df):
                 cmt = candidate["manipulation_type"] if "manipulation_type" in candidate else ""
                 st.caption(f"{cmt} · {label_text(candidate)} · loaded")
                 _preview_frames(st, clip_path(candidate))
-            # on_click, not an `if st.button(...): st.rerun()` body. The click
-            # already reruns the script; clearing the flag in the callback means
-            # that single rerun closes the dialog. Doing it in the body instead
-            # made the click cost TWO full reruns of the page behind, which on a
-            # page that decodes a clip is the difference between instant and a
-            # visible wait.
-            st.button("Done", key="pick_done", width="stretch", on_click=_close_picker)
+            # st.rerun() in the body, not on_click alone. st.dialog is a
+            # fragment, so this click only reruns the dialog body: the app-level
+            # `if sel_picker_open` never re-evaluates, and Streamlit drops a
+            # dialog only on a full script run that does not re-open it. Clearing
+            # the flag in a callback therefore closed nothing at all. The explicit
+            # app-scoped rerun is what actually shuts it.
+            if st.button("Done", key="pick_done", width="stretch"):
+                st.session_state["sel_picker_open"] = False
+                st.rerun()
 
     _body()
 

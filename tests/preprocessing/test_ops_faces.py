@@ -1,7 +1,7 @@
 """MAIN visual ops: detection, crop, mouth ROI, normalize.
 
-No MTCNN is loaded: crop/mouth take explicit landmarks, and detect_crop is
-driven by a duck-typed fake detector.
+No real detector is loaded: crop/mouth take explicit landmarks, and detect_crop
+is driven by a fake standing in for anything from preprocessing/ops/detectors.py.
 
 Five-point alignment used to be tested here. It was removed from the pipeline and
 is parked in docs/ideas.md; the tests went with it, and the commit that deleted
@@ -22,16 +22,16 @@ def img():
 
 
 class FakeDetector:
-    """Stands in for MTCNN: returns canned box/prob/landmarks from .detect()."""
+    """Canned (box, landmarks5, prob) in the detectors.py shape. See that module."""
+    name = "fake"
+
     def __init__(self, box, points, prob):
         self.box, self.points, self.prob = box, points, prob
 
-    def detect(self, frame_rgb, landmarks=False):
-        boxes = np.array([self.box], dtype=np.float32)
-        probs = np.array([self.prob], dtype=np.float32)
-        if landmarks:
-            return boxes, probs, np.array([self.points], dtype=np.float32)
-        return boxes, probs
+    def detect(self, frame_rgb):
+        return (np.array(self.box, dtype=np.float32),
+                np.array(self.points, dtype=np.float32),
+                float(self.prob))
 
 
 def test_crop_and_resize_shape_rgb(img):
