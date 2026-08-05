@@ -94,23 +94,15 @@ def decode_inputs(video_path: str, num_frames: int, window_sec: float, conf: flo
                   margin: float = 0.2) -> dict:
     """The real preprocessed tensors both cross-modal streams read.
 
-    Faces and mouths come from one detect call, exactly as the Visual tab of the
-    Preprocessing page does it, so the crops on this page are the crops the
-    pipeline stores.
+    Faces and mouths come from one MTCNN pass through media.cached_face_mouth,
+    the same entry point the Visual tab uses, so the crops on this page are the
+    crops the pipeline stores and the two pages share one cache entry.
     """
     from dashboard.lib import media
 
     duration, fps = media.frame_meta(video_path)
     timestamps = media.sample_timestamps(duration, num_frames, window_sec)
-    frames = media.decode_frames(video_path, timestamps)
-
-    detector, _device = media.get_detector()
-    faces, mouths, detected = [], [], []
-    for frame in frames:
-        face, mouth, found = media.detect_face_and_mouth(frame, detector, conf, margin)
-        faces.append(face)
-        mouths.append(mouth)
-        detected.append(found)
+    faces, mouths, detected = media.cached_face_mouth(video_path, timestamps, conf, margin)
 
     raw, native_sr = media.decode_audio(video_path)
     if raw.size:
@@ -120,7 +112,7 @@ def decode_inputs(video_path: str, num_frames: int, window_sec: float, conf: flo
         windows = np.zeros((num_frames, int(window_sec * AUDIO_SR)), dtype=np.float32)
 
     return {"faces": faces, "mouths": mouths, "windows": windows,
-            "detected": sum(detected), "timestamps": timestamps,
+            "detected": detected, "timestamps": timestamps,
             "duration": duration, "fps": fps, "has_audio": bool(raw.size)}
 
 

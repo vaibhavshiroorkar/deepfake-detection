@@ -16,7 +16,7 @@ synthesis breaks the correspondence in a way that survives compression. So along
 detectors, this system measures disagreement between modalities rather than asking whether a voice
 sounds synthetic.
 
-Five streams read one clip, three visual (EfficientNet-B0, Xception, DINOv2) and two cross-modal
+Five streams read one clip, three visual (EfficientNet-B0, Xception, DINOv3) and two cross-modal
 (lip-sync, emotion), and each emits an embedding rather than a score. Fusion concatenates the
 embeddings and learns from the combination, so it can represent "artifact evidence is weak but
 synchrony evidence is strong", which is what separates one manipulation family from another and is
@@ -44,7 +44,7 @@ The full design, covering architecture, data, tooling, compute assumptions and b
 |---|---|
 | Preprocessing | Built. Shared pure functions in `preprocessing/ops/`, called by both the batch pipeline and the dashboard. |
 | Manifests and splits | Built. Identity-disjoint splits from `build_splits.py`, verified by `verify_splits.py`. |
-| Visual stream module | Built. One config-driven module in `models/streams/common/`; EfficientNet-B0 and Xception wired, DINOv2 not yet. |
+| Visual stream module | Built. One config-driven module in `models/streams/common/`; EfficientNet-B0, Xception and DINOv3 all wired. |
 | Training | Not written. The streams are defined, but nothing has been trained since the preprocessing rebuild. |
 | Lip-sync and emotion streams | Designed, not built (stages 4 and 5). |
 | Fusion, evaluation, explainability | Designed, not built (stages 6, 7 and 10). |

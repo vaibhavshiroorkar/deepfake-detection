@@ -15,7 +15,7 @@ because "deepfake" covers manipulations that leave evidence in completely differ
 
 | Principle | Question it asks | Streams | Best against |
 |---|---|---|---|
-| Visual artifacts | Does this face show manufacturing residue? | Xception, EfficientNet-B0, DINOv2 | Face swaps (`faceswap`, `fsgan`) — 4,694 clips |
+| Visual artifacts | Does this face show manufacturing residue? | Xception, EfficientNet-B0, DINOv3 | Face swaps (`faceswap`, `fsgan`) — 4,694 clips |
 | Audio-visual synchrony | Do the mouth's movements and the sound belong to one event? | Lip-sync | Lip-sync repaints (`wav2lip` and its combinations) — 15,872 clips |
 | Audio-visual affect | Does the emotion on the face match the emotion in the voice? | Emotion | Voice clones on genuine video (`rtvc`) — 500 clips |
 
@@ -52,10 +52,10 @@ never see the audio.
 
 - **Xception** — low-level artifacts: blending edges, colour inconsistencies
 - **EfficientNet** — a second artifact-focused view, different architecture
-- **DINOv2 (ViT)** — a third view that is *self-supervised* rather than supervised. Its
-  features are learned without fake/real labels, so they describe images generally and
-  are expected to generalize better to unseen fake types than the two artifact-focused
-  CNNs (see [math/dinov2.md](math/dinov2.md)).
+- **DINOv3 (ViT-S/16)** — a third view that is *self-supervised* rather than supervised.
+  Its features are learned without fake/real labels, so they describe images generally
+  and are expected to generalize better to unseen fake types than the two
+  artifact-focused CNNs (see [math/dinov3.md](math/dinov3.md)).
 
 Every visual stream runs each frame through its backbone to get per-frame embeddings,
 then passes the frame sequence through a temporal model (LSTM or GRU, configurable) to
@@ -85,7 +85,7 @@ fusion — not a standalone prediction.**
 
 ### Two things to always keep straight
 
-- Xception, EfficientNet, and DINOv2 do **not** do lip-syncing or emotion matching. They
+- Xception, EfficientNet, and DINOv3 do **not** do lip-syncing or emotion matching. They
   never see audio. That work belongs to the cross-modal streams.
 - **There is no standalone audio-only stream.** An audio-only model cannot see whether
   audio and video agree, which is where partial fakes hide. That said, fusion benefits
@@ -148,7 +148,7 @@ masking a score column the way late-fusion ablation would.
 - If streams each catch different fakes, keep all of them.
 - If two overlap too much (Xception and EfficientNet are both artifact-focused CNNs and
   may catch the same fakes), drop the redundant one.
-- DINOv2 is expected to survive by catching different fakes than the two artifact CNNs,
+- DINOv3 is expected to survive by catching different fakes than the two artifact CNNs,
   since it is self-supervised rather than trained on manipulation artifacts.
 
 Dropping a stream because the data told you to is a genuine finding, not a failure. This
@@ -365,7 +365,7 @@ description of the *kind* of work in each stage plan, not a fixed person assignm
    → temporal modeling (state which: mean-pool / LSTM / temporal attention, and why) →
    binary head → tracked training loop → eval on val including per-category breakdown.
    Previously reached AUC 0.994 with EfficientNet-B0 — that is the bar (§14).
-3. **Remaining visual streams** cloning the validated pattern: Xception and DINOv2.
+3. **Remaining visual streams** cloning the validated pattern: Xception and DINOv3.
 4. **Cross-modal streams:** Lip-sync (AV-HuBERT + Whisper) and Emotion (HSEmotions +
    Wav2Vec2), each consuming aligned audio+video from the shared dataloader,
    cross-attention between modalities, each outputting a fixed-size mismatch feature
@@ -405,7 +405,8 @@ The work order above maps onto the numbered stage plans, which hold per-stage de
   Detection Techniques in Audio-Visual Media*
 
 **Visual architectures (math we present):** Xception (depthwise separable convolutions),
-EfficientNet (compound scaling), DINOv2 (self-supervised self-distillation).
+EfficientNet (compound scaling), DINOv3 (self-supervised self-distillation with Gram
+anchoring).
 
 **Cross-modal lineage (design basis for the implemented streams):**
 
@@ -457,7 +458,7 @@ deepfake-detection/
 ├── preprocessing/            # face + audio extraction, splits, shared DataLoader
 ├── models/streams/
 │   ├── common/               # the shared, config-driven visual-stream template
-│   ├── xception/  efficientnet/  dinov2/
+│   ├── xception/  efficientnet/  dinov3/
 │   ├── lipsync/              # AV-HuBERT + Whisper cross-attention
 │   └── emotion/              # HSEmotions + Wav2Vec2 cross-attention
 ├── checkpoints/<stream>/     # trained weights coming back from Kaggle/W&B (gitignored)
@@ -576,7 +577,7 @@ per stream that walks one clip through the model stage by stage. The pictures on
 pages are real — `models/streams/common/introspect.py` hooks the backbone's
 `feature_info` stages, runs one forward pass, and returns the activations — so the
 architecture in the Documentation tab and the thing that runs are visibly the same
-object. DINOv2 is wired in alongside Xception and EfficientNet-B0 (a ViT, so it is
+object. DINOv3 is wired in alongside Xception and EfficientNet-B0 (a ViT, so it is
 built with an explicit `img_size=224`; its stages are token matrices, not channel maps).
 
 **This did not change §7: the dashboard still never trains.** It went further the other

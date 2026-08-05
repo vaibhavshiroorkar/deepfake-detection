@@ -1,6 +1,6 @@
 """The reusable visual-stream template — every visual stream is an instance of
 this one class, differing only by the StreamConfig passed in (Xception vs
-EfficientNet vs DINOv2 later).
+EfficientNet vs DINOv3 later).
 
 Data flow for one clip, batched as [B, T, 3, H, W] (T = num_frames):
 
@@ -30,7 +30,7 @@ from models.streams.common.config import StreamConfig
 def _create_backbone(config: StreamConfig) -> nn.Module:
     """The timm backbone, built at the config's input resolution.
 
-    A ViT needs `img_size` to be told: DINOv2 ships a 518-pixel pretrained config,
+    A ViT needs `img_size` to be told: DINOv3 ships a 256-pixel pretrained config,
     and this pipeline feeds 224-pixel face crops, so without it the positional
     embedding is sized for an input that never arrives. A CNN has no such
     parameter and raises TypeError on the keyword, which is the signal to build

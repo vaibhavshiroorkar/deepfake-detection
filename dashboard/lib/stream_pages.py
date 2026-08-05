@@ -27,7 +27,7 @@ import streamlit as st
 
 from dashboard.lib import sticky
 from models.streams.common.config import (
-    StreamConfig, DINOV2, EFFICIENTNET_B0, XCEPTION,
+    StreamConfig, DINOV3, EFFICIENTNET_B0, XCEPTION,
 )
 
 # Label -> (temporal_type, bidirectional), the three ways to collapse a frame
@@ -39,7 +39,7 @@ TEMPORAL = {"BiLSTM": ("lstm", True), "GRU": ("gru", True), "Mean-pool": ("mean"
 VISUAL_MODELS = {
     "xception": ("Xception", XCEPTION),
     "efficientnet": ("EfficientNet-B0", EFFICIENTNET_B0),
-    "dinov2": ("DINOv2 (ViT-S/14)", DINOV2),
+    "dinov3": ("DINOv3 (ViT-S/16)", DINOV3),
 }
 
 DEFAULTS = {"enabled": True, "temporal": "BiLSTM", "hidden": 256, "dim": 256, "freeze": True}

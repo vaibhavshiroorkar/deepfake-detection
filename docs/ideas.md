@@ -143,8 +143,11 @@ reports the current error as *Worst off-centre*.
 
 ## assets/flow.png corrections
 
-The architecture diagram has three typos: "AuHubert" should be AV-HuBERT, "DinoV2"
-should be DINOv2, and "Explanability" should be Explainability.
+The architecture diagram has two typos: "AuHubert" should be AV-HuBERT, and
+"Explanability" should be Explainability. It also still names the third backbone
+"DinoV2"; the project moved to DINOv3 (2026-08-02), and the version in
+`DeepFake_Detection_System_Presentation.pptx` is already ahead of this file on all
+three counts.
 
 More substantively, its "Stream Layer" box merges the video and audio paths *before*
 the Visual Stream, which implies the visual streams see audio. They never do, and

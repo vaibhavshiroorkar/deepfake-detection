@@ -2,7 +2,6 @@
 
 These pin down bugs found by checking the tab against the ops it calls:
 
-  * the "Enable downmix" toggle did the same channel mean whether on or off;
   * "Trim leading silence" cut the head off the waveform while the frame
     timestamps stayed put, sliding every audio window later in real time;
   * the concatenated-windows plot was labelled in clip seconds when its x axis
@@ -36,21 +35,6 @@ def test_waveform_fig_time_axis_matches_duration():
 def test_waveform_fig_labels_can_say_it_is_not_clip_time():
     fig = P.waveform_fig(np.zeros(10, np.float32), 100, "t", xlabel="s within the concatenation")
     assert "concatenation" in fig.axes[0].get_xlabel()
-
-
-# --------------------------------------------------------------- downmix vs off
-
-def test_downmix_off_is_not_the_same_operation_as_on():
-    """The toggle has to change the signal, or it is decoration."""
-    rng = np.random.default_rng(0)
-    stereo = rng.standard_normal((2, 4000)).astype(np.float32)
-
-    on = AF.downmix(stereo)                    # what the enabled branch computes
-    off = np.asarray(stereo[0], dtype=np.float32)   # what the disabled branch now computes
-
-    assert not np.allclose(on, off)
-    # and the old disabled branch was literally the enabled one
-    assert np.allclose(on, stereo.mean(axis=0))
 
 
 # ----------------------------------------------------------- leading silence

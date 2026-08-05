@@ -9,7 +9,7 @@ import pytest
 import torch
 
 from models.streams.common.config import (
-    StreamConfig, DINOV2, EFFICIENTNET_B0, XCEPTION, dinov2_config,
+    StreamConfig, DINOV3, EFFICIENTNET_B0, XCEPTION, dinov3_config,
 )
 from models.streams.common.visual_stream import build_visual_stream
 from models.streams.common import introspect
@@ -120,25 +120,26 @@ def test_trace_refuses_a_batch():
 
 # ------------------------------------------------------------------- ViT branch
 
-def test_dinov2_builds_at_the_pipeline_resolution_and_traces_as_tokens():
-    """The slow one: ~22M params. DINOv2 is a ViT, so its stages are token
+def test_dinov3_builds_at_the_pipeline_resolution_and_traces_as_tokens():
+    """The slow one: ~22M params. DINOv3 is a ViT, so its stages are token
     matrices and the spatial helpers do not apply to them."""
-    model = build_visual_stream(dinov2_config(pretrained=False, num_frames=2,
+    model = build_visual_stream(dinov3_config(pretrained=False, num_frames=2,
                                               frame_chunk_size=0)).eval()
     assert model.feature_dim == 384
     trace = introspect.trace_visual_stream(model, _clip(2), detail_frame=1)
     assert len(trace.stages) == 12
     stage = trace.stages[-1]
     assert stage.kind == introspect.TOKENS
-    assert stage.shape == (257, 384)              # CLS + a 16x16 patch grid
-    assert stage.summary.shape == (2, 16, 16)
-    assert introspect.cls_similarity_map(stage.detail).shape == (16, 16)
-    assert introspect.patch_token_map(stage.detail).shape == (16, 16)
+    # patch16 at 224 gives a 14x14 grid, behind CLS plus four register tokens
+    assert stage.shape == (201, 384)
+    assert stage.summary.shape == (2, 14, 14)
+    assert introspect.cls_similarity_map(stage.detail).shape == (14, 14)
+    assert introspect.patch_token_map(stage.detail).shape == (14, 14)
 
 
-def test_dinov2_preset_names_the_vit():
-    assert dinov2_config().backbone_name == DINOV2
-    assert dinov2_config().stream_name == "dinov2"
+def test_dinov3_preset_names_the_vit():
+    assert dinov3_config().backbone_name == DINOV3
+    assert dinov3_config().stream_name == "dinov3"
 
 
 # ------------------------------------------------------------- numpy view helpers

@@ -165,7 +165,7 @@ def render_selection():
     st.header("Selection")
     source = st.segmented_control(
         "Clip source", [SOURCE_DATASET, SOURCE_UPLOAD], default=SOURCE_DATASET,
-        key="sel_source", help="Browse a discovered dataset, or bring your own video.")
+        key="sel_source")
     if source == SOURCE_UPLOAD:
         return _render_upload(st)
     return _render_dataset(st)
@@ -176,10 +176,9 @@ def render_selection():
 def _render_upload(st):
     uploaded = st.file_uploader(
         "Video file", type=["mp4", "mov", "mkv", "webm", "avi"], key="sel_upload",
-        help="Decoded and previewed exactly like a dataset clip. Never copied into data/.")
+        help="Runs through the same pipeline as a dataset clip. Never copied into data/.")
     if uploaded is None:
-        st.caption("Upload a video to run it through the same preprocessing steps. It carries no "
-                   "ground-truth label, so its label reads *unknown*.")
+        st.caption("An uploaded clip has no ground truth, so its label reads *unknown*.")
         return None
 
     row = upload_row(uploaded.name, uploaded.getvalue(), str(uploaded.file_id))
@@ -307,8 +306,8 @@ def _picker(st, df):
                                     key="pick_label")
             filtered = group_by_identity(search_manifest(
                 filter_manifest(df, manip, methods, label_filter), query))
-            st.caption(f"{len(filtered)} clips. Variants of one identity are grouped. "
-                       "Click a row to load it straight into the page behind.")
+            st.caption(f"{len(filtered)} clips, grouped by identity. "
+                       "Click a row to load it.")
             view_cols = [c for c in ["clip_id", "source", "manipulation_type", "method", "label"]
                          if c in filtered.columns]
             event = st.dataframe(filtered[view_cols], height=340, hide_index=True,
@@ -334,17 +333,25 @@ def _picker(st, df):
             else:
                 st.markdown(f"**{candidate['clip_id']}**")
                 cmt = candidate["manipulation_type"] if "manipulation_type" in candidate else ""
-                st.caption(f"{cmt} ({label_text(candidate)}) · live on the page behind")
+                st.caption(f"{cmt} · {label_text(candidate)} · loaded")
                 _preview_frames(st, clip_path(candidate))
-            if st.button("Done", key="pick_done", width="stretch"):
-                _close_picker()
-                st.rerun()
+            # on_click, not an `if st.button(...): st.rerun()` body. The click
+            # already reruns the script; clearing the flag in the callback means
+            # that single rerun closes the dialog. Doing it in the body instead
+            # made the click cost TWO full reruns of the page behind, which on a
+            # page that decodes a clip is the difference between instant and a
+            # visible wait.
+            st.button("Done", key="pick_done", width="stretch", on_click=_close_picker)
 
     _body()
 
 
 def _preview_frames(st, video_path, n: int = 4):
-    """Show a few raw frames of a clip inside the picker (no MTCNN)."""
+    """Show a few raw frames of a clip inside the picker (no MTCNN).
+
+    Cached decode: every keystroke in the search box reruns the dialog, and
+    re-seeking the clip on each one is what made typing feel laggy.
+    """
     import cv2
     from dashboard.lib import media
 
@@ -353,7 +360,7 @@ def _preview_frames(st, video_path, n: int = 4):
         return
     duration, _ = media.frame_meta(str(video_path))
     ts = media.sample_timestamps(duration, n, 0.35)
-    frames = [cv2.resize(f, (150, 150)) for f in media.decode_frames(str(video_path), ts)]
+    frames = [cv2.resize(f, (150, 150)) for f in media.cached_decode_frames(video_path, ts)]
     cols = st.columns(2)
     for k, im in enumerate(frames):
         cols[k % 2].image(im, width="stretch")

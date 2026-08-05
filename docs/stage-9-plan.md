@@ -22,7 +22,7 @@ The honesty test. In-the-wild deepfakes, unseen generators, messy conditions.
 
 - **Data:** Run the frozen preprocessing over Deepfake-Eval-2024 (expect more failures than on clean data — log them). Nothing here was ever trained on.
 - **ML:** Evaluate every stream's embedding and the fusion on it, exactly as in-distribution. Expect a drop — the question is how large.
-- **Research:** Report the in-distribution → in-the-wild gap per stream and for fusion. A key hypothesis: once added, DINOv2 and the cross-modal streams should degrade less than the artifact CNNs. Confirm or refute.
+- **Research:** Report the in-distribution → in-the-wild gap per stream and for fusion. A key hypothesis: once added, DINOv3 and the cross-modal streams should degrade less than the artifact CNNs. Confirm or refute.
 - **Done when:** Deepfake-Eval-2024 results reported, with the generalization gap quantified per stream.
 
 ---

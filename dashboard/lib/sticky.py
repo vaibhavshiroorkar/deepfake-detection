@@ -45,7 +45,7 @@ def run_state(key: str) -> dict:
     """The visual stream's run controls and last trace, for one backbone.
 
     Per backbone rather than one shared slot, so switching from Xception to
-    DINOv2 shows DINOv2's own last run instead of Xception's flagged stale, and
+    DINOv3 shows DINOv3's own last run instead of Xception's flagged stale, and
     the two can be compared by flipping between them. A checkpoint is trained for
     one backbone and is never loadable into another, so it belongs here too.
     """

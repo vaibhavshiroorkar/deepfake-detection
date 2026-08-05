@@ -103,8 +103,37 @@ def test_config_click_does_not_reopen_a_dismissed_picker():
     assert len(at.dataframe) == 0            # no picker table until the button is clicked
 
 
+def test_done_closes_the_picker():
+    # Done runs through an on_click callback, so the one rerun the click already
+    # causes is the rerun that closes the dialog. Closing it in the button body
+    # instead cost a second full rerun of the page behind.
+    at = AppTest.from_file("dashboard/pages/preprocess.py", default_timeout=180).run()
+    [b for b in at.button if b.key == "open_picker_btn"][0].click()
+    at.run()
+    assert at.session_state["sel_picker_open"]
+
+    done = [b for b in at.button if b.key == "pick_done"]
+    assert done, "the picker should offer a Done button"
+    done[0].click()
+    at.run()
+    assert not at.exception
+    assert not at.session_state["sel_picker_open"]
+    assert len(at.dataframe) == 0             # the picker table is gone
+
+
 def test_visual_mouth_branch_adds_separate_mouth_model_input():
     at = _with_clip(v_mouth=True)             # detection defaults on
     headers = [h.value for h in at.header]
     assert "Visual model input" in headers    # face output still present
     assert "Mouth model input" in headers     # mouth is a separate, parallel output
+
+
+def test_mouth_branch_runs_mtcnn_of_its_own_when_the_face_crop_is_off():
+    # The mouth ROI comes from MTCNN's mouth-corner landmarks, so it must be
+    # produced whether or not the face-crop step is enabled. It used to warn and
+    # produce nothing.
+    at = _with_clip(v_mouth=True, v_detect=False)
+    headers = [h.value for h in at.header]
+    assert "Mouth model input" in headers
+    # and no "enable face detection first" nag, which is what it used to show
+    assert not any("Enable face detection" in w.value for w in at.warning)

@@ -13,7 +13,7 @@ architecture invalidates it, and the page says so instead of showing stale
 pictures beside new settings.
 
 The trace and the controls that produced it are kept PER BACKBONE, in
-dashboard/lib/sticky.py, so flipping between Xception and DINOv2 shows each one's
+dashboard/lib/sticky.py, so flipping between Xception and DINOv3 shows each one's
 own last run rather than the other's flagged stale, and leaving the page for the
 Preprocessing tab and coming back does not reset anything.
 """
@@ -179,10 +179,11 @@ with st.container(border=True):
 st.subheader("2 · Backbone stages")
 is_vit = trace.stages[0].kind == introspect.TOKENS
 if is_vit:
-    st.caption("DINOv2 is a transformer, so there are no channel maps to show. Each block emits "
-               "one token per 14-pixel patch plus a CLS token, and the maps below are measured "
-               "from those tokens: how much weight each patch's token carries, and how closely "
-               "it points in the same direction as the CLS token that summarises the frame.")
+    st.caption("DINOv3 is a transformer, so there are no channel maps to show. Each block emits "
+               "one token per 16-pixel patch, behind a CLS token and four register tokens, and "
+               "the maps below are measured from those tokens: how much weight each patch's "
+               "token carries, and how closely it points in the same direction as the CLS token "
+               "that summarises the frame.")
 else:
     st.caption("Each stage's map is the mean over its channels, so it shows where the stage "
                "responded rather than to what. Maps are upsampled without interpolation: a 7x7 "

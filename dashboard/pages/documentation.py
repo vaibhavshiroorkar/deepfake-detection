@@ -107,7 +107,7 @@ pipeline instead of the forgery.
 |---|---|---|---|
 | **Xception** | faces | Low-level blending and colour artifacts. The long-standing FaceForensics++ baseline, strongest of the classic CNNs on manipulation residue. | 3 |
 | **EfficientNet-B0** | faces | A second artifact view from a different architecture family, and the lightest of the three, which is why it was built first and set the AUC 0.994 bar. | 2 |
-| **DINOv2 (ViT-S/14)** | faces | Self-supervised features, learned with no fake/real labels at all. The bet is that generic visual structure transfers to manipulation methods never seen in training. | 3 |
+| **DINOv3 (ViT-S/16)** | faces | Self-supervised features, learned with no fake/real labels at all. The bet is that generic visual structure transfers to manipulation methods never seen in training. | 3 |
 | **Lip-sync** | mouth + audio | Cross-attention between AV-HuBERT (video) and Whisper (audio): a synchronisation-mismatch vector. | 4 |
 | **Emotion** | faces + audio | Cross-attention between HSEmotions (face) and Wav2Vec2 (voice): an affect-consistency mismatch vector. | 5 |
 
@@ -723,9 +723,9 @@ laptop that produced the earlier results. That build reached test accuracy 0.963
 F1 0.974 and EER 0.018, in-distribution: the bar the rebuild has to clear.
 """)
 
-    with st.expander("**DINOv2 (ViT-S/14)**: self-supervised, and the generalisation bet"):
+    with st.expander("**DINOv3 (ViT-S/16)**: self-supervised, and the generalisation bet"):
         st.markdown("""
-DINOv2 is a vision transformer trained with **no labels of any kind**. Two networks are involved:
+DINOv3 is a vision transformer trained with **no labels of any kind**. Two networks are involved:
 a student, and a teacher whose weights are an exponential moving average of the student's. Both
 see different augmented crops of the same image, the teacher getting large global crops and the
 student global and small local ones, and the student is trained to match the teacher's output
@@ -734,12 +734,20 @@ encode what the object *is*, not where the crop was taken.
 
 Two mechanisms keep this from collapsing to a constant output: the teacher's distribution is
 *centred* using a running mean, which prevents any one dimension from dominating, and *sharpened*
-with a low temperature, which prevents it from flattening into a uniform distribution. DINOv2 adds
-a masked-patch objective on top and trains on a large curated corpus.
+with a low temperature, which prevents it from flattening into a uniform distribution. On top of
+that DINOv3 adds **Gram anchoring**, which holds the patch-to-patch similarity structure steady
+against a reference. Without it the dense per-patch features drift and blur over a long training
+schedule even while the global summary keeps improving, and per-patch features are exactly what
+the stage viewer on this page reads.
+
+The variant used here is the ViT-S/16 distilled from the 7B model, so it inherits that model's
+representation at ~22M parameters. Patch 16 at a 224-pixel crop gives a 14x14 patch grid, and the
+token matrix carries four register tokens behind the CLS token: extra rows the model can park
+global information in, so it stops overloading a few patch tokens to do the same job.
 
 The reason it is here is specific. Xception and EfficientNet were trained to recognise categories
 and are then fine-tuned to recognise the artifacts of the forgeries they were shown, which is
-exactly the kind of learning that fails on a generator it has never seen. DINOv2's features were
+exactly the kind of learning that fails on a generator it has never seen. DINOv3's features were
 never fitted to any manipulation, so the expectation is that it degrades more gracefully on unseen
 methods. Whether that expectation survives contact with the ablation is one of the results this
 project is meant to produce.

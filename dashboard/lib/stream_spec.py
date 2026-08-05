@@ -15,7 +15,7 @@ STREAMS = {
     "note": "Three feature streams feed fusion. Each has its own page, where one clip is walked "
             "through the model a stage at a time.",
     "views": [
-        ("Visual", "Xception, EfficientNet-B0 and DINOv2 over the face-crop sequence. Configure "
+        ("Visual", "Xception, EfficientNet-B0 and DINOv3 over the face-crop sequence. Configure "
                    "the temporal model, hidden size, embedding dim and freezing, then run a clip "
                    "and watch the activations at every backbone stage."),
         ("Lip-Sync", "AV-HuBERT over the mouth crop against Whisper over the audio, compared by "

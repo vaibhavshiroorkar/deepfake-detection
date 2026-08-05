@@ -11,10 +11,10 @@ dashboard/lib/trace_ui.py.
 
 Two shapes of stage come back, because the backbones are not the same kind of
 network. A CNN stage (Xception, EfficientNet) emits a spatial map [C, H, W] per
-frame. A ViT stage (DINOv2) emits a token matrix [1 + P, D] per frame, one row
-per patch plus the CLS row. `StageTrace.kind` says which, and callers must
-branch: a channel grid is meaningless for tokens, and a patch grid is meaningless
-for channels.
+frame. A ViT stage (DINOv3) emits a token matrix [prefix + P, D] per frame, one
+row per patch plus the CLS and register rows. `StageTrace.kind` says which, and
+callers must branch: a channel grid is meaningless for tokens, and a patch grid
+is meaningless for channels.
 
 Memory: a full Xception trace at 16 frames is ~150 MB if every stage keeps every
 frame at full width, which is not worth holding in session state. Each stage
@@ -98,7 +98,7 @@ def token_grid(num_tokens: int) -> tuple[int, int]:
     """(prefix_count, grid_side) for a ViT stage output with num_tokens rows.
 
     The patch rows form a square, so the prefix is whatever is left over once a
-    square fits. Smallest prefix wins: 257 is 1 + 16^2, not 32 + 15^2.
+    square fits. Smallest prefix wins: 201 is 5 + 14^2, not 65 + 8^2.
     """
     for prefix in range(MAX_PREFIX_TOKENS + 1):
         patches = num_tokens - prefix
@@ -281,7 +281,7 @@ def cls_similarity_map(detail: np.ndarray) -> np.ndarray:
     """Cosine similarity of each patch token to the CLS token, as a [side, side] map.
 
     The ViT stand-in for a channel-mean heatmap: it shows which regions the
-    summary token is actually built from. DINOv2 exposes no attention weights
+    summary token is actually built from. DINOv3 exposes no attention weights
     through timm's fused attention, so this is measured from the tokens instead.
     """
     if detail.ndim != 2:

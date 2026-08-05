@@ -88,7 +88,7 @@ from another, and no weighted average of five scores can express it.
 |---|---|
 | Preprocessing | Built. Shared functions in `preprocessing/ops/`, called by both the batch pipeline and this dashboard. |
 | Manifests and splits | Built. Identity-disjoint, verified by `verify_splits.py`. |
-| Visual stream module | Built. EfficientNet-B0 and Xception wired; DINOv2 not yet. |
+| Visual stream module | Built. EfficientNet-B0, Xception and DINOv3 all wired. |
 | Training | Not written. |
 | Lip-sync and emotion streams | Designed. Stages 4 and 5. |
 | Fusion, evaluation, explainability | Designed. Stages 6, 7 and 10. |

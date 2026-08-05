@@ -39,7 +39,7 @@ def test_overview_states_build_status_without_overclaiming():
     body = " ".join(m.value for m in _page().markdown)
     # The streams are named, but training is stated as not written, the honest
     # status is the point of the section.
-    assert "EfficientNet-B0" in body and "Xception" in body and "DINOv2" in body
+    assert "EfficientNet-B0" in body and "Xception" in body and "DINOv3" in body
     assert "Not written" in body
 
 

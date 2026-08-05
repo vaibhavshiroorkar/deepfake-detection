@@ -26,7 +26,7 @@ Late-fusion ablation (the old plan) is simple: drop a score column and re-averag
 **Research:**
 - From the table, make the keep/drop calls:
   - Do Xception and EfficientNet overlap so much that one is redundant?
-  - Does DINOv2 survive by catching different fakes than Xception/EfficientNet? (Expected to, being self-supervised rather than trained on manipulation artifacts.)
+  - Does DINOv3 survive by catching different fakes than Xception/EfficientNet? (Expected to, being self-supervised rather than trained on manipulation artifacts.)
   - How much does each cross-modal stream add over visual-only?
   - Document every drop as a data-driven finding, not a failure (per [PROJECT_OVERVIEW.md §4](PROJECT_OVERVIEW.md)).
 - Done when: ablation table complete, keep/drop decisions made and justified, final stream set chosen.

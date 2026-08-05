@@ -21,7 +21,7 @@ The system's most compelling explainability story, and nearly free — the featu
 ## Milestone 10B — Visual explainability (Grad-CAM)
 
 - **ML:** Run Grad-CAM (or similar) on the surviving visual stream(s) to show *where* on the face they attend — blending boundaries, mouth region, etc. Overlay heatmaps on example crops.
-- **Research:** Connect the heatmaps back to the architecture writeups (why an artifact CNN lights up on blend edges; how DINOv2, once added, differs).
+- **Research:** Connect the heatmaps back to the architecture writeups (why an artifact CNN lights up on blend edges; how DINOv3, once added, differs).
 - **Done when:** Grad-CAM overlays for real and fake examples are produced and explained.
 
 ---

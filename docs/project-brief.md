@@ -125,7 +125,7 @@ principles, applied to the same clip:
 
 | Principle | Question it asks | Streams | Best against |
 |---|---|---|---|
-| **Visual artifacts** | Does this face show manufacturing residue? | Xception, EfficientNet-B0, DINOv2 | Face swaps, and any fake with pixel-level residue |
+| **Visual artifacts** | Does this face show manufacturing residue? | Xception, EfficientNet-B0, DINOv3 | Face swaps, and any fake with pixel-level residue |
 | **Audio-visual synchrony** | Do the mouth's movements and the sound belong to one event? | Lip-sync | Lip-sync repaints, voice clones |
 | **Audio-visual affect** | Does the emotion on the face match the emotion in the voice? | Emotion | Voice clones, and any fake where affect drifts |
 
@@ -170,7 +170,7 @@ the disagreement is where the fake hides. The system is audio-visual by construc
 |---|---|
 | Chollet (2017), Xception | Depthwise separable convolutions. Our low-level artifact detector: blending edges, colour inconsistency. |
 | Tan and Le (2019), EfficientNet | Compound scaling. A second artifact-focused CNN view at a fraction of the parameters. |
-| Oquab et al. (2023), DINOv2 | Self-supervised ViT features learned with no fake/real labels, so they describe images generally instead of memorizing one generator's fingerprint. Our generalization bet. |
+| Siméoni et al. (2025), DINOv3 | Self-supervised ViT features learned with no fake/real labels, so they describe images generally instead of memorizing one generator's fingerprint. Our generalization bet. |
 | Vaswani et al. (2017), Attention Is All You Need | Scaled dot-product cross-attention, `softmax(QK^T / sqrt(d)) V`, the mechanism both cross-modal streams are built on. |
 | Chung and Zisserman (2016), SyncNet | Closest prior art for the lip-sync stream: audio-visual synchrony as an embedding-space temporal check, not a semantic one. |
 | Mittal et al. (2020), Emotions Don't Lie | Conceptual basis for the emotion-mismatch stream. We implement the idea with cross-attention on learned embeddings rather than their original scoring method. |
@@ -230,7 +230,7 @@ the disagreement is where the fake hides. The system is audio-visual by construc
         |         |    +------------+----------------+     |
         v         v                 v                      v
   +-----------+ +-----------+  +-----------+  +--------------------+
-  | Xception  | | Efficient |  | DINOv2    |  |  lip-sync stream   |
+  | Xception  | | Efficient |  | DINOv3    |  |  lip-sync stream   |
   |           | | Net-B0    |  |           |  |  video x audio     |
   +-----------+ +-----------+  +-----------+  |  cross-attention   |
         |             |              |        +--------------------+
@@ -452,9 +452,9 @@ feature store, and is discarded once the stream folds into fusion.
 |---|---|---|---|---|
 | **EfficientNet-B0** | `tf_efficientnet_b0.ns_jft_in1k` | ~5M | 1280 | Lightest, built first because it fits the 6 GB laptop GPU. Artifact-focused. |
 | **Xception** | `legacy_xception` | ~22M | 2048 | Depthwise separable convolutions. Classic deepfake-detection baseline, artifact-focused. |
-| **DINOv2 (ViT-S/14)** | `vit_small_patch14_dinov2.lvd142m` | ~22M | 384 | Self-supervised. Built with an explicit `img_size=224`, so a face crop becomes a 16x16 patch grid. Trained frozen first, on purpose. |
+| **DINOv3 (ViT-S/16)** | `vit_small_patch16_dinov3.lvd1689m` | ~22M | 384 | Self-supervised, distilled from the 7B model. Built with an explicit `img_size=224`, so a face crop becomes a 14x14 patch grid behind a CLS token and 4 registers. Trained frozen first, on purpose. |
 
-**Why DINOv2 is trained differently.** Its features were learned with no fake/real labels,
+**Why DINOv3 is trained differently.** Its features were learned with no fake/real labels,
 so they describe images generally instead of latching onto one generator's fingerprint.
 Fine-tuning it end to end on FakeAVCeleb artifacts risks destroying exactly the property it
 was chosen for. So it starts frozen with a lightweight probe (temporal model plus temporary
@@ -555,7 +555,7 @@ calls:
 
 - Do Xception and EfficientNet overlap enough that one is redundant? Both are
   artifact-focused CNNs, so this is a real possibility.
-- Does DINOv2 survive by catching different fakes than the two CNNs, as its
+- Does DINOv3 survive by catching different fakes than the two CNNs, as its
   self-supervised nature predicts?
 - How much does each cross-modal stream add over visual-only?
 
@@ -575,7 +575,7 @@ set.
 | # | Evaluation | Question it answers |
 |---|---|---|
 | 9A | In-distribution FakeAVCeleb | The headline number. Fused AUC, accuracy, LogLoss, confusion matrix, per-category breakdown, positioned against standalone streams and published benchmarks. |
-| 9B | Deepfake-Eval-2024, in the wild | Does it generalize, or did it memorize FakeAVCeleb's quirks? We expect a drop; the question is how large, per stream. Hypothesis: DINOv2 and the cross-modal streams degrade less than the artifact CNNs. |
+| 9B | Deepfake-Eval-2024, in the wild | Does it generalize, or did it memorize FakeAVCeleb's quirks? We expect a drop; the question is how large, per stream. Hypothesis: DINOv3 and the cross-modal streams degrade less than the artifact CNNs. |
 | 9C | Held-out manipulation types | Re-split so an entire generation method never appears in training. Maps the system's blind spots. |
 | 9D | Robustness | Re-encode at lower bitrates, add audio noise, reduce resolution, and plot degradation curves. Artifact CNNs are typically compression-sensitive; the claim to test is that cross-modal streams hold up better. |
 
@@ -706,7 +706,7 @@ not a `StreamConfig` instance, because the dashboard loads checkpoints with
 |---|---|---|---|
 | 1 | Data pipeline | Identity-disjoint manifests, DataLoader yields verified shapes, feature store round-trips, leakage checked independently | **Built** |
 | 2 | First visual stream end to end | EfficientNet-B0 plus BiLSTM plus temporary head trains, loss drops, full metrics compute, reusable template documented | **Next** |
-| 3 | Remaining visual streams | Xception and DINOv2 embeddings in the feature store with standalone AUCs recorded | Module built, not trained |
+| 3 | Remaining visual streams | Xception and DINOv3 embeddings in the feature store with standalone AUCs recorded | Module built, not trained |
 | 4 | Lip-sync cross-modal stream | Video plus audio in, one 256-dim vector out, no transcription, embeddings stored, early evidence it behaves differently on RVFA clips | Designed |
 | 5 | Emotion cross-modal stream | Same cross-attention module, direction flipped by config, embeddings stored | Designed |
 | 6 | Fusion | Fused test metrics computed, fit on train and tuned on val, beating or honestly not beating the best single stream | Designed |
@@ -733,7 +733,7 @@ else indefinitely.
 | Manifests and splits | Built. 21,544-clip manifest, identity-disjoint splits, `verify_splits.py` passing with zero identity and zero file overlap. |
 | Per-clip cache | Built and versioned. Full precache of all three splits, roughly 2000 clips, has been run. |
 | Feature store | Schema frozen, round-trips a dummy embedding. |
-| Visual stream module | Built. One config-driven module; EfficientNet-B0, Xception and DINOv2 all wired and forward-passing. |
+| Visual stream module | Built. One config-driven module; EfficientNet-B0, Xception and DINOv3 all wired and forward-passing. |
 | Dashboard | Built. Six pages, real activations on the stream pages, 166 tests green. |
 | Training | Not written. The streams are defined, but nothing has been trained since the preprocessing rebuild. |
 | Lip-sync, emotion, fusion, evaluation, explainability | Designed, not built. |
@@ -798,7 +798,7 @@ failure.
 
 | # | Decision | Status |
 |---|---|---|
-| 1 | Which backbone is the template | Settled in practice: EfficientNet-B0 first, being lightest. Xception and DINOv2 clone it by supplying a different `StreamConfig.backbone_name`. |
+| 1 | Which backbone is the template | Settled in practice: EfficientNet-B0 first, being lightest. Xception and DINOv3 clone it by supplying a different `StreamConfig.backbone_name`. |
 | 2 | Val/test class distribution | **Decided 2026-07-23:** 1:3 in every split, with rationale recorded. |
 | 3 | Experiment tracking | **Settled 2026-07-31:** W&B. `wandb` is a dependency, imported lazily. The old hand-maintained `experiments.csv` is gone. |
 | 4 | Frozen backbones versus end-to-end fine-tuning at fusion | Open, to be decided in Stage 6 and justified against the compute budget. |
@@ -912,7 +912,7 @@ prediction.
   CVPR. https://arxiv.org/abs/1610.02357
 - Tan, M. and Le, Q. (2019). *EfficientNet: Rethinking Model Scaling for Convolutional
   Neural Networks.* ICML. https://arxiv.org/abs/1905.11946
-- Oquab, M. et al. (2023). *DINOv2: Learning Robust Visual Features without Supervision.*
+- Siméoni, O. et al. (2025). *DINOv3.* <https://arxiv.org/abs/2508.10104>
   https://arxiv.org/abs/2304.07193
 - Dosovitskiy, A. et al. (2020). *An Image is Worth 16x16 Words* (ViT).
   https://arxiv.org/abs/2010.11929
@@ -962,7 +962,7 @@ the one point it must land.
 | 9 | Preprocessing done right | Two war stories: the reflection-padding bug that pasted a mirrored second face into every crop, and why 5-point alignment was then removed rather than kept on argument alone. |
 | 10 | The data | FakeAVCeleb: four categories on one axis, seven manipulation methods on the other, and why we report per-method accuracy rather than one number. |
 | 11 | Identity-disjoint splits | The one slide that says "our numbers are honest". Include the split table. |
-| 12 | The three visual streams | Table of backbone, size, character. Highlight why DINOv2 is trained frozen. |
+| 12 | The three visual streams | Table of backbone, size, character. Highlight why DINOv3 is trained frozen. |
 | 13 | The two cross-modal streams | Cross-attention diagram: Q from one modality, K and V from the other. |
 | 14 | Fusion | Concatenate 5 x 256, MLP, sigmoid. Train-fit, val-tune, test-report. |
 | 15 | Evaluation plan | The four Stage 9 evaluations as a 2 x 2. In-distribution, in the wild, held-out method, robustness. |

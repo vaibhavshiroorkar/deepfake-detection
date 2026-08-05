@@ -10,10 +10,10 @@ from dataclasses import dataclass
 EFFICIENTNET_B0 = "tf_efficientnet_b0.ns_jft_in1k"   # ~5M params, light, 1280-dim
 XCEPTION = "legacy_xception"                          # ~22M params, 2048-dim
 # A ViT, unlike the two above, so it is built with an explicit img_size: its
-# pretrained config is 518 pixels and this pipeline feeds 224 (see
-# visual_stream._create_backbone). 224/14 = 16, so a face crop becomes a 16x16
-# patch grid.
-DINOV2 = "vit_small_patch14_dinov2.lvd142m"          # ~22M params, 384-dim
+# pretrained config is 256 pixels and this pipeline feeds 224 (see
+# visual_stream._create_backbone). 224/16 = 14, so a face crop becomes a 14x14
+# patch grid, and the prefix is 5 rows (CLS + 4 registers) rather than 1.
+DINOV3 = "vit_small_patch16_dinov3.lvd1689m"         # ~22M params, 384-dim
 
 
 @dataclass
@@ -65,7 +65,7 @@ def xception_config(**overrides) -> StreamConfig:
     return StreamConfig(**base)
 
 
-def dinov2_config(**overrides) -> StreamConfig:
-    base = dict(stream_name="dinov2", backbone_name=DINOV2)
+def dinov3_config(**overrides) -> StreamConfig:
+    base = dict(stream_name="dinov3", backbone_name=DINOV3)
     base.update(overrides)
     return StreamConfig(**base)

@@ -170,6 +170,52 @@ def decode_audio(video_path: str) -> tuple[np.ndarray, int]:
     return _audio.decode(str(video_path))
 
 
+def cached_decode_frames(video_path, timestamps) -> list[np.ndarray]:
+    """decode_frames memoized on (path, mtime, timestamps).
+
+    Seeking and decoding 16 frames costs a few hundred milliseconds. Streamlit
+    reruns the whole script on every widget interaction, including one that
+    touches nothing on this path (a checkbox in another step, closing the clip
+    picker), so without this the page pays for the decode again each time.
+    """
+    import streamlit as st
+
+    @st.cache_data(show_spinner=False, max_entries=8)
+    def _load(path: str, _mtime: float, ts: tuple[float, ...]):
+        return decode_frames(path, np.asarray(ts, dtype=float))
+
+    stat = Path(video_path).stat()
+    return _load(str(video_path), stat.st_mtime, tuple(float(t) for t in timestamps))
+
+
+def cached_face_mouth(video_path, timestamps, conf_thresh: float, margin: float,
+                      mouth_size: int = MOUTH_SIZE):
+    """(faces, mouths, n_detected) for a clip, memoized on the detector settings.
+
+    MTCNN over 16 frames is the slowest thing either the Preprocessing page or a
+    stream page does, and it is pure with respect to (clip, timestamps, conf,
+    margin). Cached under those, so only a change that can alter the crops pays
+    for it.
+    """
+    import streamlit as st
+
+    @st.cache_data(show_spinner="Detecting faces...", max_entries=8)
+    def _run(path: str, _mtime: float, ts: tuple[float, ...], conf: float, mrg: float,
+             msize: int):
+        detector, _device = get_detector()
+        faces, mouths, found = [], [], 0
+        for frame in cached_decode_frames(path, ts):
+            face, mouth, detected = detect_face_and_mouth(frame, detector, conf, mrg, msize)
+            faces.append(face)
+            mouths.append(mouth)
+            found += int(detected)
+        return faces, mouths, found
+
+    stat = Path(video_path).stat()
+    return _run(str(video_path), stat.st_mtime, tuple(float(t) for t in timestamps),
+                float(conf_thresh), float(margin), int(mouth_size))
+
+
 def detect_and_crop(frame_rgb, detector, conf_thresh: float, margin: float):
     """(face_224_rgb, detected). The visual/emotion face path."""
     face, _mouth, detected = _faces.detect_crop(

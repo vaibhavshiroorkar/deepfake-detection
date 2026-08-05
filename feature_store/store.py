@@ -2,7 +2,7 @@
 Shared feature store: the hand-off point between "streams" (Stages 2-5) and
 "fusion" (Stage 6).
 
-Every stream (Xception, EfficientNet, DINOv2, lip-sync, emotion) computes one
+Every stream (Xception, EfficientNet, DINOv3, lip-sync, emotion) computes one
 embedding vector per clip and writes a row here. Fusion later reads all rows
 for a clip_id, one per stream, concatenates the embeddings, and feeds that
 into the fusion MLP. Keeping this interface identical across streams is what

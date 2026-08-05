@@ -10,8 +10,8 @@ docstring). Returns exactly what every later stage consumes:
     audio:              [16, window_samples] float32 waveform windows
     label:              scalar int, 1 = fake / 0 = real (clip-level)
 
-Normalization: the visual backbones (Xception/EfficientNet/DINOv2, Stage 2+)
-are all ImageNet-pretrained in timm, so we normalize with ImageNet
+Normalization: the visual backbones (Xception/EfficientNet/DINOv3, Stage 2+)
+all expect ImageNet statistics in timm, so we normalize with ImageNet
 mean/std here rather than per-stream later -- one place to get it right.
 """
 import sys

@@ -49,7 +49,7 @@ How it works:
 
 Types:
 
-- **Visual streams** — look at video frames only. They catch fakes where the pixels are wrong: blending errors around a swapped face, colour mismatch, artifacts left by the AI. Examples: **Xception**, **EfficientNet**, **DINOv2**.
+- **Visual streams** — look at video frames only. They catch fakes where the pixels are wrong: blending errors around a swapped face, colour mismatch, artifacts left by the AI. Examples: **Xception**, **EfficientNet**, **DINOv3**.
 - **Cross-modal streams** — take audio and video *together* to catch the mismatch between them, using **cross-attention on embeddings** (no transcription or lip-reading-to-text anywhere; everything is vectors).
   - **Lip-sync stream** — a video encoder embeds mouth-region motion (Key/Value), an audio encoder embeds the audio track (Query), and cross-attention compares them. Mismatch → suspicion score rises.
   - **Emotion stream** — a face-emotion encoder embeds facial expression (Key/Value), a voice-emotion encoder embeds vocal affect (Query), and cross-attention compares them. Mismatch → suspicion score rises.
@@ -92,7 +92,7 @@ Maintained in full on the Drive doc; summarized here for orientation.
 
 - **Surveys:** Hashmi et al. (2024); Khan, Khan & Ahmad (2025).
 - **Datasets:** FaceForensics++ (Rössler et al. 2019); FakeAVCeleb (Khalid et al. 2022); Celeb-DF (Li et al. 2020); Deepfake-Eval-2024 (Chandra et al. 2026).
-- **Models:** Xception (Chollet 2016); EfficientNet; DINOv2 (Oquab et al. 2023).
+- **Models:** Xception (Chollet 2016); EfficientNet; DINOv3 (Siméoni et al. 2025).
 - **Methods (implemented):** Vaswani et al. (2017), cross-attention; Chung & Zisserman (2016, SyncNet), lip-sync embedding lineage; Mittal et al. (2020), emotion mismatch concept.
 - **Methods (read-only comparison):** Zhou & Lim (2021); AVFF (Oorloff et al. 2024); Bohacek & Farid (2024) — their transcription-based semantic lip-sync method is not implemented here; our lip-sync stream uses embeddings and cross-attention instead.
 

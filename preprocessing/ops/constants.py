@@ -19,7 +19,7 @@ AUDIO_WINDOW_SEC = 0.35     # duration of the audio window centered on each fram
 # margin-padded bbox crop (parked in docs/ideas.md).
 PIPELINE_VERSION = 4
 
-# ImageNet statistics — all three visual backbones (Xception/EfficientNet/DINOv2)
+# ImageNet statistics — all three visual backbones (Xception/EfficientNet/DINOv3)
 # are ImageNet-pretrained in timm, so face crops are normalized with these.
 IMAGENET_MEAN = np.array([0.485, 0.456, 0.406], dtype=np.float32)
 IMAGENET_STD = np.array([0.229, 0.224, 0.225], dtype=np.float32)

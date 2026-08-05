@@ -47,7 +47,7 @@ def test_streams_survive_the_widget_key_being_discarded_entirely():
     _clear()
     sticky.clip_settings()["n_frames"] = 24
     assert "pp_n_frames" not in st.session_state
-    assert stream_pages.build_config("dinov2").num_frames == 24
+    assert stream_pages.build_config("dinov3").num_frames == 24
 
 
 def test_cross_modal_reads_the_same_store():
@@ -64,7 +64,7 @@ def test_run_state_is_independent_per_backbone():
     """Each backbone keeps its own run, so switching does not show the other's."""
     _clear()
     sticky.run_state("xception")["trace"] = "xception-trace"
-    assert sticky.run_state("dinov2")["trace"] is None
+    assert sticky.run_state("dinov3")["trace"] is None
     assert sticky.run_state("xception")["trace"] == "xception-trace"
 
 
@@ -81,4 +81,4 @@ def test_run_state_defaults_are_a_copy_not_the_shared_template():
     _clear()
     sticky.run_state("xception")["seed"] = 999
     assert sticky.RUN_DEFAULTS["seed"] == 42
-    assert sticky.run_state("dinov2")["seed"] == 42
+    assert sticky.run_state("dinov3")["seed"] == 42
