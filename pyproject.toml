@@ -1,0 +1,89 @@
+[build-system]
+requires = ["hatchling==1.28.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "deepfake-generalization"
+version = "0.1.0"
+description = "Shortcut-controlled multimodal deepfake detection research platform."
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "numpy==2.4.6",
+    "pyarrow==24.0.0",
+    "scikit-learn==1.9.0",
+]
+
+[project.optional-dependencies]
+media = [
+    "av==16.1.0",
+    "facenet-pytorch==2.5.3",
+    "opencv-python==5.0.0.93",
+]
+ml = [
+    "timm==1.0.27",
+    "transformers==5.13.0",
+]
+dashboard = [
+    "streamlit==1.60.0",
+]
+cpu = [
+    "torch==2.12.1",
+    "torchvision==0.27.1",
+]
+cu130 = [
+    "torch==2.12.1",
+    "torchvision==0.27.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.0.2",
+    "pytest-cov==7.0.0",
+    "ruff==0.16.3",
+]
+
+[project.scripts]
+ddf = "deepfake_detection.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/deepfake_detection"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.coverage.run]
+branch = true
+source = ["deepfake_detection"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B", "S", "UP"]
+ignore = ["S101"]
+
+[tool.uv]
+conflicts = [[{ extra = "cpu" }, { extra = "cu130" }]]
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu130", extra = "cu130" },
+]
+torchvision = [
+    { index = "pytorch-cpu", extra = "cpu" },
+    { index = "pytorch-cu130", extra = "cu130" },
+]
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
