@@ -17,13 +17,13 @@ Start with the [handbook index](handbook/README.md). Live chapters are:
 - [Audio-video foundations](handbook/03-audio-video-foundations.md)
 - [Data and leakage](handbook/04-data-and-leakage.md)
 - [Preprocessing pipeline](handbook/05-preprocessing-pipeline.md)
+- [Visual artifact branch](handbook/06-visual-branch.md)
+- [Audio spoof branch](handbook/07-audio-branch.md)
+- [Audio-video synchronization branch](handbook/08-sync-branch.md)
+- [Fusion, calibration, and abstention](handbook/09-fusion-and-calibration.md)
 
 Future chapters are:
 
-`handbook/06-visual-branch.md`
-`handbook/07-audio-branch.md`
-`handbook/08-sync-branch.md`
-`handbook/09-fusion-and-calibration.md`
 `handbook/10-training-system.md`
 `handbook/11-evaluation-and-statistics.md`
 `handbook/12-inference-and-dashboard.md`

@@ -105,6 +105,69 @@ def test_preprocessing_chapter_contract() -> None:
     )
 
 
+MODEL_CHAPTERS = {
+    "docs/handbook/06-visual-branch.md": (
+        "Cue and hypothesis",
+        "Input shape",
+        "Architecture",
+        "Forward pass",
+        "Training target",
+        "Candidate comparison",
+        "Current limitations",
+        "Project code path",
+        "Exercises",
+        "Viva questions",
+        "Sources",
+    ),
+    "docs/handbook/07-audio-branch.md": (
+        "Cue and hypothesis",
+        "Waveform representation",
+        "Architecture",
+        "Attention pooling",
+        "Training target",
+        "Padding and masks",
+        "Candidate comparison",
+        "Current limitations",
+        "Project code path",
+        "Exercises",
+        "Viva questions",
+        "Sources",
+    ),
+    "docs/handbook/08-sync-branch.md": (
+        "Cue and hypothesis",
+        "Correspondence task",
+        "Offset classes",
+        "Architecture",
+        "Losses",
+        "Negative pairs",
+        "Candidate comparison",
+        "Current limitations",
+        "Project code path",
+        "Exercises",
+        "Viva questions",
+        "Sources",
+    ),
+    "docs/handbook/09-fusion-and-calibration.md": (
+        "Why late fusion",
+        "Out-of-fold predictions",
+        "Calibration",
+        "Fusion features",
+        "Missing evidence",
+        "Ablations",
+        "Current limitations",
+        "Project code path",
+        "Exercises",
+        "Viva questions",
+        "Sources",
+    ),
+}
+
+
+@pytest.mark.parametrize(("relative", "headings"), MODEL_CHAPTERS.items())
+def test_model_chapter_contracts(relative: str, headings: tuple[str, ...]) -> None:
+    assert_markdown_headings(Path.cwd(), relative, headings)
+
+
 def test_cli_reference_discovers_every_leaf_command() -> None:
     assert command_paths(build_parser()) == (
         "ddf cache build",
