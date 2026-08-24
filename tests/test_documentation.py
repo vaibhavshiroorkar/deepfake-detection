@@ -177,6 +177,7 @@ def test_cli_reference_discovers_every_leaf_command() -> None:
         "ddf manifest build",
         "ddf predict",
         "ddf run",
+        "ddf smoke",
         "ddf split build",
         "ddf split crossfit",
         "ddf split method-holdout",

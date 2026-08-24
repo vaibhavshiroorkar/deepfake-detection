@@ -14,6 +14,10 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ### Added
 
+- A deterministic CPU late-fusion smoke command with source-disjoint,
+  class-balanced fixture groups, held-out validation metrics, byte-hashed
+  artifacts, and optional MLflow evidence. Its metrics are software fixture
+  evidence only.
 - Configured `ddf run` execution with layered YAML, an explicit project root,
   optional MLflow tracking, and failed-run status for nonzero command exits.
 - MLflow training evidence for branch histories, stage metrics, elapsed time,

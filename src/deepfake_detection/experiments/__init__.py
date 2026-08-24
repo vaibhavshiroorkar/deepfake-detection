@@ -9,6 +9,7 @@ from deepfake_detection.experiments.runtime import (
     capture_runtime,
     seed_everything,
 )
+from deepfake_detection.experiments.smoke import SmokeReport, run_fusion_smoke
 from deepfake_detection.experiments.tracking import (
     NullRunLogger,
     RunLogger,
@@ -20,6 +21,7 @@ __all__ = [
     "ResolvedConfiguration",
     "RuntimeSnapshot",
     "RunLogger",
+    "SmokeReport",
     "NullRunLogger",
     "TrackingSettings",
     "capture_runtime",
@@ -28,4 +30,5 @@ __all__ = [
     "load_configuration",
     "seed_everything",
     "start_tracked_run",
+    "run_fusion_smoke",
 ]

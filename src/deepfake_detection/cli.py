@@ -37,6 +37,7 @@ from deepfake_detection.evaluation.metrics import (
 from deepfake_detection.experiments import (
     NullRunLogger,
     execute_configured_run,
+    run_fusion_smoke,
     runtime,
 )
 from deepfake_detection.experiments.runner import _CONFIGURED_RUN_SENTINEL
@@ -72,6 +73,16 @@ def _manifest_build(arguments: argparse.Namespace) -> int:
             "records": len(result.records),
             "quarantined_paths": [str(path) for path in result.quarantined_paths],
         },
+    )
+    return 0
+
+
+def _smoke(arguments: argparse.Namespace) -> int:
+    run_fusion_smoke(
+        arguments.output_dir,
+        seed=arguments.seed,
+        samples=arguments.samples,
+        logger=getattr(arguments, "_run_logger", NullRunLogger()),
     )
     return 0
 
@@ -935,6 +946,12 @@ def build_parser() -> argparse.ArgumentParser:
         handler=_run_configured,
         _configured_run_sentinel=_CONFIGURED_RUN_SENTINEL,
     )
+
+    smoke = commands.add_parser("smoke")
+    smoke.add_argument("--output-dir", type=Path, required=True)
+    smoke.add_argument("--seed", type=int, default=17)
+    smoke.add_argument("--samples", type=int, default=32)
+    smoke.set_defaults(handler=_smoke)
 
     manifest = commands.add_parser("manifest")
     manifest_commands = manifest.add_subparsers(dest="manifest_command", required=True)

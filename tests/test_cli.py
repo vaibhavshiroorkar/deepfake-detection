@@ -37,6 +37,16 @@ def test_run_command_accepts_a_root_and_multiple_configuration_layers() -> None:
     assert not arguments.no_tracking
 
 
+def test_smoke_command_accepts_deterministic_fixture_arguments() -> None:
+    arguments = build_parser().parse_args(
+        ["smoke", "--output-dir", "runs/fixture", "--seed", "17", "--samples", "32"]
+    )
+
+    assert arguments.output_dir == Path("runs/fixture")
+    assert arguments.seed == 17
+    assert arguments.samples == 32
+
+
 def test_resolved_config_hash_skips_the_fallback_when_present() -> None:
     def fallback(values: object) -> str:
         del values

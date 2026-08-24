@@ -22,6 +22,7 @@ uv run ddf --help
 - `ddf manifest build`
 - `ddf predict`
 - `ddf run`
+- `ddf smoke`
 - `ddf split build`
 - `ddf split crossfit`
 - `ddf split method-holdout`
@@ -39,6 +40,9 @@ parser change to detect drift.
 
 `ddf run` loads layered configuration files and executes the configured command
 from the selected project root. Run `uv run ddf run --help`.
+
+`ddf smoke` runs a deterministic CPU fusion fixture. Its metrics are software
+fixture evidence only. Run `uv run ddf smoke --help`.
 
 `ddf manifest build` normalizes source metadata and writes a manifest audit.
 Run `uv run ddf manifest build --help`.
