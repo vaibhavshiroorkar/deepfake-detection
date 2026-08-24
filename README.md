@@ -176,6 +176,7 @@ Run the complete suite:
 
 ```powershell
 uv run pytest
+uv run ddf-docs
 ```
 
 The media integration test needs FFmpeg. It skips when FFmpeg is unavailable.

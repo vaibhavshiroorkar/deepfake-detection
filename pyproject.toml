@@ -45,6 +45,7 @@ dev = [
 
 [project.scripts]
 ddf = "deepfake_detection.cli:main"
+ddf-docs = "deepfake_detection.documentation.__main__:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/deepfake_detection"]

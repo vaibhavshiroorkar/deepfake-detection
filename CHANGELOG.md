@@ -14,6 +14,8 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ### Added
 
+- Repository-owned documentation validation for Markdown, local links, change
+  contracts, and optional external links.
 - A live roadmap with phase gates for the final-year project.
 - Model selection rules for controlled component comparisons.
 - A reproducibility contract for local experiments and future MLflow tracking.
