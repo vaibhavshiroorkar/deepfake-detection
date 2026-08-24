@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .checks import (
     check_change_contract,
+    check_cli_reference,
     check_external_links,
     check_markdown_tree,
     git_changed_paths,
@@ -20,6 +21,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     arguments = parser.parse_args(argv)
     root = arguments.root.resolve()
     issues = list(check_markdown_tree(root))
+    issues.extend(check_cli_reference(root))
     if arguments.external:
         issues.extend(check_external_links(root))
     if arguments.changed_from:

@@ -14,6 +14,8 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ### Added
 
+- A public CLI parser contract, generated CLI command reference, and CLI drift
+  validation in `ddf-docs`.
 - Repository-owned documentation validation for Markdown, local links, change
   contracts, and optional external links.
 - A live roadmap with phase gates for the final-year project.

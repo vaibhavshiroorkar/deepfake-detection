@@ -1,10 +1,58 @@
 from pathlib import Path
 
+from deepfake_detection.cli import build_parser
 from deepfake_detection.documentation.checks import (
     check_change_contract,
+    check_cli_reference,
     check_external_links,
     check_markdown_tree,
 )
+from deepfake_detection.documentation.cli_reference import (
+    command_paths,
+    render_command_block,
+)
+
+
+def test_cli_reference_discovers_every_leaf_command() -> None:
+    assert command_paths(build_parser()) == (
+        "ddf cache build",
+        "ddf evaluate",
+        "ddf features export",
+        "ddf features score",
+        "ddf manifest build",
+        "ddf predict",
+        "ddf split build",
+        "ddf split crossfit",
+        "ddf split method-holdout",
+        "ddf threshold",
+        "ddf train audio",
+        "ddf train fusion",
+        "ddf train sync",
+        "ddf train visual",
+    )
+
+
+def write_cli_reference(root: Path, block: str) -> None:
+    path = root / "docs" / "reference" / "cli.md"
+    path.parent.mkdir(parents=True)
+    path.write_text(
+        "# CLI\n\n<!-- BEGIN GENERATED COMMANDS -->\n"
+        f"{block}\n"
+        "<!-- END GENERATED COMMANDS -->\n",
+        encoding="utf-8",
+    )
+
+
+def test_cli_reference_accepts_the_current_parser(tmp_path: Path) -> None:
+    write_cli_reference(tmp_path, render_command_block(build_parser()))
+
+    assert check_cli_reference(tmp_path) == ()
+
+
+def test_cli_reference_rejects_a_stale_command_block(tmp_path: Path) -> None:
+    write_cli_reference(tmp_path, "- `ddf stale`")
+
+    assert check_cli_reference(tmp_path)[0].rule == "cli-reference"
 
 
 def test_markdown_checker_accepts_valid_ascii_documentation(tmp_path: Path) -> None:

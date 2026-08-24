@@ -4,9 +4,15 @@ from pathlib import Path
 
 import joblib
 
-from deepfake_detection.cli import main
+from deepfake_detection.cli import build_parser, main
 from deepfake_detection.fusion.late import FusionArtifact
 from deepfake_detection.fusion.store import FeatureRecord, FeatureStore
+
+
+def test_public_parser_exposes_the_documented_command_tree() -> None:
+    parser = build_parser()
+
+    assert parser.prog == "ddf"
 
 
 def write_fixture_manifest(path: Path) -> None:

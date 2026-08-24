@@ -29,6 +29,8 @@ FENCED_CODE_PATTERN = re.compile(
     re.DOTALL | re.MULTILINE,
 )
 INLINE_CODE_PATTERN = re.compile(r"`[^`\n]+`")
+CLI_BLOCK_START = "<!-- BEGIN GENERATED COMMANDS -->"
+CLI_BLOCK_END = "<!-- END GENERATED COMMANDS -->"
 
 
 def _markdown_files(root: Path) -> tuple[Path, ...]:
@@ -111,6 +113,41 @@ def check_change_contract(
             )
         )
     return tuple(sorted(issues))
+
+
+def check_cli_reference(root: Path) -> tuple[DocumentationIssue, ...]:
+    from deepfake_detection.cli import build_parser
+    from deepfake_detection.documentation.cli_reference import render_command_block
+
+    path = root / "docs" / "reference" / "cli.md"
+    if not path.exists():
+        return (
+            DocumentationIssue(
+                Path("docs/reference/cli.md"),
+                "cli-reference",
+                "CLI reference is missing",
+            ),
+        )
+    text = path.read_text(encoding="utf-8")
+    if CLI_BLOCK_START not in text or CLI_BLOCK_END not in text:
+        return (
+            DocumentationIssue(
+                path.relative_to(root),
+                "cli-reference",
+                "Generated command markers are missing",
+            ),
+        )
+    actual = text.split(CLI_BLOCK_START, 1)[1].split(CLI_BLOCK_END, 1)[0].strip()
+    expected = render_command_block(build_parser())
+    if actual != expected:
+        return (
+            DocumentationIssue(
+                path.relative_to(root),
+                "cli-reference",
+                "Generated command block is stale",
+            ),
+        )
+    return ()
 
 
 def git_changed_paths(root: Path, base_ref: str) -> tuple[Path, ...]:

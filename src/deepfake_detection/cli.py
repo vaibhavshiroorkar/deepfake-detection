@@ -876,7 +876,7 @@ def _predict(arguments: argparse.Namespace) -> int:
     return 0
 
 
-def _parser() -> argparse.ArgumentParser:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="ddf")
     commands = parser.add_subparsers(dest="command", required=True)
 
@@ -1052,7 +1052,7 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    arguments = _parser().parse_args(argv)
+    arguments = build_parser().parse_args(argv)
     return int(arguments.handler(arguments))
 
 
