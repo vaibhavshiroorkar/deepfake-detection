@@ -28,6 +28,9 @@ ml = [
 dashboard = [
     "streamlit==1.60.0",
 ]
+tracking = [
+    "mlflow==3.15.1",
+]
 cpu = [
     "torch==2.12.1",
     "torchvision==0.27.1",

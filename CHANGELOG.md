@@ -14,6 +14,8 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ### Added
 
+- Optional local MLflow tracking with SQLite metadata, local artifacts, runtime
+  snapshots, resolved configuration artifacts, and failed-run records.
 - Versioned layered YAML configuration for reproducible local experiments.
 - Runtime environment snapshots with Git, package, hardware, memory, and FFmpeg
   details, plus deterministic shared training seeds.
