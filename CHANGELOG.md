@@ -20,6 +20,9 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ### Added
 
+- Training-only detector review sampling and JSONL annotation contracts with
+  source-disjoint calibration groups, fixed evidence gates, frame hashes,
+  multi-face labels, double-review checks, and disagreement audits.
 - A deterministic constant-velocity face association challenger with bounded
   gap recovery and stable one-to-one matching. Greedy IoU remains the default.
 - A deterministic five-landmark lower-face view with a versioned template,
