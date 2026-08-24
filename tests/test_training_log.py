@@ -1,0 +1,180 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+
+import pytest
+
+from deepfake_detection.experiments.training_log import (
+    log_binary_training,
+    log_fusion_training,
+    log_sync_training,
+)
+from deepfake_detection.training.binary import (
+    BinaryEpochRecord,
+    BinaryTrainingHistory,
+)
+from deepfake_detection.training.sync import SyncEpochRecord, SyncTrainingHistory
+
+
+@dataclass
+class FakeLogger:
+    params: list[dict[str, object]]
+    metrics: list[tuple[dict[str, float], int | None]]
+    artifacts: list[tuple[Path, str | None]]
+
+    @property
+    def run_id(self) -> str:
+        return "run"
+
+    def log_params(self, values: dict[str, object]) -> None:
+        self.params.append(dict(values))
+
+    def log_metrics(self, values: dict[str, float], *, step: int | None = None) -> None:
+        self.metrics.append((dict(values), step))
+
+    def log_artifact(self, path: Path, *, artifact_path: str | None = None) -> None:
+        self.artifacts.append((path, artifact_path))
+
+    def log_dict(self, values: dict[str, object], artifact_file: str) -> None:
+        del values, artifact_file
+
+
+def test_log_binary_training_records_epoch_metrics_and_output_artifacts(
+    tmp_path: Path,
+) -> None:
+    checkpoint = tmp_path / "branch.pt"
+    history_path = tmp_path / "history.json"
+    checkpoint.write_bytes(b"checkpoint")
+    history_path.write_text("{}", encoding="utf-8")
+    logger = FakeLogger([], [], [])
+    history = BinaryTrainingHistory(
+        epochs=(BinaryEpochRecord(1, 0.8, 0.6, 3, False),), best_epoch=1
+    )
+
+    log_binary_training(
+        logger,
+        history=history,
+        configuration_hash="configuration-hash",
+        checkpoint=checkpoint,
+        history_path=history_path,
+        elapsed_seconds=1.5,
+    )
+
+    assert logger.params == [
+        {
+            "training.kind": "binary",
+            "training.best_epoch": 1,
+            "training.elapsed_seconds": 1.5,
+            "configuration.sha256": "configuration-hash",
+            "checkpoint.sha256": "47320987f9a49d5b00119b960f247a956773f57543982b8bfcb6da5bb3afd9ef",
+        }
+    ]
+    assert logger.metrics == [
+        (
+            {
+                "training.loss": 0.8,
+                "validation.loss": 0.6,
+                "optimizer.steps": 3.0,
+                "stage.backbone_trainable": 0.0,
+            },
+            1,
+        )
+    ]
+    assert logger.artifacts == [(checkpoint, "checkpoints"), (history_path, "history")]
+
+
+def test_log_sync_training_rejects_nonfinite_metrics_before_logging(
+    tmp_path: Path,
+) -> None:
+    checkpoint = tmp_path / "sync.pt"
+    history_path = tmp_path / "history.json"
+    checkpoint.write_bytes(b"checkpoint")
+    history_path.write_text("{}", encoding="utf-8")
+    logger = FakeLogger([], [], [])
+    history = SyncTrainingHistory(
+        epochs=(SyncEpochRecord(1, "heads", float("nan"), 0.6, 3),), best_epoch=1
+    )
+
+    with pytest.raises(ValueError, match="finite"):
+        log_sync_training(
+            logger,
+            history=history,
+            configuration_hash="configuration-hash",
+            checkpoint=checkpoint,
+            history_path=history_path,
+            elapsed_seconds=1.5,
+        )
+
+    assert logger.params == []
+    assert logger.metrics == []
+    assert logger.artifacts == []
+
+
+def test_log_sync_training_records_stage_metrics_and_output_artifacts(
+    tmp_path: Path,
+) -> None:
+    checkpoint = tmp_path / "sync.pt"
+    history_path = tmp_path / "history.json"
+    checkpoint.write_bytes(b"checkpoint")
+    history_path.write_text("{}", encoding="utf-8")
+    logger = FakeLogger([], [], [])
+    history = SyncTrainingHistory(
+        epochs=(SyncEpochRecord(1, "heads", 0.8, 0.6, 3),), best_epoch=1
+    )
+
+    log_sync_training(
+        logger,
+        history=history,
+        configuration_hash="configuration-hash",
+        checkpoint=checkpoint,
+        history_path=history_path,
+        elapsed_seconds=1.5,
+    )
+
+    assert logger.metrics == [
+        (
+            {
+                "training.loss": 0.8,
+                "validation.loss": 0.6,
+                "optimizer.steps": 3.0,
+                "stage.heads": 1.0,
+                "stage.upper": 0.0,
+            },
+            1,
+        )
+    ]
+    assert logger.artifacts == [(checkpoint, "checkpoints"), (history_path, "history")]
+
+
+def test_log_fusion_training_records_provenance_and_output_artifacts(
+    tmp_path: Path,
+) -> None:
+    model = tmp_path / "fusion.joblib"
+    metadata = tmp_path / "fusion.json"
+    model.write_bytes(b"model")
+    metadata.write_text("{}", encoding="utf-8")
+    logger = FakeLogger([], [], [])
+
+    log_fusion_training(
+        logger,
+        samples=8,
+        branches=("visual", "audio", "sync"),
+        model_kind="logistic",
+        split_hash="split-hash",
+        preprocessing_hash="preprocessing-hash",
+        model_path=model,
+        metadata_path=metadata,
+    )
+
+    assert logger.params == [
+        {
+            "fusion.samples": 8,
+            "fusion.branches": "visual,audio,sync",
+            "fusion.model_kind": "logistic",
+            "fusion.split_hash": "split-hash",
+            "fusion.preprocessing_hash": "preprocessing-hash",
+            "fusion.model_sha256": "9372c470eeadd5ecd9c3c74c2b3cb633f8e2f2fad799250a0f70d652b6b825e4",
+        }
+    ]
+    assert logger.artifacts == [(model, "models"), (metadata, "metadata")]

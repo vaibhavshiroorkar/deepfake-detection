@@ -21,6 +21,7 @@ uv run ddf --help
 - `ddf features score`
 - `ddf manifest build`
 - `ddf predict`
+- `ddf run`
 - `ddf split build`
 - `ddf split crossfit`
 - `ddf split method-holdout`
@@ -35,6 +36,9 @@ The command block comes from `build_parser()`. Run `uv run ddf-docs` after a
 parser change to detect drift.
 
 ## Command help
+
+`ddf run` loads layered configuration files and executes the configured command
+from the selected project root. Run `uv run ddf run --help`.
 
 `ddf manifest build` normalizes source metadata and writes a manifest audit.
 Run `uv run ddf manifest build --help`.

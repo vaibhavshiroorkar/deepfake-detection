@@ -14,6 +14,10 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ### Added
 
+- Configured `ddf run` execution with layered YAML, an explicit project root,
+  optional MLflow tracking, and failed-run status for nonzero command exits.
+- MLflow training evidence for branch histories, stage metrics, elapsed time,
+  byte-hashed checkpoints, fusion artifacts, and metadata outputs.
 - Optional local MLflow tracking with SQLite metadata, local artifacts, runtime
   snapshots, resolved configuration artifacts, and failed-run records.
 - MLflow-safe tracking keys and bounded parameter, tag, runtime, and run-name

@@ -176,6 +176,7 @@ def test_cli_reference_discovers_every_leaf_command() -> None:
         "ddf features score",
         "ddf manifest build",
         "ddf predict",
+        "ddf run",
         "ddf split build",
         "ddf split crossfit",
         "ddf split method-holdout",

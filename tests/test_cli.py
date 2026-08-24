@@ -17,6 +17,24 @@ def test_public_parser_exposes_the_documented_command_tree() -> None:
     assert parser.prog == "ddf"
 
 
+def test_run_command_accepts_a_root_and_multiple_configuration_layers() -> None:
+    arguments = build_parser().parse_args(
+        [
+            "run",
+            "--root",
+            ".",
+            "--config",
+            "configs/local.yaml",
+            "--config",
+            "configs/smoke.yaml",
+        ]
+    )
+
+    assert arguments.root == Path(".")
+    assert arguments.config == [Path("configs/local.yaml"), Path("configs/smoke.yaml")]
+    assert not arguments.no_tracking
+
+
 @pytest.mark.parametrize("branch", ["visual", "sync"])
 def test_branch_training_uses_shared_runtime_seed_function(
     branch: str, monkeypatch: pytest.MonkeyPatch

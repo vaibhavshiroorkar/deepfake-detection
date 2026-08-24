@@ -3,6 +3,7 @@ from deepfake_detection.experiments.configuration import (
     configuration_argv,
     load_configuration,
 )
+from deepfake_detection.experiments.runner import execute_configured_run
 from deepfake_detection.experiments.runtime import (
     RuntimeSnapshot,
     capture_runtime,
@@ -23,6 +24,7 @@ __all__ = [
     "TrackingSettings",
     "capture_runtime",
     "configuration_argv",
+    "execute_configured_run",
     "load_configuration",
     "seed_everything",
     "start_tracked_run",

@@ -6,6 +6,7 @@ import hashlib
 import json
 import shutil
 import subprocess
+import time
 from collections.abc import Sequence
 from dataclasses import asdict
 from pathlib import Path
@@ -33,7 +34,16 @@ from deepfake_detection.evaluation.metrics import (
     select_balanced_accuracy_threshold,
     subgroup_metrics,
 )
-from deepfake_detection.experiments import runtime
+from deepfake_detection.experiments import (
+    NullRunLogger,
+    execute_configured_run,
+    runtime,
+)
+from deepfake_detection.experiments.training_log import (
+    log_binary_training,
+    log_fusion_training,
+    log_sync_training,
+)
 from deepfake_detection.fusion.late import FusionArtifact, FusionSample, LateFusion
 from deepfake_detection.fusion.store import FeatureStore
 from deepfake_detection.training.crossfit import build_group_folds
@@ -341,6 +351,16 @@ def _train_fusion(arguments: argparse.Namespace) -> int:
             },
         },
     )
+    log_fusion_training(
+        getattr(arguments, "_run_logger", NullRunLogger()),
+        samples=len(samples),
+        branches=branches,
+        model_kind=arguments.model,
+        split_hash=split_hash,
+        preprocessing_hash=preprocessing_hash,
+        model_path=arguments.output,
+        metadata_path=arguments.metadata,
+    )
     return 0
 
 
@@ -372,6 +392,7 @@ def _git_commit() -> str:
 
 
 def _binary_branch_train(arguments: argparse.Namespace) -> int:
+    started_at = time.perf_counter()
     runtime.seed_everything(arguments.seed, deterministic=True)
 
     import torch
@@ -497,7 +518,7 @@ def _binary_branch_train(arguments: argparse.Namespace) -> int:
         git_commit=_git_commit(),
         split_hash=arguments.split_hash,
         preprocessing_hash=arguments.preprocessing_hash,
-        config_hash=hash_config(run_config),
+        config_hash=getattr(arguments, "_config_hash", hash_config(run_config)),
         seed=arguments.seed,
     )
     checkpoint_hash = save_checkpoint(
@@ -517,10 +538,19 @@ def _binary_branch_train(arguments: argparse.Namespace) -> int:
             "epochs": [asdict(epoch) for epoch in history.epochs],
         },
     )
+    log_binary_training(
+        getattr(arguments, "_run_logger", NullRunLogger()),
+        history=history,
+        configuration_hash=metadata.config_hash,
+        checkpoint=arguments.checkpoint,
+        history_path=arguments.history,
+        elapsed_seconds=time.perf_counter() - started_at,
+    )
     return 0
 
 
 def _sync_branch_train(arguments: argparse.Namespace) -> int:
+    started_at = time.perf_counter()
     runtime.seed_everything(arguments.seed, deterministic=True)
 
     import torch
@@ -639,7 +669,7 @@ def _sync_branch_train(arguments: argparse.Namespace) -> int:
         git_commit=_git_commit(),
         split_hash=arguments.split_hash,
         preprocessing_hash=arguments.preprocessing_hash,
-        config_hash=hash_config(run_config),
+        config_hash=getattr(arguments, "_config_hash", hash_config(run_config)),
         seed=arguments.seed,
     )
     checkpoint_hash = save_checkpoint(
@@ -659,7 +689,24 @@ def _sync_branch_train(arguments: argparse.Namespace) -> int:
             "epochs": [asdict(epoch) for epoch in history.epochs],
         },
     )
+    log_sync_training(
+        getattr(arguments, "_run_logger", NullRunLogger()),
+        history=history,
+        configuration_hash=metadata.config_hash,
+        checkpoint=arguments.checkpoint,
+        history_path=arguments.history,
+        elapsed_seconds=time.perf_counter() - started_at,
+    )
     return 0
+
+
+def _run_configured(arguments: argparse.Namespace) -> int:
+    return execute_configured_run(
+        arguments.config,
+        root=arguments.root,
+        parser_factory=build_parser,
+        disable_tracking=arguments.no_tracking,
+    )
 
 
 def _sha256(path: Path) -> str:
@@ -869,6 +916,12 @@ def _predict(arguments: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="ddf")
     commands = parser.add_subparsers(dest="command", required=True)
+
+    run = commands.add_parser("run")
+    run.add_argument("--root", type=Path, default=Path("."))
+    run.add_argument("--config", type=Path, action="append", required=True)
+    run.add_argument("--no-tracking", action="store_true")
+    run.set_defaults(handler=_run_configured)
 
     manifest = commands.add_parser("manifest")
     manifest_commands = manifest.add_subparsers(dest="manifest_command", required=True)
