@@ -14,6 +14,7 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ### Fixed
 
+- Root output-directory ignores no longer hide Python packages under `src`.
 - MLflow tracking now redacts sensitive camel-case and punctuation-delimited
   configuration and tag keys, and records failed finalization attempts as
   failed runs without replacing their original errors.
