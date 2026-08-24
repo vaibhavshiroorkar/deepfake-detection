@@ -1,13 +1,19 @@
+import hashlib
+import json
+from pathlib import Path
+
 import pytest
 
 pytest.importorskip("mlflow")
-
-from pathlib import Path
 
 from mlflow import MlflowClient
 
 from deepfake_detection.cli import main
 from deepfake_detection.experiments.configuration import load_configuration
+
+
+def _file_hash(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def test_configured_smoke_run_logs_finished_mlflow_evidence(tmp_path: Path) -> None:
@@ -65,7 +71,6 @@ tracking:
     assert run.info.status == "FINISHED"
     assert run.data.params["configuration_sha256"] == configuration.sha256
     assert run.data.params["smoke.evidence_scope"] == "software_fixture_only"
-    assert "smoke.validation.roc_auc" in run.data.metrics
     assert "smoke.report_sha256" in run.data.params
     artifacts = {artifact.path for artifact in client.list_artifacts(run.info.run_id)}
     assert {
@@ -75,3 +80,34 @@ tracking:
         "smoke-report.json",
         "predictions.csv",
     } <= artifacts
+    downloaded = {
+        name: Path(
+            client.download_artifacts(run.info.run_id, name, tmp_path / "download")
+        )
+        for name in ("fusion.joblib", "predictions.csv", "smoke-report.json")
+    }
+    report = json.loads(downloaded["smoke-report.json"].read_text(encoding="utf-8"))
+    assert report["evidence_scope"] == "software_fixture_only"
+    assert set(report["metric_evidence_scope"].values()) == {"software_fixture_only"}
+    assert (
+        _file_hash(downloaded["fusion.joblib"])
+        == report["artifact_hashes"]["fusion.joblib"]
+    )
+    assert (
+        _file_hash(downloaded["predictions.csv"])
+        == report["artifact_hashes"]["predictions.csv"]
+    )
+    assert (
+        _file_hash(downloaded["smoke-report.json"])
+        == run.data.params["smoke.report_sha256"]
+    )
+    for artifact_name, artifact_hash in report["artifact_hashes"].items():
+        assert run.data.params[f"smoke.payload.{artifact_name}.sha256"] == artifact_hash
+    scoped_metric_prefix = "smoke.software_fixture_only.validation."
+    assert set(run.data.metrics) == {
+        f"{scoped_metric_prefix}{name}" for name in report["metrics"]
+    }
+    assert {
+        name.removeprefix(scoped_metric_prefix): value
+        for name, value in run.data.metrics.items()
+    } == pytest.approx(report["metrics"])

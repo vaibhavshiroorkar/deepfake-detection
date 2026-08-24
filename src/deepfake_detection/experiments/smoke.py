@@ -309,7 +309,10 @@ def _log_smoke_evidence(
         }
     )
     logger.log_metrics(
-        {f"smoke.validation.{name}": value for name, value in report.metrics.items()}
+        {
+            f"smoke.{report.evidence_scope}.validation.{name}": value
+            for name, value in report.metrics.items()
+        }
     )
     for path in artifact_paths:
         logger.log_artifact(path)

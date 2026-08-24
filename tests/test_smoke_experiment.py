@@ -3,9 +3,12 @@ import hashlib
 import json
 from pathlib import Path
 
+import joblib
 import pytest
 
+import deepfake_detection.experiments.smoke as smoke
 from deepfake_detection.experiments.smoke import _atomic_write, run_fusion_smoke
+from deepfake_detection.fusion.late import FusionSample
 
 
 def _file_hash(path: Path) -> str:
@@ -82,8 +85,76 @@ def test_fusion_smoke_is_deterministic_and_writes_fixture_evidence(
         "fusion.joblib": _file_hash(tmp_path / "first" / "fusion.joblib"),
         "predictions.csv": _file_hash(tmp_path / "first" / "predictions.csv"),
     }
-    assert _file_hash(report_path) == _file_hash(
-        tmp_path / "second" / "smoke-report.json"
+    for artifact_name in ("fusion.joblib", "predictions.csv", "smoke-report.json"):
+        assert _file_hash(tmp_path / "first" / artifact_name) == _file_hash(
+            tmp_path / "second" / artifact_name
+        )
+
+
+def test_fusion_smoke_uses_fit_for_threshold_and_validation_for_metrics(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    captured: dict[str, tuple[tuple[int, ...], tuple[float, ...]]] = {}
+    original_selection = smoke.select_balanced_accuracy_threshold
+    original_metrics = smoke.binary_metrics
+
+    def select_spy(*, labels: list[int], probabilities: object) -> object:
+        captured["selection"] = (tuple(labels), tuple(probabilities))
+        return original_selection(labels=labels, probabilities=probabilities)
+
+    def metrics_spy(
+        *, labels: list[int], probabilities: object, threshold: float
+    ) -> object:
+        captured["metrics"] = (tuple(labels), tuple(probabilities))
+        return original_metrics(
+            labels=labels,
+            probabilities=probabilities,
+            threshold=threshold,
+        )
+
+    monkeypatch.setattr(smoke, "select_balanced_accuracy_threshold", select_spy)
+    monkeypatch.setattr(smoke, "binary_metrics", metrics_spy)
+    run_fusion_smoke(tmp_path, seed=17, samples=24)
+
+    rows = list(csv.DictReader((tmp_path / "predictions.csv").open(encoding="utf-8")))
+    fit_rows = [row for row in rows if row["partition"] == "fit"]
+    validation_rows = [row for row in rows if row["partition"] == "validation"]
+    assert {
+        sum(row["source_identity"] == source for row in rows)
+        for source in {row["source_identity"] for row in rows}
+    } == {2, 4}
+    assert captured["selection"] == (
+        tuple(int(row["label"]) for row in fit_rows),
+        pytest.approx(tuple(float(row["probability"]) for row in fit_rows)),
+    )
+    assert captured["metrics"] == (
+        tuple(int(row["label"]) for row in validation_rows),
+        pytest.approx(tuple(float(row["probability"]) for row in validation_rows)),
+    )
+
+
+def test_fusion_smoke_predictions_match_the_persisted_model_for_24_rows(
+    tmp_path: Path,
+) -> None:
+    run_fusion_smoke(tmp_path, seed=17, samples=24)
+    rows = list(csv.DictReader((tmp_path / "predictions.csv").open(encoding="utf-8")))
+    model = joblib.load(tmp_path / "fusion.joblib")
+    samples = [
+        FusionSample(
+            branch_logits={
+                "visual": float(row["visual_logit"]),
+                "audio": float(row["audio_logit"]),
+                "sync": float(row["sync_logit"]),
+            },
+            face_coverage=float(row["face_coverage"]),
+            audio_clipped=row["audio_clipped"] == "True",
+            av_duration_delta_sec=float(row["av_duration_delta_sec"]),
+        )
+        for row in rows
+    ]
+
+    assert model.predict_proba(samples) == pytest.approx(
+        [float(row["probability"]) for row in rows]
     )
 
 
