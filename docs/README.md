@@ -16,10 +16,10 @@ Start with the [handbook index](handbook/README.md). Live chapters are:
 - [Deep learning foundations](handbook/02-deep-learning-foundations.md)
 - [Audio-video foundations](handbook/03-audio-video-foundations.md)
 - [Data and leakage](handbook/04-data-and-leakage.md)
+- [Preprocessing pipeline](handbook/05-preprocessing-pipeline.md)
 
 Future chapters are:
 
-`handbook/05-preprocessing-pipeline.md`
 `handbook/06-visual-branch.md`
 `handbook/07-audio-branch.md`
 `handbook/08-sync-branch.md`

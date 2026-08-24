@@ -79,6 +79,32 @@ def test_foundation_chapter_contracts(relative: str, headings: tuple[str, ...]) 
     assert_markdown_headings(Path.cwd(), relative, headings)
 
 
+PREPROCESSING_HEADINGS = (
+    "Pipeline overview",
+    "Shared timeline",
+    "Media decoding",
+    "Face detection and tracking",
+    "Visual and mouth crops",
+    "Audio views",
+    "Quality gates and abstention",
+    "Caching and hashes",
+    "Current limitations",
+    "Project code path",
+    "Failure cases",
+    "Exercises",
+    "Viva questions",
+    "Sources",
+)
+
+
+def test_preprocessing_chapter_contract() -> None:
+    assert_markdown_headings(
+        Path.cwd(),
+        "docs/handbook/05-preprocessing-pipeline.md",
+        PREPROCESSING_HEADINGS,
+    )
+
+
 def test_cli_reference_discovers_every_leaf_command() -> None:
     assert command_paths(build_parser()) == (
         "ddf cache build",
