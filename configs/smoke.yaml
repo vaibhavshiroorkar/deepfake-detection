@@ -1,0 +1,9 @@
+schema_version: 1
+command: [smoke]
+arguments:
+  output-dir: runs/smoke
+  seed: 17
+  samples: 32
+tracking:
+  experiment_name: smoke-fixture-fusion
+  run_name: logistic-seed17

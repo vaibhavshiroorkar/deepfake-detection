@@ -1,0 +1,10 @@
+schema_version: 1
+tracking:
+  enabled: true
+  tracking_uri: sqlite:///mlflow.db
+  artifact_root: mlartifacts
+  experiment_name: local-smoke
+  run_name: fusion-smoke-seed17
+  tags:
+    project: deepfake-generalization
+    environment: local

@@ -371,6 +371,7 @@ source = { editable = "." }
 dependencies = [
     { name = "numpy" },
     { name = "pyarrow" },
+    { name = "pyyaml" },
     { name = "scikit-learn" },
 ]
 
@@ -412,6 +413,7 @@ requires-dist = [
     { name = "numpy", specifier = "==2.4.6" },
     { name = "opencv-python", marker = "extra == 'media'", specifier = "==5.0.0.93" },
     { name = "pyarrow", specifier = "==24.0.0" },
+    { name = "pyyaml", specifier = "==6.0.3" },
     { name = "scikit-learn", specifier = "==1.9.0" },
     { name = "streamlit", marker = "extra == 'dashboard'", specifier = "==1.60.0" },
     { name = "timm", marker = "extra == 'ml'", specifier = "==1.0.27" },
