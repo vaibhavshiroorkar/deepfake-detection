@@ -176,7 +176,11 @@ def start_tracked_run(
         _record_failure(logger, mlflow, error, configuration.values)
         raise
     else:
-        mlflow.end_run(status="FINISHED")
+        try:
+            mlflow.end_run(status="FINISHED")
+        except BaseException as error:
+            _record_failure(logger, mlflow, error, configuration.values)
+            raise
 
 
 def _import_mlflow() -> Any:
@@ -323,8 +327,33 @@ def _redacted_values(value: Any) -> Any:
 
 
 def _is_sensitive_key(name: str) -> bool:
-    parts = name.casefold().replace("-", "_").split("_")
-    return any(part in _SENSITIVE_KEYS for part in parts)
+    return any(part in _SENSITIVE_KEYS for part in _key_tokens(name))
+
+
+def _key_tokens(name: str) -> tuple[str, ...]:
+    tokens = [name.casefold()]
+    current: list[str] = []
+
+    for index, character in enumerate(name):
+        if not character.isalnum():
+            if current:
+                tokens.append("".join(current).casefold())
+                current = []
+            continue
+
+        next_is_lower = index + 1 < len(name) and name[index + 1].islower()
+        if (
+            character.isupper()
+            and current
+            and (current[-1].islower() or (current[-1].isupper() and next_is_lower))
+        ):
+            tokens.append("".join(current).casefold())
+            current = []
+        current.append(character)
+
+    if current:
+        tokens.append("".join(current).casefold())
+    return tuple(tokens)
 
 
 def _secret_values(value: Any) -> set[str]:

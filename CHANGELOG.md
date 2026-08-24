@@ -12,6 +12,12 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+### Fixed
+
+- MLflow tracking now redacts sensitive camel-case and punctuation-delimited
+  configuration and tag keys, and records failed finalization attempts as
+  failed runs without replacing their original errors.
+
 ### Added
 
 - Windows CI that installs the full local environment, checks lint, format,

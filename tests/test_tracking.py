@@ -69,6 +69,27 @@ class _FakeMlflow:
         self._record("end_run", status=status)
 
 
+class _FinalizationFailureMlflow(_FakeMlflow):
+    def __init__(
+        self, *, fail_failure_log: bool = False, fail_failed_end: bool = False
+    ) -> None:
+        super().__init__()
+        self.fail_failure_log = fail_failure_log
+        self.fail_failed_end = fail_failed_end
+
+    def log_dict(self, values: dict[str, Any], artifact_file: str) -> None:
+        super().log_dict(values, artifact_file)
+        if artifact_file == "failure.json" and self.fail_failure_log:
+            raise RuntimeError("failure artifact unavailable")
+
+    def end_run(self, status: str) -> None:
+        super().end_run(status)
+        if status == "FINISHED":
+            raise RuntimeError("finished finalization unavailable")
+        if status == "FAILED" and self.fail_failed_end:
+            raise RuntimeError("failed finalization unavailable")
+
+
 def _configuration() -> ResolvedConfiguration:
     return ResolvedConfiguration(
         values={
@@ -375,6 +396,139 @@ def test_failed_run_redacts_secret_values_from_the_exception_message(
         artifact_file: values for (values, artifact_file), _ in _calls(fake, "log_dict")
     }
     assert logged_dicts["failure.json"]["message"] == "request used [REDACTED]"
+
+
+def test_tracked_run_redacts_camel_case_sensitive_configuration_and_tag_values(
+    tmp_path: Path,
+) -> None:
+    configuration = _configuration()
+    values = dict(configuration.values)
+    values["credentials"] = {
+        "clientSecret": "client-secret-value",
+        "databasePassword": "database-password-value",
+        "signingKey": "signing-key-value",
+        "accessToken": "access-token-value",
+        "privateKey": "private-key-value",
+        "clientName": "safe-client",
+    }
+    tracking_values = dict(configuration.values["tracking"])
+    tracking_values["tags"] = {
+        "clientSecret": "tag-client-secret",
+        "database:Password": "tag-database-password",
+        "serviceRegion": "safe-region",
+    }
+    values["tracking"] = tracking_values
+    configuration = ResolvedConfiguration(
+        values=values,
+        sources=configuration.sources,
+        sha256=configuration.sha256,
+    )
+    settings = experiment_tracking.TrackingSettings.from_configuration(
+        configuration.values["tracking"], root=tmp_path
+    )
+    fake = _FakeMlflow()
+
+    with pytest.raises(RuntimeError, match="client-secret-value"):
+        with experiment_tracking.start_tracked_run(
+            settings,
+            configuration=configuration,
+            runtime=_runtime(),
+            mlflow_module=fake,
+        ):
+            raise RuntimeError("request used client-secret-value")
+
+    parameters = _calls(fake, "log_params")[0][0][0]
+    tags = _calls(fake, "set_tags")[0][0][0]
+    logged_dicts = {
+        artifact_file: values for (values, artifact_file), _ in _calls(fake, "log_dict")
+    }
+    sensitive_values = {
+        "client-secret-value",
+        "database-password-value",
+        "signing-key-value",
+        "access-token-value",
+        "private-key-value",
+        "tag-client-secret",
+        "tag-database-password",
+    }
+    assert "credentials.clientName" in parameters
+    assert "credentials.clientSecret" not in parameters
+    assert "credentials.databasePassword" not in parameters
+    assert "credentials.signingKey" not in parameters
+    assert "credentials.accessToken" not in parameters
+    assert "credentials.privateKey" not in parameters
+    assert all(value not in parameters.values() for value in sensitive_values)
+    assert tags["serviceRegion"] == "safe-region"
+    assert "clientSecret" not in tags
+    assert "database:Password" not in tags
+    assert all(value not in tags.values() for value in sensitive_values)
+    assert all(
+        value not in str(logged_dicts["resolved-config.yaml"])
+        for value in sensitive_values
+    )
+    assert logged_dicts["failure.json"]["message"] == "request used [REDACTED]"
+
+
+def test_finished_finalization_failure_records_failure_and_preserves_original_error(
+    tmp_path: Path,
+) -> None:
+    configuration = _configuration()
+    settings = experiment_tracking.TrackingSettings.from_configuration(
+        configuration.values["tracking"], root=tmp_path
+    )
+    fake = _FinalizationFailureMlflow()
+
+    with pytest.raises(
+        RuntimeError, match="finished finalization unavailable"
+    ) as caught:
+        with experiment_tracking.start_tracked_run(
+            settings,
+            configuration=configuration,
+            runtime=_runtime(),
+            mlflow_module=fake,
+        ):
+            pass
+
+    logged_dicts = {
+        artifact_file: values for (values, artifact_file), _ in _calls(fake, "log_dict")
+    }
+    assert str(caught.value) == "finished finalization unavailable"
+    assert logged_dicts["failure.json"] == {
+        "exception_type": "RuntimeError",
+        "message": "finished finalization unavailable",
+    }
+    assert _calls(fake, "end_run") == [
+        ((), {"status": "FINISHED"}),
+        ((), {"status": "FAILED"}),
+    ]
+
+
+def test_finished_finalization_preserves_original_error_when_recovery_fails(
+    tmp_path: Path,
+) -> None:
+    configuration = _configuration()
+    settings = experiment_tracking.TrackingSettings.from_configuration(
+        configuration.values["tracking"], root=tmp_path
+    )
+    fake = _FinalizationFailureMlflow(fail_failure_log=True, fail_failed_end=True)
+
+    with pytest.raises(
+        RuntimeError, match="finished finalization unavailable"
+    ) as caught:
+        with experiment_tracking.start_tracked_run(
+            settings,
+            configuration=configuration,
+            runtime=_runtime(),
+            mlflow_module=fake,
+        ):
+            pass
+
+    assert str(caught.value) == "finished finalization unavailable"
+    assert any(args[1] == "failure.json" for args, _ in _calls(fake, "log_dict"))
+    assert _calls(fake, "end_run") == [
+        ((), {"status": "FINISHED"}),
+        ((), {"status": "FAILED"}),
+    ]
 
 
 def test_relative_sqlite_and_artifact_paths_resolve_from_project_root(
