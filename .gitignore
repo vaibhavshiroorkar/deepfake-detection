@@ -12,4 +12,7 @@ cache/
 checkpoints/
 artifacts/
 runs/
+mlflow.db
+mlartifacts/
+mlruns/
 .env

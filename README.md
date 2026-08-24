@@ -4,7 +4,19 @@ This repository tests whether three cue-specific detectors generalize better tog
 
 The branches inspect visual artifacts, audio spoofing, and mouth-audio alignment. The final model uses calibrated late fusion. It does not issue a full verdict when required evidence is missing.
 
-Read [the research design](docs/research-design.md) before changing the model or evaluation protocol. Read [the data card](docs/data-card.md) before adding a dataset.
+## Project documents
+
+- [Research design](docs/research-design.md): question, protocol, ablations, and exit criteria.
+- [Data card](docs/data-card.md): data contract, split policy, risks, and handling rules.
+- [Roadmap](ROADMAP.md): implementation order and phase gates.
+- [Model selection](docs/model-selection.md): controlled component comparisons and selection rules.
+- [Reproducibility](docs/reproducibility.md): required run metadata and local tracking design.
+- [Threat model](docs/threat-model.md): supported threats, failure modes, and claim limits.
+- [Changelog](CHANGELOG.md): material software and protocol changes.
+
+Read the research design before changing the model or evaluation protocol. Read
+the data card before adding a dataset. Update the changelog with each material
+change.
 
 ## Quick start
 
