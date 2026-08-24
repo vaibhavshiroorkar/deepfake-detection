@@ -100,6 +100,9 @@ class _Detector:
         self.calls += 1
         return (Detection(Box(1, 1, 16, 18), 0.8, _landmarks()),)
 
+    def runtime_metadata(self) -> dict[str, object]:
+        return {"device": "cpu", "thread_count": 2}
+
 
 def _runtime() -> RuntimeSnapshot:
     return RuntimeSnapshot(
@@ -134,8 +137,6 @@ def test_runner_requires_a_valid_audit_before_detector_inference(
             frame_reader=lambda row: frames[row.frame_id],
             raw_output=tmp_path / "raw.jsonl",
             runtime_snapshot=_runtime(),
-            device="cpu",
-            thread_count=2,
             evidence_scope="software_fixture_only",
         )
 
@@ -166,8 +167,6 @@ def test_runner_rejects_missing_independent_double_review(tmp_path: Path) -> Non
             frame_reader=lambda row: frames[row.frame_id],
             raw_output=tmp_path / "raw.jsonl",
             runtime_snapshot=_runtime(),
-            device="cpu",
-            thread_count=2,
         )
 
     assert detector.calls == 0
@@ -191,8 +190,6 @@ def test_runner_warms_up_times_frames_and_writes_path_free_deterministic_jsonl(
         frame_reader=lambda row: frames[row.frame_id],
         raw_output=output,
         runtime_snapshot=_runtime(),
-        device="cpu",
-        thread_count=2,
         warmup_frames=2,
         clock=lambda: next(elapsed),
     )
@@ -202,6 +199,8 @@ def test_runner_warms_up_times_frames_and_writes_path_free_deterministic_jsonl(
     assert len(records) == 500
     assert records[0].frame_id == "frame-000"
     assert all(record.latency_ms == pytest.approx(2.0) for record in records)
+    assert all(record.device == "cpu" for record in records)
+    assert all(record.thread_count == 2 for record in records)
     assert report.evidence_scope == "software_fixture_only"
     assert report.threshold == 0.8
     assert report.frame_count == 400
@@ -243,8 +242,6 @@ def test_runner_rejects_changed_source_pixels_and_metadata_before_output(
             frame_reader=lambda row: changed[row.frame_id],
             raw_output=tmp_path / "raw.jsonl",
             runtime_snapshot=_runtime(),
-            device="cpu",
-            thread_count=2,
             evidence_scope="software_fixture_only",
         )
 
@@ -259,8 +256,6 @@ def test_runner_rejects_changed_source_pixels_and_metadata_before_output(
             frame_reader=lambda row: frames[row.frame_id],
             raw_output=tmp_path / "raw.jsonl",
             runtime_snapshot=_runtime(),
-            device="cpu",
-            thread_count=2,
             evidence_scope="software_fixture_only",
         )
 
@@ -282,8 +277,6 @@ def test_candidate_jsonl_rejects_private_paths_and_nonfinite_values(
         frame_reader=lambda row: frames[row.frame_id],
         raw_output=output,
         runtime_snapshot=_runtime(),
-        device="cpu",
-        thread_count=2,
         warmup_frames=0,
         clock=lambda: next(ticks),
         evidence_scope="software_fixture_only",
@@ -320,9 +313,47 @@ def test_runner_rejects_a_collection_threshold_metadata_mismatch(
             frame_reader=lambda row: frames[row.frame_id],
             raw_output=tmp_path / "raw.jsonl",
             runtime_snapshot=_runtime(),
-            device="cpu",
-            thread_count=2,
             collection_threshold=0.1,
         )
 
     assert detector.calls == 0
+
+
+def test_runner_rejects_backend_metadata_changes_after_timing(
+    tmp_path: Path,
+) -> None:
+    sample, annotations, frames = _valid_review()
+
+    class ChangingMetadataDetector(_Detector):
+        def __init__(self) -> None:
+            super().__init__()
+            self.metadata_calls = 0
+
+        def runtime_metadata(self) -> dict[str, object]:
+            self.metadata_calls += 1
+            return {
+                "device": "cpu",
+                "thread_count": 2 if self.metadata_calls == 1 else 4,
+            }
+
+    detector = ChangingMetadataDetector()
+    ticks = iter(index * 0.001 for index in range(1001))
+
+    with pytest.raises(ValueError, match="changed during timed inference"):
+        run_detector_benchmark(
+            sample=sample,
+            annotations=annotations,
+            detector=detector,
+            detector_name="fixture-detector",
+            detector_revision="revision-1",
+            model_sha256="a" * 64,
+            frame_reader=lambda row: frames[row.frame_id],
+            raw_output=tmp_path / "raw.jsonl",
+            runtime_snapshot=_runtime(),
+            warmup_frames=0,
+            clock=lambda: next(ticks),
+            evidence_scope="software_fixture_only",
+        )
+
+    assert detector.metadata_calls == 2
+    assert not (tmp_path / "raw.jsonl").exists()

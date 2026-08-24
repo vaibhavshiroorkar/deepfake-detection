@@ -9,6 +9,7 @@ from deepfake_detection.benchmarks.detector_annotations import (
     FrameAnnotation,
 )
 from deepfake_detection.benchmarks.detector_metrics import (
+    BOOTSTRAP_SEED,
     FROZEN_DETECTOR_RULE_REVISION,
     CandidateFrame,
     DetectorBenchmarkReport,
@@ -16,10 +17,12 @@ from deepfake_detection.benchmarks.detector_metrics import (
     DetectorLatency,
     DetectorMetrics,
     TrackerMetrics,
+    _maximum_iou_assignment,
     calibrate_detector_threshold,
     compare_detectors,
     evaluate_detector,
 )
+from deepfake_detection.evaluation.bootstrap import BootstrapInterval
 from deepfake_detection.views.tracking import Box, Detection, Landmarks5, Point
 
 
@@ -107,6 +110,23 @@ def _candidate(
     )
 
 
+def _with_calibration(
+    records: tuple[CandidateFrame, ...],
+    annotations: tuple[FrameAnnotation, ...],
+    *,
+    threshold: float,
+) -> tuple[tuple[CandidateFrame, ...], tuple[FrameAnnotation, ...]]:
+    calibration = _candidate(
+        "frame-f",
+        source="f" * 64,
+        split_role="calibration",
+        detections=(Detection(Box(1, 1, 16, 18), threshold, _landmarks()),),
+        clip_id="calibration-clip",
+    )
+    gold = _annotation("frame-f", frame_hash=calibration.frame_sha256)
+    return (calibration, *records), (gold, *annotations)
+
+
 def test_calibration_uses_only_calibration_sources_and_frozen_ties() -> None:
     calibration = _candidate(
         "frame-1",
@@ -167,13 +187,50 @@ def test_calibration_matches_all_visible_faces_before_counting_false_detections(
     assert threshold == 0.80
 
 
+def test_assignment_filters_matches_below_the_frozen_iou_threshold() -> None:
+    detections = (Detection(Box(0, 0, 2, 2), 0.9, None),)
+    faces = (FaceAnnotation(Box(10, 10, 12, 12), True, None),)
+
+    assert _maximum_iou_assignment(detections, faces) == ()
+
+
+def test_assignment_handles_a_crowded_frame() -> None:
+    detections = tuple(
+        Detection(Box(index * 3, 0, index * 3 + 2, 2), 0.9, None) for index in range(24)
+    )
+    faces = tuple(
+        FaceAnnotation(Box(index * 3, 0, index * 3 + 2, 2), index == 0, None)
+        for index in range(24)
+    )
+
+    assignment = _maximum_iou_assignment(detections, faces)
+
+    assert assignment == tuple((index, index, 1.0) for index in range(24))
+
+
+def test_assignment_uses_stable_indices_for_equal_iou_ties() -> None:
+    detections = (
+        Detection(Box(0, 0, 2, 2), 0.9, None),
+        Detection(Box(0, 0, 2, 2), 0.9, None),
+    )
+    faces = (
+        FaceAnnotation(Box(0, 0, 2, 2), True, None),
+        FaceAnnotation(Box(0, 0, 2, 2), False, None),
+    )
+
+    assert _maximum_iou_assignment(detections, faces) == (
+        (0, 0, 1.0),
+        (1, 1, 1.0),
+    )
+
+
 def test_evaluation_is_comparison_only_and_reports_landmark_error() -> None:
     records = (
         _candidate(
             "frame-1",
             source="1" * 64,
             split_role="calibration",
-            detections=(Detection(Box(40, 40, 50, 50), 0.99, None),),
+            detections=(Detection(Box(1, 1, 16, 18), 0.70, _landmarks()),),
         ),
         _candidate(
             "frame-2",
@@ -186,7 +243,7 @@ def test_evaluation_is_comparison_only_and_reports_landmark_error() -> None:
             "frame-3",
             source="3" * 64,
             split_role="comparison",
-            detections=(Detection(Box(1, 1, 16, 18), 0.75, None),),
+            detections=(Detection(Box(1, 1, 16, 18), 0.75, _landmarks(1)),),
             clip_id="clip-2",
             latency_ms=5.0,
         ),
@@ -210,7 +267,7 @@ def test_evaluation_is_comparison_only_and_reports_landmark_error() -> None:
     assert report.metrics.target_recall == 1.0
     assert report.metrics.false_detections_per_frame == 0.0
     assert report.metrics.landmark_nme == pytest.approx(0.1)
-    assert report.metrics.landmark_coverage == 0.5
+    assert report.metrics.landmark_coverage == 1.0
     assert report.latency.median_ms == 4.0
     assert report.latency.p95_ms == pytest.approx(4.9)
     assert report.latency.throughput_fps == 250.0
@@ -219,14 +276,91 @@ def test_evaluation_is_comparison_only_and_reports_landmark_error() -> None:
         "false_detections_per_frame",
         "landmark_nme",
         "landmark_coverage",
+        "non_target_candidate_count",
         "greedy_iou.target_track_errors_per_1000",
         "constant_velocity.target_track_errors_per_1000",
+        "latency.median_ms",
+        "latency.p95_ms",
+        "latency.throughput_fps",
     }
     assert report.bootstrap_samples == 1000
+    assert report.bootstrap_seed == BOOTSTRAP_SEED
     assert all(
-        0 < interval.successful_samples <= 1000
-        for interval in report.intervals.values()
+        interval.successful_samples == 1000 for interval in report.intervals.values()
     )
+
+
+def test_evaluation_rejects_defined_metrics_with_undefined_fixed_resamples() -> None:
+    records = (
+        _candidate(
+            "frame-a",
+            source="a" * 64,
+            split_role="calibration",
+            detections=(Detection(Box(1, 1, 16, 18), 0.7, _landmarks()),),
+        ),
+        _candidate(
+            "frame-1",
+            source="1" * 64,
+            split_role="comparison",
+            detections=(Detection(Box(1, 1, 16, 18), 0.8, _landmarks()),),
+        ),
+        _candidate(
+            "frame-2",
+            source="2" * 64,
+            split_role="comparison",
+            detections=(Detection(Box(1, 1, 16, 18), 0.8, None),),
+            clip_id="clip-2",
+        ),
+    )
+    annotations = tuple(
+        _annotation(record.frame_id, frame_hash=record.frame_sha256)
+        for record in records
+    )
+
+    with pytest.raises(ValueError, match="undefined fixed bootstrap"):
+        evaluate_detector(
+            records,
+            annotations,
+            threshold=0.7,
+            detector_name="candidate",
+            runtime_snapshot=_runtime_snapshot(),
+            evidence_scope="software_fixture_only",
+        )
+
+
+def test_evaluation_omits_intervals_for_undefined_optional_metrics() -> None:
+    records = (
+        _candidate(
+            "frame-a",
+            source="a" * 64,
+            split_role="calibration",
+            detections=(Detection(Box(1, 1, 16, 18), 0.7, _landmarks()),),
+        ),
+        _candidate(
+            "frame-1",
+            source="1" * 64,
+            split_role="comparison",
+            detections=(Detection(Box(1, 1, 16, 18), 0.8, None),),
+        ),
+    )
+    annotations = tuple(
+        _annotation(record.frame_id, frame_hash=record.frame_sha256)
+        for record in records
+    )
+
+    report = evaluate_detector(
+        records,
+        annotations,
+        threshold=0.7,
+        detector_name="candidate",
+        runtime_snapshot=_runtime_snapshot(),
+        evidence_scope="software_fixture_only",
+    )
+
+    assert report.metrics.landmark_nme is None
+    assert report.metrics.aligned_mouth_jitter is None
+    assert "landmark_nme" not in report.intervals
+    assert "aligned_mouth_jitter" not in report.intervals
 
 
 def test_evaluation_tracks_both_association_modes() -> None:
@@ -260,6 +394,11 @@ def test_evaluation_tracks_both_association_modes() -> None:
             multi_person=False,
         )
         for record, left in zip(records, (0, 5, 15), strict=True)
+    )
+    records, annotations = _with_calibration(
+        records,
+        annotations,
+        threshold=0.5,
     )
 
     report = evaluate_detector(
@@ -299,6 +438,11 @@ def test_evaluation_measures_mouth_residual_motion_after_face_alignment() -> Non
         _annotation(record.frame_id, frame_hash=record.frame_sha256)
         for record in records
     )
+    records, annotations = _with_calibration(
+        records,
+        annotations,
+        threshold=0.7,
+    )
 
     report = evaluate_detector(
         records,
@@ -334,6 +478,11 @@ def test_evaluation_counts_a_stable_non_target_primary_track_as_target_error() -
         )
         for record in records
     )
+    records, annotations = _with_calibration(
+        records,
+        annotations,
+        threshold=0.7,
+    )
 
     report = evaluate_detector(
         records,
@@ -345,9 +494,82 @@ def test_evaluation_counts_a_stable_non_target_primary_track_as_target_error() -
     )
 
     for tracker in report.trackers:
-        assert tracker.target_track_errors == 5
-        assert tracker.target_track_errors_per_1000 == 1000
+        assert tracker.stable_track_coverage == 0.0
+        assert tracker.abstention_rate == 1.0
+        assert tracker.tracked_frames == 0
+        assert tracker.target_track_errors == 0
+        assert tracker.target_track_errors_per_1000 == 0
     assert report.metrics.non_target_candidate_count == 5
+
+
+def _identity_sequence_report(states: tuple[str, ...]) -> DetectorBenchmarkReport:
+    target_box = Box(1, 1, 16, 18)
+    other_box = Box(7, 1, 22, 18)
+    records = tuple(
+        _candidate(
+            f"frame-{index + 1}",
+            source="2" * 64,
+            split_role="comparison",
+            detections=(
+                Detection(
+                    target_box if state == "target" else other_box,
+                    0.9,
+                    _landmarks(),
+                ),
+            ),
+            timestamp=float(index),
+        )
+        for index, state in enumerate(states)
+    )
+    annotations = tuple(
+        FrameAnnotation(
+            frame_id=record.frame_id,
+            frame_sha256=record.frame_sha256,
+            reviewer_id="reviewer-a",
+            faces=(
+                FaceAnnotation(target_box, True, _landmarks()),
+                FaceAnnotation(other_box, False, None),
+            ),
+            no_suitable_target=False,
+            pose="frontal",
+            lighting="even",
+            multi_person=True,
+        )
+        for record in records
+    )
+    records, annotations = _with_calibration(
+        records,
+        annotations,
+        threshold=0.7,
+    )
+    return evaluate_detector(
+        records,
+        annotations,
+        threshold=0.7,
+        detector_name="candidate",
+        runtime_snapshot=_runtime_snapshot(),
+        evidence_scope="software_fixture_only",
+    )
+
+
+def test_stable_wrong_initial_acquisition_is_one_track_error_event() -> None:
+    report = _identity_sequence_report(("other",) * 5)
+
+    for tracker in report.trackers:
+        assert tracker.stable_track_coverage == 1.0
+        assert tracker.tracked_frames == 5
+        assert tracker.target_track_errors == 1
+        assert tracker.target_track_errors_per_1000 == 200
+
+
+def test_sustained_wrong_segment_and_recovery_are_two_transition_events() -> None:
+    report = _identity_sequence_report(("target", "other", "other", "target"))
+
+    for tracker in report.trackers:
+        assert tracker.stable_track_coverage == 1.0
+        assert tracker.tracked_frames == 4
+        assert tracker.target_track_errors == 2
+        assert tracker.target_track_errors_per_1000 == 500
 
 
 def _report(
@@ -360,6 +582,69 @@ def _report(
     scope: str = "research_evidence",
     evaluation_set_sha256: str = "e" * 64,
 ) -> DetectorBenchmarkReport:
+    metrics = DetectorMetrics(
+        target_recall=recall,
+        false_detections_per_frame=0.05,
+        non_target_detections_per_frame=0.1,
+        non_target_candidate_count=40,
+        landmark_nme=nme,
+        landmark_coverage=1.0,
+        aligned_mouth_jitter=0.02,
+    )
+    tracked_frames = 100_000
+    target_track_errors = round(track_errors_per_1000 * tracked_frames / 1000)
+    trackers = (
+        TrackerMetrics(
+            association="greedy_iou",
+            stable_track_coverage=0.9,
+            abstention_rate=1 - 0.9,
+            target_track_errors=target_track_errors,
+            tracked_frames=tracked_frames,
+            target_track_errors_per_1000=track_errors_per_1000,
+        ),
+        TrackerMetrics(
+            association="constant_velocity",
+            stable_track_coverage=0.95,
+            abstention_rate=1 - 0.95,
+            target_track_errors=target_track_errors,
+            tracked_frames=tracked_frames,
+            target_track_errors_per_1000=track_errors_per_1000,
+        ),
+    )
+    latency = DetectorLatency(
+        timed_frames=400,
+        median_ms=latency_ms,
+        p95_ms=latency_ms + 1,
+        throughput_fps=1000 / latency_ms,
+        device="cpu",
+        thread_count=4,
+    )
+    point_estimates = {
+        "target_recall": metrics.target_recall,
+        "false_detections_per_frame": metrics.false_detections_per_frame,
+        "non_target_detections_per_frame": metrics.non_target_detections_per_frame,
+        "non_target_candidate_count": float(metrics.non_target_candidate_count),
+        "landmark_nme": float(metrics.landmark_nme),
+        "landmark_coverage": metrics.landmark_coverage,
+        "aligned_mouth_jitter": float(metrics.aligned_mouth_jitter),
+        "greedy_iou.stable_track_coverage": trackers[0].stable_track_coverage,
+        "greedy_iou.abstention_rate": trackers[0].abstention_rate,
+        "greedy_iou.target_track_errors_per_1000": trackers[
+            0
+        ].target_track_errors_per_1000,
+        "constant_velocity.stable_track_coverage": trackers[1].stable_track_coverage,
+        "constant_velocity.abstention_rate": trackers[1].abstention_rate,
+        "constant_velocity.target_track_errors_per_1000": trackers[
+            1
+        ].target_track_errors_per_1000,
+        "latency.median_ms": latency.median_ms,
+        "latency.p95_ms": latency.p95_ms,
+        "latency.throughput_fps": latency.throughput_fps,
+    }
+    intervals = {
+        key: BootstrapInterval(value, value, value, 1000)
+        for key, value in point_estimates.items()
+    }
     return DetectorBenchmarkReport(
         detector_name=name,
         detector_revision=f"{name}-revision",
@@ -370,47 +655,29 @@ def _report(
         rule_revision=FROZEN_DETECTOR_RULE_REVISION,
         frame_count=400,
         source_count=80,
-        metrics=DetectorMetrics(
-            target_recall=recall,
-            false_detections_per_frame=0.05,
-            non_target_detections_per_frame=0.1,
-            non_target_candidate_count=40,
-            landmark_nme=nme,
-            landmark_coverage=1.0,
-            aligned_mouth_jitter=0.02,
-        ),
-        trackers=(
-            TrackerMetrics(
-                association="greedy_iou",
-                stable_track_coverage=0.9,
-                abstention_rate=0.1,
-                target_track_errors=2,
-                tracked_frames=1000,
-                target_track_errors_per_1000=track_errors_per_1000,
-            ),
-            TrackerMetrics(
-                association="constant_velocity",
-                stable_track_coverage=0.95,
-                abstention_rate=0.05,
-                target_track_errors=2,
-                tracked_frames=1000,
-                target_track_errors_per_1000=track_errors_per_1000,
-            ),
-        ),
-        latency=DetectorLatency(
-            timed_frames=400,
-            median_ms=latency_ms,
-            p95_ms=latency_ms + 1,
-            throughput_fps=1000 / latency_ms,
-            device="cpu",
-            thread_count=4,
-        ),
-        intervals={},
+        metrics=metrics,
+        trackers=trackers,
+        latency=latency,
+        intervals=intervals,
         runtime_snapshot=_runtime_snapshot(),
         raw_results_sha256="f" * 64,
         evaluation_set_sha256=evaluation_set_sha256,
         annotation_audit_validated=True,
+        bootstrap_seed=BOOTSTRAP_SEED,
     )
+
+
+def test_research_report_rejects_non_cpu_runtime_metadata() -> None:
+    report = _report(
+        "candidate",
+        recall=0.95,
+        nme=0.08,
+        track_errors_per_1000=2,
+        latency_ms=5,
+    )
+
+    with pytest.raises(ValueError, match="CPU runtime metadata"):
+        replace(report, latency=replace(report.latency, device="cuda:0"))
 
 
 def test_selection_applies_each_frozen_rejection_margin_before_speed() -> None:
@@ -503,6 +770,80 @@ def test_selection_cannot_turn_fixture_evidence_into_a_real_choice() -> None:
 
     assert decision.selected_detector is None
     assert decision.reason == "software_fixture_only"
+
+
+def test_report_rejects_incomplete_or_inconsistent_bootstrap_intervals() -> None:
+    report = _report(
+        "candidate", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5
+    )
+    wrong_estimate = dict(report.intervals)
+    wrong_estimate["target_recall"] = replace(
+        wrong_estimate["target_recall"], estimate=0.5
+    )
+    tiny_estimate_change = dict(report.intervals)
+    tiny_estimate_change["target_recall"] = replace(
+        tiny_estimate_change["target_recall"],
+        estimate=report.metrics.target_recall + 5e-13,
+    )
+    incomplete = dict(report.intervals)
+    incomplete.pop("latency.p95_ms")
+    unexpected = {
+        **report.intervals,
+        "hidden_metric": BootstrapInterval(1.0, 1.0, 1.0, 1000),
+    }
+    short = dict(report.intervals)
+    short["target_recall"] = replace(short["target_recall"], successful_samples=999)
+    noninteger = dict(report.intervals)
+    noninteger["target_recall"] = replace(
+        noninteger["target_recall"], successful_samples=1000.0
+    )
+    nonfinite = dict(report.intervals)
+    nonfinite["target_recall"] = replace(nonfinite["target_recall"], lower=float("nan"))
+
+    for intervals in (
+        wrong_estimate,
+        tiny_estimate_change,
+        incomplete,
+        unexpected,
+        short,
+        noninteger,
+        nonfinite,
+    ):
+        with pytest.raises(ValueError, match="interval"):
+            replace(report, intervals=intervals)
+
+
+def test_metric_contracts_reject_inconsistent_tracker_and_latency_counts() -> None:
+    tracker = TrackerMetrics(
+        association="greedy_iou",
+        stable_track_coverage=0.9,
+        abstention_rate=1 - 0.9,
+        target_track_errors=2,
+        tracked_frames=1000,
+        target_track_errors_per_1000=2.0,
+    )
+    with pytest.raises(ValueError, match="complements"):
+        replace(tracker, abstention_rate=0.2)
+    with pytest.raises(ValueError, match="complements"):
+        replace(tracker, abstention_rate=tracker.abstention_rate + 5e-13)
+    with pytest.raises(ValueError, match="exactly match"):
+        replace(tracker, target_track_errors_per_1000=3.0)
+    with pytest.raises(ValueError, match="exactly match"):
+        replace(
+            tracker,
+            target_track_errors_per_1000=(tracker.target_track_errors_per_1000 + 5e-13),
+        )
+    with pytest.raises((TypeError, ValueError), match="integer"):
+        replace(tracker, tracked_frames=1000.0)
+    with pytest.raises((TypeError, ValueError), match="integer"):
+        DetectorLatency(
+            timed_frames=True,
+            median_ms=1.0,
+            p95_ms=2.0,
+            throughput_fps=500.0,
+            device="cpu",
+            thread_count=4,
+        )
 
 
 def test_selection_rejects_unpaired_frames_and_unequal_cpu_settings() -> None:
@@ -609,10 +950,15 @@ def test_evaluation_rejects_hash_mismatch_nonfinite_values_and_rule_changes() ->
             runtime_snapshot={},
             evidence_scope="software_fixture_only",
         )
+    valid_records, valid_annotations = _with_calibration(
+        (record,),
+        (_annotation("frame-1", frame_hash="1" * 64),),
+        threshold=0.7,
+    )
     with pytest.raises(ValueError, match="valid annotation audit"):
         evaluate_detector(
-            (record,),
-            (_annotation("frame-1", frame_hash="1" * 64),),
+            valid_records,
+            valid_annotations,
             threshold=0.7,
             detector_name="candidate",
             runtime_snapshot=_runtime_snapshot(),
@@ -632,17 +978,27 @@ def test_evaluation_set_hash_covers_the_resolved_gold_labels() -> None:
         faces=(FaceAnnotation(Box(2, 1, 17, 18), True, _landmarks()),),
     )
 
-    first = evaluate_detector(
+    first_records, first_annotations = _with_calibration(
         (record,),
         (first_gold,),
+        threshold=0.7,
+    )
+    changed_records, changed_annotations = _with_calibration(
+        (record,),
+        (changed_gold,),
+        threshold=0.7,
+    )
+    first = evaluate_detector(
+        first_records,
+        first_annotations,
         threshold=0.7,
         detector_name="first",
         runtime_snapshot=_runtime_snapshot(),
         evidence_scope="software_fixture_only",
     )
     changed = evaluate_detector(
-        (record,),
-        (changed_gold,),
+        changed_records,
+        changed_annotations,
         threshold=0.7,
         detector_name="changed",
         runtime_snapshot=_runtime_snapshot(),
@@ -681,7 +1037,7 @@ def test_evaluation_set_hash_covers_the_threshold_calibration_frames() -> None:
         return evaluate_detector(
             records,
             annotations,
-            threshold=0.7,
+            threshold=0.8,
             detector_name=calibration.frame_id,
             runtime_snapshot=_runtime_snapshot(),
             evidence_scope="software_fixture_only",
@@ -691,3 +1047,131 @@ def test_evaluation_set_hash_covers_the_threshold_calibration_frames() -> None:
         report(first_calibration).evaluation_set_sha256
         != report(changed_calibration).evaluation_set_sha256
     )
+
+
+def test_evaluation_set_hash_covers_clip_and_timestamp_sequence_identity() -> None:
+    record = _candidate(
+        "frame-1",
+        source="1" * 64,
+        split_role="comparison",
+        detections=(Detection(Box(1, 1, 16, 18), 0.8, _landmarks()),),
+    )
+    annotation = _annotation("frame-1", frame_hash=record.frame_sha256)
+
+    def report(candidate: CandidateFrame) -> DetectorBenchmarkReport:
+        records, annotations = _with_calibration(
+            (candidate,),
+            (annotation,),
+            threshold=0.7,
+        )
+        return evaluate_detector(
+            records,
+            annotations,
+            threshold=0.7,
+            detector_name="candidate",
+            runtime_snapshot=_runtime_snapshot(),
+            evidence_scope="software_fixture_only",
+        )
+
+    original_hash = report(record).evaluation_set_sha256
+
+    assert (
+        report(replace(record, clip_id="clip-2")).evaluation_set_sha256 != original_hash
+    )
+    assert (
+        report(replace(record, timestamp_sec=1.0)).evaluation_set_sha256
+        != original_hash
+    )
+
+
+def test_evaluation_recomputes_and_binds_the_frozen_calibration_threshold() -> None:
+    records = (
+        _candidate(
+            "frame-1",
+            source="1" * 64,
+            split_role="calibration",
+            detections=(Detection(Box(1, 1, 16, 18), 0.8, _landmarks()),),
+        ),
+        _candidate(
+            "frame-2",
+            source="2" * 64,
+            split_role="comparison",
+            detections=(Detection(Box(1, 1, 16, 18), 0.9, _landmarks()),),
+        ),
+    )
+    annotations = tuple(
+        _annotation(record.frame_id, frame_hash=record.frame_sha256)
+        for record in records
+    )
+
+    with pytest.raises(ValueError, match="frozen calibrated threshold"):
+        evaluate_detector(
+            records,
+            annotations,
+            threshold=0.7,
+            detector_name="candidate",
+            runtime_snapshot=_runtime_snapshot(),
+            evidence_scope="software_fixture_only",
+        )
+    with pytest.raises(ValueError, match="collection threshold"):
+        evaluate_detector(
+            records,
+            annotations,
+            threshold=0.8,
+            detector_name="candidate",
+            runtime_snapshot=_runtime_snapshot(),
+            evidence_scope="software_fixture_only",
+            collection_threshold=0.85,
+        )
+    with pytest.raises(ValueError, match="collection threshold"):
+        evaluate_detector(
+            records,
+            annotations,
+            threshold=0.8,
+            detector_name="candidate",
+            runtime_snapshot=_runtime_snapshot(),
+            evidence_scope="software_fixture_only",
+            collection_threshold=0.8 + 5e-13,
+        )
+
+
+def test_evaluation_rejects_bootstrap_sample_or_seed_overrides() -> None:
+    records = (
+        _candidate(
+            "frame-1",
+            source="1" * 64,
+            split_role="calibration",
+            detections=(Detection(Box(1, 1, 16, 18), 0.8, _landmarks()),),
+        ),
+        _candidate(
+            "frame-2",
+            source="2" * 64,
+            split_role="comparison",
+            detections=(Detection(Box(1, 1, 16, 18), 0.9, _landmarks()),),
+        ),
+    )
+    annotations = tuple(
+        _annotation(record.frame_id, frame_hash=record.frame_sha256)
+        for record in records
+    )
+
+    with pytest.raises(ValueError, match="1,000 fixed"):
+        evaluate_detector(
+            records,
+            annotations,
+            threshold=0.8,
+            detector_name="candidate",
+            runtime_snapshot=_runtime_snapshot(),
+            evidence_scope="software_fixture_only",
+            bootstrap_samples=999,
+        )
+    with pytest.raises(ValueError, match="fixed bootstrap seed"):
+        evaluate_detector(
+            records,
+            annotations,
+            threshold=0.8,
+            detector_name="candidate",
+            runtime_snapshot=_runtime_snapshot(),
+            evidence_scope="software_fixture_only",
+            bootstrap_seed=7,
+        )

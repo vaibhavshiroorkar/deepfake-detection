@@ -14,6 +14,9 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ### Fixed
 
+- Detector evidence now binds thresholds to calibration data, hashes sequence
+  identity, uses fixed complete source bootstraps, counts stable-track identity
+  events, and records backend-derived CPU runtime metadata.
 - Root output-directory ignores no longer hide Python packages under `src`.
 - MLflow tracking now redacts sensitive camel-case and punctuation-delimited
   configuration and tag keys, and records failed finalization attempts as

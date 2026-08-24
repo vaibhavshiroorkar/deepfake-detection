@@ -4,13 +4,16 @@ from typing import Any
 
 import numpy as np
 import pytest
+import torch
 
+from deepfake_detection.views import face_detector as face_detector_module
 from deepfake_detection.views.face_detector import MTCNNFaceDetector, YuNetFaceDetector
 from deepfake_detection.views.tracking import Box, Detection, Landmarks5, Point
 
 
 class FixtureMTCNN:
     def __init__(self) -> None:
+        self.device = "cpu"
         self.image: np.ndarray | None = None
         self.landmarks_requested = False
 
@@ -66,6 +69,19 @@ def test_mtcnn_adapter_converts_bgr_filters_scores_and_canonicalizes_points() ->
         mouth_left=Point(2.0, 9.0),
         mouth_right=Point(8.0, 9.0),
     )
+
+
+def test_mtcnn_adapter_reports_model_device_and_pytorch_threads(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    model = FixtureMTCNN()
+    model.device = "cuda:1"
+    monkeypatch.setattr(torch, "get_num_threads", lambda: 7)
+
+    assert MTCNNFaceDetector(model=model).runtime_metadata() == {
+        "device": "cuda:1",
+        "thread_count": 7,
+    }
 
 
 @pytest.mark.parametrize(
@@ -191,6 +207,17 @@ def test_yunet_adapter_parses_rows_filters_scores_and_uses_each_frame_size() -> 
         mouth_left=Point(2.0, 9.0),
         mouth_right=Point(8.0, 9.0),
     )
+
+
+def test_yunet_adapter_reports_opencv_cpu_runtime(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(face_detector_module.cv2, "getNumThreads", lambda: 5)
+
+    assert YuNetFaceDetector(model=FixtureYuNet(None)).runtime_metadata() == {
+        "device": "cpu",
+        "thread_count": 5,
+    }
 
 
 @pytest.mark.parametrize(

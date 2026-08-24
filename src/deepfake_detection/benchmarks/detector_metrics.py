@@ -10,6 +10,7 @@ from pathlib import PurePosixPath, PureWindowsPath
 from typing import Any, Literal
 
 import numpy as np
+from scipy.optimize import linear_sum_assignment
 
 from deepfake_detection.evaluation.bootstrap import BootstrapInterval
 from deepfake_detection.views.tracking import (
@@ -248,8 +249,23 @@ class TrackerMetrics:
             _finite(name, getattr(self, name), nonnegative=True)
         if self.stable_track_coverage > 1 or self.abstention_rate > 1:
             raise ValueError("Tracker coverage values must be in [0, 1]")
+        for name in ("target_track_errors", "tracked_frames"):
+            value = getattr(self, name)
+            if not isinstance(value, int) or isinstance(value, bool):
+                raise TypeError(f"{name} must be an integer")
         if self.target_track_errors < 0 or self.tracked_frames < 0:
             raise ValueError("Tracker counts must be nonnegative")
+        if self.target_track_errors > self.tracked_frames:
+            raise ValueError("Target-track errors cannot exceed tracked frames")
+        if self.abstention_rate != 1 - self.stable_track_coverage:
+            raise ValueError("Abstention and stable coverage must be exact complements")
+        expected_rate = (
+            1000 * self.target_track_errors / self.tracked_frames
+            if self.tracked_frames
+            else 0.0
+        )
+        if self.target_track_errors_per_1000 != expected_rate:
+            raise ValueError("Target-track error rate must exactly match its counts")
 
 
 @dataclass(frozen=True, slots=True)
@@ -262,13 +278,50 @@ class DetectorLatency:
     thread_count: int
 
     def __post_init__(self) -> None:
+        if not isinstance(self.timed_frames, int) or isinstance(
+            self.timed_frames, bool
+        ):
+            raise TypeError("timed_frames must be an integer")
         if self.timed_frames <= 0:
             raise ValueError("Latency requires at least one timed frame")
         for name in ("median_ms", "p95_ms", "throughput_fps"):
             _finite(name, getattr(self, name), nonnegative=True)
         _required_string("device", self.device, path_free=True)
+        if not isinstance(self.thread_count, int) or isinstance(
+            self.thread_count, bool
+        ):
+            raise TypeError("thread_count must be an integer")
         if self.thread_count <= 0:
             raise ValueError("thread_count must be positive")
+
+
+def _report_point_estimates(
+    metrics: DetectorMetrics,
+    trackers: Sequence[TrackerMetrics],
+    latency: DetectorLatency,
+) -> dict[str, float]:
+    values: dict[str, float] = {
+        "target_recall": metrics.target_recall,
+        "false_detections_per_frame": metrics.false_detections_per_frame,
+        "non_target_detections_per_frame": metrics.non_target_detections_per_frame,
+        "non_target_candidate_count": float(metrics.non_target_candidate_count),
+        "landmark_coverage": metrics.landmark_coverage,
+        "latency.median_ms": latency.median_ms,
+        "latency.p95_ms": latency.p95_ms,
+        "latency.throughput_fps": latency.throughput_fps,
+    }
+    if metrics.landmark_nme is not None:
+        values["landmark_nme"] = metrics.landmark_nme
+    if metrics.aligned_mouth_jitter is not None:
+        values["aligned_mouth_jitter"] = metrics.aligned_mouth_jitter
+    for tracker in trackers:
+        prefix = tracker.association
+        values[f"{prefix}.stable_track_coverage"] = tracker.stable_track_coverage
+        values[f"{prefix}.abstention_rate"] = tracker.abstention_rate
+        values[f"{prefix}.target_track_errors_per_1000"] = (
+            tracker.target_track_errors_per_1000
+        )
+    return values
 
 
 @dataclass(frozen=True, slots=True)
@@ -291,6 +344,7 @@ class DetectorBenchmarkReport:
     evaluation_set_sha256: str
     annotation_audit_validated: bool
     bootstrap_samples: int = BOOTSTRAP_SAMPLES
+    bootstrap_seed: int = BOOTSTRAP_SEED
 
     def __post_init__(self) -> None:
         _required_string("detector_name", self.detector_name, path_free=True)
@@ -312,17 +366,48 @@ class DetectorBenchmarkReport:
             and not self.annotation_audit_validated
         ):
             raise ValueError("Research evidence requires a valid annotation audit")
+        if (
+            self.evidence_scope == "research_evidence"
+            and self.latency.device.casefold() != "cpu"
+        ):
+            raise ValueError("Research evidence requires CPU runtime metadata")
         if self.rule_revision != FROZEN_DETECTOR_RULE_REVISION:
             raise ValueError("Report does not use the frozen detector rule revision")
         if self.frame_count <= 0 or self.source_count <= 0:
             raise ValueError("Report frame and source counts must be positive")
         if self.bootstrap_samples != BOOTSTRAP_SAMPLES:
             raise ValueError("Detector reports require 1,000 fixed source bootstraps")
+        if self.bootstrap_seed != BOOTSTRAP_SEED:
+            raise ValueError("Detector reports require the fixed bootstrap seed")
         if {tracker.association for tracker in self.trackers} != {
             "greedy_iou",
             "constant_velocity",
         }:
             raise ValueError("Report must contain both frozen tracker associations")
+        point_estimates = _report_point_estimates(
+            self.metrics,
+            self.trackers,
+            self.latency,
+        )
+        if set(self.intervals) != set(point_estimates):
+            raise ValueError("Report interval keys must exactly match defined metrics")
+        for name, interval in self.intervals.items():
+            if not isinstance(interval, BootstrapInterval):
+                raise TypeError("Report intervals must be BootstrapInterval values")
+            if (
+                not isinstance(interval.successful_samples, int)
+                or isinstance(interval.successful_samples, bool)
+                or interval.successful_samples != BOOTSTRAP_SAMPLES
+            ):
+                raise ValueError(
+                    "Every report interval requires 1,000 source resamples"
+                )
+            for field in ("estimate", "lower", "upper"):
+                _finite(f"interval {name}.{field}", getattr(interval, field))
+            if interval.estimate != point_estimates[name]:
+                raise ValueError(
+                    "Report interval estimate differs from its point metric"
+                )
         _validate_runtime_snapshot(self.runtime_snapshot)
 
 
@@ -401,6 +486,8 @@ def _evaluation_set_hash(
     rows = [
         {
             "frame_id": record.frame_id,
+            "clip_id": record.clip_id,
+            "timestamp_sec": float(record.timestamp_sec),
             "frame_sha256": record.frame_sha256,
             "source_hash": record.source_hash,
             "split_role": record.split_role,
@@ -475,33 +562,40 @@ def _maximum_iou_assignment(
     detections: Sequence[Detection],
     faces: Sequence[FaceAnnotation],
 ) -> tuple[tuple[int, int, float], ...]:
-    states: dict[int, tuple[float, tuple[tuple[int, int], ...]]] = {0: (0.0, ())}
-    for detection_index, detection in enumerate(detections):
-        updated = dict(states)
-        for mask, (total, pairs) in states.items():
-            for face_index, face in enumerate(faces):
-                bit = 1 << face_index
-                if mask & bit:
-                    continue
-                overlap = detection.box.iou(face.box)
-                candidate = (total + overlap, pairs + ((detection_index, face_index),))
-                previous = updated.get(mask | bit)
-                if (
-                    previous is None
-                    or candidate[0] > previous[0]
-                    or (candidate[0] == previous[0] and candidate[1] < previous[1])
-                ):
-                    updated[mask | bit] = candidate
-        states = updated
-    _, pairs = max(
-        states.values(),
-        key=lambda item: (item[0], len(item[1]), tuple((-a, -b) for a, b in item[1])),
+    if not detections or not faces:
+        return ()
+    overlaps = np.asarray(
+        [[detection.box.iou(face.box) for detection in detections] for face in faces],
+        dtype=np.float64,
+    )
+    face_count, detection_count = overlaps.shape
+    costs = np.zeros((face_count, detection_count + face_count), dtype=np.float64)
+    costs[:, :detection_count] = 1.0
+    valid = overlaps >= TARGET_IOU_THRESHOLD
+    tie_unit = np.finfo(np.float64).eps
+    for face_index, detection_index in zip(*np.nonzero(valid), strict=True):
+        tie_rank = abs(face_index - detection_index) + (
+            detection_index / (detection_count + 1)
+        )
+        costs[face_index, detection_index] = (
+            -overlaps[face_index, detection_index] + tie_unit * tie_rank
+        )
+    face_indices, column_indices = linear_sum_assignment(costs)
+    pairs = sorted(
+        (
+            (detection_index, face_index)
+            for face_index, detection_index in zip(
+                face_indices.tolist(), column_indices.tolist(), strict=True
+            )
+            if detection_index < detection_count and valid[face_index, detection_index]
+        ),
+        key=lambda pair: pair[0],
     )
     return tuple(
         (
             detection_index,
             face_index,
-            detections[detection_index].box.iou(faces[face_index].box),
+            float(overlaps[face_index, detection_index]),
         )
         for detection_index, face_index in pairs
     )
@@ -636,6 +730,13 @@ def calibrate_detector_threshold(
         raise ValueError("Cannot change the frozen false-detection calibration rule")
     annotation_by_id = _annotation_map(annotations)
     rows = _validate_records(records, annotation_by_id)
+    return _calibrate_validated(rows, annotation_by_id)
+
+
+def _calibrate_validated(
+    rows: Sequence[CandidateFrame],
+    annotation_by_id: Mapping[str, FrameAnnotation],
+) -> float:
     calibration = tuple(row for row in rows if row.split_role == "calibration")
     if not calibration:
         raise ValueError("Threshold calibration requires calibration sources")
@@ -661,7 +762,7 @@ def calibrate_detector_threshold(
             counts.target_hits / counts.target_frames if counts.target_frames else 0.0
         )
         false_rate = counts.false_detections / counts.frames
-        if false_rate <= max_false_detections_per_frame:
+        if false_rate <= MAX_FALSE_DETECTIONS_PER_FRAME:
             candidates.append((recall, -false_rate, threshold))
     if not candidates:
         raise ValueError(
@@ -710,15 +811,27 @@ def _tracker_counts(
             max_gap=1 if association == "constant_velocity" else 0,
         )
         total_frames += len(clip)
-        if selection.stable:
-            stable_frames += len(selection.frame_indices)
+        if not selection.stable:
+            continue
+        stable_frames += len(selection.frame_indices)
+        identity_states: list[bool] = []
         for frame_index, detection in zip(
             selection.frame_indices, selection.detections, strict=True
         ):
             tracked_frames += 1
             target = _target_face(annotations[clip[frame_index].frame_id])
-            if target is None or detection.box.iou(target.box) < TARGET_IOU_THRESHOLD:
-                errors += 1
+            identity_states.append(
+                target is not None
+                and detection.box.iou(target.box) >= TARGET_IOU_THRESHOLD
+            )
+        if identity_states:
+            errors += int(not identity_states[0])
+            errors += sum(
+                current != previous
+                for previous, current in zip(
+                    identity_states, identity_states[1:], strict=False
+                )
+            )
     return _TrackerCounts(stable_frames, total_frames, errors, tracked_frames)
 
 
@@ -855,12 +968,15 @@ def _aggregate_summaries(summaries: Sequence[_SourceSummary]) -> _SourceSummary:
 
 def _metric_values(summary: _SourceSummary) -> dict[str, float | None]:
     frames = summary.frames
+    latencies = np.asarray(summary.latencies, dtype=np.float64)
+    total_latency_seconds = float(latencies.sum()) / 1000
     values: dict[str, float | None] = {
         "target_recall": frames.target_hits / frames.target_frames
         if frames.target_frames
         else 0.0,
         "false_detections_per_frame": frames.false_detections / frames.frames,
         "non_target_detections_per_frame": frames.non_target_detections / frames.frames,
+        "non_target_candidate_count": float(frames.non_target_detections),
         "landmark_nme": (
             frames.landmark_error_sum / frames.landmark_targets
             if frames.landmark_targets
@@ -875,6 +991,11 @@ def _metric_values(summary: _SourceSummary) -> dict[str, float | None]:
             summary.jitter.total / summary.jitter.pairs
             if summary.jitter.pairs
             else None
+        ),
+        "latency.median_ms": float(np.median(latencies)),
+        "latency.p95_ms": float(np.quantile(latencies, 0.95)),
+        "latency.throughput_fps": (
+            len(latencies) / total_latency_seconds if total_latency_seconds else 0.0
         ),
     }
     for prefix, tracker in (
@@ -936,12 +1057,13 @@ def _bootstrap_intervals(
         )
         for name in values:
             value = metrics[name]
-            if value is not None:
-                values[name].append(value)
+            if value is None:
+                raise ValueError(
+                    f"Metric {name} has an undefined fixed bootstrap resample"
+                )
+            values[name].append(value)
     intervals: dict[str, BootstrapInterval] = {}
     for name, samples_for_metric in values.items():
-        if not samples_for_metric:
-            continue
         intervals[name] = BootstrapInterval(
             estimate=float(estimate[name]),
             lower=float(np.quantile(samples_for_metric, 0.025)),
@@ -967,6 +1089,10 @@ def evaluate_detector(
 ) -> DetectorBenchmarkReport:
     if rule_revision != FROZEN_DETECTOR_RULE_REVISION:
         raise ValueError("Cannot change the frozen detector rule revision")
+    if bootstrap_samples != BOOTSTRAP_SAMPLES:
+        raise ValueError("Detector evaluation requires 1,000 fixed source bootstraps")
+    if bootstrap_seed != BOOTSTRAP_SEED:
+        raise ValueError("Detector evaluation requires the fixed bootstrap seed")
     runtime_dict = dict(runtime_snapshot)
     _validate_runtime_snapshot(runtime_dict)
     for name, value in (
@@ -978,6 +1104,18 @@ def evaluate_detector(
             raise ValueError(f"{name} must be in [0, 1]")
     annotation_by_id = _annotation_map(annotations)
     rows = _validate_records(records, annotation_by_id)
+    calibrated_threshold = _calibrate_validated(rows, annotation_by_id)
+    if not math.isclose(
+        threshold,
+        calibrated_threshold,
+        rel_tol=0.0,
+        abs_tol=1e-12,
+    ):
+        raise ValueError(
+            "Supplied threshold differs from the frozen calibrated threshold"
+        )
+    if threshold < collection_threshold:
+        raise ValueError("Frozen threshold cannot be below the collection threshold")
     audit_validated = False
     if annotation_audit is not None:
         if (
@@ -1074,6 +1212,7 @@ def evaluate_detector(
         evaluation_set_sha256=_evaluation_set_hash(rows, annotation_by_id),
         annotation_audit_validated=audit_validated,
         bootstrap_samples=bootstrap_samples,
+        bootstrap_seed=bootstrap_seed,
     )
 
 

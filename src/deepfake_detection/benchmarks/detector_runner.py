@@ -35,6 +35,28 @@ from .detector_sample import ReviewFrame, _validate_sha256
 class DetectorBackend(Protocol):
     def detect(self, frame: np.ndarray) -> tuple[Detection, ...]: ...
 
+    def runtime_metadata(self) -> Mapping[str, object]: ...
+
+
+def _backend_runtime_metadata(detector: DetectorBackend) -> tuple[str, int]:
+    metadata = detector.runtime_metadata()
+    if not isinstance(metadata, Mapping) or set(metadata) != {
+        "device",
+        "thread_count",
+    }:
+        raise ValueError(
+            "Detector runtime metadata must contain device and thread_count"
+        )
+    device = metadata["device"]
+    thread_count = metadata["thread_count"]
+    if not isinstance(device, str) or not device.strip():
+        raise ValueError("Detector runtime device must be a nonblank string")
+    if not isinstance(thread_count, int) or isinstance(thread_count, bool):
+        raise TypeError("Detector runtime thread_count must be an integer")
+    if thread_count <= 0:
+        raise ValueError("Detector runtime thread_count must be positive")
+    return device, thread_count
+
 
 def _frame_hash(frame: np.ndarray) -> str:
     if not isinstance(frame, np.ndarray):
@@ -214,8 +236,6 @@ def run_detector_benchmark(
     frame_reader: Callable[[ReviewFrame], np.ndarray],
     raw_output: Path,
     runtime_snapshot: RuntimeSnapshot | Mapping[str, Any],
-    device: str,
-    thread_count: int,
     collection_threshold: float = 0.0,
     warmup_frames: int = 3,
     clock: Callable[[], float] = time.perf_counter,
@@ -233,12 +253,6 @@ def run_detector_benchmark(
     _validate_sha256("model_sha256", model_sha256)
     if not detector_name.strip() or not detector_revision.strip():
         raise ValueError("Detector name and revision must be nonblank")
-    if not device.strip():
-        raise ValueError("Detector device must be nonblank")
-    if not isinstance(thread_count, int) or isinstance(thread_count, bool):
-        raise TypeError("thread_count must be an integer")
-    if thread_count <= 0:
-        raise ValueError("thread_count must be positive")
     if not isinstance(warmup_frames, int) or isinstance(warmup_frames, bool):
         raise TypeError("warmup_frames must be an integer")
     if warmup_frames < 0:
@@ -265,6 +279,7 @@ def run_detector_benchmark(
         ):
             raise TypeError("Detector must return a tuple of Detection values")
 
+    device, thread_count = _backend_runtime_metadata(detector)
     records: list[CandidateFrame] = []
     for row in ordered:
         frame = _read_verified_frame(row, frame_reader)
@@ -291,6 +306,8 @@ def run_detector_benchmark(
                 thread_count=thread_count,
             )
         )
+    if _backend_runtime_metadata(detector) != (device, thread_count):
+        raise ValueError("Detector runtime metadata changed during timed inference")
     candidate_rows = tuple(records)
     threshold = calibrate_detector_threshold(candidate_rows, resolved)
     effective_scope: EvidenceScope = (

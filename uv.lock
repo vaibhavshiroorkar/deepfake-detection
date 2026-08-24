@@ -690,6 +690,8 @@ dependencies = [
     { name = "pyarrow" },
     { name = "pyyaml" },
     { name = "scikit-learn" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-23-deepfake-generalization-cpu' and extra == 'extra-23-deepfake-generalization-cu130')" },
+    { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-23-deepfake-generalization-cpu' and extra == 'extra-23-deepfake-generalization-cu130')" },
 ]
 
 [package.optional-dependencies]
@@ -736,6 +738,8 @@ requires-dist = [
     { name = "pyarrow", specifier = "==24.0.0" },
     { name = "pyyaml", specifier = "==6.0.3" },
     { name = "scikit-learn", specifier = "==1.9.0" },
+    { name = "scipy", marker = "python_full_version < '3.12'", specifier = "==1.17.1" },
+    { name = "scipy", marker = "python_full_version >= '3.12'", specifier = "==1.18.1" },
     { name = "streamlit", marker = "extra == 'dashboard'", specifier = "==1.60.0" },
     { name = "timm", marker = "extra == 'ml'", specifier = "==1.0.27" },
     { name = "torch", marker = "extra == 'cpu'", specifier = "==2.12.1", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "deepfake-generalization", extra = "cpu" } },

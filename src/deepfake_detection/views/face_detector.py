@@ -69,6 +69,26 @@ class MTCNNFaceDetector:
         self.model = model
         self.confidence = confidence
 
+    def runtime_metadata(self) -> dict[str, object]:
+        try:
+            import torch
+        except ImportError as error:
+            raise RuntimeError(
+                "MTCNN runtime metadata requires the PyTorch dependency"
+            ) from error
+        model_device = getattr(self.model, "device", None)
+        if model_device is None:
+            parameters = getattr(self.model, "parameters", None)
+            if callable(parameters):
+                first_parameter = next(iter(parameters()), None)
+                model_device = getattr(first_parameter, "device", None)
+        if model_device is None or not str(model_device).strip():
+            raise RuntimeError("Cannot determine the MTCNN model device")
+        return {
+            "device": str(model_device),
+            "thread_count": int(torch.get_num_threads()),
+        }
+
     def detect(self, frame: np.ndarray) -> tuple[Detection, ...]:
         _validate_frame(frame)
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -145,6 +165,12 @@ class YuNetFaceDetector:
             )
         self.model = model
         self.confidence = confidence
+
+    def runtime_metadata(self) -> dict[str, object]:
+        return {
+            "device": "cpu",
+            "thread_count": int(cv2.getNumThreads()),
+        }
 
     def detect(self, frame: np.ndarray) -> tuple[Detection, ...]:
         _validate_frame(frame)
