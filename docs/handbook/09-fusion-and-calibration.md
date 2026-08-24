@@ -66,9 +66,10 @@ four-source table explains the rule. It does not describe a recorded run.
 
 ## Calibration
 
-Each branch `j` produces a raw logit `l_(i,j)` for clip `i`. The current
-calibrator fits a one-feature logistic regression on out-of-fold logits and
-binary clip labels:
+Each branch `j` produces a raw logit `l_(i,j)` for clip `i`. There are `N`
+out-of-fold meta-training clips. The global fusion label is `y_i` in `{0,1}`,
+where 1 means the clip is fake. Define the signed label `t_i = 2y_i - 1`, so
+`t_i` is in `{-1,+1}`. The current calibrator maps a score with:
 
 ```text
 p_(i,j) = sigmoid(a_j l_(i,j) + b_j)
@@ -76,11 +77,27 @@ sigmoid(x) = 1 / (1 + exp(-x))
 c_(i,j) = log(p_(i,j) / (1 - p_(i,j)))
 ```
 
-`a_j` and `b_j` are learned calibration parameters. `p_(i,j)` is a calibrated
-branch probability estimate. `c_(i,j)` converts it back to calibrated log-odds
-for fusion. The implementation clips probability to `[1e-6, 1 - 1e-6]` before
-the log-odds transform to avoid infinity. This sigmoid mapping is commonly
-called Platt scaling.
+The score mapping does not explain how `a_j` and `b_j` are fitted. For branch
+`j`, the current `liblinear` logistic regression minimizes this equivalent
+L2-regularized negative log-likelihood objective:
+
+```text
+J_cal,j(a_j, b_j) = sum_(i=1)^N log(
+    1 + exp(-t_i (a_j l_(i,j) + b_j))
+) + (a_j^2 + b_j^2) / (2C)
+```
+
+`a_j` is the learned slope, `b_j` is the learned intercept, and `C > 0` is the
+scikit-learn inverse regularization strength. `liblinear` represents the
+intercept as a synthetic feature with default `intercept_scaling = 1`, so its
+weight is also penalized. Multiplying the full expression by positive `C`
+gives liblinear's equivalent form: `C` times the loss sum plus one half the
+squared parameter norm. The current default is `C = 1.0`.
+
+`p_(i,j)` is the fitted branch probability estimate. `c_(i,j)` converts it
+back to calibrated log-odds for fusion. The implementation clips probability
+to `[1e-6, 1 - 1e-6]` before the log-odds transform to avoid infinity. This is
+the project's sigmoid, or Platt-style, calibration step.
 
 Calibration and decision thresholds solve different problems. Calibration
 maps a score to a probability estimate. A threshold maps the final probability
@@ -109,10 +126,24 @@ eta_i = beta_0 + sum_(j=1)^J beta_j c_(i,j)
 p_i = sigmoid(eta_i)
 ```
 
-Every `beta` is learned. Regularization limits coefficient size. The current
-default uses scikit-learn logistic regression with `C = 1.0` and the
-`liblinear` solver. Smaller `C` means stronger L2 regularization under that
-estimator's convention.
+Let `Q = J + 3` be the fusion feature count. Let `beta` in `R^Q` contain the
+weights for every calibrated branch logit and quality value. Let `beta_0` be
+the intercept, so `eta_i = beta^T x_i + beta_0`. The current logistic fusion
+fit minimizes:
+
+```text
+J_fusion(beta, beta_0) = sum_(i=1)^N log(
+    1 + exp(-t_i (beta^T x_i + beta_0))
+) + (||beta||_2^2 + beta_0^2) / (2C)
+```
+
+`||beta||_2^2` is the sum of squared feature weights. `N`, `t_i`, and `C` have
+the definitions above. The current model again uses scikit-learn
+`LogisticRegression`, `liblinear`, default `intercept_scaling = 1`, and
+`C = 1.0`. The intercept is therefore penalized as a synthetic-feature
+weight. Smaller `C` means stronger L2 regularization. After fitting, the model
+maps `eta_i` to final probability `p_i`; fitting and score mapping are separate
+steps.
 
 ### Worked score example
 
@@ -138,9 +169,9 @@ The fused probability is `sigmoid(1.3645)`, about `0.796`. This is a worked
 calculation. It is not a learned project coefficient or experiment result.
 
 `FeatureRecord` is the stored branch-level row. It contains dataset, clip,
-segment, branch, logit, embedding, availability, cue label, quality fields,
-source and subgroup metadata, partition role, checkpoint hash, preprocessing
-hash, split hash, cache fingerprint, and run ID.
+segment, branch, logit, embedding, availability, global clip label, quality
+fields, source and subgroup metadata, partition role, checkpoint hash,
+preprocessing hash, split hash, cache fingerprint, and run ID.
 
 `FeatureStore.assemble()` groups records by dataset, clip, and segment. In
 strict mode it requires every selected branch to be present and available. It
@@ -233,15 +264,28 @@ held out once and that train and holdout sources never overlap.
 [`test_feature_store.py`](../../tests/test_feature_store.py) checks Parquet
 round trips, duplicate keys, strict coverage, unavailable rows, and provenance
 conflicts.
-[`test_fusion.py`](../../tests/test_fusion.py) checks per-branch calibration,
-ordered probabilities, missing-branch rejection, MLP scoring, and artifact
-hash validation.
-[`test_cli.py`](../../tests/test_cli.py) checks that fusion training accepts
-out-of-fold rows and rejects other partition roles.
-[`test_metrics.py`](../../tests/test_metrics.py) checks balanced-accuracy
-threshold selection and invalid probability rejection.
-[`test_inference.py`](../../tests/test_inference.py) checks complete scoring and
-indeterminate output when audio or sync evidence is missing.
+[`test_fusion.py`](../../tests/test_fusion.py) fits the three-branch logistic
+path and checks that a negative fixture scores below 0.5 while a positive one
+scores above 0.5. Separate cases check missing-branch rejection, ordered MLP
+scores, and split or preprocessing hash rejection.
+[`test_cli.py`](../../tests/test_cli.py) runs fusion training and scoring with
+rows marked `oof`. It checks artifact type and hashes, ordered output
+probabilities, populated visual probabilities, preserved sources, and a blank
+fused probability for an incomplete appended clip. It has no non-OOF rejection
+case.
+[`test_metrics.py`](../../tests/test_metrics.py) checks one valid
+balanced-accuracy threshold and rejection of single-class labels. It does not
+test invalid probability values.
+[`test_inference.py`](../../tests/test_inference.py) checks one complete fused
+prediction. Its incomplete fixture removes audio plus both sync views, then
+checks indeterminate output, no probability, and a `missing_audio` blocker. It
+does not isolate missing sync.
+
+Implementation guarantees beyond those isolated tests are explicit in code:
+`_train_fusion()` rejects assembled partition roles other than `oof`;
+`select_balanced_accuracy_threshold()` rejects nonfinite or out-of-range
+probabilities; and `PredictionEngine.predict()` checks every configured branch
+before fusion.
 
 ## Project code path
 
@@ -249,7 +293,7 @@ indeterminate output when audio or sync evidence is missing.
    creates repeatable source-grouped train and holdout indices.
 2. [`export_features()`](../../src/deepfake_detection/fusion/export.py) creates
    one `FeatureRecord` per clip and branch with logit, availability, quality,
-   labels, checkpoint hashes, and other provenance.
+   the global clip label, checkpoint hashes, and other provenance.
 3. [`FeatureRecord` and `FeatureStore.assemble()`](../../src/deepfake_detection/fusion/store.py)
    persist and validate branch evidence.
 4. [`FusionSample`, `LateFusion.fit()`, and `LateFusion.predict_proba()`](../../src/deepfake_detection/fusion/late.py)

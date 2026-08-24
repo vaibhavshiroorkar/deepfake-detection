@@ -245,10 +245,13 @@ for matching fixture pairs.
 [`test_sync_dataset.py`](../../tests/test_sync_dataset.py) covers authentic
 offset variants and cross-source mismatches.
 [`test_training_recipes.py`](../../tests/test_training_recipes.py) checks that
-correct offset logits reduce training loss and that the contrastive weight
-changes the total.
-[`test_feature_export.py`](../../tests/test_feature_export.py) checks the anomaly
-logit and checkpoint provenance exported for fusion.
+correct offset logits reduce training loss, shifted pairs contribute to the
+contrastive term, and a one-epoch sync smoke run updates the aligned-class
+offset-head bias.
+[`test_feature_export.py`](../../tests/test_feature_export.py) checks that the
+producer writes a row named `sync` beside visual and audio rows. It also checks
+the global clip label and selected provenance fields. It does not assert the
+sync anomaly logit, embedding, or checkpoint hash.
 
 ## Project code path
 

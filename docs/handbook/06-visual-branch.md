@@ -65,19 +65,23 @@ textures, and object parts. The project first freezes the backbone, then makes
 it trainable after `freeze_epochs`. This reduces early damage to pretrained
 features while the new temporal and classification layers learn.
 
-For one GRU step, let `x_t` be the frame feature in `R^D` and `h_(t-1)` the
-previous state in `R^K`. A first-principles form is:
+For one PyTorch GRU step, let `x_t` be the frame feature in `R^D` and
+`h_(t-1)` the previous state in `R^K`. `nn.GRU` computes:
 
 ```text
-r_t = sigmoid(W_r x_t + U_r h_(t-1) + b_r)
-z_t = sigmoid(W_z x_t + U_z h_(t-1) + b_z)
-n_t = tanh(W_n x_t + U_n (r_t * h_(t-1)) + b_n)
+r_t = sigmoid(W_ir x_t + b_ir + W_hr h_(t-1) + b_hr)
+z_t = sigmoid(W_iz x_t + b_iz + W_hz h_(t-1) + b_hz)
+n_t = tanh(W_in x_t + b_in + r_t * (W_hn h_(t-1) + b_hn))
 h_t = (1 - z_t) * n_t + z_t * h_(t-1)
 ```
 
-Here `r_t` is the reset gate, `z_t` is the update gate, `n_t` is the candidate
-state, `*` is elementwise multiplication, and every `W`, `U`, and `b` is a
-learned parameter. The gates decide which past evidence to keep.
+Here `r_t`, `z_t`, `n_t`, and `h_t` are reset gate, update gate, candidate
+state, and new hidden state in `R^K`. `W_i*` maps input space `R^D` to hidden
+space `R^K`. `W_h*` maps the previous hidden state within `R^K`. Each `b_i*`
+and `b_h*` is a separate learned bias in `R^K`. `sigmoid` and `tanh` act
+elementwise, `*` is elementwise multiplication, and `1` is the all-ones vector
+in `R^K`. PyTorch applies `r_t` after the hidden affine transform in the
+candidate equation, as written above.
 
 ## Forward pass
 
@@ -125,8 +129,9 @@ L_i = -[w_pos y_i log(sigmoid(l_i))
 `w_pos` is the configured positive-class weight. It defaults to 1. The CLI
 also uses inverse-frequency sampling on the training set. Validation loss
 selects the best epoch. `save_checkpoint()` stores the model and optimizer
-state with run metadata. That metadata includes the Git commit, split hash,
-preprocessing hash, config hash, seed, run ID, branch name, and best epoch.
+state with seven run-metadata fields: run ID, branch name, Git commit, split
+hash, preprocessing hash, config hash, and seed. The selected epoch is the
+separate top-level checkpoint `epoch` value. It is not part of `RunMetadata`.
 The feature store later records the resulting checkpoint hash for every row.
 
 ## Candidate comparison
@@ -180,12 +185,19 @@ confidence intervals overlap materially.
 
 [`test_branches.py`](../../tests/test_branches.py) checks that the visual branch
 preserves batch size and returns one logit and one embedding per clip.
-[`test_training_recipes.py`](../../tests/test_training_recipes.py) covers the
-binary training recipe and staged backbone control.
-[`test_feature_export.py`](../../tests/test_feature_export.py) checks export of
-branch logits, embeddings, availability, and provenance.
-[`test_inference.py`](../../tests/test_inference.py) checks that missing evidence
-causes an indeterminate result instead of a fused score.
+[`test_training_recipes.py`](../../tests/test_training_recipes.py) checks that a
+one-epoch binary smoke run updates a tiny branch and still takes one optimizer
+step when accumulation exceeds batch count. It sets `freeze_epochs = 0`, so it
+does not test staged freezing.
+[`test_feature_export.py`](../../tests/test_feature_export.py) checks that the
+producer writes three named branch rows with the global clip label,
+preprocessing hash, cache fingerprint, source, and method. Its missing-cache
+case checks three unavailable rows and their failure flag. It does not assert
+the exported logit, embedding, checkpoint hash, or sync anomaly value.
+[`test_inference.py`](../../tests/test_inference.py) checks a complete fused
+prediction and a fixture where audio plus both sync views are absent. The
+second case is indeterminate, has no fused probability, and names
+`missing_audio`; it does not isolate missing visual or missing sync behavior.
 
 ## Project code path
 

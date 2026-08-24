@@ -113,9 +113,10 @@ L_i = -[w_pos y_i log(sigmoid(l_i))
 
 `w_pos` is the positive-class weight and defaults to 1. Training uses
 inverse-frequency sampling, staged encoder unfreezing, validation-loss early
-stopping, and best-state restore. The saved checkpoint metadata contains the
-Git commit, split hash, preprocessing hash, config hash, seed, run ID, branch,
-and best epoch. Exported feature rows also carry the checkpoint hash.
+stopping, and best-state restore. The saved `RunMetadata` contains seven
+fields: run ID, branch, Git commit, split hash, preprocessing hash, config
+hash, and seed. The selected epoch is stored separately as the top-level
+checkpoint `epoch` value. Exported feature rows also carry the checkpoint hash.
 
 ## Padding and masks
 
@@ -182,16 +183,21 @@ runtime, and memory as defined in [model selection](../model-selection.md).
 
 ### Supporting tests
 
-[`test_branches.py`](../../tests/test_branches.py) uses a real token-producing
-fixture encoder. It checks that pooling occurs after temporal tokens and that
-the output has one embedding and logit per clip. It does not cover masking,
-because masking is not implemented.
-[`test_training_recipes.py`](../../tests/test_training_recipes.py) covers binary
-loss training and staged backbone control.
-[`test_feature_export.py`](../../tests/test_feature_export.py) checks logit,
-embedding, availability, and provenance export.
-[`test_inference.py`](../../tests/test_inference.py) checks abstention when audio
-is missing.
+[`test_branches.py`](../../tests/test_branches.py) uses a small fixture encoder
+that returns five temporal tokens. It checks output logit and embedding shapes
+and preserves `token_count = 5`. It does not inspect attention weights or
+masking.
+[`test_training_recipes.py`](../../tests/test_training_recipes.py) checks that a
+one-epoch binary smoke run updates a tiny branch and performs one accumulated
+optimizer step. It sets `freeze_epochs = 0`, so it does not test staged
+freezing.
+[`test_feature_export.py`](../../tests/test_feature_export.py) checks three
+named branch rows, the global clip label, selected provenance fields, and
+missing-cache availability. It does not assert exported logits, embeddings,
+checkpoint hashes, or the sync anomaly value.
+[`test_inference.py`](../../tests/test_inference.py) checks indeterminate output
+when audio plus both sync views are absent. It asserts no fused probability
+and a `missing_audio` blocker; it does not isolate the audio branch from sync.
 
 ## Project code path
 
