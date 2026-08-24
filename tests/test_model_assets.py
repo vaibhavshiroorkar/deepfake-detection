@@ -132,3 +132,21 @@ def test_fetch_yunet_rejects_bad_download_without_replacing_destination(
 
     assert destination.read_bytes() == b"existing-wrong-file"
     assert list(tmp_path.glob("*.tmp")) == []
+
+
+def test_fetch_yunet_stops_after_size_limit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    expected = b"expected-model"
+    configure_test_asset(monkeypatch, expected)
+    response = ByteResponse(expected + b"unexpected trailing data")
+    monkeypatch.setattr(
+        model_assets,
+        "urlopen",
+        lambda request, timeout: response,
+    )
+
+    with pytest.raises(ValueError, match="integrity"):
+        model_assets.fetch_yunet_model(tmp_path / "yunet.onnx")
+
+    assert response.offset == len(expected) + 1

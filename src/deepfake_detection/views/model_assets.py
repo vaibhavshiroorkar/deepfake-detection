@@ -32,8 +32,18 @@ def fetch_yunet_model(destination: Path, *, force: bool = False) -> Path:
     try:
         with urlopen(request, timeout=60) as response:  # noqa: S310
             with temporary.open("xb") as output:
-                while chunk := response.read(1024 * 1024):
+                byte_limit = YUNET_SIZE_BYTES + 1
+                downloaded = 0
+                while chunk := response.read(min(1024 * 1024, byte_limit - downloaded)):
+                    downloaded += len(chunk)
+                    if downloaded > YUNET_SIZE_BYTES:
+                        raise ValueError(
+                            "Downloaded YuNet model failed integrity checks: "
+                            "size limit exceeded"
+                        )
                     output.write(chunk)
+                    if downloaded == byte_limit:
+                        break
                 output.flush()
                 os.fsync(output.fileno())
         if not _has_expected_integrity(temporary):

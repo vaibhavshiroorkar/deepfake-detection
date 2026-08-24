@@ -40,6 +40,15 @@ def _sort_and_filter(
     )
 
 
+def _is_mtcnn_empty_result(boxes: Any, probabilities: Any, points: Any) -> bool:
+    if boxes is not None or points is not None:
+        return False
+    if probabilities is None:
+        return True
+    probability_rows = np.asarray(probabilities, dtype=object)
+    return probability_rows.shape == (1,) and probability_rows[0] is None
+
+
 class MTCNNFaceDetector:
     def __init__(
         self,
@@ -67,7 +76,7 @@ class MTCNNFaceDetector:
         if not isinstance(result, tuple) or len(result) != 3:
             raise ValueError("MTCNN must return boxes, probabilities, and landmarks")
         boxes, probabilities, points = result
-        if boxes is None and probabilities is None and points is None:
+        if _is_mtcnn_empty_result(boxes, probabilities, points):
             return ()
         if boxes is None or probabilities is None or points is None:
             raise ValueError("MTCNN returned a partial detection result")

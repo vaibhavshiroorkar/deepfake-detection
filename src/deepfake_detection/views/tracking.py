@@ -80,6 +80,8 @@ class Detection:
     def __post_init__(self) -> None:
         if not isinstance(self.box, Box):
             raise TypeError("Detection box must be a Box")
+        if self.box.right <= self.box.left or self.box.bottom <= self.box.top:
+            raise ValueError("Detection box must have positive width and height")
         _require_finite("Detection confidence", self.confidence)
         if not 0 <= self.confidence <= 1:
             raise ValueError("Detection confidence must be in [0, 1]")

@@ -92,6 +92,42 @@ def test_mtcnn_adapter_accepts_empty_outputs(result: tuple[Any, Any, Any]) -> No
     )
 
 
+def test_mtcnn_adapter_accepts_single_image_none_probability_output() -> None:
+    class EmptyMTCNN:
+        def detect(
+            self, image: np.ndarray, *, landmarks: bool
+        ) -> tuple[None, np.ndarray, None]:
+            return None, np.asarray([None], dtype=object), None
+
+    detector = MTCNNFaceDetector(model=EmptyMTCNN())
+
+    assert detector.detect(np.zeros((8, 8, 3), dtype=np.uint8)) == ()
+
+
+@pytest.mark.parametrize(
+    "result",
+    [
+        (
+            np.asarray([[1, 2, 3, 4]], dtype=np.float32),
+            np.asarray([0.9]),
+            None,
+        ),
+        (None, np.asarray([0.9]), None),
+    ],
+)
+def test_mtcnn_adapter_rejects_partial_non_empty_outputs(
+    result: tuple[Any, Any, Any],
+) -> None:
+    class PartialMTCNN:
+        def detect(self, image: np.ndarray, *, landmarks: bool) -> tuple[Any, Any, Any]:
+            return result
+
+    detector = MTCNNFaceDetector(model=PartialMTCNN())
+
+    with pytest.raises(ValueError, match="partial"):
+        detector.detect(np.zeros((8, 8, 3), dtype=np.uint8))
+
+
 @pytest.mark.parametrize(
     ("boxes", "probabilities", "points"),
     [
@@ -183,6 +219,53 @@ def test_yunet_adapter_rejects_malformed_rows(rows: np.ndarray) -> None:
 
 
 @pytest.mark.parametrize(
+    "box",
+    [
+        [1, 2, 1, 12],
+        [10, 2, 1, 12],
+        [1, 2, 10, 2],
+        [1, 12, 10, 2],
+    ],
+)
+def test_mtcnn_adapter_rejects_degenerate_boxes(box: list[float]) -> None:
+    class DegenerateMTCNN:
+        def detect(
+            self, image: np.ndarray, *, landmarks: bool
+        ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+            return (
+                np.asarray([box], dtype=np.float32),
+                np.asarray([0.9], dtype=np.float32),
+                np.asarray(
+                    [[[2, 3], [8, 3], [5, 6], [3, 9], [7, 9]]],
+                    dtype=np.float32,
+                ),
+            )
+
+    with pytest.raises(ValueError, match="positive"):
+        MTCNNFaceDetector(model=DegenerateMTCNN()).detect(
+            np.zeros((16, 16, 3), dtype=np.uint8)
+        )
+
+
+@pytest.mark.parametrize(
+    ("width", "height"),
+    [(0.0, 10.0), (-1.0, 10.0), (10.0, 0.0), (10.0, -1.0)],
+)
+def test_yunet_adapter_rejects_non_positive_box_dimensions(
+    width: float, height: float
+) -> None:
+    rows = np.asarray(
+        [[1, 2, width, height, 8, 4, 3, 4, 5, 6, 8, 9, 2, 9, 0.95]],
+        dtype=np.float32,
+    )
+
+    with pytest.raises(ValueError, match="positive"):
+        YuNetFaceDetector(model=FixtureYuNet(rows)).detect(
+            np.zeros((16, 16, 3), dtype=np.uint8)
+        )
+
+
+@pytest.mark.parametrize(
     "value",
     [float("nan"), float("inf"), float("-inf")],
 )
@@ -201,6 +284,20 @@ def test_detection_contract_rejects_scores_outside_probability_range(
 ) -> None:
     with pytest.raises(ValueError, match=r"\[0, 1\]"):
         Detection(Box(0.0, 0.0, 1.0, 1.0), confidence)
+
+
+@pytest.mark.parametrize(
+    "box",
+    [
+        Box(1.0, 1.0, 1.0, 2.0),
+        Box(2.0, 1.0, 1.0, 2.0),
+        Box(1.0, 1.0, 2.0, 1.0),
+        Box(1.0, 2.0, 2.0, 1.0),
+    ],
+)
+def test_detection_contract_rejects_boxes_without_positive_area(box: Box) -> None:
+    with pytest.raises(ValueError, match="positive"):
+        Detection(box, 0.9)
 
 
 def test_landmark_contract_canonicalizes_provider_pair_order() -> None:
