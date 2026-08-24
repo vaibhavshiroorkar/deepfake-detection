@@ -14,6 +14,8 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ### Added
 
+- A beginner handbook with a 15-chapter learning path and live foundations for
+  the research problem, deep learning, audio-video timing, and data leakage.
 - A public CLI parser contract, generated CLI command reference, and CLI drift
   validation in `ddf-docs`.
 - Repository-owned documentation validation for Markdown, local links, change

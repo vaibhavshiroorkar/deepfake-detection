@@ -9,13 +9,16 @@
 
 ## Learning handbook
 
-The handbook is planned. Its future chapters are:
+Start with the [handbook index](handbook/README.md). Live chapters are:
 
-`handbook/00-learning-path.md`
-`handbook/01-problem-and-research-question.md`
-`handbook/02-deep-learning-foundations.md`
-`handbook/03-audio-video-foundations.md`
-`handbook/04-data-and-leakage.md`
+- [Learning path](handbook/00-learning-path.md)
+- [Problem and research question](handbook/01-problem-and-research-question.md)
+- [Deep learning foundations](handbook/02-deep-learning-foundations.md)
+- [Audio-video foundations](handbook/03-audio-video-foundations.md)
+- [Data and leakage](handbook/04-data-and-leakage.md)
+
+Future chapters are:
+
 `handbook/05-preprocessing-pipeline.md`
 `handbook/06-visual-branch.md`
 `handbook/07-audio-branch.md`

@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from deepfake_detection.cli import build_parser
 from deepfake_detection.documentation.checks import (
     check_change_contract,
@@ -11,6 +13,70 @@ from deepfake_detection.documentation.cli_reference import (
     command_paths,
     render_command_block,
 )
+
+
+def assert_markdown_headings(
+    root: Path, relative: str, headings: tuple[str, ...]
+) -> None:
+    text = (root / relative).read_text(encoding="utf-8")
+    for heading in headings:
+        assert f"## {heading}\n" in text
+
+
+FOUNDATION_CHAPTERS = {
+    "docs/handbook/00-learning-path.md": (
+        "Who this is for",
+        "Reading order",
+        "How to study each chapter",
+        "Learning checks",
+    ),
+    "docs/handbook/01-problem-and-research-question.md": (
+        "Problem definition",
+        "Research questions",
+        "Contribution",
+        "Limits",
+        "Viva questions",
+        "Sources",
+    ),
+    "docs/handbook/02-deep-learning-foundations.md": (
+        "Tensors and shapes",
+        "Forward pass and gradients",
+        "Binary classification loss",
+        "Optimization and regularization",
+        "Transfer learning",
+        "Worked example",
+        "Exercises",
+        "Viva questions",
+        "Sources",
+    ),
+    "docs/handbook/03-audio-video-foundations.md": (
+        "Digital video",
+        "Digital audio",
+        "Timestamps and synchronization",
+        "Codecs and shortcuts",
+        "Worked timeline",
+        "Exercises",
+        "Viva questions",
+        "Sources",
+    ),
+    "docs/handbook/04-data-and-leakage.md": (
+        "Manifest contract",
+        "Cue-specific labels",
+        "Source-disjoint splits",
+        "Leakage and shortcuts",
+        "Method holdout",
+        "Project code path",
+        "Failure cases",
+        "Exercises",
+        "Viva questions",
+        "Sources",
+    ),
+}
+
+
+@pytest.mark.parametrize(("relative", "headings"), FOUNDATION_CHAPTERS.items())
+def test_foundation_chapter_contracts(relative: str, headings: tuple[str, ...]) -> None:
+    assert_markdown_headings(Path.cwd(), relative, headings)
 
 
 def test_cli_reference_discovers_every_leaf_command() -> None:
