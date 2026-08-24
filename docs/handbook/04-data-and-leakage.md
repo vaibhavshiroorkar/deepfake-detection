@@ -35,10 +35,23 @@ The four valid `manipulation_type` values are `RealVideo-RealAudio`,
 `FakeVideo-RealAudio`, `RealVideo-FakeAudio`, and `FakeVideo-FakeAudio`.
 `ClipRecord` derives and validates the three Boolean labels from this value.
 
-`load_manifest()` reads UTF-8 CSV, groups rows by media path, and checks clip
-identity consistency. It quarantines a path when one clip ID maps to several
-paths or duplicate rows disagree on manipulation type or method. It returns
-usable records and the quarantined paths separately.
+`load_manifest()` reads UTF-8 CSV and groups rows by the text in `video_path`.
+Its conflict checks are deliberately narrow:
+
+1. It builds the set of paths used by each `clip_id`. If one clip ID maps to
+   more than one path, every affected path is quarantined.
+2. Within one shared path, it compares only the pair
+   `(manipulation_type, method)`. More than one such pair quarantines that path.
+3. If both checks pass, it creates one `ClipRecord` from the first row in that
+   path group. It returns those records and the quarantined paths separately.
+
+This is not a full identity or duplicate-content audit. Two different clip IDs
+can share one path and pass when their manipulation type and method match. The
+loader then keeps the first row's clip ID. It also does not compare duplicate
+rows for differences in `source`, targets, race, gender, or leading silence.
+`ClipRecord` validates the selected row, but it cannot detect disagreements in
+rows that were not selected. Upstream manifest construction and audit must
+resolve those cases before a split is frozen.
 
 ## Cue-specific labels
 
@@ -122,8 +135,9 @@ validation tuning can still adapt to it.
 
 ## Project code path
 
-1. [`load_manifest()`](../../src/deepfake_detection/data/manifest.py) parses,
-   validates, deduplicates, and quarantines.
+1. [`load_manifest()`](../../src/deepfake_detection/data/manifest.py) groups
+   paths, applies its two narrow conflict checks, and validates the selected
+   first row for each accepted path.
 2. [`build_source_split()`](../../src/deepfake_detection/data/protocols.py)
    groups source identities into partitions.
 3. [`audit_split()`](../../src/deepfake_detection/data/protocols.py) reports
@@ -173,6 +187,8 @@ separately.
 - Conflicting demographics for one source stop split construction.
 - A missing split partition or empty held-out set stops method holdout.
 - Row-level random splitting silently creates dependent evaluation examples.
+- A shared path with different clip IDs can pass the loader when method and
+  manipulation type match. Differences in other duplicate fields can also pass.
 
 ### Supporting tests
 
@@ -197,10 +213,21 @@ uv run pytest tests\test_manifest.py tests\test_protocols.py -v
 ## Viva questions
 
 1. Why does the visual branch not use `clip_fake`?
+   Expected answer: `clip_fake` is true for fake audio with real video. Using it
+   would label authentic visual evidence as fake. Visual uses `video_fake`.
 2. What does source-disjoint mean, and what does it leave unresolved?
+   Expected answer: each source identity belongs to exactly one partition. A
+   target identity can still cross partitions, and other shortcuts can remain.
 3. Why are target identities treated in a separate stress subset?
+   Expected answer: isolating both source and target roles across the full
+   connected identity graph would remove much of the data and method coverage.
 4. Why must validation exclude a held-out method?
+   Expected answer: model or threshold choices made on that method would tune
+   to the attack claimed as unseen, even if training excluded it.
 5. What does the split hash prove, and what does it not prove?
+   Expected answer: it fingerprints partition, clip, source, and target
+   assignments independent of row order. It does not prove label correctness,
+   media uniqueness, demographic quality, or absence of all leakage.
 
 ## Sources
 

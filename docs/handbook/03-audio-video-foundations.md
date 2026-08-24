@@ -156,10 +156,20 @@ uv run pytest tests\test_views.py tests\test_preprocessor.py `
 ## Viva questions
 
 1. Why is a presentation timestamp safer than a frame number?
+   Expected answer: timestamps state display time even when frame rate varies
+   or decode order differs from presentation order.
 2. Why does resampling need filtering?
+   Expected answer: lowering the sample rate without an anti-alias filter folds
+   frequencies above the new limit into false lower frequencies.
 3. Why does the sync objective decode wider audio context?
+   Expected answer: it can crop every shifted two-second view from real decoded
+   audio. Offset-specific zero padding would reveal the target class.
 4. How can a codec become a shortcut?
+   Expected answer: if codec artifacts correlate with labels or methods, the
+   model can identify the encoding pipeline instead of manipulation evidence.
 5. Why must every branch share one timeline?
+   Expected answer: visual frames and audio samples must refer to the same
+   seconds. Independent origins or rounding rules can create false misalignment.
 
 ## Sources
 
