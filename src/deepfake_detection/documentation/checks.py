@@ -23,7 +23,11 @@ FORBIDDEN_CHARACTERS = frozenset(
     {"\u2013", "\u2014", "\u2022", "\u00b7", "\u2026", "\u2192"}
 )
 LINK_PATTERN = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
-FENCED_CODE_PATTERN = re.compile(r"```.*?```", re.DOTALL)
+FENCED_CODE_PATTERN = re.compile(
+    r"^(?P<backtick>`{3,})[^\n]*\n.*?^(?P=backtick)`*[ \t]*$"
+    r"|^(?P<tilde>~{3,})[^\n]*\n.*?^(?P=tilde)~*[ \t]*$",
+    re.DOTALL | re.MULTILINE,
+)
 INLINE_CODE_PATTERN = re.compile(r"`[^`\n]+`")
 
 

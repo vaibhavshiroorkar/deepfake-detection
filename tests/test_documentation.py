@@ -30,6 +30,36 @@ def test_markdown_checker_reports_broken_links_and_prose_rules(
     assert rules == {"ascii", "local-link", "unfinished-marker"}
 
 
+def test_markdown_checker_ignores_inline_and_fenced_code(tmp_path: Path) -> None:
+    guide = tmp_path / "guide.md"
+    guide.write_text(
+        """# Guide
+
+`[Inline](missing-inline.md) [INCOMPLETE]`
+
+```markdown
+[Triple](missing-triple.md)
+[INCOMPLETE]
+```
+
+````markdown
+```markdown
+[Longer](missing-longer.md)
+[INCOMPLETE]
+```
+````
+
+~~~markdown
+[Tilde](missing-tilde.md)
+[INCOMPLETE]
+~~~
+""",
+        encoding="utf-8",
+    )
+
+    assert check_markdown_tree(tmp_path) == ()
+
+
 def test_change_contract_requires_docs_and_changelog_for_source_changes() -> None:
     issues = check_change_contract(
         (Path("src/deepfake_detection/cli.py"), Path("tests/test_cli.py"))
