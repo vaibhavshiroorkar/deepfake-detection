@@ -21,6 +21,9 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ### Added
 
+- A source-disjoint detector benchmark evaluator with fixed threshold
+  calibration, all-face matching, landmark and tracking metrics, source
+  bootstraps, deterministic raw evidence, and frozen selection rules.
 - Training-only detector review sampling and JSONL annotation contracts with
   source-disjoint calibration groups, fixed evidence gates, frame hashes,
   multi-face labels, independent double-review checks, whole-face disagreement
