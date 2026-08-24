@@ -99,3 +99,19 @@ def test_configuration_rejects_invalid_contracts(
 
     with pytest.raises(ValueError, match=message):
         load_configuration((path,))
+
+
+def test_configuration_rejects_cyclic_yaml_aliases(tmp_path: Path) -> None:
+    path = tmp_path / "cyclic.yaml"
+    path.write_text(
+        """
+schema_version: 1
+command: [smoke]
+arguments: {}
+tracking: &loop { self: *loop }
+""".lstrip(),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="cyclic"):
+        load_configuration((path,))

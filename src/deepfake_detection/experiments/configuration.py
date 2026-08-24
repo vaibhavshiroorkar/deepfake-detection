@@ -88,12 +88,37 @@ def _merge_mappings(
     return merged
 
 
-def _copy_value(value: Any) -> Any:
+def _copy_value(value: Any, active_ids: set[int] | None = None) -> Any:
+    if active_ids is None:
+        active_ids = set()
     if isinstance(value, Mapping):
-        return {key: _copy_value(item) for key, item in value.items()}
+        return _copy_mapping(value, active_ids)
     if isinstance(value, list):
-        return [_copy_value(item) for item in value]
+        return _copy_list(value, active_ids)
     return value
+
+
+def _copy_mapping(value: Mapping[object, Any], active_ids: set[int]) -> dict[Any, Any]:
+    _add_active(value, active_ids)
+    try:
+        return {key: _copy_value(item, active_ids) for key, item in value.items()}
+    finally:
+        active_ids.remove(id(value))
+
+
+def _copy_list(value: list[Any], active_ids: set[int]) -> list[Any]:
+    _add_active(value, active_ids)
+    try:
+        return [_copy_value(item, active_ids) for item in value]
+    finally:
+        active_ids.remove(id(value))
+
+
+def _add_active(value: object, active_ids: set[int]) -> None:
+    value_id = id(value)
+    if value_id in active_ids:
+        raise ValueError("Configuration cannot contain cyclic YAML aliases")
+    active_ids.add(value_id)
 
 
 def _validate_configuration(values: dict[str, Any]) -> None:
