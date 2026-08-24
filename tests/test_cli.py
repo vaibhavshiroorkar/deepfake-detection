@@ -3,8 +3,10 @@ import json
 from pathlib import Path
 
 import joblib
+import pytest
 
 from deepfake_detection.cli import build_parser, main
+from deepfake_detection.experiments import runtime
 from deepfake_detection.fusion.late import FusionArtifact
 from deepfake_detection.fusion.store import FeatureRecord, FeatureStore
 
@@ -13,6 +15,54 @@ def test_public_parser_exposes_the_documented_command_tree() -> None:
     parser = build_parser()
 
     assert parser.prog == "ddf"
+
+
+@pytest.mark.parametrize("branch", ["visual", "sync"])
+def test_branch_training_uses_shared_runtime_seed_function(
+    branch: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[tuple[int, bool]] = []
+
+    class StopTraining(Exception):
+        pass
+
+    def stop_after_seed(seed: int, *, deterministic: bool) -> None:
+        calls.append((seed, deterministic))
+        raise StopTraining
+
+    monkeypatch.setattr(runtime, "seed_everything", stop_after_seed)
+
+    with pytest.raises(StopTraining):
+        main(
+            [
+                "train",
+                branch,
+                "--train-manifest",
+                "train.csv",
+                "--validation-manifest",
+                "validation.csv",
+                "--cache-index",
+                "cache.csv",
+                "--cache-root",
+                "cache",
+                "--dataset",
+                "fixture",
+                "--checkpoint",
+                "checkpoint.pt",
+                "--history",
+                "history.json",
+                "--run-id",
+                "run",
+                "--split-hash",
+                "split",
+                "--preprocessing-hash",
+                "preprocessing",
+                "--seed",
+                "23",
+            ]
+        )
+
+    assert calls == [(23, True)]
 
 
 def write_fixture_manifest(path: Path) -> None:

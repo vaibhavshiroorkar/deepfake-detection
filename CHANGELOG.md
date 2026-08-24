@@ -15,6 +15,8 @@ Experiment metrics belong in the experiment tracker, not this file.
 ### Added
 
 - Versioned layered YAML configuration for reproducible local experiments.
+- Runtime environment snapshots with Git, package, hardware, memory, and FFmpeg
+  details, plus deterministic shared training seeds.
 - A beginner handbook with a 15-chapter learning path and live foundations for
   the research problem, deep learning, audio-video timing, data leakage, and
   the implemented preprocessing pipeline.

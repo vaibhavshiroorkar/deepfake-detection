@@ -33,6 +33,7 @@ from deepfake_detection.evaluation.metrics import (
     select_balanced_accuracy_threshold,
     subgroup_metrics,
 )
+from deepfake_detection.experiments import runtime
 from deepfake_detection.fusion.late import FusionArtifact, FusionSample, LateFusion
 from deepfake_detection.fusion.store import FeatureStore
 from deepfake_detection.training.crossfit import build_group_folds
@@ -370,20 +371,9 @@ def _git_commit() -> str:
     return process.stdout.strip() if process.returncode == 0 else "uncommitted"
 
 
-def _seed_everything(seed: int) -> None:
-    import random
-
-    import numpy as np
-    import torch
-
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
-
-
 def _binary_branch_train(arguments: argparse.Namespace) -> int:
+    runtime.seed_everything(arguments.seed, deterministic=True)
+
     import torch
     from torch.utils.data import DataLoader, WeightedRandomSampler
 
@@ -403,7 +393,6 @@ def _binary_branch_train(arguments: argparse.Namespace) -> int:
         save_checkpoint,
     )
 
-    _seed_everything(arguments.seed)
     train_records = load_manifest(
         arguments.train_manifest, dataset=arguments.dataset
     ).records
@@ -532,6 +521,8 @@ def _binary_branch_train(arguments: argparse.Namespace) -> int:
 
 
 def _sync_branch_train(arguments: argparse.Namespace) -> int:
+    runtime.seed_everything(arguments.seed, deterministic=True)
+
     import torch
     from torch.utils.data import DataLoader
 
@@ -549,7 +540,6 @@ def _sync_branch_train(arguments: argparse.Namespace) -> int:
     )
     from deepfake_detection.training.sync import SyncTrainingConfig, fit_sync_branch
 
-    _seed_everything(arguments.seed)
     train_records = load_manifest(
         arguments.train_manifest, dataset=arguments.dataset
     ).records
