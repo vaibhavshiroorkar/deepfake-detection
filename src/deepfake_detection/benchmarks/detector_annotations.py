@@ -7,6 +7,7 @@ from collections import Counter, defaultdict
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Literal
 
 from deepfake_detection.views.tracking import Box, Landmarks5, Point
 
@@ -46,12 +47,25 @@ class FrameAnnotation:
     pose: str
     lighting: str
     multi_person: bool
+    review_role: Literal["review", "adjudication"] = "review"
 
     def __post_init__(self) -> None:
-        for name in ("frame_id", "reviewer_id", "pose", "lighting"):
-            if not str(getattr(self, name)).strip():
+        for name in (
+            "frame_id",
+            "frame_sha256",
+            "reviewer_id",
+            "pose",
+            "lighting",
+            "review_role",
+        ):
+            value = getattr(self, name)
+            if not isinstance(value, str):
+                raise TypeError(f"{name} must be a string")
+            if not value.strip():
                 raise ValueError(f"{name} cannot be blank")
         _validate_sha256("frame_sha256", self.frame_sha256)
+        if self.review_role not in {"review", "adjudication"}:
+            raise ValueError("review_role must be review or adjudication")
         if not isinstance(self.faces, tuple) or not all(
             isinstance(face, FaceAnnotation) for face in self.faces
         ):
@@ -81,6 +95,12 @@ class AnnotationDisagreement:
     pose_values: tuple[str, ...]
     lighting_values: tuple[str, ...]
     multi_person_values: tuple[bool, ...]
+    visible_face_min_iou: float | None
+    unmatched_face_count: int
+    target_label_mismatch: bool
+    landmark_presence_mismatch: bool
+    visible_landmark_max_nme: float | None
+    degenerate_landmark_normalization: bool
     target_box_min_iou: float | None
     target_landmark_max_nme: float | None
 
@@ -92,7 +112,9 @@ class AnnotationAudit:
     frame_count: int
     clip_count: int
     source_count: int
+    annotation_count: int
     review_count: int
+    adjudication_count: int
     calibration_source_count: int
     comparison_source_count: int
     double_review_required: int
@@ -100,10 +122,13 @@ class AnnotationAudit:
     missing_frame_ids: tuple[str, ...]
     missing_double_review_frame_ids: tuple[str, ...]
     duplicate_frame_ids: tuple[str, ...]
+    duplicate_frame_sha256s: tuple[str, ...]
     duplicate_reviews: tuple[tuple[str, str], ...]
     overlapping_source_hashes: tuple[str, ...]
     missing_strata: tuple[str, ...]
     disagreements: tuple[AnnotationDisagreement, ...]
+    unresolved_disagreement_frame_ids: tuple[str, ...]
+    adjudicated_frame_ids: tuple[str, ...]
 
 
 def _landmark_points(landmarks: Landmarks5) -> tuple[Point, ...]:
@@ -124,18 +149,23 @@ def _distance(left: Point, right: Point) -> float:
     return math.hypot(left.x - right.x, left.y - right.y)
 
 
-def _target_landmark_nme(
+def _landmark_nme(
     left: FaceAnnotation,
     right: FaceAnnotation,
-) -> float | None:
+) -> tuple[float | None, bool]:
     if left.landmarks is None or right.landmarks is None:
-        return None
-    normalization = _distance(
+        return None, False
+    left_inter_eye = _distance(
         left.landmarks.eye_left,
         left.landmarks.eye_right,
     )
-    if normalization <= 0:
-        return None
+    right_inter_eye = _distance(
+        right.landmarks.eye_left,
+        right.landmarks.eye_right,
+    )
+    if left_inter_eye <= 0 or right_inter_eye <= 0:
+        return None, True
+    normalization = (left_inter_eye + right_inter_eye) / 2
     errors = tuple(
         _distance(left_point, right_point)
         for left_point, right_point in zip(
@@ -144,7 +174,78 @@ def _target_landmark_nme(
             strict=True,
         )
     )
-    return sum(errors) / len(errors) / normalization
+    return sum(errors) / len(errors) / normalization, False
+
+
+def _face_key(face: FaceAnnotation) -> tuple[object, ...]:
+    landmarks = (
+        tuple((point.x, point.y) for point in _landmark_points(face.landmarks))
+        if face.landmarks is not None
+        else ()
+    )
+    return (
+        face.box.left,
+        face.box.top,
+        face.box.right,
+        face.box.bottom,
+        face.target,
+        landmarks,
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class _FaceComparison:
+    minimum_iou: float | None
+    unmatched_count: int
+    target_label_mismatch: bool
+    landmark_presence_mismatch: bool
+    landmark_max_nme: float | None
+    degenerate_landmark_normalization: bool
+
+
+def _compare_visible_faces(
+    left_faces: Sequence[FaceAnnotation],
+    right_faces: Sequence[FaceAnnotation],
+) -> _FaceComparison:
+    left = tuple(sorted(left_faces, key=_face_key))
+    right = tuple(sorted(right_faces, key=_face_key))
+    candidates = sorted(
+        (
+            (-left_face.box.iou(right_face.box), left_index, right_index)
+            for left_index, left_face in enumerate(left)
+            for right_index, right_face in enumerate(right)
+        )
+    )
+    used_left: set[int] = set()
+    used_right: set[int] = set()
+    matches: list[tuple[FaceAnnotation, FaceAnnotation, float]] = []
+    for negative_iou, left_index, right_index in candidates:
+        if left_index in used_left or right_index in used_right:
+            continue
+        used_left.add(left_index)
+        used_right.add(right_index)
+        matches.append((left[left_index], right[right_index], -negative_iou))
+    landmark_errors: list[float] = []
+    landmark_presence_mismatch = False
+    degenerate = False
+    target_label_mismatch = False
+    for left_face, right_face, _ in matches:
+        target_label_mismatch |= left_face.target != right_face.target
+        landmark_presence_mismatch |= (left_face.landmarks is None) != (
+            right_face.landmarks is None
+        )
+        error, pair_degenerate = _landmark_nme(left_face, right_face)
+        degenerate |= pair_degenerate
+        if error is not None:
+            landmark_errors.append(error)
+    return _FaceComparison(
+        minimum_iou=min((match[2] for match in matches), default=None),
+        unmatched_count=(len(left) - len(used_left)) + (len(right) - len(used_right)),
+        target_label_mismatch=target_label_mismatch,
+        landmark_presence_mismatch=landmark_presence_mismatch,
+        landmark_max_nme=max(landmark_errors, default=None),
+        degenerate_landmark_normalization=degenerate,
+    )
 
 
 def _disagreement(
@@ -152,31 +253,68 @@ def _disagreement(
     annotations: Sequence[FrameAnnotation],
 ) -> AnnotationDisagreement | None:
     ordered = tuple(sorted(annotations, key=lambda item: item.reviewer_id))
+    annotation_pairs = tuple(itertools.combinations(ordered, 2))
+    face_comparisons = tuple(
+        _compare_visible_faces(left.faces, right.faces)
+        for left, right in annotation_pairs
+    )
     targets = tuple(_target(annotation) for annotation in ordered)
     target_pairs = tuple(
         (left, right)
         for left, right in itertools.combinations(targets, 2)
         if left is not None and right is not None
     )
-    ious = tuple(left.box.iou(right.box) for left, right in target_pairs)
-    landmark_errors = tuple(
-        error
-        for left, right in target_pairs
-        if (error := _target_landmark_nme(left, right)) is not None
+    target_ious = tuple(left.box.iou(right.box) for left, right in target_pairs)
+    target_landmark_results = tuple(
+        _landmark_nme(left, right) for left, right in target_pairs
+    )
+    target_landmark_errors = tuple(
+        error for error, _ in target_landmark_results if error is not None
     )
     face_counts = tuple(len(annotation.faces) for annotation in ordered)
     no_target = tuple(annotation.no_suitable_target for annotation in ordered)
     poses = tuple(annotation.pose for annotation in ordered)
     lighting = tuple(annotation.lighting for annotation in ordered)
     multi_person = tuple(annotation.multi_person for annotation in ordered)
-    target_iou = min(ious) if ious else None
-    target_nme = max(landmark_errors) if landmark_errors else None
+    visible_ious = tuple(
+        comparison.minimum_iou
+        for comparison in face_comparisons
+        if comparison.minimum_iou is not None
+    )
+    visible_landmark_errors = tuple(
+        comparison.landmark_max_nme
+        for comparison in face_comparisons
+        if comparison.landmark_max_nme is not None
+    )
+    target_iou = min(target_ious) if target_ious else None
+    target_nme = max(target_landmark_errors, default=None)
+    visible_iou = min(visible_ious, default=None)
+    visible_nme = max(visible_landmark_errors, default=None)
+    unmatched_count = max(
+        (comparison.unmatched_count for comparison in face_comparisons),
+        default=0,
+    )
+    target_label_mismatch = any(
+        comparison.target_label_mismatch for comparison in face_comparisons
+    )
+    landmark_presence_mismatch = any(
+        comparison.landmark_presence_mismatch for comparison in face_comparisons
+    )
+    degenerate = any(
+        comparison.degenerate_landmark_normalization for comparison in face_comparisons
+    ) or any(pair_degenerate for _, pair_degenerate in target_landmark_results)
     agrees = (
         len(set(face_counts)) == 1
         and len(set(no_target)) == 1
         and len(set(poses)) == 1
         and len(set(lighting)) == 1
         and len(set(multi_person)) == 1
+        and unmatched_count == 0
+        and not target_label_mismatch
+        and not landmark_presence_mismatch
+        and not degenerate
+        and (visible_iou is None or visible_iou == 1.0)
+        and (visible_nme is None or visible_nme == 0.0)
         and (target_iou is None or target_iou == 1.0)
         and (target_nme is None or target_nme == 0.0)
     )
@@ -190,6 +328,12 @@ def _disagreement(
         pose_values=tuple(sorted(set(poses))),
         lighting_values=tuple(sorted(set(lighting))),
         multi_person_values=tuple(sorted(set(multi_person))),
+        visible_face_min_iou=visible_iou,
+        unmatched_face_count=unmatched_count,
+        target_label_mismatch=target_label_mismatch,
+        landmark_presence_mismatch=landmark_presence_mismatch,
+        visible_landmark_max_nme=visible_nme,
+        degenerate_landmark_normalization=degenerate,
         target_box_min_iou=target_iou,
         target_landmark_max_nme=target_nme,
     )
@@ -213,6 +357,11 @@ def _geometry_errors(
             )
         if face.landmarks is None:
             continue
+        if _distance(face.landmarks.eye_left, face.landmarks.eye_right) <= 0:
+            errors.append(
+                f"Frame {frame.frame_id} face {face_index} has degenerate "
+                "inter-eye landmark normalization"
+            )
         for point_index, point in enumerate(_landmark_points(face.landmarks)):
             if not (0 <= point.x < frame.width and 0 <= point.y < frame.height):
                 errors.append(
@@ -251,6 +400,14 @@ def validate_annotations(
     )
     if duplicate_frame_ids:
         errors.append("Review sample contains duplicate frame identifiers")
+    frame_hash_counts = Counter(frame.frame_sha256 for frame in sample_rows)
+    duplicate_frame_sha256s = tuple(
+        sorted(
+            frame_hash for frame_hash, count in frame_hash_counts.items() if count > 1
+        )
+    )
+    if duplicate_frame_sha256s:
+        errors.append("Review sample contains duplicate frame SHA-256 values")
     frame_by_id: dict[str, ReviewFrame] = {}
     for frame in sample_rows:
         frame_by_id.setdefault(frame.frame_id, frame)
@@ -296,7 +453,8 @@ def validate_annotations(
             f"sample marks {len(required_double_ids)}"
         )
 
-    by_frame: dict[str, list[FrameAnnotation]] = defaultdict(list)
+    by_frame_reviews: dict[str, list[FrameAnnotation]] = defaultdict(list)
+    by_frame_adjudications: dict[str, list[FrameAnnotation]] = defaultdict(list)
     review_pairs = Counter(
         (annotation.frame_id, annotation.reviewer_id) for annotation in annotation_rows
     )
@@ -305,17 +463,27 @@ def validate_annotations(
     )
     if duplicate_reviews:
         errors.append("Annotation file contains duplicate frame and reviewer rows")
+    invalid_annotation_pairs: set[tuple[str, str]] = set()
     for annotation in annotation_rows:
         frame = frame_by_id.get(annotation.frame_id)
         if frame is None:
             errors.append(f"Annotation references unknown frame {annotation.frame_id}")
             continue
-        by_frame[annotation.frame_id].append(annotation)
+        destination = (
+            by_frame_reviews
+            if annotation.review_role == "review"
+            else by_frame_adjudications
+        )
+        destination[annotation.frame_id].append(annotation)
         if annotation.frame_sha256 != frame.frame_sha256:
             errors.append(f"Annotation frame hash differs for {annotation.frame_id}")
-        errors.extend(_geometry_errors(frame, annotation))
+            invalid_annotation_pairs.add((annotation.frame_id, annotation.reviewer_id))
+        geometry_errors = _geometry_errors(frame, annotation)
+        if geometry_errors:
+            invalid_annotation_pairs.add((annotation.frame_id, annotation.reviewer_id))
+        errors.extend(geometry_errors)
 
-    reviewed_ids = set(by_frame)
+    reviewed_ids = set(by_frame_reviews)
     missing_frame_ids = tuple(sorted(set(frame_by_id) - reviewed_ids))
     if missing_frame_ids:
         errors.append(f"Annotations are missing {len(missing_frame_ids)} review frames")
@@ -324,7 +492,10 @@ def validate_annotations(
             frame_id
             for frame_id in required_double_ids
             if len(
-                {annotation.reviewer_id for annotation in by_frame.get(frame_id, ())}
+                {
+                    annotation.reviewer_id
+                    for annotation in by_frame_reviews.get(frame_id, ())
+                }
             )
             < 2
         )
@@ -340,10 +511,31 @@ def validate_annotations(
         errors.append("Annotations are missing required sample strata")
     disagreements = tuple(
         disagreement
-        for frame_id, rows in sorted(by_frame.items())
+        for frame_id, rows in sorted(by_frame_reviews.items())
         if len({row.reviewer_id for row in rows}) >= 2
         if (disagreement := _disagreement(frame_id, rows)) is not None
     )
+    unresolved: list[str] = []
+    adjudicated: list[str] = []
+    for disagreement in disagreements:
+        frame_id = disagreement.frame_id
+        review_reviewers = {row.reviewer_id for row in by_frame_reviews[frame_id]}
+        adjudications = by_frame_adjudications.get(frame_id, ())
+        valid_adjudications = tuple(
+            row
+            for row in adjudications
+            if row.reviewer_id not in review_reviewers
+            and (row.frame_id, row.reviewer_id) not in invalid_annotation_pairs
+        )
+        if len(adjudications) == 1 and len(valid_adjudications) == 1:
+            adjudicated.append(frame_id)
+        else:
+            unresolved.append(frame_id)
+    if unresolved:
+        errors.append(
+            "Review disagreements require one distinct valid adjudicator for "
+            f"{len(unresolved)} frames"
+        )
     unique_errors = tuple(dict.fromkeys(errors))
     return AnnotationAudit(
         valid=not unique_errors,
@@ -351,7 +543,11 @@ def validate_annotations(
         frame_count=frame_count,
         clip_count=clip_count,
         source_count=len(source_roles),
-        review_count=len(annotation_rows),
+        annotation_count=len(annotation_rows),
+        review_count=sum(row.review_role == "review" for row in annotation_rows),
+        adjudication_count=sum(
+            row.review_role == "adjudication" for row in annotation_rows
+        ),
         calibration_source_count=calibration_sources,
         comparison_source_count=comparison_sources,
         double_review_required=len(required_double_ids),
@@ -359,11 +555,42 @@ def validate_annotations(
         missing_frame_ids=missing_frame_ids,
         missing_double_review_frame_ids=missing_double,
         duplicate_frame_ids=duplicate_frame_ids,
+        duplicate_frame_sha256s=duplicate_frame_sha256s,
         duplicate_reviews=duplicate_reviews,
         overlapping_source_hashes=overlapping_sources,
         missing_strata=missing_strata,
         disagreements=disagreements,
+        unresolved_disagreement_frame_ids=tuple(unresolved),
+        adjudicated_frame_ids=tuple(adjudicated),
     )
+
+
+def resolve_annotations(
+    sample: Sequence[ReviewFrame],
+    annotations: Sequence[FrameAnnotation],
+) -> tuple[FrameAnnotation, ...]:
+    """Return one deterministic gold annotation per sample frame."""
+
+    sample_rows = tuple(sample)
+    annotation_rows = tuple(annotations)
+    audit = validate_annotations(sample_rows, annotation_rows)
+    if not audit.valid:
+        raise ValueError("Cannot resolve an invalid annotation audit")
+    reviews: dict[str, list[FrameAnnotation]] = defaultdict(list)
+    adjudications: dict[str, list[FrameAnnotation]] = defaultdict(list)
+    for annotation in annotation_rows:
+        destination = reviews if annotation.review_role == "review" else adjudications
+        destination[annotation.frame_id].append(annotation)
+    adjudicated = set(audit.adjudicated_frame_ids)
+    resolved: list[FrameAnnotation] = []
+    for frame in sample_rows:
+        candidates = (
+            adjudications[frame.frame_id]
+            if frame.frame_id in adjudicated
+            else reviews[frame.frame_id]
+        )
+        resolved.append(min(candidates, key=lambda row: row.reviewer_id))
+    return tuple(resolved)
 
 
 def _point_from_mapping(row: object) -> Point:
@@ -407,6 +634,13 @@ def _face_from_mapping(row: object) -> FaceAnnotation:
     )
 
 
+def _required_string(row: dict[str, object], name: str) -> str:
+    value = row[name]
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError(f"{name} must be a nonblank string")
+    return value
+
+
 def _annotation_from_mapping(row: dict[str, object]) -> FrameAnnotation:
     expected = set(FrameAnnotation.__dataclass_fields__)
     if set(row) != expected:
@@ -418,14 +652,15 @@ def _annotation_from_mapping(row: dict[str, object]) -> FrameAnnotation:
         if not isinstance(row[name], bool):
             raise ValueError(f"{name} must be a boolean")
     return FrameAnnotation(
-        frame_id=str(row["frame_id"]),
-        frame_sha256=str(row["frame_sha256"]),
-        reviewer_id=str(row["reviewer_id"]),
+        frame_id=_required_string(row, "frame_id"),
+        frame_sha256=_required_string(row, "frame_sha256"),
+        reviewer_id=_required_string(row, "reviewer_id"),
         faces=tuple(_face_from_mapping(face) for face in faces),
         no_suitable_target=row["no_suitable_target"],
-        pose=str(row["pose"]),
-        lighting=str(row["lighting"]),
+        pose=_required_string(row, "pose"),
+        lighting=_required_string(row, "lighting"),
         multi_person=row["multi_person"],
+        review_role=_required_string(row, "review_role"),  # type: ignore[arg-type]
     )
 
 

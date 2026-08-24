@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from dataclasses import replace
 from pathlib import Path
 
@@ -10,6 +11,7 @@ from deepfake_detection.benchmarks.detector_annotations import (
     FaceAnnotation,
     FrameAnnotation,
     read_annotations,
+    resolve_annotations,
     validate_annotations,
     write_annotations,
 )
@@ -62,6 +64,7 @@ def _annotation(
     reviewer_id: str = "reviewer-a",
     target_offset: float = 0.0,
     pose: str = "frontal",
+    review_role: str = "review",
 ) -> FrameAnnotation:
     return FrameAnnotation(
         frame_id=frame.frame_id,
@@ -78,6 +81,7 @@ def _annotation(
         pose=pose,
         lighting="normal",
         multi_person=False,
+        review_role=review_role,
     )
 
 
@@ -181,7 +185,7 @@ def test_annotation_jsonl_round_trip_preserves_multi_face_rows(
     assert len(output.read_text(encoding="utf-8").splitlines()) == 1
 
 
-def test_validation_enforces_gates_and_reports_review_disagreement() -> None:
+def test_unresolved_disagreement_invalidates_the_audit() -> None:
     sample = _sample()
     annotations = list(_complete_annotations(sample))
     second_index = next(
@@ -199,7 +203,7 @@ def test_validation_enforces_gates_and_reports_review_disagreement() -> None:
 
     audit = validate_annotations(sample, tuple(annotations))
 
-    assert audit.valid
+    assert not audit.valid
     assert audit.frame_count == 500
     assert audit.clip_count == 100
     assert audit.review_count == 550
@@ -207,6 +211,8 @@ def test_validation_enforces_gates_and_reports_review_disagreement() -> None:
     assert audit.double_review_completed == 50
     assert audit.missing_frame_ids == ()
     assert audit.missing_strata == ()
+    assert audit.unresolved_disagreement_frame_ids == (sample[0].frame_id,)
+    assert audit.adjudicated_frame_ids == ()
     disagreement = next(
         item for item in audit.disagreements if item.frame_id == sample[0].frame_id
     )
@@ -214,6 +220,90 @@ def test_validation_enforces_gates_and_reports_review_disagreement() -> None:
     assert disagreement.pose_values == ("frontal", "profile")
     assert disagreement.target_box_min_iou == pytest.approx(36 / 44)
     assert disagreement.target_landmark_max_nme == pytest.approx(0.2)
+
+
+def test_one_distinct_adjudicator_resolves_disagreement_and_gold_rows() -> None:
+    sample = _sample()
+    annotations = list(_complete_annotations(sample))
+    second_index = next(
+        index
+        for index, annotation in enumerate(annotations)
+        if annotation.frame_id == sample[0].frame_id
+        and annotation.reviewer_id == "reviewer-b"
+    )
+    annotations[second_index] = _annotation(
+        sample[0],
+        reviewer_id="reviewer-b",
+        target_offset=4.0,
+    )
+    annotations.append(
+        _annotation(
+            sample[0],
+            reviewer_id="reviewer-c",
+            target_offset=2.0,
+            review_role="adjudication",
+        )
+    )
+
+    audit = validate_annotations(sample, tuple(annotations))
+    gold = resolve_annotations(sample, tuple(reversed(annotations)))
+
+    assert audit.valid
+    assert audit.review_count == 550
+    assert audit.annotation_count == 551
+    assert audit.adjudication_count == 1
+    assert audit.unresolved_disagreement_frame_ids == ()
+    assert audit.adjudicated_frame_ids == (sample[0].frame_id,)
+    assert len(audit.disagreements) == 1
+    assert len(gold) == 500
+    assert gold[0].reviewer_id == "reviewer-c"
+    assert gold[0].review_role == "adjudication"
+
+
+def test_adjudication_does_not_count_as_an_independent_double_review() -> None:
+    sample = _sample()
+    annotations = [
+        annotation
+        for annotation in _complete_annotations(sample)
+        if not (
+            annotation.frame_id == sample[0].frame_id
+            and annotation.reviewer_id == "reviewer-b"
+        )
+    ]
+    annotations.append(
+        _annotation(
+            sample[0],
+            reviewer_id="reviewer-c",
+            review_role="adjudication",
+        )
+    )
+
+    audit = validate_annotations(sample, tuple(annotations))
+
+    assert not audit.valid
+    assert sample[0].frame_id in audit.missing_double_review_frame_ids
+
+
+def test_adjudicator_must_be_unique_and_distinct_from_reviewers() -> None:
+    sample = _sample()
+    annotations = list(_complete_annotations(sample))
+    annotations[-50] = _annotation(
+        sample[0], reviewer_id="reviewer-b", target_offset=4.0
+    )
+    annotations.append(
+        _annotation(
+            sample[0],
+            reviewer_id="reviewer-a",
+            review_role="adjudication",
+        )
+    )
+
+    audit = validate_annotations(sample, tuple(annotations))
+
+    assert not audit.valid
+    assert audit.unresolved_disagreement_frame_ids == (sample[0].frame_id,)
+    with pytest.raises(ValueError, match="invalid annotation audit"):
+        resolve_annotations(sample, tuple(annotations))
 
 
 def test_validation_rejects_missing_or_duplicate_double_reviews() -> None:
@@ -277,6 +367,132 @@ def test_validation_rejects_a_changed_calibration_comparison_ratio() -> None:
     assert any("20/80" in error for error in audit.errors)
 
 
+def test_disagreement_compares_changed_and_unmatched_non_target_faces() -> None:
+    sample = _sample()
+    target = FaceAnnotation(Box(20, 20, 60, 80), True, _landmarks())
+    first = replace(
+        _annotation(sample[0]),
+        faces=(target, FaceAnnotation(Box(65, 10, 95, 55), False, None)),
+        multi_person=True,
+    )
+    changed = replace(
+        first,
+        reviewer_id="reviewer-b",
+        faces=(target, FaceAnnotation(Box(60, 10, 90, 55), False, None)),
+    )
+    unmatched = replace(
+        first,
+        reviewer_id="reviewer-b",
+        faces=(target,),
+        multi_person=False,
+    )
+    base = [
+        annotation
+        for annotation in _complete_annotations(sample)
+        if annotation.frame_id != sample[0].frame_id
+    ]
+
+    changed_audit = validate_annotations(sample, (*base, first, changed))
+    unmatched_audit = validate_annotations(sample, (*base, first, unmatched))
+
+    assert not changed_audit.valid
+    changed_disagreement = changed_audit.disagreements[0]
+    assert changed_disagreement.visible_face_min_iou == pytest.approx(25 / 35)
+    assert changed_disagreement.unmatched_face_count == 0
+    assert not unmatched_audit.valid
+    assert unmatched_audit.disagreements[0].unmatched_face_count == 1
+
+
+def test_disagreement_detects_target_label_changes() -> None:
+    sample = _sample()
+    target_box = Box(20, 20, 60, 80)
+    other_box = Box(65, 10, 95, 55)
+    first = replace(
+        _annotation(sample[0]),
+        faces=(
+            FaceAnnotation(target_box, True, _landmarks()),
+            FaceAnnotation(other_box, False, None),
+        ),
+        multi_person=True,
+    )
+    second = replace(
+        first,
+        reviewer_id="reviewer-b",
+        faces=(
+            FaceAnnotation(target_box, False, _landmarks()),
+            FaceAnnotation(other_box, True, _landmarks(35)),
+        ),
+    )
+    base = [
+        annotation
+        for annotation in _complete_annotations(sample)
+        if annotation.frame_id != sample[0].frame_id
+    ]
+
+    audit = validate_annotations(sample, (*base, first, second))
+
+    assert not audit.valid
+    assert audit.disagreements[0].target_label_mismatch
+
+
+def test_landmark_nme_is_symmetric_across_reviewer_order() -> None:
+    sample = _sample()
+    small = _landmarks()
+    large = Landmarks5(
+        eye_left=Point(25, 30),
+        eye_right=Point(65, 30),
+        nose=Point(42, 45),
+        mouth_left=Point(30, 60),
+        mouth_right=Point(50, 60),
+    )
+
+    def annotation(reviewer_id: str, landmarks: Landmarks5) -> FrameAnnotation:
+        return replace(
+            _annotation(sample[0], reviewer_id=reviewer_id),
+            faces=(FaceAnnotation(Box(20, 20, 70, 80), True, landmarks),),
+        )
+
+    base = [
+        row
+        for row in _complete_annotations(sample)
+        if row.frame_id != sample[0].frame_id
+    ]
+    first = validate_annotations(
+        sample,
+        (*base, annotation("reviewer-a", small), annotation("reviewer-b", large)),
+    )
+    swapped = validate_annotations(
+        sample,
+        (*base, annotation("reviewer-a", large), annotation("reviewer-b", small)),
+    )
+
+    first_nme = first.disagreements[0].target_landmark_max_nme
+    swapped_nme = swapped.disagreements[0].target_landmark_max_nme
+    assert first_nme == pytest.approx(5.6 / 30)
+    assert swapped_nme == pytest.approx(first_nme)
+
+
+def test_degenerate_landmark_normalization_invalidates_the_audit() -> None:
+    sample = _sample()
+    degenerate = Landmarks5(
+        eye_left=Point(40, 30),
+        eye_right=Point(40, 30),
+        nose=Point(40, 45),
+        mouth_left=Point(33, 60),
+        mouth_right=Point(47, 60),
+    )
+    annotations = list(_complete_annotations(sample))
+    annotations[0] = replace(
+        annotations[0],
+        faces=(FaceAnnotation(Box(20, 20, 60, 80), True, degenerate),),
+    )
+
+    audit = validate_annotations(sample, tuple(annotations))
+
+    assert not audit.valid
+    assert any("degenerate inter-eye" in error for error in audit.errors)
+
+
 def test_validation_reports_missing_strata_and_bad_frame_geometry() -> None:
     sample = _sample()
     annotations = list(_complete_annotations(sample))
@@ -317,3 +533,47 @@ def test_reviewer_identity_and_multi_person_flag_are_required() -> None:
                 FaceAnnotation(Box(65, 10, 95, 55), False, None),
             ),
         )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    (
+        ("frame_id", None),
+        ("frame_sha256", False),
+        ("reviewer_id", 7),
+        ("pose", []),
+        ("lighting", {}),
+        ("review_role", None),
+    ),
+)
+def test_annotation_jsonl_rejects_wrong_string_scalar_types(
+    tmp_path: Path,
+    field: str,
+    value: object,
+) -> None:
+    path = tmp_path / "annotation.jsonl"
+    write_annotations((_annotation(_sample()[0]),), path)
+    row = json.loads(path.read_text(encoding="utf-8"))
+    row[field] = value
+    path.write_text(json.dumps(row) + "\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match=f"{field} must be a nonblank string"):
+        read_annotations(path)
+
+
+def test_frame_annotation_requires_real_strings_and_known_review_role() -> None:
+    frame = _sample()[0]
+    with pytest.raises(TypeError, match="reviewer_id must be a string"):
+        replace(_annotation(frame), reviewer_id=7)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="review_role"):
+        replace(_annotation(frame), review_role="editor")  # type: ignore[arg-type]
+
+
+def test_validation_rejects_duplicate_sample_frame_hashes() -> None:
+    sample = list(_sample())
+    sample[-1] = replace(sample[-1], frame_sha256=sample[0].frame_sha256)
+
+    audit = validate_annotations(tuple(sample), _complete_annotations(tuple(sample)))
+
+    assert not audit.valid
+    assert audit.duplicate_frame_sha256s == (sample[0].frame_sha256,)
