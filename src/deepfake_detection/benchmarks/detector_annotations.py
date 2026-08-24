@@ -63,6 +63,8 @@ class FrameAnnotation:
                 raise TypeError(f"{name} must be a string")
             if not value.strip():
                 raise ValueError(f"{name} cannot be blank")
+            if value != value.strip():
+                raise ValueError(f"{name} must be canonical without outer whitespace")
         _validate_sha256("frame_sha256", self.frame_sha256)
         if self.review_role not in {"review", "adjudication"}:
             raise ValueError("review_role must be review or adjudication")
@@ -515,6 +517,15 @@ def validate_annotations(
         if len({row.reviewer_id for row in rows}) >= 2
         if (disagreement := _disagreement(frame_id, rows)) is not None
     )
+    disagreement_ids = {item.frame_id for item in disagreements}
+    unexpected_adjudications = tuple(
+        sorted(set(by_frame_adjudications) - disagreement_ids)
+    )
+    if unexpected_adjudications:
+        errors.append(
+            "Adjudication is allowed only for a review disagreement: "
+            + ", ".join(unexpected_adjudications)
+        )
     unresolved: list[str] = []
     adjudicated: list[str] = []
     for disagreement in disagreements:

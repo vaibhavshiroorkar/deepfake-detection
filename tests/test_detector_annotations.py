@@ -569,6 +569,58 @@ def test_frame_annotation_requires_real_strings_and_known_review_role() -> None:
         replace(_annotation(frame), review_role="editor")  # type: ignore[arg-type]
 
 
+def test_reviewer_whitespace_alias_cannot_complete_double_review() -> None:
+    frame = _sample()[0]
+
+    with pytest.raises(ValueError, match="reviewer_id must be canonical"):
+        replace(_annotation(frame), reviewer_id="reviewer-a ")
+
+
+def test_reviewer_whitespace_alias_cannot_act_as_adjudicator() -> None:
+    frame = _sample()[0]
+
+    with pytest.raises(ValueError, match="reviewer_id must be canonical"):
+        _annotation(
+            frame,
+            reviewer_id=" reviewer-a",
+            review_role="adjudication",
+        )
+
+
+@pytest.mark.parametrize(
+    "field",
+    ("frame_id", "frame_sha256", "pose", "lighting", "review_role"),
+)
+def test_required_annotation_strings_reject_outer_whitespace(field: str) -> None:
+    annotation = _annotation(_sample()[0])
+
+    with pytest.raises(ValueError, match=f"{field} must be canonical"):
+        replace(annotation, **{field: f" {getattr(annotation, field)}"})
+
+
+def test_adjudication_is_rejected_when_independent_reviews_agree() -> None:
+    sample = _sample()
+    annotations = (
+        *_complete_annotations(sample),
+        _annotation(
+            sample[0],
+            reviewer_id="reviewer-c",
+            target_offset=4.0,
+            review_role="adjudication",
+        ),
+    )
+
+    audit = validate_annotations(sample, annotations)
+
+    assert not audit.valid
+    assert any(
+        sample[0].frame_id in error and "Adjudication" in error
+        for error in audit.errors
+    )
+    with pytest.raises(ValueError, match="invalid annotation audit"):
+        resolve_annotations(sample, annotations)
+
+
 def test_validation_rejects_duplicate_sample_frame_hashes() -> None:
     sample = list(_sample())
     sample[-1] = replace(sample[-1], frame_sha256=sample[0].frame_sha256)
