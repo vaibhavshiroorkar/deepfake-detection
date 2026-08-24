@@ -115,6 +115,8 @@ arguments:
   methods: [faceswap, wav2lip]
   keep-leading-silence: true
   external: false
+tracking:
+  enabled: false
 """.lstrip(),
         encoding="utf-8",
     )
@@ -124,12 +126,12 @@ arguments:
     assert configuration_argv(resolved) == (
         "cache",
         "build",
+        "--keep-leading-silence",
         "--manifest",
         "data/manifest.csv",
         "--methods",
         "faceswap",
         "wav2lip",
-        "--keep-leading-silence",
     )
 
 
@@ -847,4 +849,3 @@ Before planning detector and landmark work, verify:
 - CI runs the same local quality and smoke commands.
 - No local database, run directory, checkpoint, or artifact is tracked.
 - Smoke metrics are labeled as fixture evidence and are not copied into research findings.
-
