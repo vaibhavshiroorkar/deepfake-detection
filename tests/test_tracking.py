@@ -182,7 +182,7 @@ def test_tracking_normalizes_over_limit_parameter_and_tag_data(tmp_path: Path) -
     long_runtime_value = "r" * 8001
     long_parameter_key = f"caller:{'k' * 300}"
     long_tag_key = f"tag:{'k' * 300}"
-    unsafe_path_key = "paths/."
+    unsafe_path_keys = (".", "..", "../tag", "..tag", "paths/.")
     values = dict(configuration.values)
     values["arguments"] = {
         **configuration.values["arguments"],
@@ -215,7 +215,7 @@ def test_tracking_normalizes_over_limit_parameter_and_tag_data(tmp_path: Path) -
         logger.log_params(
             {
                 long_parameter_key: long_parameter_value,
-                unsafe_path_key: "unsafe path key",
+                **{key: f"unsafe value {key}" for key in unsafe_path_keys},
             }
         )
 
@@ -233,7 +233,7 @@ def test_tracking_normalizes_over_limit_parameter_and_tag_data(tmp_path: Path) -
     assert initial_parameters["arguments.description"] == _shortened(
         long_parameter_value, 6000
     )
-    assert len(caller_parameters) == 2
+    assert len(caller_parameters) == 1 + len(unsafe_path_keys)
     assert long_parameter_key not in caller_parameters
     normalized_parameter_key = next(
         key for key in caller_parameters if key.endswith(f"__{parameter_key_hash}")
@@ -242,7 +242,13 @@ def test_tracking_normalizes_over_limit_parameter_and_tag_data(tmp_path: Path) -
     assert caller_parameters[normalized_parameter_key] == _shortened(
         long_parameter_value, 6000
     )
-    assert unsafe_path_key not in caller_parameters
+    for unsafe_path_key in unsafe_path_keys:
+        assert unsafe_path_key not in caller_parameters
+        key_hash = hashlib.sha256(unsafe_path_key.encode("utf-8")).hexdigest()[:16]
+        normalized_key = next(
+            key for key in caller_parameters if key.endswith(f"__{key_hash}")
+        )
+        assert caller_parameters[normalized_key] == f"unsafe value {unsafe_path_key}"
     assert tags["project"] == "deepfake-generalization"
     assert tags["custom"] == _shortened(long_tag_value, 8000)
     assert tags["cpu"] == _shortened(long_runtime_value, 8000)
@@ -460,8 +466,10 @@ def test_real_local_backend_accepts_normalized_limit_values(
             settings,
             configuration=configuration,
             runtime=replace(_runtime(), cpu=long_runtime_value),
-        ):
-            pass
+        ) as logger:
+            logger.log_params(
+                {key: f"unsafe value {key}" for key in (".", "..", "../tag", "..tag")}
+            )
 
     client = mlflow.tracking.MlflowClient(tracking_uri=settings.tracking_uri)
     experiment = client.get_experiment_by_name(settings.experiment_name)
@@ -475,6 +483,13 @@ def test_real_local_backend_accepts_normalized_limit_values(
     assert run.data.tags["custom"] == _shortened(long_tag_value, 8000)
     assert run.data.tags["cpu"] == _shortened(long_runtime_value, 8000)
     assert run.data.tags["mlflow.runName"] == _shortened("n" * 8001, 8000)
+    for unsafe_path_key in (".", "..", "../tag", "..tag"):
+        assert unsafe_path_key not in run.data.params
+        key_hash = hashlib.sha256(unsafe_path_key.encode("utf-8")).hexdigest()[:16]
+        normalized_key = next(
+            key for key in run.data.params if key.endswith(f"__{key_hash}")
+        )
+        assert run.data.params[normalized_key] == f"unsafe value {unsafe_path_key}"
     assert not [record for record in caplog.records if "truncated" in record.message]
 
 

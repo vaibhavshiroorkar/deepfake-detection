@@ -427,7 +427,13 @@ def _is_safe_key(value: str) -> bool:
         return False
     if any(character not in _KEY_CHARACTERS for character in value):
         return False
-    return not value.startswith("/") and posixpath.normpath(value) == value
+    normalized = posixpath.normpath(value)
+    return (
+        normalized == value
+        and normalized != "."
+        and not normalized.startswith("..")
+        and not normalized.startswith("/")
+    )
 
 
 def _encoded_key(value: str) -> str:
