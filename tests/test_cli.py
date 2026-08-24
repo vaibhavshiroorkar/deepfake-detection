@@ -1,3 +1,4 @@
+import argparse
 import csv
 import json
 from pathlib import Path
@@ -5,6 +6,7 @@ from pathlib import Path
 import joblib
 import pytest
 
+from deepfake_detection import cli
 from deepfake_detection.cli import build_parser, main
 from deepfake_detection.experiments import runtime
 from deepfake_detection.fusion.late import FusionArtifact
@@ -33,6 +35,19 @@ def test_run_command_accepts_a_root_and_multiple_configuration_layers() -> None:
     assert arguments.root == Path(".")
     assert arguments.config == [Path("configs/local.yaml"), Path("configs/smoke.yaml")]
     assert not arguments.no_tracking
+
+
+def test_resolved_config_hash_skips_the_fallback_when_present() -> None:
+    def fallback(values: object) -> str:
+        del values
+        raise AssertionError("fallback hash must not run")
+
+    assert (
+        cli._configuration_hash(
+            argparse.Namespace(_config_hash="resolved"), {}, fallback
+        )
+        == "resolved"
+    )
 
 
 @pytest.mark.parametrize("branch", ["visual", "sync"])

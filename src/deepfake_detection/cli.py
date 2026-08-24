@@ -7,7 +7,7 @@ import json
 import shutil
 import subprocess
 import time
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import asdict
 from pathlib import Path
 
@@ -39,6 +39,7 @@ from deepfake_detection.experiments import (
     execute_configured_run,
     runtime,
 )
+from deepfake_detection.experiments.runner import _CONFIGURED_RUN_SENTINEL
 from deepfake_detection.experiments.training_log import (
     log_binary_training,
     log_fusion_training,
@@ -518,7 +519,7 @@ def _binary_branch_train(arguments: argparse.Namespace) -> int:
         git_commit=_git_commit(),
         split_hash=arguments.split_hash,
         preprocessing_hash=arguments.preprocessing_hash,
-        config_hash=getattr(arguments, "_config_hash", hash_config(run_config)),
+        config_hash=_configuration_hash(arguments, run_config, hash_config),
         seed=arguments.seed,
     )
     checkpoint_hash = save_checkpoint(
@@ -669,7 +670,7 @@ def _sync_branch_train(arguments: argparse.Namespace) -> int:
         git_commit=_git_commit(),
         split_hash=arguments.split_hash,
         preprocessing_hash=arguments.preprocessing_hash,
-        config_hash=getattr(arguments, "_config_hash", hash_config(run_config)),
+        config_hash=_configuration_hash(arguments, run_config, hash_config),
         seed=arguments.seed,
     )
     checkpoint_hash = save_checkpoint(
@@ -707,6 +708,15 @@ def _run_configured(arguments: argparse.Namespace) -> int:
         parser_factory=build_parser,
         disable_tracking=arguments.no_tracking,
     )
+
+
+def _configuration_hash(
+    arguments: argparse.Namespace,
+    run_config: object,
+    fallback: Callable[[object], str],
+) -> str:
+    resolved = getattr(arguments, "_config_hash", None)
+    return resolved if resolved is not None else fallback(run_config)
 
 
 def _sha256(path: Path) -> str:
@@ -921,7 +931,10 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--root", type=Path, default=Path("."))
     run.add_argument("--config", type=Path, action="append", required=True)
     run.add_argument("--no-tracking", action="store_true")
-    run.set_defaults(handler=_run_configured)
+    run.set_defaults(
+        handler=_run_configured,
+        _configured_run_sentinel=_CONFIGURED_RUN_SENTINEL,
+    )
 
     manifest = commands.add_parser("manifest")
     manifest_commands = manifest.add_subparsers(dest="manifest_command", required=True)

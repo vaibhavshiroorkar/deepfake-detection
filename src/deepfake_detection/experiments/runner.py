@@ -13,6 +13,8 @@ from deepfake_detection.experiments.configuration import (
 from deepfake_detection.experiments.runtime import capture_runtime
 from deepfake_detection.experiments.tracking import TrackingSettings, start_tracked_run
 
+_CONFIGURED_RUN_SENTINEL = object()
+
 
 class _HandlerFailed(Exception):
     def __init__(self, exit_code: int) -> None:
@@ -31,7 +33,11 @@ def execute_configured_run(
     configuration = load_configuration(resolved_paths)
     arguments = parser_factory().parse_args(configuration_argv(configuration))
     handler = arguments.handler
-    if getattr(arguments, "command", None) == "run":
+    if (
+        getattr(arguments, "command", None) == "run"
+        or getattr(arguments, "_configured_run_sentinel", None)
+        is _CONFIGURED_RUN_SENTINEL
+    ):
         raise ValueError("Configured runs cannot dispatch run")
 
     runtime = capture_runtime(project_root)
@@ -50,7 +56,7 @@ def execute_configured_run(
             arguments._run_logger = logger
             arguments._resolved_configuration = configuration
             arguments._config_hash = configuration.sha256
-            if hasattr(arguments, "run_id"):
+            if settings.enabled and hasattr(arguments, "run_id"):
                 arguments.run_id = logger.run_id
             exit_code = _call_from_root(handler, arguments, project_root)
             if exit_code:
