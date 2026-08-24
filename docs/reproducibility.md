@@ -11,6 +11,22 @@ MLflow evidence. `ddf run` resolves layered YAML configuration files from an
 explicit project root. With tracking enabled, it records the resolved
 configuration, runtime snapshot, metrics, and artifacts in a local MLflow run.
 
+## Tracking data and redaction
+
+Redaction uses sensitive configuration and tag key names. Sensitive values are
+excluded from parameters and tags. They are replaced in `resolved-config.yaml`
+and in `failure.json` messages. This protects configured sensitive values. It
+cannot detect an arbitrary secret that is not present under a sensitive key in
+the configuration.
+
+`configuration_sha256` identifies the validated, unredacted resolved
+configuration. The tracked `resolved-config.yaml` artifact is redacted, so it
+does not reproduce that digest by itself.
+
+The smoke run logs byte SHA-256 hashes for payload artifacts as
+`smoke.payload.<name>.sha256`. It logs the complete `smoke-report.json` byte
+hash separately as `smoke.report_sha256`.
+
 ## Local tracking decision
 
 The default tracked workflow uses MLflow with a local SQLite metadata store and
@@ -55,7 +71,7 @@ authentication and is outside this project.
 ### Training
 
 - Branch or fusion stage.
-- Full resolved configuration.
+- Resolved configuration SHA-256 and a redacted configuration artifact.
 - Random seed.
 - Pretrained model identifier and revision.
 - Optimizer, scheduler, learning rate, batch size, and maximum steps.
@@ -113,8 +129,8 @@ Names help navigation. Hashes remain the source of identity.
 A clean environment runs this local fixture command:
 
 ```powershell
-uv sync --extra tracking
-uv run --extra tracking ddf run --root . --config configs/local.yaml --config configs/smoke.yaml
+uv sync --extra media --extra tracking
+uv run --extra media --extra tracking ddf run --root . --config configs/local.yaml --config configs/smoke.yaml
 ```
 
 It creates a tracked CPU fusion smoke run and local artifacts. Its metrics
@@ -134,8 +150,13 @@ The final project must support all three levels.
 
 ## Failure rules
 
+- After an MLflow run starts, an exception logs redacted `failure.json`, ends
+  the run as `FAILED`, and then propagates the original exception.
+- Invalid YAML, schema validation, or configured-command dispatch parsing
+  occurs before tracking starts. These errors create no MLflow run.
+- A nonzero configured handler becomes a failed tracked lifecycle. Its original
+  exit code is returned to the caller.
 - Mark interrupted and non-finite runs as failed. Do not delete them.
-- Log configuration errors before retrying with changed settings.
 - Start a new run when any input, seed, or hyperparameter changes.
 - Do not select a model from incomplete seed sets.
 - Do not silently rerun a failed seed until it produces a favorable result.

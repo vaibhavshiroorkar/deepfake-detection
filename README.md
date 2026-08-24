@@ -36,9 +36,9 @@ From the repository root, run the local smoke fixture and then start the local
 MLflow UI:
 
 ```powershell
-uv sync --extra tracking
-uv run --extra tracking ddf run --root . --config configs/local.yaml --config configs/smoke.yaml
-uv run --extra tracking mlflow server --host 127.0.0.1 --backend-store-uri sqlite:///mlflow.db
+uv sync --extra media --extra tracking
+uv run --extra media --extra tracking ddf run --root . --config configs/local.yaml --config configs/smoke.yaml
+uv run --extra media --extra tracking mlflow server --host 127.0.0.1 --backend-store-uri sqlite:///mlflow.db
 ```
 
 The smoke metrics are software fixture evidence. They are not research

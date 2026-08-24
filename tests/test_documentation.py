@@ -1,3 +1,4 @@
+import shlex
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,54 @@ from deepfake_detection.documentation.cli_reference import (
     command_paths,
     render_command_block,
 )
+
+SMOKE_RECIPE_DOCUMENTS = ("README.md", "docs/reproducibility.md")
+
+
+def command_tokens(command: str) -> tuple[str, ...]:
+    return tuple(shlex.split(command))
+
+
+def extra_values(tokens: tuple[str, ...]) -> set[str]:
+    return {
+        tokens[index + 1]
+        for index, argument in enumerate(tokens[:-1])
+        if argument == "--extra"
+    }
+
+
+def smoke_recipe_commands(relative: str) -> tuple[tuple[str, ...], ...]:
+    text = Path(relative).read_text(encoding="utf-8")
+    smoke_block = next(
+        block
+        for block in text.split("```powershell")[1:]
+        if "configs/smoke.yaml" in block
+    ).split("```", maxsplit=1)[0]
+    return tuple(
+        command_tokens(line.strip())
+        for line in smoke_block.splitlines()
+        if line.strip().startswith("uv ")
+    )
+
+
+def test_published_smoke_recipes_install_and_run_with_media_and_tracking() -> None:
+    required_extras = {"media", "tracking"}
+    for relative in SMOKE_RECIPE_DOCUMENTS:
+        commands = smoke_recipe_commands(relative)
+        install = next(command for command in commands if command[:2] == ("uv", "sync"))
+        run = next(
+            command
+            for command in commands
+            if command[:2] == ("uv", "run")
+            and "ddf" in command
+            and "run" in command
+            and "configs/smoke.yaml" in command
+        )
+        assert required_extras <= extra_values(install)
+        assert required_extras <= extra_values(run)
+        for command in commands:
+            if "mlflow" in command and "server" in command:
+                assert required_extras <= extra_values(command)
 
 
 def assert_markdown_headings(
