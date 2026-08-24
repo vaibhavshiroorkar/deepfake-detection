@@ -54,19 +54,22 @@ batch dimension. A batch of eight visual clips therefore has shape
 
 | Symbol | Field | Default |
 |---|---|---|
-| `N_v` | `visual_frames` | 16 |
-| `H_v, W_v` | `visual_height`, `visual_width` | 224, 224 |
+| `N_v` | `visual_frames` | 16 frames |
+| `H_v, W_v` | `visual_height`, `visual_width` | 224, 224 pixels |
 | `T_a` | `audio_seconds` | 4.0 seconds |
 | `T_s` | `sync_seconds` | 2.0 seconds |
 | `f_s` | `sync_fps` | 25 frames per second |
-| `H_s, W_s` | `sync_height`, `sync_width` | 112, 112 |
+| `H_s, W_s` | `sync_height`, `sync_width` | 112, 112 pixels |
 | `O` | `sync_max_offset_seconds` | 0.32 seconds |
 | `r` | `sample_rate` | 16000 samples per second |
-| `m` | `crop_margin` | 0.20 |
-| `q` | `detector_confidence` | 0.80 |
+| `e` | `eval_overlap` | 0.5, a unitless fraction |
+| `m` | `crop_margin` | 0.20, a unitless fraction |
+| `q` | `detector_confidence` | 0.80, a unitless probability |
+| `R` | `remove_leading_silence` | `True`, a Boolean |
 
 Let `D_v` be video duration, `D_a` be audio duration, and `l` be the manifest's
-leading silence. With leading-silence removal enabled, the content start is:
+leading silence, all in seconds. `R` is the Boolean switch for silence removal.
+With leading-silence removal enabled, content start `s_c`, in seconds, is:
 
 ```text
 s_c = min(l, D_v)
@@ -80,8 +83,10 @@ t_i = s_c + (i + 1/2) * (D_v - s_c) / N_v
 for i in {0, ..., N_v - 1}
 ```
 
-Midpoints keep all requested timestamps inside the interval. Sync timestamps
-use a fixed rate. For sync start `s_s` and index `j`:
+Midpoints keep all requested timestamps inside the interval. `t_i` is time in
+seconds, and `i` is the zero-based visual-frame index. Sync timestamps use a
+fixed rate. Let `s_s` be sync start in seconds, `N_s` be the sync-frame count,
+`u_j` be a sync timestamp in seconds, and `j` be its zero-based frame index:
 
 ```text
 N_s = round(T_s * f_s) = 50
@@ -90,8 +95,9 @@ for j in {0, ..., N_s - 1}
 ```
 
 The code clamps each `u_j` to the final safe video timestamp
-`max(0, D_v - 0.5 / f_s)`. Audio lengths follow `L = round(T * r)`. This gives
-64000 main samples, 32000 sync samples, and 42240 context samples.
+`max(0, D_v - 0.5 / f_s)`. For audio, let `T` be any window duration in
+seconds and `L` be its sample count. Then `L = round(T * r)`. This gives 64000
+main samples, 32000 sync samples, and 42240 context samples.
 
 The initial sync start fits the two-second video window when possible:
 
@@ -99,7 +105,8 @@ The initial sync start fits the two-second video window when possible:
 s_s = min(s_c, max(0, D_v - T_s))
 ```
 
-Full offset context requires audio and the interval:
+Full offset context requires audio and the interval below. `lower` and `upper`
+are candidate sync starts in seconds:
 
 ```text
 lower = s_c + O
@@ -137,16 +144,21 @@ duration. Stream duration is converted to seconds with its time base. Container
 duration is the fallback for video. If audio duration is unavailable, the code
 uses video duration.
 
-`read_frames()` uses OpenCV. For each shared timestamp it seeks in milliseconds
-and decodes one BGR frame. It raises an error if the file cannot open or a frame
-cannot be decoded. The preprocessor also rejects the wrong number of returned
-frames.
+`read_frames()` uses OpenCV. For each shared timestamp it requests a seek in
+milliseconds and decodes one BGR frame. It ignores the Boolean result from
+`VideoCapture.set()`. It raises an error if the file cannot open or the
+following `read()` fails. A failed or inaccurate seek that still returns a
+frame is not detected. The preprocessor also rejects the wrong number of
+returned frames.
 
 `read_audio()` invokes the FFmpeg executable without a shell. It seeks to
 `start_sec`, decodes `duration_sec`, removes video, mixes to one channel,
 resamples to `sample_rate`, and returns little-endian `float32`. It pads a short
 decode with zeros and trims a long decode to the requested sample count. A
-missing FFmpeg executable or a failed process stops that clip.
+missing FFmpeg executable raises `RuntimeError`; `build_cache()` catches it and
+reports that clip as failed. A nonzero FFmpeg process raises
+`subprocess.CalledProcessError` because `check=True`. `build_cache()` does not
+catch that type, so one failed process can abort the whole cache build.
 
 Seeking compressed media depends on container timestamps and keyframes. The
 current frame adapter checks the decoded count, but it does not compare the
@@ -160,7 +172,9 @@ boxes with probability at least 0.80 and sorts them by confidence. Its
 `Detection` contract contains only a box and confidence. MTCNN can expose
 facial landmarks, but this adapter does not request or retain them.
 
-Tracking uses box intersection over union. For boxes `A` and `B`:
+Tracking uses box intersection over union. Let `A` and `B` be boxes whose
+coordinates are measured in pixels. Their areas use square pixels. IoU is a
+unitless ratio:
 
 ```text
 IoU(A, B) = area(A intersect B) / area(A union B)
@@ -171,8 +185,9 @@ It greedily appends the unused detection with maximum IoU when that IoU is at
 least 0.30. Remaining detections start new tracks. Tracks are ranked by length,
 then mean detection confidence.
 
-Let `F` be sampled frames, `L_1` be the primary-track length, and `L_2` be the
-second-track length. The quality terms are:
+Let `F` be the sampled-frame count, `L_1` be the primary-track detection count,
+and `L_2` be the second-track detection count. Coverage and dominance are
+unitless ratios, and `stable` is a Boolean. The quality terms are:
 
 ```text
 coverage = L_1 / F
@@ -187,8 +202,9 @@ uses the full frame as a fake face crop.
 
 ## Visual and mouth crops
 
-For the visual view, the code centers a square on the face box. If box width is
-`w`, box height is `h`, and margin is `m = 0.20`, the requested side length is:
+For the visual view, the code centers a square on the face box. Let box width
+`w`, box height `h`, and requested side `a` be measured in pixels. Margin
+`m = 0.20` is unitless. The requested side length is:
 
 ```text
 a = max(w, h) * (1 + 2m) = 1.4 * max(w, h)
@@ -199,12 +215,15 @@ edge can make the actual crop rectangular. OpenCV resizes every accepted crop
 to 224 by 224 pixels.
 
 The current mouth estimate is the lower 48 percent of the face box. Its top is
-`y_top + 0.52 * h`; the other face-box sides stay unchanged. That region gets a
-separate 10 percent square expansion and is resized to 112 by 112. This is a
-box-relative estimate, not landmark alignment.
+`y_top + 0.52 * h`, where `y_top` and `h` are in pixels. The other face-box
+sides stay unchanged. That region gets a separate unitless 10 percent square
+expansion and is resized to 112 by 112 pixels. This is a box-relative estimate,
+not landmark alignment.
 
-Both crop types use the same image normalization. For an eight-bit pixel
-channel value `p_c`:
+Both crop types use the same image normalization. Let `c` identify an RGB
+channel. `p_c` is that channel's eight-bit pixel value from 0 through 255.
+`mean_c` and `std_c` are the channel constants below on the zero-to-one scale.
+The dimensionless normalized value is `x_c`:
 
 ```text
 x_c = ((p_c / 255) - mean_c) / std_c
@@ -212,43 +231,52 @@ mean = (0.485, 0.456, 0.406)
 std  = (0.229, 0.224, 0.225)
 ```
 
-OpenCV BGR becomes RGB first. The array then changes from height, width,
+OpenCV BGR becomes RGB first. The visual crop is 224 by 224 pixels, and the
+mouth crop is 112 by 112 pixels. The array then changes from height, width,
 channels to channels, height, width. Stacking crops produces
 `[time, channels, height, width]`.
 
 ## Audio views
 
-The main audio start is:
+Let `s_a` be main-audio start in seconds. The main audio start is:
 
 ```text
 s_a = min(s_c, max(0, D_a - T_a))
 ```
 
 This backs up the start when fewer than four seconds remain. The sync audio
-uses `s_s`. Both arrays normalize only the samples that belong to real decoded
-duration. For valid samples `x_i`, mean `mu`, and population standard deviation
-`sigma`:
+uses `s_s`. The preprocessor estimates a valid sample count from the probed
+audio duration and requested start. It does not receive the decoder's actual
+unpadded sample count. Let `i` be a sample index and `x_i` be its returned
+unitless `float32` amplitude in the estimated valid region. Let `mu` be that
+region's mean, `sigma` be its population standard deviation, and `y_i` be its
+normalized amplitude:
 
 ```text
 y_i = (x_i - mu) / sigma, when sigma > 1e-7
 y_i = 0, otherwise
 ```
 
-Samples outside the valid duration stay zero. This order matters. Normalizing
-decoder padding as if it were content would create a length cue. A constant or
-empty valid region also becomes zeros. The main view is `[64000]`; the aligned
-sync view is `[32000]`.
+Samples outside the estimated valid region stay zero. A constant or empty
+estimated valid region also becomes zeros. However, `read_audio()` pads before
+returning. If a successful decode is unexpectedly shorter than the probed
+duration implies, its decoder-added zeros can fall inside the estimated valid
+region and affect `mu` and `sigma`. The cache stores no actual-length mask to
+detect that case. The main view is `[64000]`; the aligned sync view is
+`[32000]`.
 
 The 2.64-second `sync_audio_context` is different. The preprocessor only pads
-or trims it to `[42240]`; it does not normalize it. `CachedSyncDataset` later
-crops a real two-second window for one of seven offsets:
+or trims it to `[42240]`; it does not normalize it. The implemented
+[`OFFSET_MILLISECONDS` and `crop_audio_context()`](../../src/deepfake_detection/branches/sync_objective.py)
+define seven real-context offsets:
 
 ```text
 {-320, -160, -80, 0, 80, 160, 320} milliseconds
 ```
 
-The dataset normalizes each cropped window after selection. It creates the
-eighth sync class from a different authentic identity. Context is absent when
+[`CachedSyncDataset`](../../src/deepfake_detection/data/datasets.py) selects and
+normalizes each cropped window. For the eighth sync class, it selects cached
+sync audio from a different authentic source identity. Context is absent when
 the video and audio do not contain the full margin around the sync window.
 
 `audio_clipped` is true when the absolute value of any raw main-audio sample is
@@ -283,7 +311,9 @@ The project uses two SHA-256 hashes for different questions.
 
 `preprocessing_config_hash()` hashes canonical JSON containing all
 `ViewConfig` fields and `code_version`. It identifies one pipeline definition
-across clips. Clip content and dataset are excluded.
+across clips. The complete field set is the defaults table under Shared
+timeline, including `eval_overlap` and `remove_leading_silence`. Clip content
+and dataset are excluded.
 
 `cache_fingerprint()` hashes canonical JSON containing:
 
@@ -370,15 +400,19 @@ background only and cannot select the project detector.
     paths, counts failures and blockers, and calls `CacheStore.save()`.
 11. [`CacheStore`](../../src/deepfake_detection/views/cache_store.py) writes and
     loads compressed view archives in dataset and clip namespaces.
-12. [`CachedSyncDataset`](../../src/deepfake_detection/data/datasets.py) makes
+12. [`OFFSET_MILLISECONDS` and `crop_audio_context()`](../../src/deepfake_detection/branches/sync_objective.py)
+    define the real sync offsets and crop them from cached context.
+13. [`CachedSyncDataset`](../../src/deepfake_detection/data/datasets.py) makes
     real-context offset and cross-identity mismatch examples from the cache.
 
 ## Failure cases
 
 - A missing video stream or unavailable duration stops the clip.
 - A nonpositive video duration stops preprocessing.
-- A missing FFmpeg executable prevents audio decoding.
-- A failed frame seek or wrong decoded frame count stops preprocessing.
+- An unreadable frame or wrong decoded frame count stops preprocessing. A
+  failed or inaccurate seek that still returns a frame passes undetected.
+- A missing FFmpeg executable becomes a reported clip failure. A nonzero
+  FFmpeg process can abort the full cache build with `CalledProcessError`.
 - A face box that becomes empty after frame clamping stops crop creation.
 - No stable face track produces absent visual and mouth views, not full-frame
   substitutes.
@@ -399,8 +433,9 @@ background only and cannot select the project detector.
 normalization, missing-face behavior, short clips, silence removal, and real
 sync context. [`test_tracking.py`](../../tests/test_tracking.py) covers primary
 track selection and multi-face ambiguity.
-[`test_face_detector.py`](../../tests/test_face_detector.py) covers color
-conversion, confidence filtering, and box conversion.
+[`test_face_detector.py`](../../tests/test_face_detector.py) covers confidence
+filtering and box conversion. Its fixture ignores the input image, so it does
+not prove the implementation's BGR-to-RGB conversion.
 [`test_media_decoder.py`](../../tests/test_media_decoder.py) exercises real
 video and audio decoding when FFmpeg is available.
 [`test_views.py`](../../tests/test_views.py) covers timestamps, sync lengths,
@@ -408,11 +443,15 @@ and hashes. [`test_quality.py`](../../tests/test_quality.py) covers blockers.
 [`test_clip_cache.py`](../../tests/test_clip_cache.py) covers archive round trips
 and dataset namespaces. [`test_cache_build.py`](../../tests/test_cache_build.py)
 covers missing media, blocker counts, and the shared preprocessing hash.
+[`test_sync_objective.py`](../../tests/test_sync_objective.py) fixes the seven
+offset constants and checks real-context cropping without padded edges.
+[`test_sync_dataset.py`](../../tests/test_sync_dataset.py) covers authentic
+offset variants and the cross-source mismatch class.
 
 Run the focused pipeline set:
 
 ```powershell
-uv run pytest tests\test_preprocessor.py tests\test_tracking.py tests\test_face_detector.py tests\test_media_decoder.py tests\test_views.py tests\test_quality.py tests\test_clip_cache.py tests\test_cache_build.py -v
+uv run pytest tests\test_preprocessor.py tests\test_tracking.py tests\test_face_detector.py tests\test_media_decoder.py tests\test_views.py tests\test_quality.py tests\test_clip_cache.py tests\test_cache_build.py tests\test_sync_objective.py tests\test_sync_dataset.py -v
 ```
 
 ## Exercises
