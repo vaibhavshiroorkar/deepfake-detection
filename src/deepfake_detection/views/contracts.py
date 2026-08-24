@@ -12,12 +12,15 @@ class QualityReport:
     audio_clipped: bool
     av_duration_delta_sec: float
     sync_duration_sufficient: bool = True
+    landmark_coverage: float = 1.0
 
     def __post_init__(self) -> None:
         if not 0 <= self.face_coverage <= 1:
             raise ValueError("Face coverage must be in [0, 1]")
         if self.av_duration_delta_sec < 0:
             raise ValueError("Duration difference cannot be negative")
+        if not 0 <= self.landmark_coverage <= 1:
+            raise ValueError("Landmark coverage must be in [0, 1]")
 
     def full_fusion_blockers(self) -> tuple[str, ...]:
         blockers: list[str] = []
@@ -31,6 +34,8 @@ class QualityReport:
             blockers.append("av_duration_mismatch")
         if not self.sync_duration_sufficient:
             blockers.append("insufficient_sync_duration")
+        if self.landmark_coverage < 1.0:
+            blockers.append("missing_face_landmarks")
         return tuple(blockers)
 
 

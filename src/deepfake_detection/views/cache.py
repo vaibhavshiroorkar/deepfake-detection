@@ -5,6 +5,7 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
+from .alignment import LANDMARK_TEMPLATE_REVISION
 from .timeline import ViewConfig
 
 
@@ -24,6 +25,7 @@ def preprocessing_config_hash(
     payload = {
         "code_version": code_version,
         "config": asdict(config),
+        "landmark_template_revision": LANDMARK_TEMPLATE_REVISION,
     }
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(encoded).hexdigest()

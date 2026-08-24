@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,6 +20,7 @@ class ViewConfig:
     crop_margin: float = 0.20
     detector_confidence: float = 0.80
     remove_leading_silence: bool = True
+    mouth_crop_mode: Literal["box", "landmark"] = "box"
 
     def __post_init__(self) -> None:
         if self.visual_frames <= 0 or self.sync_fps <= 0 or self.sample_rate <= 0:
@@ -29,6 +31,8 @@ class ViewConfig:
             raise ValueError("Maximum sync offset cannot be negative")
         if not 0 <= self.eval_overlap < 1:
             raise ValueError("Evaluation overlap must be in [0, 1)")
+        if self.mouth_crop_mode not in {"box", "landmark"}:
+            raise ValueError("Mouth crop mode must be 'box' or 'landmark'")
 
 
 @dataclass(frozen=True, slots=True)

@@ -13,7 +13,14 @@ def fixture_prepared() -> PreparedClip:
         audio_view=np.ones((8,), dtype=np.float32),
         sync_video_view=np.ones((3, 3, 4, 4), dtype=np.float32),
         sync_audio_view=np.ones((6,), dtype=np.float32),
-        quality=QualityReport(1.0, True, True, False, 0.01),
+        quality=QualityReport(
+            1.0,
+            True,
+            True,
+            False,
+            0.01,
+            landmark_coverage=0.75,
+        ),
         preprocessing_fingerprint="abc123",
         preprocessing_config_hash="pipeline123",
         sync_audio_context=np.ones((10,), dtype=np.float32),
@@ -33,6 +40,7 @@ def test_cache_round_trip_preserves_views_quality_and_fingerprint(
     assert np.array_equal(restored.audio_view, prepared.audio_view)
     assert np.array_equal(restored.sync_audio_context, prepared.sync_audio_context)
     assert restored.quality == prepared.quality
+    assert restored.quality.landmark_coverage == 0.75
     assert restored.preprocessing_fingerprint == "abc123"
     assert restored.preprocessing_config_hash == "pipeline123"
 

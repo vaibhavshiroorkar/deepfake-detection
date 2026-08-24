@@ -9,6 +9,7 @@ import numpy as np
 
 from deepfake_detection.data.manifest import ClipRecord
 
+from .alignment import aligned_lower_face
 from .cache import cache_fingerprint, preprocessing_config_hash
 from .contracts import PreparedClip, QualityReport
 from .timeline import ViewConfig, make_sync_window, uniform_timestamps
@@ -139,13 +140,36 @@ def _mouth_view(
     *,
     height: int,
     width: int,
-) -> np.ndarray | None:
+    mode: str,
+) -> tuple[np.ndarray | None, float]:
     if not selection.stable:
-        return None
+        return None, 0.0 if mode == "landmark" else 1.0
+    filled = _filled_detections(selection, len(frames))
+    if mode == "landmark":
+        aligned: list[np.ndarray] = []
+        valid_landmarks = 0
+        for frame, detection in zip(frames, filled, strict=True):
+            if detection.landmarks is None:
+                continue
+            try:
+                aligned.append(
+                    aligned_lower_face(
+                        frame,
+                        detection.landmarks,
+                        height=height,
+                        width=width,
+                    )
+                )
+            except ValueError:
+                continue
+            valid_landmarks += 1
+        coverage = valid_landmarks / len(frames) if frames else 0.0
+        if valid_landmarks != len(frames):
+            return None, coverage
+        return np.stack(aligned), coverage
+
     crops: list[np.ndarray] = []
-    for frame, detection in zip(
-        frames, _filled_detections(selection, len(frames)), strict=True
-    ):
+    for frame, detection in zip(frames, filled, strict=True):
         box = detection.box
         mouth = Box(
             box.left,
@@ -157,7 +181,7 @@ def _mouth_view(
         crops.append(
             _normalize_image(frame[top:bottom, left:right], height=height, width=width)
         )
-    return np.stack(crops)
+    return np.stack(crops), 1.0
 
 
 class Preprocessor:
@@ -234,11 +258,12 @@ class Preprocessor:
             width=self.config.visual_width,
             margin=self.config.crop_margin,
         )
-        sync_video = _mouth_view(
+        sync_video, landmark_coverage = _mouth_view(
             sync_frames,
             sync_track,
             height=self.config.sync_height,
             width=self.config.sync_width,
+            mode=self.config.mouth_crop_mode,
         )
 
         audio_view = None
@@ -318,6 +343,7 @@ class Preprocessor:
                     or info.audio_duration_sec >= self.config.sync_seconds
                 )
             ),
+            landmark_coverage=landmark_coverage,
         )
         return PreparedClip(
             clip_id=record.clip_id,

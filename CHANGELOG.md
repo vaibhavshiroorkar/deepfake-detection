@@ -20,6 +20,9 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ### Added
 
+- A deterministic five-landmark lower-face view with a versioned template,
+  fixed crop region, strict geometry checks, nearest-frame fill, quality
+  coverage, and cache identity. The existing box crop remains the default.
 - Landmark-aware MTCNN and YuNet face detector adapters with a pinned,
   integrity-checked YuNet model asset.
 - Windows CI that installs the full local environment, checks lint, format,
