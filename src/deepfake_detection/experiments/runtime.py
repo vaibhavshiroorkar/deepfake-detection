@@ -141,6 +141,8 @@ def _available_memory_mib() -> int | None:
         available_pages = os.sysconf("SC_AVPHYS_PAGES")
     except (AttributeError, OSError, TypeError, ValueError):
         return None
+    if page_size <= 0 or available_pages < 0:
+        return None
     return (page_size * available_pages) // (1024**2)
 
 
