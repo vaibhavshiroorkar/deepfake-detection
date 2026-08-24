@@ -10,7 +10,12 @@ import pytest
 from deepfake_detection.experiments import tracking as experiment_tracking
 from deepfake_detection.experiments.configuration import ResolvedConfiguration
 from deepfake_detection.experiments.runtime import RuntimeSnapshot
-from deepfake_detection.views.tracking import Box, Detection, select_primary_track
+from deepfake_detection.views.tracking import (
+    Box,
+    Detection,
+    TrackSelection,
+    select_primary_track,
+)
 
 
 @dataclass(frozen=True)
@@ -679,6 +684,159 @@ class FaceTrackingTests(unittest.TestCase):
         result = select_primary_track(frames, min_iou=0.3)
 
         self.assertFalse(result.stable)
+
+    def test_constant_velocity_keeps_fast_motion_in_one_track(self) -> None:
+        frames = (
+            (Detection(Box(0, 0, 10, 10), 0.95),),
+            (Detection(Box(5, 0, 15, 10), 0.94),),
+            (Detection(Box(15, 0, 25, 10), 0.93),),
+        )
+
+        greedy = select_primary_track(frames, min_iou=0.3)
+        motion = select_primary_track(
+            frames,
+            min_iou=0.3,
+            association="constant_velocity",
+        )
+
+        self.assertEqual(greedy.frame_indices, (0, 1))
+        self.assertEqual(motion.frame_indices, (0, 1, 2))
+
+    def test_constant_velocity_preserves_identity_when_tracks_cross(self) -> None:
+        frames = (
+            (
+                Detection(Box(0, 0, 10, 10), 0.99),
+                Detection(Box(30, 0, 40, 10), 0.70),
+            ),
+            (
+                Detection(Box(6, 0, 16, 10), 0.98),
+                Detection(Box(24, 0, 34, 10), 0.71),
+            ),
+            (
+                Detection(Box(12, 0, 22, 10), 0.97),
+                Detection(Box(18, 0, 28, 10), 0.72),
+            ),
+            (
+                Detection(Box(12, 0, 22, 10), 0.73),
+                Detection(Box(18, 0, 28, 10), 0.96),
+            ),
+        )
+
+        result = select_primary_track(
+            frames,
+            min_iou=0.2,
+            association="constant_velocity",
+        )
+
+        self.assertEqual(
+            tuple(detection.confidence for detection in result.detections),
+            (0.99, 0.98, 0.97, 0.96),
+        )
+        self.assertEqual(
+            tuple(detection.box.left for detection in result.detections),
+            (0, 6, 12, 18),
+        )
+
+    def test_constant_velocity_reconnects_one_missing_frame_within_gap(self) -> None:
+        frames = (
+            (Detection(Box(0, 0, 10, 10), 0.95),),
+            (Detection(Box(5, 0, 15, 10), 0.94),),
+            (),
+            (Detection(Box(15, 0, 25, 10), 0.93),),
+        )
+
+        result = select_primary_track(
+            frames,
+            min_iou=0.3,
+            association="constant_velocity",
+            max_gap=1,
+        )
+
+        self.assertEqual(result.frame_indices, (0, 1, 3))
+
+    def test_constant_velocity_does_not_cross_the_gap_limit(self) -> None:
+        frames = (
+            (Detection(Box(0, 0, 10, 10), 0.95),),
+            (Detection(Box(5, 0, 15, 10), 0.94),),
+            (),
+            (),
+            (Detection(Box(20, 0, 30, 10), 0.93),),
+        )
+
+        result = select_primary_track(
+            frames,
+            min_iou=0.3,
+            association="constant_velocity",
+            max_gap=1,
+        )
+
+        self.assertEqual(result.frame_indices, (0, 1))
+
+    def test_constant_velocity_uses_stable_indices_for_equal_scores(self) -> None:
+        frames = (
+            (
+                Detection(Box(0, 0, 10, 10), 0.90),
+                Detection(Box(0, 0, 10, 10), 0.80),
+            ),
+            (
+                Detection(Box(0, 0, 10, 10), 0.70),
+                Detection(Box(0, 0, 10, 10), 0.60),
+            ),
+        )
+
+        result = select_primary_track(
+            frames,
+            min_iou=0.3,
+            association="constant_velocity",
+        )
+
+        self.assertEqual(
+            tuple(detection.confidence for detection in result.detections),
+            (0.90, 0.70),
+        )
+        self.assertFalse(result.stable)
+
+    def test_constant_velocity_keeps_simultaneous_faces_separate(self) -> None:
+        frames = (
+            (
+                Detection(Box(0, 0, 10, 10), 0.95),
+                Detection(Box(30, 0, 40, 10), 0.95),
+            ),
+            (
+                Detection(Box(2, 0, 12, 10), 0.95),
+                Detection(Box(28, 0, 38, 10), 0.95),
+            ),
+        )
+
+        result = select_primary_track(
+            frames,
+            min_iou=0.3,
+            association="constant_velocity",
+        )
+
+        self.assertEqual(result.frame_indices, (0, 1))
+        self.assertFalse(result.stable)
+
+    def test_constant_velocity_handles_empty_input(self) -> None:
+        result = select_primary_track(
+            (),
+            min_iou=0.3,
+            association="constant_velocity",
+            max_gap=1,
+        )
+
+        self.assertEqual(result, TrackSelection((), (), 0.0, False))
+
+    def test_rejects_unknown_association_and_negative_gap(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Association"):
+            select_primary_track((), min_iou=0.3, association="centroid")
+        with self.assertRaisesRegex(ValueError, "gap"):
+            select_primary_track(
+                (),
+                min_iou=0.3,
+                association="constant_velocity",
+                max_gap=-1,
+            )
 
 
 if __name__ == "__main__":

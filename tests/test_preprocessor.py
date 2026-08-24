@@ -44,9 +44,28 @@ class FixtureDecoder:
         )
 
 
+class WideFixtureDecoder(FixtureDecoder):
+    def read_frames(
+        self, path: Path, timestamps_sec: tuple[float, ...]
+    ) -> tuple[np.ndarray, ...]:
+        frames = []
+        for index, _ in enumerate(timestamps_sec):
+            frame = np.zeros((64, 1200, 3), dtype=np.uint8)
+            frame[0, 0, 0] = index
+            frames.append(frame)
+        return tuple(frames)
+
+
 class FixtureDetector:
     def detect(self, frame: np.ndarray) -> tuple[Detection, ...]:
         return (Detection(Box(2, 2, 14, 14), 0.99),)
+
+
+class AcceleratingFaceDetector:
+    def detect(self, frame: np.ndarray) -> tuple[Detection, ...]:
+        index = int(frame[0, 0, 0])
+        left = 0 if index == 0 else 10 + 20 * (index - 1)
+        return (Detection(Box(left, 2, left + 20, 42), 0.99),)
 
 
 class LandmarkFixtureDetector:
@@ -150,6 +169,13 @@ def fixture_record() -> ClipRecord:
 def test_view_config_rejects_unknown_mouth_crop_mode() -> None:
     with pytest.raises(ValueError, match="Mouth crop mode"):
         ViewConfig(mouth_crop_mode="full_frame")
+
+
+def test_view_config_rejects_unknown_track_association_and_negative_gap() -> None:
+    with pytest.raises(ValueError, match="Track association"):
+        ViewConfig(track_association="centroid")
+    with pytest.raises(ValueError, match="Track gap"):
+        ViewConfig(track_max_gap=-1)
 
 
 def test_preprocessor_builds_all_three_exact_views(tmp_path: Path) -> None:
@@ -283,6 +309,31 @@ def test_preprocessing_hash_covers_crop_mode_and_template_revision(
 
     assert box_hash != landmark_hash
     assert box_hash != revised_hash
+
+
+def test_preprocessor_uses_motion_tracker_and_hashes_its_settings(
+    tmp_path: Path,
+) -> None:
+    media = tmp_path / "clip.mp4"
+    media.write_bytes(b"fixture")
+    greedy = Preprocessor(
+        decoder=WideFixtureDecoder(),
+        detector=AcceleratingFaceDetector(),
+        config=ViewConfig(),
+        code_version="test",
+    ).prepare(fixture_record(), media)
+    motion = Preprocessor(
+        decoder=WideFixtureDecoder(),
+        detector=AcceleratingFaceDetector(),
+        config=ViewConfig(track_association="constant_velocity", track_max_gap=1),
+        code_version="test",
+    ).prepare(fixture_record(), media)
+
+    assert greedy.visual_view is None
+    assert greedy.sync_video_view is None
+    assert motion.visual_view is not None
+    assert motion.sync_video_view is not None
+    assert greedy.preprocessing_config_hash != motion.preprocessing_config_hash
 
 
 def test_preprocessor_never_replaces_a_missing_face_with_the_full_frame(

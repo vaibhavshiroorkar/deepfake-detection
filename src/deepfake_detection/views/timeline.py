@@ -21,6 +21,8 @@ class ViewConfig:
     detector_confidence: float = 0.80
     remove_leading_silence: bool = True
     mouth_crop_mode: Literal["box", "landmark"] = "box"
+    track_association: Literal["greedy_iou", "constant_velocity"] = "greedy_iou"
+    track_max_gap: int = 0
 
     def __post_init__(self) -> None:
         if self.visual_frames <= 0 or self.sync_fps <= 0 or self.sample_rate <= 0:
@@ -33,6 +35,12 @@ class ViewConfig:
             raise ValueError("Evaluation overlap must be in [0, 1)")
         if self.mouth_crop_mode not in {"box", "landmark"}:
             raise ValueError("Mouth crop mode must be 'box' or 'landmark'")
+        if self.track_association not in {"greedy_iou", "constant_velocity"}:
+            raise ValueError(
+                "Track association must be 'greedy_iou' or 'constant_velocity'"
+            )
+        if self.track_max_gap < 0:
+            raise ValueError("Track gap cannot be negative")
 
 
 @dataclass(frozen=True, slots=True)

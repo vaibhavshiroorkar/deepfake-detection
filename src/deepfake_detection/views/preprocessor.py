@@ -200,7 +200,12 @@ class Preprocessor:
 
     def _track(self, frames: tuple[np.ndarray, ...]) -> TrackSelection:
         detections = tuple(self.detector.detect(frame) for frame in frames)
-        return select_primary_track(detections, min_iou=0.30)
+        return select_primary_track(
+            detections,
+            min_iou=0.30,
+            association=self.config.track_association,
+            max_gap=self.config.track_max_gap,
+        )
 
     def prepare(self, record: ClipRecord, media_path: Path) -> PreparedClip:
         info = self.decoder.probe(media_path)

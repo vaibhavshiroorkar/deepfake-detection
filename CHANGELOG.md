@@ -20,6 +20,8 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ### Added
 
+- A deterministic constant-velocity face association challenger with bounded
+  gap recovery and stable one-to-one matching. Greedy IoU remains the default.
 - A deterministic five-landmark lower-face view with a versioned template,
   fixed crop region, strict geometry checks, nearest-frame fill, quality
   coverage, and cache identity. The existing box crop remains the default.
