@@ -16,6 +16,8 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 - Optional local MLflow tracking with SQLite metadata, local artifacts, runtime
   snapshots, resolved configuration artifacts, and failed-run records.
+- MLflow-safe tracking keys and bounded parameter, tag, runtime, and run-name
+  values with deterministic hash suffixes.
 - Versioned layered YAML configuration for reproducible local experiments.
 - Runtime environment snapshots with Git, package, hardware, memory, and FFmpeg
   details, plus deterministic shared training seeds.

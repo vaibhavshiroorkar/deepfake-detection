@@ -1,5 +1,7 @@
+import hashlib
+import logging
 import unittest
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -111,6 +113,11 @@ def _calls(
     ]
 
 
+def _shortened(value: str, limit: int) -> str:
+    suffix = f"...[sha256:{hashlib.sha256(value.encode('utf-8')).hexdigest()[:16]}]"
+    return f"{value[: limit - len(suffix)]}{suffix}"
+
+
 def test_disabled_tracking_does_not_import_mlflow(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -157,7 +164,7 @@ def test_tracked_run_logs_config_runtime_metrics_and_finishes(tmp_path: Path) ->
     logged_dicts = {
         artifact_file: values for (values, artifact_file), _ in _calls(fake, "log_dict")
     }
-    assert parameters["arguments.seed"] == 17
+    assert parameters["arguments.seed"] == "17"
     assert parameters["configuration_sha256"] == "a" * 64
     assert tags["configuration_sha256"] == "a" * 64
     assert tags["git_commit"] == "abc123"
@@ -166,6 +173,107 @@ def test_tracked_run_logs_config_runtime_metrics_and_finishes(tmp_path: Path) ->
     assert _calls(fake, "log_metrics") == [(({"accuracy": 0.75},), {"step": 3})]
     assert _calls(fake, "log_artifact") == [((artifact,), {"artifact_path": "reports"})]
     assert _calls(fake, "end_run") == [((), {"status": "FINISHED"})]
+
+
+def test_tracking_normalizes_over_limit_parameter_and_tag_data(tmp_path: Path) -> None:
+    configuration = _configuration()
+    long_parameter_value = "p" * 6001
+    long_tag_value = "t" * 8001
+    long_runtime_value = "r" * 8001
+    long_parameter_key = f"caller:{'k' * 300}"
+    long_tag_key = f"tag:{'k' * 300}"
+    unsafe_path_key = "paths/."
+    values = dict(configuration.values)
+    values["arguments"] = {
+        **configuration.values["arguments"],
+        "description": long_parameter_value,
+    }
+    tracking_values = dict(configuration.values["tracking"])
+    tracking_values["run_name"] = "n" * 8001
+    tracking_values["tags"] = {
+        "project": "deepfake-generalization",
+        "custom": long_tag_value,
+        long_tag_key: "custom tag value",
+    }
+    values["tracking"] = tracking_values
+    configuration = ResolvedConfiguration(
+        values=values,
+        sources=configuration.sources,
+        sha256=configuration.sha256,
+    )
+    settings = experiment_tracking.TrackingSettings.from_configuration(
+        configuration.values["tracking"], root=tmp_path
+    )
+    fake = _FakeMlflow()
+
+    with experiment_tracking.start_tracked_run(
+        settings,
+        configuration=configuration,
+        runtime=replace(_runtime(), cpu=long_runtime_value),
+        mlflow_module=fake,
+    ) as logger:
+        logger.log_params(
+            {
+                long_parameter_key: long_parameter_value,
+                unsafe_path_key: "unsafe path key",
+            }
+        )
+
+    initial_parameters, caller_parameters = [
+        values for (values,), _ in _calls(fake, "log_params")
+    ]
+    tags = _calls(fake, "set_tags")[0][0][0]
+    run_name = _calls(fake, "start_run")[0][1]["run_name"]
+    parameter_key_hash = hashlib.sha256(long_parameter_key.encode("utf-8")).hexdigest()[
+        :16
+    ]
+    tag_key_hash = hashlib.sha256(long_tag_key.encode("utf-8")).hexdigest()[:16]
+
+    assert initial_parameters["arguments.seed"] == "17"
+    assert initial_parameters["arguments.description"] == _shortened(
+        long_parameter_value, 6000
+    )
+    assert len(caller_parameters) == 2
+    assert long_parameter_key not in caller_parameters
+    normalized_parameter_key = next(
+        key for key in caller_parameters if key.endswith(f"__{parameter_key_hash}")
+    )
+    assert len(normalized_parameter_key) <= 250
+    assert caller_parameters[normalized_parameter_key] == _shortened(
+        long_parameter_value, 6000
+    )
+    assert unsafe_path_key not in caller_parameters
+    assert tags["project"] == "deepfake-generalization"
+    assert tags["custom"] == _shortened(long_tag_value, 8000)
+    assert tags["cpu"] == _shortened(long_runtime_value, 8000)
+    assert long_tag_key not in tags
+    assert any(key.endswith(f"__{tag_key_hash}") for key in tags)
+    assert all(len(key) <= 250 and len(value) <= 8000 for key, value in tags.items())
+    assert run_name == _shortened("n" * 8001, 8000)
+
+
+def test_logger_keeps_values_when_normalized_parameter_keys_collide(
+    tmp_path: Path,
+) -> None:
+    configuration = _configuration()
+    settings = experiment_tracking.TrackingSettings.from_configuration(
+        configuration.values["tracking"], root=tmp_path
+    )
+    fake = _FakeMlflow()
+
+    with experiment_tracking.start_tracked_run(
+        settings,
+        configuration=configuration,
+        runtime=_runtime(),
+        mlflow_module=fake,
+    ) as logger:
+        logger.log_params({1: "integer key", "1": "string key"})
+
+    caller_parameters = _calls(fake, "log_params")[1][0][0]
+    assert len(caller_parameters) == 2
+    assert set(caller_parameters.values()) == {"integer key", "string key"}
+    assert "1" in caller_parameters
+    assert any(key.startswith("1__") for key in caller_parameters)
 
 
 def test_tracked_run_records_failure_and_marks_run_failed(tmp_path: Path) -> None:
@@ -319,6 +427,55 @@ def test_real_local_backend_finishes_a_run(tmp_path: Path) -> None:
     assert runs[0].info.status == "FINISHED"
     assert runs[0].data.params["arguments.seed"] == "17"
     assert runs[0].data.metrics["accuracy"] == 0.75
+
+
+def test_real_local_backend_accepts_normalized_limit_values(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    mlflow = pytest.importorskip("mlflow")
+    long_parameter_value = "p" * 6001
+    long_tag_value = "t" * 8001
+    long_runtime_value = "r" * 8001
+    configuration = _configuration()
+    values = dict(configuration.values)
+    values["arguments"] = {
+        **configuration.values["arguments"],
+        "description": long_parameter_value,
+    }
+    tracking_values = dict(configuration.values["tracking"])
+    tracking_values["run_name"] = "n" * 8001
+    tracking_values["tags"] = {"custom": long_tag_value}
+    values["tracking"] = tracking_values
+    configuration = ResolvedConfiguration(
+        values=values,
+        sources=configuration.sources,
+        sha256=configuration.sha256,
+    )
+    settings = experiment_tracking.TrackingSettings.from_configuration(
+        configuration.values["tracking"], root=tmp_path
+    )
+
+    with caplog.at_level(logging.WARNING, logger="mlflow.utils.validation"):
+        with experiment_tracking.start_tracked_run(
+            settings,
+            configuration=configuration,
+            runtime=replace(_runtime(), cpu=long_runtime_value),
+        ):
+            pass
+
+    client = mlflow.tracking.MlflowClient(tracking_uri=settings.tracking_uri)
+    experiment = client.get_experiment_by_name(settings.experiment_name)
+    assert experiment is not None
+    runs = client.search_runs([experiment.experiment_id])
+    assert len(runs) == 1
+    run = runs[0]
+    assert run.data.params["arguments.description"] == _shortened(
+        long_parameter_value, 6000
+    )
+    assert run.data.tags["custom"] == _shortened(long_tag_value, 8000)
+    assert run.data.tags["cpu"] == _shortened(long_runtime_value, 8000)
+    assert run.data.tags["mlflow.runName"] == _shortened("n" * 8001, 8000)
+    assert not [record for record in caplog.records if "truncated" in record.message]
 
 
 class FaceTrackingTests(unittest.TestCase):

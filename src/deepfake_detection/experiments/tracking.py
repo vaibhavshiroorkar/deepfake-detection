@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import importlib
+import posixpath
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -21,6 +23,13 @@ _SENSITIVE_KEYS = frozenset(
         "secret",
         "token",
     }
+)
+_MAX_KEY_LENGTH = 250
+_MAX_PARAMETER_VALUE_LENGTH = 6000
+_MAX_TAG_VALUE_LENGTH = 8000
+_HASH_LENGTH = 16
+_KEY_CHARACTERS = frozenset(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._- /"
 )
 
 
@@ -120,7 +129,7 @@ class _MlflowRunLogger:
         return self._run_id
 
     def log_params(self, values: Mapping[str, Any]) -> None:
-        self._mlflow.log_params(dict(values))
+        self._mlflow.log_params(_normalize_params(values))
 
     def log_metrics(
         self, values: Mapping[str, float], *, step: int | None = None
@@ -151,13 +160,15 @@ def start_tracked_run(
     mlflow.set_tracking_uri(settings.tracking_uri)
     _select_experiment(mlflow, settings)
 
-    run = mlflow.start_run(run_name=settings.run_name)
+    run = mlflow.start_run(
+        run_name=_bounded_value(settings.run_name, limit=_MAX_TAG_VALUE_LENGTH)
+    )
     logger = _MlflowRunLogger(mlflow, _run_id(run))
     try:
         parameters = _scalar_values(configuration.values)
         parameters["configuration_sha256"] = configuration.sha256
         logger.log_params(parameters)
-        mlflow.set_tags(_run_tags(settings, configuration, runtime))
+        mlflow.set_tags(_normalize_tags(_run_tags(settings, configuration, runtime)))
         logger.log_dict(_redacted_values(configuration.values), "resolved-config.yaml")
         logger.log_dict(runtime.as_dict(), "runtime.json")
         yield logger
@@ -375,3 +386,68 @@ def _run_tags(
     if runtime.gpu is not None:
         tags["gpu"] = runtime.gpu
     return tags
+
+
+def _normalize_params(values: Mapping[str, Any]) -> dict[str, str]:
+    return _normalize_values(values, value_limit=_MAX_PARAMETER_VALUE_LENGTH)
+
+
+def _normalize_tags(values: Mapping[str, Any]) -> dict[str, str]:
+    return _normalize_values(values, value_limit=_MAX_TAG_VALUE_LENGTH)
+
+
+def _normalize_values(values: Mapping[str, Any], *, value_limit: int) -> dict[str, str]:
+    normalized: dict[str, str] = {}
+    used_keys: set[str] = set()
+    for key, value in sorted(values.items(), key=_entry_sort_key):
+        normalized_key = _normalized_key(str(key), used_keys)
+        normalized[normalized_key] = _bounded_value(value, limit=value_limit)
+    return normalized
+
+
+def _entry_sort_key(item: tuple[Any, Any]) -> tuple[str, str, str]:
+    key = item[0]
+    return (str(key), type(key).__qualname__, repr(key))
+
+
+def _normalized_key(value: str, used_keys: set[str]) -> str:
+    candidate = value if _is_safe_key(value) else _encoded_key(value)
+    unique_key = candidate
+    index = 1
+    while unique_key in used_keys:
+        suffix = f"__{_short_hash(f'{value}:{index}')}"
+        unique_key = f"{candidate[: _MAX_KEY_LENGTH - len(suffix)]}{suffix}"
+        index += 1
+    used_keys.add(unique_key)
+    return unique_key
+
+
+def _is_safe_key(value: str) -> bool:
+    if not value or len(value) > _MAX_KEY_LENGTH:
+        return False
+    if any(character not in _KEY_CHARACTERS for character in value):
+        return False
+    return not value.startswith("/") and posixpath.normpath(value) == value
+
+
+def _encoded_key(value: str) -> str:
+    readable = "".join(
+        character if character in _KEY_CHARACTERS and character != "/" else "_"
+        for character in value
+    ).strip(" .")
+    if not readable:
+        readable = "key"
+    suffix = f"__{_short_hash(value)}"
+    return f"{readable[: _MAX_KEY_LENGTH - len(suffix)]}{suffix}"
+
+
+def _bounded_value(value: Any, *, limit: int) -> str:
+    text = str(value)
+    if len(text) <= limit:
+        return text
+    suffix = f"...[sha256:{_short_hash(text)}]"
+    return f"{text[: limit - len(suffix)]}{suffix}"
+
+
+def _short_hash(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()[:_HASH_LENGTH]
