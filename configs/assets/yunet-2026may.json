@@ -1,0 +1,7 @@
+{
+  "asset_id": "opencv-zoo-yunet-2026may",
+  "source_commit": "47534e27c9851bb1128ccc0102f1145e27f23f98",
+  "url": "https://github.com/opencv/opencv_zoo/raw/47534e27c9851bb1128ccc0102f1145e27f23f98/models/face_detection_yunet/face_detection_yunet_2026may.onnx",
+  "size_bytes": 229738,
+  "sha256": "ebafce4e3c118d6554634be5c27ab333b4c047a9a8c3faf1d7cf93101c22f0f0"
+}

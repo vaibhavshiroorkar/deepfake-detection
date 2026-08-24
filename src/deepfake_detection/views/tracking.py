@@ -1,6 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
+
+
+def _require_finite(name: str, *values: float) -> None:
+    if not all(isfinite(value) for value in values):
+        raise ValueError(f"{name} values must be finite")
 
 
 @dataclass(frozen=True, slots=True)
@@ -9,6 +15,9 @@ class Box:
     top: float
     right: float
     bottom: float
+
+    def __post_init__(self) -> None:
+        _require_finite("Box", self.left, self.top, self.right, self.bottom)
 
     @property
     def area(self) -> float:
@@ -26,9 +35,56 @@ class Box:
 
 
 @dataclass(frozen=True, slots=True)
+class Point:
+    x: float
+    y: float
+
+    def __post_init__(self) -> None:
+        _require_finite("Point", self.x, self.y)
+
+
+@dataclass(frozen=True, slots=True)
+class Landmarks5:
+    eye_left: Point
+    eye_right: Point
+    nose: Point
+    mouth_left: Point
+    mouth_right: Point
+
+    def __post_init__(self) -> None:
+        points = (
+            self.eye_left,
+            self.eye_right,
+            self.nose,
+            self.mouth_left,
+            self.mouth_right,
+        )
+        if not all(isinstance(point, Point) for point in points):
+            raise TypeError("Landmark values must be Point instances")
+        if self.eye_left.x > self.eye_right.x:
+            left, right = self.eye_right, self.eye_left
+            object.__setattr__(self, "eye_left", left)
+            object.__setattr__(self, "eye_right", right)
+        if self.mouth_left.x > self.mouth_right.x:
+            left, right = self.mouth_right, self.mouth_left
+            object.__setattr__(self, "mouth_left", left)
+            object.__setattr__(self, "mouth_right", right)
+
+
+@dataclass(frozen=True, slots=True)
 class Detection:
     box: Box
     confidence: float
+    landmarks: Landmarks5 | None = None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.box, Box):
+            raise TypeError("Detection box must be a Box")
+        _require_finite("Detection confidence", self.confidence)
+        if not 0 <= self.confidence <= 1:
+            raise ValueError("Detection confidence must be in [0, 1]")
+        if self.landmarks is not None and not isinstance(self.landmarks, Landmarks5):
+            raise TypeError("Detection landmarks must be Landmarks5 or None")
 
 
 @dataclass(frozen=True, slots=True)

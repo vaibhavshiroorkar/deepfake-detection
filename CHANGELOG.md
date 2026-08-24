@@ -20,6 +20,8 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ### Added
 
+- Landmark-aware MTCNN and YuNet face detector adapters with a pinned,
+  integrity-checked YuNet model asset.
 - Windows CI that installs the full local environment, checks lint, format,
   lock, documentation, tests, and the configured tracked smoke run.
 - A deterministic CPU late-fusion smoke command with source-disjoint,
