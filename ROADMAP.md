@@ -19,6 +19,9 @@ Exit gate: a clean checkout can run the test suite and show every CLI command.
 
 ## Phase 1: Reproducible local experiments
 
+- [ ] Add the layered project handbook and technical reference.
+- [ ] Add research questions, an experiment matrix, and result traceability.
+- [ ] Add automated documentation validation and package ownership checks.
 - [ ] Add MLflow as an optional local dependency.
 - [ ] Store MLflow metadata in SQLite and artifacts on the local filesystem.
 - [ ] Log the run contract from [reproducibility.md](docs/reproducibility.md).

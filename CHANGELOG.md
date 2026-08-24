@@ -19,6 +19,8 @@ Experiment metrics belong in the experiment tracker, not this file.
 - A reproducibility contract for local experiments and future MLflow tracking.
 - A threat model for research scope, failure modes, and misuse.
 - A documentation index in the README.
+- An approved specification for the project handbook and research evidence
+  system.
 
 ## 0.1.0 - 2026-08-24
 
