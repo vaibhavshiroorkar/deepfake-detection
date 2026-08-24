@@ -14,6 +14,8 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ### Added
 
+- Windows CI that installs the full local environment, checks lint, format,
+  lock, documentation, tests, and the configured tracked smoke run.
 - A deterministic CPU late-fusion smoke command with source-disjoint,
   class-balanced fixture groups, held-out validation metrics, byte-hashed
   artifacts, and optional MLflow evidence. Its metrics are software fixture

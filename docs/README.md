@@ -54,9 +54,9 @@ Planned evidence files: `research/questions-and-hypotheses.md`,
 - [Threat model](threat-model.md)
 - [Roadmap](../ROADMAP.md)
 - [Changelog](../CHANGELOG.md)
+- [ADR-001: Local MLflow tracking](decisions/ADR-001-local-mlflow.md)
 
-Planned decisions: `decisions/ADR-001-local-mlflow.md`,
-`decisions/ADR-002-source-disjoint-splits.md`,
+Planned decisions: `decisions/ADR-002-source-disjoint-splits.md`,
 `decisions/ADR-003-calibrated-late-fusion.md`,
 `decisions/ADR-004-quality-aware-abstention.md`, and
 `decisions/ADR-005-detector-bakeoff.md`.

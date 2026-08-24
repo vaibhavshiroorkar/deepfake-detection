@@ -5,17 +5,19 @@ artifacts. A run without the fields below cannot support the final report.
 
 ## Current state
 
-The project currently writes JSON training histories, PyTorch checkpoints,
-Parquet feature stores, split hashes, preprocessing hashes, and audit reports.
-It does not yet integrate MLflow. [The roadmap](../ROADMAP.md) makes local
-MLflow the next infrastructure task.
+The project writes JSON training histories, PyTorch checkpoints, Parquet
+feature stores, split hashes, preprocessing hashes, audit reports, and local
+MLflow evidence. `ddf run` resolves layered YAML configuration files from an
+explicit project root. With tracking enabled, it records the resolved
+configuration, runtime snapshot, metrics, and artifacts in a local MLflow run.
 
 ## Local tracking decision
 
-Use MLflow with a local SQLite metadata store and a local artifact directory.
-Do not require a hosted account for the primary workflow. Keep the existing
-JSON, checkpoint, and Parquet files. MLflow indexes them and records their
-relationships.
+The default tracked workflow uses MLflow with a local SQLite metadata store and
+a local artifact directory. It does not require a hosted account. Existing
+JSON, checkpoint, and Parquet files remain the primary outputs. MLflow indexes
+their relationships. See [ADR-001](decisions/ADR-001-local-mlflow.md) for the
+decision and its collaboration review trigger.
 
 The implementation must keep these local paths outside Git:
 
@@ -108,8 +110,15 @@ Names help navigation. Hashes remain the source of identity.
 
 ### Smoke reproduction
 
-A clean environment runs a tiny fixture through preprocessing, training,
-feature export, fusion, and evaluation. This checks software integration.
+A clean environment runs this local fixture command:
+
+```powershell
+uv sync --extra tracking
+uv run --extra tracking ddf run --root . --config configs/local.yaml --config configs/smoke.yaml
+```
+
+It creates a tracked CPU fusion smoke run and local artifacts. Its metrics
+prove software integration only. They are not research findings.
 
 ### Result reproduction
 

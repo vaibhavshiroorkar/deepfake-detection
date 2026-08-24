@@ -22,12 +22,12 @@ Exit gate: a clean checkout can run the test suite and show every CLI command.
 - [ ] Add the layered project handbook and technical reference.
 - [ ] Add research questions, an experiment matrix, and result traceability.
 - [ ] Add automated documentation validation and package ownership checks.
-- [ ] Add MLflow as an optional local dependency.
-- [ ] Store MLflow metadata in SQLite and artifacts on the local filesystem.
-- [ ] Log the run contract from [reproducibility.md](docs/reproducibility.md).
-- [ ] Add versioned configuration files for preprocessing and training.
-- [ ] Add a CPU smoke configuration that finishes on a small fixture dataset.
-- [ ] Add CI for linting, formatting, tests, and documentation links.
+- [x] Add MLflow as an optional local dependency.
+- [x] Store MLflow metadata in SQLite and artifacts on the local filesystem.
+- [x] Log the run contract from [reproducibility.md](docs/reproducibility.md).
+- [x] Add versioned configuration files for preprocessing and training.
+- [x] Add a CPU smoke configuration that finishes on a small fixture dataset.
+- [x] Add CI for linting, formatting, tests, and documentation links.
 
 Exit gate: one command reproduces a tracked smoke run from a clean environment.
 

@@ -10,7 +10,7 @@ The branches inspect visual artifacts, audio spoofing, and mouth-audio alignment
 - [Data card](docs/data-card.md): data contract, split policy, risks, and handling rules.
 - [Roadmap](ROADMAP.md): implementation order and phase gates.
 - [Model selection](docs/model-selection.md): controlled component comparisons and selection rules.
-- [Reproducibility](docs/reproducibility.md): required run metadata and local tracking design.
+- [Reproducibility](docs/reproducibility.md): required run metadata and local tracking.
 - [Threat model](docs/threat-model.md): supported threats, failure modes, and claim limits.
 - [Changelog](CHANGELOG.md): material software and protocol changes.
 
@@ -29,6 +29,20 @@ uv run ddf --help
 ```
 
 Use the `cu130` extra instead of `cpu` on a compatible NVIDIA system. Do not install both extras together.
+
+## Local tracked smoke
+
+From the repository root, run the local smoke fixture and then start the local
+MLflow UI:
+
+```powershell
+uv sync --extra tracking
+uv run --extra tracking ddf run --root . --config configs/local.yaml --config configs/smoke.yaml
+uv run --extra tracking mlflow server --host 127.0.0.1 --backend-store-uri sqlite:///mlflow.db
+```
+
+The smoke metrics are software fixture evidence. They are not research
+findings.
 
 ## Workflow
 
