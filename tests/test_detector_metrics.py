@@ -194,6 +194,31 @@ def test_assignment_filters_matches_below_the_frozen_iou_threshold() -> None:
     assert _maximum_iou_assignment(detections, faces) == ()
 
 
+def test_assignment_optimizes_all_overlaps_before_applying_the_iou_threshold() -> None:
+    class FaceBox:
+        def __init__(self, index: int) -> None:
+            self.index = index
+
+    class DetectionBox:
+        def __init__(self, overlaps: tuple[float, float]) -> None:
+            self.overlaps = overlaps
+
+        def iou(self, face: FaceBox) -> float:
+            return self.overlaps[face.index]
+
+    class Candidate:
+        def __init__(self, box: DetectionBox | FaceBox) -> None:
+            self.box = box
+
+    detections = (
+        Candidate(DetectionBox((0.55, 0.51))),
+        Candidate(DetectionBox((0.49, 0.01))),
+    )
+    faces = (Candidate(FaceBox(0)), Candidate(FaceBox(1)))
+
+    assert _maximum_iou_assignment(detections, faces) == ((0, 1, 0.51),)
+
+
 def test_assignment_handles_a_crowded_frame() -> None:
     detections = tuple(
         Detection(Box(index * 3, 0, index * 3 + 2, 2), 0.9, None) for index in range(24)
@@ -680,6 +705,39 @@ def test_research_report_rejects_non_cpu_runtime_metadata() -> None:
         replace(report, latency=replace(report.latency, device="cuda:0"))
 
 
+def test_selection_does_not_prefer_a_zero_frame_tracker() -> None:
+    report = _report(
+        "candidate", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5
+    )
+    zero_frame_tracker = replace(
+        report.trackers[0],
+        stable_track_coverage=0.0,
+        abstention_rate=1.0,
+        target_track_errors=0,
+        tracked_frames=0,
+        target_track_errors_per_1000=0.0,
+    )
+    intervals = dict(report.intervals)
+    intervals.update(
+        {
+            "greedy_iou.stable_track_coverage": BootstrapInterval(0.0, 0.0, 0.0, 1000),
+            "greedy_iou.abstention_rate": BootstrapInterval(1.0, 1.0, 1.0, 1000),
+            "greedy_iou.target_track_errors_per_1000": BootstrapInterval(
+                0.0, 0.0, 0.0, 1000
+            ),
+        }
+    )
+    zero_frame_report = replace(
+        report,
+        trackers=(zero_frame_tracker, report.trackers[1]),
+        intervals=intervals,
+    )
+
+    decision = compare_detectors((zero_frame_report,))
+
+    assert decision.selected_association == "constant_velocity"
+
+
 def test_selection_applies_each_frozen_rejection_margin_before_speed() -> None:
     reports = (
         _report("best", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=8),
@@ -811,6 +869,39 @@ def test_report_rejects_incomplete_or_inconsistent_bootstrap_intervals() -> None
     ):
         with pytest.raises(ValueError, match="interval"):
             replace(report, intervals=intervals)
+
+
+def test_report_rejects_invalid_cross_field_constraints() -> None:
+    report = _report(
+        "candidate", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5
+    )
+    reversed_interval_bounds = dict(report.intervals)
+    reversed_interval_bounds["target_recall"] = BootstrapInterval(
+        report.metrics.target_recall,
+        0.96,
+        0.94,
+        1000,
+    )
+    duplicate_tracker_modes = (
+        report.trackers[0],
+        report.trackers[1],
+        report.trackers[0],
+    )
+    lower_p95_intervals = dict(report.intervals)
+    lower_p95_intervals["latency.p95_ms"] = BootstrapInterval(4.0, 4.0, 4.0, 1000)
+
+    with pytest.raises(ValueError):
+        replace(report, intervals=reversed_interval_bounds)
+    with pytest.raises(ValueError):
+        replace(report, trackers=duplicate_tracker_modes)
+    with pytest.raises(ValueError):
+        replace(report, frame_count=report.frame_count - 1)
+    with pytest.raises(ValueError):
+        replace(
+            report,
+            latency=replace(report.latency, p95_ms=4.0),
+            intervals=lower_p95_intervals,
+        )
 
 
 def test_metric_contracts_reject_inconsistent_tracker_and_latency_counts() -> None:
@@ -1109,6 +1200,15 @@ def test_evaluation_recomputes_and_binds_the_frozen_calibration_threshold() -> N
             records,
             annotations,
             threshold=0.7,
+            detector_name="candidate",
+            runtime_snapshot=_runtime_snapshot(),
+            evidence_scope="software_fixture_only",
+        )
+    with pytest.raises(ValueError, match="frozen calibrated threshold"):
+        evaluate_detector(
+            records,
+            annotations,
+            threshold=0.8 + 5e-13,
             detector_name="candidate",
             runtime_snapshot=_runtime_snapshot(),
             evidence_scope="software_fixture_only",

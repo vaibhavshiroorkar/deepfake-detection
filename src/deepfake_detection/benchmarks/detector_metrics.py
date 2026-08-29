@@ -286,6 +286,8 @@ class DetectorLatency:
             raise ValueError("Latency requires at least one timed frame")
         for name in ("median_ms", "p95_ms", "throughput_fps"):
             _finite(name, getattr(self, name), nonnegative=True)
+        if self.p95_ms < self.median_ms:
+            raise ValueError("p95_ms cannot be lower than median_ms")
         _required_string("device", self.device, path_free=True)
         if not isinstance(self.thread_count, int) or isinstance(
             self.thread_count, bool
@@ -375,11 +377,13 @@ class DetectorBenchmarkReport:
             raise ValueError("Report does not use the frozen detector rule revision")
         if self.frame_count <= 0 or self.source_count <= 0:
             raise ValueError("Report frame and source counts must be positive")
+        if self.frame_count != self.latency.timed_frames:
+            raise ValueError("Report frame_count must match latency timed_frames")
         if self.bootstrap_samples != BOOTSTRAP_SAMPLES:
             raise ValueError("Detector reports require 1,000 fixed source bootstraps")
         if self.bootstrap_seed != BOOTSTRAP_SEED:
             raise ValueError("Detector reports require the fixed bootstrap seed")
-        if {tracker.association for tracker in self.trackers} != {
+        if len(self.trackers) != 2 or {tracker.association for tracker in self.trackers} != {
             "greedy_iou",
             "constant_velocity",
         }:
@@ -404,6 +408,8 @@ class DetectorBenchmarkReport:
                 )
             for field in ("estimate", "lower", "upper"):
                 _finite(f"interval {name}.{field}", getattr(interval, field))
+            if interval.lower > interval.upper:
+                raise ValueError("Report interval bounds must be ordered")
             if interval.estimate != point_estimates[name]:
                 raise ValueError(
                     "Report interval estimate differs from its point metric"
@@ -570,16 +576,13 @@ def _maximum_iou_assignment(
     )
     face_count, detection_count = overlaps.shape
     costs = np.zeros((face_count, detection_count + face_count), dtype=np.float64)
-    costs[:, :detection_count] = 1.0
-    valid = overlaps >= TARGET_IOU_THRESHOLD
+    costs[:, :detection_count] = -overlaps
     tie_unit = np.finfo(np.float64).eps
-    for face_index, detection_index in zip(*np.nonzero(valid), strict=True):
+    for face_index, detection_index in np.ndindex(overlaps.shape):
         tie_rank = abs(face_index - detection_index) + (
             detection_index / (detection_count + 1)
         )
-        costs[face_index, detection_index] = (
-            -overlaps[face_index, detection_index] + tie_unit * tie_rank
-        )
+        costs[face_index, detection_index] += tie_unit * tie_rank
     face_indices, column_indices = linear_sum_assignment(costs)
     pairs = sorted(
         (
@@ -587,7 +590,10 @@ def _maximum_iou_assignment(
             for face_index, detection_index in zip(
                 face_indices.tolist(), column_indices.tolist(), strict=True
             )
-            if detection_index < detection_count and valid[face_index, detection_index]
+            if (
+                detection_index < detection_count
+                and overlaps[face_index, detection_index] >= TARGET_IOU_THRESHOLD
+            )
         ),
         key=lambda pair: pair[0],
     )
@@ -1105,12 +1111,7 @@ def evaluate_detector(
     annotation_by_id = _annotation_map(annotations)
     rows = _validate_records(records, annotation_by_id)
     calibrated_threshold = _calibrate_validated(rows, annotation_by_id)
-    if not math.isclose(
-        threshold,
-        calibrated_threshold,
-        rel_tol=0.0,
-        abs_tol=1e-12,
-    ):
+    if threshold != calibrated_threshold:
         raise ValueError(
             "Supplied threshold differs from the frozen calibrated threshold"
         )
@@ -1218,8 +1219,11 @@ def evaluate_detector(
 
 def _best_tracker(report: DetectorBenchmarkReport) -> TrackerMetrics:
     order = {"greedy_iou": 0, "constant_velocity": 1}
+    usable_trackers = tuple(
+        tracker for tracker in report.trackers if tracker.tracked_frames > 0
+    )
     return min(
-        report.trackers,
+        usable_trackers or report.trackers,
         key=lambda tracker: (
             tracker.target_track_errors_per_1000,
             -tracker.stable_track_coverage,
