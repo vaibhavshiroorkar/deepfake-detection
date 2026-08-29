@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
+from deepfake_detection.experiments import training_log
 from deepfake_detection.experiments.training_log import (
     log_binary_training,
     log_fusion_training,
@@ -178,3 +180,51 @@ def test_log_fusion_training_records_provenance_and_output_artifacts(
         }
     ]
     assert logger.artifacts == [(model, "models"), (metadata, "metadata")]
+
+
+def test_detector_benchmark_logging_allows_only_path_free_evidence(
+    tmp_path: Path,
+) -> None:
+    report_path = tmp_path / "aggregate-report.json"
+    predictions = tmp_path / "predictions.jsonl"
+    annotations = tmp_path / "private-annotations.jsonl"
+    review_image = tmp_path / "private-review.jpg"
+    for path in (report_path, predictions, annotations, review_image):
+        path.write_text("{}", encoding="utf-8")
+    logger = FakeLogger([], [], [])
+    report = SimpleNamespace(
+        detector_name="fixture",
+        detector_revision="fixture-revision",
+        model_sha256="a" * 64,
+        rule_revision="detector-selection-v1",
+        evidence_scope="software_fixture_only",
+        raw_results_sha256="b" * 64,
+        evaluation_set_sha256="c" * 64,
+        metrics=SimpleNamespace(
+            target_recall=1.0,
+            false_detections_per_frame=0.0,
+            non_target_detections_per_frame=0.0,
+            landmark_coverage=1.0,
+            landmark_nme=0.0,
+            aligned_mouth_jitter=0.0,
+        ),
+        latency=SimpleNamespace(
+            median_ms=1.0,
+            p95_ms=1.0,
+            throughput_fps=1000.0,
+        ),
+    )
+
+    training_log.log_detector_benchmark(
+        logger,
+        report=report,
+        report_path=report_path,
+        predictions_path=predictions,
+    )
+
+    assert logger.artifacts == [
+        (report_path, "detector/aggregate"),
+        (predictions, "detector/predictions"),
+    ]
+    assert all(path not in {annotations, review_image} for path, _ in logger.artifacts)
+    assert logger.params[0]["detector.evidence_scope"] == "software_fixture_only"

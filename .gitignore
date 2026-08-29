@@ -15,4 +15,5 @@ htmlcov/
 mlflow.db
 /mlartifacts/
 /mlruns/
+/models/
 .env

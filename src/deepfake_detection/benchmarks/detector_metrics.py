@@ -383,7 +383,9 @@ class DetectorBenchmarkReport:
             raise ValueError("Detector reports require 1,000 fixed source bootstraps")
         if self.bootstrap_seed != BOOTSTRAP_SEED:
             raise ValueError("Detector reports require the fixed bootstrap seed")
-        if len(self.trackers) != 2 or {tracker.association for tracker in self.trackers} != {
+        if len(self.trackers) != 2 or {
+            tracker.association for tracker in self.trackers
+        } != {
             "greedy_iou",
             "constant_velocity",
         }:

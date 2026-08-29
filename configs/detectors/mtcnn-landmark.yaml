@@ -1,0 +1,20 @@
+schema_version: 1
+command: [cache, build]
+arguments:
+  manifest: data/private/train-manifest.csv
+  dataset-root: data/private
+  cache-root: cache/mtcnn-landmark
+  index: runs/cache/mtcnn-landmark-index.csv
+  audit: runs/cache/mtcnn-landmark-audit.json
+  dataset: training
+  code-version: phase-2a
+  detector: mtcnn
+  tracker: greedy_iou
+  crop-mode: landmark
+  model-path: null
+  expected-model-hash: null
+tracking:
+  experiment_name: detector-preprocessing
+  run_name: mtcnn-landmark
+  tags:
+    evidence_scope: research_evidence_pending_review

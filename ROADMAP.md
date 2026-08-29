@@ -33,16 +33,22 @@ Exit gate: one command reproduces a tracked smoke run from a clean environment.
 
 ## Phase 2: Face and mouth view integrity
 
-- [ ] Extend detections with five facial landmarks.
-- [ ] Add YuNet behind the detector interface.
-- [ ] Replace box-relative mouth crops with landmark-aligned crops.
+- [x] Extend detections with five facial landmarks.
+- [x] Add YuNet behind the detector interface.
+- [x] Add versioned landmark-aligned crops while keeping box crops as default.
+- [x] Add deterministic training-only review sampling and annotation tooling.
 - [ ] Create the reviewed detector benchmark sample.
+- [x] Add frozen detector, tracker, crop, and benchmark evaluation tooling.
 - [ ] Compare MTCNN and YuNet using the frozen selection rules.
-- [ ] Compare the current tracker with a motion-aware association method.
+- [x] Add and test constant-velocity association against greedy IoU.
 - [ ] Freeze the detector, tracker, and alignment configuration.
 
 Exit gate: the selected view pipeline meets the quality rules in
 [model-selection.md](docs/model-selection.md). Its configuration hash is frozen.
+
+The software gate is complete. The evidence gate still needs at least 500
+human-reviewed frames from at least 100 training clips, a second review of at
+least 10 percent, paired detector runs, and acceptance of the measured choice.
 
 ## Phase 3: Strong branch baselines
 

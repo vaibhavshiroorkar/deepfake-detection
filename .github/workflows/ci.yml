@@ -36,5 +36,7 @@ jobs:
         run: uv run ddf-docs --changed-from ${{ github.event.pull_request.base.sha }}
       - name: Tests
         run: uv run pytest
+      - name: Detector evaluator fixture smoke
+        run: uv run pytest tests/test_detector_cli.py -k detector_compare_fixture_smoke
       - name: Tracked smoke
         run: uv run --extra tracking ddf run --root . --config configs/local.yaml --config configs/smoke.yaml

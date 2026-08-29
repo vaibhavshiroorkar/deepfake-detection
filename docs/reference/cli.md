@@ -16,6 +16,11 @@ uv run ddf --help
 
 <!-- BEGIN GENERATED COMMANDS -->
 - `ddf cache build`
+- `ddf detector compare`
+- `ddf detector fetch-yunet`
+- `ddf detector run`
+- `ddf detector sample`
+- `ddf detector validate-annotations`
 - `ddf evaluate`
 - `ddf features export`
 - `ddf features score`
@@ -59,6 +64,43 @@ Run `uv run ddf split method-holdout --help`.
 `ddf cache build` prepares shared audio-video views and records failed clips.
 Run `uv run ddf cache build --help`.
 
+`ddf detector fetch-yunet` downloads the pinned YuNet asset and verifies its
+size and SHA-256. The model stays local and is never an MLflow artifact.
+
+`ddf detector sample` creates a deterministic training-only review sample and
+local PNG review images. It requires at least 500 frames from 100 clips and
+marks at least 10 percent for independent second review.
+
+`ddf detector validate-annotations` writes an aggregate audit. It returns code
+`2` until every review, second review, and required adjudication passes.
+
+`ddf detector run` validates the audit before inference. It calibrates the
+candidate threshold on source-disjoint calibration identities, evaluates the
+comparison identities, and writes a path-free prediction JSONL plus an
+aggregate report.
+
+`ddf detector compare` applies the frozen selection rules to one or more
+aggregate reports. Fixture reports cannot produce a real selection.
+
+Use these commands directly or place the same command and arguments in a YAML
+file for `ddf run`. With local tracking enabled, only aggregate detector
+reports and path-free predictions become detector artifacts. Review images,
+annotations, source media, crops, and model binaries remain local inputs.
+
+Run the workflow in order:
+
+```powershell
+uv run ddf detector fetch-yunet --report runs/detector/yunet-asset.json
+uv run ddf detector sample --manifest data/private/train-manifest.csv --dataset-root data/private --dataset training --output data/private/detector-review/sample.jsonl --review-dir data/private/detector-review/images --report runs/detector/sample-report.json
+uv run ddf detector validate-annotations --sample data/private/detector-review/sample.jsonl --annotations data/private/detector-review/annotations.jsonl --report runs/detector/annotation-audit.json
+uv run ddf detector run --sample data/private/detector-review/sample.jsonl --annotations data/private/detector-review/annotations.jsonl --manifest data/private/train-manifest.csv --dataset-root data/private --dataset training --predictions runs/detector/mtcnn-predictions.jsonl --report runs/detector/mtcnn-report.json --detector mtcnn --detector-revision <revision> --expected-model-hash <sha256>
+uv run ddf detector run --sample data/private/detector-review/sample.jsonl --annotations data/private/detector-review/annotations.jsonl --manifest data/private/train-manifest.csv --dataset-root data/private --dataset training --predictions runs/detector/yunet-predictions.jsonl --report runs/detector/yunet-report.json --detector yunet --detector-revision opencv-zoo-47534e27 --model-path models/face_detection_yunet_2026may.onnx --expected-model-hash ebafce4e3c118d6554634be5c27ab333b4c047a9a8c3faf1d7cf93101c22f0f0
+uv run ddf detector compare --reports runs/detector/mtcnn-report.json runs/detector/yunet-report.json --output runs/detector/decision.json
+```
+
+These commands prepare the comparison. They do not claim that review or the
+real comparison has happened.
+
 `ddf train visual` trains the visual cue branch.
 Run `uv run ddf train visual --help`.
 
@@ -95,6 +137,8 @@ error also normally ends with code `1`.
 Code `2` means partial output or invalid CLI input. `ddf cache build` returns
 `2` when one or more clips fail after writing its successful outputs.
 `ddf features export` returns `2` when one or more rows lack required evidence.
+`ddf detector validate-annotations` returns `2` for an incomplete or invalid
+audit after writing its aggregate report.
 Argparse also uses `2` for invalid command syntax.
 
 ## Security

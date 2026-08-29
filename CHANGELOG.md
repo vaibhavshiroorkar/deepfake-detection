@@ -24,6 +24,15 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ### Added
 
+- Detector CLI commands for the pinned YuNet asset, training-only review
+  sampling, annotation audits, benchmark runs, and frozen comparisons.
+- A shared cache and prediction preprocessor factory with explicit detector,
+  tracker, crop, model path, and expected model hash inputs. Existing MTCNN,
+  greedy IoU, and box-crop defaults remain unchanged.
+- MLflow-safe detector evidence logging for aggregate reports, hashes, and
+  path-free prediction JSONL. Raw review data and model binaries remain local.
+- A deterministic CI detector comparison smoke whose fixture scope cannot
+  select a real detector.
 - A source-disjoint detector benchmark evaluator with fixed threshold
   calibration, all-face matching, landmark and tracking metrics, source
   bootstraps, deterministic raw evidence, and frozen selection rules.

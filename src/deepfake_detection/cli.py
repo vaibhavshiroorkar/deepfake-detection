@@ -13,6 +13,25 @@ from pathlib import Path
 
 import joblib
 
+from deepfake_detection.benchmarks.detector_annotations import (
+    read_annotations,
+    validate_annotations,
+)
+from deepfake_detection.benchmarks.detector_metrics import (
+    DetectorBenchmarkReport,
+    DetectorDecision,
+    DetectorLatency,
+    DetectorMetrics,
+    TrackerMetrics,
+    compare_detectors,
+)
+from deepfake_detection.benchmarks.detector_runner import run_detector_benchmark
+from deepfake_detection.benchmarks.detector_sample import (
+    ReviewFrame,
+    build_review_sample,
+    read_review_sample,
+    write_review_sample,
+)
 from deepfake_detection.data.cache_build import build_cache
 from deepfake_detection.data.manifest import load_manifest, write_manifest
 from deepfake_detection.data.protocols import (
@@ -23,6 +42,7 @@ from deepfake_detection.data.protocols import (
     split_hash,
 )
 from deepfake_detection.evaluation.bootstrap import (
+    BootstrapInterval,
     PairedPrediction,
     bootstrap_binary_metrics,
     paired_auc_difference,
@@ -41,19 +61,24 @@ from deepfake_detection.experiments import (
     runtime,
 )
 from deepfake_detection.experiments.runner import _CONFIGURED_RUN_SENTINEL
+from deepfake_detection.experiments.runtime import capture_runtime
 from deepfake_detection.experiments.training_log import (
     log_binary_training,
+    log_detector_benchmark,
     log_fusion_training,
     log_sync_training,
 )
 from deepfake_detection.fusion.late import FusionArtifact, FusionSample, LateFusion
 from deepfake_detection.fusion.store import FeatureStore
+from deepfake_detection.inference.loading import (
+    InferenceConfig,
+    build_preprocessor,
+    load_prediction_engine,
+)
 from deepfake_detection.training.crossfit import build_group_folds
 from deepfake_detection.views.cache_store import CacheStore
-from deepfake_detection.views.face_detector import MTCNNFaceDetector
 from deepfake_detection.views.media import FFmpegMediaDecoder
-from deepfake_detection.views.preprocessor import Preprocessor
-from deepfake_detection.views.timeline import ViewConfig
+from deepfake_detection.views.model_assets import fetch_yunet_model
 
 
 def _write_json(path: Path, payload: object) -> None:
@@ -170,15 +195,15 @@ def _split_method_holdout(arguments: argparse.Namespace) -> int:
 
 def _cache_build(arguments: argparse.Namespace) -> int:
     result = load_manifest(arguments.manifest, dataset=arguments.dataset)
-    config = ViewConfig(remove_leading_silence=not arguments.keep_leading_silence)
-    preprocessor = Preprocessor(
-        decoder=FFmpegMediaDecoder(),
-        detector=MTCNNFaceDetector(
-            confidence=config.detector_confidence,
-            device=arguments.device,
-        ),
-        config=config,
+    preprocessor = build_preprocessor(
         code_version=arguments.code_version,
+        device=arguments.device,
+        detector=arguments.detector,
+        tracker=arguments.tracker,
+        crop_mode=arguments.crop_mode,
+        model_path=arguments.model_path,
+        expected_model_hash=arguments.expected_model_hash,
+        remove_leading_silence=not arguments.keep_leading_silence,
     )
     report = build_cache(
         records=result.records,
@@ -738,6 +763,250 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _run_logger(arguments: argparse.Namespace):
+    return getattr(arguments, "_run_logger", NullRunLogger())
+
+
+def _detector_fetch_yunet(arguments: argparse.Namespace) -> int:
+    model = fetch_yunet_model(arguments.destination, force=arguments.force)
+    digest = _sha256(model)
+    payload = {
+        "asset": "opencv-zoo-yunet-2026may",
+        "sha256": digest,
+    }
+    if arguments.report is not None:
+        _write_json(arguments.report, payload)
+        _run_logger(arguments).log_artifact(
+            arguments.report,
+            artifact_path="detector/aggregate",
+        )
+    _run_logger(arguments).log_params(
+        {
+            "detector.asset": payload["asset"],
+            "detector.model_sha256": digest,
+        }
+    )
+    return 0
+
+
+def _manifest_media_path(record, dataset_root: Path) -> Path:
+    path = Path(record.video_path)
+    return path if path.is_absolute() else dataset_root / path
+
+
+def _detector_sample(arguments: argparse.Namespace) -> int:
+    records = load_manifest(arguments.manifest, dataset=arguments.dataset).records
+    decoder = FFmpegMediaDecoder()
+
+    def duration_reader(record) -> float:
+        return decoder.probe(
+            _manifest_media_path(record, arguments.dataset_root)
+        ).duration_sec
+
+    def frame_reader(record, timestamp: float):
+        return decoder.read_frames(
+            _manifest_media_path(record, arguments.dataset_root),
+            (timestamp,),
+        )[0]
+
+    sample = build_review_sample(
+        records,
+        partition=arguments.partition,
+        duration_reader=duration_reader,
+        frame_reader=frame_reader,
+        frame_count=arguments.frames,
+        clip_count=arguments.clips,
+        double_review_fraction=arguments.double_review_fraction,
+        seed=arguments.seed,
+    )
+    write_review_sample(sample, arguments.output)
+    records_by_id = {record.clip_id: record for record in records}
+    arguments.review_dir.mkdir(parents=True, exist_ok=True)
+    import cv2
+
+    for row in sample:
+        record = records_by_id[row.clip_id]
+        frame = frame_reader(record, row.timestamp_sec)
+        destination = arguments.review_dir / f"{row.frame_id}.png"
+        if not cv2.imwrite(str(destination), frame):
+            raise OSError(f"Cannot write review image: {destination}")
+    payload = {
+        "evidence_scope": "research_evidence_pending_human_review",
+        "frame_count": len(sample),
+        "clip_count": len({row.clip_id for row in sample}),
+        "source_count": len({row.source_hash for row in sample}),
+        "double_review_count": sum(row.double_review for row in sample),
+        "sample_sha256": _sha256(arguments.output),
+        "seed": arguments.seed,
+    }
+    _write_json(arguments.report, payload)
+    logger = _run_logger(arguments)
+    logger.log_params(
+        {
+            "detector.sample_sha256": payload["sample_sha256"],
+            "detector.evidence_scope": payload["evidence_scope"],
+            "detector.sample_seed": arguments.seed,
+        }
+    )
+    logger.log_metrics(
+        {
+            "detector.review_frames": float(payload["frame_count"]),
+            "detector.review_clips": float(payload["clip_count"]),
+            "detector.review_sources": float(payload["source_count"]),
+        }
+    )
+    logger.log_artifact(arguments.report, artifact_path="detector/aggregate")
+    return 0
+
+
+def _detector_validate_annotations(arguments: argparse.Namespace) -> int:
+    sample = read_review_sample(arguments.sample)
+    annotations = read_annotations(arguments.annotations)
+    audit = validate_annotations(sample, annotations)
+    _write_json(arguments.report, asdict(audit))
+    logger = _run_logger(arguments)
+    logger.log_params(
+        {
+            "detector.annotation_audit_valid": audit.valid,
+            "detector.annotation_audit_sha256": _sha256(arguments.report),
+        }
+    )
+    logger.log_metrics(
+        {
+            "detector.annotation_frames": float(audit.frame_count),
+            "detector.annotation_reviews": float(audit.review_count),
+            "detector.annotation_disagreements": float(len(audit.disagreements)),
+        }
+    )
+    logger.log_artifact(arguments.report, artifact_path="detector/aggregate")
+    return 0 if audit.valid else 2
+
+
+def _detector_frame_reader(
+    *,
+    manifest: Path,
+    dataset: str,
+    dataset_root: Path,
+):
+    records = load_manifest(manifest, dataset=dataset).records
+    records_by_id = {record.clip_id: record for record in records}
+    decoder = FFmpegMediaDecoder()
+
+    def read(row: ReviewFrame):
+        try:
+            record = records_by_id[row.clip_id]
+        except KeyError as error:
+            raise ValueError(
+                f"Review sample clip is absent from the manifest: {row.clip_id}"
+            ) from error
+        return decoder.read_frames(
+            _manifest_media_path(record, dataset_root),
+            (row.timestamp_sec,),
+        )[0]
+
+    return read
+
+
+def _detector_run(arguments: argparse.Namespace) -> int:
+    sample = read_review_sample(arguments.sample)
+    annotations = read_annotations(arguments.annotations)
+    preprocessor = build_preprocessor(
+        code_version=arguments.code_version,
+        device=arguments.device,
+        detector=arguments.detector,
+        model_path=arguments.model_path,
+        expected_model_hash=arguments.expected_model_hash,
+        detector_confidence=arguments.collection_threshold,
+    )
+    report = run_detector_benchmark(
+        sample=sample,
+        annotations=annotations,
+        detector=preprocessor.detector,
+        detector_name=arguments.detector,
+        detector_revision=arguments.detector_revision,
+        model_sha256=arguments.expected_model_hash,
+        frame_reader=_detector_frame_reader(
+            manifest=arguments.manifest,
+            dataset=arguments.dataset,
+            dataset_root=arguments.dataset_root,
+        ),
+        raw_output=arguments.predictions,
+        runtime_snapshot=capture_runtime(Path.cwd()),
+        collection_threshold=arguments.collection_threshold,
+        warmup_frames=arguments.warmup_frames,
+        evidence_scope=arguments.evidence_scope,
+    )
+    _write_json(arguments.report, asdict(report))
+    log_detector_benchmark(
+        _run_logger(arguments),
+        report=report,
+        report_path=arguments.report,
+        predictions_path=arguments.predictions,
+    )
+    return 0
+
+
+def _detector_report_from_path(path: Path) -> DetectorBenchmarkReport:
+    values = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(values, dict):
+        raise ValueError("Detector report must be a JSON object")
+    expected_fields = set(DetectorBenchmarkReport.__dataclass_fields__)
+    if set(values) != expected_fields:
+        raise ValueError("Detector report contains unknown or missing fields")
+    intervals = {
+        name: BootstrapInterval(**interval)
+        for name, interval in values["intervals"].items()
+    }
+    return DetectorBenchmarkReport(
+        detector_name=values["detector_name"],
+        detector_revision=values["detector_revision"],
+        model_sha256=values["model_sha256"],
+        threshold=values["threshold"],
+        collection_threshold=values["collection_threshold"],
+        evidence_scope=values["evidence_scope"],
+        rule_revision=values["rule_revision"],
+        frame_count=values["frame_count"],
+        source_count=values["source_count"],
+        metrics=DetectorMetrics(**values["metrics"]),
+        trackers=tuple(TrackerMetrics(**row) for row in values["trackers"]),
+        latency=DetectorLatency(**values["latency"]),
+        intervals=intervals,
+        runtime_snapshot=values["runtime_snapshot"],
+        raw_results_sha256=values["raw_results_sha256"],
+        evaluation_set_sha256=values["evaluation_set_sha256"],
+        annotation_audit_validated=values["annotation_audit_validated"],
+        bootstrap_samples=values["bootstrap_samples"],
+        bootstrap_seed=values["bootstrap_seed"],
+    )
+
+
+def _detector_compare(arguments: argparse.Namespace) -> int:
+    reports = tuple(_detector_report_from_path(path) for path in arguments.reports)
+    downstream = None
+    if arguments.downstream_validation is not None:
+        downstream = json.loads(
+            arguments.downstream_validation.read_text(encoding="utf-8")
+        )
+        if not isinstance(downstream, dict):
+            raise ValueError("Downstream validation must be a JSON object")
+    decision: DetectorDecision = compare_detectors(
+        reports,
+        downstream_validation=downstream,
+    )
+    _write_json(arguments.output, asdict(decision))
+    logger = _run_logger(arguments)
+    logger.log_params(
+        {
+            "detector.comparison_rule_revision": decision.rule_revision,
+            "detector.comparison_reason": decision.reason,
+            "detector.selected": decision.selected_detector or "none",
+            "detector.selected_association": (decision.selected_association or "none"),
+        }
+    )
+    logger.log_artifact(arguments.output, artifact_path="detector/aggregate")
+    return 0
+
+
 def _load_trained_branches(arguments: argparse.Namespace):
     from deepfake_detection.branches.audio import build_wav2vec2_audio_branch
     from deepfake_detection.branches.sync import build_sync_branch
@@ -891,43 +1160,22 @@ def _features_score(arguments: argparse.Namespace) -> int:
 
 
 def _predict(arguments: argparse.Namespace) -> int:
-    from deepfake_detection.inference.predictor import PredictionEngine
-    from deepfake_detection.training.checkpoints import validate_branch_states
-    from deepfake_detection.views.cache import preprocessing_config_hash
-
-    visual, audio, sync, states = _load_trained_branches(arguments)
-    config = ViewConfig()
-    preprocessor = Preprocessor(
-        decoder=FFmpegMediaDecoder(),
-        detector=MTCNNFaceDetector(
-            confidence=config.detector_confidence,
+    engine = load_prediction_engine(
+        InferenceConfig(
+            visual_checkpoint=arguments.visual_checkpoint,
+            audio_checkpoint=arguments.audio_checkpoint,
+            sync_checkpoint=arguments.sync_checkpoint,
+            fusion_model=arguments.fusion_model,
+            code_version=arguments.code_version,
+            threshold=arguments.threshold,
+            audio_model=arguments.audio_model,
             device=arguments.device,
-        ),
-        config=config,
-        code_version=arguments.code_version,
-    )
-    fusion = joblib.load(arguments.fusion_model)
-    if not isinstance(fusion, FusionArtifact):
-        raise ValueError("Fusion model does not contain provenance metadata")
-    provenance = validate_branch_states(states)
-    runtime_preprocessing_hash = preprocessing_config_hash(
-        config=config,
-        code_version=arguments.code_version,
-    )
-    if runtime_preprocessing_hash != provenance.preprocessing_hash:
-        raise ValueError("Runtime preprocessing does not match the checkpoints")
-    fusion.validate_provenance(
-        split_hash=provenance.split_hash,
-        preprocessing_hash=provenance.preprocessing_hash,
-    )
-    engine = PredictionEngine(
-        preprocessor=preprocessor,
-        visual_model=visual,
-        audio_model=audio,
-        sync_model=sync,
-        fusion=fusion,
-        threshold=arguments.threshold,
-        device=arguments.device,
+            detector=arguments.detector,
+            tracker=arguments.tracker,
+            crop_mode=arguments.crop_mode,
+            model_path=arguments.model_path,
+            expected_model_hash=arguments.expected_model_hash,
+        )
     )
     result = engine.predict(arguments.video)
     _write_json(arguments.output, asdict(result))
@@ -996,7 +1244,105 @@ def build_parser() -> argparse.ArgumentParser:
     cache_build.add_argument("--device", default="cpu")
     cache_build.add_argument("--code-version", required=True)
     cache_build.add_argument("--keep-leading-silence", action="store_true")
+
+    def add_preprocessing_arguments(command: argparse.ArgumentParser) -> None:
+        command.add_argument(
+            "--detector",
+            choices=("mtcnn", "yunet"),
+            default="mtcnn",
+        )
+        command.add_argument(
+            "--tracker",
+            choices=("greedy_iou", "constant_velocity"),
+            default="greedy_iou",
+        )
+        command.add_argument(
+            "--crop-mode",
+            choices=("box", "landmark"),
+            default="box",
+        )
+        command.add_argument("--model-path", type=Path)
+        command.add_argument("--expected-model-hash")
+
+    add_preprocessing_arguments(cache_build)
     cache_build.set_defaults(handler=_cache_build)
+
+    detector = commands.add_parser("detector")
+    detector_commands = detector.add_subparsers(
+        dest="detector_command",
+        required=True,
+    )
+    detector_fetch = detector_commands.add_parser("fetch-yunet")
+    detector_fetch.add_argument(
+        "--destination",
+        type=Path,
+        default=Path("models/face_detection_yunet_2026may.onnx"),
+    )
+    detector_fetch.add_argument("--force", action="store_true")
+    detector_fetch.add_argument("--report", type=Path)
+    detector_fetch.set_defaults(handler=_detector_fetch_yunet)
+
+    detector_sample = detector_commands.add_parser("sample")
+    detector_sample.add_argument("--manifest", type=Path, required=True)
+    detector_sample.add_argument("--dataset-root", type=Path, required=True)
+    detector_sample.add_argument("--dataset", required=True)
+    detector_sample.add_argument("--output", type=Path, required=True)
+    detector_sample.add_argument("--review-dir", type=Path, required=True)
+    detector_sample.add_argument("--report", type=Path, required=True)
+    detector_sample.add_argument("--partition", default="train")
+    detector_sample.add_argument("--frames", type=int, default=500)
+    detector_sample.add_argument("--clips", type=int, default=100)
+    detector_sample.add_argument(
+        "--double-review-fraction",
+        type=float,
+        default=0.10,
+    )
+    detector_sample.add_argument("--seed", type=int, default=17)
+    detector_sample.set_defaults(handler=_detector_sample)
+
+    detector_validate = detector_commands.add_parser("validate-annotations")
+    detector_validate.add_argument("--sample", type=Path, required=True)
+    detector_validate.add_argument("--annotations", type=Path, required=True)
+    detector_validate.add_argument("--report", type=Path, required=True)
+    detector_validate.set_defaults(handler=_detector_validate_annotations)
+
+    detector_run = detector_commands.add_parser("run")
+    detector_run.add_argument("--sample", type=Path, required=True)
+    detector_run.add_argument("--annotations", type=Path, required=True)
+    detector_run.add_argument("--manifest", type=Path, required=True)
+    detector_run.add_argument("--dataset-root", type=Path, required=True)
+    detector_run.add_argument("--dataset", required=True)
+    detector_run.add_argument("--predictions", type=Path, required=True)
+    detector_run.add_argument("--report", type=Path, required=True)
+    detector_run.add_argument(
+        "--detector",
+        choices=("mtcnn", "yunet"),
+        required=True,
+    )
+    detector_run.add_argument("--detector-revision", required=True)
+    detector_run.add_argument("--model-path", type=Path)
+    detector_run.add_argument("--expected-model-hash", required=True)
+    detector_run.add_argument("--code-version", default="detector-benchmark-v1")
+    detector_run.add_argument("--device", default="cpu")
+    detector_run.add_argument("--collection-threshold", type=float, default=0.0)
+    detector_run.add_argument("--warmup-frames", type=int, default=3)
+    detector_run.add_argument(
+        "--evidence-scope",
+        choices=("research_evidence", "software_fixture_only"),
+        default="research_evidence",
+    )
+    detector_run.set_defaults(handler=_detector_run)
+
+    detector_compare = detector_commands.add_parser("compare")
+    detector_compare.add_argument(
+        "--reports",
+        type=Path,
+        nargs="+",
+        required=True,
+    )
+    detector_compare.add_argument("--downstream-validation", type=Path)
+    detector_compare.add_argument("--output", type=Path, required=True)
+    detector_compare.set_defaults(handler=_detector_compare)
 
     evaluate = commands.add_parser("evaluate")
     evaluate.add_argument("--predictions", type=Path, required=True)
@@ -1120,6 +1466,7 @@ def build_parser() -> argparse.ArgumentParser:
     predict.add_argument("--threshold", type=float, required=True)
     predict.add_argument("--code-version", required=True)
     add_checkpoint_arguments(predict)
+    add_preprocessing_arguments(predict)
     predict.set_defaults(handler=_predict)
     return parser
 

@@ -84,6 +84,25 @@ uv run ddf cache build `
 
 The command returns exit code 2 when any clip fails. It still writes the successful index and a failure record. The audit records fusion-ready coverage, each quality blocker, and the global preprocessing hash. Pass that hash to every branch training command.
 
+The default remains MTCNN, greedy IoU tracking, and box-relative mouth crops.
+The landmark and YuNet variants are explicit configurations:
+
+```powershell
+uv run --extra media --extra tracking ddf run --root . `
+  --config configs/local.yaml `
+  --config configs/detectors/mtcnn-landmark.yaml
+uv run ddf detector fetch-yunet `
+  --report runs/detector/yunet-asset.json
+uv run --extra media --extra tracking ddf run --root . `
+  --config configs/local.yaml `
+  --config configs/detectors/yunet-landmark.yaml
+```
+
+Edit private data and cache paths locally before running these configurations.
+The reviewed detector workflow is documented in
+[the CLI reference](docs/reference/cli.md). Fixture smoke evidence tests the
+software path only. It cannot select a detector, tracker, or crop mode.
+
 Train the visual and audio branches with `ddf train visual` and `ddf train audio`. Train the alignment model with `ddf train sync`. Run `uv run ddf train <branch> --help` for the complete arguments.
 
 Build source-grouped cross-fitting manifests from the frozen training partition only. Never cross-fit over validation or test identities. Train each branch on every fold's training manifest. Export only its held-out rows to one dedicated out-of-fold store:
@@ -176,6 +195,8 @@ It shows the visual, audio, and sync coverage gate before the verdict. It contai
 ## Repository rules
 
 - Keep raw media, caches, checkpoints, and run outputs outside Git.
+- Keep detector review images, annotations, and model binaries outside Git and
+  MLflow.
 - Use cue-specific labels for branch training.
 - Use the global clip label only for fusion.
 - Never balance validation or test data.

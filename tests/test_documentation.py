@@ -220,6 +220,11 @@ def test_model_chapter_contracts(relative: str, headings: tuple[str, ...]) -> No
 def test_cli_reference_discovers_every_leaf_command() -> None:
     assert command_paths(build_parser()) == (
         "ddf cache build",
+        "ddf detector compare",
+        "ddf detector fetch-yunet",
+        "ddf detector run",
+        "ddf detector sample",
+        "ddf detector validate-annotations",
         "ddf evaluate",
         "ddf features export",
         "ddf features score",

@@ -67,6 +67,9 @@ def test_ci_workflow_runs_the_local_quality_and_smoke_contract() -> None:
         "uv run --extra tracking ddf run --root . --config configs/local.yaml "
         "--config configs/smoke.yaml"
     )
+    assert step_with_name(steps, "Detector evaluator fixture smoke")["run"] == (
+        "uv run pytest tests/test_detector_cli.py -k detector_compare_fixture_smoke"
+    )
 
 
 def test_ci_workflow_checks_pull_request_documentation_contract() -> None:

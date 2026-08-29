@@ -5,6 +5,7 @@ import math
 from collections.abc import Sequence
 from pathlib import Path
 
+from deepfake_detection.benchmarks.detector_metrics import DetectorBenchmarkReport
 from deepfake_detection.experiments.tracking import RunLogger
 from deepfake_detection.training.binary import BinaryTrainingHistory
 from deepfake_detection.training.sync import SyncTrainingHistory
@@ -100,6 +101,46 @@ def log_fusion_training(
     )
     logger.log_artifact(model_path, artifact_path="models")
     logger.log_artifact(metadata_path, artifact_path="metadata")
+
+
+def log_detector_benchmark(
+    logger: RunLogger,
+    *,
+    report: DetectorBenchmarkReport,
+    report_path: Path,
+    predictions_path: Path,
+) -> None:
+    logger.log_params(
+        {
+            "detector.name": report.detector_name,
+            "detector.revision": report.detector_revision,
+            "detector.model_sha256": report.model_sha256,
+            "detector.rule_revision": report.rule_revision,
+            "detector.evidence_scope": report.evidence_scope,
+            "detector.raw_results_sha256": report.raw_results_sha256,
+            "detector.evaluation_set_sha256": report.evaluation_set_sha256,
+        }
+    )
+    metrics = {
+        "detector.target_recall": report.metrics.target_recall,
+        "detector.false_detections_per_frame": (
+            report.metrics.false_detections_per_frame
+        ),
+        "detector.non_target_detections_per_frame": (
+            report.metrics.non_target_detections_per_frame
+        ),
+        "detector.landmark_coverage": report.metrics.landmark_coverage,
+        "detector.latency_median_ms": report.latency.median_ms,
+        "detector.latency_p95_ms": report.latency.p95_ms,
+        "detector.throughput_fps": report.latency.throughput_fps,
+    }
+    if report.metrics.landmark_nme is not None:
+        metrics["detector.landmark_nme"] = report.metrics.landmark_nme
+    if report.metrics.aligned_mouth_jitter is not None:
+        metrics["detector.aligned_mouth_jitter"] = report.metrics.aligned_mouth_jitter
+    logger.log_metrics(metrics)
+    logger.log_artifact(report_path, artifact_path="detector/aggregate")
+    logger.log_artifact(predictions_path, artifact_path="detector/predictions")
 
 
 def _log_training(

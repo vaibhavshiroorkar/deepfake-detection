@@ -27,6 +27,12 @@ The smoke run logs byte SHA-256 hashes for payload artifacts as
 `smoke.payload.<name>.sha256`. It logs the complete `smoke-report.json` byte
 hash separately as `smoke.report_sha256`.
 
+Detector runs log aggregate reports, hashes, path-free prediction JSONL, and
+resolved configurations. They do not log raw media, review images, raw
+annotation JSONL, derived crops, or model binaries. Keep private input paths
+relative in tracked configuration layers. Fixture detector reports use
+`software_fixture_only` and cannot select a real detector.
+
 ## Local tracking decision
 
 The default tracked workflow uses MLflow with a local SQLite metadata store and
@@ -43,6 +49,7 @@ The implementation must keep these local paths outside Git:
 - `artifacts/`
 - `checkpoints/`
 - `runs/`
+- `models/`
 
 The server must bind to localhost by default. Remote exposure needs separate
 authentication and is outside this project.
@@ -116,6 +123,9 @@ Names help navigation. Hashes remain the source of identity.
 ## Artifact boundaries
 
 - Raw datasets stay outside the repository and MLflow artifact directory.
+- Detector review images and raw annotation files stay outside Git and MLflow.
+- Detector model binaries stay outside Git and MLflow. Record only their
+  expected and observed SHA-256 hashes.
 - Derived face and mouth crops follow the source dataset's license.
 - Checkpoints remain local unless their training data permits distribution.
 - Split manifests may enter Git only after the protocol is frozen.

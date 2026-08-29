@@ -19,6 +19,8 @@ class ViewConfig:
     eval_overlap: float = 0.5
     crop_margin: float = 0.20
     detector_confidence: float = 0.80
+    detector: Literal["mtcnn", "yunet"] = "mtcnn"
+    detector_model_sha256: str | None = None
     remove_leading_silence: bool = True
     mouth_crop_mode: Literal["box", "landmark"] = "box"
     track_association: Literal["greedy_iou", "constant_velocity"] = "greedy_iou"
@@ -39,6 +41,14 @@ class ViewConfig:
             raise ValueError(
                 "Track association must be 'greedy_iou' or 'constant_velocity'"
             )
+        if self.detector not in {"mtcnn", "yunet"}:
+            raise ValueError("Detector must be 'mtcnn' or 'yunet'")
+        if self.detector_model_sha256 is not None:
+            digest = self.detector_model_sha256
+            if len(digest) != 64 or any(
+                character not in "0123456789abcdef" for character in digest
+            ):
+                raise ValueError("Detector model hash must be a lowercase SHA-256")
         if self.track_max_gap < 0:
             raise ValueError("Track gap cannot be negative")
 

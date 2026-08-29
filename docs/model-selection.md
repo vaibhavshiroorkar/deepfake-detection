@@ -44,6 +44,13 @@ Annotate the intended speaking face, its box, and five facial landmarks. Record
 frames where no suitable face exists. Review a shared subset twice to estimate
 annotation disagreement.
 
+Assign reviewed source identities once to a 20 percent threshold-calibration
+subset and an 80 percent comparison subset. The two subsets must remain source
+disjoint. Collect every candidate at a low threshold. On calibration sources,
+choose the highest-recall threshold with no more than 0.10 false detections per
+frame. Break ties by fewer false detections, then by the higher threshold. Do
+not retune on comparison sources.
+
 Measure:
 
 - Target-face recall at an intersection over union of at least 0.5.
@@ -52,12 +59,23 @@ Measure:
 - Identity switches per 1,000 tracked frames.
 - Stable-track coverage and resulting abstention rate.
 - Mouth-region jitter after compensating for face motion.
-- Median and 95th percentile processing time on the target CPU and GPU.
+- Median and 95th percentile processing time under matched CPU settings.
 
 Reject a detector if its target-face recall is more than one percentage point
-below the best candidate. Among the remaining candidates, select the fastest
-one that does not worsen identity switches or landmark error materially.
-Use landmark-aligned downstream validation as the final tie-breaker.
+below the best candidate. Among that recall pool, reject landmark NME more than
+0.01 above the best or target-track errors more than one per 1,000 tracked
+frames above the best. Select the fastest remaining CPU candidate. Use
+aligned-mouth downstream validation only to break an exact speed tie. Bootstrap
+all comparison metrics by source identity with 1,000 fixed resamples.
+
+The benchmark reports bind the reviewed labels, calibrated threshold, raw
+candidate hash, model hash, runtime, and frozen rule revision. Software fixture
+reports carry `software_fixture_only`. The comparison code refuses to turn
+that scope into a real detector choice.
+
+The adapters, review tooling, evaluator, and comparison command are complete.
+No human-reviewed sample or measured MTCNN versus YuNet result exists yet.
+MTCNN, greedy IoU, and box-relative crops remain the defaults.
 
 Published speed figures are background evidence only. Different hardware,
 resolutions, and thresholds make them unsuitable for project selection.
@@ -99,8 +117,9 @@ Every accepted comparison must record:
 - Selected candidate and exact reason.
 - Known weaknesses and rejected alternatives.
 
-Store full runs in MLflow after its integration. Keep the short accepted
-decision in this document or a later architecture decision record.
+Store aggregate evidence in local MLflow. Keep raw media, review images, and
+annotations outside its artifacts. Record an accepted decision here or in a
+later architecture decision record only after the human evidence gate passes.
 
 ## Background sources
 

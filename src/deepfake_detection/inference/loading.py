@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 import joblib
 
@@ -14,7 +16,7 @@ from deepfake_detection.training.checkpoints import (
     validate_branch_states,
 )
 from deepfake_detection.views.cache import preprocessing_config_hash
-from deepfake_detection.views.face_detector import MTCNNFaceDetector
+from deepfake_detection.views.face_detector import MTCNNFaceDetector, YuNetFaceDetector
 from deepfake_detection.views.media import FFmpegMediaDecoder
 from deepfake_detection.views.preprocessor import Preprocessor
 from deepfake_detection.views.timeline import ViewConfig
@@ -32,6 +34,69 @@ class InferenceConfig:
     threshold: float = 0.5
     audio_model: str = "facebook/wav2vec2-base"
     device: str = "cuda"
+    detector: Literal["mtcnn", "yunet"] = "mtcnn"
+    tracker: Literal["greedy_iou", "constant_velocity"] = "greedy_iou"
+    crop_mode: Literal["box", "landmark"] = "box"
+    model_path: Path | None = None
+    expected_model_hash: str | None = None
+
+
+def _file_sha256(path: Path) -> str:
+    with path.open("rb") as handle:
+        return hashlib.file_digest(handle, "sha256").hexdigest()
+
+
+def build_preprocessor(
+    *,
+    code_version: str,
+    device: str = "cpu",
+    detector: Literal["mtcnn", "yunet"] = "mtcnn",
+    tracker: Literal["greedy_iou", "constant_velocity"] = "greedy_iou",
+    crop_mode: Literal["box", "landmark"] = "box",
+    model_path: Path | None = None,
+    expected_model_hash: str | None = None,
+    detector_confidence: float = 0.80,
+    remove_leading_silence: bool = True,
+) -> Preprocessor:
+    if expected_model_hash is not None:
+        if len(expected_model_hash) != 64 or any(
+            character not in "0123456789abcdef" for character in expected_model_hash
+        ):
+            raise ValueError("Expected model hash must be a lowercase SHA-256")
+    if detector == "yunet":
+        if model_path is None or expected_model_hash is None:
+            raise ValueError("YuNet requires a model path and expected model hash")
+        actual_hash = _file_sha256(model_path)
+        if actual_hash != expected_model_hash:
+            raise ValueError("YuNet model hash does not match the expected hash")
+        backend = YuNetFaceDetector(
+            model_path=model_path,
+            confidence=detector_confidence,
+        )
+    elif detector == "mtcnn":
+        if model_path is not None:
+            raise ValueError("MTCNN does not accept a model path")
+        backend = MTCNNFaceDetector(
+            confidence=detector_confidence,
+            device=device,
+        )
+    else:
+        raise ValueError("Detector must be 'mtcnn' or 'yunet'")
+    view_config = ViewConfig(
+        detector_confidence=detector_confidence,
+        detector=detector,
+        detector_model_sha256=expected_model_hash,
+        mouth_crop_mode=crop_mode,
+        track_association=tracker,
+        track_max_gap=1 if tracker == "constant_velocity" else 0,
+        remove_leading_silence=remove_leading_silence,
+    )
+    return Preprocessor(
+        decoder=FFmpegMediaDecoder(),
+        detector=backend,
+        config=view_config,
+        code_version=code_version,
+    )
 
 
 def load_prediction_engine(config: InferenceConfig) -> PredictionEngine:
@@ -58,7 +123,16 @@ def load_prediction_engine(config: InferenceConfig) -> PredictionEngine:
         preprocessing_hash=provenance.preprocessing_hash,
     )
 
-    view_config = ViewConfig()
+    preprocessor = build_preprocessor(
+        code_version=config.code_version,
+        device=config.device,
+        detector=config.detector,
+        tracker=config.tracker,
+        crop_mode=config.crop_mode,
+        model_path=config.model_path,
+        expected_model_hash=config.expected_model_hash,
+    )
+    view_config = preprocessor.config
     if (
         preprocessing_config_hash(
             config=view_config,
@@ -67,15 +141,6 @@ def load_prediction_engine(config: InferenceConfig) -> PredictionEngine:
         != provenance.preprocessing_hash
     ):
         raise ValueError("Runtime preprocessing does not match the checkpoints")
-    preprocessor = Preprocessor(
-        decoder=FFmpegMediaDecoder(),
-        detector=MTCNNFaceDetector(
-            confidence=view_config.detector_confidence,
-            device=config.device,
-        ),
-        config=view_config,
-        code_version=config.code_version,
-    )
     return PredictionEngine(
         preprocessor=preprocessor,
         visual_model=visual,
