@@ -35,14 +35,18 @@ other model could perform better.
 
 ## Detector benchmark
 
-Build the detector review set from training identities only. Sample at least
-500 frames from at least 100 clips. Stratify across real and fake clips,
+Build the detector review set from the verified frozen training split. Bind the
+split hash to every sample row and audit. Sample at least 625 frames from at
+least 125 clips so the comparison retains at least 500 frames from 100 clips
+after calibration sources are removed. Stratify across real and fake clips,
 manipulation families, compression, pose, lighting, and multi-person scenes.
 Use supplied demographic fields for coverage checks when available.
 
-Annotate the intended speaking face, its box, and five facial landmarks. Record
-frames where no suitable face exists. Review a shared subset twice to estimate
-annotation disagreement.
+Draw a box for every visible face. Mark at most one suitable speaking target.
+Add five landmarks to that target. Record frames where no suitable target
+exists. Review a shared subset twice to estimate annotation disagreement.
+Unmatched detections are false detections. Detections matched to other visible
+faces are not false positives.
 
 Assign reviewed source identities once to a 20 percent threshold-calibration
 subset and an 80 percent comparison subset. The two subsets must remain source
@@ -68,8 +72,10 @@ frames above the best. Select the fastest remaining CPU candidate. Use
 aligned-mouth downstream validation only to break an exact speed tie. Bootstrap
 all comparison metrics by source identity with 1,000 fixed resamples.
 
-The benchmark reports bind the reviewed labels, calibrated threshold, raw
-candidate hash, model hash, runtime, and frozen rule revision. Software fixture
+The benchmark reports bind the frozen split, reviewed sample, annotation audit,
+calibrated threshold, raw candidate hash, model hash, runtime, and frozen rule
+revision. MTCNN hashes its loaded state. YuNet verifies the local asset bytes
+against the expected hash. Software fixture
 reports carry `software_fixture_only`. The comparison code refuses to turn
 that scope into a real detector choice.
 

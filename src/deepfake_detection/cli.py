@@ -14,6 +14,7 @@ from pathlib import Path
 import joblib
 
 from deepfake_detection.benchmarks.detector_annotations import (
+    annotation_audit_sha256,
     read_annotations,
     validate_annotations,
 )
@@ -27,9 +28,12 @@ from deepfake_detection.benchmarks.detector_metrics import (
 )
 from deepfake_detection.benchmarks.detector_runner import run_detector_benchmark
 from deepfake_detection.benchmarks.detector_sample import (
+    MINIMUM_REVIEW_CLIPS,
+    MINIMUM_REVIEW_FRAMES,
     ReviewFrame,
     build_review_sample,
     read_review_sample,
+    review_sample_sha256,
     write_review_sample,
 )
 from deepfake_detection.data.cache_build import build_cache
@@ -794,8 +798,19 @@ def _manifest_media_path(record, dataset_root: Path) -> Path:
     return path if path.is_absolute() else dataset_root / path
 
 
+def _load_frozen_split(split_dir: Path, dataset: str):
+    return {
+        name: load_manifest(split_dir / f"{name}.csv", dataset=dataset).records
+        for name in ("train", "val", "test")
+    }
+
+
 def _detector_sample(arguments: argparse.Namespace) -> int:
-    records = load_manifest(arguments.manifest, dataset=arguments.dataset).records
+    frozen_split = _load_frozen_split(arguments.split_dir, arguments.dataset)
+    observed_split_hash = split_hash(frozen_split)
+    if observed_split_hash != arguments.expected_split_hash:
+        raise ValueError("Frozen split does not match the expected split hash")
+    records = frozen_split["train"]
     decoder = FFmpegMediaDecoder()
 
     def duration_reader(record) -> float:
@@ -812,6 +827,8 @@ def _detector_sample(arguments: argparse.Namespace) -> int:
     sample = build_review_sample(
         records,
         partition=arguments.partition,
+        frozen_split=frozen_split,
+        expected_split_hash=arguments.expected_split_hash,
         duration_reader=duration_reader,
         frame_reader=frame_reader,
         frame_count=arguments.frames,
@@ -836,7 +853,12 @@ def _detector_sample(arguments: argparse.Namespace) -> int:
         "clip_count": len({row.clip_id for row in sample}),
         "source_count": len({row.source_hash for row in sample}),
         "double_review_count": sum(row.double_review for row in sample),
-        "sample_sha256": _sha256(arguments.output),
+        "comparison_frame_count": sum(row.split_role == "comparison" for row in sample),
+        "comparison_clip_count": len(
+            {row.clip_id for row in sample if row.split_role == "comparison"}
+        ),
+        "sample_sha256": review_sample_sha256(sample),
+        "split_hash": observed_split_hash,
         "seed": arguments.seed,
     }
     _write_json(arguments.report, payload)
@@ -868,7 +890,9 @@ def _detector_validate_annotations(arguments: argparse.Namespace) -> int:
     logger.log_params(
         {
             "detector.annotation_audit_valid": audit.valid,
-            "detector.annotation_audit_sha256": _sha256(arguments.report),
+            "detector.annotation_audit_sha256": annotation_audit_sha256(audit),
+            "detector.reviewed_sample_sha256": audit.reviewed_sample_sha256,
+            "detector.split_hash": audit.split_hash,
         }
     )
     logger.log_metrics(
@@ -876,6 +900,8 @@ def _detector_validate_annotations(arguments: argparse.Namespace) -> int:
             "detector.annotation_frames": float(audit.frame_count),
             "detector.annotation_reviews": float(audit.review_count),
             "detector.annotation_disagreements": float(len(audit.disagreements)),
+            "detector.comparison_frames": float(audit.comparison_frame_count),
+            "detector.comparison_clips": float(audit.comparison_clip_count),
         }
     )
     logger.log_artifact(arguments.report, artifact_path="detector/aggregate")
@@ -909,6 +935,19 @@ def _detector_frame_reader(
 
 def _detector_run(arguments: argparse.Namespace) -> int:
     sample = read_review_sample(arguments.sample)
+    frozen_split = _load_frozen_split(arguments.split_dir, arguments.dataset)
+    sample_split_hashes = {row.split_hash for row in sample}
+    if sample_split_hashes != {split_hash(frozen_split)}:
+        raise ValueError("Review sample does not match the frozen split artifact")
+    frozen_train = {
+        (
+            record.clip_id,
+            hashlib.sha256(f"{record.dataset}\0{record.source}".encode()).hexdigest(),
+        )
+        for record in frozen_split["train"]
+    }
+    if any((row.clip_id, row.source_hash) not in frozen_train for row in sample):
+        raise ValueError("Review sample contains a source outside frozen training")
     annotations = read_annotations(arguments.annotations)
     preprocessor = build_preprocessor(
         code_version=arguments.code_version,
@@ -924,9 +963,9 @@ def _detector_run(arguments: argparse.Namespace) -> int:
         detector=preprocessor.detector,
         detector_name=arguments.detector,
         detector_revision=arguments.detector_revision,
-        model_sha256=arguments.expected_model_hash,
+        model_sha256=preprocessor.config.detector_model_sha256,
         frame_reader=_detector_frame_reader(
-            manifest=arguments.manifest,
+            manifest=arguments.split_dir / "train.csv",
             dataset=arguments.dataset,
             dataset_root=arguments.dataset_root,
         ),
@@ -953,9 +992,41 @@ def _detector_report_from_path(path: Path) -> DetectorBenchmarkReport:
     expected_fields = set(DetectorBenchmarkReport.__dataclass_fields__)
     if set(values) != expected_fields:
         raise ValueError("Detector report contains unknown or missing fields")
+
+    def exact_object(value: object, expected: set[str], name: str) -> dict:
+        if not isinstance(value, dict) or set(value) != expected:
+            raise ValueError(
+                f"Detector report {name} schema has unknown or missing fields"
+            )
+        return value
+
+    metric_values = exact_object(
+        values["metrics"], set(DetectorMetrics.__dataclass_fields__), "metrics"
+    )
+    latency_values = exact_object(
+        values["latency"], set(DetectorLatency.__dataclass_fields__), "latency"
+    )
+    tracker_rows = values["trackers"]
+    if not isinstance(tracker_rows, list):
+        raise ValueError("Detector report trackers schema must be a list")
+    trackers = tuple(
+        TrackerMetrics(
+            **exact_object(row, set(TrackerMetrics.__dataclass_fields__), "tracker")
+        )
+        for row in tracker_rows
+    )
+    interval_values = values["intervals"]
+    if not isinstance(interval_values, dict):
+        raise ValueError("Detector report intervals schema must be an object")
     intervals = {
-        name: BootstrapInterval(**interval)
-        for name, interval in values["intervals"].items()
+        name: BootstrapInterval(
+            **exact_object(
+                interval,
+                set(BootstrapInterval.__dataclass_fields__),
+                "interval",
+            )
+        )
+        for name, interval in interval_values.items()
     }
     return DetectorBenchmarkReport(
         detector_name=values["detector_name"],
@@ -966,14 +1037,18 @@ def _detector_report_from_path(path: Path) -> DetectorBenchmarkReport:
         evidence_scope=values["evidence_scope"],
         rule_revision=values["rule_revision"],
         frame_count=values["frame_count"],
+        comparison_clip_count=values["comparison_clip_count"],
         source_count=values["source_count"],
-        metrics=DetectorMetrics(**values["metrics"]),
-        trackers=tuple(TrackerMetrics(**row) for row in values["trackers"]),
-        latency=DetectorLatency(**values["latency"]),
+        metrics=DetectorMetrics(**metric_values),
+        trackers=trackers,
+        latency=DetectorLatency(**latency_values),
         intervals=intervals,
         runtime_snapshot=values["runtime_snapshot"],
         raw_results_sha256=values["raw_results_sha256"],
         evaluation_set_sha256=values["evaluation_set_sha256"],
+        split_hash=values["split_hash"],
+        reviewed_sample_sha256=values["reviewed_sample_sha256"],
+        annotation_audit_sha256=values["annotation_audit_sha256"],
         annotation_audit_validated=values["annotation_audit_validated"],
         bootstrap_samples=values["bootstrap_samples"],
         bootstrap_seed=values["bootstrap_seed"],
@@ -1283,15 +1358,16 @@ def build_parser() -> argparse.ArgumentParser:
     detector_fetch.set_defaults(handler=_detector_fetch_yunet)
 
     detector_sample = detector_commands.add_parser("sample")
-    detector_sample.add_argument("--manifest", type=Path, required=True)
+    detector_sample.add_argument("--split-dir", type=Path, required=True)
+    detector_sample.add_argument("--expected-split-hash", required=True)
     detector_sample.add_argument("--dataset-root", type=Path, required=True)
     detector_sample.add_argument("--dataset", required=True)
     detector_sample.add_argument("--output", type=Path, required=True)
     detector_sample.add_argument("--review-dir", type=Path, required=True)
     detector_sample.add_argument("--report", type=Path, required=True)
     detector_sample.add_argument("--partition", default="train")
-    detector_sample.add_argument("--frames", type=int, default=500)
-    detector_sample.add_argument("--clips", type=int, default=100)
+    detector_sample.add_argument("--frames", type=int, default=MINIMUM_REVIEW_FRAMES)
+    detector_sample.add_argument("--clips", type=int, default=MINIMUM_REVIEW_CLIPS)
     detector_sample.add_argument(
         "--double-review-fraction",
         type=float,
@@ -1309,7 +1385,7 @@ def build_parser() -> argparse.ArgumentParser:
     detector_run = detector_commands.add_parser("run")
     detector_run.add_argument("--sample", type=Path, required=True)
     detector_run.add_argument("--annotations", type=Path, required=True)
-    detector_run.add_argument("--manifest", type=Path, required=True)
+    detector_run.add_argument("--split-dir", type=Path, required=True)
     detector_run.add_argument("--dataset-root", type=Path, required=True)
     detector_run.add_argument("--dataset", required=True)
     detector_run.add_argument("--predictions", type=Path, required=True)
@@ -1321,7 +1397,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     detector_run.add_argument("--detector-revision", required=True)
     detector_run.add_argument("--model-path", type=Path)
-    detector_run.add_argument("--expected-model-hash", required=True)
+    detector_run.add_argument("--expected-model-hash")
     detector_run.add_argument("--code-version", default="detector-benchmark-v1")
     detector_run.add_argument("--device", default="cpu")
     detector_run.add_argument("--collection-threshold", type=float, default=0.0)

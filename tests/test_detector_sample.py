@@ -3,17 +3,19 @@ from __future__ import annotations
 import hashlib
 import json
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import numpy as np
 import pytest
 
+from deepfake_detection.benchmarks import detector_sample
 from deepfake_detection.benchmarks.detector_sample import (
     build_review_sample,
     read_review_sample,
     write_review_sample,
 )
+from deepfake_detection.data.protocols import split_hash
 
 
 @dataclass(frozen=True)
@@ -24,6 +26,7 @@ class _Clip:
     manipulation_type: str
     method: str
     source: str
+    targets: tuple[str, ...]
     race: str
     gender: str
 
@@ -45,11 +48,26 @@ def _clips(count: int = 100) -> tuple[_Clip, ...]:
             manipulation_type=_MANIPULATIONS[index % 4],
             method=f"method-{index % 4}",
             source=f"source-{index:03d}",
+            targets=(),
             race=f"race-{index % 4}",
             gender=f"gender-{index % 2}",
         )
         for index in range(count)
     )
+
+
+def _frozen_split(train: tuple[_Clip, ...]) -> dict[str, tuple[_Clip, ...]]:
+    validation = replace(
+        train[0],
+        clip_id="validation-clip",
+        source="validation-source",
+    )
+    test = replace(
+        train[1],
+        clip_id="test-clip",
+        source="test-source",
+    )
+    return {"train": train, "val": (validation,), "test": (test,)}
 
 
 def _frame(clip: _Clip, timestamp_sec: float) -> np.ndarray:
@@ -59,9 +77,22 @@ def _frame(clip: _Clip, timestamp_sec: float) -> np.ndarray:
     return np.frombuffer(payload[:12], dtype=np.uint8).reshape(2, 2, 3)
 
 
+def _build(clips: tuple[_Clip, ...], **values: object):
+    frozen = (
+        values.pop("frozen_split") if "frozen_split" in values else _frozen_split(clips)
+    )
+    expected_hash = values.pop("expected_split_hash", split_hash(frozen))
+    return build_review_sample(
+        clips,
+        frozen_split=frozen,
+        expected_split_hash=expected_hash,
+        **values,
+    )
+
+
 def test_sample_requires_an_explicit_training_partition() -> None:
     with pytest.raises(ValueError, match="training partition"):
-        build_review_sample(
+        _build(
             _clips(),
             partition="validation",
             duration_reader=lambda _: 10.0,
@@ -69,18 +100,59 @@ def test_sample_requires_an_explicit_training_partition() -> None:
         )
 
 
+def test_sample_rejects_a_validation_record_relabelled_as_training() -> None:
+    train = _clips(125)
+    frozen = _frozen_split(train)
+    validation = frozen["val"]
+
+    with pytest.raises(ValueError, match="frozen training split"):
+        _build(
+            validation,
+            partition="train",
+            frozen_split=frozen,
+            expected_split_hash=split_hash(frozen),
+            duration_reader=lambda _: 10.0,
+            frame_reader=_frame,
+            frame_count=625,
+            clip_count=125,
+        )
+
+
+def test_sample_binds_the_frozen_split_and_meets_the_comparison_gate() -> None:
+    train = _clips(125)
+    frozen = _frozen_split(train)
+    expected_hash = split_hash(frozen)
+
+    sample = build_review_sample(
+        train,
+        partition="train",
+        frozen_split=frozen,
+        expected_split_hash=expected_hash,
+        duration_reader=lambda _: 10.0,
+        frame_reader=_frame,
+        frame_count=625,
+        clip_count=125,
+    )
+
+    comparison = tuple(row for row in sample if row.split_role == "comparison")
+    assert len(comparison) == 500
+    assert len({row.clip_id for row in comparison}) == 100
+    assert {row.split_hash for row in sample} == {expected_hash}
+    assert len(detector_sample.review_sample_sha256(sample)) == 64
+
+
 def test_sample_does_not_shrink_the_frame_or_clip_gates() -> None:
-    with pytest.raises(ValueError, match="at least 100 unique clips"):
-        build_review_sample(
+    with pytest.raises(ValueError, match="at least 125 unique clips"):
+        _build(
             _clips(99),
             partition="train",
             duration_reader=lambda _: 10.0,
             frame_reader=_frame,
         )
 
-    with pytest.raises(ValueError, match="at least 500 frames"):
-        build_review_sample(
-            _clips(),
+    with pytest.raises(ValueError, match="at least 625 frames"):
+        _build(
+            _clips(125),
             partition="train",
             duration_reader=lambda _: 10.0,
             frame_reader=_frame,
@@ -89,16 +161,16 @@ def test_sample_does_not_shrink_the_frame_or_clip_gates() -> None:
 
 
 def test_sample_is_deterministic_balanced_and_source_disjoint() -> None:
-    clips = _clips(104)
+    clips = _clips(125)
 
-    first = build_review_sample(
+    first = _build(
         clips,
         partition="train",
         duration_reader=lambda _: 10.0,
         frame_reader=_frame,
         seed=17,
     )
-    reordered = build_review_sample(
+    reordered = _build(
         tuple(reversed(clips)),
         partition="train",
         duration_reader=lambda _: 10.0,
@@ -107,16 +179,16 @@ def test_sample_is_deterministic_balanced_and_source_disjoint() -> None:
     )
 
     assert first == reordered
-    assert len(first) == 500
-    assert len({frame.frame_id for frame in first}) == 500
-    assert len({frame.clip_id for frame in first}) == 100
-    assert sum(frame.double_review for frame in first) == 50
+    assert len(first) == 625
+    assert len({frame.frame_id for frame in first}) == 625
+    assert len({frame.clip_id for frame in first}) == 125
+    assert sum(frame.double_review for frame in first) == 63
     source_roles: dict[str, set[str]] = {}
     for frame in first:
         source_roles.setdefault(frame.source_hash, set()).add(frame.split_role)
     assert all(len(roles) == 1 for roles in source_roles.values())
     assert Counter(next(iter(roles)) for roles in source_roles.values()) == Counter(
-        {"calibration": 20, "comparison": 80}
+        {"calibration": 25, "comparison": 100}
     )
     manipulation_counts = Counter(frame.manipulation_type for frame in first)
     assert max(manipulation_counts.values()) - min(manipulation_counts.values()) <= 5
@@ -136,7 +208,7 @@ def test_sample_is_deterministic_balanced_and_source_disjoint() -> None:
 
 
 def test_sample_jsonl_round_trip_excludes_private_paths(tmp_path: Path) -> None:
-    clips = _clips()
+    clips = _clips(125)
     absolute_root = tmp_path.resolve()
     private_clips = tuple(
         _Clip(
@@ -147,7 +219,7 @@ def test_sample_jsonl_round_trip_excludes_private_paths(tmp_path: Path) -> None:
         )
         for clip in clips
     )
-    sample = build_review_sample(
+    sample = _build(
         private_clips,
         partition="train",
         duration_reader=lambda _: 10.0,
@@ -160,7 +232,7 @@ def test_sample_jsonl_round_trip_excludes_private_paths(tmp_path: Path) -> None:
     assert read_review_sample(output) == sample
     text = output.read_text(encoding="utf-8")
     assert str(absolute_root) not in text
-    assert len(text.splitlines()) == 500
+    assert len(text.splitlines()) == 625
     assert all("video_path" not in json.loads(line) for line in text.splitlines())
 
 
@@ -170,6 +242,7 @@ def test_sample_jsonl_rejects_non_boolean_review_flags(tmp_path: Path) -> None:
         "dataset": "fixture",
         "clip_id": "clip-001",
         "source_hash": "a" * 64,
+        "split_hash": "c" * 64,
         "timestamp_sec": 1.0,
         "frame_sha256": "b" * 64,
         "width": 100,
@@ -192,8 +265,8 @@ def test_sample_rejects_duplicate_source_frames() -> None:
     static = np.zeros((2, 2, 3), dtype=np.uint8)
 
     with pytest.raises(ValueError, match="duplicate source frame"):
-        build_review_sample(
-            _clips(),
+        _build(
+            _clips(125),
             partition="train",
             duration_reader=lambda _: 10.0,
             frame_reader=lambda _clip, _timestamp: static,

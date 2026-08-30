@@ -344,6 +344,21 @@ def test_change_contract_accepts_code_docs_and_changelog_together() -> None:
     )
 
 
+def test_detector_annotation_protocol_defines_visible_face_error_accounting() -> None:
+    protocol = " ".join(
+        Path("docs/model-selection.md").read_text(encoding="utf-8").split()
+    )
+
+    for required in (
+        "box for every visible face",
+        "at most one suitable speaking target",
+        "five landmarks",
+        "Unmatched detections are false detections",
+        "other visible faces are not false positives",
+    ):
+        assert required in protocol
+
+
 def test_external_link_checker_reports_only_failed_targets(tmp_path: Path) -> None:
     (tmp_path / "README.md").write_text(
         "[Good](https://example.com/good) [Bad](https://example.com/bad)\n",

@@ -49,7 +49,7 @@ def _valid_review() -> tuple[
     sample: list[ReviewFrame] = []
     annotations: list[FrameAnnotation] = []
     frames: dict[str, np.ndarray] = {}
-    for index in range(500):
+    for index in range(625):
         source_index = index // 5
         frame = np.zeros((20, 20, 3), dtype=np.uint16)
         frame[0, 0, 0] = index
@@ -62,12 +62,13 @@ def _valid_review() -> tuple[
             source_hash=hashlib.sha256(
                 f"source-{source_index:03d}".encode()
             ).hexdigest(),
+            split_hash="f" * 64,
             timestamp_sec=float(index % 5),
             frame_sha256=frame_hash,
             width=20,
             height=20,
-            split_role="calibration" if source_index < 20 else "comparison",
-            double_review=index < 50,
+            split_role="calibration" if source_index < 25 else "comparison",
+            double_review=index < 63,
             manipulation_type=f"manipulation-{source_index % 4}",
             method=f"method-{source_index % 4}",
             race=f"race-{source_index % 4}",
@@ -85,7 +86,7 @@ def _valid_review() -> tuple[
         )
         sample.append(row)
         annotations.append(review)
-        if index < 50:
+        if index < 63:
             annotations.append(replace(review, reviewer_id="reviewer-b"))
         frames[frame_id] = frame
     return tuple(sample), tuple(annotations), frames
@@ -177,7 +178,7 @@ def test_runner_warms_up_times_frames_and_writes_path_free_deterministic_jsonl(
 ) -> None:
     sample, annotations, frames = _valid_review()
     detector = _Detector()
-    elapsed = iter(index * 0.002 for index in range(1001))
+    elapsed = iter(index * 0.002 for index in range(1251))
     output = tmp_path / "raw.jsonl"
 
     report = run_detector_benchmark(
@@ -195,16 +196,16 @@ def test_runner_warms_up_times_frames_and_writes_path_free_deterministic_jsonl(
     )
 
     records = read_candidate_records(output)
-    assert detector.calls == 502
-    assert len(records) == 500
+    assert detector.calls == 627
+    assert len(records) == 625
     assert records[0].frame_id == "frame-000"
     assert all(record.latency_ms == pytest.approx(2.0) for record in records)
     assert all(record.device == "cpu" for record in records)
     assert all(record.thread_count == 2 for record in records)
     assert report.evidence_scope == "software_fixture_only"
     assert report.threshold == 0.8
-    assert report.frame_count == 400
-    assert report.latency.timed_frames == 400
+    assert report.frame_count == 500
+    assert report.latency.timed_frames == 500
     text = output.read_text(encoding="utf-8")
     assert str(tmp_path.resolve()) not in text
     assert "frame_reader" not in text
@@ -265,7 +266,7 @@ def test_candidate_jsonl_rejects_private_paths_and_nonfinite_values(
 ) -> None:
     sample, annotations, frames = _valid_review()
     detector = _Detector()
-    ticks = iter(index * 0.001 for index in range(1001))
+    ticks = iter(index * 0.001 for index in range(1251))
     output = tmp_path / "raw.jsonl"
     run_detector_benchmark(
         sample=sample,
@@ -285,9 +286,45 @@ def test_candidate_jsonl_rejects_private_paths_and_nonfinite_values(
     row["detector_revision"] = str(tmp_path.resolve())
     output.write_text(json.dumps(row) + "\n", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="private path"):
+    with pytest.raises(ValueError, match="path-free"):
         read_candidate_records(output)
 
+
+def test_candidate_jsonl_hashes_relative_path_shaped_identifiers(
+    tmp_path: Path,
+) -> None:
+    sample, annotations, frames = _valid_review()
+    output = tmp_path / "candidates.jsonl"
+    run_detector_benchmark(
+        sample=sample,
+        annotations=annotations,
+        detector=_Detector(),
+        detector_name="fixture",
+        detector_revision="fixture-revision",
+        model_sha256="a" * 64,
+        frame_reader=lambda row: frames[row.frame_id],
+        raw_output=output,
+        runtime_snapshot=_runtime(),
+        clock=iter(index / 1000 for index in range(2000)).__next__,
+        warmup_frames=0,
+        evidence_scope="software_fixture_only",
+    )
+    rows = [
+        json.loads(line) for line in output.read_text(encoding="utf-8").splitlines()
+    ]
+    rows[0]["clip_id"] = "private/review/frame.png"
+    output.write_text(
+        "".join(json.dumps(row) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+
+    write_candidate_records(read_candidate_records(output), output)
+
+    persisted = json.loads(output.read_text(encoding="utf-8").splitlines()[0])
+    assert persisted["clip_id"] != "private/review/frame.png"
+    assert len(persisted["clip_id"]) == 64
+
+    row = rows[0]
     row["detector_revision"] = "revision-1"
     row["latency_ms"] = float("nan")
     output.write_text(json.dumps(row) + "\n", encoding="utf-8")
@@ -337,7 +374,7 @@ def test_runner_rejects_backend_metadata_changes_after_timing(
             }
 
     detector = ChangingMetadataDetector()
-    ticks = iter(index * 0.001 for index in range(1001))
+    ticks = iter(index * 0.001 for index in range(1251))
 
     with pytest.raises(ValueError, match="changed during timed inference"):
         run_detector_benchmark(

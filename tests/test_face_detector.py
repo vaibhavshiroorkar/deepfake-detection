@@ -84,6 +84,23 @@ def test_mtcnn_adapter_reports_model_device_and_pytorch_threads(
     }
 
 
+def test_mtcnn_model_binding_is_derived_from_loaded_state() -> None:
+    class WeightedMTCNN:
+        def __init__(self, value: float) -> None:
+            self.value = value
+
+        def state_dict(self) -> dict[str, torch.Tensor]:
+            return {"network.weight": torch.tensor([self.value], dtype=torch.float32)}
+
+    first = MTCNNFaceDetector(model=WeightedMTCNN(1.0)).model_sha256()
+    same = MTCNNFaceDetector(model=WeightedMTCNN(1.0)).model_sha256()
+    changed = MTCNNFaceDetector(model=WeightedMTCNN(2.0)).model_sha256()
+
+    assert first == same
+    assert first != changed
+    assert len(first) == 64
+
+
 @pytest.mark.parametrize(
     "result",
     [

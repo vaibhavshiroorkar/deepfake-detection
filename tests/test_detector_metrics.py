@@ -637,7 +637,7 @@ def _report(
         ),
     )
     latency = DetectorLatency(
-        timed_frames=400,
+        timed_frames=500,
         median_ms=latency_ms,
         p95_ms=latency_ms + 1,
         throughput_fps=1000 / latency_ms,
@@ -678,8 +678,9 @@ def _report(
         collection_threshold=0.1,
         evidence_scope=scope,
         rule_revision=FROZEN_DETECTOR_RULE_REVISION,
-        frame_count=400,
-        source_count=80,
+        frame_count=500,
+        comparison_clip_count=100,
+        source_count=100,
         metrics=metrics,
         trackers=trackers,
         latency=latency,
@@ -687,6 +688,9 @@ def _report(
         runtime_snapshot=_runtime_snapshot(),
         raw_results_sha256="f" * 64,
         evaluation_set_sha256=evaluation_set_sha256,
+        split_hash="b" * 64,
+        reviewed_sample_sha256="c" * 64,
+        annotation_audit_sha256="d" * 64,
         annotation_audit_validated=True,
         bootstrap_seed=BOOTSTRAP_SEED,
     )
@@ -703,6 +707,43 @@ def test_research_report_rejects_non_cpu_runtime_metadata() -> None:
 
     with pytest.raises(ValueError, match="CPU runtime metadata"):
         replace(report, latency=replace(report.latency, device="cuda:0"))
+
+
+def test_research_report_requires_the_post_split_frame_and_clip_gate() -> None:
+    report = _report(
+        "candidate",
+        recall=0.95,
+        nme=0.08,
+        track_errors_per_1000=2,
+        latency_ms=5,
+    )
+
+    with pytest.raises(ValueError, match="500 comparison frames"):
+        replace(
+            report,
+            frame_count=499,
+            latency=replace(report.latency, timed_frames=499),
+        )
+
+    with pytest.raises(ValueError, match="100 comparison clips"):
+        replace(report, comparison_clip_count=99)
+
+
+def test_research_comparison_requires_the_same_split_and_reviewed_audit() -> None:
+    first = _report(
+        "first", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5
+    )
+    changed_split = replace(first, detector_name="changed-split", split_hash="d" * 64)
+    changed_audit = replace(
+        first,
+        detector_name="changed-audit",
+        annotation_audit_sha256="e" * 64,
+    )
+
+    with pytest.raises(ValueError, match="split"):
+        compare_detectors((first, changed_split))
+    with pytest.raises(ValueError, match="annotation audit"):
+        compare_detectors((first, changed_audit))
 
 
 def test_selection_does_not_prefer_a_zero_frame_tracker() -> None:

@@ -217,6 +217,25 @@ def read_candidate_records(path: Path) -> tuple[CandidateFrame, ...]:
     return ordered
 
 
+def validate_candidate_artifact(path: Path) -> tuple[CandidateFrame, ...]:
+    """Validate the exact path-free candidate JSONL schema before upload."""
+
+    records = read_candidate_records(path)
+    for record in records:
+        for name, value in (
+            ("frame_id", record.frame_id),
+            ("clip_id", record.clip_id),
+            ("detector_revision", record.detector_revision),
+            ("device", record.device),
+        ):
+            if "/" in value or "\\" in value:
+                raise ValueError(f"Candidate JSONL {name} must be path-free")
+    canonical = _candidate_jsonl_bytes(records)
+    if path.read_bytes() != canonical:
+        raise ValueError("Candidate JSONL must use the exact canonical schema")
+    return records
+
+
 def _runtime_mapping(snapshot: RuntimeSnapshot | Mapping[str, Any]) -> dict[str, Any]:
     if isinstance(snapshot, RuntimeSnapshot):
         return snapshot.as_dict()

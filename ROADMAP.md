@@ -46,9 +46,11 @@ Exit gate: one command reproduces a tracked smoke run from a clean environment.
 Exit gate: the selected view pipeline meets the quality rules in
 [model-selection.md](docs/model-selection.md). Its configuration hash is frozen.
 
-The software gate is complete. The evidence gate still needs at least 500
-human-reviewed frames from at least 100 training clips, a second review of at
-least 10 percent, paired detector runs, and acceptance of the measured choice.
+The software gate is complete. The evidence gate still needs a frozen sample
+with at least 625 human-reviewed frames from 125 training clips. After
+calibration sources are removed, at least 500 frames from 100 clips must remain.
+It also needs a second review of at least 10 percent, paired detector runs, and
+acceptance of the measured choice.
 
 ## Phase 3: Strong branch baselines
 

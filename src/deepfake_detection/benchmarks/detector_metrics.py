@@ -20,8 +20,18 @@ from deepfake_detection.views.tracking import (
     select_primary_track,
 )
 
-from .detector_annotations import AnnotationAudit, FaceAnnotation, FrameAnnotation
-from .detector_sample import SplitRole, _validate_sha256
+from .detector_annotations import (
+    AnnotationAudit,
+    FaceAnnotation,
+    FrameAnnotation,
+    annotation_audit_sha256,
+)
+from .detector_sample import (
+    MINIMUM_COMPARISON_CLIPS,
+    MINIMUM_COMPARISON_FRAMES,
+    SplitRole,
+    _validate_sha256,
+)
 
 FROZEN_DETECTOR_RULE_REVISION = "detector-selection-v1"
 TARGET_IOU_THRESHOLD = 0.50
@@ -40,6 +50,10 @@ def _looks_absolute(value: str) -> bool:
     return PurePosixPath(value).is_absolute() or PureWindowsPath(value).is_absolute()
 
 
+def _looks_path_shaped(value: str) -> bool:
+    return _looks_absolute(value) or "/" in value or "\\" in value
+
+
 def _required_string(name: str, value: str, *, path_free: bool = False) -> None:
     if not isinstance(value, str):
         raise TypeError(f"{name} must be a string")
@@ -48,7 +62,7 @@ def _required_string(name: str, value: str, *, path_free: bool = False) -> None:
     if value != value.strip():
         raise ValueError(f"{name} must be canonical without outer whitespace")
     if path_free and _looks_absolute(value):
-        raise ValueError(f"{name} cannot contain a private path")
+        raise ValueError(f"{name} must be path-free")
 
 
 def _finite(name: str, value: float, *, nonnegative: bool = False) -> None:
@@ -59,7 +73,11 @@ def _finite(name: str, value: float, *, nonnegative: bool = False) -> None:
 
 
 def _validate_runtime(value: Any, *, name: str = "runtime_snapshot") -> None:
-    if isinstance(value, bool) or value is None or isinstance(value, str):
+    if isinstance(value, str):
+        if _looks_path_shaped(value):
+            raise ValueError(f"{name} must be path-free")
+        return
+    if isinstance(value, bool) or value is None:
         return
     if isinstance(value, int):
         return
@@ -93,11 +111,8 @@ def _validate_runtime_snapshot(snapshot: Mapping[str, Any]) -> None:
         "available_memory_mib",
         "ffmpeg_version",
     }
-    missing = required - set(snapshot)
-    if missing:
-        raise ValueError(
-            "runtime snapshot is missing required fields: " + ", ".join(sorted(missing))
-        )
+    if set(snapshot) != required:
+        raise ValueError("runtime snapshot schema has unknown or missing fields")
     for name in ("started_at_utc", "git_commit", "python_version", "platform", "cpu"):
         value = snapshot[name]
         if not isinstance(value, str) or not value.strip():
@@ -111,7 +126,7 @@ def _validate_runtime_snapshot(snapshot: Mapping[str, Any]) -> None:
         and (version is None or isinstance(version, str))
         for name, version in packages.items()
     ):
-        raise ValueError("runtime snapshot packages must map names to versions")
+        raise ValueError("runtime snapshot packages schema must map names to versions")
     for name in ("gpu", "ffmpeg_version"):
         value = snapshot[name]
         if value is not None and (not isinstance(value, str) or not value.strip()):
@@ -336,6 +351,7 @@ class DetectorBenchmarkReport:
     evidence_scope: EvidenceScope
     rule_revision: str
     frame_count: int
+    comparison_clip_count: int
     source_count: int
     metrics: DetectorMetrics
     trackers: tuple[TrackerMetrics, ...]
@@ -344,6 +360,9 @@ class DetectorBenchmarkReport:
     runtime_snapshot: dict[str, Any]
     raw_results_sha256: str
     evaluation_set_sha256: str
+    split_hash: str
+    reviewed_sample_sha256: str
+    annotation_audit_sha256: str
     annotation_audit_validated: bool
     bootstrap_samples: int = BOOTSTRAP_SAMPLES
     bootstrap_seed: int = BOOTSTRAP_SEED
@@ -354,6 +373,9 @@ class DetectorBenchmarkReport:
         _validate_sha256("model_sha256", self.model_sha256)
         _validate_sha256("raw_results_sha256", self.raw_results_sha256)
         _validate_sha256("evaluation_set_sha256", self.evaluation_set_sha256)
+        _validate_sha256("split_hash", self.split_hash)
+        _validate_sha256("reviewed_sample_sha256", self.reviewed_sample_sha256)
+        _validate_sha256("annotation_audit_sha256", self.annotation_audit_sha256)
         for name in ("threshold", "collection_threshold"):
             value = getattr(self, name)
             _finite(name, value)
@@ -377,6 +399,16 @@ class DetectorBenchmarkReport:
             raise ValueError("Report does not use the frozen detector rule revision")
         if self.frame_count <= 0 or self.source_count <= 0:
             raise ValueError("Report frame and source counts must be positive")
+        if self.comparison_clip_count <= 0:
+            raise ValueError("Report comparison clip count must be positive")
+        if self.evidence_scope == "research_evidence" and (
+            self.frame_count < MINIMUM_COMPARISON_FRAMES
+            or self.comparison_clip_count < MINIMUM_COMPARISON_CLIPS
+        ):
+            raise ValueError(
+                "Research evidence requires at least 500 comparison frames "
+                "from at least 100 comparison clips"
+            )
         if self.frame_count != self.latency.timed_frames:
             raise ValueError("Report frame_count must match latency timed_frames")
         if self.bootstrap_samples != BOOTSTRAP_SAMPLES:
@@ -431,9 +463,14 @@ class DetectorDecision:
 
 
 def _candidate_frame_mapping(record: CandidateFrame) -> dict[str, object]:
+    def safe_identifier(value: str) -> str:
+        if _looks_path_shaped(value):
+            return hashlib.sha256(value.encode("utf-8")).hexdigest()
+        return value
+
     return {
-        "frame_id": record.frame_id,
-        "clip_id": record.clip_id,
+        "frame_id": safe_identifier(record.frame_id),
+        "clip_id": safe_identifier(record.clip_id),
         "timestamp_sec": float(record.timestamp_sec),
         "frame_sha256": record.frame_sha256,
         "source_hash": record.source_hash,
@@ -1130,8 +1167,12 @@ def evaluate_detector(
             role: {row.source_hash for row in rows if row.split_role == role}
             for role in ("calibration", "comparison")
         }
+        comparison_rows = tuple(row for row in rows if row.split_role == "comparison")
         if (
             annotation_audit.frame_count != len(rows)
+            or annotation_audit.comparison_frame_count != len(comparison_rows)
+            or annotation_audit.comparison_clip_count
+            != len({row.clip_id for row in comparison_rows})
             or annotation_audit.source_count
             != len(role_sources["calibration"] | role_sources["comparison"])
             or annotation_audit.calibration_source_count
@@ -1150,6 +1191,15 @@ def evaluate_detector(
     comparison = tuple(row for row in rows if row.split_role == "comparison")
     if not comparison:
         raise ValueError("Detector evaluation requires comparison sources")
+    comparison_clip_count = len({row.clip_id for row in comparison})
+    if evidence_scope == "research_evidence" and (
+        len(comparison) < MINIMUM_COMPARISON_FRAMES
+        or comparison_clip_count < MINIMUM_COMPARISON_CLIPS
+    ):
+        raise ValueError(
+            "Research evidence requires at least 500 comparison frames "
+            "from at least 100 comparison clips"
+        )
     grouped: dict[str, list[CandidateFrame]] = defaultdict(list)
     for row in comparison:
         grouped[row.source_hash].append(row)
@@ -1191,6 +1241,7 @@ def evaluate_detector(
         evidence_scope=evidence_scope,
         rule_revision=rule_revision,
         frame_count=len(comparison),
+        comparison_clip_count=comparison_clip_count,
         source_count=len(grouped),
         metrics=metrics,
         trackers=(
@@ -1213,6 +1264,13 @@ def evaluate_detector(
         runtime_snapshot=runtime_dict,
         raw_results_sha256=hashlib.sha256(raw_bytes).hexdigest(),
         evaluation_set_sha256=_evaluation_set_hash(rows, annotation_by_id),
+        split_hash=(annotation_audit.split_hash if annotation_audit else "0" * 64),
+        reviewed_sample_sha256=(
+            annotation_audit.reviewed_sample_sha256 if annotation_audit else "0" * 64
+        ),
+        annotation_audit_sha256=(
+            annotation_audit_sha256(annotation_audit) if annotation_audit else "0" * 64
+        ),
         annotation_audit_validated=audit_validated,
         bootstrap_samples=bootstrap_samples,
         bootstrap_seed=bootstrap_seed,
@@ -1288,6 +1346,18 @@ def compare_detectors(
         raise ValueError("Detector reports use different runtime environments")
     if len({report.evaluation_set_sha256 for report in rows}) != 1:
         raise ValueError("Detector reports use different comparison frames")
+    if len({report.split_hash for report in rows}) != 1:
+        raise ValueError("Detector reports use different frozen training splits")
+    if len({report.reviewed_sample_sha256 for report in rows}) != 1:
+        raise ValueError("Detector reports use different reviewed samples")
+    if len({report.annotation_audit_sha256 for report in rows}) != 1:
+        raise ValueError("Detector reports use different reviewed annotation audits")
+    if any(
+        report.frame_count < MINIMUM_COMPARISON_FRAMES
+        or report.comparison_clip_count < MINIMUM_COMPARISON_CLIPS
+        for report in rows
+    ):
+        raise ValueError("Detector reports do not meet the post-split evidence gate")
     if any(report.metrics.landmark_nme is None for report in rows):
         raise ValueError("Detector selection requires landmark NME for every candidate")
 

@@ -12,6 +12,13 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Bound detector review evidence to the verified frozen training split and its
+  hash. Enforced the 500-frame, 100-clip gate after calibration removal.
+- Bound benchmark reports to the reviewed sample and annotation audit. Added
+  strict nested aggregate and candidate validation before MLflow upload.
+- Derived MTCNN provenance from loaded weights and clarified visible-face
+  annotation rules.
+
 ### Fixed
 
 - Detector evidence now binds thresholds to calibration data, hashes sequence

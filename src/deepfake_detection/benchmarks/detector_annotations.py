@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import itertools
 import json
 import math
@@ -12,11 +13,14 @@ from typing import Literal
 from deepfake_detection.views.tracking import Box, Landmarks5, Point
 
 from .detector_sample import (
+    MINIMUM_COMPARISON_CLIPS,
+    MINIMUM_COMPARISON_FRAMES,
     MINIMUM_DOUBLE_REVIEW_FRACTION,
     MINIMUM_REVIEW_CLIPS,
     MINIMUM_REVIEW_FRAMES,
     ReviewFrame,
     _validate_sha256,
+    review_sample_sha256,
 )
 
 
@@ -111,8 +115,12 @@ class AnnotationDisagreement:
 class AnnotationAudit:
     valid: bool
     errors: tuple[str, ...]
+    split_hash: str
+    reviewed_sample_sha256: str
     frame_count: int
+    comparison_frame_count: int
     clip_count: int
+    comparison_clip_count: int
     source_count: int
     annotation_count: int
     review_count: int
@@ -396,6 +404,25 @@ def validate_annotations(
     sample_rows = tuple(sample)
     annotation_rows = tuple(annotations)
     errors: list[str] = []
+    split_hashes = {frame.split_hash for frame in sample_rows}
+    if len(split_hashes) != 1:
+        errors.append("Review sample must bind exactly one frozen split hash")
+    split_hash = next(iter(split_hashes), "0" * 64)
+    comparison_frames = tuple(
+        frame for frame in sample_rows if frame.split_role == "comparison"
+    )
+    comparison_frame_count = len(comparison_frames)
+    comparison_clip_count = len({frame.clip_id for frame in comparison_frames})
+    if comparison_frame_count < MINIMUM_COMPARISON_FRAMES:
+        errors.append(
+            f"Comparison gate requires {MINIMUM_COMPARISON_FRAMES} frames; "
+            f"found {comparison_frame_count}"
+        )
+    if comparison_clip_count < MINIMUM_COMPARISON_CLIPS:
+        errors.append(
+            f"Comparison gate requires {MINIMUM_COMPARISON_CLIPS} clips; "
+            f"found {comparison_clip_count}"
+        )
     frame_id_counts = Counter(frame.frame_id for frame in sample_rows)
     duplicate_frame_ids = tuple(
         sorted(frame_id for frame_id, count in frame_id_counts.items() if count > 1)
@@ -551,8 +578,12 @@ def validate_annotations(
     return AnnotationAudit(
         valid=not unique_errors,
         errors=unique_errors,
+        split_hash=split_hash,
+        reviewed_sample_sha256=review_sample_sha256(sample_rows),
         frame_count=frame_count,
+        comparison_frame_count=comparison_frame_count,
         clip_count=clip_count,
+        comparison_clip_count=comparison_clip_count,
         source_count=len(source_roles),
         annotation_count=len(annotation_rows),
         review_count=sum(row.review_role == "review" for row in annotation_rows),
@@ -574,6 +605,13 @@ def validate_annotations(
         unresolved_disagreement_frame_ids=tuple(unresolved),
         adjudicated_frame_ids=tuple(adjudicated),
     )
+
+
+def annotation_audit_sha256(audit: AnnotationAudit) -> str:
+    payload = json.dumps(
+        asdict(audit), sort_keys=True, separators=(",", ":"), ensure_ascii=True
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
 
 
 def resolve_annotations(

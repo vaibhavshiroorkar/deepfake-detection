@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 from dataclasses import asdict
@@ -99,6 +100,7 @@ def _fixture_report(name: str) -> DetectorBenchmarkReport:
         evidence_scope="software_fixture_only",
         rule_revision=FROZEN_DETECTOR_RULE_REVISION,
         frame_count=1,
+        comparison_clip_count=1,
         source_count=1,
         metrics=metrics,
         trackers=trackers,
@@ -107,6 +109,9 @@ def _fixture_report(name: str) -> DetectorBenchmarkReport:
         runtime_snapshot=_runtime(),
         raw_results_sha256="b" * 64,
         evaluation_set_sha256="c" * 64,
+        split_hash="d" * 64,
+        reviewed_sample_sha256="e" * 64,
+        annotation_audit_sha256="f" * 64,
         annotation_audit_validated=True,
         bootstrap_seed=BOOTSTRAP_SEED,
     )
@@ -132,23 +137,23 @@ def test_detector_command_tree_exposes_all_operational_commands() -> None:
 def test_shared_preprocessor_factory_preserves_defaults(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    sentinel = object()
-    monkeypatch.setattr(
-        loading,
-        "MTCNNFaceDetector",
-        lambda **values: (sentinel, values),
-    )
+    class BoundFixtureMTCNN:
+        def __init__(self, **values: object) -> None:
+            self.values = values
+
+        def model_sha256(self) -> str:
+            return "a" * 64
+
+    monkeypatch.setattr(loading, "MTCNNFaceDetector", BoundFixtureMTCNN)
 
     preprocessor = loading.build_preprocessor(code_version="revision", device="cpu")
 
-    assert preprocessor.detector == (
-        sentinel,
-        {"confidence": 0.8, "device": "cpu"},
-    )
+    assert isinstance(preprocessor.detector, BoundFixtureMTCNN)
+    assert preprocessor.detector.values == {"confidence": 0.8, "device": "cpu"}
     assert preprocessor.config.detector == "mtcnn"
     assert preprocessor.config.track_association == "greedy_iou"
     assert preprocessor.config.mouth_crop_mode == "box"
-    assert preprocessor.config.detector_model_sha256 is None
+    assert preprocessor.config.detector_model_sha256 == "a" * 64
 
 
 def test_shared_preprocessor_factory_checks_yunet_model_hash(
@@ -171,6 +176,32 @@ def test_shared_preprocessor_factory_checks_yunet_model_hash(
             model_path=model,
             expected_model_hash="0" * 64,
         )
+
+
+def test_shared_factory_rejects_claimed_mtcnn_hash_and_uses_observed_weights(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class BoundMTCNN:
+        def __init__(self, **values: object) -> None:
+            self.values = values
+
+        def model_sha256(self) -> str:
+            return "b" * 64
+
+    monkeypatch.setattr(loading, "MTCNNFaceDetector", BoundMTCNN)
+
+    with pytest.raises(ValueError, match="MTCNN.*expected model hash"):
+        loading.build_preprocessor(
+            code_version="revision",
+            detector="mtcnn",
+            expected_model_hash="a" * 64,
+        )
+
+    preprocessor = loading.build_preprocessor(
+        code_version="revision",
+        detector="mtcnn",
+    )
+    assert preprocessor.config.detector_model_sha256 == "b" * 64
 
 
 def test_detector_compare_fixture_smoke_cannot_select_a_real_detector(
@@ -222,6 +253,54 @@ def test_detector_compare_rejects_fields_outside_the_aggregate_contract(
                 str(tmp_path / "decision.json"),
             ]
         )
+
+
+def test_detector_compare_rejects_invalid_nested_report_schemas(
+    tmp_path: Path,
+) -> None:
+    base = asdict(_fixture_report("fixture"))
+    mutations: list[tuple[str, dict[str, object]]] = []
+
+    extra_metric = copy.deepcopy(base)
+    extra_metric["metrics"]["private_path"] = "private/metric.json"
+    mutations.append(("extra-metric", extra_metric))
+
+    missing_latency = copy.deepcopy(base)
+    del missing_latency["latency"]["thread_count"]
+    mutations.append(("missing-latency", missing_latency))
+
+    extra_runtime = copy.deepcopy(base)
+    extra_runtime["runtime_snapshot"]["workspace"] = "private/workspace"
+    mutations.append(("extra-runtime", extra_runtime))
+
+    wrong_packages = copy.deepcopy(base)
+    wrong_packages["runtime_snapshot"]["packages"] = ["opencv-python"]
+    mutations.append(("wrong-packages", wrong_packages))
+
+    for runtime_path in (
+        "/private/runtime.json",
+        "private/runtime.json",
+        "C:\\private\\runtime.json",
+        "private\\runtime.json",
+    ):
+        private_runtime = copy.deepcopy(base)
+        private_runtime["runtime_snapshot"]["platform"] = runtime_path
+        mutations.append((f"runtime-path-{len(mutations)}", private_runtime))
+
+    for name, payload in mutations:
+        report = tmp_path / f"{name}.json"
+        report.write_text(json.dumps(payload), encoding="utf-8")
+        with pytest.raises(ValueError, match="schema|path-free"):
+            main(
+                [
+                    "detector",
+                    "compare",
+                    "--reports",
+                    str(report),
+                    "--output",
+                    str(tmp_path / f"{name}-decision.json"),
+                ]
+            )
 
 
 def test_cache_and_predict_parsers_preserve_and_accept_preprocessing_choices() -> None:

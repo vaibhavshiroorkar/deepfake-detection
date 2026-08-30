@@ -4,15 +4,19 @@ import hashlib
 import json
 import math
 from collections import defaultdict, deque
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Literal, Protocol, TypeVar
 
 import numpy as np
 
-MINIMUM_REVIEW_FRAMES = 500
-MINIMUM_REVIEW_CLIPS = 100
+from deepfake_detection.data.protocols import split_hash as protocol_split_hash
+
+MINIMUM_REVIEW_FRAMES = 625
+MINIMUM_REVIEW_CLIPS = 125
+MINIMUM_COMPARISON_FRAMES = 500
+MINIMUM_COMPARISON_CLIPS = 100
 MINIMUM_REVIEW_SOURCES = 5
 MINIMUM_DOUBLE_REVIEW_FRACTION = 0.10
 
@@ -25,6 +29,7 @@ class ManifestRecord(Protocol):
     manipulation_type: str
     method: str
     source: str
+    targets: tuple[str, ...]
     race: str
     gender: str
 
@@ -35,6 +40,7 @@ class ReviewFrame:
     dataset: str
     clip_id: str
     source_hash: str
+    split_hash: str
     timestamp_sec: float
     frame_sha256: str
     width: int
@@ -61,6 +67,7 @@ class ReviewFrame:
         if _looks_absolute(self.clip_id):
             raise ValueError("clip_id cannot contain an absolute path")
         _validate_sha256("source_hash", self.source_hash)
+        _validate_sha256("split_hash", self.split_hash)
         _validate_sha256("frame_sha256", self.frame_sha256)
         if not math.isfinite(self.timestamp_sec) or self.timestamp_sec < 0:
             raise ValueError("timestamp_sec must be finite and nonnegative")
@@ -270,6 +277,8 @@ def build_review_sample(
     records: Sequence[ManifestRecord],
     *,
     partition: str,
+    frozen_split: Mapping[str, Sequence[ManifestRecord]],
+    expected_split_hash: str,
     duration_reader: Callable[[ManifestRecord], float],
     frame_reader: Callable[[ManifestRecord, float], np.ndarray],
     frame_count: int = MINIMUM_REVIEW_FRAMES,
@@ -281,10 +290,32 @@ def build_review_sample(
 
     if partition != "train":
         raise ValueError("Detector review accepts only an explicit training partition")
+    _validate_sha256("expected_split_hash", expected_split_hash)
+    if set(frozen_split) != {"train", "val", "test"}:
+        raise ValueError("Frozen split must contain train, val, and test partitions")
+    observed_split_hash = protocol_split_hash(frozen_split)  # type: ignore[arg-type]
+    if observed_split_hash != expected_split_hash:
+        raise ValueError("Frozen split artifact does not match its expected split hash")
+    frozen_train = {(record.clip_id, record.source) for record in frozen_split["train"]}
+    frozen_non_train_sources = {
+        record.source for name in ("val", "test") for record in frozen_split[name]
+    }
+    if any(
+        (record.clip_id, record.source) not in frozen_train
+        or record.source in frozen_non_train_sources
+        for record in records
+    ):
+        raise ValueError(
+            "Detector review records are outside the frozen training split"
+        )
     if frame_count < MINIMUM_REVIEW_FRAMES:
-        raise ValueError("Detector review requires at least 500 frames")
+        raise ValueError(
+            f"Detector review requires at least {MINIMUM_REVIEW_FRAMES} frames"
+        )
     if clip_count < MINIMUM_REVIEW_CLIPS:
-        raise ValueError("Detector review requires at least 100 unique clips")
+        raise ValueError(
+            f"Detector review requires at least {MINIMUM_REVIEW_CLIPS} unique clips"
+        )
     if frame_count < clip_count:
         raise ValueError("frame_count must be at least clip_count")
     if (
@@ -366,6 +397,7 @@ def build_review_sample(
                     dataset=record.dataset,
                     clip_id=record.clip_id,
                     source_hash=source_hash,
+                    split_hash=observed_split_hash,
                     timestamp_sec=timestamp_sec,
                     frame_sha256=frame_sha256,
                     width=int(frame.shape[1]),
@@ -394,9 +426,19 @@ def build_review_sample(
             ),
         )[:double_count]
     }
-    return tuple(
+    result = tuple(
         replace(frame, double_review=frame.frame_id in double_ids) for frame in built
     )
+    comparison = tuple(frame for frame in result if frame.split_role == "comparison")
+    if len(comparison) < MINIMUM_COMPARISON_FRAMES:
+        raise ValueError(
+            "Detector review requires at least 500 comparison frames after calibration"
+        )
+    if len({frame.clip_id for frame in comparison}) < MINIMUM_COMPARISON_CLIPS:
+        raise ValueError(
+            "Detector review requires at least 100 comparison clips after calibration"
+        )
+    return result
 
 
 def _review_frame_from_mapping(row: dict[str, object]) -> ReviewFrame:
@@ -410,6 +452,7 @@ def _review_frame_from_mapping(row: dict[str, object]) -> ReviewFrame:
         dataset=str(row["dataset"]),
         clip_id=str(row["clip_id"]),
         source_hash=str(row["source_hash"]),
+        split_hash=str(row["split_hash"]),
         timestamp_sec=float(row["timestamp_sec"]),
         frame_sha256=str(row["frame_sha256"]),
         width=int(row["width"]),
@@ -451,3 +494,17 @@ def read_review_sample(path: Path) -> tuple[ReviewFrame, ...]:
                     f"Invalid review sample line {line_number}: {error}"
                 ) from error
     return tuple(frames)
+
+
+def review_sample_sha256(frames: Sequence[ReviewFrame]) -> str:
+    canonical = sorted(
+        (asdict(frame) for frame in frames),
+        key=lambda row: str(row["frame_id"]),
+    )
+    payload = json.dumps(
+        canonical,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()

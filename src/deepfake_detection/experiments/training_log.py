@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from deepfake_detection.benchmarks.detector_metrics import DetectorBenchmarkReport
+from deepfake_detection.benchmarks.detector_runner import validate_candidate_artifact
 from deepfake_detection.experiments.tracking import RunLogger
 from deepfake_detection.training.binary import BinaryTrainingHistory
 from deepfake_detection.training.sync import SyncTrainingHistory
@@ -110,6 +111,7 @@ def log_detector_benchmark(
     report_path: Path,
     predictions_path: Path,
 ) -> None:
+    validate_candidate_artifact(predictions_path)
     logger.log_params(
         {
             "detector.name": report.detector_name,
@@ -119,6 +121,9 @@ def log_detector_benchmark(
             "detector.evidence_scope": report.evidence_scope,
             "detector.raw_results_sha256": report.raw_results_sha256,
             "detector.evaluation_set_sha256": report.evaluation_set_sha256,
+            "detector.split_hash": report.split_hash,
+            "detector.reviewed_sample_sha256": report.reviewed_sample_sha256,
+            "detector.annotation_audit_sha256": report.annotation_audit_sha256,
         }
     )
     metrics = {
@@ -133,6 +138,7 @@ def log_detector_benchmark(
         "detector.latency_median_ms": report.latency.median_ms,
         "detector.latency_p95_ms": report.latency.p95_ms,
         "detector.throughput_fps": report.latency.throughput_fps,
+        "detector.comparison_clips": float(report.comparison_clip_count),
     }
     if report.metrics.landmark_nme is not None:
         metrics["detector.landmark_nme"] = report.metrics.landmark_nme

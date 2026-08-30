@@ -68,8 +68,10 @@ Run `uv run ddf cache build --help`.
 size and SHA-256. The model stays local and is never an MLflow artifact.
 
 `ddf detector sample` creates a deterministic training-only review sample and
-local PNG review images. It requires at least 500 frames from 100 clips and
-marks at least 10 percent for independent second review.
+local PNG review images. It verifies the frozen split directory against its
+expected hash. The default is 625 frames from 125 clips. This leaves at least
+500 comparison frames from 100 clips after the 20 percent calibration split.
+It marks at least 10 percent for independent second review.
 
 `ddf detector validate-annotations` writes an aggregate audit. It returns code
 `2` until every review, second review, and required adjudication passes.
@@ -77,7 +79,8 @@ marks at least 10 percent for independent second review.
 `ddf detector run` validates the audit before inference. It calibrates the
 candidate threshold on source-disjoint calibration identities, evaluates the
 comparison identities, and writes a path-free prediction JSONL plus an
-aggregate report.
+aggregate report. MTCNN provenance comes from its loaded state. Do not pass an
+expected model hash for MTCNN. YuNet still requires a matching asset hash.
 
 `ddf detector compare` applies the frozen selection rules to one or more
 aggregate reports. Fixture reports cannot produce a real selection.
@@ -91,10 +94,10 @@ Run the workflow in order:
 
 ```powershell
 uv run ddf detector fetch-yunet --report runs/detector/yunet-asset.json
-uv run ddf detector sample --manifest data/private/train-manifest.csv --dataset-root data/private --dataset training --output data/private/detector-review/sample.jsonl --review-dir data/private/detector-review/images --report runs/detector/sample-report.json
+uv run ddf detector sample --split-dir data/private/splits --expected-split-hash <sha256> --dataset-root data/private --dataset training --output data/private/detector-review/sample.jsonl --review-dir data/private/detector-review/images --report runs/detector/sample-report.json
 uv run ddf detector validate-annotations --sample data/private/detector-review/sample.jsonl --annotations data/private/detector-review/annotations.jsonl --report runs/detector/annotation-audit.json
-uv run ddf detector run --sample data/private/detector-review/sample.jsonl --annotations data/private/detector-review/annotations.jsonl --manifest data/private/train-manifest.csv --dataset-root data/private --dataset training --predictions runs/detector/mtcnn-predictions.jsonl --report runs/detector/mtcnn-report.json --detector mtcnn --detector-revision <revision> --expected-model-hash <sha256>
-uv run ddf detector run --sample data/private/detector-review/sample.jsonl --annotations data/private/detector-review/annotations.jsonl --manifest data/private/train-manifest.csv --dataset-root data/private --dataset training --predictions runs/detector/yunet-predictions.jsonl --report runs/detector/yunet-report.json --detector yunet --detector-revision opencv-zoo-47534e27 --model-path models/face_detection_yunet_2026may.onnx --expected-model-hash ebafce4e3c118d6554634be5c27ab333b4c047a9a8c3faf1d7cf93101c22f0f0
+uv run ddf detector run --sample data/private/detector-review/sample.jsonl --annotations data/private/detector-review/annotations.jsonl --split-dir data/private/splits --dataset-root data/private --dataset training --predictions runs/detector/mtcnn-predictions.jsonl --report runs/detector/mtcnn-report.json --detector mtcnn --detector-revision <revision>
+uv run ddf detector run --sample data/private/detector-review/sample.jsonl --annotations data/private/detector-review/annotations.jsonl --split-dir data/private/splits --dataset-root data/private --dataset training --predictions runs/detector/yunet-predictions.jsonl --report runs/detector/yunet-report.json --detector yunet --detector-revision opencv-zoo-47534e27 --model-path models/face_detection_yunet_2026may.onnx --expected-model-hash ebafce4e3c118d6554634be5c27ab333b4c047a9a8c3faf1d7cf93101c22f0f0
 uv run ddf detector compare --reports runs/detector/mtcnn-report.json runs/detector/yunet-report.json --output runs/detector/decision.json
 ```
 

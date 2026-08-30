@@ -35,7 +35,7 @@ def _landmarks(offset: float = 0.0) -> Landmarks5:
 
 def _sample() -> tuple[ReviewFrame, ...]:
     frames = []
-    for index in range(500):
+    for index in range(625):
         source_index = index // 5
         frames.append(
             ReviewFrame(
@@ -43,12 +43,13 @@ def _sample() -> tuple[ReviewFrame, ...]:
                 dataset="fixture",
                 clip_id=f"clip-{source_index:03d}",
                 source_hash=_sha(f"source-{source_index:03d}"),
+                split_hash="f" * 64,
                 timestamp_sec=float(index % 5),
                 frame_sha256=_sha(f"frame-{index:03d}"),
                 width=100,
                 height=100,
-                split_role=("calibration" if source_index < 20 else "comparison"),
-                double_review=index < 50,
+                split_role=("calibration" if source_index < 25 else "comparison"),
+                double_review=index < 63,
                 manipulation_type=f"manipulation-{source_index % 4}",
                 method=f"method-{source_index % 5}",
                 race=f"race-{source_index % 4}",
@@ -95,6 +96,44 @@ def _complete_annotations(
         if frame.double_review
     )
     return tuple(rows)
+
+
+def _post_split_gate_sample() -> tuple[ReviewFrame, ...]:
+    frames = []
+    for index in range(625):
+        source_index = index // 5
+        frames.append(
+            ReviewFrame(
+                frame_id=f"gate-frame-{index:03d}",
+                dataset="fixture",
+                clip_id=f"gate-clip-{source_index:03d}",
+                source_hash=_sha(f"gate-source-{source_index:03d}"),
+                split_hash="f" * 64,
+                timestamp_sec=float(index % 5),
+                frame_sha256=_sha(f"gate-frame-{index:03d}"),
+                width=100,
+                height=100,
+                split_role=("calibration" if source_index < 25 else "comparison"),
+                double_review=index < 63,
+                manipulation_type=f"manipulation-{source_index % 4}",
+                method=f"method-{source_index % 5}",
+                race=f"race-{source_index % 4}",
+                gender=f"gender-{source_index % 2}",
+            )
+        )
+    return tuple(frames)
+
+
+def test_annotation_audit_binds_split_sample_and_post_split_counts() -> None:
+    sample = _post_split_gate_sample()
+
+    audit = validate_annotations(sample, _complete_annotations(sample))
+
+    assert audit.valid
+    assert audit.comparison_frame_count == 500
+    assert audit.comparison_clip_count == 100
+    assert len(audit.split_hash) == 64
+    assert len(audit.reviewed_sample_sha256) == 64
 
 
 def test_frame_annotation_requires_one_landmarked_target_when_suitable() -> None:
@@ -204,11 +243,11 @@ def test_unresolved_disagreement_invalidates_the_audit() -> None:
     audit = validate_annotations(sample, tuple(annotations))
 
     assert not audit.valid
-    assert audit.frame_count == 500
-    assert audit.clip_count == 100
-    assert audit.review_count == 550
-    assert audit.double_review_required == 50
-    assert audit.double_review_completed == 50
+    assert audit.frame_count == 625
+    assert audit.clip_count == 125
+    assert audit.review_count == 688
+    assert audit.double_review_required == 63
+    assert audit.double_review_completed == 63
     assert audit.missing_frame_ids == ()
     assert audit.missing_strata == ()
     assert audit.unresolved_disagreement_frame_ids == (sample[0].frame_id,)
@@ -249,13 +288,13 @@ def test_one_distinct_adjudicator_resolves_disagreement_and_gold_rows() -> None:
     gold = resolve_annotations(sample, tuple(reversed(annotations)))
 
     assert audit.valid
-    assert audit.review_count == 550
-    assert audit.annotation_count == 551
+    assert audit.review_count == 688
+    assert audit.annotation_count == 689
     assert audit.adjudication_count == 1
     assert audit.unresolved_disagreement_frame_ids == ()
     assert audit.adjudicated_frame_ids == (sample[0].frame_id,)
     assert len(audit.disagreements) == 1
-    assert len(gold) == 500
+    assert len(gold) == 625
     assert gold[0].reviewer_id == "reviewer-c"
     assert gold[0].review_role == "adjudication"
 

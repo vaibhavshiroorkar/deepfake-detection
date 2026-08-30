@@ -76,16 +76,19 @@ def build_preprocessor(
     elif detector == "mtcnn":
         if model_path is not None:
             raise ValueError("MTCNN does not accept a model path")
+        if expected_model_hash is not None:
+            raise ValueError("MTCNN does not accept an expected model hash")
         backend = MTCNNFaceDetector(
             confidence=detector_confidence,
             device=device,
         )
+        actual_hash = backend.model_sha256()
     else:
         raise ValueError("Detector must be 'mtcnn' or 'yunet'")
     view_config = ViewConfig(
         detector_confidence=detector_confidence,
         detector=detector,
-        detector_model_sha256=expected_model_hash,
+        detector_model_sha256=actual_hash,
         mouth_crop_mode=crop_mode,
         track_association=tracker,
         track_max_gap=1 if tracker == "constant_velocity" else 0,

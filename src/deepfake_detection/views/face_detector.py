@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 from typing import Any
 
@@ -68,6 +70,25 @@ class MTCNNFaceDetector:
             model = MTCNN(keep_all=True, device=device)
         self.model = model
         self.confidence = confidence
+
+    def model_sha256(self) -> str:
+        state_dict = getattr(self.model, "state_dict", None)
+        if not callable(state_dict):
+            raise RuntimeError("MTCNN backend does not expose loaded model state")
+        state = state_dict()
+        if not isinstance(state, dict) or not state:
+            raise RuntimeError("MTCNN backend returned no loaded model state")
+        digest = hashlib.sha256()
+        for name, tensor in sorted(state.items()):
+            detached = getattr(tensor, "detach", None)
+            if not callable(detached):
+                raise RuntimeError("MTCNN model state contains a non-tensor value")
+            value = detached().cpu().contiguous()
+            digest.update(name.encode("utf-8"))
+            digest.update(str(value.dtype).encode("ascii"))
+            digest.update(json.dumps(tuple(value.shape)).encode("ascii"))
+            digest.update(value.numpy().tobytes())
+        return digest.hexdigest()
 
     def runtime_metadata(self) -> dict[str, object]:
         try:
