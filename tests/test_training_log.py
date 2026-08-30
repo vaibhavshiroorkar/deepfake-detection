@@ -1,14 +1,24 @@
 from __future__ import annotations
 
+import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
-from deepfake_detection.benchmarks.detector_metrics import CandidateFrame
+from deepfake_detection.benchmarks.detector_metrics import (
+    BOOTSTRAP_SEED,
+    FROZEN_DETECTOR_RULE_REVISION,
+    CandidateFrame,
+    DetectorBenchmarkReport,
+    DetectorLatency,
+    DetectorMetrics,
+    TrackerMetrics,
+)
 from deepfake_detection.benchmarks.detector_runner import write_candidate_records
+from deepfake_detection.evaluation.bootstrap import BootstrapInterval
 from deepfake_detection.experiments import training_log
 from deepfake_detection.experiments.training_log import (
     log_binary_training,
@@ -60,6 +70,104 @@ def _candidate() -> CandidateFrame:
         model_sha256="a" * 64,
         device="cpu",
         thread_count=1,
+    )
+
+
+def _detector_report(
+    raw_results_sha256: str, *, name: str = "fixture"
+) -> DetectorBenchmarkReport:
+    metrics = DetectorMetrics(
+        target_recall=1.0,
+        false_detections_per_frame=0.0,
+        non_target_detections_per_frame=0.0,
+        non_target_candidate_count=0,
+        landmark_nme=0.0,
+        landmark_coverage=1.0,
+        aligned_mouth_jitter=0.0,
+    )
+    trackers = tuple(
+        TrackerMetrics(
+            association=association,
+            stable_track_coverage=1.0,
+            abstention_rate=0.0,
+            target_track_errors=0,
+            tracked_frames=1,
+            target_track_errors_per_1000=0.0,
+        )
+        for association in ("greedy_iou", "constant_velocity")
+    )
+    latency = DetectorLatency(
+        timed_frames=1,
+        median_ms=1.0,
+        p95_ms=1.0,
+        throughput_fps=1000.0,
+        device="cpu",
+        thread_count=1,
+    )
+    estimates = {
+        "target_recall": 1.0,
+        "false_detections_per_frame": 0.0,
+        "non_target_detections_per_frame": 0.0,
+        "non_target_candidate_count": 0.0,
+        "landmark_nme": 0.0,
+        "landmark_coverage": 1.0,
+        "aligned_mouth_jitter": 0.0,
+        "latency.median_ms": 1.0,
+        "latency.p95_ms": 1.0,
+        "latency.throughput_fps": 1000.0,
+        "greedy_iou.stable_track_coverage": 1.0,
+        "greedy_iou.abstention_rate": 0.0,
+        "greedy_iou.target_track_errors_per_1000": 0.0,
+        "constant_velocity.stable_track_coverage": 1.0,
+        "constant_velocity.abstention_rate": 0.0,
+        "constant_velocity.target_track_errors_per_1000": 0.0,
+    }
+    return DetectorBenchmarkReport(
+        detector_name=name,
+        detector_revision=f"{name}-revision",
+        model_sha256="a" * 64,
+        threshold=0.5,
+        collection_threshold=0.0,
+        evidence_scope="software_fixture_only",
+        rule_revision=FROZEN_DETECTOR_RULE_REVISION,
+        frame_count=1,
+        comparison_clip_count=1,
+        source_count=1,
+        metrics=metrics,
+        trackers=trackers,
+        latency=latency,
+        intervals={
+            key: BootstrapInterval(value, value, value, 1000)
+            for key, value in estimates.items()
+        },
+        runtime_snapshot={
+            "started_at_utc": "2026-08-25T00:00:00+00:00",
+            "git_commit": "a" * 40,
+            "git_dirty": False,
+            "python_version": "3.13.0",
+            "platform": "fixture-platform",
+            "packages": {"opencv-python": "5.0.0.93"},
+            "cpu": "fixture-cpu",
+            "gpu": None,
+            "gpu_memory_mib": None,
+            "available_memory_mib": 1024,
+            "ffmpeg_version": "fixture-ffmpeg",
+        },
+        raw_results_sha256=raw_results_sha256,
+        evaluation_set_sha256="c" * 64,
+        split_hash="d" * 64,
+        identity_strict_split_hash="b" * 64,
+        reviewed_sample_sha256="e" * 64,
+        annotation_audit_sha256="f" * 64,
+        annotation_audit_validated=True,
+        bootstrap_seed=BOOTSTRAP_SEED,
+    )
+
+
+def _write_report(path: Path, report: DetectorBenchmarkReport) -> None:
+    path.write_text(
+        json.dumps(asdict(report), indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
     )
 
 
@@ -210,36 +318,12 @@ def test_detector_benchmark_logging_allows_only_path_free_evidence(
     predictions = tmp_path / "predictions.jsonl"
     annotations = tmp_path / "private-annotations.jsonl"
     review_image = tmp_path / "private-review.jpg"
-    for path in (report_path, annotations, review_image):
+    for path in (annotations, review_image):
         path.write_text("{}", encoding="utf-8")
     write_candidate_records((_candidate(),), predictions)
     logger = FakeLogger([], [], [])
-    report = SimpleNamespace(
-        detector_name="fixture",
-        detector_revision="fixture-revision",
-        model_sha256="a" * 64,
-        rule_revision="detector-selection-v1",
-        evidence_scope="software_fixture_only",
-        raw_results_sha256="b" * 64,
-        evaluation_set_sha256="c" * 64,
-        split_hash="d" * 64,
-        reviewed_sample_sha256="e" * 64,
-        annotation_audit_sha256="f" * 64,
-        comparison_clip_count=1,
-        metrics=SimpleNamespace(
-            target_recall=1.0,
-            false_detections_per_frame=0.0,
-            non_target_detections_per_frame=0.0,
-            landmark_coverage=1.0,
-            landmark_nme=0.0,
-            aligned_mouth_jitter=0.0,
-        ),
-        latency=SimpleNamespace(
-            median_ms=1.0,
-            p95_ms=1.0,
-            throughput_fps=1000.0,
-        ),
-    )
+    report = _detector_report(hashlib.sha256(predictions.read_bytes()).hexdigest())
+    _write_report(report_path, report)
 
     training_log.log_detector_benchmark(
         logger,
@@ -254,6 +338,58 @@ def test_detector_benchmark_logging_allows_only_path_free_evidence(
     ]
     assert all(path not in {annotations, review_image} for path, _ in logger.artifacts)
     assert logger.params[0]["detector.evidence_scope"] == "software_fixture_only"
+
+
+def test_detector_logging_rejects_a_valid_candidate_from_another_report(
+    tmp_path: Path,
+) -> None:
+    expected_predictions = tmp_path / "expected.jsonl"
+    other_predictions = tmp_path / "other.jsonl"
+    report_path = tmp_path / "report.json"
+    write_candidate_records((_candidate(),), expected_predictions)
+    write_candidate_records((replace(_candidate(), latency_ms=2.0),), other_predictions)
+    report = _detector_report(
+        hashlib.sha256(expected_predictions.read_bytes()).hexdigest()
+    )
+    _write_report(report_path, report)
+    logger = FakeLogger([], [], [])
+
+    with pytest.raises(ValueError, match="raw-results hash"):
+        training_log.log_detector_benchmark(
+            logger,
+            report=report,
+            report_path=report_path,
+            predictions_path=other_predictions,
+        )
+
+    assert logger.params == []
+    assert logger.metrics == []
+    assert logger.artifacts == []
+
+
+def test_detector_logging_rejects_a_valid_report_from_another_run(
+    tmp_path: Path,
+) -> None:
+    predictions = tmp_path / "predictions.jsonl"
+    report_path = tmp_path / "report.json"
+    write_candidate_records((_candidate(),), predictions)
+    raw_hash = hashlib.sha256(predictions.read_bytes()).hexdigest()
+    expected_report = _detector_report(raw_hash, name="expected")
+    other_report = _detector_report(raw_hash, name="other")
+    _write_report(report_path, other_report)
+    logger = FakeLogger([], [], [])
+
+    with pytest.raises(ValueError, match="report artifact"):
+        training_log.log_detector_benchmark(
+            logger,
+            report=expected_report,
+            report_path=report_path,
+            predictions_path=predictions,
+        )
+
+    assert logger.params == []
+    assert logger.metrics == []
+    assert logger.artifacts == []
 
 
 @pytest.mark.parametrize(

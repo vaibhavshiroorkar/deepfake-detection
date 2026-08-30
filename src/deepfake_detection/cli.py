@@ -21,10 +21,8 @@ from deepfake_detection.benchmarks.detector_annotations import (
 from deepfake_detection.benchmarks.detector_metrics import (
     DetectorBenchmarkReport,
     DetectorDecision,
-    DetectorLatency,
-    DetectorMetrics,
-    TrackerMetrics,
     compare_detectors,
+    read_detector_report,
 )
 from deepfake_detection.benchmarks.detector_runner import run_detector_benchmark
 from deepfake_detection.benchmarks.detector_sample import (
@@ -46,7 +44,6 @@ from deepfake_detection.data.protocols import (
     split_hash,
 )
 from deepfake_detection.evaluation.bootstrap import (
-    BootstrapInterval,
     PairedPrediction,
     bootstrap_binary_metrics,
     paired_auc_difference,
@@ -810,7 +807,8 @@ def _detector_sample(arguments: argparse.Namespace) -> int:
     observed_split_hash = split_hash(frozen_split)
     if observed_split_hash != arguments.expected_split_hash:
         raise ValueError("Frozen split does not match the expected split hash")
-    records = frozen_split["train"]
+    strict_split = identity_strict_subset(frozen_split)
+    records = strict_split["train"]
     decoder = FFmpegMediaDecoder()
 
     def duration_reader(record) -> float:
@@ -859,6 +857,7 @@ def _detector_sample(arguments: argparse.Namespace) -> int:
         ),
         "sample_sha256": review_sample_sha256(sample),
         "split_hash": observed_split_hash,
+        "identity_strict_split_hash": split_hash(strict_split),
         "seed": arguments.seed,
     }
     _write_json(arguments.report, payload)
@@ -893,6 +892,7 @@ def _detector_validate_annotations(arguments: argparse.Namespace) -> int:
             "detector.annotation_audit_sha256": annotation_audit_sha256(audit),
             "detector.reviewed_sample_sha256": audit.reviewed_sample_sha256,
             "detector.split_hash": audit.split_hash,
+            "detector.identity_strict_split_hash": (audit.identity_strict_split_hash),
         }
     )
     logger.log_metrics(
@@ -936,15 +936,19 @@ def _detector_frame_reader(
 def _detector_run(arguments: argparse.Namespace) -> int:
     sample = read_review_sample(arguments.sample)
     frozen_split = _load_frozen_split(arguments.split_dir, arguments.dataset)
+    strict_split = identity_strict_subset(frozen_split)
     sample_split_hashes = {row.split_hash for row in sample}
     if sample_split_hashes != {split_hash(frozen_split)}:
         raise ValueError("Review sample does not match the frozen split artifact")
+    sample_strict_hashes = {row.identity_strict_split_hash for row in sample}
+    if sample_strict_hashes != {split_hash(strict_split)}:
+        raise ValueError("Review sample does not match identity-strict training")
     frozen_train = {
         (
             record.clip_id,
             hashlib.sha256(f"{record.dataset}\0{record.source}".encode()).hexdigest(),
         )
-        for record in frozen_split["train"]
+        for record in strict_split["train"]
     }
     if any((row.clip_id, row.source_hash) not in frozen_train for row in sample):
         raise ValueError("Review sample contains a source outside frozen training")
@@ -986,73 +990,7 @@ def _detector_run(arguments: argparse.Namespace) -> int:
 
 
 def _detector_report_from_path(path: Path) -> DetectorBenchmarkReport:
-    values = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(values, dict):
-        raise ValueError("Detector report must be a JSON object")
-    expected_fields = set(DetectorBenchmarkReport.__dataclass_fields__)
-    if set(values) != expected_fields:
-        raise ValueError("Detector report contains unknown or missing fields")
-
-    def exact_object(value: object, expected: set[str], name: str) -> dict:
-        if not isinstance(value, dict) or set(value) != expected:
-            raise ValueError(
-                f"Detector report {name} schema has unknown or missing fields"
-            )
-        return value
-
-    metric_values = exact_object(
-        values["metrics"], set(DetectorMetrics.__dataclass_fields__), "metrics"
-    )
-    latency_values = exact_object(
-        values["latency"], set(DetectorLatency.__dataclass_fields__), "latency"
-    )
-    tracker_rows = values["trackers"]
-    if not isinstance(tracker_rows, list):
-        raise ValueError("Detector report trackers schema must be a list")
-    trackers = tuple(
-        TrackerMetrics(
-            **exact_object(row, set(TrackerMetrics.__dataclass_fields__), "tracker")
-        )
-        for row in tracker_rows
-    )
-    interval_values = values["intervals"]
-    if not isinstance(interval_values, dict):
-        raise ValueError("Detector report intervals schema must be an object")
-    intervals = {
-        name: BootstrapInterval(
-            **exact_object(
-                interval,
-                set(BootstrapInterval.__dataclass_fields__),
-                "interval",
-            )
-        )
-        for name, interval in interval_values.items()
-    }
-    return DetectorBenchmarkReport(
-        detector_name=values["detector_name"],
-        detector_revision=values["detector_revision"],
-        model_sha256=values["model_sha256"],
-        threshold=values["threshold"],
-        collection_threshold=values["collection_threshold"],
-        evidence_scope=values["evidence_scope"],
-        rule_revision=values["rule_revision"],
-        frame_count=values["frame_count"],
-        comparison_clip_count=values["comparison_clip_count"],
-        source_count=values["source_count"],
-        metrics=DetectorMetrics(**metric_values),
-        trackers=trackers,
-        latency=DetectorLatency(**latency_values),
-        intervals=intervals,
-        runtime_snapshot=values["runtime_snapshot"],
-        raw_results_sha256=values["raw_results_sha256"],
-        evaluation_set_sha256=values["evaluation_set_sha256"],
-        split_hash=values["split_hash"],
-        reviewed_sample_sha256=values["reviewed_sample_sha256"],
-        annotation_audit_sha256=values["annotation_audit_sha256"],
-        annotation_audit_validated=values["annotation_audit_validated"],
-        bootstrap_samples=values["bootstrap_samples"],
-        bootstrap_seed=values["bootstrap_seed"],
-    )
+    return read_detector_report(path)
 
 
 def _detector_compare(arguments: argparse.Namespace) -> int:

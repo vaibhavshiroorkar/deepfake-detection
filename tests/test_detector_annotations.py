@@ -44,6 +44,7 @@ def _sample() -> tuple[ReviewFrame, ...]:
                 clip_id=f"clip-{source_index:03d}",
                 source_hash=_sha(f"source-{source_index:03d}"),
                 split_hash="f" * 64,
+                identity_strict_split_hash="e" * 64,
                 timestamp_sec=float(index % 5),
                 frame_sha256=_sha(f"frame-{index:03d}"),
                 width=100,
@@ -109,6 +110,7 @@ def _post_split_gate_sample() -> tuple[ReviewFrame, ...]:
                 clip_id=f"gate-clip-{source_index:03d}",
                 source_hash=_sha(f"gate-source-{source_index:03d}"),
                 split_hash="f" * 64,
+                identity_strict_split_hash="e" * 64,
                 timestamp_sec=float(index % 5),
                 frame_sha256=_sha(f"gate-frame-{index:03d}"),
                 width=100,
@@ -133,6 +135,7 @@ def test_annotation_audit_binds_split_sample_and_post_split_counts() -> None:
     assert audit.comparison_frame_count == 500
     assert audit.comparison_clip_count == 100
     assert len(audit.split_hash) == 64
+    assert len(audit.identity_strict_split_hash) == 64
     assert len(audit.reviewed_sample_sha256) == 64
 
 

@@ -116,6 +116,7 @@ class AnnotationAudit:
     valid: bool
     errors: tuple[str, ...]
     split_hash: str
+    identity_strict_split_hash: str
     reviewed_sample_sha256: str
     frame_count: int
     comparison_frame_count: int
@@ -408,6 +409,10 @@ def validate_annotations(
     if len(split_hashes) != 1:
         errors.append("Review sample must bind exactly one frozen split hash")
     split_hash = next(iter(split_hashes), "0" * 64)
+    identity_strict_hashes = {frame.identity_strict_split_hash for frame in sample_rows}
+    if len(identity_strict_hashes) != 1:
+        errors.append("Review sample must bind exactly one identity-strict split hash")
+    identity_strict_hash = next(iter(identity_strict_hashes), "0" * 64)
     comparison_frames = tuple(
         frame for frame in sample_rows if frame.split_role == "comparison"
     )
@@ -579,6 +584,7 @@ def validate_annotations(
         valid=not unique_errors,
         errors=unique_errors,
         split_hash=split_hash,
+        identity_strict_split_hash=identity_strict_hash,
         reviewed_sample_sha256=review_sample_sha256(sample_rows),
         frame_count=frame_count,
         comparison_frame_count=comparison_frame_count,

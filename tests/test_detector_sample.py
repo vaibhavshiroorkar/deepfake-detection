@@ -118,6 +118,28 @@ def test_sample_rejects_a_validation_record_relabelled_as_training() -> None:
         )
 
 
+def test_sample_rejects_a_training_clip_with_a_validation_target_identity() -> None:
+    train = _clips(125)
+    frozen = _frozen_split(train)
+    cross_identity = replace(
+        train[0],
+        targets=(frozen["val"][0].source,),
+    )
+    frozen["train"] = (cross_identity, *train[1:])
+
+    with pytest.raises(ValueError, match="identity-strict training"):
+        build_review_sample(
+            frozen["train"],
+            partition="train",
+            frozen_split=frozen,
+            expected_split_hash=split_hash(frozen),
+            duration_reader=lambda _: 10.0,
+            frame_reader=_frame,
+            frame_count=625,
+            clip_count=125,
+        )
+
+
 def test_sample_binds_the_frozen_split_and_meets_the_comparison_gate() -> None:
     train = _clips(125)
     frozen = _frozen_split(train)
@@ -138,6 +160,7 @@ def test_sample_binds_the_frozen_split_and_meets_the_comparison_gate() -> None:
     assert len(comparison) == 500
     assert len({row.clip_id for row in comparison}) == 100
     assert {row.split_hash for row in sample} == {expected_hash}
+    assert len({row.identity_strict_split_hash for row in sample}) == 1
     assert len(detector_sample.review_sample_sha256(sample)) == 64
 
 
@@ -243,6 +266,7 @@ def test_sample_jsonl_rejects_non_boolean_review_flags(tmp_path: Path) -> None:
         "clip_id": "clip-001",
         "source_hash": "a" * 64,
         "split_hash": "c" * 64,
+        "identity_strict_split_hash": "d" * 64,
         "timestamp_sec": 1.0,
         "frame_sha256": "b" * 64,
         "width": 100,

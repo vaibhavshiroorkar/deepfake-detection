@@ -11,6 +11,7 @@ from typing import Literal, Protocol, TypeVar
 
 import numpy as np
 
+from deepfake_detection.data.protocols import identity_strict_subset
 from deepfake_detection.data.protocols import split_hash as protocol_split_hash
 
 MINIMUM_REVIEW_FRAMES = 625
@@ -41,6 +42,7 @@ class ReviewFrame:
     clip_id: str
     source_hash: str
     split_hash: str
+    identity_strict_split_hash: str
     timestamp_sec: float
     frame_sha256: str
     width: int
@@ -68,6 +70,7 @@ class ReviewFrame:
             raise ValueError("clip_id cannot contain an absolute path")
         _validate_sha256("source_hash", self.source_hash)
         _validate_sha256("split_hash", self.split_hash)
+        _validate_sha256("identity_strict_split_hash", self.identity_strict_split_hash)
         _validate_sha256("frame_sha256", self.frame_sha256)
         if not math.isfinite(self.timestamp_sec) or self.timestamp_sec < 0:
             raise ValueError("timestamp_sec must be finite and nonnegative")
@@ -296,18 +299,32 @@ def build_review_sample(
     observed_split_hash = protocol_split_hash(frozen_split)  # type: ignore[arg-type]
     if observed_split_hash != expected_split_hash:
         raise ValueError("Frozen split artifact does not match its expected split hash")
-    frozen_train = {(record.clip_id, record.source) for record in frozen_split["train"]}
+    strict_split = identity_strict_subset(frozen_split)  # type: ignore[arg-type]
+    observed_identity_strict_hash = protocol_split_hash(strict_split)
+    frozen_train = {
+        (record.clip_id, record.source, record.targets)
+        for record in frozen_split["train"]
+    }
+    strict_train = {
+        (record.clip_id, record.source, record.targets)
+        for record in strict_split["train"]
+    }
     frozen_non_train_sources = {
         record.source for name in ("val", "test") for record in frozen_split[name]
     }
     if any(
-        (record.clip_id, record.source) not in frozen_train
+        (record.clip_id, record.source, record.targets) not in frozen_train
         or record.source in frozen_non_train_sources
         for record in records
     ):
         raise ValueError(
             "Detector review records are outside the frozen training split"
         )
+    if any(
+        (record.clip_id, record.source, record.targets) not in strict_train
+        for record in records
+    ):
+        raise ValueError("Detector review records are outside identity-strict training")
     if frame_count < MINIMUM_REVIEW_FRAMES:
         raise ValueError(
             f"Detector review requires at least {MINIMUM_REVIEW_FRAMES} frames"
@@ -398,6 +415,7 @@ def build_review_sample(
                     clip_id=record.clip_id,
                     source_hash=source_hash,
                     split_hash=observed_split_hash,
+                    identity_strict_split_hash=observed_identity_strict_hash,
                     timestamp_sec=timestamp_sec,
                     frame_sha256=frame_sha256,
                     width=int(frame.shape[1]),
@@ -453,6 +471,7 @@ def _review_frame_from_mapping(row: dict[str, object]) -> ReviewFrame:
         clip_id=str(row["clip_id"]),
         source_hash=str(row["source_hash"]),
         split_hash=str(row["split_hash"]),
+        identity_strict_split_hash=str(row["identity_strict_split_hash"]),
         timestamp_sec=float(row["timestamp_sec"]),
         frame_sha256=str(row["frame_sha256"]),
         width=int(row["width"]),

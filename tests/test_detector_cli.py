@@ -110,6 +110,7 @@ def _fixture_report(name: str) -> DetectorBenchmarkReport:
         raw_results_sha256="b" * 64,
         evaluation_set_sha256="c" * 64,
         split_hash="d" * 64,
+        identity_strict_split_hash="a" * 64,
         reviewed_sample_sha256="e" * 64,
         annotation_audit_sha256="f" * 64,
         annotation_audit_validated=True,

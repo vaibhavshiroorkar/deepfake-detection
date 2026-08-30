@@ -6,7 +6,7 @@ import math
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from pathlib import PurePosixPath, PureWindowsPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any, Literal
 
 import numpy as np
@@ -361,6 +361,7 @@ class DetectorBenchmarkReport:
     raw_results_sha256: str
     evaluation_set_sha256: str
     split_hash: str
+    identity_strict_split_hash: str
     reviewed_sample_sha256: str
     annotation_audit_sha256: str
     annotation_audit_validated: bool
@@ -374,6 +375,7 @@ class DetectorBenchmarkReport:
         _validate_sha256("raw_results_sha256", self.raw_results_sha256)
         _validate_sha256("evaluation_set_sha256", self.evaluation_set_sha256)
         _validate_sha256("split_hash", self.split_hash)
+        _validate_sha256("identity_strict_split_hash", self.identity_strict_split_hash)
         _validate_sha256("reviewed_sample_sha256", self.reviewed_sample_sha256)
         _validate_sha256("annotation_audit_sha256", self.annotation_audit_sha256)
         for name in ("threshold", "collection_threshold"):
@@ -460,6 +462,77 @@ class DetectorDecision:
     downstream_tie_candidates: tuple[str, ...]
     reason: str
     rule_revision: str
+
+
+def read_detector_report(path: Path) -> DetectorBenchmarkReport:
+    values = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(values, dict):
+        raise ValueError("Detector report must be a JSON object")
+    expected_fields = set(DetectorBenchmarkReport.__dataclass_fields__)
+    if set(values) != expected_fields:
+        raise ValueError("Detector report contains unknown or missing fields")
+
+    def exact_object(value: object, expected: set[str], name: str) -> dict[str, Any]:
+        if not isinstance(value, dict) or set(value) != expected:
+            raise ValueError(
+                f"Detector report {name} schema has unknown or missing fields"
+            )
+        return value
+
+    metric_values = exact_object(
+        values["metrics"], set(DetectorMetrics.__dataclass_fields__), "metrics"
+    )
+    latency_values = exact_object(
+        values["latency"], set(DetectorLatency.__dataclass_fields__), "latency"
+    )
+    tracker_rows = values["trackers"]
+    if not isinstance(tracker_rows, list):
+        raise ValueError("Detector report trackers schema must be a list")
+    trackers = tuple(
+        TrackerMetrics(
+            **exact_object(row, set(TrackerMetrics.__dataclass_fields__), "tracker")
+        )
+        for row in tracker_rows
+    )
+    interval_values = values["intervals"]
+    if not isinstance(interval_values, dict):
+        raise ValueError("Detector report intervals schema must be an object")
+    intervals = {
+        name: BootstrapInterval(
+            **exact_object(
+                interval,
+                set(BootstrapInterval.__dataclass_fields__),
+                "interval",
+            )
+        )
+        for name, interval in interval_values.items()
+    }
+    return DetectorBenchmarkReport(
+        detector_name=values["detector_name"],
+        detector_revision=values["detector_revision"],
+        model_sha256=values["model_sha256"],
+        threshold=values["threshold"],
+        collection_threshold=values["collection_threshold"],
+        evidence_scope=values["evidence_scope"],
+        rule_revision=values["rule_revision"],
+        frame_count=values["frame_count"],
+        comparison_clip_count=values["comparison_clip_count"],
+        source_count=values["source_count"],
+        metrics=DetectorMetrics(**metric_values),
+        trackers=trackers,
+        latency=DetectorLatency(**latency_values),
+        intervals=intervals,
+        runtime_snapshot=values["runtime_snapshot"],
+        raw_results_sha256=values["raw_results_sha256"],
+        evaluation_set_sha256=values["evaluation_set_sha256"],
+        split_hash=values["split_hash"],
+        identity_strict_split_hash=values["identity_strict_split_hash"],
+        reviewed_sample_sha256=values["reviewed_sample_sha256"],
+        annotation_audit_sha256=values["annotation_audit_sha256"],
+        annotation_audit_validated=values["annotation_audit_validated"],
+        bootstrap_samples=values["bootstrap_samples"],
+        bootstrap_seed=values["bootstrap_seed"],
+    )
 
 
 def _candidate_frame_mapping(record: CandidateFrame) -> dict[str, object]:
@@ -1265,6 +1338,11 @@ def evaluate_detector(
         raw_results_sha256=hashlib.sha256(raw_bytes).hexdigest(),
         evaluation_set_sha256=_evaluation_set_hash(rows, annotation_by_id),
         split_hash=(annotation_audit.split_hash if annotation_audit else "0" * 64),
+        identity_strict_split_hash=(
+            annotation_audit.identity_strict_split_hash
+            if annotation_audit
+            else "0" * 64
+        ),
         reviewed_sample_sha256=(
             annotation_audit.reviewed_sample_sha256 if annotation_audit else "0" * 64
         ),
@@ -1348,6 +1426,10 @@ def compare_detectors(
         raise ValueError("Detector reports use different comparison frames")
     if len({report.split_hash for report in rows}) != 1:
         raise ValueError("Detector reports use different frozen training splits")
+    if len({report.identity_strict_split_hash for report in rows}) != 1:
+        raise ValueError(
+            "Detector reports use different identity-strict training subsets"
+        )
     if len({report.reviewed_sample_sha256 for report in rows}) != 1:
         raise ValueError("Detector reports use different reviewed samples")
     if len({report.annotation_audit_sha256 for report in rows}) != 1:

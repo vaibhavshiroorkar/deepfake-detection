@@ -12,6 +12,10 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Restricted detector review sampling to identity-strict training rows and
+  bound the identity-strict subset hash through benchmark evidence.
+- Required candidate bytes and strict aggregate report content to match the
+  supplied benchmark report before MLflow logging begins.
 - Bound detector review evidence to the verified frozen training split and its
   hash. Enforced the 500-frame, 100-clip gate after calibration removal.
 - Bound benchmark reports to the reviewed sample and annotation audit. Added

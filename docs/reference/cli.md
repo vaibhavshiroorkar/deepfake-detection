@@ -69,9 +69,11 @@ size and SHA-256. The model stays local and is never an MLflow artifact.
 
 `ddf detector sample` creates a deterministic training-only review sample and
 local PNG review images. It verifies the frozen split directory against its
-expected hash. The default is 625 frames from 125 clips. This leaves at least
-500 comparison frames from 100 clips after the 20 percent calibration split.
-It marks at least 10 percent for independent second review.
+expected hash and samples only identity-strict training rows. Every source and
+target identity must be owned by training. The default is 625 frames from 125
+clips. This leaves at least 500 comparison frames from 100 clips after the 20
+percent calibration split. It marks at least 10 percent for independent second
+review.
 
 `ddf detector validate-annotations` writes an aggregate audit. It returns code
 `2` until every review, second review, and required adjudication passes.
@@ -89,6 +91,8 @@ Use these commands directly or place the same command and arguments in a YAML
 file for `ddf run`. With local tracking enabled, only aggregate detector
 reports and path-free predictions become detector artifacts. Review images,
 annotations, source media, crops, and model binaries remain local inputs.
+Before upload, the prediction byte hash and strictly parsed report artifact must
+match the supplied benchmark report.
 
 Run the workflow in order:
 

@@ -35,10 +35,12 @@ other model could perform better.
 
 ## Detector benchmark
 
-Build the detector review set from the verified frozen training split. Bind the
-split hash to every sample row and audit. Sample at least 625 frames from at
-least 125 clips so the comparison retains at least 500 frames from 100 clips
-after calibration sources are removed. Stratify across real and fake clips,
+Build the detector review set from the identity-strict subset of the verified
+frozen training split. Every source and target identity in a sampled clip must
+belong to training. Bind both the frozen split hash and identity-strict subset
+hash to every sample row and audit. Sample at least 625 frames from at least 125
+clips so the comparison retains at least 500 frames from 100 clips after
+calibration sources are removed. Stratify across real and fake clips,
 manipulation families, compression, pose, lighting, and multi-person scenes.
 Use supplied demographic fields for coverage checks when available.
 

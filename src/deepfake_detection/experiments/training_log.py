@@ -5,7 +5,10 @@ import math
 from collections.abc import Sequence
 from pathlib import Path
 
-from deepfake_detection.benchmarks.detector_metrics import DetectorBenchmarkReport
+from deepfake_detection.benchmarks.detector_metrics import (
+    DetectorBenchmarkReport,
+    read_detector_report,
+)
 from deepfake_detection.benchmarks.detector_runner import validate_candidate_artifact
 from deepfake_detection.experiments.tracking import RunLogger
 from deepfake_detection.training.binary import BinaryTrainingHistory
@@ -112,6 +115,12 @@ def log_detector_benchmark(
     predictions_path: Path,
 ) -> None:
     validate_candidate_artifact(predictions_path)
+    predictions_hash = _file_hash(predictions_path)
+    if predictions_hash != report.raw_results_sha256:
+        raise ValueError("Candidate artifact raw-results hash does not match report")
+    artifact_report = read_detector_report(report_path)
+    if artifact_report != report:
+        raise ValueError("Detector report artifact does not match supplied report")
     logger.log_params(
         {
             "detector.name": report.detector_name,
@@ -122,6 +131,7 @@ def log_detector_benchmark(
             "detector.raw_results_sha256": report.raw_results_sha256,
             "detector.evaluation_set_sha256": report.evaluation_set_sha256,
             "detector.split_hash": report.split_hash,
+            "detector.identity_strict_split_hash": (report.identity_strict_split_hash),
             "detector.reviewed_sample_sha256": report.reviewed_sample_sha256,
             "detector.annotation_audit_sha256": report.annotation_audit_sha256,
         }

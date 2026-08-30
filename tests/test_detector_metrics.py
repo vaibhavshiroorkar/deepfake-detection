@@ -689,6 +689,7 @@ def _report(
         raw_results_sha256="f" * 64,
         evaluation_set_sha256=evaluation_set_sha256,
         split_hash="b" * 64,
+        identity_strict_split_hash="a" * 64,
         reviewed_sample_sha256="c" * 64,
         annotation_audit_sha256="d" * 64,
         annotation_audit_validated=True,

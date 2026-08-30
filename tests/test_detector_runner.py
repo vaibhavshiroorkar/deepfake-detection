@@ -63,6 +63,7 @@ def _valid_review() -> tuple[
                 f"source-{source_index:03d}".encode()
             ).hexdigest(),
             split_hash="f" * 64,
+            identity_strict_split_hash="e" * 64,
             timestamp_sec=float(index % 5),
             frame_sha256=frame_hash,
             width=20,
