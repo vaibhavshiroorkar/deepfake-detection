@@ -135,6 +135,23 @@ def test_detector_command_tree_exposes_all_operational_commands() -> None:
     }
 
 
+def test_detector_compare_cli_rejects_the_unbound_downstream_score_option() -> None:
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(
+            [
+                "detector",
+                "compare",
+                "--reports",
+                "mtcnn.json",
+                "yunet.json",
+                "--downstream-validation",
+                "scores.json",
+                "--output",
+                "decision.json",
+            ]
+        )
+
+
 def test_shared_preprocessor_factory_preserves_defaults(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -233,6 +250,10 @@ def test_detector_compare_fixture_smoke_cannot_select_a_real_detector(
     assert decision["selected_detector"] is None
     assert decision["selected_association"] is None
     assert decision["reason"] == "software_fixture_only"
+    assert decision["input_report_sha256"] == {
+        "left": hashlib.sha256(left.read_bytes()).hexdigest(),
+        "right": hashlib.sha256(right.read_bytes()).hexdigest(),
+    }
 
 
 def test_detector_compare_rejects_fields_outside_the_aggregate_contract(

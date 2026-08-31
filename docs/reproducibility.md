@@ -33,6 +33,14 @@ annotation JSONL, derived crops, or model binaries. Keep private input paths
 relative in tracked configuration layers. Fixture detector reports use
 `software_fixture_only` and cannot select a real detector.
 
+Research detector reports require a clean Git worktree. Each report records its
+source run ID and the byte SHA-256 of the pinned `uv.lock`. Research comparison
+requires paired MTCNN and YuNet reports from the same environment and evidence.
+The saved decision records both exact report byte hashes, both run IDs, and all
+common split, sample, audit, evaluation-set, and lock hashes. A detector without
+tracked frames is ineligible. An exact speed tie stays undecided because bare
+downstream scalar scores are not accepted.
+
 ## Local tracking decision
 
 The default tracked workflow uses MLflow with a local SQLite metadata store and

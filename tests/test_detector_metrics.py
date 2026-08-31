@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import replace
+import hashlib
+from dataclasses import asdict, replace
 
 import pytest
 
@@ -693,7 +694,22 @@ def _report(
         reviewed_sample_sha256="c" * 64,
         annotation_audit_sha256="d" * 64,
         annotation_audit_validated=True,
+        source_run_id=f"run-{name}",
+        environment_lock_sha256="9" * 64,
         bootstrap_seed=BOOTSTRAP_SEED,
+    )
+
+
+def _compare(
+    reports: tuple[DetectorBenchmarkReport, ...],
+) -> DetectorDecision:
+    hashes = {
+        report.detector_name: hashlib.sha256(report.detector_name.encode()).hexdigest()
+        for report in reports
+    }
+    return compare_detectors(
+        reports,
+        input_report_sha256=hashes,
     )
 
 
@@ -730,26 +746,130 @@ def test_research_report_requires_the_post_split_frame_and_clip_gate() -> None:
         replace(report, comparison_clip_count=99)
 
 
+def test_research_report_requires_clean_pinned_run_provenance() -> None:
+    report = _report(
+        "mtcnn", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5
+    )
+
+    with pytest.raises(ValueError, match="clean worktree"):
+        replace(
+            report,
+            runtime_snapshot={**report.runtime_snapshot, "git_dirty": True},
+        )
+    with pytest.raises(ValueError, match="pinned lock hash"):
+        replace(report, environment_lock_sha256="0" * 64)
+    with pytest.raises(ValueError, match="source run ID"):
+        replace(report, source_run_id="software-fixture")
+
+    payload = asdict(report)
+    assert "environment_lock_sha256" in payload
+    assert "source_run_id" in payload
+
+
+def test_research_comparison_requires_exactly_mtcnn_and_yunet() -> None:
+    mtcnn = _report(
+        "mtcnn", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5
+    )
+    yunet = _report(
+        "yunet", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=6
+    )
+
+    with pytest.raises(ValueError, match="exactly one mtcnn and one yunet"):
+        compare_detectors((mtcnn,))
+    with pytest.raises(ValueError, match="exactly one mtcnn and one yunet"):
+        compare_detectors((mtcnn, replace(mtcnn, detector_name="retinaface")))
+    with pytest.raises(ValueError, match="exactly one mtcnn and one yunet"):
+        compare_detectors((mtcnn, replace(mtcnn, detector_revision="duplicate")))
+    with pytest.raises(ValueError, match="exact input report hashes"):
+        compare_detectors((mtcnn, yunet))
+
+    assert _compare((mtcnn, yunet)).selected_detector == "mtcnn"
+
+
+def test_research_selection_rejects_a_detector_with_no_tracking_evidence() -> None:
+    mtcnn = _report(
+        "mtcnn", recall=0.95, nme=0.08, track_errors_per_1000=0, latency_ms=1
+    )
+    yunet = _report(
+        "yunet", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5
+    )
+    empty_trackers = tuple(
+        replace(
+            tracker,
+            stable_track_coverage=0.0,
+            abstention_rate=1.0,
+            target_track_errors=0,
+            tracked_frames=0,
+            target_track_errors_per_1000=0.0,
+        )
+        for tracker in mtcnn.trackers
+    )
+    empty_intervals = dict(mtcnn.intervals)
+    for association in ("greedy_iou", "constant_velocity"):
+        empty_intervals[f"{association}.stable_track_coverage"] = BootstrapInterval(
+            0.0, 0.0, 0.0, 1000
+        )
+        empty_intervals[f"{association}.abstention_rate"] = BootstrapInterval(
+            1.0, 1.0, 1.0, 1000
+        )
+        empty_intervals[f"{association}.target_track_errors_per_1000"] = (
+            BootstrapInterval(0.0, 0.0, 0.0, 1000)
+        )
+    mtcnn = replace(mtcnn, trackers=empty_trackers, intervals=empty_intervals)
+
+    decision = _compare((mtcnn, yunet))
+
+    assert decision.selected_detector == "yunet"
+    assert decision.rejected["mtcnn"] == ("tracking_evidence_missing",)
+
+
+def test_research_tie_break_rejects_unbound_scalar_scores() -> None:
+    reports = (
+        _report("mtcnn", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5),
+        _report("yunet", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5),
+    )
+
+    with pytest.raises(ValueError, match="downstream tie-break.*disabled"):
+        compare_detectors(
+            reports,
+            downstream_validation={"mtcnn": 0.80, "yunet": 0.82},
+        )
+
+
+def test_research_decision_binds_reports_runs_and_common_evidence() -> None:
+    reports = (
+        _report("mtcnn", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=4),
+        _report("yunet", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5),
+    )
+
+    decision = _compare(reports)
+    payload = asdict(decision)
+
+    assert "input_report_sha256" in payload
+    assert "source_run_ids" in payload
+    assert "common_evidence_hashes" in payload
+
+
 def test_research_comparison_requires_the_same_split_and_reviewed_audit() -> None:
     first = _report(
-        "first", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5
+        "mtcnn", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5
     )
-    changed_split = replace(first, detector_name="changed-split", split_hash="d" * 64)
+    changed_split = replace(first, detector_name="yunet", split_hash="d" * 64)
     changed_audit = replace(
         first,
-        detector_name="changed-audit",
+        detector_name="yunet",
         annotation_audit_sha256="e" * 64,
     )
 
     with pytest.raises(ValueError, match="split"):
-        compare_detectors((first, changed_split))
+        _compare((first, changed_split))
     with pytest.raises(ValueError, match="annotation audit"):
-        compare_detectors((first, changed_audit))
+        _compare((first, changed_audit))
 
 
 def test_selection_does_not_prefer_a_zero_frame_tracker() -> None:
     report = _report(
-        "candidate", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5
+        "mtcnn", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5
     )
     zero_frame_tracker = replace(
         report.trackers[0],
@@ -775,49 +895,39 @@ def test_selection_does_not_prefer_a_zero_frame_tracker() -> None:
         intervals=intervals,
     )
 
-    decision = compare_detectors((zero_frame_report,))
+    yunet = _report(
+        "yunet", recall=0.94, nme=0.08, track_errors_per_1000=3, latency_ms=8
+    )
+    decision = _compare((zero_frame_report, yunet))
 
     assert decision.selected_association == "constant_velocity"
 
 
 def test_selection_applies_each_frozen_rejection_margin_before_speed() -> None:
     reports = (
-        _report("best", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=8),
-        _report(
-            "lowrecall", recall=0.939, nme=0.05, track_errors_per_1000=1, latency_ms=2
-        ),
-        _report(
-            "badnme", recall=0.95, nme=0.091, track_errors_per_1000=10, latency_ms=3
-        ),
-        _report(
-            "badtrack", recall=0.95, nme=0.08, track_errors_per_1000=3.01, latency_ms=4
-        ),
-        _report("winner", recall=0.95, nme=0.08, track_errors_per_1000=3, latency_ms=5),
+        _report("mtcnn", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=8),
+        _report("yunet", recall=0.939, nme=0.05, track_errors_per_1000=1, latency_ms=2),
     )
 
-    decision = compare_detectors(reports)
+    decision = _compare(reports)
 
-    assert decision.selected_detector == "winner"
+    assert decision.selected_detector == "mtcnn"
     assert decision.selected_association == "constant_velocity"
-    assert decision.rejected == {
-        "badnme": ("landmark_nme_margin", "target_track_error_margin"),
-        "badtrack": ("target_track_error_margin",),
-        "lowrecall": ("target_recall_margin",),
-    }
-    assert decision.eligible_detectors == ("best", "winner")
+    assert decision.rejected == {"yunet": ("target_recall_margin",)}
+    assert decision.eligible_detectors == ("mtcnn",)
 
 
 def test_selection_keeps_candidates_exactly_on_each_frozen_margin() -> None:
     reports = (
         _report(
-            "best",
+            "mtcnn",
             recall=0.95,
             nme=0.08,
             track_errors_per_1000=2,
             latency_ms=8,
         ),
         _report(
-            "boundary",
+            "yunet",
             recall=0.94,
             nme=0.09,
             track_errors_per_1000=3,
@@ -825,35 +935,42 @@ def test_selection_keeps_candidates_exactly_on_each_frozen_margin() -> None:
         ),
     )
 
-    decision = compare_detectors(reports)
+    decision = _compare(reports)
 
-    assert decision.selected_detector == "boundary"
-    assert decision.eligible_detectors == ("best", "boundary")
+    assert decision.selected_detector == "yunet"
+    assert decision.eligible_detectors == ("mtcnn", "yunet")
 
 
-def test_selection_exposes_speed_tie_and_uses_only_given_downstream_scores() -> None:
+def test_selection_exposes_speed_tie_without_an_unbound_tie_break() -> None:
     reports = (
-        _report("alpha", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5),
-        _report("beta", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5),
+        _report("mtcnn", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5),
+        _report("yunet", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5),
     )
 
-    tied = compare_detectors(reports)
-    decided = compare_detectors(
-        reports,
-        downstream_validation={"alpha": 0.80, "beta": 0.82},
-    )
+    tied = _compare(reports)
 
     assert tied == DetectorDecision(
         selected_detector=None,
         selected_association=None,
-        eligible_detectors=("alpha", "beta"),
+        eligible_detectors=("mtcnn", "yunet"),
         rejected={},
-        downstream_tie_candidates=("alpha", "beta"),
-        reason="downstream_validation_required",
+        downstream_tie_candidates=("mtcnn", "yunet"),
+        reason="downstream_evidence_required",
         rule_revision=FROZEN_DETECTOR_RULE_REVISION,
+        input_report_sha256={
+            "mtcnn": hashlib.sha256(b"mtcnn").hexdigest(),
+            "yunet": hashlib.sha256(b"yunet").hexdigest(),
+        },
+        source_run_ids={"mtcnn": "run-mtcnn", "yunet": "run-yunet"},
+        common_evidence_hashes={
+            "evaluation_set_sha256": "e" * 64,
+            "split_hash": "b" * 64,
+            "identity_strict_split_hash": "a" * 64,
+            "reviewed_sample_sha256": "c" * 64,
+            "annotation_audit_sha256": "d" * 64,
+            "environment_lock_sha256": "9" * 64,
+        },
     )
-    assert decided.selected_detector == "beta"
-    assert decided.reason == "downstream_validation_tie_break"
 
 
 def test_selection_cannot_turn_fixture_evidence_into_a_real_choice() -> None:
@@ -981,10 +1098,10 @@ def test_metric_contracts_reject_inconsistent_tracker_and_latency_counts() -> No
 
 def test_selection_rejects_unpaired_frames_and_unequal_cpu_settings() -> None:
     first = _report(
-        "alpha", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5
+        "mtcnn", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5
     )
     changed_frames = _report(
-        "beta",
+        "yunet",
         recall=0.95,
         nme=0.08,
         track_errors_per_1000=2,
@@ -1009,38 +1126,44 @@ def test_selection_rejects_unpaired_frames_and_unequal_cpu_settings() -> None:
             "packages": {"opencv-python": "different-version"},
         },
     )
+    changed_gpu = replace(
+        changed_frames,
+        evaluation_set_sha256=first.evaluation_set_sha256,
+        runtime_snapshot={**_runtime_snapshot(), "gpu": "different-gpu"},
+    )
+    changed_lock = replace(
+        changed_frames,
+        evaluation_set_sha256=first.evaluation_set_sha256,
+        environment_lock_sha256="8" * 64,
+    )
 
     with pytest.raises(ValueError, match="comparison frames"):
-        compare_detectors((first, changed_frames))
+        _compare((first, changed_frames))
     with pytest.raises(ValueError, match="thread counts"):
-        compare_detectors((first, changed_threads))
+        _compare((first, changed_threads))
     with pytest.raises(ValueError, match="CPU hardware"):
-        compare_detectors((first, changed_cpu))
+        _compare((first, changed_cpu))
     with pytest.raises(ValueError, match="runtime environments"):
-        compare_detectors((first, changed_packages))
+        _compare((first, changed_packages))
+    with pytest.raises(ValueError, match="runtime environments"):
+        _compare((first, changed_gpu))
+    with pytest.raises(ValueError, match="pinned environments"):
+        _compare((first, changed_lock))
 
 
 def test_selection_applies_nme_and_tracking_rejections_to_recall_pool() -> None:
     reports = (
-        _report(
-            "nme-best", recall=0.95, nme=0.05, track_errors_per_1000=10, latency_ms=5
-        ),
-        _report(
-            "track-best", recall=0.95, nme=0.061, track_errors_per_1000=1, latency_ms=6
-        ),
-        _report(
-            "compromise", recall=0.95, nme=0.05, track_errors_per_1000=2.1, latency_ms=4
-        ),
+        _report("mtcnn", recall=0.95, nme=0.05, track_errors_per_1000=10, latency_ms=5),
+        _report("yunet", recall=0.95, nme=0.061, track_errors_per_1000=1, latency_ms=6),
     )
 
-    decision = compare_detectors(reports)
+    decision = _compare(reports)
 
     assert decision.selected_detector is None
     assert decision.eligible_detectors == ()
     assert decision.rejected == {
-        "compromise": ("target_track_error_margin",),
-        "nme-best": ("target_track_error_margin",),
-        "track-best": ("landmark_nme_margin",),
+        "mtcnn": ("target_track_error_margin",),
+        "yunet": ("landmark_nme_margin",),
     }
     assert decision.reason == "no_eligible_detector"
 

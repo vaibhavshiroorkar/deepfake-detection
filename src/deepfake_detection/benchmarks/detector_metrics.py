@@ -365,6 +365,8 @@ class DetectorBenchmarkReport:
     reviewed_sample_sha256: str
     annotation_audit_sha256: str
     annotation_audit_validated: bool
+    source_run_id: str = "software-fixture"
+    environment_lock_sha256: str = "0" * 64
     bootstrap_samples: int = BOOTSTRAP_SAMPLES
     bootstrap_seed: int = BOOTSTRAP_SEED
 
@@ -378,6 +380,11 @@ class DetectorBenchmarkReport:
         _validate_sha256("identity_strict_split_hash", self.identity_strict_split_hash)
         _validate_sha256("reviewed_sample_sha256", self.reviewed_sample_sha256)
         _validate_sha256("annotation_audit_sha256", self.annotation_audit_sha256)
+        _required_string("source_run_id", self.source_run_id)
+        if _looks_path_shaped(self.source_run_id):
+            raise ValueError("source_run_id must be path-free")
+        _validate_sha256("environment_lock_sha256", self.environment_lock_sha256)
+        _validate_runtime_snapshot(self.runtime_snapshot)
         for name in ("threshold", "collection_threshold"):
             value = getattr(self, name)
             _finite(name, value)
@@ -392,6 +399,17 @@ class DetectorBenchmarkReport:
             and not self.annotation_audit_validated
         ):
             raise ValueError("Research evidence requires a valid annotation audit")
+        if self.evidence_scope == "research_evidence" and bool(
+            self.runtime_snapshot["git_dirty"]
+        ):
+            raise ValueError("Research evidence requires a clean worktree")
+        if self.evidence_scope == "research_evidence" and (
+            self.source_run_id == "software-fixture"
+            or self.environment_lock_sha256 == "0" * 64
+        ):
+            raise ValueError(
+                "Research evidence requires a source run ID and pinned lock hash"
+            )
         if (
             self.evidence_scope == "research_evidence"
             and self.latency.device.casefold() != "cpu"
@@ -450,7 +468,6 @@ class DetectorBenchmarkReport:
                 raise ValueError(
                     "Report interval estimate differs from its point metric"
                 )
-        _validate_runtime_snapshot(self.runtime_snapshot)
 
 
 @dataclass(frozen=True, slots=True)
@@ -462,6 +479,9 @@ class DetectorDecision:
     downstream_tie_candidates: tuple[str, ...]
     reason: str
     rule_revision: str
+    input_report_sha256: dict[str, str]
+    source_run_ids: dict[str, str]
+    common_evidence_hashes: dict[str, str]
 
 
 def read_detector_report(path: Path) -> DetectorBenchmarkReport:
@@ -530,6 +550,8 @@ def read_detector_report(path: Path) -> DetectorBenchmarkReport:
         reviewed_sample_sha256=values["reviewed_sample_sha256"],
         annotation_audit_sha256=values["annotation_audit_sha256"],
         annotation_audit_validated=values["annotation_audit_validated"],
+        source_run_id=values["source_run_id"],
+        environment_lock_sha256=values["environment_lock_sha256"],
         bootstrap_samples=values["bootstrap_samples"],
         bootstrap_seed=values["bootstrap_seed"],
     )
@@ -1204,6 +1226,8 @@ def evaluate_detector(
     rule_revision: str = FROZEN_DETECTOR_RULE_REVISION,
     bootstrap_samples: int = BOOTSTRAP_SAMPLES,
     bootstrap_seed: int = BOOTSTRAP_SEED,
+    source_run_id: str = "software-fixture",
+    environment_lock_sha256: str = "0" * 64,
 ) -> DetectorBenchmarkReport:
     if rule_revision != FROZEN_DETECTOR_RULE_REVISION:
         raise ValueError("Cannot change the frozen detector rule revision")
@@ -1350,6 +1374,8 @@ def evaluate_detector(
             annotation_audit_sha256(annotation_audit) if annotation_audit else "0" * 64
         ),
         annotation_audit_validated=audit_validated,
+        source_run_id=source_run_id,
+        environment_lock_sha256=environment_lock_sha256,
         bootstrap_samples=bootstrap_samples,
         bootstrap_seed=bootstrap_seed,
     )
@@ -1371,7 +1397,17 @@ def _best_tracker(report: DetectorBenchmarkReport) -> TrackerMetrics:
 
 
 def _comparison_runtime_key(report: DetectorBenchmarkReport) -> str:
-    names = ("git_commit", "python_version", "platform", "packages", "cpu")
+    names = (
+        "git_commit",
+        "git_dirty",
+        "python_version",
+        "platform",
+        "packages",
+        "cpu",
+        "gpu",
+        "gpu_memory_mib",
+        "ffmpeg_version",
+    )
     values = {name: report.runtime_snapshot[name] for name in names}
     return json.dumps(values, sort_keys=True, separators=(",", ":"))
 
@@ -1389,20 +1425,24 @@ def compare_detectors(
     reports: Sequence[DetectorBenchmarkReport],
     *,
     downstream_validation: Mapping[str, float] | None = None,
+    input_report_sha256: Mapping[str, str] | None = None,
     rule_revision: str = FROZEN_DETECTOR_RULE_REVISION,
 ) -> DetectorDecision:
     if rule_revision != FROZEN_DETECTOR_RULE_REVISION:
         raise ValueError("Cannot change the frozen detector rule revision")
+    if downstream_validation is not None:
+        raise ValueError("The unbound downstream tie-break is disabled")
     rows = tuple(reports)
     if not rows:
         raise ValueError("Detector comparison requires reports")
     names = tuple(report.detector_name for report in rows)
-    if len(set(names)) != len(names):
-        raise ValueError("Detector report names must be unique")
     if any(report.rule_revision != rule_revision for report in rows):
         raise ValueError("Detector reports use inconsistent frozen rules")
     scopes = {report.evidence_scope for report in rows}
     if scopes == {"software_fixture_only"}:
+        if len(set(names)) != len(names):
+            raise ValueError("Detector report names must be unique")
+        report_hashes = dict(input_report_sha256 or {})
         return DetectorDecision(
             selected_detector=None,
             selected_association=None,
@@ -1411,9 +1451,23 @@ def compare_detectors(
             downstream_tie_candidates=(),
             reason="software_fixture_only",
             rule_revision=rule_revision,
+            input_report_sha256=report_hashes,
+            source_run_ids={
+                report.detector_name: report.source_run_id for report in rows
+            },
+            common_evidence_hashes={},
         )
     if scopes != {"research_evidence"}:
         raise ValueError("Cannot mix fixture and research detector evidence")
+    if len(rows) != 2 or sorted(names) != ["mtcnn", "yunet"]:
+        raise ValueError(
+            "Research comparison requires exactly one mtcnn and one yunet report"
+        )
+    report_hashes = dict(input_report_sha256 or {})
+    if set(report_hashes) != {"mtcnn", "yunet"}:
+        raise ValueError("Research comparison requires exact input report hashes")
+    for name, digest in report_hashes.items():
+        _validate_sha256(f"input_report_sha256.{name}", digest)
     if any(report.latency.device.lower() != "cpu" for report in rows):
         raise ValueError("Frozen detector selection requires CPU latency reports")
     if len({report.latency.thread_count for report in rows}) != 1:
@@ -1434,6 +1488,8 @@ def compare_detectors(
         raise ValueError("Detector reports use different reviewed samples")
     if len({report.annotation_audit_sha256 for report in rows}) != 1:
         raise ValueError("Detector reports use different reviewed annotation audits")
+    if len({report.environment_lock_sha256 for report in rows}) != 1:
+        raise ValueError("Detector reports use different pinned environments")
     if any(
         report.frame_count < MINIMUM_COMPARISON_FRAMES
         or report.comparison_clip_count < MINIMUM_COMPARISON_CLIPS
@@ -1443,10 +1499,45 @@ def compare_detectors(
     if any(report.metrics.landmark_nme is None for report in rows):
         raise ValueError("Detector selection requires landmark NME for every candidate")
 
-    best_recall = max(report.metrics.target_recall for report in rows)
+    common_hashes = {
+        "evaluation_set_sha256": rows[0].evaluation_set_sha256,
+        "split_hash": rows[0].split_hash,
+        "identity_strict_split_hash": rows[0].identity_strict_split_hash,
+        "reviewed_sample_sha256": rows[0].reviewed_sample_sha256,
+        "annotation_audit_sha256": rows[0].annotation_audit_sha256,
+        "environment_lock_sha256": rows[0].environment_lock_sha256,
+    }
+    rejected: dict[str, tuple[str, ...]] = {
+        report.detector_name: ("tracking_evidence_missing",)
+        for report in rows
+        if not any(tracker.tracked_frames > 0 for tracker in report.trackers)
+    }
+    tracked_rows = tuple(
+        report for report in rows if report.detector_name not in rejected
+    )
+    provenance = {
+        "input_report_sha256": report_hashes,
+        "source_run_ids": {
+            report.detector_name: report.source_run_id for report in rows
+        },
+        "common_evidence_hashes": common_hashes,
+    }
+    if not tracked_rows:
+        return DetectorDecision(
+            selected_detector=None,
+            selected_association=None,
+            eligible_detectors=(),
+            rejected=rejected,
+            downstream_tie_candidates=(),
+            reason="no_eligible_detector",
+            rule_revision=rule_revision,
+            **provenance,
+        )
+
+    best_recall = max(report.metrics.target_recall for report in tracked_rows)
     recall_eligible = tuple(
         report
-        for report in rows
+        for report in tracked_rows
         if _within_frozen_margin(
             best_recall - report.metrics.target_recall,
             RECALL_REJECTION_MARGIN,
@@ -1473,8 +1564,9 @@ def compare_detectors(
         )
     )
     eligible_names = tuple(sorted(report.detector_name for report in eligible))
-    rejected: dict[str, tuple[str, ...]] = {}
     for report in sorted(rows, key=lambda item: item.detector_name):
+        if report.detector_name in rejected:
+            continue
         reasons: list[str] = []
         if report not in recall_eligible:
             reasons.append("target_recall_margin")
@@ -1501,6 +1593,7 @@ def compare_detectors(
             downstream_tie_candidates=(),
             reason="no_eligible_detector",
             rule_revision=rule_revision,
+            **provenance,
         )
 
     fastest = min(report.latency.median_ms for report in eligible)
@@ -1516,21 +1609,7 @@ def compare_detectors(
     downstream_ties: tuple[str, ...] = ()
     if len(speed_ties) > 1:
         downstream_ties = speed_ties
-        reason = "downstream_validation_required"
-        if downstream_validation is not None and all(
-            name in downstream_validation for name in speed_ties
-        ):
-            scores = {name: float(downstream_validation[name]) for name in speed_ties}
-            for score in scores.values():
-                _finite("downstream validation score", score)
-            best_score = max(scores.values())
-            winners = tuple(
-                sorted(name for name, score in scores.items() if score == best_score)
-            )
-            if len(winners) == 1:
-                selected_name = winners[0]
-                downstream_ties = ()
-                reason = "downstream_validation_tie_break"
+        reason = "downstream_evidence_required"
     selected_report = next(
         (report for report in eligible if report.detector_name == selected_name), None
     )
@@ -1546,4 +1625,5 @@ def compare_detectors(
         downstream_tie_candidates=downstream_ties,
         reason=reason,
         rule_revision=rule_revision,
+        **provenance,
     )

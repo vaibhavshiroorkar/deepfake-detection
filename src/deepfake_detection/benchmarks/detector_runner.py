@@ -261,6 +261,8 @@ def run_detector_benchmark(
     evidence_scope: EvidenceScope = "research_evidence",
     rule_revision: str = FROZEN_DETECTOR_RULE_REVISION,
     bootstrap_seed: int = BOOTSTRAP_SEED,
+    source_run_id: str = "software-fixture",
+    environment_lock_sha256: str = "0" * 64,
 ) -> DetectorBenchmarkReport:
     sample_rows = tuple(sample)
     annotation_rows = tuple(annotations)
@@ -346,6 +348,8 @@ def run_detector_benchmark(
         collection_threshold=collection_threshold,
         rule_revision=rule_revision,
         bootstrap_seed=bootstrap_seed,
+        source_run_id=source_run_id,
+        environment_lock_sha256=environment_lock_sha256,
     )
     write_candidate_records(candidate_rows, raw_output)
     output_hash = hashlib.sha256(raw_output.read_bytes()).hexdigest()

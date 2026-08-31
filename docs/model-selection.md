@@ -71,15 +71,19 @@ Reject a detector if its target-face recall is more than one percentage point
 below the best candidate. Among that recall pool, reject landmark NME more than
 0.01 above the best or target-track errors more than one per 1,000 tracked
 frames above the best. Select the fastest remaining CPU candidate. Use
-aligned-mouth downstream validation only to break an exact speed tie. Bootstrap
-all comparison metrics by source identity with 1,000 fixed resamples.
+no downstream tie-break until a strict training-only evidence artifact is
+defined. An exact speed tie remains undecided. Bootstrap all comparison metrics
+by source identity with 1,000 fixed resamples.
 
-The benchmark reports bind the frozen split, reviewed sample, annotation audit,
-calibrated threshold, raw candidate hash, model hash, runtime, and frozen rule
-revision. MTCNN hashes its loaded state. YuNet verifies the local asset bytes
-against the expected hash. Software fixture
-reports carry `software_fixture_only`. The comparison code refuses to turn
-that scope into a real detector choice.
+Research comparison requires exactly one MTCNN report and one YuNet report. A
+candidate with no tracked frames from either association is ineligible. The
+benchmark reports bind the frozen split, reviewed sample, annotation audit,
+calibrated threshold, raw candidate hash, model hash, source run ID, clean
+runtime, pinned `uv.lock` hash, and frozen rule revision. MTCNN hashes its loaded
+state. YuNet verifies the local asset bytes against the expected hash. The
+decision binds the exact input report byte hashes, source run IDs, and common
+evidence hashes. Software fixture reports carry `software_fixture_only`. The
+comparison code refuses to turn that scope into a real detector choice.
 
 The adapters, review tooling, evaluator, and comparison command are complete.
 No human-reviewed sample or measured MTCNN versus YuNet result exists yet.

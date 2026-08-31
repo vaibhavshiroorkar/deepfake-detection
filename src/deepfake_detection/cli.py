@@ -934,6 +934,7 @@ def _detector_frame_reader(
 
 
 def _detector_run(arguments: argparse.Namespace) -> int:
+    logger = _run_logger(arguments)
     sample = read_review_sample(arguments.sample)
     frozen_split = _load_frozen_split(arguments.split_dir, arguments.dataset)
     strict_split = identity_strict_subset(frozen_split)
@@ -978,10 +979,20 @@ def _detector_run(arguments: argparse.Namespace) -> int:
         collection_threshold=arguments.collection_threshold,
         warmup_frames=arguments.warmup_frames,
         evidence_scope=arguments.evidence_scope,
+        source_run_id=(
+            logger.run_id
+            or arguments.source_run_id
+            or (
+                "software-fixture"
+                if arguments.evidence_scope == "software_fixture_only"
+                else ""
+            )
+        ),
+        environment_lock_sha256=_sha256(Path.cwd() / "uv.lock"),
     )
     _write_json(arguments.report, asdict(report))
     log_detector_benchmark(
-        _run_logger(arguments),
+        logger,
         report=report,
         report_path=arguments.report,
         predictions_path=arguments.predictions,
@@ -995,16 +1006,13 @@ def _detector_report_from_path(path: Path) -> DetectorBenchmarkReport:
 
 def _detector_compare(arguments: argparse.Namespace) -> int:
     reports = tuple(_detector_report_from_path(path) for path in arguments.reports)
-    downstream = None
-    if arguments.downstream_validation is not None:
-        downstream = json.loads(
-            arguments.downstream_validation.read_text(encoding="utf-8")
-        )
-        if not isinstance(downstream, dict):
-            raise ValueError("Downstream validation must be a JSON object")
+    report_hashes = {
+        report.detector_name: _sha256(path)
+        for path, report in zip(arguments.reports, reports, strict=True)
+    }
     decision: DetectorDecision = compare_detectors(
         reports,
-        downstream_validation=downstream,
+        input_report_sha256=report_hashes,
     )
     _write_json(arguments.output, asdict(decision))
     logger = _run_logger(arguments)
@@ -1014,6 +1022,22 @@ def _detector_compare(arguments: argparse.Namespace) -> int:
             "detector.comparison_reason": decision.reason,
             "detector.selected": decision.selected_detector or "none",
             "detector.selected_association": (decision.selected_association or "none"),
+        }
+    )
+    logger.log_params(
+        {
+            **{
+                f"detector.input_report_sha256.{name}": digest
+                for name, digest in decision.input_report_sha256.items()
+            },
+            **{
+                f"detector.source_run_id.{name}": run_id
+                for name, run_id in decision.source_run_ids.items()
+            },
+            **{
+                f"detector.common_evidence.{name}": digest
+                for name, digest in decision.common_evidence_hashes.items()
+            },
         }
     )
     logger.log_artifact(arguments.output, artifact_path="detector/aggregate")
@@ -1340,6 +1364,7 @@ def build_parser() -> argparse.ArgumentParser:
     detector_run.add_argument("--device", default="cpu")
     detector_run.add_argument("--collection-threshold", type=float, default=0.0)
     detector_run.add_argument("--warmup-frames", type=int, default=3)
+    detector_run.add_argument("--source-run-id")
     detector_run.add_argument(
         "--evidence-scope",
         choices=("research_evidence", "software_fixture_only"),
@@ -1354,7 +1379,6 @@ def build_parser() -> argparse.ArgumentParser:
         nargs="+",
         required=True,
     )
-    detector_compare.add_argument("--downstream-validation", type=Path)
     detector_compare.add_argument("--output", type=Path, required=True)
     detector_compare.set_defaults(handler=_detector_compare)
 

@@ -81,11 +81,18 @@ review.
 `ddf detector run` validates the audit before inference. It calibrates the
 candidate threshold on source-disjoint calibration identities, evaluates the
 comparison identities, and writes a path-free prediction JSONL plus an
-aggregate report. MTCNN provenance comes from its loaded state. Do not pass an
-expected model hash for MTCNN. YuNet still requires a matching asset hash.
+aggregate report. A research report requires a clean worktree, the current
+`uv.lock` byte hash, and a source run ID. Tracking supplies the run ID when it is
+enabled. Otherwise pass `--source-run-id`. MTCNN provenance comes from its
+loaded state. Do not pass an expected model hash for MTCNN. YuNet still requires
+a matching asset hash.
 
-`ddf detector compare` applies the frozen selection rules to one or more
-aggregate reports. Fixture reports cannot produce a real selection.
+`ddf detector compare` requires exactly one MTCNN report and one YuNet report
+for research evidence. It hashes the exact report bytes into the saved
+decision. It rejects unpaired environments and candidates with no tracked
+frames. Exact speed ties remain undecided because no strict downstream evidence
+artifact exists. Fixture comparisons remain flexible and cannot produce a real
+selection.
 
 Use these commands directly or place the same command and arguments in a YAML
 file for `ddf run`. With local tracking enabled, only aggregate detector
@@ -100,8 +107,8 @@ Run the workflow in order:
 uv run ddf detector fetch-yunet --report runs/detector/yunet-asset.json
 uv run ddf detector sample --split-dir data/private/splits --expected-split-hash <sha256> --dataset-root data/private --dataset training --output data/private/detector-review/sample.jsonl --review-dir data/private/detector-review/images --report runs/detector/sample-report.json
 uv run ddf detector validate-annotations --sample data/private/detector-review/sample.jsonl --annotations data/private/detector-review/annotations.jsonl --report runs/detector/annotation-audit.json
-uv run ddf detector run --sample data/private/detector-review/sample.jsonl --annotations data/private/detector-review/annotations.jsonl --split-dir data/private/splits --dataset-root data/private --dataset training --predictions runs/detector/mtcnn-predictions.jsonl --report runs/detector/mtcnn-report.json --detector mtcnn --detector-revision <revision>
-uv run ddf detector run --sample data/private/detector-review/sample.jsonl --annotations data/private/detector-review/annotations.jsonl --split-dir data/private/splits --dataset-root data/private --dataset training --predictions runs/detector/yunet-predictions.jsonl --report runs/detector/yunet-report.json --detector yunet --detector-revision opencv-zoo-47534e27 --model-path models/face_detection_yunet_2026may.onnx --expected-model-hash ebafce4e3c118d6554634be5c27ab333b4c047a9a8c3faf1d7cf93101c22f0f0
+uv run ddf detector run --sample data/private/detector-review/sample.jsonl --annotations data/private/detector-review/annotations.jsonl --split-dir data/private/splits --dataset-root data/private --dataset training --predictions runs/detector/mtcnn-predictions.jsonl --report runs/detector/mtcnn-report.json --detector mtcnn --detector-revision <revision> --source-run-id <run-id>
+uv run ddf detector run --sample data/private/detector-review/sample.jsonl --annotations data/private/detector-review/annotations.jsonl --split-dir data/private/splits --dataset-root data/private --dataset training --predictions runs/detector/yunet-predictions.jsonl --report runs/detector/yunet-report.json --detector yunet --detector-revision opencv-zoo-47534e27 --model-path models/face_detection_yunet_2026may.onnx --expected-model-hash ebafce4e3c118d6554634be5c27ab333b4c047a9a8c3faf1d7cf93101c22f0f0 --source-run-id <run-id>
 uv run ddf detector compare --reports runs/detector/mtcnn-report.json runs/detector/yunet-report.json --output runs/detector/decision.json
 ```
 

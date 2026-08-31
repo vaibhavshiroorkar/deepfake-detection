@@ -134,6 +134,8 @@ def log_detector_benchmark(
             "detector.identity_strict_split_hash": (report.identity_strict_split_hash),
             "detector.reviewed_sample_sha256": report.reviewed_sample_sha256,
             "detector.annotation_audit_sha256": report.annotation_audit_sha256,
+            "detector.source_run_id": report.source_run_id,
+            "detector.environment_lock_sha256": report.environment_lock_sha256,
         }
     )
     metrics = {
