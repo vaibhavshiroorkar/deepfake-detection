@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from dataclasses import asdict, replace
 
 import pytest
@@ -12,6 +13,7 @@ from deepfake_detection.benchmarks.detector_annotations import (
 from deepfake_detection.benchmarks.detector_metrics import (
     BOOTSTRAP_SEED,
     FROZEN_DETECTOR_RULE_REVISION,
+    BoundDetectorReport,
     CandidateFrame,
     DetectorBenchmarkReport,
     DetectorDecision,
@@ -700,17 +702,16 @@ def _report(
     )
 
 
+def _bound(report: DetectorBenchmarkReport) -> BoundDetectorReport:
+    return BoundDetectorReport(
+        json.dumps(asdict(report), sort_keys=True, separators=(",", ":")).encode()
+    )
+
+
 def _compare(
     reports: tuple[DetectorBenchmarkReport, ...],
 ) -> DetectorDecision:
-    hashes = {
-        report.detector_name: hashlib.sha256(report.detector_name.encode()).hexdigest()
-        for report in reports
-    }
-    return compare_detectors(
-        reports,
-        input_report_sha256=hashes,
-    )
+    return compare_detectors(tuple(_bound(report) for report in reports))
 
 
 def test_research_report_rejects_non_cpu_runtime_metadata() -> None:
@@ -780,10 +781,43 @@ def test_research_comparison_requires_exactly_mtcnn_and_yunet() -> None:
         compare_detectors((mtcnn, replace(mtcnn, detector_name="retinaface")))
     with pytest.raises(ValueError, match="exactly one mtcnn and one yunet"):
         compare_detectors((mtcnn, replace(mtcnn, detector_revision="duplicate")))
-    with pytest.raises(ValueError, match="exact input report hashes"):
+    with pytest.raises(ValueError, match="byte-bound detector reports"):
         compare_detectors((mtcnn, yunet))
 
     assert _compare((mtcnn, yunet)).selected_detector == "mtcnn"
+
+
+def test_research_comparison_rejects_caller_supplied_report_digests() -> None:
+    reports = (
+        _report("mtcnn", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5),
+        _report("yunet", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=6),
+    )
+    report_bytes = {
+        report.detector_name: json.dumps(asdict(report), sort_keys=True).encode()
+        for report in reports
+    }
+    swapped = {
+        "mtcnn": hashlib.sha256(report_bytes["yunet"]).hexdigest(),
+        "yunet": hashlib.sha256(report_bytes["mtcnn"]).hexdigest(),
+    }
+
+    with pytest.raises(TypeError):
+        compare_detectors(reports, input_report_sha256=swapped)
+
+
+def test_bound_report_selection_uses_only_its_immutable_bytes() -> None:
+    mtcnn = _bound(
+        _report("mtcnn", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=5)
+    )
+    yunet = _bound(
+        _report("yunet", recall=0.95, nme=0.08, track_errors_per_1000=2, latency_ms=6)
+    )
+    exposed = mtcnn.report
+    exposed.runtime_snapshot["cpu"] = "tampered-after-parse"
+
+    decision = compare_detectors((mtcnn, yunet))
+
+    assert decision.selected_detector == "mtcnn"
 
 
 def test_research_selection_rejects_a_detector_with_no_tracking_evidence() -> None:
@@ -958,8 +992,12 @@ def test_selection_exposes_speed_tie_without_an_unbound_tie_break() -> None:
         reason="downstream_evidence_required",
         rule_revision=FROZEN_DETECTOR_RULE_REVISION,
         input_report_sha256={
-            "mtcnn": hashlib.sha256(b"mtcnn").hexdigest(),
-            "yunet": hashlib.sha256(b"yunet").hexdigest(),
+            report.detector_name: hashlib.sha256(
+                json.dumps(
+                    asdict(report), sort_keys=True, separators=(",", ":")
+                ).encode()
+            ).hexdigest()
+            for report in reports
         },
         source_run_ids={"mtcnn": "run-mtcnn", "yunet": "run-yunet"},
         common_evidence_hashes={

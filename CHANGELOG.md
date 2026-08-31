@@ -15,6 +15,8 @@ Experiment metrics belong in the experiment tracker, not this file.
 - Required paired MTCNN and YuNet research reports, usable tracking evidence,
   clean pinned environments, exact input report hashes, and source run IDs for
   detector decisions. Disabled the unbound downstream scalar tie-break.
+- Bound detector parsing and report hashing to one immutable, single-read byte
+  buffer and removed caller-supplied report digests.
 - Restricted detector review sampling to identity-strict training rows and
   bound the identity-strict subset hash through benchmark evidence.
 - Required candidate bytes and strict aggregate report content to match the

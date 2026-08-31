@@ -256,6 +256,50 @@ def test_detector_compare_fixture_smoke_cannot_select_a_real_detector(
     }
 
 
+def test_detector_compare_reads_each_report_once_for_parse_and_hash(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    left = tmp_path / "left.json"
+    right = tmp_path / "right.json"
+    output = tmp_path / "decision.json"
+    left_bytes = json.dumps(asdict(_fixture_report("left"))).encode()
+    right_bytes = json.dumps(asdict(_fixture_report("right"))).encode()
+    left.write_bytes(left_bytes)
+    right.write_bytes(right_bytes)
+    reads = {left: 0, right: 0}
+    original_open = Path.open
+
+    def counted_open(path: Path, *args: object, **kwargs: object):
+        if path in reads:
+            reads[path] += 1
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", counted_open)
+
+    assert (
+        main(
+            [
+                "detector",
+                "compare",
+                "--reports",
+                str(left),
+                str(right),
+                "--output",
+                str(output),
+            ]
+        )
+        == 0
+    )
+
+    decision = json.loads(output.read_text(encoding="utf-8"))
+    assert reads == {left: 1, right: 1}
+    assert decision["input_report_sha256"] == {
+        "left": hashlib.sha256(left_bytes).hexdigest(),
+        "right": hashlib.sha256(right_bytes).hexdigest(),
+    }
+
+
 def test_detector_compare_rejects_fields_outside_the_aggregate_contract(
     tmp_path: Path,
 ) -> None:

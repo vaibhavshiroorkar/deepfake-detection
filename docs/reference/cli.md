@@ -88,11 +88,12 @@ loaded state. Do not pass an expected model hash for MTCNN. YuNet still requires
 a matching asset hash.
 
 `ddf detector compare` requires exactly one MTCNN report and one YuNet report
-for research evidence. It hashes the exact report bytes into the saved
-decision. It rejects unpaired environments and candidates with no tracked
-frames. Exact speed ties remain undecided because no strict downstream evidence
-artifact exists. Fixture comparisons remain flexible and cannot produce a real
-selection.
+for research evidence. It reads each report once, then parses and hashes that
+same immutable byte buffer. The saved decision therefore identifies the exact
+bytes used for selection. It rejects unpaired environments and candidates with
+no tracked frames. Exact speed ties remain undecided because no strict
+downstream evidence artifact exists. Fixture comparisons remain flexible and
+cannot produce a real selection.
 
 Use these commands directly or place the same command and arguments in a YAML
 file for `ddf run`. With local tracking enabled, only aggregate detector

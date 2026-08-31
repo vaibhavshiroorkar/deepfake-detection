@@ -39,7 +39,9 @@ requires paired MTCNN and YuNet reports from the same environment and evidence.
 The saved decision records both exact report byte hashes, both run IDs, and all
 common split, sample, audit, evaluation-set, and lock hashes. A detector without
 tracked frames is ineligible. An exact speed tie stays undecided because bare
-downstream scalar scores are not accepted.
+downstream scalar scores are not accepted. Each report is read into one byte
+buffer. Parsing and hashing both use that buffer, and callers cannot supply a
+detached digest.
 
 ## Local tracking decision
 

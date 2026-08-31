@@ -484,8 +484,24 @@ class DetectorDecision:
     common_evidence_hashes: dict[str, str]
 
 
-def read_detector_report(path: Path) -> DetectorBenchmarkReport:
-    values = json.loads(path.read_text(encoding="utf-8"))
+@dataclass(frozen=True, slots=True, init=False)
+class BoundDetectorReport:
+    report_bytes: bytes
+    sha256: str
+
+    def __init__(self, report_bytes: bytes) -> None:
+        if not isinstance(report_bytes, bytes):
+            raise TypeError("Bound detector report input must be bytes")
+        object.__setattr__(self, "report_bytes", report_bytes)
+        object.__setattr__(self, "sha256", hashlib.sha256(report_bytes).hexdigest())
+
+    @property
+    def report(self) -> DetectorBenchmarkReport:
+        return _parse_detector_report_bytes(self.report_bytes)
+
+
+def _parse_detector_report_bytes(report_bytes: bytes) -> DetectorBenchmarkReport:
+    values = json.loads(report_bytes)
     if not isinstance(values, dict):
         raise ValueError("Detector report must be a JSON object")
     expected_fields = set(DetectorBenchmarkReport.__dataclass_fields__)
@@ -555,6 +571,14 @@ def read_detector_report(path: Path) -> DetectorBenchmarkReport:
         bootstrap_samples=values["bootstrap_samples"],
         bootstrap_seed=values["bootstrap_seed"],
     )
+
+
+def read_bound_detector_report(path: Path) -> BoundDetectorReport:
+    return BoundDetectorReport(path.read_bytes())
+
+
+def read_detector_report(path: Path) -> DetectorBenchmarkReport:
+    return read_bound_detector_report(path).report
 
 
 def _candidate_frame_mapping(record: CandidateFrame) -> dict[str, object]:
@@ -1422,19 +1446,22 @@ def _within_frozen_margin(difference: float, margin: float) -> bool:
 
 
 def compare_detectors(
-    reports: Sequence[DetectorBenchmarkReport],
+    reports: Sequence[DetectorBenchmarkReport | BoundDetectorReport],
     *,
     downstream_validation: Mapping[str, float] | None = None,
-    input_report_sha256: Mapping[str, str] | None = None,
     rule_revision: str = FROZEN_DETECTOR_RULE_REVISION,
 ) -> DetectorDecision:
     if rule_revision != FROZEN_DETECTOR_RULE_REVISION:
         raise ValueError("Cannot change the frozen detector rule revision")
     if downstream_validation is not None:
         raise ValueError("The unbound downstream tie-break is disabled")
-    rows = tuple(reports)
-    if not rows:
+    inputs = tuple(reports)
+    if not inputs:
         raise ValueError("Detector comparison requires reports")
+    rows = tuple(
+        item.report if isinstance(item, BoundDetectorReport) else item
+        for item in inputs
+    )
     names = tuple(report.detector_name for report in rows)
     if any(report.rule_revision != rule_revision for report in rows):
         raise ValueError("Detector reports use inconsistent frozen rules")
@@ -1442,7 +1469,11 @@ def compare_detectors(
     if scopes == {"software_fixture_only"}:
         if len(set(names)) != len(names):
             raise ValueError("Detector report names must be unique")
-        report_hashes = dict(input_report_sha256 or {})
+        report_hashes = {
+            report.detector_name: item.sha256
+            for item, report in zip(inputs, rows, strict=True)
+            if isinstance(item, BoundDetectorReport)
+        }
         return DetectorDecision(
             selected_detector=None,
             selected_association=None,
@@ -1463,11 +1494,13 @@ def compare_detectors(
         raise ValueError(
             "Research comparison requires exactly one mtcnn and one yunet report"
         )
-    report_hashes = dict(input_report_sha256 or {})
-    if set(report_hashes) != {"mtcnn", "yunet"}:
-        raise ValueError("Research comparison requires exact input report hashes")
-    for name, digest in report_hashes.items():
-        _validate_sha256(f"input_report_sha256.{name}", digest)
+    if not all(isinstance(item, BoundDetectorReport) for item in inputs):
+        raise ValueError("Research comparison requires byte-bound detector reports")
+    report_hashes = {
+        report.detector_name: item.sha256
+        for item, report in zip(inputs, rows, strict=True)
+        if isinstance(item, BoundDetectorReport)
+    }
     if any(report.latency.device.lower() != "cpu" for report in rows):
         raise ValueError("Frozen detector selection requires CPU latency reports")
     if len({report.latency.thread_count for report in rows}) != 1:

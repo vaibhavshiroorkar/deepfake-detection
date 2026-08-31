@@ -19,10 +19,10 @@ from deepfake_detection.benchmarks.detector_annotations import (
     validate_annotations,
 )
 from deepfake_detection.benchmarks.detector_metrics import (
-    DetectorBenchmarkReport,
+    BoundDetectorReport,
     DetectorDecision,
     compare_detectors,
-    read_detector_report,
+    read_bound_detector_report,
 )
 from deepfake_detection.benchmarks.detector_runner import run_detector_benchmark
 from deepfake_detection.benchmarks.detector_sample import (
@@ -1000,20 +1000,13 @@ def _detector_run(arguments: argparse.Namespace) -> int:
     return 0
 
 
-def _detector_report_from_path(path: Path) -> DetectorBenchmarkReport:
-    return read_detector_report(path)
+def _detector_report_from_path(path: Path) -> BoundDetectorReport:
+    return read_bound_detector_report(path)
 
 
 def _detector_compare(arguments: argparse.Namespace) -> int:
     reports = tuple(_detector_report_from_path(path) for path in arguments.reports)
-    report_hashes = {
-        report.detector_name: _sha256(path)
-        for path, report in zip(arguments.reports, reports, strict=True)
-    }
-    decision: DetectorDecision = compare_detectors(
-        reports,
-        input_report_sha256=report_hashes,
-    )
+    decision: DetectorDecision = compare_detectors(reports)
     _write_json(arguments.output, asdict(decision))
     logger = _run_logger(arguments)
     logger.log_params(

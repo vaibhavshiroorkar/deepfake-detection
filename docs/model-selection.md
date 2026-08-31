@@ -82,8 +82,11 @@ calibrated threshold, raw candidate hash, model hash, source run ID, clean
 runtime, pinned `uv.lock` hash, and frozen rule revision. MTCNN hashes its loaded
 state. YuNet verifies the local asset bytes against the expected hash. The
 decision binds the exact input report byte hashes, source run IDs, and common
-evidence hashes. Software fixture reports carry `software_fixture_only`. The
-comparison code refuses to turn that scope into a real detector choice.
+evidence hashes. Each report is read once into an immutable byte buffer. The
+same buffer is parsed and hashed before research selection. The comparison API
+does not accept caller-supplied report digests. Software fixture reports carry
+`software_fixture_only`. The comparison code refuses to turn that scope into a
+real detector choice.
 
 The adapters, review tooling, evaluator, and comparison command are complete.
 No human-reviewed sample or measured MTCNN versus YuNet result exists yet.
