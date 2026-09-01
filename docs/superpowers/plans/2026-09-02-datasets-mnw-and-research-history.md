@@ -60,7 +60,7 @@ foreach ($path in $movePaths) {
 (Get-ChildItem -LiteralPath $fakeavSource -Recurse -File -Filter '*.mp4').Count
 ```
 
-Expected: every resolved path remains inside the workspace. The source counts are 6,253 Celeb-DF-v2 MP4 files and 21,544 FakeAVCeleb MP4 files.
+Expected: every resolved path remains inside the workspace. The source counts are 6,529 Celeb-DF-v2 MP4 files and 21,544 FakeAVCeleb MP4 files.
 
 - [ ] **Step 2: Create the target root and move the two trees**
 
@@ -86,7 +86,7 @@ Test-Path -LiteralPath 'data\FakeAVCeleb_v1.2\meta_data.csv'
 Get-ChildItem -LiteralPath 'data\FakeAVCeleb_v1.2' -Directory | Select-Object -ExpandProperty Name
 ```
 
-Expected: counts remain 6,253 and 21,544. Both metadata checks return `True`. FakeAVCeleb has the four cue folders named in its README.
+Expected: counts remain 6,529 and 21,544. Both metadata checks return `True`. FakeAVCeleb has the four cue folders named in its README.
 
 - [ ] **Step 4: Confirm raw data remains ignored and package code remains visible**
 

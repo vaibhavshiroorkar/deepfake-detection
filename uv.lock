@@ -692,6 +692,7 @@ dependencies = [
     { name = "scikit-learn" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-23-deepfake-generalization-cpu' and extra == 'extra-23-deepfake-generalization-cu130')" },
     { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-23-deepfake-generalization-cpu' and extra == 'extra-23-deepfake-generalization-cu130')" },
+    { name = "tqdm" },
 ]
 
 [package.optional-dependencies]
@@ -746,6 +747,7 @@ requires-dist = [
     { name = "torch", marker = "extra == 'cu130'", specifier = "==2.12.1", index = "https://download.pytorch.org/whl/cu130", conflict = { package = "deepfake-generalization", extra = "cu130" } },
     { name = "torchvision", marker = "extra == 'cpu'", specifier = "==0.27.1", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "deepfake-generalization", extra = "cpu" } },
     { name = "torchvision", marker = "extra == 'cu130'", specifier = "==0.27.1", index = "https://download.pytorch.org/whl/cu130", conflict = { package = "deepfake-generalization", extra = "cu130" } },
+    { name = "tqdm", specifier = "==4.70.0" },
     { name = "transformers", marker = "extra == 'ml'", specifier = "==5.13.0" },
 ]
 provides-extras = ["media", "ml", "dashboard", "tracking", "cpu", "cu130"]
