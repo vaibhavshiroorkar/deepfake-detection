@@ -93,6 +93,22 @@ def seed_everything(seed: int, *, deterministic: bool) -> None:
         torch.backends.cudnn.benchmark = False
 
 
+def require_research_cuda(device: str) -> None:
+    import torch
+
+    requested = torch.device(device)
+    if requested.type != "cuda":
+        raise ValueError("Research branch training requires a CUDA device")
+    if not torch.cuda.is_available():
+        raise RuntimeError(
+            "Research branch training requested CUDA, but CUDA is unavailable"
+        )
+    try:
+        torch.cuda.get_device_properties(requested)
+    except (AssertionError, RuntimeError, ValueError) as error:
+        raise RuntimeError(f"CUDA device is unavailable: {device}") from error
+
+
 def _command_output(command: list[str], root: Path) -> str | None:
     try:
         process = subprocess.run(  # noqa: S603

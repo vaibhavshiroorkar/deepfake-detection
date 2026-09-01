@@ -190,6 +190,8 @@ def test_log_binary_training_records_epoch_metrics_and_output_artifacts(
         checkpoint=checkpoint,
         history_path=history_path,
         elapsed_seconds=1.5,
+        samples_per_second=12.5,
+        peak_gpu_memory_mib=4096.0,
     )
 
     assert logger.params == [
@@ -210,9 +212,51 @@ def test_log_binary_training_records_epoch_metrics_and_output_artifacts(
                 "stage.backbone_trainable": 0.0,
             },
             1,
-        )
+        ),
+        (
+            {
+                "training.samples_per_second": 12.5,
+                "training.peak_gpu_memory_mib": 4096.0,
+            },
+            None,
+        ),
     ]
     assert logger.artifacts == [(checkpoint, "checkpoints"), (history_path, "history")]
+
+
+@pytest.mark.parametrize(
+    ("samples_per_second", "peak_gpu_memory_mib"),
+    ((0.0, 1.0), (1.0, 0.0)),
+)
+def test_log_binary_training_rejects_nonpositive_gpu_cost_metrics(
+    tmp_path: Path,
+    samples_per_second: float,
+    peak_gpu_memory_mib: float,
+) -> None:
+    checkpoint = tmp_path / "branch.pt"
+    history_path = tmp_path / "history.json"
+    checkpoint.write_bytes(b"checkpoint")
+    history_path.write_text("{}", encoding="utf-8")
+    logger = FakeLogger([], [], [])
+    history = BinaryTrainingHistory(
+        epochs=(BinaryEpochRecord(1, 0.8, 0.6, 3, False),), best_epoch=1
+    )
+
+    with pytest.raises(ValueError, match="positive"):
+        log_binary_training(
+            logger,
+            history=history,
+            configuration_hash="configuration-hash",
+            checkpoint=checkpoint,
+            history_path=history_path,
+            elapsed_seconds=1.5,
+            samples_per_second=samples_per_second,
+            peak_gpu_memory_mib=peak_gpu_memory_mib,
+        )
+
+    assert logger.params == []
+    assert logger.metrics == []
+    assert logger.artifacts == []
 
 
 def test_log_sync_training_rejects_nonfinite_metrics_before_logging(
@@ -235,6 +279,8 @@ def test_log_sync_training_rejects_nonfinite_metrics_before_logging(
             checkpoint=checkpoint,
             history_path=history_path,
             elapsed_seconds=1.5,
+            samples_per_second=12.5,
+            peak_gpu_memory_mib=4096.0,
         )
 
     assert logger.params == []
@@ -261,6 +307,8 @@ def test_log_sync_training_records_stage_metrics_and_output_artifacts(
         checkpoint=checkpoint,
         history_path=history_path,
         elapsed_seconds=1.5,
+        samples_per_second=12.5,
+        peak_gpu_memory_mib=4096.0,
     )
 
     assert logger.metrics == [
@@ -273,7 +321,14 @@ def test_log_sync_training_records_stage_metrics_and_output_artifacts(
                 "stage.upper": 0.0,
             },
             1,
-        )
+        ),
+        (
+            {
+                "training.samples_per_second": 12.5,
+                "training.peak_gpu_memory_mib": 4096.0,
+            },
+            None,
+        ),
     ]
     assert logger.artifacts == [(checkpoint, "checkpoints"), (history_path, "history")]
 

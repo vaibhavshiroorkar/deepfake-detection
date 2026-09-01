@@ -41,7 +41,8 @@ Required evaluations are:
 - Full source-disjoint FakeAVCeleb test.
 - Identity-strict filtered stress test.
 - Leave-one-method-family-out tests.
-- External zero-shot evaluation on [Deepfake-Eval](https://arxiv.org/html/2503.02857v5).
+- External zero-shot evaluation on the evaluation-only
+  [Microsoft-Northwestern-WITNESS benchmark](https://github.com/microsoft/MNW).
 - Leading-silence, compression, noise, and resolution stress tests.
 - Race and gender subgroups when sample counts support them.
 
@@ -49,7 +50,9 @@ Report ROC-AUC, PR-AUC, balanced accuracy, F1, precision, recall, FPR, FNR, EER,
 
 Use 1,000 source-identity bootstrap samples for 95 percent confidence intervals. Compare fusion with the visual baseline through a paired source bootstrap. Run three fixed training seeds.
 
-Choose all model settings and thresholds on training and validation data. Run the locked test set once. Do not tune on Deepfake-Eval.
+Choose all model settings and thresholds on training and validation data. Run
+the locked test set once. Do not tune on MNW or inspect its labels before the
+selected models and thresholds are frozen.
 
 ## Required ablations
 

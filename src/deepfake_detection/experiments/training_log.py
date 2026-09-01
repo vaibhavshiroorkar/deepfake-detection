@@ -23,6 +23,8 @@ def log_binary_training(
     checkpoint: Path,
     history_path: Path,
     elapsed_seconds: float,
+    samples_per_second: float,
+    peak_gpu_memory_mib: float,
 ) -> None:
     metrics = [
         (
@@ -44,6 +46,8 @@ def log_binary_training(
         checkpoint=checkpoint,
         history_path=history_path,
         elapsed_seconds=elapsed_seconds,
+        samples_per_second=samples_per_second,
+        peak_gpu_memory_mib=peak_gpu_memory_mib,
         metrics=metrics,
     )
 
@@ -56,6 +60,8 @@ def log_sync_training(
     checkpoint: Path,
     history_path: Path,
     elapsed_seconds: float,
+    samples_per_second: float,
+    peak_gpu_memory_mib: float,
 ) -> None:
     metrics = [
         (
@@ -78,6 +84,8 @@ def log_sync_training(
         checkpoint=checkpoint,
         history_path=history_path,
         elapsed_seconds=elapsed_seconds,
+        samples_per_second=samples_per_second,
+        peak_gpu_memory_mib=peak_gpu_memory_mib,
         metrics=metrics,
     )
 
@@ -170,9 +178,15 @@ def _log_training(
     checkpoint: Path,
     history_path: Path,
     elapsed_seconds: float,
+    samples_per_second: float,
+    peak_gpu_memory_mib: float,
     metrics: Sequence[tuple[int, dict[str, float]]],
 ) -> None:
-    _require_finite(elapsed_seconds)
+    _require_positive_finite(
+        elapsed_seconds,
+        samples_per_second,
+        peak_gpu_memory_mib,
+    )
     for _, values in metrics:
         _require_finite(*values.values())
     logger.log_params(
@@ -186,6 +200,12 @@ def _log_training(
     )
     for epoch, values in metrics:
         logger.log_metrics(values, step=epoch)
+    logger.log_metrics(
+        {
+            "training.samples_per_second": samples_per_second,
+            "training.peak_gpu_memory_mib": peak_gpu_memory_mib,
+        }
+    )
     logger.log_artifact(checkpoint, artifact_path="checkpoints")
     logger.log_artifact(history_path, artifact_path="history")
 
@@ -193,6 +213,12 @@ def _log_training(
 def _require_finite(*values: float) -> None:
     if not all(math.isfinite(value) for value in values):
         raise ValueError("Training metrics must be finite")
+
+
+def _require_positive_finite(*values: float) -> None:
+    _require_finite(*values)
+    if not all(value > 0 for value in values):
+        raise ValueError("Training cost metrics must be positive")
 
 
 def _file_hash(path: Path) -> str:

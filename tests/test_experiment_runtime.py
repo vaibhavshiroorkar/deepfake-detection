@@ -1,5 +1,7 @@
 import json
+import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -28,6 +30,24 @@ def test_seed_everything_repeats_numpy_values() -> None:
     second = np.random.random(4)
 
     np.testing.assert_array_equal(first, second)
+
+
+def test_research_cuda_rejects_cpu() -> None:
+    with pytest.raises(ValueError, match="requires a CUDA device"):
+        runtime.require_research_cuda("cpu")
+
+
+def test_research_cuda_rejects_unavailable_cuda(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_torch = SimpleNamespace(
+        cuda=SimpleNamespace(is_available=lambda: False),
+        device=lambda _: SimpleNamespace(type="cuda"),
+    )
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+
+    with pytest.raises(RuntimeError, match="CUDA is unavailable"):
+        runtime.require_research_cuda("cuda")
 
 
 @pytest.mark.parametrize("values", [(0, 10), (-1, 10), (4096, -1)])

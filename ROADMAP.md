@@ -81,7 +81,7 @@ Exit gate: the final experiment manifest can reproduce every validation table.
 
 - [ ] Run the frozen FakeAVCeleb test once.
 - [ ] Run identity-strict and leave-one-method-family-out evaluations.
-- [ ] Run the locked zero-shot Deepfake-Eval evaluation.
+- [ ] Run the locked zero-shot Microsoft-Northwestern-WITNESS evaluation.
 - [ ] Report subgroup, corruption, coverage, and abstention results.
 - [ ] Complete error analysis without retuning the locked models.
 - [ ] Create the final model card from measured results.
@@ -96,6 +96,6 @@ artifacts. Claims include failures, limits, and confidence intervals.
 
 - Test at most one or two serious challengers per component.
 - Prefer a cheaper model when results are statistically indistinguishable.
-- Do not tune on the final test set or Deepfake-Eval.
+- Do not tune on the final test set or the evaluation-only MNW benchmark.
 - Do not add interface work until the evidence pipeline is complete.
 - Treat a negative fusion result as a valid final result.

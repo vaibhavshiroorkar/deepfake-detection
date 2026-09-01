@@ -60,6 +60,19 @@ def test_resolved_config_hash_skips_the_fallback_when_present() -> None:
     )
 
 
+def test_training_cost_metrics_use_completed_epochs() -> None:
+    assert cli._training_cost_metrics(
+        train_samples=24,
+        completed_epochs=3,
+        elapsed_seconds=6.0,
+        peak_gpu_memory_bytes=2 * 1024**2,
+    ) == {
+        "training_examples": 72,
+        "samples_per_second": 12.0,
+        "peak_gpu_memory_mib": 2.0,
+    }
+
+
 @pytest.mark.parametrize("branch", ["visual", "sync"])
 def test_branch_training_uses_shared_runtime_seed_function(
     branch: str, monkeypatch: pytest.MonkeyPatch
@@ -106,6 +119,53 @@ def test_branch_training_uses_shared_runtime_seed_function(
         )
 
     assert calls == [(23, True)]
+
+
+@pytest.mark.parametrize("branch", ["visual", "sync"])
+def test_branch_training_requires_the_default_cuda_device(
+    branch: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    devices: list[str] = []
+
+    class StopTraining(Exception):
+        pass
+
+    def stop_after_guard(device: str) -> None:
+        devices.append(device)
+        raise StopTraining
+
+    monkeypatch.setattr(runtime, "seed_everything", lambda *args, **kwargs: None)
+    monkeypatch.setattr(runtime, "require_research_cuda", stop_after_guard)
+
+    with pytest.raises(StopTraining):
+        main(
+            [
+                "train",
+                branch,
+                "--train-manifest",
+                "train.csv",
+                "--validation-manifest",
+                "validation.csv",
+                "--cache-index",
+                "cache.csv",
+                "--cache-root",
+                "cache",
+                "--dataset",
+                "fixture",
+                "--checkpoint",
+                "checkpoint.pt",
+                "--history",
+                "history.json",
+                "--run-id",
+                "run",
+                "--split-hash",
+                "split",
+                "--preprocessing-hash",
+                "preprocessing",
+            ]
+        )
+
+    assert devices == ["cuda"]
 
 
 def write_fixture_manifest(path: Path) -> None:

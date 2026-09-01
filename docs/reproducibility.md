@@ -106,6 +106,19 @@ authentication and is outside this project.
 - Metrics, confidence intervals, subgroup reports, and corruption reports.
 - Error or interruption details for failed runs.
 
+## Research training hardware
+
+Visual, audio, and synchronization research training requires CUDA. The CLI
+stops before loading a manifest when the requested device is not CUDA or CUDA
+is unavailable. CPU remains valid for unit tests and software fixture smoke
+runs.
+
+The current research machine has an NVIDIA GeForce RTX 5070 Ti with 16,303 MiB
+of VRAM. Each branch run records its GPU identity in the runtime snapshot. It
+also logs peak allocated GPU memory, completed training examples, samples per
+second, and elapsed time. Use a short measured branch run to forecast the full
+experiment matrix. Do not use a hardware-only estimate as a schedule claim.
+
 ## Naming
 
 Use stable experiment names:

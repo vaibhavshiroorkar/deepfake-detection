@@ -12,6 +12,13 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Replaced the former external benchmark with the evaluation-only
+  Microsoft-Northwestern-WITNESS benchmark. Defined one ignored four-dataset
+  data root and added versioned experiment and result traceability records.
+- Added a resumable FaceForensics++ downloader that removes partial transfer
+  files after failures and preserves completed payloads.
+- Required CUDA for visual, audio, and synchronization research training. Added
+  MLflow metrics for training throughput and peak allocated GPU memory.
 - Required paired MTCNN and YuNet research reports, usable tracking evidence,
   clean pinned environments, exact input report hashes, and source run IDs for
   detector decisions. Disabled the unbound downstream scalar tie-break.

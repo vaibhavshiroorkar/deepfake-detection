@@ -42,11 +42,13 @@ Planned references: `reference/architecture.md`, `reference/configuration.md`,
 
 - [Research design](research-design.md)
 - [Model selection](model-selection.md)
+- [Experiment matrix](research/experiment-matrix.md)
+- [Result traceability](research/result-traceability.md)
+- [Findings](research/findings.md)
 
 Planned evidence files: `research/questions-and-hypotheses.md`,
-`research/experiment-matrix.md`, `research/metrics-and-statistics.md`,
-`research/result-traceability.md`, `research/findings.md`,
-`research/error-analysis.md`, and `research/paper-outline.md`.
+`research/metrics-and-statistics.md`, `research/error-analysis.md`, and
+`research/paper-outline.md`.
 
 ## Decisions and project controls
 

@@ -50,7 +50,7 @@ Normalize and audit source metadata:
 
 ```powershell
 uv run ddf manifest build `
-  --input C:\datasets\fakeavceleb\full_manifest.csv `
+  --input data\FakeAVCeleb_v1.2\full_manifest.csv `
   --output artifacts\manifest.csv `
   --audit artifacts\manifest-audit.json `
   --dataset FakeAVCeleb
@@ -73,7 +73,7 @@ Build all branch views:
 ```powershell
 uv run ddf cache build `
   --manifest artifacts\manifest.csv `
-  --dataset-root C:\datasets\fakeavceleb `
+  --dataset-root data\FakeAVCeleb_v1.2 `
   --cache-root C:\deepfake-cache `
   --index artifacts\cache-index.csv `
   --audit artifacts\cache-audit.json `

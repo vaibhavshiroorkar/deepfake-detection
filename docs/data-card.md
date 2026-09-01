@@ -4,7 +4,17 @@
 
 This project studies talking-head deepfake detection. It is a research system, not an identity, moderation, or law-enforcement system.
 
-The primary development dataset is [FakeAVCeleb](https://arxiv.org/abs/2108.05080). Deepfake-Eval is the external evaluation target. Consult each dataset's current access and license terms before downloading or sharing files.
+The primary development dataset is
+[FakeAVCeleb](https://arxiv.org/abs/2108.05080). The local data root also holds
+Celeb-DF-v2 and FaceForensics++ for declared visual experiments. Their exact
+training or evaluation role must be frozen in an experiment manifest before
+use.
+
+The [Microsoft-Northwestern-WITNESS benchmark](https://github.com/microsoft/MNW)
+is the locked external evaluation target. MNW is evaluation-only. It cannot be
+used for training, validation, model selection, or threshold selection. MNW
+also prohibits commercial use. Consult every dataset's current terms before
+downloading, deriving, or sharing files.
 
 ## Record contract
 
@@ -49,6 +59,7 @@ Multi-person videos without a stable primary face are outside the core protocol.
 ## Handling rules
 
 - Keep raw videos outside Git.
+- Keep MNW out of every training and validation manifest.
 - Do not publish derived face crops without checking dataset terms.
 - Do not infer identity or protected traits beyond supplied audit metadata.
 - Do not tune models on external test labels.

@@ -429,9 +429,25 @@ def _git_commit() -> str:
     return process.stdout.strip() if process.returncode == 0 else "uncommitted"
 
 
+def _training_cost_metrics(
+    *,
+    train_samples: int,
+    completed_epochs: int,
+    elapsed_seconds: float,
+    peak_gpu_memory_bytes: int,
+) -> dict[str, int | float]:
+    training_examples = train_samples * completed_epochs
+    return {
+        "training_examples": training_examples,
+        "samples_per_second": training_examples / elapsed_seconds,
+        "peak_gpu_memory_mib": peak_gpu_memory_bytes / (1024**2),
+    }
+
+
 def _binary_branch_train(arguments: argparse.Namespace) -> int:
     started_at = time.perf_counter()
     runtime.seed_everything(arguments.seed, deterministic=True)
+    runtime.require_research_cuda(arguments.device)
 
     import torch
     from torch.utils.data import DataLoader, WeightedRandomSampler
@@ -542,6 +558,8 @@ def _binary_branch_train(arguments: argparse.Namespace) -> int:
             "pretrained": True,
         },
     }
+    torch.cuda.reset_peak_memory_stats(arguments.device)
+    training_started = time.perf_counter()
     history = fit_binary_branch(
         model=model,
         train_batches=train_loader,
@@ -549,6 +567,12 @@ def _binary_branch_train(arguments: argparse.Namespace) -> int:
         optimizer=optimizer,
         config=config,
         device=arguments.device,
+    )
+    training_cost = _training_cost_metrics(
+        train_samples=len(train_dataset),
+        completed_epochs=len(history.epochs),
+        elapsed_seconds=time.perf_counter() - training_started,
+        peak_gpu_memory_bytes=torch.cuda.max_memory_allocated(arguments.device),
     )
     metadata = RunMetadata(
         run_id=arguments.run_id,
@@ -574,6 +598,7 @@ def _binary_branch_train(arguments: argparse.Namespace) -> int:
             "checkpoint_hash": checkpoint_hash,
             "best_epoch": history.best_epoch,
             "epochs": [asdict(epoch) for epoch in history.epochs],
+            "hardware": training_cost,
         },
     )
     log_binary_training(
@@ -583,6 +608,8 @@ def _binary_branch_train(arguments: argparse.Namespace) -> int:
         checkpoint=arguments.checkpoint,
         history_path=arguments.history,
         elapsed_seconds=time.perf_counter() - started_at,
+        samples_per_second=float(training_cost["samples_per_second"]),
+        peak_gpu_memory_mib=float(training_cost["peak_gpu_memory_mib"]),
     )
     return 0
 
@@ -590,6 +617,7 @@ def _binary_branch_train(arguments: argparse.Namespace) -> int:
 def _sync_branch_train(arguments: argparse.Namespace) -> int:
     started_at = time.perf_counter()
     runtime.seed_everything(arguments.seed, deterministic=True)
+    runtime.require_research_cuda(arguments.device)
 
     import torch
     from torch.utils.data import DataLoader
@@ -693,6 +721,8 @@ def _sync_branch_train(arguments: argparse.Namespace) -> int:
             "pretrained": True,
         },
     }
+    torch.cuda.reset_peak_memory_stats(arguments.device)
+    training_started = time.perf_counter()
     history = fit_sync_branch(
         model=model,
         train_batches=train_loader,
@@ -700,6 +730,12 @@ def _sync_branch_train(arguments: argparse.Namespace) -> int:
         optimizer=optimizer,
         config=config,
         device=arguments.device,
+    )
+    training_cost = _training_cost_metrics(
+        train_samples=len(train_dataset),
+        completed_epochs=len(history.epochs),
+        elapsed_seconds=time.perf_counter() - training_started,
+        peak_gpu_memory_bytes=torch.cuda.max_memory_allocated(arguments.device),
     )
     metadata = RunMetadata(
         run_id=arguments.run_id,
@@ -725,6 +761,7 @@ def _sync_branch_train(arguments: argparse.Namespace) -> int:
             "checkpoint_hash": checkpoint_hash,
             "best_epoch": history.best_epoch,
             "epochs": [asdict(epoch) for epoch in history.epochs],
+            "hardware": training_cost,
         },
     )
     log_sync_training(
@@ -734,6 +771,8 @@ def _sync_branch_train(arguments: argparse.Namespace) -> int:
         checkpoint=arguments.checkpoint,
         history_path=arguments.history,
         elapsed_seconds=time.perf_counter() - started_at,
+        samples_per_second=float(training_cost["samples_per_second"]),
+        peak_gpu_memory_mib=float(training_cost["peak_gpu_memory_mib"]),
     )
     return 0
 

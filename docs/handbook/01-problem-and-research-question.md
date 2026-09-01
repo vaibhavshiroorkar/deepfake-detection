@@ -205,4 +205,4 @@ reported with its confidence interval, coverage, and protocol limits.
 - [FaceForensics++ paper and benchmark](https://openaccess.thecvf.com/content_ICCV_2019/html/Rossler_FaceForensics_Learning_to_Detect_Manipulated_Facial_Images_ICCV_2019_paper.html)
 - [Wav2Lip paper](https://arxiv.org/abs/2008.10010)
 - [AVFF audio-visual fusion paper](https://openaccess.thecvf.com/content/CVPR2024/html/Oorloff_AVFF_Audio-Visual_Feature_Fusion_for_Video_Deepfake_Detection_CVPR_2024_paper.html)
-- [Deepfake-Eval dataset paper](https://arxiv.org/abs/2503.02857)
+- [Microsoft-Northwestern-WITNESS benchmark](https://github.com/microsoft/MNW)
