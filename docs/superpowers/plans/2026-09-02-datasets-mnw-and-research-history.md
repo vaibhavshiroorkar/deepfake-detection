@@ -176,7 +176,7 @@ Expected: the cleanup test fails because the current script leaves its temporary
 
 - [ ] **Step 3: Normalize and harden the downloader**
 
-Make `tqdm==4.67.1` a direct project dependency and run `uv lock`. Sort imports, remove unused `random` and `urllib`, replace tabs, and apply Ruff's safe formatting fixes. Keep the upstream server paths and CLI arguments unchanged.
+Make `tqdm==4.70.0` a direct project dependency and run `uv lock`. Sort imports, remove unused `random` and `urllib`, replace tabs, and apply Ruff's safe formatting fixes. Keep the upstream server paths and CLI arguments unchanged.
 
 Replace the temporary-file block in `download_file()` with:
 
