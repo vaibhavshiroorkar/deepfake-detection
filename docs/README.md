@@ -5,6 +5,7 @@
 - [Project overview](../README.md)
 - [Research design](research-design.md)
 - [Data card](data-card.md)
+- [Project handoff](handoff.md)
 - [Documentation command reference](reference/cli.md)
 
 ## Learning handbook

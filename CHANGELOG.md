@@ -19,6 +19,8 @@ Experiment metrics belong in the experiment tracker, not this file.
   files after failures and preserves completed payloads.
 - Required CUDA for visual, audio, and synchronization research training. Added
   MLflow metrics for training throughput and peak allocated GPU memory.
+- Added a maintained project handoff with dataset, artifact, MLflow, dashboard,
+  verification, and resume instructions.
 - Required paired MTCNN and YuNet research reports, usable tracking evidence,
   clean pinned environments, exact input report hashes, and source run IDs for
   detector decisions. Disabled the unbound downstream scalar tie-break.
