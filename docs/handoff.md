@@ -17,6 +17,8 @@ multimodal research matrix is not complete.
 - Active worktree: `.worktrees\datasets-mnw-research-history`
 - Feature branch: `feat/datasets-mnw-research-history`
 - Implementation checkpoint: `268957796d366a81b5ab897dd1a4f523f1dc4b11`
+- Dashboard checkpoint: `230d368`
+- Remote branch: `origin/feat/datasets-mnw-research-history`
 - Remote YuNet archive branch: `old`
 
 The feature branch contains the dataset, tracking, CUDA, cache-index, and sync
@@ -197,8 +199,8 @@ The visual-only loader was also run on the RTX 5070 Ti with the saved
 checkpoint and one held-out validation clip. It returned probability
 `0.006948`; the stored batch evaluation contains `0.006941` for the same clip.
 
-The feature branch is suitable to push for review. It is not suitable to label
-as a finished research release.
+The feature branch is pushed and suitable for a pull request. It is not
+suitable to label as a finished research release.
 
 ## Remaining research work
 
