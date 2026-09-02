@@ -14,20 +14,20 @@ multimodal research matrix is not complete.
 ## Workspace and Git
 
 - Primary checkout: `C:\Users\vaibh\Documents\GitHub\deepfake-generalization`
-- Active worktree: `.worktrees\datasets-mnw-research-history`
-- Feature branch: `feat/datasets-mnw-research-history`
+- Active branch: `main`
 - Implementation checkpoint: `268957796d366a81b5ab897dd1a4f523f1dc4b11`
 - Dashboard checkpoint: `230d368`
-- Remote branch: `origin/feat/datasets-mnw-research-history`
+- Archived feature branch: `origin/feat/datasets-mnw-research-history`
 - Remote YuNet archive branch: `old`
 
-The feature branch contains the dataset, tracking, CUDA, cache-index, and sync
-determinism changes. It has not been merged into `main`. Raw data, checkpoints,
-caches, MLflow storage, and run outputs are ignored by Git.
+`main` contains the dataset, tracking, CUDA, cache-index, sync determinism,
+dashboard, and handoff changes. The former linked worktree has been retired.
+Raw data, checkpoints, caches, MLflow storage, and run outputs are ignored by
+Git.
 
-The primary checkout has an untracked
-`src/deepfake_detection/data/download.py`. Preserve it until it is compared
-with the tracked downloader on the feature branch.
+The original untracked FaceForensics++ downloader was compared with the
+tracked version before integration. The tracked version preserves the upstream
+behavior and adds safe cleanup for partial downloads.
 
 ## Dataset state
 
@@ -131,7 +131,7 @@ MLflow uses:
 - Artifacts: `mlartifacts`
 - UI: `http://127.0.0.1:5000`
 
-Start the UI from the feature worktree without changing the installed CUDA
+Start the UI from the main checkout without changing the installed CUDA
 environment:
 
 ```powershell
@@ -171,7 +171,7 @@ development split and does not establish cross-dataset generalization.
 The dashboard does not expose multimodal artifact loading. The current fusion
 fixture is not a research model and must not be used for a multimodal claim.
 
-Start the dashboard from the feature worktree:
+Start the dashboard from the main checkout:
 
 ```powershell
 .\.venv\Scripts\python.exe -m streamlit run `
@@ -183,7 +183,7 @@ Open `http://127.0.0.1:8501`.
 
 ## Verification state
 
-The feature worktree passes:
+The main checkout passes:
 
 ```powershell
 uv run --no-sync pytest -q
@@ -199,8 +199,8 @@ The visual-only loader was also run on the RTX 5070 Ti with the saved
 checkpoint and one held-out validation clip. It returned probability
 `0.006948`; the stored batch evaluation contains `0.006941` for the same clip.
 
-The feature branch is pushed and suitable for a pull request. It is not
-suitable to label as a finished research release.
+The verified changes are integrated into `main`. The project is not suitable
+to label as a finished research release.
 
 ## Remaining research work
 
@@ -219,7 +219,7 @@ not implemented.
 
 ## Resume FaceForensics++
 
-Run the ignored supervisor from the feature worktree:
+Run the ignored supervisor from the main checkout:
 
 ```powershell
 $script = Resolve-Path runs\prototype-20260902\download-supervisor.ps1
