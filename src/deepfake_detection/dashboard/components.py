@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import streamlit as st
 
 from deepfake_detection.dashboard.navigation import PageSpec, PageState
-from deepfake_detection.dashboard.state import UploadedClip, uploaded_clip
+
+if TYPE_CHECKING:
+    from deepfake_detection.dashboard.state import UploadedClip
 
 
 def render_page_header(step: str, title: str, summary: str) -> None:
@@ -13,6 +17,8 @@ def render_page_header(step: str, title: str, summary: str) -> None:
 
 
 def require_upload() -> UploadedClip | None:
+    from deepfake_detection.dashboard.state import uploaded_clip
+
     clip = uploaded_clip(st.session_state)
     if clip is None:
         st.info("Start with 1. Video input, then return to this page.")

@@ -6,9 +6,12 @@ from collections.abc import Iterator, Mapping, MutableMapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from deepfake_detection.inference.predictor import PredictionResult
 from deepfake_detection.views.contracts import PreparedClip
+
+if TYPE_CHECKING:
+    from deepfake_detection.inference.predictor import PredictionResult
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,4 +87,6 @@ def prediction_for_upload(
     value = values.get("dashboard.prediction")
     if not isinstance(value, tuple) or len(value) != 2 or value[0] != clip_sha256:
         return None
+    from deepfake_detection.inference.predictor import PredictionResult
+
     return value[1] if isinstance(value[1], PredictionResult) else None
