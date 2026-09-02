@@ -96,7 +96,7 @@ mouth [B,T,C,H,W] -> ResNet-18 per frame -> [B,T,D_v]
                     -> projection -> video Transformer -> V [B,T,P]
 
 audio [B,S] -> Wav2Vec2 Base -> [B,U,D_a] -> projection [B,U,P]
-              -> linear interpolation to T -> audio Transformer -> A [B,T,P]
+              -> nearest timestamp selection to T -> audio Transformer -> A [B,T,P]
 
 V,A -> per-time cosine similarities [B,T]
     -> mean(V), mean(A), mean(similarity), max(similarity) [B,2P+2]
@@ -109,7 +109,7 @@ width, normally `D_a = 768`. Both project to `P = 256` by default. Each
 modality then has two Transformer encoder layers, four attention heads, and a
 feed-forward width of `4P`.
 
-For video token `v_(b,t)` and interpolated audio token `a_(b,t)`, the aligned
+For video token `v_(b,t)` and selected audio token `a_(b,t)`, the aligned
 similarity is cosine similarity:
 
 ```text
@@ -126,8 +126,8 @@ but it could not ask whether the matching evidence occurs at the same time.
 Take `B = 2`, `T = 50`, `D_v = 512`, `U = 99`, `D_a = 768`, and `P = 256`.
 The 100 mouth frames are reshaped to `[100,3,112,112]`. ResNet returns
 `[100,512]`, which becomes `[2,50,512]` and then `V = [2,50,256]`.
-Wav2Vec2 returns `[2,99,768]`. Projection gives `[2,99,256]`. Interpolation
-and the audio Transformer give `A = [2,50,256]`. Cosine products give
+Wav2Vec2 returns `[2,99,768]`. Projection gives `[2,99,256]`. Nearest
+timestamp selection and the audio Transformer give `A = [2,50,256]`. Cosine products give
 `[2,50]`. Pooling gives `[2,514]` because `2P + 2 = 514`. The head returns
 eight logits per clip, `[2,8]`.
 
@@ -207,8 +207,8 @@ detection, temporal localization, calibration, runtime, and memory under
   may not cover subtle artifacts produced by modern generators.
 - Offset classification is easy to inspect, but seven discrete offsets do not
   model every real timing error.
-- Linear interpolation gives equal token counts, but it can blur fast audio
-  changes.
+- Nearest timestamp selection has deterministic CUDA backward and preserves
+  local audio tokens, but it discards tokens between selected positions.
 - Separate Transformers model within-modality time before comparison, but add
   cost and can overfit small data.
 - Clip-level contrastive means encourage correspondence, but do not directly
@@ -218,7 +218,7 @@ detection, temporal localization, calibration, runtime, and memory under
 
 - Transformer and Wav2Vec2 calls receive no valid-length padding masks.
 - The offset head reduces its similarity sequence to mean and maximum values.
-- Audio tokens are linearly resized to video length instead of aligned by
+- Audio tokens use nearest timestamp selection instead of alignment by
   exact encoder receptive-field timestamps.
 - Cross-identity mismatches may expose speaker or recording shortcuts.
 - The primary contrastive term uses clip means after per-time tokens are made.

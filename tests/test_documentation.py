@@ -275,6 +275,16 @@ def test_markdown_checker_accepts_valid_ascii_documentation(tmp_path: Path) -> N
     assert check_markdown_tree(tmp_path) == ()
 
 
+def test_markdown_checker_ignores_external_dataset_documentation(
+    tmp_path: Path,
+) -> None:
+    readme = tmp_path / "data" / "external" / "README.md"
+    readme.parent.mkdir(parents=True)
+    readme.write_text("External\u2014text.\n", encoding="utf-8")
+
+    assert check_markdown_tree(tmp_path) == ()
+
+
 def test_markdown_checker_reports_broken_links_and_prose_rules(
     tmp_path: Path,
 ) -> None:

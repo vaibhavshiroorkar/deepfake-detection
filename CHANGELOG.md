@@ -37,6 +37,11 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ### Fixed
 
+- Cache indexes now store paths relative to the index directory, so training
+  can load caches created below that directory.
+- Sync token resizing now uses deterministic nearest timestamp selection. This
+  permits CUDA backward while deterministic algorithms remain required.
+- Documentation checks now skip external files below the ignored data root.
 - Detector evidence now binds thresholds to calibration data, hashes sequence
   identity, uses fixed complete source bootstraps, counts stable-track identity
   events, and records backend-derived CPU runtime metadata.

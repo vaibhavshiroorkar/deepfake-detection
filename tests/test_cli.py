@@ -197,6 +197,20 @@ def write_fixture_manifest(path: Path) -> None:
             )
 
 
+def test_cache_index_value_round_trips_from_index_directory(tmp_path: Path) -> None:
+    index = tmp_path / "run" / "cache-index.csv"
+    cache_path = tmp_path / "run" / "cache" / "dataset" / "clip.npz"
+
+    value = cli._cache_index_value(cache_path, index=index)
+
+    index.parent.mkdir(parents=True)
+    index.write_text(
+        f"clip_id,cache_path\nclip-1,{value}\n",
+        encoding="utf-8",
+    )
+    assert cli._read_cache_index(index)["clip-1"] == cache_path.resolve()
+
+
 def test_manifest_and_split_commands_emit_reproducible_artifacts(
     tmp_path: Path,
 ) -> None:

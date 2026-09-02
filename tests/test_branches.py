@@ -4,7 +4,10 @@ import torch
 from torch import nn
 
 from deepfake_detection.branches.audio import AudioSpoofBranch
-from deepfake_detection.branches.sync import SynchronizationBranch
+from deepfake_detection.branches.sync import (
+    SynchronizationBranch,
+    _nearest_temporal_tokens,
+)
 from deepfake_detection.branches.visual import VisualArtifactBranch
 
 
@@ -81,3 +84,16 @@ def test_sync_branch_keeps_time_axis_and_scores_offsets() -> None:
     assert output.audio_tokens.shape == (2, 5, 8)
     assert output.offset_logits.shape == (2, 8)
     assert output.aligned_similarity.shape == (2, 5)
+
+
+def test_nearest_temporal_tokens_supports_deterministic_backward() -> None:
+    tokens = torch.arange(6, dtype=torch.float32).reshape(1, 6, 1)
+    tokens.requires_grad_()
+
+    with torch.backends.cudnn.flags(deterministic=True):
+        resized = _nearest_temporal_tokens(tokens, size=4)
+        resized.sum().backward()
+
+    assert resized[:, 0].item() == 0
+    assert resized[:, -1].item() == 5
+    assert tokens.grad is not None

@@ -217,7 +217,14 @@ def _cache_build(arguments: argparse.Namespace) -> int:
         writer = csv.DictWriter(handle, fieldnames=("clip_id", "cache_path"))
         writer.writeheader()
         for clip_id, cache_path in sorted(report.cache_index.items()):
-            writer.writerow({"clip_id": clip_id, "cache_path": str(cache_path)})
+            writer.writerow(
+                {
+                    "clip_id": clip_id,
+                    "cache_path": str(
+                        _cache_index_value(cache_path, index=arguments.index)
+                    ),
+                }
+            )
     _write_json(
         arguments.audit,
         {
@@ -413,6 +420,14 @@ def _read_cache_index(path: Path) -> dict[str, Path]:
         )
         for row in rows
     }
+
+
+def _cache_index_value(cache_path: Path, *, index: Path) -> Path:
+    resolved = cache_path.resolve()
+    try:
+        return resolved.relative_to(index.parent.resolve())
+    except ValueError:
+        return resolved
 
 
 def _git_commit() -> str:

@@ -17,7 +17,7 @@ class DocumentationIssue:
     message: str
 
 
-IGNORED_PARTS = frozenset({".git", ".pytest_cache", ".venv"})
+IGNORED_PARTS = frozenset({".git", ".pytest_cache", ".venv", "data"})
 INCOMPLETE_MARKERS = ("[IN" + "COMPLETE]", "PENDING" + " CONTENT")
 FORBIDDEN_CHARACTERS = frozenset(
     {"\u2013", "\u2014", "\u2022", "\u00b7", "\u2026", "\u2192"}

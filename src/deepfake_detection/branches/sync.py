@@ -10,6 +10,24 @@ from .audio import _audio_tokens
 from .visual import _flatten_features
 
 
+def _nearest_temporal_tokens(tokens: Tensor, *, size: int) -> Tensor:
+    if tokens.ndim != 3:
+        raise ValueError("Temporal tokens must have shape [batch, time, features]")
+    if size <= 0 or tokens.shape[1] < size:
+        raise ValueError("Temporal token count must be at least the requested size")
+    indices = (
+        torch.linspace(
+            0,
+            tokens.shape[1] - 1,
+            steps=size,
+            device=tokens.device,
+        )
+        .round()
+        .long()
+    )
+    return tokens.index_select(1, indices)
+
+
 @dataclass(frozen=True, slots=True)
 class SyncOutput:
     video_tokens: Tensor
@@ -72,12 +90,7 @@ class SynchronizationBranch(nn.Module):
         video = self.video_temporal(self.video_projection(video))
 
         audio = self.audio_projection(_audio_tokens(self.audio_encoder(waveform)))
-        audio = functional.interpolate(
-            audio.transpose(1, 2),
-            size=time,
-            mode="linear",
-            align_corners=False,
-        ).transpose(1, 2)
+        audio = _nearest_temporal_tokens(audio, size=time)
         audio = self.audio_temporal(audio)
 
         normalized_video = functional.normalize(video, dim=-1)
