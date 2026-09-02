@@ -22,6 +22,9 @@ def test_dashboard_defaults_find_the_local_visual_baseline() -> None:
 def test_dashboard_defaults_bind_the_frozen_training_protocol() -> None:
     defaults = dashboard_defaults(root=Path("project"))
 
+    assert defaults.preprocessing_hash == (
+        "fd372dbe6bb64f359db4d57b05c3b5cd27ed6660f2bb8bdc50567224e0928c96"
+    )
     assert defaults.split_hash == (
         "3255ae334536336c73058941285925f3dd5b094c02b1037e19f379c6f45db30c"
     )
