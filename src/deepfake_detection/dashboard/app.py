@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import streamlit as st
 
-from deepfake_detection.dashboard.navigation import PAGES, PageState
+from deepfake_detection.dashboard.components import pipeline_stage_status
+from deepfake_detection.dashboard.navigation import PAGES
 from deepfake_detection.dashboard.state import (
     prediction_for_upload,
     prepared_for_upload,
@@ -68,18 +69,6 @@ st.markdown(
     }
     [data-testid="stSidebar"] h2 {
         font-size: 1.2rem;
-    }
-    [data-testid="stSidebar"] [data-testid="stPageLink"] a {
-        border-left: 3px solid transparent;
-        border-radius: 0;
-        color: var(--ink);
-        padding: .4rem .6rem;
-    }
-    [data-testid="stSidebar"] [data-testid="stPageLink"] a[aria-current="page"] {
-        background: #DDE7F3;
-        border-left-color: var(--cobalt);
-        color: var(--cobalt);
-        font-weight: 700;
     }
     .pipeline-state {
         color: #51626D;
@@ -149,18 +138,13 @@ def _render_sidebar(selected_slug: str) -> None:
                 label=page.navigation_label,
                 use_container_width=True,
             )
-            if page.slug == selected_slug:
-                stage_state = "current"
-            elif page.state is not PageState.READY:
-                stage_state = page.state.value
-            elif page.slug == "video-input" and clip is not None:
-                stage_state = "complete"
-            elif page.slug == "preprocessing" and prepared is not None:
-                stage_state = "complete"
-            elif page.slug in {"visual-model", "prediction"} and prediction is not None:
-                stage_state = "complete"
-            else:
-                stage_state = "ready"
+            stage_state = pipeline_stage_status(
+                page,
+                selected_slug=selected_slug,
+                has_upload=clip is not None,
+                has_prepared=prepared is not None,
+                has_prediction=prediction is not None,
+            )
             st.markdown(
                 f'<div class="pipeline-state {stage_state}">{stage_state}</div>',
                 unsafe_allow_html=True,
