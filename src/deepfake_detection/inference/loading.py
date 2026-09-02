@@ -21,7 +21,7 @@ from deepfake_detection.views.media import FFmpegMediaDecoder
 from deepfake_detection.views.preprocessor import Preprocessor
 from deepfake_detection.views.timeline import ViewConfig
 
-from .predictor import PredictionEngine
+from .predictor import PredictionEngine, VisualPredictionEngine
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,6 +33,24 @@ class InferenceConfig:
     code_version: str
     threshold: float = 0.5
     audio_model: str = "facebook/wav2vec2-base"
+    device: str = "cuda"
+    detector: Literal["mtcnn", "yunet"] = "mtcnn"
+    tracker: Literal["greedy_iou", "constant_velocity"] = "greedy_iou"
+    crop_mode: Literal["box", "landmark"] = "box"
+    model_path: Path | None = None
+    expected_model_hash: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class VisualInferenceConfig:
+    visual_checkpoint: Path
+    code_version: str
+    expected_checkpoint_sha256: str
+    expected_run_id: str
+    expected_split_hash: str
+    expected_git_commit: str
+    expected_seed: int
+    threshold: float = 0.5
     device: str = "cuda"
     detector: Literal["mtcnn", "yunet"] = "mtcnn"
     tracker: Literal["greedy_iou", "constant_velocity"] = "greedy_iou"
@@ -150,6 +168,48 @@ def load_prediction_engine(config: InferenceConfig) -> PredictionEngine:
         audio_model=audio,
         sync_model=sync,
         fusion=fusion,
+        threshold=config.threshold,
+        device=config.device,
+    )
+
+
+def load_visual_prediction_engine(
+    config: VisualInferenceConfig,
+) -> VisualPredictionEngine:
+    if _file_sha256(config.visual_checkpoint) != config.expected_checkpoint_sha256:
+        raise ValueError("Visual checkpoint does not match the expected SHA-256")
+    visual = build_efficientnet_b0(pretrained=False)
+    state = load_checkpoint(config.visual_checkpoint, model=visual)
+    provenance = validate_branch_states({"visual": state})
+    metadata = state.metadata
+    if metadata.run_id != config.expected_run_id:
+        raise ValueError("Visual checkpoint does not match the expected run ID")
+    if metadata.split_hash != config.expected_split_hash:
+        raise ValueError("Visual checkpoint does not match the expected split hash")
+    if metadata.git_commit != config.expected_git_commit:
+        raise ValueError("Visual checkpoint does not match the expected Git commit")
+    if metadata.seed != config.expected_seed:
+        raise ValueError("Visual checkpoint does not match the expected seed")
+    preprocessor = build_preprocessor(
+        code_version=config.code_version,
+        device=config.device,
+        detector=config.detector,
+        tracker=config.tracker,
+        crop_mode=config.crop_mode,
+        model_path=config.model_path,
+        expected_model_hash=config.expected_model_hash,
+    )
+    if (
+        preprocessing_config_hash(
+            config=preprocessor.config,
+            code_version=config.code_version,
+        )
+        != provenance.preprocessing_hash
+    ):
+        raise ValueError("Runtime preprocessing does not match the checkpoint")
+    return VisualPredictionEngine(
+        preprocessor=preprocessor,
+        visual_model=visual,
         threshold=config.threshold,
         device=config.device,
     )

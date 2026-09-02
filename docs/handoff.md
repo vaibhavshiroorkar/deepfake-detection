@@ -2,9 +2,10 @@
 
 ## Current outcome
 
-The repository has a trained visual development baseline, GPU prototypes for
-the implemented branches, local MLflow history, four dataset directories, and
-a verified MNW checkout. FaceForensics++ is paused and incomplete.
+The repository has a trained visual development baseline, a matching
+visual-only dashboard mode, GPU prototypes for the implemented branches,
+local MLflow history, four dataset directories, and a verified MNW checkout.
+FaceForensics++ is paused and incomplete.
 
 The visual baseline is not a final generalization result. It has only been
 evaluated on a source-disjoint FakeAVCeleb validation split. The full
@@ -155,15 +156,28 @@ The Streamlit dashboard exists at
 Its presentation view model has unit coverage in
 [`tests/test_dashboard_view.py`](../tests/test_dashboard_view.py).
 
-The dashboard has not been updated for the new visual-only baseline. It still
-requires visual, audio, sync, and fusion artifacts with compatible provenance.
-The current fixture fusion model is not compatible with the development visual
-checkpoint. The dashboard therefore cannot present a valid end-to-end verdict
-from the new checkpoint yet.
+The dashboard now runs a provenance-checked visual-only mode. Its local
+configuration points to `runs/initial-20260902/visual-initial.pt`,
+preprocessing version `2689577`, and the fixed threshold `0.5`. The loader
+checks the checkpoint SHA-256, MLflow run ID, split hash, training commit,
+seed, and preprocessing hash before loading the model.
 
-Before calling the frontend ready, add a clearly labeled visual-only mode or
-train a compatible multimodal artifact set. Add defaults through a validated
-configuration instead of hard-coding machine paths.
+Each visual-only result names its limited evidence scope. It states that the
+reported score has only been validated on a source-disjoint FakeAVCeleb
+development split and does not establish cross-dataset generalization.
+
+The dashboard does not expose multimodal artifact loading. The current fusion
+fixture is not a research model and must not be used for a multimodal claim.
+
+Start the dashboard from the feature worktree:
+
+```powershell
+.\.venv\Scripts\python.exe -m streamlit run `
+  src\deepfake_detection\dashboard\app.py `
+  --server.address 127.0.0.1
+```
+
+Open `http://127.0.0.1:8501`.
 
 ## Verification state
 
@@ -177,7 +191,11 @@ uv run --no-sync ddf-docs
 git diff --check
 ```
 
-Pytest collects 360 tests. The latest run had no failures and one skip.
+Pytest collects 369 tests. The latest run had no failures and one skip.
+
+The visual-only loader was also run on the RTX 5070 Ti with the saved
+checkpoint and one held-out validation clip. It returned probability
+`0.006948`; the stored batch evaluation contains `0.006941` for the same clip.
 
 The feature branch is suitable to push for review. It is not suitable to label
 as a finished research release.
@@ -193,7 +211,6 @@ as a finished research release.
 7. Run seeds 17, 29, and 43.
 8. Run method-holdout and subgroup analysis.
 9. Run the locked MNW evaluation once model selection is complete.
-10. Update the dashboard for the selected inference contract.
 
 ConvNeXt, WavLM, AASIST, and SyncNet-style candidates remain planned and are
 not implemented.

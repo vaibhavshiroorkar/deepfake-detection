@@ -5,8 +5,15 @@ from pathlib import Path
 
 import streamlit as st
 
+from deepfake_detection.dashboard.configuration import dashboard_defaults
 from deepfake_detection.dashboard.view_model import build_view_model
-from deepfake_detection.inference.loading import InferenceConfig, load_prediction_engine
+from deepfake_detection.inference.loading import (
+    VisualInferenceConfig,
+    load_visual_prediction_engine,
+)
+
+_THRESHOLD = 0.5
+_DEVICE = "cuda"
 
 st.set_page_config(
     page_title="Evidence Gate",
@@ -52,6 +59,22 @@ st.markdown(
     .channel.available { border-top: 5px solid var(--teal); }
     .channel.missing { border-top: 5px solid var(--amber); }
     .channel strong { display: block; text-transform: uppercase; letter-spacing: .08em; }
+    .scope {
+        display: inline-block;
+        margin: 0 0 1rem;
+        padding: .35rem .55rem;
+        border: 1px solid var(--cobalt);
+        color: var(--cobalt);
+        font: 700 .78rem/1 "Cascadia Mono", Consolas, monospace;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+    }
+    .limits {
+        border: 1px solid var(--line);
+        background: #E8EFF3;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0 1.5rem;
+    }
     .result {
         border-left: 8px solid var(--cobalt);
         background: white;
@@ -75,26 +98,23 @@ st.markdown(
 
 
 @st.cache_resource
-def _engine(
-    visual_checkpoint: str,
-    audio_checkpoint: str,
-    sync_checkpoint: str,
-    fusion_model: str,
-    code_version: str,
-    threshold: float,
-    device: str,
-):
-    return load_prediction_engine(
-        InferenceConfig(
-            visual_checkpoint=Path(visual_checkpoint),
-            audio_checkpoint=Path(audio_checkpoint),
-            sync_checkpoint=Path(sync_checkpoint),
-            fusion_model=Path(fusion_model),
-            code_version=code_version,
-            threshold=threshold,
-            device=device,
+def _visual_engine():
+    return load_visual_prediction_engine(
+        VisualInferenceConfig(
+            visual_checkpoint=defaults.visual_checkpoint,
+            code_version=defaults.code_version,
+            expected_checkpoint_sha256=defaults.checkpoint_sha256,
+            expected_run_id=defaults.run_id,
+            expected_split_hash=defaults.split_hash,
+            expected_git_commit=defaults.git_commit,
+            expected_seed=defaults.seed,
+            threshold=_THRESHOLD,
+            device=_DEVICE,
         )
     )
+
+
+defaults = dashboard_defaults(root=Path.cwd())
 
 
 st.markdown(
@@ -102,32 +122,23 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.write(
-    "Inspect one talking-head video. The system issues a verdict only when visual, "
-    "audio, and synchronization evidence are all available."
+    "Inspect one talking-head video. Every result states which evidence was used "
+    "and which research limits still apply."
 )
 
 with st.sidebar:
-    st.header("Model files")
-    visual_checkpoint = st.text_input("Visual checkpoint")
-    audio_checkpoint = st.text_input("Audio checkpoint")
-    sync_checkpoint = st.text_input("Sync checkpoint")
-    fusion_model = st.text_input("Fusion model")
-    code_version = st.text_input("Preprocessing version", value="v1")
-    threshold = st.slider("Decision threshold", 0.0, 1.0, 0.5, 0.01)
-    device = st.selectbox("Compute device", ("cuda", "cpu"))
+    st.header("Frozen baseline")
+    st.write("Visual-only EfficientNet-B0 plus GRU")
+    st.caption(f"Checkpoint: {defaults.visual_checkpoint.name}")
+    st.caption(f"Run: {defaults.run_id}")
+    st.caption(f"Decision threshold: {_THRESHOLD:.2f}")
+    st.caption(f"Compute device: {_DEVICE}")
 
 upload = st.file_uploader("Video file", type=("mp4", "mov", "mkv", "avi"))
 
 if st.button("Analyze video", type="primary", disabled=upload is None):
-    configured = {
-        "Visual checkpoint": visual_checkpoint,
-        "Audio checkpoint": audio_checkpoint,
-        "Sync checkpoint": sync_checkpoint,
-        "Fusion model": fusion_model,
-    }
-    missing = [name for name, value in configured.items() if not value]
-    if missing:
-        st.error(f"Set these model files first: {', '.join(missing)}")
+    if not defaults.visual_checkpoint.is_file():
+        st.error(f"Visual checkpoint is missing: {defaults.visual_checkpoint}")
     else:
         suffix = Path(upload.name).suffix or ".mp4"
         temporary_path: Path | None = None
@@ -136,19 +147,16 @@ if st.button("Analyze video", type="primary", disabled=upload is None):
                 temporary_path = Path(handle.name)
                 handle.write(upload.getbuffer())
             with st.spinner("Checking evidence coverage and model scores"):
-                result = _engine(
-                    visual_checkpoint,
-                    audio_checkpoint,
-                    sync_checkpoint,
-                    fusion_model,
-                    code_version,
-                    threshold,
-                    device,
-                ).predict(temporary_path)
-            view = build_view_model(result)
+                result = _visual_engine().predict(temporary_path)
+            view = build_view_model(result, threshold=_THRESHOLD)
+            st.markdown(
+                f'<div class="scope">{view.mode_label}</div>',
+                unsafe_allow_html=True,
+            )
             st.markdown(
                 f'<div class="result {view.verdict}"><h2>{view.title}</h2>'
-                f'<div class="score">{view.final_score}</div></div>',
+                f'<div class="score">{view.final_score}</div>'
+                f"<div>{view.threshold_label}</div></div>",
                 unsafe_allow_html=True,
             )
             gate = (
@@ -160,6 +168,13 @@ if st.button("Analyze video", type="primary", disabled=upload is None):
                 + "</div>"
             )
             st.markdown(gate, unsafe_allow_html=True)
+            if view.limitations:
+                st.markdown(
+                    '<div class="limits"><strong>Research limits</strong><br>'
+                    + "<br>".join(view.limitations)
+                    + "</div>",
+                    unsafe_allow_html=True,
+                )
             if view.blockers:
                 st.subheader("Why no final verdict was issued")
                 for blocker in view.blockers:

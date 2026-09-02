@@ -207,6 +207,64 @@ class Preprocessor:
             max_gap=self.config.track_max_gap,
         )
 
+    def prepare_visual(self, record: ClipRecord, media_path: Path) -> PreparedClip:
+        info = self.decoder.probe(media_path)
+        if info.duration_sec <= 0:
+            raise ValueError("Video duration must be positive")
+        content_start = (
+            min(record.leading_silence_sec, info.duration_sec)
+            if self.config.remove_leading_silence
+            else 0.0
+        )
+        if content_start >= info.duration_sec:
+            content_start = 0.0
+        timestamps = uniform_timestamps(
+            duration_sec=info.duration_sec,
+            count=self.config.visual_frames,
+            start_sec=content_start,
+        )
+        frames = self.decoder.read_frames(media_path, timestamps)
+        if len(frames) != self.config.visual_frames:
+            raise ValueError("Decoder returned the wrong number of visual frames")
+        track = self._track(frames)
+        visual_view = _face_view(
+            frames,
+            track,
+            height=self.config.visual_height,
+            width=self.config.visual_width,
+            margin=self.config.crop_margin,
+        )
+        quality = QualityReport(
+            face_coverage=track.coverage,
+            stable_face_track=track.stable,
+            audio_present=info.audio_present,
+            audio_clipped=False,
+            av_duration_delta_sec=(
+                abs(info.duration_sec - info.audio_duration_sec)
+                if info.audio_present
+                else 0.0
+            ),
+        )
+        return PreparedClip(
+            clip_id=record.clip_id,
+            visual_view=visual_view,
+            audio_view=None,
+            sync_video_view=None,
+            sync_audio_view=None,
+            quality=quality,
+            preprocessing_fingerprint=cache_fingerprint(
+                media_path,
+                dataset=record.dataset,
+                config=self.config,
+                code_version=self.code_version,
+                leading_silence_sec=record.leading_silence_sec,
+            ),
+            preprocessing_config_hash=preprocessing_config_hash(
+                config=self.config,
+                code_version=self.code_version,
+            ),
+        )
+
     def prepare(self, record: ClipRecord, media_path: Path) -> PreparedClip:
         info = self.decoder.probe(media_path)
         if info.duration_sec <= 0:

@@ -134,6 +134,13 @@ class ShortDecoder(FixtureDecoder):
 class RecordingDecoder(FixtureDecoder):
     def __init__(self) -> None:
         self.audio_requests: list[tuple[float, float]] = []
+        self.frame_requests: list[tuple[float, ...]] = []
+
+    def read_frames(
+        self, path: Path, timestamps_sec: tuple[float, ...]
+    ) -> tuple[np.ndarray, ...]:
+        self.frame_requests.append(timestamps_sec)
+        return super().read_frames(path, timestamps_sec)
 
     def read_audio(
         self,
@@ -200,6 +207,27 @@ def test_preprocessor_builds_all_three_exact_views(tmp_path: Path) -> None:
     assert float(prepared.sync_audio_view.std()) == pytest.approx(1.0, abs=1e-6)
     assert prepared.sync_audio_context.shape == (42_240,)
     assert prepared.quality.full_fusion_blockers() == ()
+
+
+def test_visual_preprocessing_skips_audio_and_sync_work(tmp_path: Path) -> None:
+    media = tmp_path / "clip.mp4"
+    media.write_bytes(b"fixture")
+    decoder = RecordingDecoder()
+    preprocessor = Preprocessor(
+        decoder=decoder,
+        detector=FixtureDetector(),
+        config=ViewConfig(),
+        code_version="test",
+    )
+
+    prepared = preprocessor.prepare_visual(fixture_record(), media)
+
+    assert prepared.visual_view.shape == (16, 3, 224, 224)
+    assert prepared.audio_view is None
+    assert prepared.sync_video_view is None
+    assert prepared.sync_audio_view is None
+    assert len(decoder.frame_requests) == 1
+    assert decoder.audio_requests == []
 
 
 def test_default_box_crop_matches_explicit_box_mode(tmp_path: Path) -> None:

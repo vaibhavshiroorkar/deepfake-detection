@@ -33,16 +33,22 @@ Use the `cu130` extra instead of `cpu` on a compatible NVIDIA system. Do not ins
 ## Local tracked smoke
 
 From the repository root, run the local smoke fixture and then start the local
-MLflow UI:
+MLflow UI. Use the installed executable so `uv` does not change the CUDA
+environment while starting the server:
 
 ```powershell
 uv sync --extra media --extra tracking
 uv run --extra media --extra tracking ddf run --root . --config configs/local.yaml --config configs/smoke.yaml
-uv run --extra media --extra tracking mlflow server --host 127.0.0.1 --backend-store-uri sqlite:///mlflow.db
+$researchRoot = (Get-Location).Path.Replace('\', '/')
+.\.venv\Scripts\mlflow.exe server `
+  --backend-store-uri "sqlite:///$researchRoot/mlflow.db" `
+  --default-artifact-root "file:///$researchRoot/mlartifacts" `
+  --host 127.0.0.1 `
+  --port 5000
 ```
 
 The smoke metrics are software fixture evidence. They are not research
-findings.
+findings. Open `http://127.0.0.1:5000`, then select an experiment and run.
 
 ## Workflow
 
@@ -184,13 +190,24 @@ Only load fusion files created by this project. Joblib files can execute code du
 
 ## Dashboard
 
-The dashboard calls the same prediction engine as the CLI:
+The dashboard defaults to the trained visual development baseline when its
+local checkpoint is present:
 
 ```powershell
-uv run --extra dashboard streamlit run src\deepfake_detection\dashboard\app.py
+.\.venv\Scripts\python.exe -m streamlit run `
+  src\deepfake_detection\dashboard\app.py `
+  --server.address 127.0.0.1
 ```
 
-It shows the visual, audio, and sync coverage gate before the verdict. It contains no generated attention or placeholder explanations.
+Open `http://127.0.0.1:8501`. The dashboard is restricted to the local host.
+It uses `runs\initial-20260902\visual-initial.pt`, preprocessing version
+`2689577`, and the fixed evaluation threshold of `0.5`. It verifies the exact
+checkpoint hash and training provenance before loading the model.
+
+Visual-only results state that the model has only been validated on the
+source-disjoint FakeAVCeleb development split. The dashboard does not expose
+multimodal artifact loading until a compatible research artifact set exists.
+It shows the evidence coverage gate before any verdict.
 
 ## Repository rules
 

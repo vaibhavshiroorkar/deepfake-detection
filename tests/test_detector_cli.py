@@ -5,8 +5,11 @@ import hashlib
 import json
 from dataclasses import asdict
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+import torch
+from torch import nn
 
 from deepfake_detection.benchmarks.detector_metrics import (
     BOOTSTRAP_SEED,
@@ -21,7 +24,10 @@ from deepfake_detection.evaluation.bootstrap import BootstrapInterval
 from deepfake_detection.experiments.configuration import load_configuration
 from deepfake_detection.experiments.runtime import RuntimeSnapshot
 from deepfake_detection.inference import loading
+from deepfake_detection.training.checkpoints import RunMetadata, save_checkpoint
+from deepfake_detection.views.cache import preprocessing_config_hash
 from deepfake_detection.views.model_assets import YUNET_SHA256
+from deepfake_detection.views.timeline import ViewConfig
 
 
 def _runtime() -> dict[str, object]:
@@ -525,6 +531,162 @@ def test_inference_config_preserves_preprocessing_defaults() -> None:
     assert config.crop_mode == "box"
     assert config.model_path is None
     assert config.expected_model_hash is None
+
+
+def test_visual_inference_loader_accepts_matching_checkpoint_provenance(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    code_version = "visual-revision"
+    view_config = ViewConfig(detector_model_sha256="a" * 64)
+    checkpoint = tmp_path / "visual.pt"
+    model = nn.Linear(2, 1)
+    checkpoint_sha256 = save_checkpoint(
+        checkpoint,
+        model=model,
+        optimizer=torch.optim.SGD(model.parameters(), lr=0.1),
+        metadata=RunMetadata(
+            run_id="visual-run",
+            branch="visual",
+            git_commit="abc123",
+            split_hash="split123",
+            preprocessing_hash=preprocessing_config_hash(
+                config=view_config,
+                code_version=code_version,
+            ),
+            config_hash="config123",
+            seed=17,
+        ),
+        epoch=2,
+    )
+    monkeypatch.setattr(
+        loading,
+        "build_efficientnet_b0",
+        lambda *, pretrained: nn.Linear(2, 1),
+    )
+    monkeypatch.setattr(
+        loading,
+        "build_preprocessor",
+        lambda **values: SimpleNamespace(config=view_config),
+    )
+
+    engine = loading.load_visual_prediction_engine(
+        loading.VisualInferenceConfig(
+            visual_checkpoint=checkpoint,
+            code_version=code_version,
+            expected_checkpoint_sha256=checkpoint_sha256,
+            expected_run_id="visual-run",
+            expected_split_hash="split123",
+            expected_git_commit="abc123",
+            expected_seed=17,
+            threshold=0.4,
+            device="cpu",
+        )
+    )
+
+    assert engine.threshold == 0.4
+    assert engine.device == "cpu"
+
+
+def test_visual_inference_loader_rejects_runtime_preprocessing_drift(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checkpoint = tmp_path / "visual.pt"
+    model = nn.Linear(2, 1)
+    checkpoint_sha256 = save_checkpoint(
+        checkpoint,
+        model=model,
+        optimizer=torch.optim.SGD(model.parameters(), lr=0.1),
+        metadata=RunMetadata(
+            run_id="visual-run",
+            branch="visual",
+            git_commit="abc123",
+            split_hash="split123",
+            preprocessing_hash="wrong-preprocessing-hash",
+            config_hash="config123",
+            seed=17,
+        ),
+        epoch=2,
+    )
+    monkeypatch.setattr(
+        loading,
+        "build_efficientnet_b0",
+        lambda *, pretrained: nn.Linear(2, 1),
+    )
+    monkeypatch.setattr(
+        loading,
+        "build_preprocessor",
+        lambda **values: SimpleNamespace(
+            config=ViewConfig(detector_model_sha256="a" * 64)
+        ),
+    )
+
+    with pytest.raises(ValueError, match="Runtime preprocessing"):
+        loading.load_visual_prediction_engine(
+            loading.VisualInferenceConfig(
+                visual_checkpoint=checkpoint,
+                code_version="visual-revision",
+                expected_checkpoint_sha256=checkpoint_sha256,
+                expected_run_id="visual-run",
+                expected_split_hash="split123",
+                expected_git_commit="abc123",
+                expected_seed=17,
+                device="cpu",
+            )
+        )
+
+
+def test_visual_inference_loader_rejects_the_wrong_checkpoint_identity(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    code_version = "visual-revision"
+    view_config = ViewConfig(detector_model_sha256="a" * 64)
+    checkpoint = tmp_path / "visual.pt"
+    model = nn.Linear(2, 1)
+    checkpoint_sha256 = save_checkpoint(
+        checkpoint,
+        model=model,
+        optimizer=torch.optim.SGD(model.parameters(), lr=0.1),
+        metadata=RunMetadata(
+            run_id="other-run",
+            branch="visual",
+            git_commit="abc123",
+            split_hash="split123",
+            preprocessing_hash=preprocessing_config_hash(
+                config=view_config,
+                code_version=code_version,
+            ),
+            config_hash="config123",
+            seed=17,
+        ),
+        epoch=2,
+    )
+    monkeypatch.setattr(
+        loading,
+        "build_efficientnet_b0",
+        lambda *, pretrained: nn.Linear(2, 1),
+    )
+    monkeypatch.setattr(
+        loading,
+        "build_preprocessor",
+        lambda **values: SimpleNamespace(config=view_config),
+    )
+
+    with pytest.raises(ValueError, match="run ID"):
+        loading.load_visual_prediction_engine(
+            loading.VisualInferenceConfig(
+                visual_checkpoint=checkpoint,
+                code_version=code_version,
+                expected_checkpoint_sha256=checkpoint_sha256,
+                expected_run_id="visual-run",
+                expected_split_hash="split123",
+                expected_git_commit="abc123",
+                expected_seed=17,
+                device="cpu",
+            )
+        )
 
 
 def test_real_yunet_load_is_opt_in_when_the_pinned_model_is_present() -> None:

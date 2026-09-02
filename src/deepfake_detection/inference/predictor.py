@@ -120,3 +120,51 @@ class PredictionEngine:
             blockers=(),
             preprocessing_fingerprint=prepared.preprocessing_fingerprint,
         )
+
+
+class VisualPredictionEngine:
+    def __init__(
+        self,
+        *,
+        preprocessor: Any,
+        visual_model: nn.Module,
+        threshold: float,
+        device: str,
+    ) -> None:
+        if not 0 <= threshold <= 1:
+            raise ValueError("Prediction threshold must be in [0, 1]")
+        self.preprocessor = preprocessor
+        self.visual_model = visual_model.to(device).eval()
+        self.threshold = threshold
+        self.device = device
+
+    def predict(self, video_path: Path) -> PredictionResult:
+        record = _InferenceRecord(clip_id=video_path.stem)
+        prepared = self.preprocessor.prepare_visual(record, video_path)
+        if prepared.visual_view is None:
+            return PredictionResult(
+                clip_id=prepared.clip_id,
+                verdict="indeterminate",
+                probability=None,
+                branch_logits={},
+                blockers=("missing_visual",),
+                preprocessing_fingerprint=prepared.preprocessing_fingerprint,
+            )
+
+        values = (
+            torch.from_numpy(np.asarray(prepared.visual_view, dtype=np.float32))
+            .unsqueeze(0)
+            .to(self.device)
+        )
+        with torch.inference_mode():
+            output = self.visual_model(values)
+            logit = float(output.logits[0].cpu())
+            probability = float(torch.sigmoid(output.logits[0]).cpu())
+        return PredictionResult(
+            clip_id=prepared.clip_id,
+            verdict="fake" if probability >= self.threshold else "real",
+            probability=probability,
+            branch_logits={"visual": logit},
+            blockers=(),
+            preprocessing_fingerprint=prepared.preprocessing_fingerprint,
+        )

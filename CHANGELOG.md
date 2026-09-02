@@ -21,6 +21,9 @@ Experiment metrics belong in the experiment tracker, not this file.
   MLflow metrics for training throughput and peak allocated GPU memory.
 - Added a maintained project handoff with dataset, artifact, MLflow, dashboard,
   verification, and resume instructions.
+- Added a provenance-checked visual-only inference mode and made it the local
+  dashboard default for the trained development baseline. The dashboard labels
+  its evidence scope and cross-dataset limits.
 - Required paired MTCNN and YuNet research reports, usable tracking evidence,
   clean pinned environments, exact input report hashes, and source run IDs for
   detector decisions. Disabled the unbound downstream scalar tie-break.
