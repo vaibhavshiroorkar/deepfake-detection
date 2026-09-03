@@ -42,9 +42,10 @@ The dashboard will use one Streamlit page with this order:
 6. Step 4, Prediction.
 7. Research and methodology.
 
-Each workflow step will use an expander. The first incomplete step will open by
-default. Completed steps will remain available for review. A short status line
-will identify each step as waiting, ready, complete, prototype, or locked.
+Each workflow step will use an expander. The first incomplete actionable step
+will open by default. Completed steps will remain available for review. A short
+status line will identify each step as waiting, ready, complete, prototype, or
+locked.
 
 The Research and methodology expander will contain five tabs:
 
@@ -140,4 +141,3 @@ Tests will cover:
 The existing dashboard runtime, state, evidence, preprocessing, and prediction
 tests will remain in use. Multipage navigation tests will be replaced with
 single-page workflow tests.
-
