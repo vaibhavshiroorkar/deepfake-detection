@@ -3,14 +3,47 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
+import streamlit as st
 
 from deepfake_detection.dashboard.configuration import dashboard_defaults
 from deepfake_detection.dashboard.state import UploadedClip, temporary_video
 from deepfake_detection.data.manifest import ClipRecord
-from deepfake_detection.inference.loading import build_preprocessor
+from deepfake_detection.inference.loading import (
+    VisualInferenceConfig,
+    build_preprocessor,
+    load_visual_prediction_engine,
+)
+from deepfake_detection.inference.predictor import (
+    PredictionResult,
+    VisualPredictionEngine,
+)
 from deepfake_detection.views.contracts import PreparedClip
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
+
+
+@st.cache_resource
+def load_frozen_visual_engine() -> VisualPredictionEngine:
+    defaults = dashboard_defaults(root=Path.cwd())
+    return load_visual_prediction_engine(
+        VisualInferenceConfig(
+            visual_checkpoint=defaults.visual_checkpoint,
+            code_version=defaults.code_version,
+            expected_checkpoint_sha256=defaults.checkpoint_sha256,
+            expected_run_id=defaults.run_id,
+            expected_split_hash=defaults.split_hash,
+            expected_git_commit=defaults.git_commit,
+            expected_seed=defaults.seed,
+            threshold=0.5,
+            device="cuda",
+        )
+    )
+
+
+def predict_upload(clip: UploadedClip) -> PredictionResult:
+    engine = load_frozen_visual_engine()
+    with temporary_video(clip) as path:
+        return engine.predict(path)
 
 
 def prepare_uploaded_visual(
