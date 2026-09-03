@@ -1,11 +1,14 @@
 import streamlit as st
 
-from deepfake_detection.dashboard.components import render_page_header, render_status
+from deepfake_detection.dashboard.components import (
+    render_page_header,
+    render_status,
+    require_upload,
+)
 from deepfake_detection.dashboard.navigation import PageState
 from deepfake_detection.dashboard.state import (
     prediction_for_upload,
     prepared_for_upload,
-    uploaded_clip,
 )
 
 MODEL_STAGES = (
@@ -49,7 +52,7 @@ st.info(
     "why a clip is authentic or manipulated."
 )
 
-clip = uploaded_clip(st.session_state)
+clip = require_upload()
 prepared = prepared_for_upload(st.session_state, clip.sha256) if clip else None
 prediction = prediction_for_upload(st.session_state, clip.sha256) if clip else None
 

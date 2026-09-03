@@ -134,9 +134,10 @@ not change the current primary environment.
 ## Dashboard flow
 
 The feature worktree does not have its own `.venv`. From that worktree, use
-the primary checkout environment:
+the primary checkout environment and set `PYTHONPATH` to the worktree source:
 
 ```powershell
+$env:PYTHONPATH = "src"
 C:\Users\vaibh\Documents\GitHub\deepfake-generalization\.venv\Scripts\python.exe -m streamlit run `
   src\deepfake_detection\dashboard\app.py `
   --server.address 127.0.0.1
@@ -149,6 +150,11 @@ For a checkout with its own `.venv`, use the relative command:
   src\deepfake_detection\dashboard\app.py `
   --server.address 127.0.0.1
 ```
+
+The dashboard reads ignored `runs` artifacts from the active checkout. Launch
+from the primary checkout when its saved artifacts are present. If you launch
+from a worktree, place the required checkpoint, history, and metrics files in
+that worktree first.
 
 Open `http://127.0.0.1:8501`. The page order is Overview, Video input,
 Preprocessing, Visual model, Prediction, Experiments, Audio branch, Sync

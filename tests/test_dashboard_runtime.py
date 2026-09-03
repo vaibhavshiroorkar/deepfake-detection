@@ -24,6 +24,7 @@ def test_load_frozen_visual_engine_uses_all_frozen_defaults(
         preprocessing_hash="p" * 64,
         checkpoint_sha256="c" * 64,
         run_id="run-id",
+        evaluation_run_id="evaluation-run-id",
         split_hash="s" * 64,
         git_commit="git-commit",
         seed=23,

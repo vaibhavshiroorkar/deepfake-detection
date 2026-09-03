@@ -138,3 +138,28 @@ def test_prediction_page_reports_a_failed_analysis_without_storing_a_result(
     assert not page.exception
     assert any("CUDA" in item.value for item in page.error)
     assert "dashboard.prediction" not in page.session_state.filtered_state
+
+
+def test_prediction_failure_hides_a_cached_result_for_the_attempt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    clip = _upload()
+    monkeypatch.setattr(
+        runtime,
+        "predict_upload",
+        lambda received: (_ for _ in ()).throw(
+            RuntimeError("CUDA driver is unavailable")
+        ),
+    )
+    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/prediction.py")
+    page.session_state["dashboard.upload"] = clip
+    page.session_state["dashboard.prediction"] = (clip.sha256, _result(clip.sha256))
+
+    page.run()
+    page.button(key="analyze_video").click().run()
+
+    body = _page_body(page)
+    assert not page.exception
+    assert any("CUDA" in item.value for item in page.error)
+    assert "Likely manipulated" not in body
+    assert "dashboard.prediction" not in page.session_state.filtered_state

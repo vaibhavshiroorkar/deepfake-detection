@@ -2,7 +2,7 @@ import streamlit as st
 
 from deepfake_detection.dashboard.components import render_page_header, render_status
 from deepfake_detection.dashboard.navigation import PageState
-from deepfake_detection.dashboard.state import store_upload
+from deepfake_detection.dashboard.state import clear_upload, store_upload, uploaded_clip
 
 render_page_header(
     "Stage 1",
@@ -22,10 +22,18 @@ upload = st.file_uploader(
     accept_multiple_files=False,
 )
 
+clip = uploaded_clip(st.session_state)
 if upload is not None:
     content = upload.getvalue()
     clip = store_upload(st.session_state, name=upload.name, content=content)
-    st.video(content)
+
+if clip is not None:
+    if upload is None:
+        st.info(
+            "The previously selected video is retained in this session. Remove it "
+            "before selecting a different video or ending the session."
+        )
+    st.video(clip.content)
     st.markdown(f"**Filename:** `{clip.name}`")
     st.markdown(f"**Size:** {len(clip.content)} bytes")
     st.markdown(f"**SHA-256:** `{clip.sha256[:12]}`")
@@ -34,3 +42,6 @@ if upload is not None:
         label="Continue to Preprocessing",
         use_container_width=True,
     )
+    if st.button("Remove video", key="remove_video", use_container_width=True):
+        clear_upload(st.session_state)
+        st.rerun()

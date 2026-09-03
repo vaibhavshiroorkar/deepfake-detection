@@ -210,6 +210,15 @@ Documentation are teaching or status pages. Audio and sync are prototypes with
 incomplete full training. Fusion is locked because the current artifact is a
 software fixture.
 
+Preprocessing and Prediction require CUDA-enabled PyTorch. On a compatible
+NVIDIA system, install the dashboard environment with:
+
+```powershell
+uv sync --extra cu130 --extra ml --extra media --extra dashboard --group dev
+```
+
+Do not install the `cpu` and `cu130` extras together.
+
 The visual path uses `runs\initial-20260902\visual-initial.pt`, preprocessing
 version `2689577`, and threshold `0.5`. It verifies the checkpoint hash and
 training provenance before loading the model. Its only reported result is

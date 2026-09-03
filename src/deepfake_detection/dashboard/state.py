@@ -43,6 +43,15 @@ def store_upload(
     return clip
 
 
+def clear_upload(values: MutableMapping[str, object]) -> None:
+    for key in (
+        "dashboard.upload",
+        "dashboard.prepared",
+        "dashboard.prediction",
+    ):
+        values.pop(key, None)
+
+
 @contextmanager
 def temporary_video(clip: UploadedClip) -> Iterator[Path]:
     path: Path | None = None
@@ -73,6 +82,14 @@ def prepared_for_upload(
     return value[1] if isinstance(value[1], PreparedClip) else None
 
 
+def clear_prepared_for_upload(
+    values: MutableMapping[str, object], clip_sha256: str
+) -> None:
+    value = values.get("dashboard.prepared")
+    if isinstance(value, tuple) and len(value) == 2 and value[0] == clip_sha256:
+        values.pop("dashboard.prepared", None)
+
+
 def store_prediction(
     values: MutableMapping[str, object],
     clip_sha256: str,
@@ -90,3 +107,11 @@ def prediction_for_upload(
     from deepfake_detection.inference.predictor import PredictionResult
 
     return value[1] if isinstance(value[1], PredictionResult) else None
+
+
+def clear_prediction_for_upload(
+    values: MutableMapping[str, object], clip_sha256: str
+) -> None:
+    value = values.get("dashboard.prediction")
+    if isinstance(value, tuple) and len(value) == 2 and value[0] == clip_sha256:
+        values.pop("dashboard.prediction", None)

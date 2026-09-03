@@ -1,4 +1,5 @@
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pytest
 
@@ -34,19 +35,45 @@ def test_status_pages_name_their_evidence_limits(
         assert text in body
 
 
-def test_documentation_page_links_only_to_existing_files() -> None:
+def test_documentation_page_links_to_tracked_records_on_github() -> None:
     page = AppTest.from_file(
         "src/deepfake_detection/dashboard/pages/documentation.py"
     ).run()
 
     assert not page.exception
-    assert all(Path(relative).is_file() for _, relative in DOCUMENTS)
-    body = _page_body(page)
-    for _, relative in DOCUMENTS:
-        assert relative in body
+    expected_base = "https://github.com/vaibhavshiroorkar/deepfake-detection/blob/main/"
+    actual_targets = [
+        item.value.split("(", 1)[1][:-1]
+        for item in page.markdown
+        if item.value.startswith("[")
+    ]
+    assert actual_targets == [target for _, target in DOCUMENTS]
+    for target in actual_targets:
+        parsed = urlparse(target)
+        assert target.startswith(expected_base)
+        assert parsed.scheme == "https"
+        assert parsed.netloc == "github.com"
 
 
 def test_experiments_page_reports_missing_local_evidence_without_a_crash() -> None:
+    page = AppTest.from_file(
+        "src/deepfake_detection/dashboard/pages/experiments.py"
+    ).run()
+
+    assert not page.exception
+    assert "Evidence is unavailable" in _page_body(page)
+
+
+def test_experiments_page_reports_an_evidence_read_os_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from deepfake_detection.dashboard import evidence
+
+    def fail(metrics_path: Path, history_path: Path) -> object:
+        raise OSError("evidence device is unavailable")
+
+    monkeypatch.setattr(evidence, "load_validation_evidence", fail)
+
     page = AppTest.from_file(
         "src/deepfake_detection/dashboard/pages/experiments.py"
     ).run()

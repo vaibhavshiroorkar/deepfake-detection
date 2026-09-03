@@ -16,8 +16,9 @@ def _page_body(page: AppTest) -> str:
 
 def test_visual_model_page_shows_the_frozen_shape_ladder() -> None:
     page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/pages/visual_model.py"
+        "src/deepfake_detection/dashboard/app.py", default_timeout=30
     ).run()
+    page.switch_page("pages/visual_model.py").run()
 
     body = _page_body(page)
     assert not page.exception
@@ -42,6 +43,17 @@ def test_visual_model_page_explains_outputs_without_claiming_explanations() -> N
     assert "logit" in body.lower()
     assert "sigmoid" in body.lower()
     assert "not an explanation" in body.lower()
+
+
+def test_visual_model_page_uses_the_shared_video_input_prerequisite() -> None:
+    page = AppTest.from_file(
+        "src/deepfake_detection/dashboard/app.py", default_timeout=30
+    ).run()
+    page.switch_page("pages/visual_model.py").run()
+
+    assert not page.exception
+    assert any("Video input" in item.value for item in page.info)
+    assert [link.label for link in page.get("page_link")] == ["Go to Video input"]
 
 
 def test_visual_model_page_shows_real_stored_shapes_and_scores() -> None:

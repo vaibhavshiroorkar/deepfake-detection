@@ -117,3 +117,46 @@ def test_validation_evidence_rejects_a_different_training_run(tmp_path: Path) ->
 
     with pytest.raises(ValueError, match="training run"):
         load_validation_evidence(metrics_path, history_path)
+
+
+@pytest.mark.parametrize("value", (float("nan"), float("inf"), -0.01, 1.01))
+def test_validation_evidence_rejects_non_probability_metrics(
+    tmp_path: Path, value: float
+) -> None:
+    metrics_path = tmp_path / "metrics.json"
+    history_path = tmp_path / "history.json"
+    _write_evidence(metrics_path, history_path)
+    payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+    payload["metrics"]["f1"] = value
+    metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="f1"):
+        load_validation_evidence(metrics_path, history_path)
+
+
+def test_validation_evidence_rejects_confusion_counts_that_do_not_total_rows(
+    tmp_path: Path,
+) -> None:
+    metrics_path = tmp_path / "metrics.json"
+    history_path = tmp_path / "history.json"
+    _write_evidence(metrics_path, history_path)
+    payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+    payload["confusion"]["false_negative"] = 2
+    metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="total"):
+        load_validation_evidence(metrics_path, history_path)
+
+
+def test_validation_evidence_rejects_an_unexpected_evaluation_run(
+    tmp_path: Path,
+) -> None:
+    metrics_path = tmp_path / "metrics.json"
+    history_path = tmp_path / "history.json"
+    _write_evidence(metrics_path, history_path)
+    payload = json.loads(metrics_path.read_text(encoding="utf-8"))
+    payload["evaluation_run_id"] = "arbitrary-run"
+    metrics_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="evaluation run"):
+        load_validation_evidence(metrics_path, history_path)

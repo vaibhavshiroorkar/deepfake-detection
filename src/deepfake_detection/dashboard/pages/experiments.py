@@ -23,7 +23,7 @@ render_status(PageState.READY)
 
 try:
     evidence = load_validation_evidence(_METRICS_PATH, _HISTORY_PATH)
-except (FileNotFoundError, ValueError) as exc:
+except (FileNotFoundError, OSError, ValueError) as exc:
     st.error(f"Evidence is unavailable: {exc}")
 else:
     st.subheader("FakeAVCeleb development validation")

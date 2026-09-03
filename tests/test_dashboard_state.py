@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from deepfake_detection.dashboard.state import (
+    clear_upload,
     prediction_for_upload,
     prepared_for_upload,
     store_prediction,
@@ -74,3 +75,31 @@ def test_prepared_state_is_available_only_for_its_upload() -> None:
 
     assert prepared_for_upload(values, clip.sha256) == prepared
     assert prepared_for_upload(values, "different-upload") is None
+
+
+def test_clear_upload_removes_the_upload_and_all_derived_state() -> None:
+    values: dict[str, object] = {}
+    clip = store_upload(values, name="sample.mp4", content=b"video")
+    prepared = PreparedClip(
+        clip_id="sample",
+        visual_view=None,
+        audio_view=None,
+        sync_video_view=None,
+        sync_audio_view=None,
+        quality=QualityReport(0.0, False, False, False, 0.0),
+        preprocessing_fingerprint="fixture",
+    )
+    result = PredictionResult(
+        clip_id="sample",
+        verdict="real",
+        probability=0.1,
+        branch_logits={"visual": -2.2},
+        blockers=(),
+        preprocessing_fingerprint="fixture",
+    )
+    store_prepared(values, clip.sha256, prepared)
+    store_prediction(values, clip.sha256, result)
+
+    clear_upload(values)
+
+    assert not values

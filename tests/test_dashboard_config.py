@@ -16,6 +16,7 @@ def test_dashboard_defaults_find_the_local_visual_baseline() -> None:
         "ac9a085e1017cf2743a7f78f3b632051c18acda695496d2f434c7d968fd627b0"
     )
     assert defaults.run_id == "4243b35e64c743b89cc33000cc9d3d3e"
+    assert defaults.evaluation_run_id == "56182266f70a424581f763b2d3b41989"
     assert defaults.seed == 17
 
 

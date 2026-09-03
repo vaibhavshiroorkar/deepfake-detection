@@ -22,7 +22,11 @@ def require_upload() -> UploadedClip | None:
     clip = uploaded_clip(st.session_state)
     if clip is None:
         st.info("Start with 1. Video input, then return to this page.")
-        st.page_link("pages/video_input.py", label="Go to Video input")
+        try:
+            st.page_link("pages/video_input.py", label="Go to Video input")
+        except KeyError as error:
+            if error.args != ("url_pathname",):
+                raise
     return clip
 
 

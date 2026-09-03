@@ -9,7 +9,11 @@ from deepfake_detection.dashboard.components import (
     require_upload,
 )
 from deepfake_detection.dashboard.navigation import PageState
-from deepfake_detection.dashboard.state import prepared_for_upload, store_prepared
+from deepfake_detection.dashboard.state import (
+    clear_prepared_for_upload,
+    prepared_for_upload,
+    store_prepared,
+)
 from deepfake_detection.views.contracts import PreparedClip
 
 PREPROCESSING_STAGES = (
@@ -122,6 +126,8 @@ if clip is not None:
         type="primary",
         use_container_width=True,
     ):
+        clear_prepared_for_upload(st.session_state, clip.sha256)
+        prepared = None
         try:
             prepared = runtime.prepare_uploaded_visual(clip)
         except (OSError, RuntimeError, ValueError) as error:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -117,12 +118,21 @@ def load_validation_evidence(
     parsed_metrics = {
         name: _required_float(metrics, name, "metrics") for name in _REQUIRED_METRICS
     }
+    for name, value in parsed_metrics.items():
+        if not math.isfinite(value) or not 0.0 <= value <= 1.0:
+            raise ValueError(f"metrics has an invalid {name}")
     confusion = _required_object(metrics_record, "confusion", "metrics")
     parsed_confusion = {
         name: _required_int(confusion, name, "metrics") for name in _REQUIRED_CONFUSION
     }
     if any(value < 0 for value in parsed_confusion.values()):
         raise ValueError("metrics confusion counts must be nonnegative")
+    if sum(parsed_confusion.values()) != rows:
+        raise ValueError("metrics confusion counts must total rows")
+
+    evaluation_run_id = _required_string(metrics_record, "evaluation_run_id", "metrics")
+    if evaluation_run_id != defaults.evaluation_run_id:
+        raise ValueError("metrics evaluation run does not match dashboard defaults")
 
     metadata = _required_object(history_record, "metadata", "history")
     history_run_id = _required_string(metadata, "run_id", "history")
@@ -161,9 +171,7 @@ def load_validation_evidence(
         epochs=epochs,
         best_epoch=best_epoch,
         checkpoint_run_id=checkpoint_run_id,
-        evaluation_run_id=_required_string(
-            metrics_record, "evaluation_run_id", "metrics"
-        ),
+        evaluation_run_id=evaluation_run_id,
         checkpoint_sha256=checkpoint_sha256,
         preprocessing_hash=preprocessing_hash,
         split_hash=split_hash,

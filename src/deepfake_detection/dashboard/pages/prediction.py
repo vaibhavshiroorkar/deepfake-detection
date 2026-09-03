@@ -11,6 +11,7 @@ from deepfake_detection.dashboard.components import (
 from deepfake_detection.dashboard.configuration import dashboard_defaults
 from deepfake_detection.dashboard.navigation import PageState
 from deepfake_detection.dashboard.state import (
+    clear_prediction_for_upload,
     prediction_for_upload,
     prepared_for_upload,
     store_prediction,
@@ -89,6 +90,8 @@ if clip is not None:
         type="primary",
         use_container_width=True,
     ):
+        clear_prediction_for_upload(st.session_state, clip.sha256)
+        result = None
         try:
             result = runtime.predict_upload(clip)
         except (OSError, RuntimeError, ValueError) as error:

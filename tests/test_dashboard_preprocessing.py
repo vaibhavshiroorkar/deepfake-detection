@@ -122,3 +122,37 @@ def test_preprocessing_runtime_failure_does_not_store_output(
     assert not page.exception
     assert any("CUDA" in item.value for item in page.error)
     assert "dashboard.prepared" not in page.session_state.filtered_state
+
+
+def test_preprocessing_failure_hides_a_cached_output_for_the_attempt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    cached = PreparedClip(
+        clip_id="a" * 64,
+        visual_view=np.zeros((16, 3, 2, 2), dtype=np.float32),
+        audio_view=None,
+        sync_video_view=None,
+        sync_audio_view=None,
+        quality=QualityReport(0.875, True, False, False, 0.0),
+        preprocessing_fingerprint="fixture",
+    )
+    monkeypatch.setattr(
+        runtime,
+        "prepare_uploaded_visual",
+        lambda clip: (_ for _ in ()).throw(RuntimeError("CUDA driver is unavailable")),
+    )
+    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/preprocessing.py")
+    page.session_state["dashboard.upload"] = UploadedClip(
+        "sample.mp4", ".mp4", b"video", "a" * 64
+    )
+    page.session_state["dashboard.prepared"] = ("a" * 64, cached)
+
+    page.run()
+    page.button(key="run_preprocessing").click().run()
+
+    assert not page.exception
+    assert any("CUDA" in item.value for item in page.error)
+    assert "Prepared visual evidence" not in " ".join(
+        item.value for item in page.subheader
+    )
+    assert "dashboard.prepared" not in page.session_state.filtered_state

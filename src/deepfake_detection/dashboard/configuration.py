@@ -11,6 +11,7 @@ class DashboardDefaults:
     preprocessing_hash: str
     checkpoint_sha256: str
     run_id: str
+    evaluation_run_id: str
     split_hash: str
     git_commit: str
     seed: int
@@ -31,6 +32,7 @@ def dashboard_defaults(
             "ac9a085e1017cf2743a7f78f3b632051c18acda695496d2f434c7d968fd627b0"
         ),
         run_id="4243b35e64c743b89cc33000cc9d3d3e",
+        evaluation_run_id="56182266f70a424581f763b2d3b41989",
         split_hash=("3255ae334536336c73058941285925f3dd5b094c02b1037e19f379c6f45db30c"),
         git_commit="268957796d366a81b5ab897dd1a4f523f1dc4b11",
         seed=17,
