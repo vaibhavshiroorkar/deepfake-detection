@@ -1,7 +1,7 @@
 import streamlit as st
 
 from deepfake_detection.dashboard.components import render_page_header, render_status
-from deepfake_detection.dashboard.navigation import PageState
+from deepfake_detection.dashboard.status import PageState
 
 
 def render_audio_branch(*, embedded: bool = False) -> None:

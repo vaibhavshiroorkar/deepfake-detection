@@ -1,13 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import StrEnum
 
-
-class PageState(StrEnum):
-    READY = "ready"
-    PROTOTYPE = "prototype"
-    LOCKED = "locked"
+from deepfake_detection.dashboard.status import PageState
 
 
 @dataclass(frozen=True, slots=True)

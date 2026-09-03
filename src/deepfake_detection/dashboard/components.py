@@ -1,13 +1,19 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import streamlit as st
 
-from deepfake_detection.dashboard.navigation import PageSpec, PageState
+from deepfake_detection.dashboard.status import PageState
+from deepfake_detection.dashboard.workflow import StepState
 
 if TYPE_CHECKING:
     from deepfake_detection.dashboard.state import UploadedClip
+
+
+class PipelinePage(Protocol):
+    slug: str
+    state: PageState
 
 
 def render_page_header(step: str, title: str, summary: str) -> None:
@@ -31,8 +37,15 @@ def render_status(state: PageState) -> None:
     st.caption(f"Status: {state.value}")
 
 
+def render_step_status(state: StepState) -> None:
+    st.markdown(
+        f'<div class="step-state {state.value}">{state.value}</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def pipeline_stage_status(
-    page: PageSpec,
+    page: PipelinePage,
     *,
     selected_slug: str,
     has_upload: bool,

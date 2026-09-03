@@ -9,7 +9,7 @@ from deepfake_detection.dashboard.components import (
     require_upload,
 )
 from deepfake_detection.dashboard.configuration import dashboard_defaults
-from deepfake_detection.dashboard.navigation import PageState
+from deepfake_detection.dashboard.status import PageState
 from deepfake_detection.dashboard.state import (
     clear_prediction_for_upload,
     prediction_for_upload,

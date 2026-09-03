@@ -4,7 +4,7 @@ import streamlit as st
 
 from deepfake_detection.dashboard.components import render_page_header, render_status
 from deepfake_detection.dashboard.evidence import load_validation_evidence
-from deepfake_detection.dashboard.navigation import PageState
+from deepfake_detection.dashboard.status import PageState
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[4]
 _METRICS_PATH = (

@@ -5,7 +5,7 @@ from deepfake_detection.dashboard.components import (
     render_status,
     require_upload,
 )
-from deepfake_detection.dashboard.navigation import PageState
+from deepfake_detection.dashboard.status import PageState
 from deepfake_detection.dashboard.state import (
     prediction_for_upload,
     prepared_for_upload,

@@ -1,7 +1,7 @@
 import streamlit as st
 
 from deepfake_detection.dashboard.components import render_page_header, render_status
-from deepfake_detection.dashboard.navigation import PageState
+from deepfake_detection.dashboard.status import PageState
 from deepfake_detection.dashboard.state import clear_upload, store_upload, uploaded_clip
 
 _UPLOADER_KEY = "dashboard.video_uploader"
