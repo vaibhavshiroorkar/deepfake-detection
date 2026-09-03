@@ -46,8 +46,7 @@ def _render_result(
     st.markdown(f"**Visual classifier probability:** {view.final_score}")
     st.markdown(f"**Visual coverage:** {_coverage_label(prepared)}")
     st.markdown(
-        "**Visual logit:** "
-        f"{view.branch_scores.get('visual', 'Not available')}"
+        f"**Visual logit:** {view.branch_scores.get('visual', 'Not available')}"
     )
     blockers = ", ".join(view.blockers) if view.blockers else "None"
     st.markdown(f"**Blockers:** {blockers}")
@@ -61,8 +60,7 @@ def _render_result(
         st.markdown(f"**Checkpoint hash:** `{defaults.checkpoint_sha256}`")
         st.markdown(f"**Split hash:** `{defaults.split_hash}`")
         st.markdown(
-            "**Preprocessing fingerprint:** "
-            f"`{view.preprocessing_fingerprint}`"
+            f"**Preprocessing fingerprint:** `{view.preprocessing_fingerprint}`"
         )
 
 

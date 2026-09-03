@@ -25,8 +25,7 @@ def dashboard_defaults(
         visual_checkpoint=default_checkpoint,
         code_version="2689577",
         preprocessing_hash=(
-            "fd372dbe6bb64f359db4d57b05c3b5cd"
-            "27ed6660f2bb8bdc50567224e0928c96"
+            "fd372dbe6bb64f359db4d57b05c3b5cd27ed6660f2bb8bdc50567224e0928c96"
         ),
         checkpoint_sha256=(
             "ac9a085e1017cf2743a7f78f3b632051c18acda695496d2f434c7d968fd627b0"

@@ -14,6 +14,22 @@ but those directories are not present now and cannot be verified. This blocks
 the real-video CUDA smoke. Do not substitute a fixture or report a real
 inference pass while the raw data is absent.
 
+## Historical dataset inventory
+
+The following table comes from the prior verified handoff. It records the
+dataset state reported at that time. It does not describe the present
+filesystem.
+
+| Dataset directory | Recorded state | Recorded detail |
+|---|---|---|
+| `data/Celeb-DF-v2` | Complete | 6,529 videos |
+| `data/FakeAVCeleb_v1.2` | Complete | 21,544 videos |
+| `data/MNW` | Complete | 67,521 Git LFS objects; pinned at `df66c459dd8b043cc7a8aeab30de8f8126710c7f` |
+| `data/FaceForensics++` | Paused | 1,039 of 9,431 videos; c23 EU2; 1,000 YouTube originals and 39 actor originals |
+
+The present `data` directory is empty. None of these raw dataset states can be
+reverified now.
+
 The active dashboard work is on `feat/multipage-teaching-dashboard` in
 `.worktrees\multipage-teaching-dashboard`. Raw data, checkpoints, run output,
 MLflow storage, and model artifacts remain ignored by Git.
@@ -90,8 +106,16 @@ MLflow. The fusion run `7b799a76d4a74305b02742ded2033118` has dataset tag
 
 ## Dashboard flow
 
-Run the dashboard from the feature worktree or another checkout that has the
-same installed environment:
+The feature worktree does not have its own `.venv`. From that worktree, use
+the primary checkout environment:
+
+```powershell
+C:\Users\vaibh\Documents\GitHub\deepfake-generalization\.venv\Scripts\python.exe -m streamlit run `
+  src\deepfake_detection\dashboard\app.py `
+  --server.address 127.0.0.1
+```
+
+For a checkout with its own `.venv`, use the relative command:
 
 ```powershell
 .\.venv\Scripts\python.exe -m streamlit run `

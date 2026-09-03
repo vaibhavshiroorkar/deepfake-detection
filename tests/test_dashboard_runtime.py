@@ -109,8 +109,7 @@ def test_prepare_uploaded_visual_uses_the_frozen_preprocessing_version(
             calls["content"] = path.read_bytes()
             return SimpleNamespace(
                 preprocessing_config_hash=(
-                    "fd372dbe6bb64f359db4d57b05c3b5cd"
-                    "27ed6660f2bb8bdc50567224e0928c96"
+                    "fd372dbe6bb64f359db4d57b05c3b5cd27ed6660f2bb8bdc50567224e0928c96"
                 )
             )
 

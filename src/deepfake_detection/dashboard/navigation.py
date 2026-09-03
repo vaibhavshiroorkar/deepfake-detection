@@ -27,14 +27,22 @@ class PageSpec:
 PAGES = (
     PageSpec("overview", "pages/overview.py", "Overview", PageState.READY),
     PageSpec("video-input", "pages/video_input.py", "1. Video input", PageState.READY),
-    PageSpec("preprocessing", "pages/preprocessing.py", "2. Preprocessing", PageState.READY),
-    PageSpec("visual-model", "pages/visual_model.py", "3. Visual model", PageState.READY),
+    PageSpec(
+        "preprocessing", "pages/preprocessing.py", "2. Preprocessing", PageState.READY
+    ),
+    PageSpec(
+        "visual-model", "pages/visual_model.py", "3. Visual model", PageState.READY
+    ),
     PageSpec("prediction", "pages/prediction.py", "4. Prediction", PageState.READY),
     PageSpec("experiments", "pages/experiments.py", "Experiments", PageState.READY),
-    PageSpec("audio-branch", "pages/audio_branch.py", "Audio branch", PageState.PROTOTYPE),
+    PageSpec(
+        "audio-branch", "pages/audio_branch.py", "Audio branch", PageState.PROTOTYPE
+    ),
     PageSpec("sync-branch", "pages/sync_branch.py", "Sync branch", PageState.PROTOTYPE),
     PageSpec("fusion", "pages/fusion.py", "Fusion", PageState.LOCKED),
-    PageSpec("documentation", "pages/documentation.py", "Documentation", PageState.READY),
+    PageSpec(
+        "documentation", "pages/documentation.py", "Documentation", PageState.READY
+    ),
 )
 
 

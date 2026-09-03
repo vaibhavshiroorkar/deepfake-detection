@@ -31,6 +31,7 @@ def _render_stage(index: int, name: str, shape: str, note: str) -> None:
         st.code(shape, language=None)
         st.write(note)
 
+
 render_page_header(
     "Stage 3",
     "3. Visual model",

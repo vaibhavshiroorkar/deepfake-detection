@@ -74,18 +74,16 @@ def prepare_uploaded_visual(
         )
         prepared = preprocessor.prepare_visual(record, path)
     if prepared.preprocessing_config_hash != defaults.preprocessing_hash:
-        raise ValueError(
-            "Runtime preprocessing does not match the checkpoint metadata"
-        )
+        raise ValueError("Runtime preprocessing does not match the checkpoint metadata")
     return prepared
 
 
 def display_face_frames(view: np.ndarray) -> tuple[np.ndarray, ...]:
     values = np.asarray(view, dtype=np.float32)
     mean = np.asarray((0.485, 0.456, 0.406), dtype=np.float32).reshape(1, 3, 1, 1)
-    standard_deviation = np.asarray(
-        (0.229, 0.224, 0.225), dtype=np.float32
-    ).reshape(1, 3, 1, 1)
+    standard_deviation = np.asarray((0.229, 0.224, 0.225), dtype=np.float32).reshape(
+        1, 3, 1, 1
+    )
     pixels = np.clip((values * standard_deviation + mean) * 255.0, 0, 255)
     hwc = pixels.transpose(0, 2, 3, 1).astype(np.uint8)
     return tuple(hwc)

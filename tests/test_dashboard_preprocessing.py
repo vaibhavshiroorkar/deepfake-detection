@@ -50,9 +50,7 @@ def test_preprocessing_page_shows_the_prepared_visual_evidence(
         preprocessing_config_hash="fd372dbe" + "0" * 56,
     )
     monkeypatch.setattr(runtime, "prepare_uploaded_visual", lambda clip: prepared)
-    page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/pages/preprocessing.py"
-    )
+    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/preprocessing.py")
     page.session_state["dashboard.upload"] = UploadedClip(
         "sample.mp4", ".mp4", b"video", "a" * 64
     )
@@ -90,9 +88,7 @@ def test_preprocessing_page_shows_quality_blockers_without_tensor_preview(
         preprocessing_config_hash="fd372dbe" + "0" * 56,
     )
     monkeypatch.setattr(runtime, "prepare_uploaded_visual", lambda clip: prepared)
-    page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/pages/preprocessing.py"
-    )
+    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/preprocessing.py")
     page.session_state["dashboard.upload"] = UploadedClip(
         "sample.mp4", ".mp4", b"video", "a" * 64
     )
@@ -104,9 +100,7 @@ def test_preprocessing_page_shows_quality_blockers_without_tensor_preview(
     info = " ".join(item.value for item in page.info)
     assert "unstable face track" in info.lower()
     assert "low face coverage" in info.lower()
-    assert "Model tensor shape" not in " ".join(
-        item.value for item in page.markdown
-    )
+    assert "Model tensor shape" not in " ".join(item.value for item in page.markdown)
     assert not page.image
 
 
@@ -117,9 +111,7 @@ def test_preprocessing_runtime_failure_does_not_store_output(
         raise RuntimeError("CUDA driver is unavailable")
 
     monkeypatch.setattr(runtime, "prepare_uploaded_visual", fail)
-    page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/pages/preprocessing.py"
-    )
+    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/preprocessing.py")
     page.session_state["dashboard.upload"] = UploadedClip(
         "sample.mp4", ".mp4", b"video", "a" * 64
     )

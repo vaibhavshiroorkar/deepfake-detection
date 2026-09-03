@@ -69,9 +69,7 @@ def test_visual_model_page_shows_real_stored_shapes_and_scores() -> None:
         blockers=(),
         preprocessing_fingerprint="fixture",
     )
-    page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/pages/visual_model.py"
-    )
+    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/visual_model.py")
     page.session_state["dashboard.upload"] = UploadedClip(
         "sample.mp4", ".mp4", b"video", clip_hash
     )

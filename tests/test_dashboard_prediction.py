@@ -69,9 +69,7 @@ def test_prediction_page_requires_an_upload_and_exposes_no_runtime_controls() ->
 
 
 def test_prediction_page_shows_one_fixed_action_after_upload() -> None:
-    page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/pages/prediction.py"
-    )
+    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/prediction.py")
     page.session_state["dashboard.upload"] = _upload()
 
     page.run()
@@ -98,9 +96,7 @@ def test_prediction_page_persists_a_clicked_analysis_without_rerunning_it(
         "predict_upload",
         lambda received: calls.append(received) or result,
     )
-    page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/pages/prediction.py"
-    )
+    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/prediction.py")
     page.session_state["dashboard.upload"] = clip
     page.session_state["dashboard.prepared"] = (clip.sha256, _prepared(clip.sha256))
 
@@ -133,9 +129,7 @@ def test_prediction_page_reports_a_failed_analysis_without_storing_a_result(
         raise RuntimeError("CUDA driver is unavailable")
 
     monkeypatch.setattr(runtime, "predict_upload", fail)
-    page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/pages/prediction.py"
-    )
+    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/prediction.py")
     page.session_state["dashboard.upload"] = _upload()
 
     page.run()

@@ -98,6 +98,7 @@ def _render_output(prepared: PreparedClip) -> None:
     for index, frame in enumerate(frames[:16], start=1):
         st.image(frame, caption=f"Face crop {index}")
 
+
 render_page_header(
     "Stage 2",
     "2. Preprocessing",
