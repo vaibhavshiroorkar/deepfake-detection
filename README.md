@@ -190,8 +190,11 @@ Only load fusion files created by this project. Joblib files can execute code du
 
 ## Dashboard
 
-The dashboard defaults to the trained visual development baseline when its
-local checkpoint is present:
+The dashboard has ten pages in this order: Overview, Video input,
+Preprocessing, Visual model, Prediction, Experiments, Audio branch, Sync
+branch, Fusion, and Documentation.
+
+Start it from the repository root:
 
 ```powershell
 .\.venv\Scripts\python.exe -m streamlit run `
@@ -199,15 +202,26 @@ local checkpoint is present:
   --server.address 127.0.0.1
 ```
 
-Open `http://127.0.0.1:8501`. The dashboard is restricted to the local host.
-It uses `runs\initial-20260902\visual-initial.pt`, preprocessing version
-`2689577`, and the fixed evaluation threshold of `0.5`. It verifies the exact
-checkpoint hash and training provenance before loading the model.
+Open `http://127.0.0.1:8501`. The server binds to the local host. Video input,
+preprocessing, and prediction execute the visual-only path when the required
+ignored local artifact is present. Experiments reads the frozen local JSON
+record. Overview, Visual model, Audio branch, Sync branch, Fusion, and
+Documentation are teaching or status pages. Audio and sync are prototypes with
+incomplete full training. Fusion is locked because the current artifact is a
+software fixture.
 
-Visual-only results state that the model has only been validated on the
-source-disjoint FakeAVCeleb development split. The dashboard does not expose
-multimodal artifact loading until a compatible research artifact set exists.
-It shows the evidence coverage gate before any verdict.
+The visual path uses `runs\initial-20260902\visual-initial.pt`, preprocessing
+version `2689577`, and threshold `0.5`. It verifies the checkpoint hash and
+training provenance before loading the model. Its only reported result is
+FakeAVCeleb development validation. It does not establish cross-dataset
+generalization. The dashboard does not load multimodal artifacts or issue a
+fusion probability.
+
+The ignored `runs` directory must contain the checkpoint, history, and metrics
+files. If a required local artifact is absent or its provenance differs, the
+dashboard reports the error and does not fabricate a metric or prediction.
+The ignored raw dataset is currently absent from the primary checkout, so a
+real-video CUDA smoke cannot run.
 
 ## Repository rules
 

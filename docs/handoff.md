@@ -1,64 +1,31 @@
 # Project handoff
 
-## Current outcome
+## Current state
 
-The repository has a trained visual development baseline, a matching
-visual-only dashboard mode, GPU prototypes for the implemented branches,
-local MLflow history, four dataset directories, and a verified MNW checkout.
-FaceForensics++ is paused and incomplete.
+The repository has a visual-only dashboard and one saved visual development
+baseline. The baseline is not a generalization result. Its recorded evaluation
+uses 400 source-disjoint FakeAVCeleb development-validation rows.
 
-The visual baseline is not a final generalization result. It has only been
-evaluated on a source-disjoint FakeAVCeleb validation split. The full
-multimodal research matrix is not complete.
+The primary checkout at
+`C:\Users\vaibh\Documents\GitHub\deepfake-generalization` contains ignored
+`mlflow.db` and `runs\initial-20260902` evidence. Its ignored `data` directory
+is empty. Earlier handoffs recorded four dataset directories and their counts,
+but those directories are not present now and cannot be verified. This blocks
+the real-video CUDA smoke. Do not substitute a fixture or report a real
+inference pass while the raw data is absent.
 
-## Workspace and Git
+The active dashboard work is on `feat/multipage-teaching-dashboard` in
+`.worktrees\multipage-teaching-dashboard`. Raw data, checkpoints, run output,
+MLflow storage, and model artifacts remain ignored by Git.
 
-- Primary checkout: `C:\Users\vaibh\Documents\GitHub\deepfake-generalization`
-- Active branch: `main`
-- Implementation checkpoint: `268957796d366a81b5ab897dd1a4f523f1dc4b11`
-- Dashboard checkpoint: `230d368`
-- Archived feature branch: `origin/feat/datasets-mnw-research-history`
-- Remote YuNet archive branch: `old`
+## Evidence record
 
-`main` contains the dataset, tracking, CUDA, cache-index, sync determinism,
-dashboard, and handoff changes. The former linked worktree has been retired.
-Raw data, checkpoints, caches, MLflow storage, and run outputs are ignored by
-Git.
+The evidence below came from the current primary-checkout files
+`runs\initial-20260902\visual-initial-history.json`,
+`runs\initial-20260902\visual-validation-metrics.json`,
+`runs\initial-20260902\cache-audit.json`, and `mlflow.db`.
 
-The original untracked FaceForensics++ downloader was compared with the
-tracked version before integration. The tracked version preserves the upstream
-behavior and adds safe cleanup for partial downloads.
-
-## Dataset state
-
-All datasets are under the ignored top-level `data` directory.
-
-| Directory | State | Verified content |
-|---|---|---:|
-| `data/Celeb-DF-v2` | Complete | 6,529 videos |
-| `data/FakeAVCeleb_v1.2` | Complete | 21,544 videos |
-| `data/MNW` | Complete | 67,521 Git LFS objects |
-| `data/FaceForensics++` | Paused | 1,039 of 9,431 videos |
-
-MNW is pinned at `df66c459dd8b043cc7a8aeab30de8f8126710c7f`.
-`git lfs fsck` passes. MNW is evaluation-only and must not be used for
-training, validation, threshold selection, or commercial work.
-
-FaceForensics++ uses c23 videos from the EU2 mirror. The retained files are
-1,000 YouTube originals and 39 actor originals. The downloader and supervisor
-are stopped. No partial transfer file remains.
-
-## Trained artifacts
-
-The main development checkpoint is local and ignored:
-
-`runs/initial-20260902/visual-initial.pt`
-
-Its training record is:
-
-`runs/initial-20260902/visual-initial-history.json`
-
-| Field | Value |
+| Field | Recorded value |
 |---|---:|
 | Architecture | EfficientNet-B0 plus GRU |
 | Training rows | 1,595 |
@@ -70,69 +37,93 @@ Its training record is:
 | Final validation loss | 0.0194314 |
 | Training throughput | 11.3568 samples/sec |
 | Peak allocated GPU memory | 11,013.91 MiB |
-
-Checkpoint SHA-256:
-
-`ac9a085e1017cf2743a7f78f3b632051c18acda695496d2f434c7d968fd627b0`
-
-Training MLflow run:
-
-`4243b35e64c743b89cc33000cc9d3d3e`
-
-One-epoch prototype artifacts also exist under `runs/prototype-20260902`:
-
-- `visual.pt`
-- `audio.pt`
-- `sync.pt`
-- `fusion/fusion.joblib`
-
-The fusion artifact is a software fixture. It is not a trained research fusion
-model and cannot support a final multimodal claim.
-
-## Development validation result
-
-The visual checkpoint was evaluated at a fixed threshold of 0.5 on all 400
-source-disjoint FakeAVCeleb validation rows. The report and row-level
-predictions are local:
-
-- `runs/initial-20260902/visual-validation-metrics.json`
-- `runs/initial-20260902/visual-validation-predictions.csv`
-
-Evaluation MLflow run:
-
-`56182266f70a424581f763b2d3b41989`
-
-| Metric | Value |
-|---|---:|
+| Fixed threshold | 0.5 |
 | ROC AUC | 0.999175 |
 | PR AUC | 0.999292 |
 | Balanced accuracy | 0.9975 |
-| Precision | 1.0 |
-| Recall | 0.995 |
 | F1 | 0.997494 |
-| False-positive rate | 0.0 |
-| False-negative rate | 0.005 |
-| Equal-error rate | 0.0025 |
-| Brier score | 0.002651 |
-| Expected calibration error | 0.003411 |
+| True negatives | 200 |
+| True positives | 199 |
+| False positives | 0 |
+| False negatives | 1 |
 
-The confusion counts are 200 true negatives, 199 true positives, zero false
-positives, and one false negative.
+The checkpoint SHA-256 is
+`ac9a085e1017cf2743a7f78f3b632051c18acda695496d2f434c7d968fd627b0`.
+The training run ID is `4243b35e64c743b89cc33000cc9d3d3e`. The evaluation run
+ID is `56182266f70a424581f763b2d3b41989`. Both records use preprocessing hash
+`fd372dbe6bb64f359db4d57b05c3b5cd27ed6660f2bb8bdc50567224e0928c96` and
+split hash
+`3255ae334536336c73058941285925f3dd5b094c02b1037e19f379c6f45db30c`.
 
-These values show strong in-dataset development performance. They do not show
-cross-dataset generalization. Celeb-DF-v2, FaceForensics++, and MNW have not
-been evaluated with this checkpoint.
+These figures apply only to FakeAVCeleb development validation. They do not
+measure Celeb-DF-v2, FaceForensics++, MNW, or cross-dataset performance.
 
-## MLflow history
+## Recorded chronology
 
-MLflow uses:
+On 2026-09-02, the initial model supervisor logged a cache-build failure with
+exit code 2. It restarted later that day, used the completed initial-model
+cache, reported 1,595 usable training rows and 400 validation rows, then
+recorded completion at 18:50:21 +05:30. The cache audit records one failed
+clip, 12 unstable-face-track blockers, four audio-video-duration blockers,
+and two low-face-coverage blockers across the cache attempt.
 
-- Database: `mlflow.db`
-- Artifacts: `mlartifacts`
-- UI: `http://127.0.0.1:5000`
+The SQLite MLflow record has three named experiments: `smoke-fixture-fusion`,
+`prototype-gpu-20260902`, and `initial-baseline-20260902`. The initial baseline
+has the finished training run and the finished fixed-threshold evaluation run
+listed above. The training runtime artifact records an NVIDIA GeForce RTX 5070
+Ti, 16,302 MiB GPU memory, and CUDA package versions for torch and torchvision.
 
-Start the UI from the main checkout without changing the installed CUDA
-environment:
+The prototype experiment has two failed runs. Run
+`52da7def729f415fbb43eddbad77a1b1` saved a `FileNotFoundError` for a cache
+path that repeated `runs\prototype-20260902`. Run
+`a8aaf6cc31144b36997dd7c3e30e607a` saved a CUDA deterministic-algorithm error
+for `upsample_linear1d_backward_out_cuda`. Commit
+`268957796d366a81b5ab897dd1a4f523f1dc4b11` changed sync token resizing to
+deterministic nearest timestamp selection. The SQLite record also shows the
+later sync prototype run `73915f8d22fc4b3eb31bf303f307cbc4` as finished. The
+evidence does not record a separate narrative cause for either failure beyond
+the saved exception messages.
+
+Prototype visual, audio, sync, and fusion runs are marked `prototype_only` in
+MLflow. The fusion run `7b799a76d4a74305b02742ded2033118` has dataset tag
+`software_fixture`. It is not a trained research fusion model.
+
+## Dashboard flow
+
+Run the dashboard from the feature worktree or another checkout that has the
+same installed environment:
+
+```powershell
+.\.venv\Scripts\python.exe -m streamlit run `
+  src\deepfake_detection\dashboard\app.py `
+  --server.address 127.0.0.1
+```
+
+Open `http://127.0.0.1:8501`. The page order is Overview, Video input,
+Preprocessing, Visual model, Prediction, Experiments, Audio branch, Sync
+branch, Fusion, and Documentation.
+
+Video input accepts one local clip. Preprocessing builds the visual view after
+the user starts it. Prediction loads the frozen visual engine only after its
+checkpoint hash, run ID, split hash, commit, seed, and preprocessing hash
+match the dashboard defaults. Experiments reads local history and metrics JSON
+only. It cross-checks shared provenance, requires the FakeAVCeleb
+development-validation scope, and labels every result with that scope. It
+shows the local MLflow URL `http://127.0.0.1:5000` and the two run IDs.
+
+Audio and sync are prototype teaching pages. Full training is incomplete.
+They do not load checkpoints or calculate probabilities. Fusion is locked. Its
+current artifact is a software fixture, so the page does not load it or return
+a fusion probability. The documentation page links only to tracked project
+documents that exist.
+
+The dashboard reports missing local evidence as an error. It does not query a
+remote service, load a substitute artifact, or create a metric when the local
+record is absent.
+
+## Local MLflow
+
+Use the primary checkout when its database and artifact root are present:
 
 ```powershell
 .\.venv\Scripts\mlflow.exe server `
@@ -142,101 +133,22 @@ environment:
   --port 5000
 ```
 
-Experiments currently include:
+Open `http://127.0.0.1:5000`. Select `initial-baseline-20260902`, then choose
+training run `4243b35e64c743b89cc33000cc9d3d3e` or evaluation run
+`56182266f70a424581f763b2d3b41989`.
 
-- `initial-baseline-20260902`
-- `prototype-gpu-20260902`
-- `smoke-fixture-fusion`
+## Verification limits and next work
 
-The prototype experiment retains two failed attempts and five finished runs.
-The failed runs preserve the CUDA and cache-path debugging history.
+The real-video CUDA smoke is blocked because the ignored raw data directory is
+empty. The saved validation CSV and metrics JSON remain available in the
+primary checkout, but they do not make a fresh real-video inference possible.
 
-## Dashboard state
+Next work should restore and verify the raw dataset before running the frozen
+manifest row through the provenance-checked CUDA path. Confirm the checkpoint
+hash before the run. Compare the authentic-row probability with
+`0.006941306870430708` only after the dataset and manifest are available.
 
-The Streamlit dashboard exists at
-[`src/deepfake_detection/dashboard/app.py`](../src/deepfake_detection/dashboard/app.py).
-Its presentation view model has unit coverage in
-[`tests/test_dashboard_view.py`](../tests/test_dashboard_view.py).
-
-The dashboard now runs a provenance-checked visual-only mode. Its local
-configuration points to `runs/initial-20260902/visual-initial.pt`,
-preprocessing version `2689577`, and the fixed threshold `0.5`. The loader
-checks the checkpoint SHA-256, MLflow run ID, split hash, training commit,
-seed, and preprocessing hash before loading the model.
-
-Each visual-only result names its limited evidence scope. It states that the
-reported score has only been validated on a source-disjoint FakeAVCeleb
-development split and does not establish cross-dataset generalization.
-
-The dashboard does not expose multimodal artifact loading. The current fusion
-fixture is not a research model and must not be used for a multimodal claim.
-
-Start the dashboard from the main checkout:
-
-```powershell
-.\.venv\Scripts\python.exe -m streamlit run `
-  src\deepfake_detection\dashboard\app.py `
-  --server.address 127.0.0.1
-```
-
-Open `http://127.0.0.1:8501`.
-
-## Verification state
-
-The main checkout passes:
-
-```powershell
-uv run --no-sync pytest -q
-uv run --no-sync ruff check src tests
-uv run --no-sync ruff format --check src tests
-uv run --no-sync ddf-docs
-git diff --check
-```
-
-Pytest collects 369 tests. The latest run had no failures and one skip.
-
-The visual-only loader was also run on the RTX 5070 Ti with the saved
-checkpoint and one held-out validation clip. It returned probability
-`0.006948`; the stored batch evaluation contains `0.006941` for the same clip.
-
-The verified changes are integrated into `main`. The project is not suitable
-to label as a finished research release.
-
-## Remaining research work
-
-1. Finish FaceForensics++.
-2. Evaluate the visual model on Celeb-DF-v2 and FaceForensics++.
-3. Train full audio and synchronization baselines.
-4. Generate genuine out-of-fold branch features.
-5. Train logistic and MLP fusion candidates.
-6. Freeze a threshold using validation data only.
-7. Run seeds 17, 29, and 43.
-8. Run method-holdout and subgroup analysis.
-9. Run the locked MNW evaluation once model selection is complete.
-
-ConvNeXt, WavLM, AASIST, and SyncNet-style candidates remain planned and are
-not implemented.
-
-## Resume FaceForensics++
-
-Run the ignored supervisor from the main checkout:
-
-```powershell
-$script = Resolve-Path runs\prototype-20260902\download-supervisor.ps1
-
-Start-Process powershell.exe `
-  -ArgumentList @(
-    "-NoProfile",
-    "-ExecutionPolicy",
-    "Bypass",
-    "-File",
-    $script,
-    "-ActiveLfsPid",
-    "0"
-  ) `
-  -WorkingDirectory (Get-Location) `
-  -WindowStyle Hidden
-```
-
-The downloader skips completed videos and resumes from the 1,039 retained
-files.
+After that, finish full audio and sync training, create genuine source-grouped
+out-of-fold branch features, train fusion candidates, choose a validation-only
+threshold, and run the locked external evaluations. Do not make a multimodal
+or cross-dataset claim before those steps have recorded evidence.
