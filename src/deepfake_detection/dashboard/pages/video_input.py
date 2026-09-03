@@ -4,6 +4,14 @@ from deepfake_detection.dashboard.components import render_page_header, render_s
 from deepfake_detection.dashboard.navigation import PageState
 from deepfake_detection.dashboard.state import clear_upload, store_upload, uploaded_clip
 
+_UPLOADER_KEY = "dashboard.video_uploader"
+
+
+def _remove_video() -> None:
+    clear_upload(st.session_state)
+    st.session_state.pop(_UPLOADER_KEY, None)
+
+
 render_page_header(
     "Stage 1",
     "1. Video input",
@@ -20,6 +28,7 @@ upload = st.file_uploader(
     "Choose a video",
     type=["mp4", "mov", "mkv", "avi"],
     accept_multiple_files=False,
+    key=_UPLOADER_KEY,
 )
 
 clip = uploaded_clip(st.session_state)
@@ -42,6 +51,9 @@ if clip is not None:
         label="Continue to Preprocessing",
         use_container_width=True,
     )
-    if st.button("Remove video", key="remove_video", use_container_width=True):
-        clear_upload(st.session_state)
-        st.rerun()
+    st.button(
+        "Remove video",
+        key="remove_video",
+        use_container_width=True,
+        on_click=_remove_video,
+    )
