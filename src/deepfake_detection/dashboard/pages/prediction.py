@@ -1,3 +1,4 @@
+from html import escape
 from pathlib import Path
 
 import streamlit as st
@@ -9,13 +10,13 @@ from deepfake_detection.dashboard.components import (
     require_upload,
 )
 from deepfake_detection.dashboard.configuration import dashboard_defaults
-from deepfake_detection.dashboard.status import PageState
 from deepfake_detection.dashboard.state import (
     clear_prediction_for_upload,
     prediction_for_upload,
     prepared_for_upload,
     store_prediction,
 )
+from deepfake_detection.dashboard.status import PageState
 from deepfake_detection.dashboard.view_model import DashboardView, build_view_model
 from deepfake_detection.inference.predictor import PredictionResult
 from deepfake_detection.views.contracts import PreparedClip
@@ -37,26 +38,50 @@ def _coverage_label(prepared: PreparedClip | None) -> str:
     return f"{prepared.quality.face_coverage:.1%}"
 
 
+def _result_markup(view: DashboardView) -> tuple[str, ...]:
+    scope = f'<div class="scope">{escape(view.mode_label)}</div>'
+    result = (
+        f'<div class="result {escape(view.verdict)}"><h2>{escape(view.title)}</h2>'
+        f'<div class="score">{escape(view.final_score)}</div>'
+        f"<div>{escape(view.threshold_label)}</div></div>"
+    )
+    gate = (
+        '<div class="gate">'
+        + "".join(
+            f'<div class="channel {escape(status)}">'
+            f"<strong>{escape(name)}</strong>{escape(status)}</div>"
+            for name, status in view.channels.items()
+        )
+        + "</div>"
+    )
+    markup = [scope, result, gate]
+    if view.limitations:
+        markup.append(
+            '<div class="limits"><strong>Research limits</strong><br>'
+            + "<br>".join(escape(limitation) for limitation in view.limitations)
+            + "</div>"
+        )
+    return tuple(markup)
+
+
 def _render_result(
     result: PredictionResult,
     prepared: PreparedClip | None,
 ) -> None:
-    view: DashboardView = build_view_model(result)
-    st.subheader(view.title)
-    st.markdown(f"**Mode:** {view.mode_label}")
-    st.markdown(f"**Visual classifier probability:** {view.final_score}")
-    st.markdown(f"**Visual coverage:** {_coverage_label(prepared)}")
-    st.markdown(
-        f"**Visual logit:** {view.branch_scores.get('visual', 'Not available')}"
-    )
-    blockers = ", ".join(view.blockers) if view.blockers else "None"
-    st.markdown(f"**Blockers:** {blockers}")
-    st.markdown("**Limitations**")
-    for limitation in view.limitations:
-        st.markdown(f"- {limitation}")
+    view = build_view_model(result, threshold=0.5)
+    for markup in _result_markup(view):
+        st.markdown(markup, unsafe_allow_html=True)
+
+    if view.blockers:
+        st.subheader("Why no final verdict was issued")
+        for blocker in view.blockers:
+            st.write(f"- {blocker.replace('_', ' ')}")
 
     defaults = dashboard_defaults(root=Path.cwd())
     with st.expander("Technical details"):
+        st.markdown(f"**Visual coverage:** {_coverage_label(prepared)}")
+        st.markdown("**Branch logits**")
+        st.json(view.branch_scores)
         st.markdown(f"**Run ID:** `{defaults.run_id}`")
         st.markdown(f"**Checkpoint hash:** `{defaults.checkpoint_sha256}`")
         st.markdown(f"**Split hash:** `{defaults.split_hash}`")

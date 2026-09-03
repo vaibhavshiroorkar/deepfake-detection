@@ -5,7 +5,9 @@ pytest.importorskip("streamlit")
 from streamlit.testing.v1 import AppTest
 
 from deepfake_detection.dashboard import runtime
+from deepfake_detection.dashboard.pages import prediction as prediction_page
 from deepfake_detection.dashboard.state import UploadedClip
+from deepfake_detection.dashboard.view_model import DashboardView
 from deepfake_detection.inference.predictor import PredictionResult
 from deepfake_detection.views.contracts import PreparedClip, QualityReport
 
@@ -120,6 +122,51 @@ def test_prediction_page_persists_a_clicked_analysis_without_rerunning_it(
 
     page.run()
     assert calls == [clip]
+
+
+def test_prediction_page_uses_the_original_result_markup() -> None:
+    clip = _upload()
+    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/prediction.py")
+    page.session_state["dashboard.upload"] = clip
+    page.session_state["dashboard.prediction"] = (clip.sha256, _result(clip.sha256))
+
+    page.run()
+
+    markup = " ".join(item.value for item in page.markdown)
+    assert not page.exception
+    assert 'class="scope"' in markup
+    assert 'class="result fake"' in markup
+    assert 'class="gate"' in markup
+    assert 'class="channel available"' in markup
+    assert 'class="limits"' in markup
+
+
+def test_result_markup_escapes_dynamic_html_values() -> None:
+    view = DashboardView(
+        mode_label='<img src=x onerror="alert(1)">',
+        title="<script>alert(1)</script>",
+        verdict='fake" onmouseover="alert(1)',
+        final_score="<strong>wrong</strong>",
+        channels={"<svg>": 'available" onclick="alert(1)'},
+        branch_scores={},
+        blockers=(),
+        preprocessing_fingerprint="prep",
+        limitations=("<iframe src=bad></iframe>",),
+        threshold_label="threshold < 0.5",
+    )
+
+    markup = " ".join(prediction_page._result_markup(view))
+
+    assert "<script>" not in markup
+    assert "<img" not in markup
+    assert "<svg>" not in markup
+    assert "<iframe" not in markup
+    assert 'onmouseover="' not in markup
+    assert 'onclick="' not in markup
+    assert "&lt;script&gt;" in markup
+    assert "&lt;img" in markup
+    assert "&lt;svg&gt;" in markup
+    assert "&lt;iframe" in markup
 
 
 def test_prediction_page_reports_a_failed_analysis_without_storing_a_result(
