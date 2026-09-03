@@ -6,7 +6,7 @@ import pytest
 pytest.importorskip("streamlit")
 from streamlit.testing.v1 import AppTest
 
-from deepfake_detection.dashboard.pages.documentation import DOCUMENTS
+from deepfake_detection.dashboard.sections.documentation import DOCUMENTS
 
 
 def _page_body(page: AppTest) -> str:
@@ -26,7 +26,7 @@ def test_status_pages_name_their_evidence_limits(
     page_path: str, required_text: tuple[str, ...]
 ) -> None:
     page = AppTest.from_file(
-        f"src/deepfake_detection/dashboard/pages/{page_path}"
+        f"src/deepfake_detection/dashboard/sections/{page_path}"
     ).run()
 
     assert not page.exception
@@ -37,7 +37,7 @@ def test_status_pages_name_their_evidence_limits(
 
 def test_documentation_page_links_to_tracked_records_on_github() -> None:
     page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/pages/documentation.py"
+        "src/deepfake_detection/dashboard/sections/documentation.py"
     ).run()
 
     assert not page.exception
@@ -66,7 +66,7 @@ def test_experiments_page_reports_missing_local_evidence_without_a_crash(
     monkeypatch.setattr(evidence, "load_validation_evidence", fail)
 
     page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/pages/experiments.py"
+        "src/deepfake_detection/dashboard/sections/experiments.py"
     ).run()
 
     assert not page.exception
@@ -84,7 +84,7 @@ def test_experiments_page_reports_an_evidence_read_os_error(
     monkeypatch.setattr(evidence, "load_validation_evidence", fail)
 
     page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/pages/experiments.py"
+        "src/deepfake_detection/dashboard/sections/experiments.py"
     ).run()
 
     assert not page.exception

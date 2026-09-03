@@ -25,6 +25,6 @@ def test_page_module_exposes_one_render_function(
     module_name: str, function_name: str
 ) -> None:
     module = importlib.import_module(
-        f"deepfake_detection.dashboard.pages.{module_name}"
+        f"deepfake_detection.dashboard.sections.{module_name}"
     )
     assert callable(getattr(module, function_name))

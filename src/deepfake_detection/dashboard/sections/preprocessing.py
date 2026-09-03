@@ -8,12 +8,12 @@ from deepfake_detection.dashboard.components import (
     render_status,
     require_upload,
 )
-from deepfake_detection.dashboard.status import PageState
 from deepfake_detection.dashboard.state import (
     clear_prepared_for_upload,
     prepared_for_upload,
     store_prepared,
 )
+from deepfake_detection.dashboard.status import PageState
 from deepfake_detection.views.contracts import PreparedClip
 
 PREPROCESSING_STAGES = (
@@ -111,12 +111,7 @@ def render_preprocessing(*, embedded: bool = False) -> None:
             "See how one clip becomes a tracked and normalized face sequence.",
         )
         render_status(PageState.READY)
-    try:
-        clip = require_upload(show_page_link=not embedded)
-    except KeyError as error:
-        if error.args != ("url_pathname",):
-            raise
-        clip = None
+    clip = require_upload()
 
     _render_stages()
 

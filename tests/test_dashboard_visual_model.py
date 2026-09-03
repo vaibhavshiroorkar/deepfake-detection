@@ -16,9 +16,9 @@ def _page_body(page: AppTest) -> str:
 
 def test_visual_model_page_shows_the_frozen_shape_ladder() -> None:
     page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/app.py", default_timeout=30
+        "src/deepfake_detection/dashboard/sections/visual_model.py",
+        default_timeout=30,
     ).run()
-    page.switch_page("pages/visual_model.py").run()
 
     body = _page_body(page)
     assert not page.exception
@@ -34,7 +34,7 @@ def test_visual_model_page_shows_the_frozen_shape_ladder() -> None:
 
 def test_visual_model_page_explains_outputs_without_claiming_explanations() -> None:
     page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/pages/visual_model.py"
+        "src/deepfake_detection/dashboard/sections/visual_model.py"
     ).run()
 
     body = _page_body(page)
@@ -47,13 +47,13 @@ def test_visual_model_page_explains_outputs_without_claiming_explanations() -> N
 
 def test_visual_model_page_uses_the_shared_video_input_prerequisite() -> None:
     page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/app.py", default_timeout=30
+        "src/deepfake_detection/dashboard/sections/visual_model.py",
+        default_timeout=30,
     ).run()
-    page.switch_page("pages/visual_model.py").run()
 
     assert not page.exception
     assert any("Video input" in item.value for item in page.info)
-    assert [link.label for link in page.get("page_link")] == ["Go to Video input"]
+    assert not page.get("page_link")
 
 
 def test_visual_model_page_shows_real_stored_shapes_and_scores() -> None:
@@ -81,7 +81,9 @@ def test_visual_model_page_shows_real_stored_shapes_and_scores() -> None:
         blockers=(),
         preprocessing_fingerprint="fixture",
     )
-    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/visual_model.py")
+    page = AppTest.from_file(
+        "src/deepfake_detection/dashboard/sections/visual_model.py"
+    )
     page.session_state["dashboard.upload"] = UploadedClip(
         "sample.mp4", ".mp4", b"video", clip_hash
     )

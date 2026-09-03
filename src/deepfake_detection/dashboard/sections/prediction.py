@@ -99,12 +99,7 @@ def render_prediction(*, embedded: bool = False) -> None:
         )
         render_status(PageState.READY)
 
-    try:
-        clip = require_upload(show_page_link=not embedded)
-    except KeyError as error:
-        if error.args != ("url_pathname",):
-            raise
-        clip = None
+    clip = require_upload()
 
     if clip is not None:
         prepared = prepared_for_upload(st.session_state, clip.sha256)

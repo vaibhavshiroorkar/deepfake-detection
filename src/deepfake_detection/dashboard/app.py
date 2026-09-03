@@ -6,15 +6,15 @@ import streamlit as st
 
 from deepfake_detection.dashboard.components import render_step_status
 from deepfake_detection.dashboard.configuration import dashboard_defaults
-from deepfake_detection.dashboard.pages.audio_branch import render_audio_branch
-from deepfake_detection.dashboard.pages.documentation import render_documentation
-from deepfake_detection.dashboard.pages.experiments import render_experiments
-from deepfake_detection.dashboard.pages.fusion import render_fusion
-from deepfake_detection.dashboard.pages.prediction import render_prediction
-from deepfake_detection.dashboard.pages.preprocessing import render_preprocessing
-from deepfake_detection.dashboard.pages.sync_branch import render_sync_branch
-from deepfake_detection.dashboard.pages.video_input import render_video_input
-from deepfake_detection.dashboard.pages.visual_model import render_visual_model
+from deepfake_detection.dashboard.sections.audio_branch import render_audio_branch
+from deepfake_detection.dashboard.sections.documentation import render_documentation
+from deepfake_detection.dashboard.sections.experiments import render_experiments
+from deepfake_detection.dashboard.sections.fusion import render_fusion
+from deepfake_detection.dashboard.sections.prediction import render_prediction
+from deepfake_detection.dashboard.sections.preprocessing import render_preprocessing
+from deepfake_detection.dashboard.sections.sync_branch import render_sync_branch
+from deepfake_detection.dashboard.sections.video_input import render_video_input
+from deepfake_detection.dashboard.sections.visual_model import render_visual_model
 from deepfake_detection.dashboard.state import (
     UploadedClip,
     prediction_for_upload,

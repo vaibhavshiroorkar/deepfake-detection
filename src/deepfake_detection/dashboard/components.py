@@ -15,14 +15,12 @@ def render_page_header(step: str, title: str, summary: str) -> None:
     st.write(summary)
 
 
-def require_upload(*, show_page_link: bool = True) -> UploadedClip | None:
+def require_upload() -> UploadedClip | None:
     from deepfake_detection.dashboard.state import uploaded_clip
 
     clip = uploaded_clip(st.session_state)
     if clip is None:
         st.info("Start with 1. Video input before using this section.")
-        if show_page_link:
-            st.page_link("pages/video_input.py", label="Go to Video input")
     return clip
 
 

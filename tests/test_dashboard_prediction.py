@@ -5,7 +5,7 @@ pytest.importorskip("streamlit")
 from streamlit.testing.v1 import AppTest
 
 from deepfake_detection.dashboard import runtime
-from deepfake_detection.dashboard.pages import prediction as prediction_page
+from deepfake_detection.dashboard.sections import prediction as prediction_section
 from deepfake_detection.dashboard.state import UploadedClip
 from deepfake_detection.dashboard.view_model import DashboardView
 from deepfake_detection.inference.predictor import PredictionResult
@@ -58,7 +58,7 @@ def _result(clip_hash: str) -> PredictionResult:
 
 def test_prediction_page_requires_an_upload_and_exposes_no_runtime_controls() -> None:
     page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/pages/prediction.py"
+        "src/deepfake_detection/dashboard/sections/prediction.py"
     ).run()
 
     body = _page_body(page)
@@ -71,7 +71,7 @@ def test_prediction_page_requires_an_upload_and_exposes_no_runtime_controls() ->
 
 
 def test_prediction_page_shows_one_fixed_action_after_upload() -> None:
-    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/prediction.py")
+    page = AppTest.from_file("src/deepfake_detection/dashboard/sections/prediction.py")
     page.session_state["dashboard.upload"] = _upload()
 
     page.run()
@@ -98,7 +98,7 @@ def test_prediction_page_persists_a_clicked_analysis_without_rerunning_it(
         "predict_upload",
         lambda received: calls.append(received) or result,
     )
-    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/prediction.py")
+    page = AppTest.from_file("src/deepfake_detection/dashboard/sections/prediction.py")
     page.session_state["dashboard.upload"] = clip
     page.session_state["dashboard.prepared"] = (clip.sha256, _prepared(clip.sha256))
 
@@ -126,7 +126,7 @@ def test_prediction_page_persists_a_clicked_analysis_without_rerunning_it(
 
 def test_prediction_page_uses_the_original_result_markup() -> None:
     clip = _upload()
-    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/prediction.py")
+    page = AppTest.from_file("src/deepfake_detection/dashboard/sections/prediction.py")
     page.session_state["dashboard.upload"] = clip
     page.session_state["dashboard.prediction"] = (clip.sha256, _result(clip.sha256))
 
@@ -155,7 +155,7 @@ def test_result_markup_escapes_dynamic_html_values() -> None:
         threshold_label="threshold < 0.5",
     )
 
-    markup = " ".join(prediction_page._result_markup(view))
+    markup = " ".join(prediction_section._result_markup(view))
 
     assert "<script>" not in markup
     assert "<img" not in markup
@@ -176,7 +176,7 @@ def test_prediction_page_reports_a_failed_analysis_without_storing_a_result(
         raise RuntimeError("CUDA driver is unavailable")
 
     monkeypatch.setattr(runtime, "predict_upload", fail)
-    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/prediction.py")
+    page = AppTest.from_file("src/deepfake_detection/dashboard/sections/prediction.py")
     page.session_state["dashboard.upload"] = _upload()
 
     page.run()
@@ -198,7 +198,7 @@ def test_prediction_failure_hides_a_cached_result_for_the_attempt(
             RuntimeError("CUDA driver is unavailable")
         ),
     )
-    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/prediction.py")
+    page = AppTest.from_file("src/deepfake_detection/dashboard/sections/prediction.py")
     page.session_state["dashboard.upload"] = clip
     page.session_state["dashboard.prediction"] = (clip.sha256, _result(clip.sha256))
 

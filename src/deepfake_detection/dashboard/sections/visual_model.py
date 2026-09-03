@@ -5,11 +5,11 @@ from deepfake_detection.dashboard.components import (
     render_status,
     require_upload,
 )
-from deepfake_detection.dashboard.status import PageState
 from deepfake_detection.dashboard.state import (
     prediction_for_upload,
     prepared_for_upload,
 )
+from deepfake_detection.dashboard.status import PageState
 
 MODEL_STAGES = (
     ("Face sequence", "[B, 16, 3, 224, 224]"),
@@ -54,7 +54,7 @@ def render_visual_model(*, embedded: bool = False) -> None:
         "why a clip is authentic or manipulated."
     )
 
-    clip = require_upload(show_page_link=not embedded)
+    clip = require_upload()
     prepared = prepared_for_upload(st.session_state, clip.sha256) if clip else None
     prediction = prediction_for_upload(st.session_state, clip.sha256) if clip else None
 

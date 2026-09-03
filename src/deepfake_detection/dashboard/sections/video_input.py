@@ -1,8 +1,8 @@
 import streamlit as st
 
 from deepfake_detection.dashboard.components import render_page_header, render_status
-from deepfake_detection.dashboard.status import PageState
 from deepfake_detection.dashboard.state import clear_upload, store_upload, uploaded_clip
+from deepfake_detection.dashboard.status import PageState
 
 _UPLOADER_KEY = "dashboard.video_uploader"
 
@@ -48,12 +48,6 @@ def render_video_input(*, embedded: bool = False) -> None:
         st.markdown(f"**Filename:** `{clip.name}`")
         st.markdown(f"**Size:** {len(clip.content)} bytes")
         st.markdown(f"**SHA-256:** `{clip.sha256[:12]}`")
-        if not embedded:
-            st.page_link(
-                "pages/preprocessing.py",
-                label="Continue to Preprocessing",
-                use_container_width=True,
-            )
         st.button(
             "Remove video",
             key="remove_video",

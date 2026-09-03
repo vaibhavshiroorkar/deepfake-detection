@@ -5,14 +5,14 @@ pytest.importorskip("streamlit")
 from streamlit.testing.v1 import AppTest
 
 from deepfake_detection.dashboard import runtime
-from deepfake_detection.dashboard.pages.preprocessing import PREPROCESSING_STAGES
+from deepfake_detection.dashboard.sections.preprocessing import PREPROCESSING_STAGES
 from deepfake_detection.dashboard.state import UploadedClip
 from deepfake_detection.views.contracts import PreparedClip, QualityReport
 
 
 def test_preprocessing_page_requires_video_input() -> None:
     page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/pages/preprocessing.py"
+        "src/deepfake_detection/dashboard/sections/preprocessing.py"
     ).run()
 
     assert not page.exception
@@ -50,7 +50,9 @@ def test_preprocessing_page_shows_the_prepared_visual_evidence(
         preprocessing_config_hash="fd372dbe" + "0" * 56,
     )
     monkeypatch.setattr(runtime, "prepare_uploaded_visual", lambda clip: prepared)
-    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/preprocessing.py")
+    page = AppTest.from_file(
+        "src/deepfake_detection/dashboard/sections/preprocessing.py"
+    )
     page.session_state["dashboard.upload"] = UploadedClip(
         "sample.mp4", ".mp4", b"video", "a" * 64
     )
@@ -88,7 +90,9 @@ def test_preprocessing_page_shows_quality_blockers_without_tensor_preview(
         preprocessing_config_hash="fd372dbe" + "0" * 56,
     )
     monkeypatch.setattr(runtime, "prepare_uploaded_visual", lambda clip: prepared)
-    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/preprocessing.py")
+    page = AppTest.from_file(
+        "src/deepfake_detection/dashboard/sections/preprocessing.py"
+    )
     page.session_state["dashboard.upload"] = UploadedClip(
         "sample.mp4", ".mp4", b"video", "a" * 64
     )
@@ -111,7 +115,9 @@ def test_preprocessing_runtime_failure_does_not_store_output(
         raise RuntimeError("CUDA driver is unavailable")
 
     monkeypatch.setattr(runtime, "prepare_uploaded_visual", fail)
-    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/preprocessing.py")
+    page = AppTest.from_file(
+        "src/deepfake_detection/dashboard/sections/preprocessing.py"
+    )
     page.session_state["dashboard.upload"] = UploadedClip(
         "sample.mp4", ".mp4", b"video", "a" * 64
     )
@@ -141,7 +147,9 @@ def test_preprocessing_failure_hides_a_cached_output_for_the_attempt(
         "prepare_uploaded_visual",
         lambda clip: (_ for _ in ()).throw(RuntimeError("CUDA driver is unavailable")),
     )
-    page = AppTest.from_file("src/deepfake_detection/dashboard/pages/preprocessing.py")
+    page = AppTest.from_file(
+        "src/deepfake_detection/dashboard/sections/preprocessing.py"
+    )
     page.session_state["dashboard.upload"] = UploadedClip(
         "sample.mp4", ".mp4", b"video", "a" * 64
     )

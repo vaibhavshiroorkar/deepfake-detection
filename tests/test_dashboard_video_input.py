@@ -6,9 +6,9 @@ from streamlit.testing.v1 import AppTest
 
 def test_video_input_stores_streamlit_upload_bytes_in_session_state() -> None:
     page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/app.py", default_timeout=30
+        "src/deepfake_detection/dashboard/sections/video_input.py",
+        default_timeout=30,
     ).run()
-    page.switch_page("pages/video_input.py").run()
 
     page.file_uploader[0].set_value(("clip.MP4", b"video bytes", "video/mp4")).run()
 
@@ -23,14 +23,12 @@ def test_video_input_stores_streamlit_upload_bytes_in_session_state() -> None:
     assert "clip.MP4" in body
     assert "11 bytes" in body
     assert "96b050b919f3" in body
-    assert [link.label for link in page.get("page_link")] == [
-        "Continue to Preprocessing"
-    ]
+    assert not page.get("page_link")
 
 
 def test_video_input_explains_local_handling_and_shows_one_uploader() -> None:
     page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/pages/video_input.py"
+        "src/deepfake_detection/dashboard/sections/video_input.py"
     ).run()
 
     assert not page.exception
@@ -43,9 +41,9 @@ def test_video_input_explains_local_handling_and_shows_one_uploader() -> None:
 
 def test_video_input_remove_action_clears_the_uploader_and_derived_state() -> None:
     page = AppTest.from_file(
-        "src/deepfake_detection/dashboard/app.py", default_timeout=30
+        "src/deepfake_detection/dashboard/sections/video_input.py",
+        default_timeout=30,
     ).run()
-    page.switch_page("pages/video_input.py").run()
     page.file_uploader[0].set_value(("sample.mp4", b"video", "video/mp4")).run()
     page.session_state["dashboard.prepared"] = object()
     page.session_state["dashboard.prediction"] = object()

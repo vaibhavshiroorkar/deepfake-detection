@@ -1,0 +1,1 @@
+"""Reusable teaching dashboard sections."""
