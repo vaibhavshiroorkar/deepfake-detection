@@ -98,7 +98,7 @@ def test_display_face_frames_reverses_imagenet_normalization() -> None:
     assert frames[0][0, 0].tolist() == [123, 116, 103]
 
 
-def test_prepare_uploaded_visual_uses_the_frozen_preprocessing_version(
+def test_prepare_uploaded_visual_uses_the_frozen_cuda_preprocessing_version(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     calls: dict[str, object] = {}
@@ -121,10 +121,10 @@ def test_prepare_uploaded_visual_uses_the_frozen_preprocessing_version(
     monkeypatch.setattr(runtime, "build_preprocessor", fake_factory)
     clip = UploadedClip("sample.mp4", ".mp4", b"video", "a" * 64)
 
-    prepared = prepare_uploaded_visual(clip, device="cpu")
+    prepared = prepare_uploaded_visual(clip)
 
     assert calls["code_version"] == "2689577"
-    assert calls["device"] == "cpu"
+    assert calls["device"] == "cuda"
     assert calls["detector"] == "mtcnn"
     assert calls["tracker"] == "greedy_iou"
     assert calls["crop_mode"] == "box"
@@ -132,6 +132,20 @@ def test_prepare_uploaded_visual_uses_the_frozen_preprocessing_version(
     assert calls["record"].clip_id == clip.sha256
     assert not calls["prepared_path"].exists()
     assert prepared.preprocessing_config_hash.endswith("e0928c96")
+
+
+def test_prepare_uploaded_visual_rejects_a_caller_device_override(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        runtime,
+        "build_preprocessor",
+        lambda **values: pytest.fail("caller-controlled device reached the factory"),
+    )
+    clip = UploadedClip("sample.mp4", ".mp4", b"video", "a" * 64)
+
+    with pytest.raises(TypeError, match="unexpected keyword argument 'device'"):
+        prepare_uploaded_visual(clip, device="cpu")
 
 
 def test_prepare_uploaded_visual_rejects_mismatched_preprocessing_provenance(
@@ -149,4 +163,4 @@ def test_prepare_uploaded_visual_rejects_mismatched_preprocessing_provenance(
     clip = UploadedClip("sample.mp4", ".mp4", b"video", "a" * 64)
 
     with pytest.raises(ValueError, match="preprocessing.*checkpoint"):
-        prepare_uploaded_visual(clip, device="cpu")
+        prepare_uploaded_visual(clip)

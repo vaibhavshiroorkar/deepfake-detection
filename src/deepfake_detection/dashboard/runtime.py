@@ -46,15 +46,11 @@ def predict_upload(clip: UploadedClip) -> PredictionResult:
         return engine.predict(path)
 
 
-def prepare_uploaded_visual(
-    clip: UploadedClip,
-    *,
-    device: str = "cuda",
-) -> PreparedClip:
+def prepare_uploaded_visual(clip: UploadedClip) -> PreparedClip:
     defaults = dashboard_defaults(root=_PROJECT_ROOT)
     preprocessor = build_preprocessor(
         code_version=defaults.code_version,
-        device=device,
+        device="cuda",
         detector="mtcnn",
         tracker="greedy_iou",
         crop_mode="box",
