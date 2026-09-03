@@ -39,3 +39,18 @@ def test_visual_only_view_names_its_limited_evidence_scope() -> None:
         "Validated on a source-disjoint FakeAVCeleb development split only.",
         "This score does not establish cross-dataset generalization.",
     )
+
+
+def test_dashboard_view_defaults_to_the_frozen_threshold() -> None:
+    result = PredictionResult(
+        clip_id="clip-1",
+        verdict="fake",
+        probability=0.75,
+        branch_logits={"visual": 1.099},
+        blockers=(),
+        preprocessing_fingerprint="prep",
+    )
+
+    view = build_view_model(result)
+
+    assert view.threshold_label == "Fixed decision threshold: 0.50"

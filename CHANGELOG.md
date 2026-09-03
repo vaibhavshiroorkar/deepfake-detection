@@ -12,6 +12,12 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Added a ten-page local teaching dashboard. The visual path is provenance
+  checked. Experiments reads strict local FakeAVCeleb development-validation
+  evidence. Audio and sync remain prototype pages, and fusion remains locked
+  behind a software fixture.
+- Updated the dashboard instructions and project handoff with local artifact,
+  MLflow, and raw-data limitations.
 - Replaced the former external benchmark with the evaluation-only
   Microsoft-Northwestern-WITNESS benchmark. Defined one ignored four-dataset
   data root and added versioned experiment and result traceability records.

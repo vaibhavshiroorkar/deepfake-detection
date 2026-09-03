@@ -22,7 +22,7 @@ class DashboardView:
 def build_view_model(
     result: PredictionResult,
     *,
-    threshold: float,
+    threshold: float = 0.5,
 ) -> DashboardView:
     titles = {
         "fake": "Likely manipulated",
