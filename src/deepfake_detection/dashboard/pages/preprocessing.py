@@ -103,36 +103,42 @@ def _render_output(prepared: PreparedClip) -> None:
         st.image(frame, caption=f"Face crop {index}")
 
 
-render_page_header(
-    "Stage 2",
-    "2. Preprocessing",
-    "See how one clip becomes a tracked and normalized face sequence.",
-)
-render_status(PageState.READY)
-try:
-    clip = require_upload()
-except KeyError as error:
-    if error.args != ("url_pathname",):
-        raise
-    clip = None
+def render_preprocessing(*, embedded: bool = False) -> None:
+    if not embedded:
+        render_page_header(
+            "Stage 2",
+            "2. Preprocessing",
+            "See how one clip becomes a tracked and normalized face sequence.",
+        )
+        render_status(PageState.READY)
+    try:
+        clip = require_upload(show_page_link=not embedded)
+    except KeyError as error:
+        if error.args != ("url_pathname",):
+            raise
+        clip = None
 
-_render_stages()
+    _render_stages()
 
-if clip is not None:
-    prepared = prepared_for_upload(st.session_state, clip.sha256)
-    if st.button(
-        "Run preprocessing",
-        key="run_preprocessing",
-        type="primary",
-        use_container_width=True,
-    ):
-        clear_prepared_for_upload(st.session_state, clip.sha256)
-        prepared = None
-        try:
-            prepared = runtime.prepare_uploaded_visual(clip)
-        except (OSError, RuntimeError, ValueError) as error:
-            st.error(_failure_guidance(error))
-        else:
-            store_prepared(st.session_state, clip.sha256, prepared)
-    if prepared is not None:
-        _render_output(prepared)
+    if clip is not None:
+        prepared = prepared_for_upload(st.session_state, clip.sha256)
+        if st.button(
+            "Run preprocessing",
+            key="run_preprocessing",
+            type="primary",
+            use_container_width=True,
+        ):
+            clear_prepared_for_upload(st.session_state, clip.sha256)
+            prepared = None
+            try:
+                prepared = runtime.prepare_uploaded_visual(clip)
+            except (OSError, RuntimeError, ValueError) as error:
+                st.error(_failure_guidance(error))
+            else:
+                store_prepared(st.session_state, clip.sha256, prepared)
+        if prepared is not None:
+            _render_output(prepared)
+
+
+if __name__ == "__main__":
+    render_preprocessing()

@@ -30,13 +30,19 @@ DOCUMENTS = (
     ),
 )
 
-render_page_header(
-    "Project record",
-    "Documentation",
-    "Open the repository records that define scope, data, runs, and reproducibility.",
-)
-render_status(PageState.READY)
+def render_documentation(*, embedded: bool = False) -> None:
+    if not embedded:
+        render_page_header(
+            "Project record",
+            "Documentation",
+            "Open the repository records that define scope, data, runs, and reproducibility.",
+        )
+    render_status(PageState.READY)
 
-st.subheader("Repository records")
-for label, target in DOCUMENTS:
-    st.markdown(f"[{label}]({target})")
+    st.subheader("Repository records")
+    for label, target in DOCUMENTS:
+        st.markdown(f"[{label}]({target})")
+
+
+if __name__ == "__main__":
+    render_documentation()

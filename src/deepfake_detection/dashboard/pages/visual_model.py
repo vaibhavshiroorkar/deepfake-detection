@@ -35,41 +35,47 @@ def _render_stage(index: int, name: str, shape: str, note: str) -> None:
         st.write(note)
 
 
-render_page_header(
-    "Stage 3",
-    "3. Visual model",
-    "Trace frame features through the frozen visual classifier.",
-)
-render_status(PageState.READY)
+def render_visual_model(*, embedded: bool = False) -> None:
+    if not embedded:
+        render_page_header(
+            "Stage 3",
+            "3. Visual model",
+            "Trace frame features through the frozen visual classifier.",
+        )
+        render_status(PageState.READY)
 
-for stage_index, ((stage_name, stage_shape), stage_note) in enumerate(
-    zip(MODEL_STAGES, _STAGE_NOTES, strict=True), start=1
-):
-    _render_stage(stage_index, stage_name, stage_shape, stage_note)
+    for stage_index, ((stage_name, stage_shape), stage_note) in enumerate(
+        zip(MODEL_STAGES, _STAGE_NOTES, strict=True), start=1
+    ):
+        _render_stage(stage_index, stage_name, stage_shape, stage_note)
 
-st.info(
-    "These intermediate values are model computations, not an explanation of "
-    "why a clip is authentic or manipulated."
-)
-
-clip = require_upload()
-prepared = prepared_for_upload(st.session_state, clip.sha256) if clip else None
-prediction = prediction_for_upload(st.session_state, clip.sha256) if clip else None
-
-if prepared is not None and prepared.visual_view is not None:
-    st.subheader("Current input")
-    st.markdown(f"**Prepared tensor shape:** `{prepared.visual_view.shape}`")
-
-if prediction is None:
-    st.caption(
-        "Prediction runs the frozen classifier and returns its visual logit and "
-        "sigmoid probability."
+    st.info(
+        "These intermediate values are model computations, not an explanation of "
+        "why a clip is authentic or manipulated."
     )
-else:
-    st.subheader("Current classifier output")
-    visual_logit = prediction.branch_logits.get("visual")
-    if visual_logit is not None:
-        st.markdown(f"**Visual logit:** `{visual_logit:+.3f}`")
-    probability = prediction.probability
-    if probability is not None:
-        st.markdown(f"**Sigmoid probability:** `{probability:.1%}`")
+
+    clip = require_upload(show_page_link=not embedded)
+    prepared = prepared_for_upload(st.session_state, clip.sha256) if clip else None
+    prediction = prediction_for_upload(st.session_state, clip.sha256) if clip else None
+
+    if prepared is not None and prepared.visual_view is not None:
+        st.subheader("Current input")
+        st.markdown(f"**Prepared tensor shape:** `{prepared.visual_view.shape}`")
+
+    if prediction is None:
+        st.caption(
+            "Prediction runs the frozen classifier and returns its visual logit and "
+            "sigmoid probability."
+        )
+    else:
+        st.subheader("Current classifier output")
+        visual_logit = prediction.branch_logits.get("visual")
+        if visual_logit is not None:
+            st.markdown(f"**Visual logit:** `{visual_logit:+.3f}`")
+        probability = prediction.probability
+        if probability is not None:
+            st.markdown(f"**Sigmoid probability:** `{probability:.1%}`")
+
+
+if __name__ == "__main__":
+    render_visual_model()

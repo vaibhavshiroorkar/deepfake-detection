@@ -65,38 +65,44 @@ def _render_result(
         )
 
 
-render_page_header(
-    "Stage 4",
-    "4. Prediction",
-    "Run the frozen visual baseline and read its evidence limits.",
-)
-render_status(PageState.READY)
+def render_prediction(*, embedded: bool = False) -> None:
+    if not embedded:
+        render_page_header(
+            "Stage 4",
+            "4. Prediction",
+            "Run the frozen visual baseline and read its evidence limits.",
+        )
+        render_status(PageState.READY)
 
-try:
-    clip = require_upload()
-except KeyError as error:
-    if error.args != ("url_pathname",):
-        raise
-    clip = None
+    try:
+        clip = require_upload(show_page_link=not embedded)
+    except KeyError as error:
+        if error.args != ("url_pathname",):
+            raise
+        clip = None
 
-if clip is not None:
-    prepared = prepared_for_upload(st.session_state, clip.sha256)
-    result = prediction_for_upload(st.session_state, clip.sha256)
-    st.markdown("**Fixed decision threshold: 0.50**")
-    st.caption("Visual-only development baseline")
-    if st.button(
-        "Analyze video",
-        key="analyze_video",
-        type="primary",
-        use_container_width=True,
-    ):
-        clear_prediction_for_upload(st.session_state, clip.sha256)
-        result = None
-        try:
-            result = runtime.predict_upload(clip)
-        except (OSError, RuntimeError, ValueError) as error:
-            st.error(_failure_guidance(error))
-        else:
-            store_prediction(st.session_state, clip.sha256, result)
-    if result is not None:
-        _render_result(result, prepared)
+    if clip is not None:
+        prepared = prepared_for_upload(st.session_state, clip.sha256)
+        result = prediction_for_upload(st.session_state, clip.sha256)
+        st.markdown("**Fixed decision threshold: 0.50**")
+        st.caption("Visual-only development baseline")
+        if st.button(
+            "Analyze video",
+            key="analyze_video",
+            type="primary",
+            use_container_width=True,
+        ):
+            clear_prediction_for_upload(st.session_state, clip.sha256)
+            result = None
+            try:
+                result = runtime.predict_upload(clip)
+            except (OSError, RuntimeError, ValueError) as error:
+                st.error(_failure_guidance(error))
+            else:
+                store_prediction(st.session_state, clip.sha256, result)
+        if result is not None:
+            _render_result(result, prepared)
+
+
+if __name__ == "__main__":
+    render_prediction()
