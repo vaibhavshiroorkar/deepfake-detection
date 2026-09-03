@@ -55,7 +55,16 @@ def test_documentation_page_links_to_tracked_records_on_github() -> None:
         assert parsed.netloc == "github.com"
 
 
-def test_experiments_page_reports_missing_local_evidence_without_a_crash() -> None:
+def test_experiments_page_reports_missing_local_evidence_without_a_crash(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from deepfake_detection.dashboard import evidence
+
+    def fail(metrics_path: Path, history_path: Path) -> object:
+        raise FileNotFoundError("missing fixture")
+
+    monkeypatch.setattr(evidence, "load_validation_evidence", fail)
+
     page = AppTest.from_file(
         "src/deepfake_detection/dashboard/pages/experiments.py"
     ).run()
