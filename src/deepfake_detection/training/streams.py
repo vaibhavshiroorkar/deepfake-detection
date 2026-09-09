@@ -99,7 +99,11 @@ def _validate(
 
 
 def parameter_groups(
-    model: nn.Module, *, head_lr: float, encoder_lr: float
+    model: nn.Module,
+    *,
+    head_lr: float,
+    encoder_lr: float,
+    encoder_names: tuple[str, ...] = ("video_encoder", "audio_encoder"),
 ) -> list[dict]:
     """Split the model so pretrained encoders learn far slower than new heads.
 
@@ -114,7 +118,7 @@ def parameter_groups(
     encoder_parameters = []
     head_parameters = []
     encoder_ids: set[int] = set()
-    for name in ("video_encoder", "audio_encoder"):
+    for name in encoder_names:
         module = getattr(model, name, None)
         if module is None:
             continue
@@ -127,9 +131,88 @@ def parameter_groups(
         if id(parameter) not in encoder_ids
     ]
     groups = [{"params": head_parameters, "lr": head_lr}]
-    if encoder_parameters:
-        groups.append({"params": encoder_parameters, "lr": encoder_lr})
+    # A frozen backbone yields no trainable parameters, and an optimizer group
+    # with an empty list raises, so the group is only added when it has members.
+    trainable = [p for p in encoder_parameters if p.requires_grad]
+    if trainable:
+        groups.append({"params": trainable, "lr": encoder_lr})
     return groups
+
+
+def fit_visual_stream(
+    *,
+    model: nn.Module,
+    train_batches: Sequence,
+    validation_batches: Sequence,
+    optimizer: Optimizer,
+    config: StreamTrainingConfig,
+    device: str,
+) -> StreamTrainingHistory:
+    """Train a `VisualStream`, which takes one tensor and returns a tuple.
+
+    `fit_stream` cannot serve this: its batches carry a video and an audio
+    tensor and its model returns a `StreamOutput`. The early stopping, staged
+    freezing and best-state restore are the same, so only the forward call and
+    the diagonal-mass field differ.
+    """
+    model.to(device)
+    criterion = nn.BCEWithLogitsLoss()
+    records: list[StreamEpochRecord] = []
+    best_loss = float("inf")
+    best_epoch = 0
+    best_state: dict[str, torch.Tensor] | None = None
+    stale = 0
+
+    def batch_loss(current: nn.Module, batch) -> torch.Tensor:
+        logit, _ = current(batch.values.to(device))
+        return criterion(logit, batch.labels.to(device))
+
+    for epoch in range(config.epochs):
+        trainable = epoch >= config.freeze_epochs
+        setter = getattr(model, "set_backbone_trainable", None)
+        if setter is not None:
+            setter(trainable)
+        train = run_accumulated_epoch(
+            model=model,
+            batches=train_batches,
+            optimizer=optimizer,
+            accumulation_steps=config.accumulation_steps,
+            loss_for_batch=batch_loss,
+        )
+        model.eval()
+        losses: list[float] = []
+        with torch.inference_mode():
+            for batch in validation_batches:
+                losses.append(float(batch_loss(model, batch)))
+        validation_loss = sum(losses) / len(losses)
+        print(
+            f"epoch {epoch + 1}/{config.epochs}  train {train.mean_loss:.4f}  "
+            f"val {validation_loss:.4f}  backbone={'on' if trainable else 'frozen'}",
+            flush=True,
+        )
+        records.append(
+            StreamEpochRecord(
+                epoch=epoch + 1,
+                train_loss=train.mean_loss,
+                validation_loss=validation_loss,
+                optimizer_steps=train.optimizer_steps,
+                encoders_trainable=trainable,
+                # Not applicable: a visual stream makes no correspondence claim,
+                # so there is no attention map to read a diagonal from.
+                validation_diagonal_mass=0.0,
+            )
+        )
+        if validation_loss < best_loss - config.minimum_improvement:
+            best_loss, best_epoch, stale = validation_loss, epoch + 1, 0
+            best_state = copy.deepcopy(model.state_dict())
+        else:
+            stale += 1
+            if stale >= config.early_stopping_patience:
+                break
+    if best_state is None:
+        raise RuntimeError("Training did not produce a checkpoint candidate")
+    model.load_state_dict(best_state)
+    return StreamTrainingHistory(epochs=tuple(records), best_epoch=best_epoch)
 
 
 def fit_stream(

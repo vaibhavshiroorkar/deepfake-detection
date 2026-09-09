@@ -247,6 +247,7 @@ def test_cli_reference_discovers_every_leaf_command() -> None:
         "ddf train stream",
         "ddf train sync",
         "ddf train visual",
+        "ddf train visual-stream",
     )
 
 

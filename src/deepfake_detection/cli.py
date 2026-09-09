@@ -1204,6 +1204,219 @@ def _binary_branch_train(arguments: argparse.Namespace) -> int:
     return 0
 
 
+VISUAL_STREAM_PRESETS = ("dinov3", "efficientnet", "xception")
+
+
+def _visual_stream_train(arguments: argparse.Namespace) -> int:
+    """Train one configurable visual stream: DINOv3, EfficientNet-B0 or Xception.
+
+    Parallel to `train visual`, which is welded to EfficientNet-B0 and returns a
+    `BranchOutput`. This trains `streams/visual_stream.py`, which carries three
+    backbones and projects each to a shared `common_dim` so several streams can
+    be concatenated for feature-level fusion.
+
+    `--freeze-backbone` is the option that matters. A fine-tuned backbone can
+    absorb the corpus it trains on: the EfficientNet baseline reached 0.9742
+    in-domain and then called 130 of 155 genuine Celeb-DF videos fake. A frozen
+    self-supervised backbone never sees the corpus, so it cannot learn its
+    artifacts, and only the head is fitted.
+    """
+    reject_evaluation_only(arguments.dataset, operation="training")
+    started_at = time.perf_counter()
+    runtime.seed_everything(arguments.seed, deterministic=True)
+    runtime.require_research_cuda(arguments.device)
+
+    import torch
+    from torch.utils.data import DataLoader
+
+    from deepfake_detection.data.datasets import (
+        CachedBranchDataset,
+        collate_branch_items,
+    )
+    from deepfake_detection.streams.config import (
+        dinov3_config,
+        efficientnet_config,
+        xception_config,
+    )
+    from deepfake_detection.streams.visual_stream import build_visual_stream
+    from deepfake_detection.training.checkpoints import (
+        RunMetadata,
+        hash_config,
+        save_checkpoint,
+    )
+    from deepfake_detection.training.streams import (
+        StreamTrainingConfig,
+        fit_visual_stream,
+        parameter_groups,
+    )
+
+    presets = {
+        "dinov3": dinov3_config,
+        "efficientnet": efficientnet_config,
+        "xception": xception_config,
+    }
+    config = presets[arguments.backbone](
+        pretrained=True,
+        common_dim=arguments.common_dim,
+        num_frames=arguments.num_frames,
+        temporal_type=arguments.temporal,
+        temporal_hidden=arguments.temporal_hidden,
+        freeze_backbone=arguments.freeze_backbone,
+        frame_chunk_size=arguments.frame_chunk_size,
+    )
+
+    train_records = load_manifest(
+        arguments.train_manifest, dataset=arguments.dataset
+    ).records
+    validation_records = load_manifest(
+        arguments.validation_manifest, dataset=arguments.dataset
+    ).records
+    index = _read_cache_index(arguments.cache_index)
+    cache_store = CacheStore(arguments.cache_root)
+
+    def dataset_for(records):
+        return CachedBranchDataset(
+            records=records,
+            cache_index=index,
+            cache_store=cache_store,
+            branch="visual",
+            preprocessing_hash=arguments.preprocessing_hash,
+        )
+
+    train_dataset = dataset_for(train_records)
+    validation_dataset = dataset_for(validation_records)
+    labels = [int(record.video_fake) for record in train_records]
+    if set(labels) != {0, 1}:
+        raise ValueError("Visual stream training needs both real and fake clips")
+
+    # Inverse-frequency sampling, matching the branch trainers. FakeAVCeleb runs
+    # roughly twenty to one fake, so uniform sampling shows a real clip about
+    # once a batch.
+    counts = {label: labels.count(label) for label in set(labels)}
+    generator = torch.Generator()
+    generator.manual_seed(arguments.seed)
+    sampler = torch.utils.data.WeightedRandomSampler(
+        weights=[1.0 / counts[label] for label in labels],
+        num_samples=len(labels),
+        replacement=True,
+        generator=generator,
+    )
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=arguments.batch_size,
+        sampler=sampler,
+        collate_fn=collate_branch_items,
+        num_workers=arguments.workers,
+    )
+    validation_loader = DataLoader(
+        validation_dataset,
+        batch_size=arguments.batch_size,
+        shuffle=False,
+        collate_fn=collate_branch_items,
+        num_workers=arguments.workers,
+    )
+
+    model = build_visual_stream(config)
+    optimizer = torch.optim.AdamW(
+        # A frozen backbone contributes no trainable parameters, so the group is
+        # empty and only the head moves; the split still matters when it is not.
+        parameter_groups(
+            model,
+            head_lr=arguments.learning_rate,
+            encoder_lr=arguments.encoder_learning_rate,
+            encoder_names=("backbone",),
+        ),
+        lr=arguments.learning_rate,
+        weight_decay=arguments.weight_decay,
+    )
+    training = StreamTrainingConfig(
+        epochs=arguments.epochs,
+        accumulation_steps=arguments.accumulation_steps,
+        freeze_epochs=arguments.epochs if arguments.freeze_backbone else arguments.freeze_epochs,
+        early_stopping_patience=arguments.patience,
+    )
+    run_config = {
+        "stream": f"visual-{arguments.backbone}",
+        "dataset": arguments.dataset,
+        "training": asdict(training),
+        "optimizer": {
+            "name": "adamw",
+            "learning_rate": arguments.learning_rate,
+            "encoder_learning_rate": arguments.encoder_learning_rate,
+            "weight_decay": arguments.weight_decay,
+        },
+        "model": {
+            "backbone": config.backbone_name,
+            "global_pool": config.global_pool,
+            "temporal": config.temporal_type,
+            "temporal_hidden": config.temporal_hidden,
+            "common_dim": config.common_dim,
+            "frozen_backbone": arguments.freeze_backbone,
+            "pretrained": True,
+        },
+    }
+
+    torch.cuda.reset_peak_memory_stats(arguments.device)
+    training_started = time.perf_counter()
+    history = fit_visual_stream(
+        model=model,
+        train_batches=train_loader,
+        validation_batches=validation_loader,
+        optimizer=optimizer,
+        config=training,
+        device=arguments.device,
+    )
+    training_cost = _training_cost_metrics(
+        train_samples=len(train_dataset),
+        completed_epochs=len(history.epochs),
+        elapsed_seconds=time.perf_counter() - training_started,
+        peak_gpu_memory_bytes=torch.cuda.max_memory_allocated(arguments.device),
+    )
+    metadata = RunMetadata(
+        run_id=arguments.run_id,
+        branch=f"visual-{arguments.backbone}",
+        git_commit=_git_commit(),
+        split_hash=arguments.split_hash,
+        preprocessing_hash=arguments.preprocessing_hash,
+        config_hash=_configuration_hash(arguments, run_config, hash_config),
+        seed=arguments.seed,
+    )
+    checkpoint_hash = save_checkpoint(
+        arguments.checkpoint,
+        model=model,
+        optimizer=optimizer,
+        metadata=metadata,
+        epoch=history.best_epoch,
+    )
+    best = history.epochs[history.best_epoch - 1]
+    _write_json(
+        arguments.history,
+        {
+            "metadata": asdict(metadata),
+            "config": run_config,
+            "checkpoint_hash": checkpoint_hash,
+            "best_epoch": history.best_epoch,
+            "epochs": [asdict(epoch) for epoch in history.epochs],
+            "hardware": training_cost,
+        },
+    )
+    logger = getattr(arguments, "_run_logger", NullRunLogger())
+    logger.log_params({f"stream.{k}": v for k, v in run_config["model"].items()})
+    logger.log_metrics(
+        {
+            "training.loss": best.train_loss,
+            "validation.loss": best.validation_loss,
+            "training.best_epoch": float(history.best_epoch),
+            "training.samples_per_second": float(training_cost["samples_per_second"]),
+            "training.peak_gpu_memory_mib": float(training_cost["peak_gpu_memory_mib"]),
+            "training.elapsed_seconds": time.perf_counter() - started_at,
+        }
+    )
+    logger.log_artifact(arguments.checkpoint, artifact_path="checkpoints")
+    logger.log_artifact(arguments.history, artifact_path="history")
+    return 0
+
+
 def _stream_train(arguments: argparse.Namespace) -> int:
     """Train one audiovisual cross-attention stream.
 
@@ -2352,6 +2565,40 @@ def build_parser() -> argparse.ArgumentParser:
         default="facebook/wav2vec2-base",
     )
     train_audio.set_defaults(handler=_binary_branch_train)
+
+    train_visual_stream = train_commands.add_parser("visual-stream")
+    add_branch_arguments(train_visual_stream)
+    train_visual_stream.add_argument(
+        "--backbone", choices=VISUAL_STREAM_PRESETS, default="efficientnet"
+    )
+    train_visual_stream.add_argument("--freeze-epochs", type=int, default=3)
+    train_visual_stream.add_argument(
+        "--freeze-backbone",
+        action="store_true",
+        help=(
+            "Never unfreeze the backbone. Intended for DINOv3, whose "
+            "self-supervised features are the reason to use it."
+        ),
+    )
+    train_visual_stream.add_argument("--common-dim", type=int, default=256)
+    train_visual_stream.add_argument("--num-frames", type=int, default=16)
+    train_visual_stream.add_argument(
+        "--temporal", choices=("lstm", "gru", "mean"), default="lstm"
+    )
+    train_visual_stream.add_argument("--temporal-hidden", type=int, default=256)
+    train_visual_stream.add_argument(
+        "--frame-chunk-size",
+        type=int,
+        default=8,
+        help="Frames pushed through the backbone at once, to bound VRAM.",
+    )
+    train_visual_stream.add_argument(
+        "--encoder-learning-rate",
+        type=float,
+        default=5e-6,
+        help="Learning rate for the pretrained backbone, kept below the head's.",
+    )
+    train_visual_stream.set_defaults(handler=_visual_stream_train)
 
     train_stream = train_commands.add_parser("stream")
     add_branch_arguments(train_stream)

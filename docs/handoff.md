@@ -2,11 +2,39 @@
 
 ## Current state
 
-The repository has a dashboard with two halves and one saved visual
-development baseline. The teaching pages walk a clip through the pipeline stage
-by stage with three configurable visual backbones; the Evidence gate runs the
-frozen baseline. The baseline is not a generalization result. Its recorded
-evaluation uses 400 source-disjoint FakeAVCeleb development-validation rows.
+The repository now holds a trained end-to-end pipeline, not just a development
+baseline. Three Design A branches (visual, audio, sync) are trained on
+FakeAVCeleb, out-of-fold branch features are exported through source-grouped
+cross-fitting, a late-fusion model is fitted on them, and the whole set is
+scored on a held-out in-domain partition and on DFDC as the cross-corpus test.
+
+Measured ROC-AUC:
+
+| Stream | In-domain | DFDC |
+| --- | --- | --- |
+| Visual | 0.9742 | 0.7583 |
+| Audio | 0.7739 | 0.5054 |
+| Sync | 0.4364 | 0.4848 |
+| Fusion | 0.9990 | 0.7500 |
+
+Two findings drive the current work. Nothing here is overfitting: validation
+loss sits below training loss in every run, so the 0.999 to 0.75 drop is domain
+shift. And the sync branch does not work. Its largest fusion coefficient is
+-3.019 on a branch scoring below chance, which calibration inverts into a
++0.0247 in-domain gain that vanishes cross-corpus. Retraining it on LAV-DF's
+2,779 authentic clips, eight times FakeAVCeleb's 348, left it at chance (best
+validation 2.1097 against ln(8) = 2.0794) while training loss fell to 1.57, so
+data starvation was not the cause.
+
+Design B is the response, and it is being built now: configurable visual streams
+(`ddf train visual-stream`), audiovisual cross-attention streams
+(`ddf train stream`), and feature-level fusion over their embeddings
+(`fusion/deep.py`) rather than over one calibrated scalar per branch. Commit
+`5611653`, tagged `pipeline-v1`, is the restore point for the pipeline as
+measured above.
+
+The teaching pages walk a clip through the pipeline stage by stage with three
+configurable visual backbones; the Evidence gate runs the frozen baseline.
 
 [docs/dashboard.md](dashboard.md) describes the dashboard layout.
 [docs/obstacles.md](obstacles.md) collects the constraints and traps that cost
@@ -152,6 +180,20 @@ Prototype visual, audio, sync, and fusion runs are marked `prototype_only` in
 MLflow. The fusion run `7b799a76d4a74305b02742ded2033118` has dataset tag
 `software_fixture`. It is not a trained research fusion model.
 
+On 2026-09-06 the `program-v1` run trained all three branches at full scale,
+exported out-of-fold features, fitted fusion and scored it on both partitions.
+Three failures inside it are worth carrying forward, and all three are recorded
+in [docs/obstacles.md](obstacles.md): a hardcoded preprocessing hash copied from
+an earlier `code_version` rejected every clip; DataLoader workers died on the
+77 MB visual batches until a retry-with-zero-workers fallback caught it; and
+`ddf train fusion` exited 1 because out-of-fold features were exported from the
+visual-usable manifest while strict assembly needs a clip usable by all three
+branches. Twenty-one runs predating MLflow logging were backfilled into the
+tracking store.
+
+On 2026-09-08 the pipeline state above was committed to main as `5611653` and
+tagged `pipeline-v1`, so Design B work can be reverted to a measured baseline.
+
 ## Current execution environment
 
 The primary checkout currently detects an NVIDIA GeForce RTX 5070 Ti through
@@ -291,26 +333,28 @@ and the two shell runners that produced them.
 What is verified now:
 
 - The full CUDA environment installs and `torch.cuda.is_available()` is `True`.
-- `load_frozen_visual_engine` loads the frozen checkpoint on CUDA with every
-  provenance check passing: checkpoint hash, run ID, split hash, commit and seed.
-- The Evidence gate runs end to end on CUDA. A synthetic clip with no real face
-  returns `indeterminate` with blocker `missing_visual`, which is the intended
-  behaviour: the verdict follows coverage rather than guessing.
-- `uv run pytest`, `uv run ruff check .` and `uv run ddf-docs` all pass.
-- Every dashboard page renders under `streamlit.testing.v1.AppTest` with an
-  empty `data/` directory, and the server answers on `127.0.0.1:8501`.
+- `uv run pytest`, `uv run ruff check .` and `uv run ddf-docs` all pass. Every
+  dashboard page renders with a clip selected, not only at its empty-state guard.
+- The pipeline runs end to end: cache, three branches, out-of-fold cross-fitting,
+  feature export, fusion, scoring on two partitions.
+- Cross-corpus generalization is measured, on DFDC. The gap is real and stated
+  above rather than smoothed over.
+- The fusion ablation runs every subset of the three branches on the same
+  out-of-fold features. In-domain, all three beat every single stream. On DFDC
+  they do not: the best subset is visual plus sync at 0.7587.
 
 What is still blocked:
 
-- A real-video inference pass. The ignored raw data directory is empty, so no
-  authentic manifest row can be decoded. Compare a real-row probability with
-  `0.006941306870430708` only after the dataset and its manifest are restored.
-- Any cross-dataset or multimodal claim. Celeb-DF-v2, FaceForensics++ and MNW
-  have no recorded result here.
+- The sync branch is at chance and four independent measurements agree on it.
+  Do not report it as a working synchronisation detector.
+- The audiovisual streams have not been trained on real data yet, so no
+  `diagonal_mass` evidence exists. Until it does, no claim about cross-modal
+  correspondence is supported.
+- AV-HuBERT, Whisper and HSEmotion or EmotiEffLib all need a network fetch and
+  are not installed.
 
-Next work: restore and verify the raw dataset, then run the frozen manifest row
-through the provenance-checked CUDA path, confirming the checkpoint hash first.
-After that, finish full audio and sync training, create genuine source-grouped
-out-of-fold branch features, train fusion candidates, choose a validation-only
-threshold, and run the locked external evaluations. Do not make a multimodal or
-cross-dataset claim before those steps have recorded evidence.
+Next work, cheapest decisive step first: get AV-HuBERT extracting features,
+train one lip-sync stream on them, and run the cross-pairing probe. Only commit
+to the full out-of-fold stream matrix if that probe shows the stream separates
+matched from mismatched audio. Then train the three visual streams, wire stream
+embeddings into `features export`, and train `StreamFusion` over them.

@@ -12,6 +12,29 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Added `ddf train visual-stream`, which trains any of the three visual
+  backbones (DINOv3, EfficientNet-B0, Xception) through `streams/visual_stream.py`
+  and projects each to a shared width, so several can be concatenated for
+  feature-level fusion. `ddf train visual` remains welded to EfficientNet-B0 and
+  is unchanged.
+- `--freeze-backbone` keeps a backbone frozen for the whole run. This is the
+  point of including DINOv3: a fine-tuned backbone can absorb the corpus it
+  trains on, which is how the EfficientNet baseline reached 0.9742 in-domain and
+  then called 130 of 155 genuine Celeb-DF videos fake.
+- `parameter_groups` now names the modules it treats as encoders instead of
+  hardcoding the two cross-modal ones, and drops the encoder group when nothing
+  in it is trainable. An optimizer group with an empty parameter list raises,
+  which every frozen-backbone run would have hit.
+- Added `fusion/deep.py`: concatenate stream embeddings, project each to a
+  common width, then an MLP. Late fusion collapsed each branch to one calibrated
+  scalar and discarded 255 of every 256 dimensions; with three scalars it put a
+  -3.019 coefficient on a branch scoring 0.4364 ROC-AUC, below chance, because
+  calibration could invert it into an in-domain gain that did not survive a
+  change of corpus. Stream dropout zeroes a whole stream at random during
+  training, so the head cannot build its decision on one stream that way.
+- `AssembledFeature` now carries `branch_embeddings` alongside the scalar
+  logits. Additive, so the existing late-fusion path is unaffected.
+
 - Added LAV-DF and DFDC adapters. LAV-DF cuts a matched pair from every forgery,
   a window on the manipulated span labelled fake and a window that misses it
   labelled real, both from the same file. The two share a speaker, a codec and a

@@ -188,6 +188,15 @@ unimodal branches it also records the diagonal attention mass each epoch: a
 falling loss beside a flat diagonal mass means the stream found a shortcut
 rather than learning synchronisation. Run `uv run ddf train stream --help`.
 
+`ddf train visual-stream` trains one configurable visual stream: DINOv3,
+EfficientNet-B0 or Xception, each projected to a shared width so several can be
+concatenated for feature-level fusion. `--freeze-backbone` is the flag that
+matters. A fine-tuned backbone can absorb the corpus it trains on: the
+EfficientNet baseline reached 0.9742 in-domain and then called 130 of 155
+genuine Celeb-DF videos fake. A frozen self-supervised backbone never learns
+those artifacts because only the head is fitted. Run
+`uv run ddf train visual-stream --help`.
+
 `ddf predict` runs all required artifacts on one video.
 Run `uv run ddf predict --help`.
 
