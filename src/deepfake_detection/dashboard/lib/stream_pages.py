@@ -29,9 +29,16 @@ from deepfake_detection.streams.config import (
 
 # Label -> (temporal_type, bidirectional), the three ways to collapse a frame
 # sequence into one clip vector.
+# The unidirectional pair is here because the trained checkpoints need it:
+# `ddf train visual` builds a unidirectional GRU, so without these two entries
+# the picker can tell you the file wants "GRU (unidirectional)" and the control
+# has no such setting, leaving the temporal model random no matter what you
+# choose.
 TEMPORAL = {
     "BiLSTM": ("lstm", True),
     "GRU": ("gru", True),
+    "LSTM (unidirectional)": ("lstm", False),
+    "GRU (unidirectional)": ("gru", False),
     "Mean-pool": ("mean", False),
 }
 

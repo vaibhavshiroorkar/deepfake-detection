@@ -293,9 +293,17 @@ with st.container(border=True):
                  "measured before fusion exists. Fusion discards it and reads the embedding.")
     right.metric("Fake probability", f"{trace.prob:.3f}")
     right.caption(f"logit {trace.logit:.4f}")
-    if checkpoint is None:
-        right.warning("These weights are untrained, so this number is a plumbing check and not a "
-                      "detection. Load a checkpoint to make it mean something.")
+    # The head is the one part a branch checkpoint cannot supply, so a loaded
+    # checkpoint is not enough to make this number a detection. Ask the report
+    # whether the head itself landed.
+    report = result["report"]
+    head_trained = report is not None and not any(
+        key.startswith(("temp_head", "projection")) for key in report["missing"]
+    )
+    if not head_trained:
+        right.warning("This head is randomly initialised, so the number is a plumbing check and "
+                      "not a detection. The stages above are trained if a checkpoint loaded; "
+                      "this last layer is not, because no stream head has been trained yet.")
 
 st.divider()
 st.subheader("Shape ladder")

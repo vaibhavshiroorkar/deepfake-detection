@@ -17,7 +17,7 @@ it as a plain dict, not as a StreamConfig instance.
 
 from pathlib import Path
 
-from deepfake_detection.dashboard.paths import CHECKPOINT_DIR
+from deepfake_detection.dashboard.paths import CHECKPOINT_DIR, RUNS_DIR
 
 SUFFIXES = (".pt", ".pth", ".ckpt")
 
@@ -34,15 +34,76 @@ UNTRAINED = "(untrained, random weights)"
 STATE_KEYS = ("model_state", "state_dict", "model_state_dict", "model", "weights")
 
 
-def discover(stream_name: str, root: Path | None = None) -> list[Path]:
-    """Checkpoints for one stream, newest first. Missing directory means none."""
+# Filename tokens that mean a checkpoint belongs to a stream. `ddf train visual`
+# is welded to EfficientNet-B0 and names its output "visual", with no backbone in
+# the name, so "visual" has to map to efficientnet or every trained visual
+# checkpoint this project has produced stays invisible to the dashboard.
+RUN_TOKENS = {
+    "efficientnet": ("efficientnet", "visual"),
+    "xception": ("xception",),
+    "dinov3": ("dinov3",),
+    "lipsync": ("lipsync",),
+    "emotion": ("emotion",),
+}
+
+
+def discover(
+    stream_name: str, root: Path | None = None, runs_root: Path | None = None
+) -> list[Path]:
+    """Checkpoints for one stream, newest first. Nothing found means none.
+
+    Two places, because training does not write where the dashboard used to
+    look. `ddf run` leaves its weights inside the run directory it was given,
+    under `runs/<run>/checkpoints/`, and nothing ever copies them to the
+    top-level `checkpoints/<stream>/` this function started with. That directory
+    has never existed in this repository, so the picker offered only untrained
+    weights while twenty trained checkpoints sat on disk.
+    """
+    found: list[Path] = []
     directory = (root or CHECKPOINT_DIR) / stream_name
-    if not directory.is_dir():
-        return []
-    found = [
-        p for p in directory.iterdir() if p.is_file() and p.suffix.lower() in SUFFIXES
-    ]
-    return sorted(found, key=lambda p: p.stat().st_mtime, reverse=True)
+    if directory.is_dir():
+        found += [
+            p
+            for p in directory.iterdir()
+            if p.is_file() and p.suffix.lower() in SUFFIXES
+        ]
+
+    runs = runs_root or RUNS_DIR
+    tokens = RUN_TOKENS.get(stream_name, (stream_name,))
+    if runs.is_dir():
+        found += [
+            p
+            for p in runs.rglob("*")
+            if p.is_file()
+            and p.suffix.lower() in SUFFIXES
+            and any(token in p.name.lower() for token in tokens)
+        ]
+
+    # Two runs can leave identically named files, so the path is the identity
+    # rather than the name, and the picker labels them by path further down.
+    unique = {p.resolve(): p for p in found}
+    return sorted(unique.values(), key=lambda p: p.stat().st_mtime, reverse=True)
+
+
+def architecture(state: dict) -> dict:
+    """What temporal model a checkpoint's tensors imply, read from their shapes.
+
+    Needed because the dashboard defaults to a BiLSTM and every trained visual
+    checkpoint here used a unidirectional GRU. Loading is non-strict, so the
+    mismatch is reported rather than raised, but "these four tensors are the
+    wrong shape" does not tell you which control to move. This does.
+    """
+    weight = state.get("temporal.weight_hh_l0")
+    if weight is None:
+        return {"temporal": "mean", "hidden": None, "bidirectional": False}
+    hidden = int(weight.shape[1])
+    gates = int(weight.shape[0]) // max(hidden, 1)
+    return {
+        # A GRU holds three gate matrices per layer, an LSTM four.
+        "temporal": {3: "gru", 4: "lstm"}.get(gates, f"{gates}-gate"),
+        "hidden": hidden,
+        "bidirectional": "temporal.weight_hh_l0_reverse" in state,
+    }
 
 
 def _state_dict(obj) -> dict:
@@ -64,13 +125,23 @@ def describe(path: Path) -> dict:
     """
     import torch
 
-    out = {"path": Path(path), "tensors": 0, "config": None, "error": None}
+    out = {
+        "path": Path(path),
+        "tensors": 0,
+        "config": None,
+        "architecture": None,
+        "metadata": None,
+        "error": None,
+    }
     try:
         blob = torch.load(path, map_location="cpu", weights_only=True)
         state = _state_dict(blob)
         out["tensors"] = len(state)
+        out["architecture"] = architecture(state)
         if isinstance(blob, dict) and isinstance(blob.get("config"), dict):
             out["config"] = blob["config"]
+        if isinstance(blob, dict) and isinstance(blob.get("metadata"), dict):
+            out["metadata"] = blob["metadata"]
     except Exception as e:
         out["error"] = f"{type(e).__name__}: {e}"
     return out

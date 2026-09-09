@@ -419,3 +419,37 @@ imports follow it.
 
 Every page has to render its empty state rather than raise. That is what the
 page smoke tests actually check, and it is the state a new checkout is in.
+
+## The dashboard reads checkpoints from a directory nothing writes to
+
+`dashboard/lib/checkpoints.discover` looked in `checkpoints/<stream_name>/` at
+the project root. `ddf run` writes into whatever run directory it is given, at
+`runs/<run>/checkpoints/`, and nothing copies between the two. The top-level
+directory has never existed here, so every stream page showed
+"(untrained, random weights)" as the only option while twenty trained
+checkpoints sat on disk. Nothing failed and nothing was logged: an empty picker
+is a valid state, because no checkpoint is a normal state early in a project.
+
+Two things follow for anyone adding a stream page. Discovery has to search the
+runs tree, and a checkpoint's filename is not an identity: `ddf run` writes the
+same `fold0-visual.pt` into every run it is pointed at, so a picker keyed on the
+name silently keeps one of them.
+
+## A branch checkpoint half-loads into a stream, and the half that fails is the head
+
+`ddf train visual` trains `branches/visual.py`, which ends in a classifier
+straight to one logit. The dashboard builds `streams/visual_stream.py`, which
+ends in a projection to the shared fusion width with a development head after
+it. The backbone and temporal tensors share their names, so 362 of 364 land, and
+the load reports six missing and two unexpected.
+
+The trap is the number on the page. Loading is non-strict by design, so the page
+happily shows a "fake probability" computed from a randomly initialised head on
+top of trained features. Check the load report for a missing `temp_head` before
+treating any stream probability as a detection.
+
+Also worth knowing: `ddf train visual` builds a *unidirectional GRU*, while the
+dashboard defaults to a BiLSTM. Both load without raising, because the size
+mismatch is filtered out first, and the result is a trained backbone feeding a
+random temporal model. The picker now reads the gate count out of the tensor
+shapes and names the setting to change.

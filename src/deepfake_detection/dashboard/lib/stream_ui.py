@@ -14,6 +14,28 @@ which show the forward pass step by step rather than reporting one number.
 from pathlib import Path
 
 from deepfake_detection.dashboard.lib import checkpoints
+from deepfake_detection.dashboard.paths import PROJECT_ROOT
+
+# The Architecture control's labels, so the picker can name the setting to
+# change rather than describe the tensor shapes that did not fit.
+_TEMPORAL_LABEL = {
+    ("lstm", True): "BiLSTM",
+    ("gru", True): "GRU",
+    ("lstm", False): "LSTM (unidirectional)",
+    ("gru", False): "GRU (unidirectional)",
+}
+
+
+def _label(path: Path) -> str:
+    """A checkpoint's name prefixed by the run that wrote it, when it sits in one."""
+    try:
+        relative = path.resolve().relative_to(PROJECT_ROOT)
+    except ValueError:
+        return path.name
+    parts = relative.parts
+    if parts[0] == "runs" and len(parts) > 2:
+        return f"{parts[1]} / {path.name}"
+    return path.name
 
 
 def render_checkpoint_picker(
@@ -29,7 +51,10 @@ def render_checkpoint_picker(
     A remembered file that has since left the disk drops back to untrained.
     """
     found = checkpoints.discover(stream_name)
-    labels = {checkpoints.UNTRAINED: None} | {p.name: p for p in found}
+    # Labelled by run directory, not by filename: `ddf run` writes the same
+    # `fold0-visual.pt` into every run it is pointed at, so the bare names
+    # collide and the picker would silently keep only the newest of each.
+    labels = {checkpoints.UNTRAINED: None} | {_label(p): p for p in found}
 
     names = list(labels)
     remembered = (store or {}).get("ckpt_choice")
@@ -41,7 +66,8 @@ def render_checkpoint_picker(
         names,
         index=index,
         key=f"{ns}_ckpt",
-        help=f"Files under `checkpoints/{stream_name}/`, newest first.",
+        help=f"Files under `checkpoints/{stream_name}/` and inside `runs/`, "
+        "newest first, labelled by the run that wrote them.",
     )
     reference = c2.text_input(
         "or an MLflow run",
@@ -68,9 +94,9 @@ def render_checkpoint_picker(
     if path is None:
         if not found:
             st.caption(
-                f"No checkpoints under `checkpoints/{stream_name}/`. The weights are "
-                "random, so the probability below is a plumbing check and not a "
-                "detection."
+                f"No checkpoints for `{stream_name}` under `checkpoints/` or `runs/`. "
+                "The weights are random, so the probability below is a plumbing "
+                "check and not a detection."
             )
         return None
 
@@ -79,10 +105,42 @@ def render_checkpoint_picker(
         st.error(f"`{path.name}` could not be read: {info['error']}")
         return None
     detail = f"{info['tensors']} tensors"
+    if info["metadata"]:
+        meta = info["metadata"]
+        detail += f"  ·  run `{meta.get('run_id', '?')}`  ·  seed {meta.get('seed', '?')}"
     if info["config"]:
         detail += f"  ·  saved config: `{info['config']}`"
     st.caption(f"`{path}`  ·  {detail}")
+
+    architecture = info["architecture"]
+    if architecture and architecture["hidden"]:
+        wanted = _TEMPORAL_LABEL.get(
+            (architecture["temporal"], architecture["bidirectional"]),
+            architecture["temporal"],
+        )
+        st.caption(
+            f"Trained with **{wanted}** at hidden **{architecture['hidden']}**. "
+            "Set the Architecture controls above to match, or the temporal model "
+            "stays randomly initialised while everything else loads."
+        )
     return path
+
+
+# The head a Design A branch carries, against the two a Design B stream carries.
+# `ddf train visual` ends in a classifier straight to one logit; a stream ends in
+# a projection to the shared width, with the head only for development. So these
+# never transfer, and saying "part of the model is randomly initialised" without
+# saying which part reads as a configuration error when it is a real difference
+# between the two designs.
+_BRANCH_HEAD = {"classifier.weight", "classifier.bias"}
+_STREAM_HEAD = {
+    "projection.0.weight",
+    "projection.0.bias",
+    "projection.1.weight",
+    "projection.1.bias",
+    "temp_head.weight",
+    "temp_head.bias",
+}
 
 
 def report_load(st, report: dict):
@@ -91,6 +149,23 @@ def report_load(st, report: dict):
         st.success(
             f"Loaded {report['matched']} tensors. The checkpoint matches this "
             "architecture exactly."
+        )
+        return
+    if (
+        not report["mismatched"]
+        and set(report["missing"]) <= _STREAM_HEAD
+        and set(report["unexpected"]) <= _BRANCH_HEAD
+    ):
+        st.success(
+            f"Loaded {report['matched']} tensors: the backbone and the temporal "
+            "model are the trained ones."
+        )
+        st.info(
+            "The head did not transfer, and cannot. This checkpoint comes from "
+            "`ddf train visual`, which ends in a classifier straight to one logit, "
+            "while a stream ends in a projection to the shared width with the head "
+            "only for development. So the features below are trained and the "
+            "probability at the end is not."
         )
         return
     st.warning(

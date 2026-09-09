@@ -178,7 +178,9 @@ def test_upload_row_writes_outside_the_data_directory() -> None:
 def test_discover_checkpoints_returns_nothing_without_a_directory(
     tmp_path: Path,
 ) -> None:
-    assert checkpoints.discover("visual", root=tmp_path) == []
+    assert (
+        checkpoints.discover("visual", root=tmp_path, runs_root=tmp_path / "runs") == []
+    )
 
 
 def test_discover_checkpoints_lists_newest_first(tmp_path: Path) -> None:
@@ -189,8 +191,88 @@ def test_discover_checkpoints_lists_newest_first(tmp_path: Path) -> None:
     (directory / "notes.txt").write_bytes(b"c")
     earlier = time.time() - 60
     os.utime(directory / "old.pt", (earlier, earlier))
-    found = checkpoints.discover("visual", root=tmp_path)
+    found = checkpoints.discover("visual", root=tmp_path, runs_root=tmp_path / "runs")
     assert [path.name for path in found] == ["new.pt", "old.pt"]
+
+
+def run_checkpoint(runs: Path, run: str, name: str) -> Path:
+    """A checkpoint where `ddf run` actually leaves one."""
+    directory = runs / run / "checkpoints"
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / name
+    path.write_bytes(b"weights")
+    return path
+
+
+def test_discover_finds_checkpoints_inside_run_directories(tmp_path: Path) -> None:
+    """The bug this covers: the picker offered only untrained weights while
+    twenty trained checkpoints sat in `runs/`, because nothing copies them to
+    the top-level `checkpoints/` directory the dashboard was looking in."""
+    runs = tmp_path / "runs"
+    run_checkpoint(runs, "program", "final-visual-seed17.pt")
+
+    found = checkpoints.discover("efficientnet", root=tmp_path / "none", runs_root=runs)
+
+    assert [path.name for path in found] == ["final-visual-seed17.pt"]
+
+
+def test_discover_keeps_streams_apart(tmp_path: Path) -> None:
+    runs = tmp_path / "runs"
+    run_checkpoint(runs, "program", "final-visual-seed17.pt")
+    run_checkpoint(runs, "program", "final-audio-seed17.pt")
+    run_checkpoint(runs, "program", "pilot-lipsync-stream.pt")
+
+    visual = checkpoints.discover("efficientnet", root=tmp_path, runs_root=runs)
+    lipsync = checkpoints.discover("lipsync", root=tmp_path, runs_root=runs)
+
+    assert [path.name for path in visual] == ["final-visual-seed17.pt"]
+    assert [path.name for path in lipsync] == ["pilot-lipsync-stream.pt"]
+
+
+def test_discover_keeps_identically_named_files_from_different_runs(
+    tmp_path: Path,
+) -> None:
+    """`ddf run` writes the same `fold0-visual.pt` into every run it is given,
+    so the filename is not an identity."""
+    runs = tmp_path / "runs"
+    run_checkpoint(runs, "first", "fold0-visual.pt")
+    run_checkpoint(runs, "second", "fold0-visual.pt")
+
+    found = checkpoints.discover("efficientnet", root=tmp_path, runs_root=runs)
+
+    assert len(found) == 2
+    assert {path.parent.parent.name for path in found} == {"first", "second"}
+
+
+def test_architecture_reads_a_gru_from_its_gate_count() -> None:
+    """A GRU holds three gate matrices per layer and an LSTM four, which is the
+    only record of which one a bare state dict was trained with."""
+    torch = pytest.importorskip("torch")
+    state = {"temporal.weight_hh_l0": torch.zeros(768, 256)}
+
+    assert checkpoints.architecture(state) == {
+        "temporal": "gru",
+        "hidden": 256,
+        "bidirectional": False,
+    }
+
+
+def test_architecture_reads_a_bidirectional_lstm() -> None:
+    torch = pytest.importorskip("torch")
+    state = {
+        "temporal.weight_hh_l0": torch.zeros(512, 128),
+        "temporal.weight_hh_l0_reverse": torch.zeros(512, 128),
+    }
+
+    assert checkpoints.architecture(state) == {
+        "temporal": "lstm",
+        "hidden": 128,
+        "bidirectional": True,
+    }
+
+
+def test_architecture_reports_mean_pooling_when_there_is_no_temporal_model() -> None:
+    assert checkpoints.architecture({})["temporal"] == "mean"
 
 
 def test_describe_reports_an_unreadable_checkpoint(tmp_path: Path) -> None:

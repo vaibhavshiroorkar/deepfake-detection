@@ -12,6 +12,27 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- The dashboard's checkpoint picker now finds trained weights. It looked only in
+  a top-level `checkpoints/<stream>/` directory that has never existed in this
+  repository, while `ddf run` writes into `runs/<run>/checkpoints/` and nothing
+  copies between them. Every stream page therefore offered untrained weights
+  only, with twenty trained checkpoints on disk. Discovery now scans the runs
+  tree and labels each file by the run that wrote it, because the same
+  `fold0-visual.pt` name recurs in every run.
+- The picker reads the temporal model out of a checkpoint's tensor shapes and
+  names the setting to match. A GRU holds three gate matrices per layer and an
+  LSTM four, which is the only record of which one a bare state dict carries.
+  Loading is non-strict, so a wrong setting was reported as four tensors of the
+  wrong shape and left the temporal model random.
+- Added the two unidirectional temporal options. `ddf train visual` builds a
+  unidirectional GRU, so no setting in the dashboard could match its
+  checkpoints.
+- A branch checkpoint loading into a stream is now reported as the design
+  difference it is, not as a configuration error. `ddf train visual` ends in a
+  classifier straight to one logit; a stream ends in a projection to the shared
+  width. The backbone and temporal model transfer, 362 tensors of 364, and the
+  head cannot.
+
 - Added `ddf train visual-stream`, which trains any of the three visual
   backbones (DINOv3, EfficientNet-B0, Xception) through `streams/visual_stream.py`
   and projects each to a shared width, so several can be concatenated for
