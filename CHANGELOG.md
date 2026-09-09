@@ -12,6 +12,69 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Added LAV-DF and DFDC adapters. LAV-DF cuts a matched pair from every forgery,
+  a window on the manipulated span labelled fake and a window that misses it
+  labelled real, both from the same file. The two share a speaker, a codec and a
+  re-encoding pass, so a model cannot separate them by recognising the
+  generator's compression. DFDC is the cross-corpus test: it is the only
+  audio-bearing dataset here that is not built on VoxCeleb2, which FakeAVCeleb
+  and LAV-DF both are.
+- `load_manifest` now keys its duplicate quarantine on the window as well as the
+  file, so two windows cut from one recording are kept as distinct clips. The
+  original guard is unchanged for everything else, and FakeAVCeleb's duplicate
+  listings still quarantine.
+- `ddf train stream` gained `--encoder-learning-rate`, defaulting to 5e-6
+  against the head's 1e-4. A single rate across a randomly initialised head and
+  100M pretrained encoder parameters drove training loss to 0.039 while
+  validation climbed to 2.56.
+
+- Built the audiovisual cross-attention stream, the first half of the streams
+  design the dashboard has specified since it was written. Audio queries video,
+  and the residual between the query and what video explains is the mismatch
+  signal fusion will read. `ddf train stream` trains it. Pooling the attended
+  vector instead of the residual was tried first and moved the embedding by 2e-7
+  when the audio was shifted 320 ms, so it could not have trained at all.
+- Added `diagonal_mass`, the fraction of attention mass near the diagonal,
+  recorded every epoch and never optimised. It checks whether a stream learned
+  real synchronisation independently of whether it classifies well: a falling
+  loss beside a flat diagonal mass is a shortcut.
+- Wav2Vec2 rather than Whisper on the audio side for now. Whisper's encoder
+  takes 30 seconds of log-mel and rejects anything else, so a 2 second window
+  would be 28 seconds of padding. AV-HuBERT stays deferred because fairseq pins
+  PyTorch to 2.0 and would break the CUDA stack.
+- Added `ClipRecord.sync_start_sec`, so a dataset that knows where a
+  manipulation sits can place the synchronisation window on it. LAV-DF hides a
+  0.8 to 1.6 second forgery inside a longer clip, which the fixed window near
+  the clip start would usually miss. The cache key gains the field only when it
+  is set, so existing entries keep their fingerprints.
+- Added `ddf cache build --skip-cached` and `--shard I/N` with `ddf cache
+  merge`, making a long cache build resumable and shard-parallel.
+- Added `ddf evaluate branch`, replacing an evaluation script that had been
+  copy-pasted between run directories, and `ddf manifest usable`, replacing an
+  untracked filter that removed clips a branch cannot read. Both report
+  abstentions rather than dropping rows from the denominator.
+- Added `ddf manifest from-meta`, `ddf split subsample` and `ddf handoff
+  update`, and adapters for Celeb-DF-v2, MNW and LAV-DF. MNW is refused by
+  `data/guards.py` anywhere outside external evaluation.
+- Constrained `evidence_scope` to a validated vocabulary and moved the frozen
+  baseline's identity out of Python into `configs/frozen-baseline.json`.
+
+- Rebuilt the dashboard around the teaching frontend. Its pages walk a clip
+  through the pipeline stage by stage with configurable models, and the frozen
+  provenance-checked baseline now lives on one Evidence gate page inside that
+  navigation. Fusion and Explainability stay registered but disabled, and audio
+  and sync remain prototype pages.
+- Added `deepfake_detection.preprocessing.ops`, the per-step preprocessing
+  functions shared by the pipeline and the dashboard, adapting the existing face
+  detectors rather than duplicating them.
+- Added `deepfake_detection.streams`: one configurable visual stream over
+  EfficientNet-B0, Xception and DINOv3, and an activation tracer that reports
+  what each backbone stage computed.
+- Added a read-only MLflow reader for the dashboard and replaced the Weights and
+  Biases checkpoint path with an MLflow one. This project tracks with MLflow
+  only.
+- Added `librosa` to the media extra and `matplotlib` to the dashboard extra.
+- Added an obstacles reference and a dashboard architecture document.
 - Added a ten-page local teaching dashboard. The visual path is provenance
   checked. Experiments reads strict local FakeAVCeleb development-validation
   evidence. Audio and sync remain prototype pages, and fusion remains locked

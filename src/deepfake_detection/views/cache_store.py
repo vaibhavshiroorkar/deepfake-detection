@@ -22,13 +22,48 @@ class CacheStore:
     def __init__(self, root: Path) -> None:
         self.root = root
 
-    def path_for(self, prepared: PreparedClip, *, dataset: str) -> Path:
+    def path_for_parts(self, *, clip_id: str, fingerprint: str, dataset: str) -> Path:
+        """Where a clip would land, without having to prepare it first.
+
+        A resumable cache build needs the path before it does the work, and the
+        fingerprint is derivable from the media bytes and the view config alone
+        (see views/cache.py). Preparing a clip just to learn where it would be
+        written would defeat the point of skipping it.
+        """
         return (
             self.root
             / _safe_component(dataset)
-            / _safe_component(prepared.clip_id)
-            / f"{prepared.preprocessing_fingerprint}.npz"
+            / _safe_component(clip_id)
+            / f"{fingerprint}.npz"
         )
+
+    def path_for(self, prepared: PreparedClip, *, dataset: str) -> Path:
+        return self.path_for_parts(
+            clip_id=prepared.clip_id,
+            fingerprint=prepared.preprocessing_fingerprint,
+            dataset=dataset,
+        )
+
+    def available_views(self, path: Path) -> frozenset[str]:
+        """Which views a cache entry holds, without decompressing any of them.
+
+        A clip whose primary face track was unstable has no `visual_view` at
+        all: the pipeline abstains rather than substituting a full-frame crop.
+        Callers need to know that before they build a loader, because the
+        alternative is discovering it as an exception halfway through an epoch.
+        """
+        with np.load(path, allow_pickle=False) as archive:
+            return frozenset(name for name in archive.files if name != "metadata")
+
+    def load_metadata(self, path: Path) -> dict:
+        """The metadata header only, leaving the view arrays on disk.
+
+        Resuming a build re-reads the quality report of every already-cached clip
+        so the audit stays exact. Loading the arrays too would make a resume as
+        slow as the work it is avoiding.
+        """
+        with np.load(path, allow_pickle=False) as archive:
+            return json.loads(str(archive["metadata"].item()))
 
     def save(self, prepared: PreparedClip, *, dataset: str) -> Path:
         path = self.path_for(prepared, dataset=dataset)

@@ -22,6 +22,7 @@ dependencies = [
 media = [
     "av==16.1.0",
     "facenet-pytorch==2.5.3",
+    "librosa==0.11.0",
     "opencv-python==5.0.0.93",
 ]
 ml = [
@@ -29,6 +30,7 @@ ml = [
     "transformers==5.13.0",
 ]
 dashboard = [
+    "matplotlib==3.11.0",
     "streamlit==1.60.0",
 ]
 tracking = [

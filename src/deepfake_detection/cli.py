@@ -7,6 +7,7 @@ import json
 import shutil
 import subprocess
 import time
+from collections import Counter
 from collections.abc import Callable, Sequence
 from dataclasses import asdict
 from pathlib import Path
@@ -35,6 +36,10 @@ from deepfake_detection.benchmarks.detector_sample import (
     write_review_sample,
 )
 from deepfake_detection.data.cache_build import build_cache
+from deepfake_detection.data.guards import (
+    reject_evaluation_only,
+    reject_evaluation_only_datasets,
+)
 from deepfake_detection.data.manifest import load_manifest, write_manifest
 from deepfake_detection.data.protocols import (
     audit_split,
@@ -42,6 +47,7 @@ from deepfake_detection.data.protocols import (
     build_source_split,
     identity_strict_subset,
     split_hash,
+    stratified_subsample,
 )
 from deepfake_detection.evaluation.bootstrap import (
     PairedPrediction,
@@ -63,6 +69,7 @@ from deepfake_detection.experiments import (
 )
 from deepfake_detection.experiments.runner import _CONFIGURED_RUN_SENTINEL
 from deepfake_detection.experiments.runtime import capture_runtime
+from deepfake_detection.experiments.scopes import validate_evidence_scope
 from deepfake_detection.experiments.training_log import (
     log_binary_training,
     log_detector_benchmark,
@@ -103,6 +110,168 @@ def _manifest_build(arguments: argparse.Namespace) -> int:
     return 0
 
 
+def _manifest_from_meta(arguments: argparse.Namespace) -> int:
+    """Build a manifest straight from a FakeAVCeleb meta_data.csv.
+
+    `manifest build` validates a manifest that already exists. Producing the
+    first one from a raw drop used to be an unrecorded manual step, which is why
+    no script for the original 2,000-row manifest survives in the repo. The
+    conversion itself is data/meta.py, already used by the dashboard; this only
+    puts a command in front of it and runs the result through the same
+    quarantine pass every other manifest gets.
+    """
+    import pandas as pd
+
+    from deepfake_detection.data.meta import manifest_from_meta
+
+    meta = pd.read_csv(arguments.meta)
+    frame = manifest_from_meta(
+        meta,
+        root=arguments.root,
+        data_dir=arguments.data_dir,
+        require_exists=not arguments.allow_missing,
+    )
+    arguments.output.parent.mkdir(parents=True, exist_ok=True)
+    frame.to_csv(arguments.output, index=False)
+
+    result = load_manifest(arguments.output, dataset=arguments.dataset)
+    write_manifest(result.records, arguments.output)
+    _write_json(
+        arguments.audit,
+        {
+            "meta_rows": len(meta),
+            "records": len(result.records),
+            "dropped_missing_media": len(meta) - len(frame),
+            "quarantined_paths": [str(path) for path in result.quarantined_paths],
+        },
+    )
+    return 0
+
+
+def _handoff_update(arguments: argparse.Namespace) -> int:
+    """Regenerate the handoff's generated blocks from the working tree.
+
+    Called after every stage of a long run, so the handoff describes the state
+    that actually exists rather than the state someone last remembered to
+    write down.
+    """
+    from deepfake_detection.documentation.handoff import update_handoff
+
+    changed = update_handoff(arguments.root, arguments.path)
+    print(f"{arguments.path}: {'updated' if changed else 'already current'}")
+    return 0
+
+
+# What each branch or stream must find in a cache entry to be usable. The
+# audiovisual streams need both halves of a pair: a clip with mouth crops but no
+# audio track, which is every MNW clip, can feed the sync branch's video encoder
+# but has nothing for a cross-modal comparison to read.
+BRANCH_VIEWS = {
+    "visual": ("visual_view",),
+    "audio": ("audio_view",),
+    "sync": ("sync_video_view",),
+    "lipsync": ("sync_video_view", "sync_audio_view"),
+    "emotion": ("visual_view", "audio_view"),
+}
+
+
+def _partition_by_view(
+    records,
+    cache_index,
+    cache_store,
+    *,
+    branch: str,
+    preprocessing_hash: str | None,
+):
+    """Split records into those a branch can score and those it must abstain on.
+
+    A clip is unusable when it was never cached, when its cache entry was built
+    by different preprocessing, or when the view this branch reads is absent.
+    The last case is the pipeline's abstention policy rather than a fault: a
+    clip whose primary face track was unstable gets no visual view, because
+    substituting a full-frame crop would bias the evaluation.
+
+    Returns (usable, abstained) where abstained maps clip_id to a reason.
+    """
+    required = BRANCH_VIEWS[branch]
+    usable = []
+    abstained: dict[str, str] = {}
+    for record in records:
+        path = cache_index.get(record.clip_id)
+        if path is None:
+            abstained[record.clip_id] = "not_cached"
+            continue
+        try:
+            views = cache_store.available_views(path)
+            metadata = cache_store.load_metadata(path)
+        except (OSError, ValueError, KeyError) as error:
+            abstained[record.clip_id] = f"unreadable_cache: {error}"
+            continue
+        if (
+            preprocessing_hash is not None
+            and metadata.get("preprocessing_config_hash") != preprocessing_hash
+        ):
+            abstained[record.clip_id] = "preprocessing_hash_mismatch"
+            continue
+        missing = [name for name in required if name not in views]
+        if missing:
+            abstained[record.clip_id] = "no_" + "_and_".join(missing)
+            continue
+        usable.append(record)
+    return usable, abstained
+
+
+def _manifest_usable(arguments: argparse.Namespace) -> int:
+    """Write the subset of a manifest that one branch can actually read.
+
+    Training and evaluation both crash on a clip whose view is missing, so this
+    filter used to live in an untracked one-off script pinned to a single run
+    directory, a single hash and a single branch. Losing it is how a rebuilt
+    cache turns into a mid-epoch exception.
+
+    The dropped clips are not silently discarded: the audit records each one and
+    its reason, so the abstention rate stays reportable rather than vanishing
+    from the denominator.
+    """
+    records = load_manifest(arguments.manifest, dataset=arguments.dataset).records
+    cache_index = _read_cache_index(arguments.cache_index)
+    usable, abstained = _partition_by_view(
+        records,
+        cache_index,
+        CacheStore(arguments.cache_root),
+        branch=arguments.branch,
+        preprocessing_hash=arguments.preprocessing_hash,
+    )
+    write_manifest(usable, arguments.output)
+
+    reasons: dict[str, int] = {}
+    for reason in abstained.values():
+        key = reason.split(":")[0]
+        reasons[key] = reasons.get(key, 0) + 1
+    labels = {record.video_fake for record in usable}
+    _write_json(
+        arguments.audit,
+        {
+            "branch": arguments.branch,
+            "dataset": arguments.dataset,
+            "input_rows": len(records),
+            "usable_rows": len(usable),
+            "abstained_rows": len(abstained),
+            "abstention_rate": (
+                len(abstained) / len(records) if records else 0.0
+            ),
+            "abstained_by_reason": dict(sorted(reasons.items())),
+            "abstained_clip_ids": sorted(abstained),
+            "both_classes_present": labels == {True, False},
+        },
+    )
+    if not usable:
+        raise ValueError(
+            f"No clip in {arguments.manifest} has a {arguments.branch} view"
+        )
+    return 0
+
+
 def _smoke(arguments: argparse.Namespace) -> int:
     run_fusion_smoke(
         arguments.output_dir,
@@ -114,6 +283,7 @@ def _smoke(arguments: argparse.Namespace) -> int:
 
 
 def _split_build(arguments: argparse.Namespace) -> int:
+    reject_evaluation_only(arguments.dataset, operation="split building")
     result = load_manifest(arguments.manifest, dataset=arguments.dataset)
     split = build_source_split(result.records, seed=arguments.seed)
     strict = identity_strict_subset(split)
@@ -194,6 +364,39 @@ def _split_method_holdout(arguments: argparse.Namespace) -> int:
     return 0
 
 
+def _split_subsample(arguments: argparse.Namespace) -> int:
+    """Thin an existing frozen split without rebuilding or rehashing it.
+
+    The pilot tier and the full tier have to stay comparable, so they share one
+    split and one split hash. Only the number of rows fed to training changes.
+    """
+    rows = {}
+    for name in ("train", "val", "test"):
+        records = load_manifest(
+            arguments.split_dir / f"{name}.csv", dataset=arguments.dataset
+        ).records
+        sampled = stratified_subsample(
+            records, seed=arguments.seed, fake_ratio=arguments.fake_ratio
+        )
+        write_manifest(sampled, arguments.output_dir / f"{name}.csv")
+        rows[name] = {
+            "rows": len(sampled),
+            "real": sum(1 for record in sampled if not record.video_fake),
+            "fake": sum(1 for record in sampled if record.video_fake),
+            "methods": len({record.method for record in sampled}),
+        }
+    _write_json(
+        arguments.output_dir / "audit.json",
+        {
+            "seed": arguments.seed,
+            "fake_ratio": arguments.fake_ratio,
+            "source_split_dir": str(arguments.split_dir),
+            "rows": rows,
+        },
+    )
+    return 0
+
+
 def _cache_build(arguments: argparse.Namespace) -> int:
     result = load_manifest(arguments.manifest, dataset=arguments.dataset)
     preprocessor = build_preprocessor(
@@ -211,6 +414,8 @@ def _cache_build(arguments: argparse.Namespace) -> int:
         dataset_root=arguments.dataset_root,
         preprocessor=preprocessor,
         cache_store=CacheStore(arguments.cache_root),
+        skip_cached=arguments.skip_cached,
+        shard=_parse_shard(arguments.shard),
     )
     arguments.index.parent.mkdir(parents=True, exist_ok=True)
     with arguments.index.open("w", newline="", encoding="utf-8") as handle:
@@ -230,6 +435,7 @@ def _cache_build(arguments: argparse.Namespace) -> int:
         {
             "succeeded": report.succeeded,
             "failed": report.failed,
+            "skipped": report.skipped,
             "full_fusion_ready": report.full_fusion_ready,
             "blocker_counts": report.blocker_counts,
             "preprocessing_hash": report.preprocessing_hash,
@@ -237,6 +443,369 @@ def _cache_build(arguments: argparse.Namespace) -> int:
         },
     )
     return 2 if report.failed else 0
+
+
+def _parse_shard(value: str | None) -> tuple[int, int] | None:
+    if value is None:
+        return None
+    index, _, count = value.partition("/")
+    try:
+        shard = (int(index), int(count))
+    except ValueError as error:
+        raise ValueError(f"Shard must look like I/N, got {value!r}") from error
+    return shard
+
+
+def _cache_merge(arguments: argparse.Namespace) -> int:
+    """Fold per-shard index and audit files into one of each.
+
+    Sharding is what makes a 21,544-clip build finish in hours rather than a day
+    and a half, but each worker can only write its own slice. Training reads one
+    index, so the shards have to be reassembled before it can run.
+    """
+    merged_index: dict[str, Path] = {}
+    for path in arguments.indexes:
+        for clip_id, cache_path in _read_cache_index(path).items():
+            merged_index[clip_id] = cache_path
+
+    succeeded = failed = skipped = full_fusion_ready = 0
+    blocker_counts: Counter[str] = Counter()
+    failures: dict[str, str] = {}
+    hashes: set[str] = set()
+    for path in arguments.audits:
+        audit = json.loads(path.read_text(encoding="utf-8"))
+        succeeded += int(audit["succeeded"])
+        failed += int(audit["failed"])
+        skipped += int(audit.get("skipped", 0))
+        full_fusion_ready += int(audit["full_fusion_ready"])
+        blocker_counts.update(audit.get("blocker_counts", {}))
+        failures.update(audit.get("failures", {}))
+        if audit.get("preprocessing_hash"):
+            hashes.add(audit["preprocessing_hash"])
+    if len(hashes) > 1:
+        raise ValueError(f"Shards disagree on the preprocessing hash: {sorted(hashes)}")
+
+    arguments.index.parent.mkdir(parents=True, exist_ok=True)
+    with arguments.index.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=("clip_id", "cache_path"))
+        writer.writeheader()
+        for clip_id, cache_path in sorted(merged_index.items()):
+            writer.writerow(
+                {
+                    "clip_id": clip_id,
+                    "cache_path": str(
+                        _cache_index_value(cache_path, index=arguments.index)
+                    ),
+                }
+            )
+    _write_json(
+        arguments.audit,
+        {
+            "succeeded": succeeded,
+            "failed": failed,
+            "skipped": skipped,
+            "full_fusion_ready": full_fusion_ready,
+            "blocker_counts": dict(sorted(blocker_counts.items())),
+            "preprocessing_hash": next(iter(hashes)) if hashes else None,
+            "failures": failures,
+            "shards": len(arguments.audits),
+        },
+    )
+    return 2 if failed else 0
+
+
+def _evaluate_branch(arguments: argparse.Namespace) -> int:
+    """Score one trained branch on any manifest, in-domain or cross-dataset.
+
+    This replaces the two near-identical `evaluate_visual.py` scripts under
+    runs/. They hardcoded one checkpoint directory, one validation manifest and
+    one dataset name, so every new evaluation target meant another copy. Cross-
+    dataset work needs the manifest, the cache and the dataset name to be
+    arguments, and needs the run recorded through the tracked path like every
+    other run rather than by a direct mlflow call.
+    """
+    import torch
+    from torch.nn import functional
+    from torch.utils.data import DataLoader
+
+    from deepfake_detection.data.datasets import (
+        CachedBranchDataset,
+        collate_branch_items,
+    )
+    from deepfake_detection.training.checkpoints import load_checkpoint
+
+    validate_evidence_scope(arguments.evidence_scope)
+    manifest_records = load_manifest(
+        arguments.manifest, dataset=arguments.dataset
+    ).records
+    cache_index = _read_cache_index(arguments.cache_index)
+    model = _build_branch_model(arguments)
+    state = load_checkpoint(arguments.checkpoint, model=model)
+    preprocessing_hash = (
+        arguments.preprocessing_hash or state.metadata.preprocessing_hash
+    )
+
+    # Clips the branch cannot read are abstained on, not dropped. A clip with an
+    # unstable primary face track has no visual view, and on MNW that is 46 of
+    # 131. Feeding them to the loader raises mid-epoch; removing them silently
+    # would flatter the result by shrinking the denominator.
+    records, abstained = _partition_by_view(
+        manifest_records,
+        cache_index,
+        CacheStore(arguments.cache_root),
+        branch=arguments.branch,
+        preprocessing_hash=preprocessing_hash,
+    )
+    if not records:
+        raise ValueError(
+            f"No clip in {arguments.manifest} has a {arguments.branch} view"
+        )
+
+    dataset = CachedBranchDataset(
+        records=records,
+        cache_index=cache_index,
+        cache_store=CacheStore(arguments.cache_root),
+        branch=arguments.branch,
+        preprocessing_hash=preprocessing_hash,
+    )
+    loader = DataLoader(
+        dataset,
+        batch_size=arguments.batch_size,
+        shuffle=False,
+        collate_fn=collate_branch_items,
+        num_workers=arguments.workers,
+    )
+    model.to(arguments.device).eval()
+
+    by_clip = {record.clip_id: record for record in records}
+    rows: list[dict[str, object]] = []
+    loss_sum = 0.0
+    with torch.inference_mode():
+        for batch in loader:
+            logits = model(batch.values.to(arguments.device)).logits
+            loss_sum += float(
+                functional.binary_cross_entropy_with_logits(
+                    logits,
+                    batch.labels.to(arguments.device),
+                    reduction="sum",
+                )
+            )
+            probabilities = torch.sigmoid(logits).cpu().tolist()
+            labels = batch.labels.int().tolist()
+            for clip_id, label, probability in zip(
+                batch.clip_ids, labels, probabilities, strict=True
+            ):
+                # Keyed on clip_id rather than zipped positionally against the
+                # manifest, so a reordered or filtered loader cannot silently
+                # pair a score with the wrong clip's metadata.
+                record = by_clip[clip_id]
+                rows.append(
+                    {
+                        "clip_id": clip_id,
+                        "label": label,
+                        "probability": probability,
+                        "predicted": int(probability >= arguments.threshold),
+                        "source": record.source,
+                        "manipulation_type": record.manipulation_type,
+                        "method": record.method,
+                    }
+                )
+    if not rows:
+        raise ValueError("Evaluation produced no rows")
+
+    report = _branch_evaluation_report(arguments, rows, state, preprocessing_hash)
+    report["loss"] = loss_sum / len(rows)
+    report["coverage"] = _coverage(manifest_records, rows, abstained)
+    _write_json(arguments.output, report)
+    arguments.predictions.parent.mkdir(parents=True, exist_ok=True)
+    with arguments.predictions.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=tuple(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+
+    logger = getattr(arguments, "_run_logger", NullRunLogger())
+    logger.log_params(
+        {
+            "evaluation.branch": arguments.branch,
+            "evaluation.dataset": arguments.dataset,
+            "evaluation.rows": len(rows),
+            "evaluation.threshold": arguments.threshold,
+            "evaluation.checkpoint_sha256": report["checkpoint_sha256"],
+        }
+    )
+    logger.log_metrics(
+        {f"evaluation.{name}": float(value) for name, value in _flat_metrics(report)}
+    )
+    logger.log_artifact(arguments.output, artifact_path="evaluation")
+    logger.log_artifact(arguments.predictions, artifact_path="evaluation")
+    return 0
+
+
+def _coverage(manifest_records, rows, abstained: dict[str, str]) -> dict[str, object]:
+    """How much of the manifest was actually scored, and why the rest was not.
+
+    docs/data-card.md requires the abstention rate to be reported rather than
+    the abstained clips being deleted from the denominator, because a detector
+    that silently declines the hard clips looks better than it is.
+    """
+    reasons: dict[str, int] = {}
+    for reason in abstained.values():
+        key = reason.split(":")[0]
+        reasons[key] = reasons.get(key, 0) + 1
+    total = len(manifest_records)
+    return {
+        "manifest_rows": total,
+        "scored_rows": len(rows),
+        "abstained_rows": len(abstained),
+        "abstention_rate": len(abstained) / total if total else 0.0,
+        "abstained_by_reason": dict(sorted(reasons.items())),
+    }
+
+
+def _build_branch_model(arguments: argparse.Namespace):
+    from deepfake_detection.branches.audio import build_wav2vec2_audio_branch
+    from deepfake_detection.branches.visual import build_efficientnet_b0
+
+    if arguments.branch == "visual":
+        return build_efficientnet_b0(pretrained=False)
+    return build_wav2vec2_audio_branch(
+        model_name=arguments.audio_model,
+        pretrained=False,
+    )
+
+
+# Below this many rows in the smaller class, a ranking metric is noise.
+MINIMUM_CLASS_ROWS = 10
+
+
+def _branch_evaluation_report(
+    arguments: argparse.Namespace,
+    rows: list[dict[str, object]],
+    state,
+    preprocessing_hash: str,
+) -> dict[str, object]:
+    from deepfake_detection.evaluation.metrics import binary_metrics
+
+    labels = [int(row["label"]) for row in rows]
+    probabilities = [float(row["probability"]) for row in rows]
+    confusion = {
+        "true_positive": sum(
+            row["label"] == 1 and row["predicted"] == 1 for row in rows
+        ),
+        "true_negative": sum(
+            row["label"] == 0 and row["predicted"] == 0 for row in rows
+        ),
+        "false_positive": sum(
+            row["label"] == 0 and row["predicted"] == 1 for row in rows
+        ),
+        "false_negative": sum(
+            row["label"] == 1 and row["predicted"] == 0 for row in rows
+        ),
+    }
+    report: dict[str, object] = {
+        "branch": arguments.branch,
+        "checkpoint_sha256": _sha256(arguments.checkpoint),
+        "checkpoint_run_id": state.metadata.run_id,
+        "dataset": arguments.dataset,
+        "evidence_scope": arguments.evidence_scope,
+        "fixed_threshold": arguments.threshold,
+        "rows": len(rows),
+        "confusion": confusion,
+        "preprocessing_hash": preprocessing_hash,
+        "trained_on_split_hash": state.metadata.split_hash,
+        "per_method": _grouped_rates(rows, "method"),
+        "per_manipulation_type": _grouped_rates(rows, "manipulation_type"),
+    }
+    positives = sum(labels)
+    negatives = len(labels) - positives
+    report["class_balance"] = {
+        "fake": positives,
+        "real": negatives,
+        # A ranking metric needs enough of both classes to mean anything. MNW
+        # scores 84 forgeries against 1 genuine clip, which yields an ROC-AUC
+        # that is arithmetically defined and statistically worthless. Saying so
+        # in the record is the difference between a caveat and a false result.
+        "ranking_metrics_reliable": min(positives, negatives) >= MINIMUM_CLASS_ROWS,
+        "minimum_rows_per_class": MINIMUM_CLASS_ROWS,
+    }
+    if set(labels) == {0, 1}:
+        report["metrics"] = asdict(
+            binary_metrics(
+                labels=labels,
+                probabilities=probabilities,
+                threshold=arguments.threshold,
+            )
+        )
+        if min(positives, negatives) < MINIMUM_CLASS_ROWS:
+            report["class_balance"]["note"] = (
+                f"Only {min(positives, negatives)} rows in the smaller class. "
+                "Ranking metrics such as ROC-AUC are reported but must not be "
+                "quoted as a result. Read the detection rate instead."
+            )
+        # The detection rate is the statistic that survives a lopsided set, so
+        # it is recorded either way rather than only in the single-class case.
+        report["detection_rate"] = (
+            sum(row["label"] == 1 and row["predicted"] == 1 for row in rows) / positives
+            if positives
+            else None
+        )
+    else:
+        # A single-class set has nothing to rank against, so ROC-AUC and every
+        # other ranking metric is undefined. MNW's lab half is exactly this: 120
+        # forgeries and no genuine video. The detection rate is the honest
+        # statistic, and reporting an AUC here would be inventing one.
+        present = labels[0]
+        correct = sum(row["label"] == row["predicted"] for row in rows)
+        rate_name = "detection_rate" if present == 1 else "specificity"
+        report["metrics"] = None
+        report["single_class"] = {
+            "class": "fake" if present == 1 else "real",
+            rate_name: correct / len(rows),
+            "mean_probability": sum(probabilities) / len(rows),
+            "note": (
+                "Only one class is present, so ranking metrics such as ROC-AUC "
+                "are undefined and are not reported."
+            ),
+        }
+    return report
+
+
+def _grouped_rates(rows: list[dict[str, object]], key: str) -> dict[str, object]:
+    """Per-group hit rate, which is how an unseen-generator result is read.
+
+    On MNW this is the per-generator detection rate: the number that answers
+    whether the detector catches forgeries it was never trained on.
+    """
+    grouped: dict[str, list[dict[str, object]]] = {}
+    for row in rows:
+        grouped.setdefault(str(row[key]), []).append(row)
+    return {
+        name: {
+            "rows": len(group),
+            "accuracy": sum(row["label"] == row["predicted"] for row in group)
+            / len(group),
+            "mean_probability": sum(float(row["probability"]) for row in group)
+            / len(group),
+        }
+        for name, group in sorted(grouped.items())
+    }
+
+
+def _flat_metrics(report: dict[str, object]):
+    metrics = report.get("metrics")
+    if isinstance(metrics, dict):
+        for name, value in metrics.items():
+            if isinstance(value, int | float):
+                yield name, value
+    single = report.get("single_class")
+    if isinstance(single, dict):
+        for name, value in single.items():
+            if isinstance(value, int | float):
+                yield name, value
+    confusion = report["confusion"]
+    if isinstance(confusion, dict):
+        for name, value in confusion.items():
+            yield f"confusion.{name}", value
 
 
 def _select_threshold(arguments: argparse.Namespace) -> int:
@@ -351,6 +920,11 @@ def _train_fusion(arguments: argparse.Namespace) -> int:
     rows = FeatureStore(arguments.feature_store).assemble(required_branches=branches)
     if {row.partition_role for row in rows} != {"oof"}:
         raise ValueError("Fusion training requires out-of-fold feature rows")
+    # The feature store is a blend, so the guard runs over every dataset that
+    # contributed a row rather than over a single --dataset flag.
+    reject_evaluation_only_datasets(
+        (row.dataset for row in rows), operation="fusion training"
+    )
     samples = [
         FusionSample(
             branch_logits=row.branch_logits,
@@ -460,6 +1034,7 @@ def _training_cost_metrics(
 
 
 def _binary_branch_train(arguments: argparse.Namespace) -> int:
+    reject_evaluation_only(arguments.dataset, operation="training")
     started_at = time.perf_counter()
     runtime.seed_everything(arguments.seed, deterministic=True)
     runtime.require_research_cuda(arguments.device)
@@ -629,7 +1204,199 @@ def _binary_branch_train(arguments: argparse.Namespace) -> int:
     return 0
 
 
+def _stream_train(arguments: argparse.Namespace) -> int:
+    """Train one audiovisual cross-attention stream.
+
+    Parallel to `_binary_branch_train` rather than folded into it: the batch
+    carries a video and an audio tensor instead of one, and the history records
+    diagonal attention mass per epoch, which the binary history has no field
+    for.
+    """
+    reject_evaluation_only(arguments.dataset, operation="training")
+    started_at = time.perf_counter()
+    runtime.seed_everything(arguments.seed, deterministic=True)
+    runtime.require_research_cuda(arguments.device)
+
+    import torch
+    from torch.utils.data import DataLoader
+
+    from deepfake_detection.data.datasets import (
+        CachedAVPairDataset,
+        collate_av_pair_items,
+    )
+    from deepfake_detection.streams.cross_modal_stream import build_lipsync_stream
+    from deepfake_detection.training.checkpoints import (
+        RunMetadata,
+        hash_config,
+        save_checkpoint,
+    )
+    from deepfake_detection.training.streams import (
+        StreamTrainingConfig,
+        fit_stream,
+        parameter_groups,
+    )
+
+    train_records = load_manifest(
+        arguments.train_manifest, dataset=arguments.dataset
+    ).records
+    validation_records = load_manifest(
+        arguments.validation_manifest, dataset=arguments.dataset
+    ).records
+    index = _read_cache_index(arguments.cache_index)
+    cache_store = CacheStore(arguments.cache_root)
+
+    def dataset_for(records):
+        return CachedAVPairDataset(
+            records=records,
+            cache_index=index,
+            cache_store=cache_store,
+            stream=arguments.stream,
+            preprocessing_hash=arguments.preprocessing_hash,
+        )
+
+    train_dataset = dataset_for(train_records)
+    validation_dataset = dataset_for(validation_records)
+    labels = [int(record.clip_fake) for record in train_records]
+    if set(labels) != {0, 1}:
+        raise ValueError("Stream training needs both real and fake clips")
+
+    # Inverse-frequency sampling, matching the branch trainers. FakeAVCeleb is
+    # roughly twenty to one fake, so uniform sampling would show the model a
+    # real clip once a batch.
+    counts = {label: labels.count(label) for label in set(labels)}
+    generator = torch.Generator()
+    generator.manual_seed(arguments.seed)
+    sampler = torch.utils.data.WeightedRandomSampler(
+        weights=[1.0 / counts[label] for label in labels],
+        num_samples=len(labels),
+        replacement=True,
+        generator=generator,
+    )
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=arguments.batch_size,
+        sampler=sampler,
+        collate_fn=collate_av_pair_items,
+        num_workers=arguments.workers,
+    )
+    validation_loader = DataLoader(
+        validation_dataset,
+        batch_size=arguments.batch_size,
+        shuffle=False,
+        collate_fn=collate_av_pair_items,
+        num_workers=arguments.workers,
+    )
+
+    model = build_lipsync_stream(
+        video_backbone=arguments.video_backbone,
+        audio_model=arguments.audio_model,
+        pretrained=True,
+        common_dim=arguments.common_dim,
+        attention_heads=arguments.attention_heads,
+    )
+    optimizer = torch.optim.AdamW(
+        parameter_groups(
+            model,
+            head_lr=arguments.learning_rate,
+            encoder_lr=arguments.encoder_learning_rate,
+        ),
+        lr=arguments.learning_rate,
+        weight_decay=arguments.weight_decay,
+    )
+    config = StreamTrainingConfig(
+        epochs=arguments.epochs,
+        accumulation_steps=arguments.accumulation_steps,
+        freeze_epochs=arguments.freeze_epochs,
+        early_stopping_patience=arguments.patience,
+    )
+    run_config = {
+        "stream": arguments.stream,
+        "dataset": arguments.dataset,
+        "training": asdict(config),
+        "optimizer": {
+            "name": "adamw",
+            "learning_rate": arguments.learning_rate,
+            "encoder_learning_rate": arguments.encoder_learning_rate,
+            "weight_decay": arguments.weight_decay,
+        },
+        "model": {
+            "video_backbone": arguments.video_backbone,
+            "audio_model": arguments.audio_model,
+            "common_dim": arguments.common_dim,
+            "attention_heads": arguments.attention_heads,
+            "pretrained": True,
+        },
+    }
+
+    torch.cuda.reset_peak_memory_stats(arguments.device)
+    training_started = time.perf_counter()
+    history = fit_stream(
+        model=model,
+        train_batches=train_loader,
+        validation_batches=validation_loader,
+        optimizer=optimizer,
+        config=config,
+        device=arguments.device,
+    )
+    training_cost = _training_cost_metrics(
+        train_samples=len(train_dataset),
+        completed_epochs=len(history.epochs),
+        elapsed_seconds=time.perf_counter() - training_started,
+        peak_gpu_memory_bytes=torch.cuda.max_memory_allocated(arguments.device),
+    )
+    metadata = RunMetadata(
+        run_id=arguments.run_id,
+        branch=arguments.stream,
+        git_commit=_git_commit(),
+        split_hash=arguments.split_hash,
+        preprocessing_hash=arguments.preprocessing_hash,
+        config_hash=_configuration_hash(arguments, run_config, hash_config),
+        seed=arguments.seed,
+    )
+    checkpoint_hash = save_checkpoint(
+        arguments.checkpoint,
+        model=model,
+        optimizer=optimizer,
+        metadata=metadata,
+        epoch=history.best_epoch,
+    )
+    best = history.epochs[history.best_epoch - 1]
+    _write_json(
+        arguments.history,
+        {
+            "metadata": asdict(metadata),
+            "config": run_config,
+            "checkpoint_hash": checkpoint_hash,
+            "best_epoch": history.best_epoch,
+            "epochs": [asdict(epoch) for epoch in history.epochs],
+            "hardware": training_cost,
+        },
+    )
+
+    logger = getattr(arguments, "_run_logger", NullRunLogger())
+    logger.log_params({f"stream.{key}": value for key, value in run_config["model"].items()})
+    logger.log_metrics(
+        {
+            "training.loss": best.train_loss,
+            "validation.loss": best.validation_loss,
+            # The stream's independent check. A falling loss beside a flat
+            # diagonal mass means a shortcut was found, not synchronisation.
+            "validation.diagonal_mass": best.validation_diagonal_mass,
+            "training.best_epoch": float(history.best_epoch),
+            "training.samples_per_second": float(training_cost["samples_per_second"]),
+            "training.peak_gpu_memory_mib": float(
+                training_cost["peak_gpu_memory_mib"]
+            ),
+            "training.elapsed_seconds": time.perf_counter() - started_at,
+        }
+    )
+    logger.log_artifact(arguments.checkpoint, artifact_path="checkpoints")
+    logger.log_artifact(arguments.history, artifact_path="history")
+    return 0
+
+
 def _sync_branch_train(arguments: argparse.Namespace) -> int:
+    reject_evaluation_only(arguments.dataset, operation="training")
     started_at = time.perf_counter()
     runtime.seed_everything(arguments.seed, deterministic=True)
     runtime.require_research_cuda(arguments.device)
@@ -1121,6 +1888,15 @@ def _load_trained_branches(arguments: argparse.Namespace):
 def _features_export(arguments: argparse.Namespace) -> int:
     from deepfake_detection.fusion.export import export_features
 
+    if arguments.partition_role != "external":
+        # An external-role export only scores a frozen model. Any other role
+        # feeds fusion training or model selection, which a locked dataset must
+        # never influence.
+        reject_evaluation_only(
+            arguments.dataset,
+            operation=f"a {arguments.partition_role}-role feature export",
+        )
+
     records = load_manifest(arguments.manifest, dataset=arguments.dataset).records
     cache_index = _read_cache_index(arguments.cache_index)
     visual, audio, sync, states = _load_trained_branches(arguments)
@@ -1279,6 +2055,15 @@ def build_parser() -> argparse.ArgumentParser:
         _configured_run_sentinel=_CONFIGURED_RUN_SENTINEL,
     )
 
+    handoff = commands.add_parser("handoff")
+    handoff_commands = handoff.add_subparsers(dest="handoff_command", required=True)
+    handoff_update = handoff_commands.add_parser("update")
+    handoff_update.add_argument("--root", type=Path, default=Path("."))
+    handoff_update.add_argument(
+        "--path", type=Path, default=Path("docs/handoff.md")
+    )
+    handoff_update.set_defaults(handler=_handoff_update)
+
     smoke = commands.add_parser("smoke")
     smoke.add_argument("--output-dir", type=Path, required=True)
     smoke.add_argument("--seed", type=int, default=17)
@@ -1292,6 +2077,31 @@ def build_parser() -> argparse.ArgumentParser:
     manifest_build.add_argument("--output", type=Path, required=True)
     manifest_build.add_argument("--audit", type=Path, required=True)
     manifest_build.add_argument("--dataset", required=True)
+
+    manifest_usable = manifest_commands.add_parser("usable")
+    manifest_usable.add_argument("--manifest", type=Path, required=True)
+    manifest_usable.add_argument("--cache-index", type=Path, required=True)
+    manifest_usable.add_argument("--cache-root", type=Path, required=True)
+    manifest_usable.add_argument("--output", type=Path, required=True)
+    manifest_usable.add_argument("--audit", type=Path, required=True)
+    manifest_usable.add_argument("--dataset", required=True)
+    manifest_usable.add_argument(
+        "--branch",
+        choices=("visual", "audio", "sync", "lipsync", "emotion"),
+        default="visual",
+    )
+    manifest_usable.add_argument("--preprocessing-hash")
+    manifest_usable.set_defaults(handler=_manifest_usable)
+
+    manifest_meta = manifest_commands.add_parser("from-meta")
+    manifest_meta.add_argument("--meta", type=Path, required=True)
+    manifest_meta.add_argument("--root", type=Path, required=True)
+    manifest_meta.add_argument("--data-dir", type=Path, default=Path("data"))
+    manifest_meta.add_argument("--output", type=Path, required=True)
+    manifest_meta.add_argument("--audit", type=Path, required=True)
+    manifest_meta.add_argument("--dataset", required=True)
+    manifest_meta.add_argument("--allow-missing", action="store_true")
+    manifest_meta.set_defaults(handler=_manifest_from_meta)
     manifest_build.set_defaults(handler=_manifest_build)
 
     split = commands.add_parser("split")
@@ -1314,6 +2124,14 @@ def build_parser() -> argparse.ArgumentParser:
     split_holdout.add_argument("--output-dir", type=Path, required=True)
     split_holdout.add_argument("--dataset", required=True)
     split_holdout.add_argument("--methods", nargs="+", required=True)
+
+    split_subsample = split_commands.add_parser("subsample")
+    split_subsample.add_argument("--split-dir", type=Path, required=True)
+    split_subsample.add_argument("--output-dir", type=Path, required=True)
+    split_subsample.add_argument("--dataset", required=True)
+    split_subsample.add_argument("--seed", type=int, required=True)
+    split_subsample.add_argument("--fake-ratio", type=float, default=3.0)
+    split_subsample.set_defaults(handler=_split_subsample)
     split_holdout.set_defaults(handler=_split_method_holdout)
 
     cache = commands.add_parser("cache")
@@ -1328,6 +2146,22 @@ def build_parser() -> argparse.ArgumentParser:
     cache_build.add_argument("--device", default="cpu")
     cache_build.add_argument("--code-version", required=True)
     cache_build.add_argument("--keep-leading-silence", action="store_true")
+    cache_build.add_argument(
+        "--skip-cached",
+        action="store_true",
+        help="Reuse clips already present in the cache root instead of rebuilding them.",
+    )
+    cache_build.add_argument(
+        "--shard",
+        help="Process only this shard, written I/N. Shards may run concurrently.",
+    )
+
+    cache_merge = cache_commands.add_parser("merge")
+    cache_merge.add_argument("--indexes", type=Path, nargs="+", required=True)
+    cache_merge.add_argument("--audits", type=Path, nargs="+", required=True)
+    cache_merge.add_argument("--index", type=Path, required=True)
+    cache_merge.add_argument("--audit", type=Path, required=True)
+    cache_merge.set_defaults(handler=_cache_merge)
 
     def add_preprocessing_arguments(command: argparse.ArgumentParser) -> None:
         command.add_argument(
@@ -1430,12 +2264,35 @@ def build_parser() -> argparse.ArgumentParser:
     detector_compare.set_defaults(handler=_detector_compare)
 
     evaluate = commands.add_parser("evaluate")
-    evaluate.add_argument("--predictions", type=Path, required=True)
-    evaluate.add_argument("--output", type=Path, required=True)
-    evaluate.add_argument("--threshold", type=float, required=True)
-    evaluate.add_argument("--bootstrap-samples", type=int, default=1_000)
-    evaluate.add_argument("--seed", type=int, default=17)
-    evaluate.set_defaults(handler=_evaluate)
+    evaluate_commands = evaluate.add_subparsers(dest="evaluate_command", required=True)
+
+    evaluate_branch = evaluate_commands.add_parser("branch")
+    evaluate_branch.add_argument(
+        "--branch", choices=("visual", "audio"), required=True
+    )
+    evaluate_branch.add_argument("--checkpoint", type=Path, required=True)
+    evaluate_branch.add_argument("--manifest", type=Path, required=True)
+    evaluate_branch.add_argument("--cache-index", type=Path, required=True)
+    evaluate_branch.add_argument("--cache-root", type=Path, required=True)
+    evaluate_branch.add_argument("--dataset", required=True)
+    evaluate_branch.add_argument("--threshold", type=float, required=True)
+    evaluate_branch.add_argument("--output", type=Path, required=True)
+    evaluate_branch.add_argument("--predictions", type=Path, required=True)
+    evaluate_branch.add_argument("--evidence-scope", required=True)
+    evaluate_branch.add_argument("--preprocessing-hash")
+    evaluate_branch.add_argument("--device", default="cuda")
+    evaluate_branch.add_argument("--batch-size", type=int, default=8)
+    evaluate_branch.add_argument("--workers", type=int, default=0)
+    evaluate_branch.add_argument("--audio-model", default="facebook/wav2vec2-base")
+    evaluate_branch.set_defaults(handler=_evaluate_branch)
+
+    evaluate_predictions = evaluate_commands.add_parser("predictions")
+    evaluate_predictions.add_argument("--predictions", type=Path, required=True)
+    evaluate_predictions.add_argument("--output", type=Path, required=True)
+    evaluate_predictions.add_argument("--threshold", type=float, required=True)
+    evaluate_predictions.add_argument("--bootstrap-samples", type=int, default=1_000)
+    evaluate_predictions.add_argument("--seed", type=int, default=17)
+    evaluate_predictions.set_defaults(handler=_evaluate)
 
     threshold = commands.add_parser("threshold")
     threshold.add_argument("--predictions", type=Path, required=True)
@@ -1495,6 +2352,26 @@ def build_parser() -> argparse.ArgumentParser:
         default="facebook/wav2vec2-base",
     )
     train_audio.set_defaults(handler=_binary_branch_train)
+
+    train_stream = train_commands.add_parser("stream")
+    add_branch_arguments(train_stream)
+    train_stream.add_argument(
+        "--stream", choices=("lipsync", "emotion"), default="lipsync"
+    )
+    train_stream.add_argument("--freeze-epochs", type=int, default=3)
+    train_stream.add_argument(
+        "--video-backbone", default="tf_efficientnet_b0.ns_jft_in1k"
+    )
+    train_stream.add_argument("--audio-model", default="facebook/wav2vec2-base")
+    train_stream.add_argument("--common-dim", type=int, default=256)
+    train_stream.add_argument("--attention-heads", type=int, default=4)
+    train_stream.add_argument(
+        "--encoder-learning-rate",
+        type=float,
+        default=5e-6,
+        help="Learning rate for the pretrained encoders, kept well below the head's.",
+    )
+    train_stream.set_defaults(handler=_stream_train)
 
     train_sync = train_commands.add_parser("sync")
     add_branch_arguments(train_sync)

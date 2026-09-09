@@ -22,9 +22,16 @@ from deepfake_detection.inference.predictor import PredictionResult
 from deepfake_detection.views.contracts import PreparedClip
 
 
-def _failure_guidance(error: OSError | RuntimeError | ValueError) -> str:
+def _failure_guidance(
+    error: AssertionError | OSError | RuntimeError | ValueError,
+) -> str:
     detail = str(error).strip()
     if "cuda" in detail.lower():
+        # runtime.require_cuda already says which of the two states this is and
+        # what to do about it, so pass its sentence through rather than
+        # flattening it back to a generic one.
+        if detail.startswith("CUDA is unavailable:"):
+            return detail
         return (
             "CUDA is unavailable on this server. Run the dashboard on a "
             "CUDA-enabled host with a working PyTorch driver."
@@ -116,7 +123,7 @@ def render_prediction(*, embedded: bool = False) -> None:
             result = None
             try:
                 result = runtime.predict_upload(clip)
-            except (OSError, RuntimeError, ValueError) as error:
+            except (AssertionError, OSError, RuntimeError, ValueError) as error:
                 st.error(_failure_guidance(error))
             else:
                 store_prediction(st.session_state, clip.sha256, result)

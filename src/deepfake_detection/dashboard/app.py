@@ -1,52 +1,41 @@
-from __future__ import annotations
+"""The dashboard shell: page registration, the sidebar, and the shared styling.
+
+Run: uv run streamlit run src/deepfake_detection/dashboard/app.py
+
+Two things live side by side here. The teaching pages walk one clip through the
+pipeline a stage at a time with configurable models. The Evidence gate runs the
+one frozen baseline that has provenance behind it. Both are reachable from the
+same sidebar so the difference between "what a stage does" and "what this
+project can currently claim" is visible rather than implied.
+
+Nothing in this dashboard trains a model or writes into data/.
+"""
 
 from pathlib import Path
 
 import streamlit as st
 
-from deepfake_detection.dashboard.components import render_step_status
 from deepfake_detection.dashboard.configuration import dashboard_defaults
-from deepfake_detection.dashboard.sections.audio_branch import render_audio_branch
-from deepfake_detection.dashboard.sections.documentation import render_documentation
-from deepfake_detection.dashboard.sections.experiments import render_experiments
-from deepfake_detection.dashboard.sections.fusion import render_fusion
-from deepfake_detection.dashboard.sections.prediction import render_prediction
-from deepfake_detection.dashboard.sections.preprocessing import render_preprocessing
-from deepfake_detection.dashboard.sections.sync_branch import render_sync_branch
-from deepfake_detection.dashboard.sections.video_input import render_video_input
-from deepfake_detection.dashboard.sections.visual_model import render_visual_model
-from deepfake_detection.dashboard.state import (
-    UploadedClip,
-    prediction_for_upload,
-    prepared_for_upload,
-    uploaded_clip,
-)
-from deepfake_detection.dashboard.workflow import (
-    StepState,
-    WorkflowState,
-    workflow_state,
-)
+from deepfake_detection.dashboard.lib import locked
+from deepfake_detection.dashboard.lib.stream_spec import EXPLAINABILITY, FUSION
 
 _THRESHOLD = 0.5
 _DEVICE = "cuda"
 
-st.set_page_config(
-    page_title="Evidence Gate",
-    page_icon=None,
-    layout="wide",
-)
+st.set_page_config(page_title="Evidence Gate", page_icon=None, layout="wide")
 
 st.markdown(
     """
     <style>
     :root {
-        --paper: #F2F6F8;
-        --ink: #14212B;
-        --cobalt: #2457A6;
-        --amber: #D98718;
-        --evidence: #B73B45;
-        --teal: #2C7A78;
-        --line: #CBD7DE;
+        --paper: #12171C;
+        --panel: #1A2128;
+        --ink: #E6EDF3;
+        --cobalt: #6EA8FF;
+        --amber: #E8A33D;
+        --evidence: #F0707C;
+        --teal: #4FC3B5;
+        --line: #2C3843;
     }
     .stApp { background: var(--paper); color: var(--ink); }
     h1, h2, h3 { font-family: Bahnschrift, "Arial Narrow", sans-serif; }
@@ -69,7 +58,7 @@ st.markdown(
     .channel {
         border: 1px solid var(--line);
         padding: 1rem;
-        background: white;
+        background: var(--panel);
     }
     .channel.available { border-top: 5px solid var(--teal); }
     .channel.missing { border-top: 5px solid var(--amber); }
@@ -90,13 +79,13 @@ st.markdown(
     }
     .limits {
         border: 1px solid var(--line);
-        background: #E8EFF3;
+        background: var(--panel);
         padding: 1rem 1.25rem;
         margin: 1rem 0 1.5rem;
     }
     .result {
         border-left: 8px solid var(--cobalt);
-        background: white;
+        background: var(--panel);
         padding: 1.5rem 1.75rem;
         margin-bottom: 1.5rem;
     }
@@ -133,80 +122,64 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+
+# One flat list in pipeline order, each entry carrying how to draw it. A spec
+# marks a page locked: Fusion and Explainability show in place, dimmed with a
+# lock icon, and do not respond to a click. `child` indents an entry under the
+# section above it.
+#
+# The nav is drawn by hand because st.navigation has no disabled entry, so the
+# built-in one is hidden and st.page_link renders the list instead, with
+# disabled=True on the locked two. Registering them still keeps their routes
+# alive, which is deliberate: a direct visit lands on a body that says what the
+# section will hold and what unlocks it, rather than a dead end.
+PAGES = [
+    (st.Page("pages/overview.py", title="Overview", default=True), None, False),
+    (st.Page("pages/gate.py", title="Evidence gate"), None, False),
+    (st.Page("pages/preprocess.py", title="Preprocessing"), None, False),
+    (st.Page("pages/streams.py", title="Streams"), None, False),
+    (st.Page("pages/stream_visual.py", title="Visual"), None, True),
+    (st.Page("pages/stream_lipsync.py", title="Lip-Sync"), None, True),
+    (st.Page("pages/stream_emotion.py", title="Emotion"), None, True),
+    (st.Page("pages/audio_branch.py", title="Audio branch"), None, True),
+    (st.Page("pages/sync_branch.py", title="Sync branch"), None, True),
+    (st.Page("pages/experiments.py", title="Experiments"), None, False),
+    (st.Page("pages/fusion.py", title="Fusion"), FUSION, False),
+    (st.Page("pages/explainability.py", title="Explainability"), EXPLAINABILITY, False),
+    (st.Page("pages/documentation.py", title="Documentation"), None, False),
+]
+
+nav = st.navigation([page for page, _, _ in PAGES], position="hidden")
+
 defaults = dashboard_defaults(root=Path.cwd())
 
-st.markdown(
-    '<div class="thesis">Verdict follows <span>coverage.</span></div>',
-    unsafe_allow_html=True,
-)
-st.write(
-    "Inspect one talking-head video. Every result states which evidence was used "
-    "and which research limits still apply."
-)
-
 with st.sidebar:
+    for page, spec, child in PAGES:
+        # A narrow spacer column is the indent. st.page_link has no notion of
+        # nesting, and st.navigation's section headers cannot themselves be
+        # pages, which the Streams hub has to be.
+        target = st.columns([1, 9])[1] if child else st
+        if spec is None:
+            target.page_link(page, width="stretch")
+        else:
+            target.page_link(
+                page,
+                icon=":material/lock:",
+                disabled=True,
+                help=locked.tooltip(spec),
+                width="stretch",
+            )
+
+    st.divider()
     st.header("Frozen baseline")
     st.write("Visual-only EfficientNet-B0 plus GRU")
     st.caption(f"Checkpoint: {defaults.visual_checkpoint.name}")
     st.caption(f"Run: {defaults.run_id}")
     st.caption(f"Decision threshold: {_THRESHOLD:.2f}")
     st.caption(f"Compute device: {_DEVICE}")
-
-
-def _current_workflow() -> tuple[UploadedClip | None, WorkflowState]:
-    clip = uploaded_clip(st.session_state)
-    prepared = prepared_for_upload(st.session_state, clip.sha256) if clip else None
-    prediction = prediction_for_upload(st.session_state, clip.sha256) if clip else None
-    return clip, workflow_state(
-        has_upload=clip is not None,
-        has_prepared=prepared is not None,
-        has_prediction=prediction is not None,
+    st.caption(
+        "These provenance values bind the Evidence gate only. The teaching pages "
+        "build their own models and load whatever checkpoint you pick."
     )
 
-
-clip, flow = _current_workflow()
-with st.expander("1. Video input", expanded=clip is None):
-    render_step_status(flow.video)
-    render_video_input(embedded=True)
-
-clip, flow = _current_workflow()
-with st.expander(
-    "2. Preprocessing",
-    expanded=clip is not None and flow.preprocessing is not StepState.COMPLETE,
-):
-    render_step_status(flow.preprocessing)
-    render_preprocessing(embedded=True)
-
-clip, flow = _current_workflow()
-with st.expander("3. Visual model"):
-    render_step_status(flow.visual_model)
-    render_visual_model(embedded=True)
-
-clip, flow = _current_workflow()
-with st.expander(
-    "4. Prediction",
-    expanded=flow.prediction is StepState.READY,
-):
-    render_step_status(flow.prediction)
-    render_prediction(embedded=True)
-
-with st.expander("Research and methodology"):
-    experiments, audio, sync, fusion, documentation = st.tabs(
-        (
-            "Experiments",
-            "Audio branch",
-            "Sync branch",
-            "Fusion",
-            "Documentation",
-        )
-    )
-    with experiments:
-        render_experiments(embedded=True)
-    with audio:
-        render_audio_branch(embedded=True)
-    with sync:
-        render_sync_branch(embedded=True)
-    with fusion:
-        render_fusion(embedded=True)
-    with documentation:
-        render_documentation(embedded=True)
+nav.run()

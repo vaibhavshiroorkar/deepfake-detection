@@ -12,6 +12,7 @@ Start with the learning path, then read the live chapters in order.
 - [07: Audio spoof branch](07-audio-branch.md)
 - [08: Audio-video synchronization branch](08-sync-branch.md)
 - [09: Fusion, calibration, and abstention](09-fusion-and-calibration.md)
+- [10: Cross-modal streams](10-crossmodal-streams.md)
 
 The rest of the planned reading order is:
 

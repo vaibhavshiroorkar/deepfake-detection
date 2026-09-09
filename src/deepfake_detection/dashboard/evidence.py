@@ -8,6 +8,7 @@ from pathlib import Path
 from types import MappingProxyType
 
 from deepfake_detection.dashboard.configuration import dashboard_defaults
+from deepfake_detection.experiments.scopes import validate_evidence_scope
 
 _REQUIRED_METRICS = ("roc_auc", "pr_auc", "balanced_accuracy", "f1")
 _REQUIRED_CONFUSION = (
@@ -84,20 +85,23 @@ def load_validation_evidence(
     history_record = _read_object(history_path, "history")
     defaults = dashboard_defaults(root=Path.cwd())
 
-    if _required_string(metrics_record, "dataset", "metrics") != "FakeAVCeleb":
-        raise ValueError("metrics dataset must be FakeAVCeleb")
-    if (
-        _required_string(metrics_record, "evidence_scope", "metrics")
-        != "development_validation"
-    ):
-        raise ValueError("metrics evidence_scope must be development_validation")
+    # Compared against the configured baseline rather than literals, so
+    # promoting a new frozen baseline is a change to
+    # configs/frozen-baseline.json and not an edit here.
+    dataset = _required_string(metrics_record, "dataset", "metrics")
+    if dataset != defaults.dataset:
+        raise ValueError(f"metrics dataset must be {defaults.dataset}")
+    scope = _required_string(metrics_record, "evidence_scope", "metrics")
+    validate_evidence_scope(scope)
+    if scope != defaults.evidence_scope:
+        raise ValueError(f"metrics evidence_scope must be {defaults.evidence_scope}")
 
     rows = _required_int(metrics_record, "rows", "metrics")
-    if rows != 400:
-        raise ValueError("metrics rows must be 400")
+    if rows != defaults.validation_rows:
+        raise ValueError(f"metrics rows must be {defaults.validation_rows}")
     threshold = _required_float(metrics_record, "fixed_threshold", "metrics")
-    if threshold != 0.5:
-        raise ValueError("metrics fixed_threshold must be 0.5")
+    if threshold != defaults.threshold:
+        raise ValueError(f"metrics fixed_threshold must be {defaults.threshold}")
 
     checkpoint_run_id = _required_string(metrics_record, "checkpoint_run_id", "metrics")
     if checkpoint_run_id != defaults.run_id:

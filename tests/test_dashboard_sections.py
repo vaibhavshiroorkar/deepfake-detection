@@ -8,6 +8,7 @@ pytest.importorskip("streamlit")
 
 
 SECTION_FUNCTIONS = (
+    ("overview", "render_overview"),
     ("video_input", "render_video_input"),
     ("preprocessing", "render_preprocessing"),
     ("visual_model", "render_visual_model"),

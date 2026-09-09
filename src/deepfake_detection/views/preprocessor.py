@@ -207,6 +207,22 @@ class Preprocessor:
             max_gap=self.config.track_max_gap,
         )
 
+    def fingerprint_for(self, record: ClipRecord, media_path: Path) -> str:
+        """The cache key this clip would get, computed without decoding it.
+
+        Hashing the media bytes costs a file read; preparing the clip costs a
+        full face-detection pass. A resumed cache build pays the former to avoid
+        the latter.
+        """
+        return cache_fingerprint(
+            media_path,
+            dataset=record.dataset,
+            config=self.config,
+            code_version=self.code_version,
+            leading_silence_sec=record.leading_silence_sec,
+            sync_start_sec=record.sync_start_sec,
+        )
+
     def prepare_visual(self, record: ClipRecord, media_path: Path) -> PreparedClip:
         info = self.decoder.probe(media_path)
         if info.duration_sec <= 0:
@@ -258,6 +274,7 @@ class Preprocessor:
                 config=self.config,
                 code_version=self.code_version,
                 leading_silence_sec=record.leading_silence_sec,
+                sync_start_sec=record.sync_start_sec,
             ),
             preprocessing_config_hash=preprocessing_config_hash(
                 config=self.config,
@@ -296,6 +313,14 @@ class Preprocessor:
         context_available = info.audio_present and context_lower <= context_upper
         if context_available:
             sync_start = context_lower
+        if record.sync_start_sec:
+            # The dataset knows where the manipulation is; the default guess
+            # does not. Clamped so an annotation near the end of a clip cannot
+            # ask for a window that runs past the media.
+            sync_start = min(
+                record.sync_start_sec,
+                max(0.0, info.duration_sec - self.config.sync_seconds),
+            )
         sync_window = make_sync_window(start_sec=sync_start, config=self.config)
         final_video_timestamp = max(
             0.0,
@@ -421,6 +446,7 @@ class Preprocessor:
                 config=self.config,
                 code_version=self.code_version,
                 leading_silence_sec=record.leading_silence_sec,
+                sync_start_sec=record.sync_start_sec,
             ),
             sync_audio_context=sync_audio_context,
             preprocessing_config_hash=preprocessing_config_hash(

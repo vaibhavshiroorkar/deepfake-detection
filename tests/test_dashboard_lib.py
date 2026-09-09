@@ -1,0 +1,222 @@
+import os
+import time
+from pathlib import Path
+
+import pandas as pd
+import pytest
+
+from deepfake_detection.dashboard.lib import checkpoints, datasets, selectors
+from deepfake_detection.data.meta import (
+    clip_label,
+    manifest_from_meta,
+    resolve_video_path,
+)
+
+META_ROW = [
+    "id00018",
+    "id00018",
+    "id00018",
+    "real",
+    "RealVideo-RealAudio",
+    "RealVideo-RealAudio",
+    "Asian",
+    "men",
+    "00109.mp4",
+    "FakeAVCeleb/RealVideo-RealAudio/Asian/men/id00018",
+]
+
+
+def write_drop(root: Path) -> Path:
+    drop = root / "FakeAVCeleb"
+    clip_dir = drop / "RealVideo-RealAudio" / "Asian" / "men" / "id00018"
+    clip_dir.mkdir(parents=True)
+    (clip_dir / "00109.mp4").write_bytes(b"not really a video")
+    pd.DataFrame([META_ROW]).to_csv(drop / "meta_data.csv", index=False)
+    return drop
+
+
+def manifest_frame() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "clip_id": ["a1", "b2", "c3"],
+            "video_path": ["a.mp4", "b.mp4", "c.mp4"],
+            "label": [0, 1, 1],
+            "manipulation_type": [
+                "RealVideo-RealAudio",
+                "FakeVideo-RealAudio",
+                "FakeVideo-FakeAudio",
+            ],
+            "method": ["real", "fsgan", "wav2lip"],
+            "source": ["id1", "id1", "id2"],
+        }
+    )
+
+
+def test_clip_label_counts_a_fake_track_as_fake() -> None:
+    assert clip_label("RealVideo-RealAudio") == 0
+    assert clip_label("RealVideo-FakeAudio") == 1
+    assert clip_label("FakeVideo-RealAudio") == 1
+
+
+def test_clip_label_rejects_an_unknown_type() -> None:
+    with pytest.raises(ValueError, match="Unrecognised"):
+        clip_label("RealVideo-SomethingElse")
+
+
+def test_resolve_video_path_drops_the_leading_dataset_segment() -> None:
+    resolved = resolve_video_path(
+        Path("/data/FakeAVCeleb"), "FakeAVCeleb/RealVideo-RealAudio/x", "a.mp4"
+    )
+    assert resolved.as_posix().endswith("FakeAVCeleb/RealVideo-RealAudio/x/a.mp4")
+
+
+def test_manifest_from_meta_drops_rows_with_no_file(tmp_path: Path) -> None:
+    drop = write_drop(tmp_path)
+    meta = pd.DataFrame([META_ROW, [*META_ROW[:8], "absent.mp4", META_ROW[9]]])
+    frame = manifest_from_meta(meta, drop, tmp_path)
+    assert len(frame) == 1
+    assert frame.loc[0, "label"] == 0
+    assert frame.loc[0, "clip_id"].endswith("00109")
+
+
+def test_manifest_from_meta_dedupes_a_repeated_file(tmp_path: Path) -> None:
+    drop = write_drop(tmp_path)
+    meta = pd.DataFrame([META_ROW, META_ROW])
+    assert len(manifest_from_meta(meta, drop, tmp_path)) == 1
+
+
+def test_manifest_from_meta_rejects_a_reshaped_meta_file(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="expected"):
+        manifest_from_meta(pd.DataFrame([[1, 2, 3]]), tmp_path, tmp_path)
+
+
+def test_discover_finds_a_raw_drop(tmp_path: Path) -> None:
+    write_drop(tmp_path)
+    found = datasets.discover(tmp_path)
+    assert list(found) == ["FakeAVCeleb"]
+    assert found["FakeAVCeleb"].splits == [datasets.RAW_SPLIT]
+
+
+def test_discover_attaches_a_manifest_to_the_drop_it_points_into(
+    tmp_path: Path,
+) -> None:
+    write_drop(tmp_path)
+    video_path = "FakeAVCeleb/RealVideo-RealAudio/Asian/men/id00018/00109.mp4"
+    pd.DataFrame(
+        {"clip_id": ["a"], "video_path": [video_path], "label": [0]}
+    ).to_csv(tmp_path / "train.csv", index=False)
+    found = datasets.discover(tmp_path)
+    assert found["FakeAVCeleb"].splits == ["train", datasets.RAW_SPLIT]
+
+
+def test_discover_ignores_a_csv_that_is_not_a_manifest(tmp_path: Path) -> None:
+    write_drop(tmp_path)
+    pd.DataFrame({"note": ["hello"]}).to_csv(tmp_path / "notes.csv", index=False)
+    assert datasets.discover(tmp_path)["FakeAVCeleb"].manifests == {}
+
+
+def test_discover_returns_nothing_for_a_missing_directory(tmp_path: Path) -> None:
+    assert datasets.discover(tmp_path / "absent") == {}
+
+
+def test_load_split_reads_the_raw_manifest(tmp_path: Path) -> None:
+    write_drop(tmp_path)
+    dataset = datasets.discover(tmp_path)["FakeAVCeleb"]
+    assert len(datasets.load_split(dataset, datasets.RAW_SPLIT, tmp_path)) == 1
+
+
+def test_load_split_rejects_an_unknown_split(tmp_path: Path) -> None:
+    write_drop(tmp_path)
+    dataset = datasets.discover(tmp_path)["FakeAVCeleb"]
+    with pytest.raises(KeyError):
+        datasets.load_split(dataset, "test", tmp_path)
+
+
+def test_filter_manifest_narrows_by_type_method_and_label() -> None:
+    frame = manifest_frame()
+    assert len(selectors.filter_manifest(frame, ["FakeVideo-RealAudio"], [], "all")) == 1
+    assert len(selectors.filter_manifest(frame, [], ["wav2lip"], "all")) == 1
+    assert len(selectors.filter_manifest(frame, [], [], "real")) == 1
+    assert len(selectors.filter_manifest(frame, [], [], "fake")) == 2
+
+
+def test_search_manifest_matches_clip_id_and_identity() -> None:
+    frame = manifest_frame()
+    assert len(selectors.search_manifest(frame, "id1")) == 2
+    assert len(selectors.search_manifest(frame, "c3")) == 1
+    assert len(selectors.search_manifest(frame, "  ")) == 3
+
+
+def test_group_by_identity_keeps_variants_together() -> None:
+    grouped = selectors.group_by_identity(manifest_frame())
+    assert list(grouped["source"]) == ["id1", "id1", "id2"]
+
+
+def test_label_text_names_an_upload_unknown() -> None:
+    assert selectors.label_text({"label": 0}) == "real"
+    assert selectors.label_text({"label": 1}) == "fake"
+    assert selectors.label_text({"label": selectors.LABEL_UNKNOWN}) == "unknown"
+
+
+def test_clip_path_leaves_an_upload_absolute(tmp_path: Path) -> None:
+    absolute = tmp_path / "clip.mp4"
+    assert selectors.clip_path({"video_path": str(absolute)}) == absolute
+    assert selectors.clip_path({"video_path": "drop/clip.mp4"}).is_absolute()
+
+
+def test_upload_row_writes_outside_the_data_directory() -> None:
+    row = selectors.upload_row("clip.mp4", b"bytes", "file-1")
+    written = Path(row["video_path"])
+    try:
+        assert written.exists()
+        assert selectors.DATA_DIR not in written.parents
+        assert row["label"] == selectors.LABEL_UNKNOWN
+    finally:
+        written.unlink()
+
+
+def test_discover_checkpoints_returns_nothing_without_a_directory(
+    tmp_path: Path,
+) -> None:
+    assert checkpoints.discover("visual", root=tmp_path) == []
+
+
+def test_discover_checkpoints_lists_newest_first(tmp_path: Path) -> None:
+    directory = tmp_path / "visual"
+    directory.mkdir()
+    (directory / "old.pt").write_bytes(b"a")
+    (directory / "new.pt").write_bytes(b"b")
+    (directory / "notes.txt").write_bytes(b"c")
+    earlier = time.time() - 60
+    os.utime(directory / "old.pt", (earlier, earlier))
+    found = checkpoints.discover("visual", root=tmp_path)
+    assert [path.name for path in found] == ["new.pt", "old.pt"]
+
+
+def test_describe_reports_an_unreadable_checkpoint(tmp_path: Path) -> None:
+    broken = tmp_path / "broken.pt"
+    broken.write_bytes(b"not a checkpoint")
+    assert checkpoints.describe(broken)["error"]
+
+
+def test_load_into_reports_what_did_not_fit(tmp_path: Path) -> None:
+    torch = pytest.importorskip("torch")
+    from torch import nn
+
+    model = nn.Linear(4, 2)
+    path = tmp_path / "other.pt"
+    torch.save({"model_state": {"weight": torch.zeros(3, 4)}}, path)
+    report = checkpoints.load_into(model, path)
+    assert report["clean"] is False
+    assert report["mismatched"][0][0] == "weight"
+    assert "bias" in report["missing"]
+
+
+def test_load_into_reports_a_clean_load(tmp_path: Path) -> None:
+    torch = pytest.importorskip("torch")
+    from torch import nn
+
+    model = nn.Linear(4, 2)
+    path = tmp_path / "same.pt"
+    torch.save({"model_state": model.state_dict()}, path)
+    assert checkpoints.load_into(model, path)["clean"] is True

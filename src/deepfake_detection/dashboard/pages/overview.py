@@ -1,0 +1,126 @@
+"""Overview: the landing page.
+
+States the problem, shows the architecture as one diagram, and says what is
+built. How anything works belongs on the Documentation page; this page links
+there instead of explaining it twice.
+
+This is also the one place that states the "no training here" rule, so the other
+pages do not each repeat it.
+
+Static by construction: no model loads, no decoding, no data/ access, so it opens
+instantly and is safe as the default page.
+"""
+
+
+import streamlit as st
+
+from deepfake_detection.dashboard.paths import PROJECT_ROOT
+from deepfake_detection.dashboard.sections.overview import render_overview
+
+DIAGRAM = PROJECT_ROOT / "assets" / "flow.png"
+
+# app.py sets layout="wide" because the Preprocessing page needs the room for its
+# 8-per-row frame grids, and Streamlit has no per-page override. This page is
+# almost entirely prose, and prose set across 1200px is genuinely hard to read, so
+# everything renders inside one bounded column. Left-aligned with a wide right
+# margin rather than centred: it reads as an editorial column instead of a narrow
+# box floating in the middle of the screen.
+body, _ = st.columns([5, 3], gap="large")
+
+with body:
+    st.title("Audio-Visual Deepfake Detection")
+    st.caption("Three detection principles over one clip: visual artifacts, audio-visual "
+               "synchrony, and audio-visual affect.")
+
+    st.header("The problem")
+    st.markdown("""
+"Deepfake" is not one thing, and the kinds hide in different places. FakeAVCeleb contains three
+families, none of them a corner case:
+
+| Family | Methods | Clips | Where the evidence is |
+|---|---|---|---|
+| **Face swap** | `fsgan`, `faceswap` | 4,694 | In the pixels. The whole face is synthetic, so blending seams, colour drift and warping are everywhere. The tractable case. |
+| **Lip-sync repaint** | `wav2lip` and its combinations | 15,872 | Barely in the pixels. Only the mouth is repainted, so the artifact budget is tiny and compression erases most of it. |
+| **Voice clone** | `rtvc` | 500 | Nowhere in the pixels. The video track is genuine. |
+
+No single detector covers all three. What the last two cannot repair is agreement between the two
+tracks. A real recording captures one physical event twice, as light off a moving mouth and as the
+sound that mouth made. Synthesis breaks the correspondence, and it stays broken after compression
+and resolution loss. So alongside the artifact detectors this system measures disagreement between
+face and voice, rather than asking whether a voice sounds synthetic, which is why it has no
+standalone audio classifier.
+""")
+
+    st.header("Architecture")
+
+    # Portrait diagram, inset again inside the already-bounded column so it does
+    # not tower over the text it illustrates.
+    _, diagram_col, _ = st.columns([1, 5, 1])
+    with diagram_col:
+        if DIAGRAM.exists():
+            st.image(str(DIAGRAM), width="stretch")
+        else:
+            st.warning(f"Architecture diagram not found at `{DIAGRAM.relative_to(PROJECT_ROOT)}`.")
+
+    st.markdown("""
+Preprocessing samples 16 timestamps per clip and runs a video path and an audio path over them,
+producing three tensors:
+""")
+    st.code("""faces  [16, 3, 224, 224]   ->  visual streams, emotion stream
+mouth  [16, 3,  96,  96]   ->  lip-sync stream
+audio  [16, 5600]          ->  lip-sync stream, emotion stream""", language="text")
+    st.markdown("""
+Both paths are indexed by the **same 16 timestamps**, so frame *i* and audio window *i* describe the
+same instant. Without that, every clip would look desynchronised and the cross-modal streams would
+measure the pipeline rather than the forgery.
+
+Each of the five streams emits a 256-dimensional embedding rather than a score. Fusion concatenates
+them and learns from the combination, so it can represent a conjunction like "artifact evidence is
+weak but synchrony evidence is strong". That conjunction is what separates one manipulation family
+from another, and no weighted average of five scores can express it.
+""")
+
+    st.header("Status")
+    st.markdown("""
+| Component | State |
+|---|---|
+| Preprocessing | Built. Shared functions in `deepfake_detection/preprocessing/ops/`, called by both the batch pipeline and this dashboard. |
+| Manifests and splits | Built. Source-disjoint, verified by `ddf split build`, which reports every source and identity overlap. |
+| Visual stream module | Built. EfficientNet-B0, Xception and DINOv3 all wired. |
+| Visual baseline training | Built and run. One frozen EfficientNet-B0 checkpoint, tracked in MLflow. |
+| Audio and sync branches | Prototypes. Trained on a fixture, not evaluated. |
+| Lip-sync and emotion streams | Designed. Stages 4 and 5. |
+| Fusion, evaluation, explainability | Designed. Stages 6, 7 and 10. |
+""")
+    st.caption("The frozen visual baseline reached ROC AUC 0.9992 on 400 source-disjoint "
+               "FakeAVCeleb validation rows at a fixed threshold of 0.5. That is a development "
+               "result on one dataset, not a generalization result.")
+
+    st.header("The pages")
+    st.markdown("""
+**Preprocessing** is the working page. Pick a clip or upload your own video, then step through the
+visual and audio tabs. Every step is a toggle, applied cumulatively, ending in the exact tensor a
+model would receive.
+
+**Streams** picks that tensor up. The hub configures all three streams at once, and a page per
+stream walks one clip through the model a stage at a time: what each backbone stage responded to,
+how the frame sequence collapses into one vector, and what fusion ends up reading.
+
+**Evidence gate** is the other half of this dashboard. The teaching pages let you configure a model
+and watch it think; the gate runs the one frozen baseline that has provenance behind it, over your
+own clip, and states what its answer is allowed to mean.
+
+**Experiments** puts the recorded runs side by side, read straight out of the local MLflow store.
+
+**Fusion** and **Explainability** are locked. Each says what will land there and what unlocks it.
+
+**Documentation** covers how every step works, what each model does, and how fusion, evaluation and
+the splits are designed, and links the repository records underneath it all.
+""")
+    st.info("Nothing in this dashboard trains a model or writes into `data/`. Training runs through "
+            "`uv run ddf run --config <config>.yaml` and is tracked in the local MLflow store; what "
+            "comes back here is a checkpoint the Streams pages can load.")
+
+    st.header("Evidence boundary")
+    st.caption("What the frozen baseline is allowed to claim, and over which data.")
+    render_overview(embedded=True)

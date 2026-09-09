@@ -12,6 +12,8 @@ The branches inspect visual artifacts, audio spoofing, and mouth-audio alignment
 - [Model selection](docs/model-selection.md): controlled component comparisons and selection rules.
 - [Reproducibility](docs/reproducibility.md): required run metadata and local tracking.
 - [Threat model](docs/threat-model.md): supported threats, failure modes, and claim limits.
+- [Dashboard](docs/dashboard.md): the two halves of the dashboard and how state crosses pages.
+- [Obstacles](docs/obstacles.md): constraints and traps to read before touching an area.
 - [Changelog](CHANGELOG.md): material software and protocol changes.
 
 Read the research design before changing the model or evaluation protocol. Read
@@ -190,31 +192,31 @@ Only load fusion files created by this project. Joblib files can execute code du
 
 ## Dashboard
 
-The dashboard has ten pages in this order: Overview, Video input,
-Preprocessing, Visual model, Prediction, Experiments, Audio branch, Sync
-branch, Fusion, and Documentation.
+The dashboard is two things sharing one shell. The teaching pages walk a clip
+through the pipeline a stage at a time with models you configure. The Evidence
+gate runs the one frozen baseline that has provenance behind it.
+
+Sidebar order: Overview, Evidence gate, Preprocessing, Streams (with Visual,
+Lip-Sync, Emotion, Audio branch and Sync branch under it), Experiments, Fusion,
+Explainability, and Documentation. Fusion and Explainability are dimmed and
+unclickable; each says what will land there and what unlocks it. Audio and sync
+are prototypes with incomplete training.
 
 Start it from the repository root:
 
 ```powershell
-.\.venv\Scripts\python.exe -m streamlit run `
-  src\deepfake_detection\dashboard\app.py `
-  --server.address 127.0.0.1
+uv run streamlit run src\deepfake_detection\dashboard\app.py --server.address 127.0.0.1
 ```
 
-Open `http://127.0.0.1:8501`. The server binds to the local host. Video input,
-preprocessing, and prediction execute the visual-only path when the required
-ignored local artifact is present. Experiments reads the frozen local JSON
-record. Overview, Visual model, Audio branch, Sync branch, Fusion, and
-Documentation are teaching or status pages. Audio and sync are prototypes with
-incomplete full training. Fusion is locked because the current artifact is a
-software fixture.
+Open `http://127.0.0.1:8501`. The server binds to the local host.
+[docs/dashboard.md](docs/dashboard.md) covers the layout and the state rules.
 
-Preprocessing and Prediction require CUDA-enabled PyTorch. On a compatible
-NVIDIA system, install the dashboard environment with:
+The Evidence gate's preprocessing and prediction steps need CUDA-enabled PyTorch
+and the ignored `runs\initial-20260902` artifacts. On a compatible NVIDIA
+system, install the full environment with:
 
 ```powershell
-uv sync --extra cu130 --extra ml --extra media --extra dashboard --group dev
+uv sync --extra cu130 --extra ml --extra media --extra dashboard --extra tracking --group dev
 ```
 
 Do not install the `cpu` and `cu130` extras together.
@@ -223,14 +225,14 @@ The visual path uses `runs\initial-20260902\visual-initial.pt`, preprocessing
 version `2689577`, and threshold `0.5`. It verifies the checkpoint hash and
 training provenance before loading the model. Its only reported result is
 FakeAVCeleb development validation. It does not establish cross-dataset
-generalization. The dashboard does not load multimodal artifacts or issue a
-fusion probability.
+generalization, and the dashboard does not issue a fusion probability.
 
-The ignored `runs` directory must contain the checkpoint, history, and metrics
-files. If a required local artifact is absent or its provenance differs, the
-dashboard reports the error and does not fabricate a metric or prediction.
-The ignored raw dataset is currently absent from the primary checkout, so a
-real-video CUDA smoke cannot run.
+If a required local artifact is absent or its provenance differs, the dashboard
+reports the error and does not fabricate a metric or prediction.
+
+The teaching pages need no checkpoint and no data. They report their empty state
+and still explain the stage. The Experiments page reads the local MLflow store
+directly and puts every recorded run in one table.
 
 ## Repository rules
 

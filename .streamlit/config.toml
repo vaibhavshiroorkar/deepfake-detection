@@ -4,3 +4,8 @@ headless = true
 
 [browser]
 gatherUsageStats = false
+
+[theme]
+# The dashboard's own stylesheet paints a dark palette, so Streamlit's widgets
+# have to match or half the page stays light.
+base = "dark"

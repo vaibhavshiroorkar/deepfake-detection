@@ -6,6 +6,7 @@
 - [Research design](research-design.md)
 - [Data card](data-card.md)
 - [Project handoff](handoff.md)
+- [Obstacles](obstacles.md)
 - [Documentation command reference](reference/cli.md)
 
 ## Learning handbook
@@ -34,6 +35,7 @@ Future chapters are:
 ## Technical reference
 
 - [CLI reference](reference/cli.md)
+- [Dashboard](dashboard.md)
 
 Planned references: `reference/architecture.md`, `reference/configuration.md`,
 `reference/artifact-contracts.md`, `reference/testing.md`, and
@@ -70,12 +72,14 @@ Planned decisions: `decisions/ADR-002-source-disjoint-splits.md`,
 |---|---|---|
 | `data` | `04-data-and-leakage.md` | `artifact-contracts.md` |
 | `views` | `05-preprocessing-pipeline.md` | `architecture.md` |
+| `preprocessing` | `05-preprocessing-pipeline.md` | `dashboard.md` |
+| `streams` | `06-visual-branch.md` | `dashboard.md` |
 | `branches` | `06-visual-branch.md` through `08-sync-branch.md` | `architecture.md` |
 | `training` | `10-training-system.md` | `configuration.md` |
 | `fusion` | `09-fusion-and-calibration.md` | `artifact-contracts.md` |
 | `evaluation` | `11-evaluation-and-statistics.md` | `testing.md` |
 | `inference` | `12-inference-and-dashboard.md` | `architecture.md` |
-| `dashboard` | `12-inference-and-dashboard.md` | `architecture.md` |
+| `dashboard` | `12-inference-and-dashboard.md` | `dashboard.md` |
 | `documentation` | `00-learning-path.md` | `testing.md` |
 
 ## Update rules

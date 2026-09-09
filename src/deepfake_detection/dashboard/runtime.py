@@ -20,10 +20,50 @@ from deepfake_detection.inference.predictor import (
 from deepfake_detection.views.contracts import PreparedClip
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
+_DEVICE = "cuda"
+
+
+def require_cuda() -> None:
+    """Fail early, and in a sentence, when this process has no usable CUDA.
+
+    Without this the first `.to("cuda")` raises `AssertionError: Torch not
+    compiled with CUDA enabled` from inside a vendored model, which the page's
+    handlers do not catch and the reader cannot act on. The two states that
+    produce it are a CPU-only install, and a server started before the
+    environment was upgraded: a running process keeps the torch it imported, so
+    the fix for the second is to restart the server, not to reinstall.
+    """
+    try:
+        import torch
+    except ImportError as error:
+        raise RuntimeError(
+            "PyTorch is not installed in this environment. Install it with "
+            "`uv sync --extra cu130 --extra ml --extra media --extra dashboard "
+            "--extra tracking --group dev`."
+        ) from error
+
+    if torch.cuda.is_available():
+        return
+
+    built_for_cuda = bool(getattr(torch.version, "cuda", None))
+    if not built_for_cuda:
+        raise RuntimeError(
+            f"CUDA is unavailable: this process is running torch "
+            f"{torch.__version__}, a CPU-only build. If the environment was "
+            "upgraded after this server started, restart the server. "
+            "Otherwise reinstall with `uv sync --extra cu130 --extra ml "
+            "--extra media --extra dashboard --extra tracking --group dev`, "
+            "and never install the cpu and cu130 extras together."
+        )
+    raise RuntimeError(
+        f"CUDA is unavailable: torch {torch.__version__} is a CUDA build, but "
+        "no device is visible. Check the NVIDIA driver with `nvidia-smi`."
+    )
 
 
 @st.cache_resource
 def load_frozen_visual_engine() -> VisualPredictionEngine:
+    require_cuda()
     defaults = dashboard_defaults(root=Path.cwd())
     return load_visual_prediction_engine(
         VisualInferenceConfig(
@@ -35,7 +75,7 @@ def load_frozen_visual_engine() -> VisualPredictionEngine:
             expected_git_commit=defaults.git_commit,
             expected_seed=defaults.seed,
             threshold=0.5,
-            device="cuda",
+            device=_DEVICE,
         )
     )
 
@@ -47,10 +87,11 @@ def predict_upload(clip: UploadedClip) -> PredictionResult:
 
 
 def prepare_uploaded_visual(clip: UploadedClip) -> PreparedClip:
+    require_cuda()
     defaults = dashboard_defaults(root=_PROJECT_ROOT)
     preprocessor = build_preprocessor(
         code_version=defaults.code_version,
-        device="cuda",
+        device=_DEVICE,
         detector="mtcnn",
         tracker="greedy_iou",
         crop_mode="box",

@@ -35,10 +35,17 @@ _STAGE_NOTES = (
 )
 
 
-def _failure_guidance(error: OSError | RuntimeError | ValueError) -> str:
+def _failure_guidance(
+    error: AssertionError | OSError | RuntimeError | ValueError,
+) -> str:
     detail = str(error).strip()
     lowered = detail.lower()
     if "cuda" in lowered:
+        # runtime.require_cuda already says which of the two states this is and
+        # what to do about it, so pass its sentence through rather than
+        # flattening it back to a generic one.
+        if detail.startswith("CUDA is unavailable:"):
+            return detail
         return (
             "CUDA is unavailable on this server. Run the dashboard on a "
             "CUDA-enabled host with a working PyTorch driver."
@@ -127,7 +134,7 @@ def render_preprocessing(*, embedded: bool = False) -> None:
             prepared = None
             try:
                 prepared = runtime.prepare_uploaded_visual(clip)
-            except (OSError, RuntimeError, ValueError) as error:
+            except (AssertionError, OSError, RuntimeError, ValueError) as error:
                 st.error(_failure_guidance(error))
             else:
                 store_prepared(st.session_state, clip.sha256, prepared)

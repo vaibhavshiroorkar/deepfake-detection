@@ -2,37 +2,83 @@
 
 ## Current state
 
-The repository has a visual-only dashboard and one saved visual development
-baseline. The baseline is not a generalization result. Its recorded evaluation
-uses 400 source-disjoint FakeAVCeleb development-validation rows.
+The repository has a dashboard with two halves and one saved visual
+development baseline. The teaching pages walk a clip through the pipeline stage
+by stage with three configurable visual backbones; the Evidence gate runs the
+frozen baseline. The baseline is not a generalization result. Its recorded
+evaluation uses 400 source-disjoint FakeAVCeleb development-validation rows.
+
+[docs/dashboard.md](dashboard.md) describes the dashboard layout.
+[docs/obstacles.md](obstacles.md) collects the constraints and traps that cost
+time in each area of this repository. Read it before changing preprocessing,
+the stream models, a training run, or the dashboard.
 
 The primary checkout at
 `C:\Users\vaibh\Documents\GitHub\deepfake-generalization` contains ignored
-`mlflow.db` and `runs\initial-20260902` evidence. Its ignored `data` directory
-is empty. Earlier handoffs recorded four dataset directories and their counts,
-but those directories are not present now and cannot be verified. This blocks
-the real-video CUDA smoke. Do not substitute a fixture or report a real
-inference pass while the raw data is absent.
+`mlflow.db` and run evidence under `runs\`.
 
-## Historical dataset inventory
+## Dataset inventory
 
-The following table comes from the prior verified handoff. It records the
-dataset state reported at that time. It does not describe the present
-filesystem.
+Counted from the working tree by `ddf handoff update`, not recorded by hand. An
+earlier version of this file said `data/` was empty while both primary datasets
+were on disk. That is the failure this generated block exists to prevent, so do
+not edit the table by hand. Run the command again after any dataset change.
 
-| Dataset directory | Recorded state | Recorded detail |
-|---|---|---|
-| `data/Celeb-DF-v2` | Complete | 6,529 videos |
-| `data/FakeAVCeleb_v1.2` | Complete | 21,544 videos |
-| `data/MNW` | Complete | 67,521 Git LFS objects; pinned at `df66c459dd8b043cc7a8aeab30de8f8126710c7f` |
-| `data/FaceForensics++` | Paused | 1,039 of 9,431 videos; c23 EU2; 1,000 YouTube originals and 39 actor originals |
+<!-- BEGIN GENERATED DATASETS -->
+| Dataset directory | Role | State | Videos | Size |
+|---|---|---|---:|---:|
+| `data/FakeAVCeleb_v1.2` | Primary development set | present | 21,544 | 6.2 GB |
+| `data/LAV-DF` | Cross-modal stream training, localized forgeries | present | 136,304 | 23.6 GB |
+| `data/Celeb-DF-v2` | Cross-dataset generalization, no audio | present | 6,529 | 9.5 GB |
+| `data/DFDC` | Cross-corpus test, the only one with audio not from VoxCeleb2 | present | 3,032 | 20.9 GB |
+| `data/FaceForensics++` | Declared visual experiments | absent | 0 | 0 B |
+| `data/MNW` | Locked external benchmark, evaluation only | present | 134 | 424.0 MB |
+<!-- END GENERATED DATASETS -->
 
-The present `data` directory is empty. None of these raw dataset states can be
-reverified now.
+Raw data, checkpoints, run output, MLflow storage, and model artifacts remain
+ignored by Git.
 
-The active dashboard work is on `feat/multipage-teaching-dashboard` in
-`.worktrees\multipage-teaching-dashboard`. Raw data, checkpoints, run output,
-MLflow storage, and model artifacts remain ignored by Git.
+## Recorded evaluation reports
+
+Every evaluation report found under `runs/`, regenerated with the inventory
+above. A row reading `undefined` for ROC-AUC is a single-class evaluation set,
+where no ranking metric exists; its detection rate is shown instead.
+
+<!-- BEGIN GENERATED EVIDENCE -->
+| Report | Dataset | Scope | Rows | ROC-AUC | Balanced accuracy |
+|---|---|---|---:|---:|---:|
+| `runs/comparison-20260904/visual-efficientnet-b0-ep8-seed17-validation-metrics.json` | FakeAVCeleb | development_comparison | 400 | 0.9992 | 0.9975 |
+| `runs/comparison-20260904/visual-efficientnet-b0-initial-seed29-validation-metrics.json` | FakeAVCeleb | development_comparison | 400 | 1.0000 | 0.9975 |
+| `runs/comparison-20260904/visual-efficientnet-b0-initial-seed43-validation-metrics.json` | FakeAVCeleb | development_comparison | 400 | 0.9998 | 0.9925 |
+| `runs/comparison-20260904/visual-efficientnet-b0-lr3e-4-seed17-validation-metrics.json` | FakeAVCeleb | development_comparison | 400 | 1.0000 | 0.9950 |
+| `runs/full-20260904/evaluation/baseline-visual-mnw-metrics.json` | MNW | external_mnw | 85 | 0.0357 | 0.0952 |
+| `runs/full-20260904/evaluation/pilot-audio-validation-metrics.json` | FakeAVCeleb | development_validation | 598 | 1.0000 | 0.9984 |
+| `runs/full-20260904/evaluation/pilot-visual-celebdf-metrics.json` | Celeb-DF-v2 | generalization_celebdf | 462 | 0.6476 | 0.5741 |
+| `runs/full-20260904/evaluation/pilot-visual-mnw-metrics.json` | MNW | external_mnw | 85 | 0.0238 | 0.0952 |
+| `runs/full-20260904/evaluation/pilot-visual-test-metrics.json` | FakeAVCeleb | development_test | 597 | 1.0000 | 1.0000 |
+| `runs/full-20260904/evaluation/pilot-visual-validation-metrics.json` | FakeAVCeleb | development_validation | 598 | 1.0000 | 1.0000 |
+| `runs/initial-20260902/visual-validation-metrics.json` | FakeAVCeleb | development_validation | 400 | 0.9992 | 0.9975 |
+| `runs/program-20260906/evaluation/audio-in-domain-test-metrics.json` | FakeAVCeleb | development_test | 1,648 | 1.0000 | 1.0000 |
+| `runs/program-20260906/evaluation/fusion-dfdc-metrics.json` | FakeAVCeleb | fusion | 2,351 | 0.7500 | 0.6203 |
+| `runs/program-20260906/evaluation/fusion-test-metrics.json` | FakeAVCeleb | fusion | 1,648 | 0.9990 | 0.9990 |
+| `runs/program-20260906/evaluation/visual-celebdf-metrics.json` | Celeb-DF-v2 | generalization_celebdf | 462 | 0.6682 | 0.5435 |
+| `runs/program-20260906/evaluation/visual-dfdc-metrics.json` | DFDC | generalization_celebdf | 2,410 | 0.7611 | 0.5677 |
+| `runs/program-20260906/evaluation/visual-in-domain-test-metrics.json` | FakeAVCeleb | development_test | 1,648 | 0.9988 | 0.9990 |
+| `runs/program-20260906/evaluation/visual-mnw-metrics.json` | MNW | external_mnw | 85 | 0.0000 | 0.1429 |
+<!-- END GENERATED EVIDENCE -->
+
+## MLflow store
+
+<!-- BEGIN GENERATED MLFLOW -->
+| Experiment | Runs |
+|---|---|
+| `full-20260904` | 5 (5 finished) |
+| `initial-baseline-20260902` | 10 (10 finished) |
+| `program-20260906` | 21 (21 finished) |
+| `prototype-gpu-20260902` | 7 (2 failed, 5 finished) |
+| `smoke-fixture-fusion` | 10 (10 finished) |
+| `streams-20260905` | 3 (3 finished) |
+<!-- END GENERATED MLFLOW -->
 
 ## Evidence record
 
@@ -112,71 +158,66 @@ The primary checkout currently detects an NVIDIA GeForce RTX 5070 Ti through
 `nvidia-smi`. The driver is 596.49 and the reported memory is 16,303 MiB. The
 CUDA toolkit environment points to 13.2.
 
-The primary checkout `.venv` is not a CUDA runtime now. It has
-`torch 2.12.1+cpu`; `torch.version.cuda` is `None`; and
-`torch.cuda.is_available()` is `False`. GPU hardware and a toolkit environment
-do not make this CPU-only Torch install capable of CUDA inference.
+The primary checkout `.venv` is a CUDA runtime. It has `torch 2.12.1+cu130`
+and `torch.cuda.is_available()` is `True`, reporting the RTX 5070 Ti. It also
+carries `mlflow 3.15.1`, `librosa 0.11.0` and `matplotlib 3.11.0`, which the
+tracking reader and the teaching pages need.
 
 The ignored visual checkpoint exists in the primary checkout. Its SHA-256
 matches
 `ac9a085e1017cf2743a7f78f3b632051c18acda695496d2f434c7d968fd627b0`.
 
-For a compatible NVIDIA system, use the README environment setup with the
-`cu130` extra instead of `cpu`:
+Reproduce it with:
 
 ```powershell
-uv sync --extra cu130 --extra ml --extra media --extra dashboard --group dev
+uv sync --extra cu130 --extra ml --extra media --extra dashboard --extra tracking --group dev
 ```
 
-Do not install both the `cpu` and `cu130` extras together. This handoff does
-not change the current primary environment.
+Do not install both the `cpu` and `cu130` extras together. `pyproject.toml`
+declares them as a conflicting pair, and installing `cpu` gives a Torch build
+where `torch.cuda.is_available()` is `False` on a working GPU.
 
 ## Dashboard flow
 
-The feature worktree does not have its own `.venv`. From that worktree, use
-the primary checkout environment and set `PYTHONPATH` to the worktree source:
-
 ```powershell
-$env:PYTHONPATH = "src"
-C:\Users\vaibh\Documents\GitHub\deepfake-generalization\.venv\Scripts\python.exe -m streamlit run `
-  src\deepfake_detection\dashboard\app.py `
-  --server.address 127.0.0.1
+uv run streamlit run src\deepfake_detection\dashboard\app.py --server.address 127.0.0.1
 ```
 
-For a checkout with its own `.venv`, use the relative command:
+Open `http://127.0.0.1:8501`. Sidebar order: Overview, Evidence gate,
+Preprocessing, Streams (with Visual, Lip-Sync, Emotion, Audio branch and Sync
+branch indented under it), Experiments, Fusion, Explainability, Documentation.
+Fusion and Explainability are dimmed and unclickable.
 
-```powershell
-.\.venv\Scripts\python.exe -m streamlit run `
-  src\deepfake_detection\dashboard\app.py `
-  --server.address 127.0.0.1
-```
+The dashboard reads the ignored `runs` artifacts of the active checkout, so
+launch it from a checkout where they are present.
 
-The dashboard reads ignored `runs` artifacts from the active checkout. Launch
-from the primary checkout when its saved artifacts are present. If you launch
-from a worktree, place the required checkpoint, history, and metrics files in
-that worktree first.
+The Evidence gate is the only page that produces a verdict. Video input accepts
+one local clip. Preprocessing builds the visual view after the user starts it.
+Prediction loads the frozen visual engine only after its checkpoint hash, run
+ID, split hash, commit, seed and preprocessing hash match the dashboard
+defaults. Derived state is keyed by the upload's SHA-256, so a new upload
+invalidates preprocessing and the prediction rather than leaving a stale result
+on screen.
 
-Open `http://127.0.0.1:8501`. The page order is Overview, Video input,
-Preprocessing, Visual model, Prediction, Experiments, Audio branch, Sync
-branch, Fusion, and Documentation.
+Experiments reads the local history and metrics JSON, cross-checks shared
+provenance, requires the FakeAVCeleb development-validation scope, and labels
+every result with that scope. Below that it reads the local MLflow store
+directly and puts every recorded run in one comparison table.
 
-Video input accepts one local clip. Preprocessing builds the visual view after
-the user starts it. Prediction loads the frozen visual engine only after its
-checkpoint hash, run ID, split hash, commit, seed, and preprocessing hash
-match the dashboard defaults. Experiments reads local history and metrics JSON
-only. It cross-checks shared provenance, requires the FakeAVCeleb
-development-validation scope, and labels every result with that scope. It
-shows the local MLflow URL `http://127.0.0.1:5000` and the two run IDs.
+The teaching pages need no checkpoint and no data. Preprocessing shows every
+step as a toggle applied cumulatively, ending in the exact tensor a model would
+receive. The Streams pages build EfficientNet-B0, Xception or DINOv3 from one
+`StreamConfig` and show what each backbone stage responded to. They load
+whatever checkpoint you pick, from `checkpoints/<stream>/` or from an MLflow
+run, and report exactly which tensors did and did not fit.
 
-Audio and sync are prototype teaching pages. Full training is incomplete.
-They do not load checkpoints or calculate probabilities. Fusion is locked. Its
-current artifact is a software fixture, so the page does not load it or return
-a fusion probability. The documentation page links only to tracked project
-documents that exist.
+Audio and sync are prototype pages. Full training is incomplete, so they load no
+checkpoint and calculate no probability. Fusion is locked: its current artifact
+is a software fixture, so the page does not load it or return a probability.
 
 The dashboard reports missing local evidence as an error. It does not query a
 remote service, load a substitute artifact, or create a metric when the local
-record is absent.
+record is absent. It never trains a model and never writes into `data/`.
 
 ## Local MLflow
 
@@ -192,24 +233,84 @@ Use the primary checkout when its database and artifact root are present:
 
 Open `http://127.0.0.1:5000`. Select `initial-baseline-20260902`, then choose
 training run `4243b35e64c743b89cc33000cc9d3d3e` or evaluation run
-`56182266f70a424581f763b2d3b41989`.
+`56182266f70a424581f763b2d3b41989`. The dashboard's Experiments page shows the
+same runs in one table without a server.
+
+## Run comparison
+
+The baseline had no variation to compare against: every recorded run used seed
+17, one backbone and one learning rate. Four more runs were trained on the same
+cached corpus to give it one. Every run shares the cache index, cache root,
+split hash and preprocessing hash of the baseline, writes its own checkpoint and
+history, and is evaluated on the same 400 source-disjoint validation rows at the
+same fixed threshold of 0.5. Only the named field changes.
+
+| Run | Seed | LR | Epochs | Best epoch | Validation loss | ROC AUC | PR AUC | Balanced accuracy | Errors |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| `initial-seed17` (frozen baseline) | 17 | 1e-4 | 5 | 4 | 0.019431 | 0.999175 | 0.999292 | 0.9975 | 1 |
+| `initial-seed29` | 29 | 1e-4 | 5 | 5 | 0.014301 | 0.999950 | 0.999950 | 0.9975 | 1 |
+| `initial-seed43` | 43 | 1e-4 | 5 | 2 | 0.039375 | 0.999800 | 0.999808 | 0.9925 | 3 |
+| `lr3e-4-seed17` | 17 | 3e-4 | 5 | 4 | 0.026085 | 1.000000 | 1.000000 | 0.9950 | 2 |
+| `ep8-seed17` | 17 | 1e-4 | 8 | 4 | 0.020293 | 0.999175 | 0.999292 | 0.9975 | 1 |
+
+Training and evaluation run IDs:
+
+| Run | Training | Evaluation |
+|---|---|---|
+| `initial-seed17` | `4243b35e64c743b89cc33000cc9d3d3e` | `56182266f70a424581f763b2d3b41989` |
+| `initial-seed29` | `9aebb7e32a9249c3a24562e11505706a` | `fca2d73320c842d8888729e87085766b` |
+| `initial-seed43` | `0575b78b4b304c8dba3fdea75d5999bf` | `625967be05e54803800f51eb20bcee36` |
+| `lr3e-4-seed17` | `ff1af7990cf1437abd8d0930ec226a16` | `84d7c7cac3684242b44f1e0ad450e6e2` |
+| `ep8-seed17` | `eb628e801f664dadb6cdd349dfa9cfa1` | `0f8a10530b084adea04cb70e7b23cffb` |
+
+What the comparison shows:
+
+- Seed dominates. Validation loss ranges from 0.0143 to 0.0394 across three
+  seeds at identical settings, a 2.8-fold spread. The baseline's 0.0194 sits in
+  the middle of that range, so it is one draw rather than a tuned result.
+- The error count moves with it: one misclassified row at seed 17 and 29, three
+  at seed 43, out of 400.
+- Neither the higher learning rate nor the longer schedule beats seed noise.
+  `lr3e-4` gains on ROC AUC and loses on balanced accuracy; `ep8` matches the
+  baseline exactly, stopping at the same best epoch 4.
+- Every run scores above 0.99 on this split. That ceiling is a property of
+  FakeAVCeleb development validation, not evidence of generalization, and it is
+  why no single number here should be read as a result.
+
+The comparison runs are tagged `evidence_scope: development_comparison` to keep
+them apart from the frozen `development_baseline` and `development_validation`
+records. They do not replace the baseline, and the dashboard still loads only
+the frozen checkpoint.
+
+The ignored `runs/comparison-20260904/` directory holds the configs, the
+checkpoints, the per-run history and metrics JSON, the per-run prediction CSVs,
+and the two shell runners that produced them.
 
 ## Verification limits and next work
 
-The real-video CUDA smoke is blocked for two reasons. The ignored raw data
-directory is empty, and the current primary Python environment has CPU-only
-Torch with CUDA unavailable. The saved validation CSV and metrics JSON remain
-available in the primary checkout, but they do not make a fresh real-video
-inference possible.
+What is verified now:
 
-Next work should restore and verify the raw dataset before running the frozen
-manifest row through the provenance-checked CUDA path. Install the documented
-CUDA environment only when that change is authorized. Confirm the checkpoint
-hash before the run. Compare the authentic-row probability with
-`0.006941306870430708` only after the dataset, manifest, and CUDA environment
-are available.
+- The full CUDA environment installs and `torch.cuda.is_available()` is `True`.
+- `load_frozen_visual_engine` loads the frozen checkpoint on CUDA with every
+  provenance check passing: checkpoint hash, run ID, split hash, commit and seed.
+- The Evidence gate runs end to end on CUDA. A synthetic clip with no real face
+  returns `indeterminate` with blocker `missing_visual`, which is the intended
+  behaviour: the verdict follows coverage rather than guessing.
+- `uv run pytest`, `uv run ruff check .` and `uv run ddf-docs` all pass.
+- Every dashboard page renders under `streamlit.testing.v1.AppTest` with an
+  empty `data/` directory, and the server answers on `127.0.0.1:8501`.
 
+What is still blocked:
+
+- A real-video inference pass. The ignored raw data directory is empty, so no
+  authentic manifest row can be decoded. Compare a real-row probability with
+  `0.006941306870430708` only after the dataset and its manifest are restored.
+- Any cross-dataset or multimodal claim. Celeb-DF-v2, FaceForensics++ and MNW
+  have no recorded result here.
+
+Next work: restore and verify the raw dataset, then run the frozen manifest row
+through the provenance-checked CUDA path, confirming the checkpoint hash first.
 After that, finish full audio and sync training, create genuine source-grouped
 out-of-fold branch features, train fusion candidates, choose a validation-only
-threshold, and run the locked external evaluations. Do not make a multimodal
-or cross-dataset claim before those steps have recorded evidence.
+threshold, and run the locked external evaluations. Do not make a multimodal or
+cross-dataset claim before those steps have recorded evidence.

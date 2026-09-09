@@ -288,6 +288,7 @@ def test_evaluate_command_keeps_blank_predictions_as_abstentions(
         main(
             [
                 "evaluate",
+                "predictions",
                 "--predictions",
                 str(predictions),
                 "--output",

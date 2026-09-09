@@ -190,3 +190,53 @@ def build_method_holdout_protocol(
             if not record.clip_fake or record.method in heldout_methods
         ),
     }
+
+
+def stratified_subsample(
+    records: Sequence[ClipRecord],
+    *,
+    seed: int,
+    fake_ratio: float,
+) -> tuple[ClipRecord, ...]:
+    """A smaller partition that keeps every real clip and thins the fakes.
+
+    FakeAVCeleb holds only 500 genuine identities against roughly 20,500
+    forgeries, so a uniform sample of a partition is almost entirely fake and
+    starves the real class. Real clips are the scarce resource, so all of them
+    are kept and the fakes are cut to `fake_ratio` per real clip, allocated
+    across (manipulation_type, method) strata in proportion to their real size
+    so no forgery method is dropped entirely.
+
+    Source identities are untouched: this thins rows inside one partition of an
+    already source-disjoint split, so it cannot introduce leakage.
+    """
+    if fake_ratio <= 0:
+        raise ValueError("Fake ratio must be positive")
+    real = [record for record in records if not record.video_fake]
+    fake = [record for record in records if record.video_fake]
+    if not real:
+        raise ValueError("Cannot subsample a partition with no real clips")
+
+    budget = min(len(fake), round(len(real) * fake_ratio))
+    strata: dict[tuple[str, str], list[ClipRecord]] = {}
+    for record in fake:
+        strata.setdefault((record.manipulation_type, record.method), []).append(record)
+
+    rng = random.Random(seed)  # noqa: S311
+    ordered = sorted(strata.items(), key=lambda item: item[0])
+    # Largest-remainder allocation, so a small stratum still gets at least the
+    # share its size earns rather than rounding away to nothing.
+    exact = {key: len(rows) * budget / len(fake) for key, rows in ordered}
+    chosen = {key: int(value) for key, value in exact.items()}
+    remaining = budget - sum(chosen.values())
+    for key, _ in sorted(ordered, key=lambda item: -(exact[item[0]] - chosen[item[0]])):
+        if remaining <= 0:
+            break
+        chosen[key] += 1
+        remaining -= 1
+
+    sampled: list[ClipRecord] = list(real)
+    for key, rows in ordered:
+        take = min(chosen[key], len(rows))
+        sampled.extend(rng.sample(sorted(rows, key=lambda item: item.clip_id), take))
+    return tuple(sorted(sampled, key=lambda record: record.clip_id))

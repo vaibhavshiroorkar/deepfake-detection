@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 import pyarrow as arrow
@@ -71,6 +71,12 @@ class AssembledFeature:
     available: bool
     missing_branches: tuple[str, ...]
     partition_role: str
+    # The full per-branch embedding, not just its scalar logit. FeatureRecord
+    # has always persisted this and export_features has always written it; only
+    # assembly discarded it, which limited fusion to one number per branch.
+    # Feature-level fusion reads this instead. Defaulted so every existing
+    # construction site and test keeps working unchanged.
+    branch_embeddings: dict[str, tuple[float, ...]] = field(default_factory=dict)
 
 
 class FeatureStore:
@@ -183,10 +189,10 @@ class FeatureStore:
                 "run_id",
             )
             mixed_provenance = False
-            for field in provenance_fields:
-                values = {getattr(record, field) for record in required_records}
+            for attribute in provenance_fields:
+                values = {getattr(record, attribute) for record in required_records}
                 if len(values) != 1:
-                    errors.append(f"{key[1]} has conflicting {field}")
+                    errors.append(f"{key[1]} has conflicting {attribute}")
                     mixed_provenance = True
             if mixed_provenance:
                 continue
@@ -198,10 +204,10 @@ class FeatureStore:
                 "partition_role",
             )
             mixed_metadata = False
-            for field in metadata_fields:
-                values = {getattr(record, field) for record in required_records}
+            for attribute in metadata_fields:
+                values = {getattr(record, attribute) for record in required_records}
                 if len(values) != 1:
-                    errors.append(f"{key[1]} has conflicting {field}")
+                    errors.append(f"{key[1]} has conflicting {attribute}")
                     mixed_metadata = True
             if mixed_metadata:
                 continue
@@ -213,6 +219,11 @@ class FeatureStore:
                     label=labels.pop(),
                     branch_logits={
                         name: by_branch[name].logit
+                        for name in required_branches
+                        if name in by_branch and by_branch[name].available
+                    },
+                    branch_embeddings={
+                        name: by_branch[name].embedding
                         for name in required_branches
                         if name in by_branch and by_branch[name].available
                     },

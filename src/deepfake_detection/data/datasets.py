@@ -256,3 +256,128 @@ class CachedGlobalSyncDataset(Dataset[SyncItem]):
             ),
             offset_class=torch.tensor(offset_class, dtype=torch.long),
         )
+
+
+# Which cached views each audiovisual stream compares. Lip-sync reads the mouth
+# crops and the audio cut to the same 2.0 second window, so the two modalities
+# are aligned by construction. Emotion reads the face crops against the clip's
+# audio window; those two do not share a span, which is why the emotion stream
+# has to trim itself to the overlapping prefix.
+STREAM_VIEWS = {
+    "lipsync": ("sync_video_view", "sync_audio_view"),
+    "emotion": ("visual_view", "audio_view"),
+}
+
+# How many leading video frames of each stream's view are covered by its audio.
+# Lip-sync needs no trim: both of its views are exactly 2.0 seconds from the same
+# start, so they are aligned by construction.
+#
+# Emotion does. `visual_view` spreads 16 frames across the whole clip while
+# `audio_view` is a fixed 4.0 second window, so on a longer clip the later face
+# frames have no audio to be compared against. Measured on this corpus the
+# window covers at worst 51 percent of a clip, so the first 8 frames are inside
+# it for every clip; taking more would pair a face against silence that came
+# from a different moment, which is exactly the comparison the stream claims to
+# make.
+STREAM_FRAME_LIMITS = {"lipsync": None, "emotion": 8}
+
+
+@dataclass(frozen=True, slots=True)
+class AVPairItem:
+    clip_id: str
+    video: Tensor
+    audio: Tensor
+    label: Tensor
+
+
+@dataclass(frozen=True, slots=True)
+class AVPairBatch:
+    clip_ids: tuple[str, ...]
+    video: Tensor
+    audio: Tensor
+    labels: Tensor
+
+
+def collate_av_pair_items(items: Sequence[AVPairItem]) -> AVPairBatch:
+    if not items:
+        raise ValueError("Cannot collate an empty audiovisual batch")
+    return AVPairBatch(
+        clip_ids=tuple(item.clip_id for item in items),
+        video=torch.stack([item.video for item in items]),
+        audio=torch.stack([item.audio for item in items]),
+        labels=torch.stack([item.label for item in items]),
+    )
+
+
+class CachedAVPairDataset(Dataset[AVPairItem]):
+    """Paired video and audio for one cross-attention stream, with a clip label.
+
+    Distinct from `CachedGlobalSyncDataset`, which exists for the eight-class
+    offset objective and yields an offset class rather than a fake label, and
+    hardcodes the mouth views. A stream is a binary classifier over whichever
+    pair of views it compares, so the views are a parameter here.
+
+    The label is `clip_fake` rather than `video_fake` or `audio_fake`: a
+    cross-modal mismatch can be produced by either side being manipulated, so
+    the cue-specific labels do not describe what this stream can see.
+    """
+
+    def __init__(
+        self,
+        *,
+        records: Sequence[ClipRecord],
+        cache_index: Mapping[str, Path],
+        cache_store: CacheStore,
+        stream: str = "lipsync",
+        preprocessing_hash: str | None = None,
+    ) -> None:
+        if stream not in STREAM_VIEWS:
+            raise ValueError(
+                f"Unsupported stream {stream!r}. Expected one of "
+                f"{', '.join(sorted(STREAM_VIEWS))}."
+            )
+        missing = sorted(
+            record.clip_id for record in records if record.clip_id not in cache_index
+        )
+        if missing:
+            raise ValueError(f"Missing cache entries: {', '.join(missing)}")
+        self.records = tuple(records)
+        self.cache_index = dict(cache_index)
+        self.cache_store = cache_store
+        self.stream = stream
+        self.video_field, self.audio_field = STREAM_VIEWS[stream]
+        self.frame_limit = STREAM_FRAME_LIMITS[stream]
+        self.preprocessing_hash = preprocessing_hash
+
+    def __len__(self) -> int:
+        return len(self.records)
+
+    def __getitem__(self, index: int) -> AVPairItem:
+        record = self.records[index]
+        prepared = self.cache_store.load(self.cache_index[record.clip_id])
+        if (
+            self.preprocessing_hash is not None
+            and prepared.preprocessing_config_hash != self.preprocessing_hash
+        ):
+            raise ValueError(
+                f"Cache entry {record.clip_id} uses a different preprocessing hash"
+            )
+        video = getattr(prepared, self.video_field)
+        audio = getattr(prepared, self.audio_field)
+        if video is None or audio is None:
+            # Abstention, not a fault. A clip with no stable primary face has no
+            # video view at all, and a clip with no audio track has no audio
+            # view; `ddf manifest usable` filters these out ahead of training so
+            # the abstention rate stays reportable.
+            raise ValueError(
+                f"Cache entry {record.clip_id} has no {self.stream} view "
+                f"({self.video_field} or {self.audio_field} is missing)"
+            )
+        if self.frame_limit is not None:
+            video = video[: self.frame_limit]
+        return AVPairItem(
+            clip_id=record.clip_id,
+            video=torch.from_numpy(video).float(),
+            audio=_normalize_waveform(torch.from_numpy(audio).float()),
+            label=torch.tensor(float(record.clip_fake), dtype=torch.float32),
+        )

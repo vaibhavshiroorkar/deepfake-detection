@@ -1,3 +1,4 @@
+import sys
 from types import SimpleNamespace
 
 import numpy as np
@@ -11,6 +12,19 @@ from deepfake_detection.dashboard.runtime import (
 )
 from deepfake_detection.dashboard.state import UploadedClip
 from deepfake_detection.inference.predictor import PredictionResult
+
+# Bound before the autouse fixture stubs the module attribute, so the preflight
+# tests below can still reach the real function.
+_REQUIRE_CUDA = runtime.require_cuda
+
+
+@pytest.fixture(autouse=True)
+def _allow_cuda(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Neutralize the CUDA preflight so these stay host-independent.
+
+    The preflight itself is covered below against a stubbed torch.
+    """
+    monkeypatch.setattr(runtime, "require_cuda", lambda: None)
 
 
 def test_load_frozen_visual_engine_uses_all_frozen_defaults(
@@ -164,3 +178,64 @@ def test_prepare_uploaded_visual_rejects_mismatched_preprocessing_provenance(
 
     with pytest.raises(ValueError, match="preprocessing.*checkpoint"):
         prepare_uploaded_visual(clip)
+
+
+def _stub_torch(monkeypatch: pytest.MonkeyPatch, *, available: bool, cuda: str | None):
+    """Install a fake torch so the preflight can be tested off a real GPU."""
+    module = SimpleNamespace(
+        __version__="2.12.1+cu130" if cuda else "2.12.1+cpu",
+        version=SimpleNamespace(cuda=cuda),
+        cuda=SimpleNamespace(is_available=lambda: available),
+    )
+    monkeypatch.setitem(sys.modules, "torch", module)
+
+
+def test_require_cuda_accepts_a_working_device(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _stub_torch(monkeypatch, available=True, cuda="13.0")
+    assert _REQUIRE_CUDA() is None
+
+
+def test_require_cuda_names_a_cpu_only_build_and_the_restart(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _stub_torch(monkeypatch, available=False, cuda=None)
+    with pytest.raises(RuntimeError) as failure:
+        _REQUIRE_CUDA()
+    message = str(failure.value)
+    assert message.startswith("CUDA is unavailable:")
+    assert "CPU-only build" in message
+    assert "restart the server" in message
+    assert "cu130" in message
+
+
+def test_require_cuda_separates_a_missing_driver_from_a_cpu_build(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _stub_torch(monkeypatch, available=False, cuda="13.0")
+    with pytest.raises(RuntimeError) as failure:
+        _REQUIRE_CUDA()
+    message = str(failure.value)
+    assert message.startswith("CUDA is unavailable:")
+    assert "nvidia-smi" in message
+    assert "CPU-only" not in message
+
+
+def test_require_cuda_reports_a_missing_torch(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import builtins
+
+    real_import = builtins.__import__
+
+    def refuse(name, *args, **kwargs):
+        if name == "torch":
+            raise ImportError("no torch here")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setitem(sys.modules, "torch", None)
+    monkeypatch.delitem(sys.modules, "torch")
+    monkeypatch.setattr(builtins, "__import__", refuse)
+    with pytest.raises(RuntimeError, match="PyTorch is not installed"):
+        _REQUIRE_CUDA()

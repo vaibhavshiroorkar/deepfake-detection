@@ -115,3 +115,39 @@ class ClipRecordTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_conflicting_rows_on_the_same_window_are_still_quarantined() -> None:
+    """The guard that catches FakeAVCeleb's duplicate listings must survive the
+    change that let LAV-DF cut two windows from one file. Same path and same
+    window with different methods is still a contradiction."""
+    with TemporaryDirectory() as directory:
+        path = Path(directory) / "manifest.csv"
+        path.write_text(
+            "clip_id,video_path,manipulation_type,method,source,sync_start_sec\n"
+            "a,clip.mp4,FakeVideo-RealAudio,wav2lip,id1,0\n"
+            "b,clip.mp4,FakeVideo-RealAudio,faceswap,id1,0\n",
+            encoding="utf-8",
+        )
+
+        result = load_manifest(path, dataset="fixture")
+
+        assert not result.records
+        assert result.quarantined_paths == (Path("clip.mp4"),)
+
+
+def test_two_windows_of_one_file_are_kept_apart() -> None:
+    with TemporaryDirectory() as directory:
+        path = Path(directory) / "manifest.csv"
+        path.write_text(
+            "clip_id,video_path,manipulation_type,method,source,sync_start_sec\n"
+            "a__forged,clip.mp4,FakeVideo-RealAudio,lavdf-forged,id1,4.5\n"
+            "a__genuine,clip.mp4,RealVideo-RealAudio,lavdf-genuine-span,id1,0.0\n",
+            encoding="utf-8",
+        )
+
+        result = load_manifest(path, dataset="fixture")
+
+        assert len(result.records) == 2
+        assert not result.quarantined_paths
+        assert {r.clip_fake for r in result.records} == {True, False}

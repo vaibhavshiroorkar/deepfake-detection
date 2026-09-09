@@ -31,6 +31,12 @@ class ClipRecord:
     race: str = "unknown"
     gender: str = "unknown"
     leading_silence_sec: float = 0.0
+    # Where the 2 second synchronisation window should start, when the dataset
+    # knows better than the default. LAV-DF places a 0.8 to 1.6 second forgery
+    # somewhere inside an otherwise genuine clip, so a window pinned to the
+    # start of the clip usually contains no manipulation at all while carrying a
+    # fake label. Zero means "decide it the usual way".
+    sync_start_sec: float = 0.0
 
     def __post_init__(self) -> None:
         for name in ("clip_id", "dataset", "method", "source"):
@@ -40,6 +46,8 @@ class ClipRecord:
             raise ValueError("video_path cannot be blank")
         if not math.isfinite(self.leading_silence_sec) or self.leading_silence_sec < 0:
             raise ValueError("Leading silence must be a finite nonnegative value")
+        if not math.isfinite(self.sync_start_sec) or self.sync_start_sec < 0:
+            raise ValueError("Sync start must be a finite nonnegative value")
         expected_video_fake = self.manipulation_type.startswith("FakeVideo-")
         expected_audio_fake = self.manipulation_type.endswith("-FakeAudio")
         if self.manipulation_type not in MANIPULATION_TYPES:
@@ -77,6 +85,7 @@ class ClipRecord:
             race=row.get("race", "unknown").strip() or "unknown",
             gender=row.get("gender", "unknown").strip() or "unknown",
             leading_silence_sec=float(row.get("leading_silence_sec", "0") or 0),
+            sync_start_sec=float(row.get("sync_start_sec", "0") or 0),
         )
 
 
@@ -89,20 +98,34 @@ class ManifestLoadResult:
 def load_manifest(path: Path, *, dataset: str) -> ManifestLoadResult:
     with path.open(newline="", encoding="utf-8-sig") as handle:
         rows: Sequence[dict[str, str]] = tuple(csv.DictReader(handle))
-    by_path: dict[Path, list[dict[str, str]]] = {}
-    for row in rows:
-        by_path.setdefault(Path(row["video_path"]), []).append(row)
+    def window_of(row: dict[str, str]) -> float:
+        return float(row.get("sync_start_sec", "0") or 0)
 
-    paths_by_clip: dict[str, set[Path]] = {}
+    # Keyed on the window as well as the file. LAV-DF cuts two clips from one
+    # recording on purpose, a window on the manipulated span and a window that
+    # misses it, and those carry different labels by design. Grouping on the
+    # path alone would read that as the contradiction this quarantine exists to
+    # catch, and drop both.
+    #
+    # The original guard is unchanged for everything else: FakeAVCeleb lists
+    # about 22 files twice with conflicting methods and no window offset, so
+    # those still collide on (path, 0.0) and are still quarantined.
+    by_window: dict[tuple[Path, float], list[dict[str, str]]] = {}
     for row in rows:
-        paths_by_clip.setdefault(row["clip_id"], set()).add(Path(row["video_path"]))
+        by_window.setdefault((Path(row["video_path"]), window_of(row)), []).append(row)
+
+    paths_by_clip: dict[str, set[tuple[Path, float]]] = {}
+    for row in rows:
+        paths_by_clip.setdefault(row["clip_id"], set()).add(
+            (Path(row["video_path"]), window_of(row))
+        )
     ambiguous_clip_ids = {
-        clip_id for clip_id, paths in paths_by_clip.items() if len(paths) > 1
+        clip_id for clip_id, keys in paths_by_clip.items() if len(keys) > 1
     }
 
     records: list[ClipRecord] = []
     quarantined: list[Path] = []
-    for video_path, path_rows in by_path.items():
+    for (video_path, _window), path_rows in by_window.items():
         if any(row["clip_id"] in ambiguous_clip_ids for row in path_rows):
             quarantined.append(video_path)
             continue
@@ -135,6 +158,7 @@ def write_manifest(records: Sequence[ClipRecord], path: Path) -> None:
         "race",
         "gender",
         "leading_silence_sec",
+        "sync_start_sec",
     )
     with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
@@ -156,5 +180,6 @@ def write_manifest(records: Sequence[ClipRecord], path: Path) -> None:
                     "race": record.race,
                     "gender": record.gender,
                     "leading_silence_sec": record.leading_silence_sec,
+                    "sync_start_sec": record.sync_start_sec,
                 }
             )

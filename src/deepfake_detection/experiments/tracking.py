@@ -11,6 +11,7 @@ from typing import Any, Protocol
 
 from deepfake_detection.experiments.configuration import ResolvedConfiguration
 from deepfake_detection.experiments.runtime import RuntimeSnapshot
+from deepfake_detection.experiments.scopes import validate_evidence_scope
 
 _SENSITIVE_KEYS = frozenset(
     {
@@ -72,6 +73,10 @@ class TrackingSettings:
         )
         run_name = _string_value(tracking.get("run_name", "run"), "run_name")
         tags = _tags(tracking.get("tags", {}))
+        # A run whose scope is a typo is worse than one with no scope at all:
+        # it lands in the store looking like evidence and nothing flags it.
+        if "evidence_scope" in tags:
+            validate_evidence_scope(tags["evidence_scope"])
 
         return cls(
             enabled=enabled,
