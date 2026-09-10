@@ -12,6 +12,17 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Added `fusion/stream_export.py`, which writes Design B stream embeddings into
+  the same feature store the branches use, so `ddf train fusion --model deep`
+  can read them. `export_features` could not be extended to cover it: it is
+  welded to three branches with three different call signatures, while streams
+  are uniform and take a loop.
+- The exporter imports its view selection and waveform normalisation from
+  `data.datasets` rather than restating them. A first draft restated the
+  normalisation and got it wrong, using peak where the dataset centres and
+  divides by standard deviation. A stream trained on one and scored on the other
+  raises nothing; the only symptom is a disappointing number.
+
 - Added `ddf train fusion --model deep`, which reads the whole embedding per
   stream instead of one calibrated scalar, and `training/fusion.py` to fit it.
   The validation slice it stops early against is held out by source identity,
