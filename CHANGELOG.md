@@ -12,6 +12,17 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Added `scripts/score_streams.py`, which scores every trained Design B stream
+  on the held-out in-domain test set and on DFDC, and writes the feature store
+  `ddf train fusion --model deep` reads. Both come from the same forward pass.
+  Training records loss only, and loss does not answer the question the
+  objectives are stated in: the visual branch reached 0.9742 in-domain and
+  0.7583 on DFDC from loss curves that looked alike.
+- Each stream is rebuilt from its own history file rather than from flags. A
+  stream rebuilt with the wrong temporal model would otherwise load most of its
+  tensors and compute a different vector, which is the failure the dashboard
+  checkpoint picker had to be taught to report.
+
 - Added `fusion/stream_export.py`, which writes Design B stream embeddings into
   the same feature store the branches use, so `ddf train fusion --model deep`
   can read them. `export_features` could not be extended to cover it: it is
