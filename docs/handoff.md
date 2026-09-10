@@ -33,19 +33,27 @@ Design B is the response and is now training. Configurable visual streams
 and export what fusion reads. Commit `5611653`, tagged `pipeline-v1`, is the
 restore point for the Design A pipeline measured above.
 
-The first Design B result refutes the claim that motivated it. A frozen
-self-supervised backbone was supposed to trade in-domain accuracy for
-cross-corpus transfer, because it cannot learn the training corpus:
+The first two Design B streams are trained but their results are withdrawn, and
+the reason is the most useful thing learned so far. Both selected their
+checkpoint on validation BCE, and that kept the wrong epoch:
 
-| Visual model | In-domain | DFDC |
-| --- | --- | --- |
-| DINOv3 ViT-S/16, frozen | 0.9085 | 0.5106 |
-| EfficientNet-B0, fine-tuned (Design A) | 0.9742 | 0.7583 |
+| Superseded run | Selected epoch | In-domain | DFDC |
+| --- | --- | --- | --- |
+| DINOv3 ViT-S/16, frozen | 4 of 7 | 0.9085 | 0.5106 |
+| EfficientNet-B0, fine-tuned | 1 of 4, backbone still frozen | 0.4668 | 0.6343 |
 
-It gave up the accuracy and gained nothing. 0.5106 is chance. Read this as
-refuting the configuration rather than the idea: validation loss swung by 0.2
-between epochs, so `lr 1e-3` was too high for a head sitting on frozen features,
-and a frozen encoder leaves the whole task to a BiLSTM head.
+EfficientNet's checkpoint scores below chance in-domain because epoch 1 had the
+lowest loss and every later epoch looked worse. BCE measures calibration and
+punishes a confident mistake hard, so a model that ranks well while being
+overconfident loses to one that hedges and ranks badly. Every objective here is
+stated in ROC-AUC. Both trainers now select on it, through
+`training/ranking.py`, and the streams are retraining.
+
+The lesson generalises past this bug: a rising validation loss beside a falling
+training loss looks exactly like overfitting and is not sufficient evidence of
+it. Score the checkpoint before concluding anything from the curve. The
+superseded checkpoints are kept under
+`runs/design-b-20260910/checkpoints-loss-selected/` so the comparison survives.
 
 The teaching pages walk a clip through the pipeline stage by stage with three
 configurable visual backbones; the Evidence gate runs the frozen baseline.

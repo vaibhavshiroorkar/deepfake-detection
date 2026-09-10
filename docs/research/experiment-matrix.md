@@ -54,9 +54,10 @@ full scale; the remaining seeds are queued behind the visual results.
 | XM-01 | Cross-modal | Lip-sync stream, audio queries mouth | Diagonal attention mass plus validation metrics | running |
 | XM-02 | Cross-modal | Emotion stream, voice queries face | Same, once the audio window alignment is fixed | planned |
 | XM-03 | Cross-corpus | Lip-sync stream on DFDC | Zero-shot, the only audio-bearing corpus not built on VoxCeleb2 | planned |
-| VST-01 | Visual stream | DINOv3 ViT-S/16, backbone frozen | In-domain test and DFDC ROC-AUC | done |
-| VST-02 | Visual stream | EfficientNet-B0, fine-tuned after 2 frozen epochs | Same | running |
+| VST-01 | Visual stream | DINOv3 ViT-S/16, backbone frozen | In-domain test and DFDC ROC-AUC | superseded |
+| VST-02 | Visual stream | EfficientNet-B0, fine-tuned after 2 frozen epochs | Same | superseded |
 | VST-03 | Visual stream | Xception, fine-tuned after 2 frozen epochs | Same | queued |
+| VST-04 | Visual stream | All three, checkpoint selected on ROC-AUC | Same | running |
 
 VIS-01 needs code before it can run: `branches/visual.py` builds only
 EfficientNet-B0, and `train visual` has no architecture flag, so the
@@ -64,17 +65,25 @@ ConvNeXt-Tiny comparison is not currently expressible. The VST rows are the
 Design B answer to the same question: `ddf train visual-stream` does carry an
 architecture flag, so the three backbones are one command apart.
 
-VST-01 tested a specific claim and refuted it. The argument for freezing a
-self-supervised backbone was that it cannot learn the training corpus, so it
-should trade in-domain accuracy for cross-corpus transfer. It traded away the
-accuracy and bought nothing: 0.9085 in-domain against the fine-tuned branch
-baseline's 0.9742, and 0.5106 on DFDC against 0.7583. Chance is 0.5.
+VST-01 and VST-02 are superseded, and the reason is worth keeping. Both selected
+their checkpoint on validation BCE, which kept the wrong epoch. VST-02 reached
+its lowest loss at epoch 1 with the backbone still frozen, and that checkpoint
+measured 0.4668 ROC-AUC in-domain, below chance. Their recorded numbers describe
+the selection rule, not the architectures:
 
-Two limits on that reading. Validation loss swung by 0.2 between epochs, so
-`lr 1e-3` was too high for a head on frozen features and the best epoch may not
-be the best this architecture reaches. And a frozen encoder puts the whole task
-on a BiLSTM head. So VST-01 refutes this configuration, not the idea; a rerun at
-a lower learning rate is what would separate the two.
+| Superseded run | In-domain | DFDC |
+| --- | --- | --- |
+| VST-01 DINOv3, frozen | 0.9085 | 0.5106 |
+| VST-02 EfficientNet-B0 | 0.4668 | 0.6343 |
+
+Do not cite either as evidence about a backbone. The claim VST-01 appeared to
+refute, that a frozen self-supervised backbone trades in-domain accuracy for
+cross-corpus transfer, is untested again and is what VST-04 re-runs.
+
+VST-04 selects on ROC-AUC. See the early-stopping section of
+[obstacles](../obstacles.md) for why the two metrics disagree, and why a rising
+validation loss beside a falling training loss is not sufficient evidence of
+overfitting.
 
 ## Cross-modal stream protocol
 
