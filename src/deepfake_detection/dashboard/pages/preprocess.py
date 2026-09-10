@@ -274,16 +274,17 @@ def render_visual():
         left, r = st.columns([1, 2])
         left.markdown("**1 · Face detection + crop**")
         do_detect = left.checkbox("Enable face crop", value=True, key="v_detect")
-        detector = left.selectbox("Detector", media.DETECTOR_NAMES, key="v_detector",
-                               format_func=DETECTOR_LABELS.get,
-                               help="Swap to compare. Timings for both are shown below.")
         left.caption("Highest-scoring face only. Below the threshold the step falls back to the "
                   "whole frame rather than to a guess.")
-        conf = left.slider("Confidence", 0.50, 0.99, 0.90, 0.01, key="v_conf")
+        with left.expander("Advanced"):
+            detector = st.selectbox("Detector", media.DETECTOR_NAMES, key="v_detector",
+                               format_func=DETECTOR_LABELS.get,
+                               help="Swap to compare. Timings for both are shown below.")
+            conf = st.slider("Confidence", 0.50, 0.99, 0.90, 0.01, key="v_conf")
         # margin pads the box and clamps to the frame, so it can never introduce
         # padding of its own. Five-point alignment used to be the alternative
         # here; it is removed; see docs/obstacles.md.
-        margin = left.slider("Crop margin", 0.0, 0.6, 0.20, 0.05, key="v_margin")
+            margin = st.slider("Crop margin", 0.0, 0.6, 0.20, 0.05, key="v_margin")
 
         # Neither slider is disabled with the crop off: the mouth branch runs its
         # own detection off these same two numbers. Both branches go through
@@ -304,18 +305,21 @@ def render_visual():
     with st.container(border=True):
         left, r = st.columns([1, 2])
         left.markdown("**2 · Enhancement**")
-        do_sharpen = left.checkbox("Sharpen", key="v_sharpen_on")
-        sharpen_amt = left.slider("amount", 0.0, 3.0, 1.0, disabled=not do_sharpen, key="v_sharp")
-        do_denoise = left.checkbox("Denoise", key="v_denoise_on")
-        denoise_str = left.slider("strength", 1, 20, 5, disabled=not do_denoise, key="v_den")
-        do_clahe = left.checkbox("CLAHE contrast", key="v_clahe_on")
-        clahe_clip = left.slider("clip", 1.0, 8.0, 2.0, disabled=not do_clahe, key="v_clahe")
-        do_blur = left.checkbox("Gaussian blur", key="v_blur_on")
-        blur_k = left.slider("kernel", 3, 31, 9, step=2, disabled=not do_blur, key="v_blur")
-        do_jpeg = left.checkbox("JPEG re-compress", key="v_jpeg_on")
-        jpeg_q = left.slider("quality", 5, 95, 30, disabled=not do_jpeg, key="v_jpeg")
-        do_ds = left.checkbox("Downscale→upscale", key="v_ds_on")
-        ds_factor = left.slider("scale", 0.1, 0.9, 0.25, disabled=not do_ds, key="v_ds")
+        left.caption("All off by default. These are the corruptions a clip meets in the wild, "
+                     "kept here so you can see what each one does to the input.")
+        with left.expander("Advanced"):
+            do_sharpen = st.checkbox("Sharpen", key="v_sharpen_on")
+            sharpen_amt = st.slider("amount", 0.0, 3.0, 1.0, disabled=not do_sharpen, key="v_sharp")
+            do_denoise = st.checkbox("Denoise", key="v_denoise_on")
+            denoise_str = st.slider("strength", 1, 20, 5, disabled=not do_denoise, key="v_den")
+            do_clahe = st.checkbox("CLAHE contrast", key="v_clahe_on")
+            clahe_clip = st.slider("clip", 1.0, 8.0, 2.0, disabled=not do_clahe, key="v_clahe")
+            do_blur = st.checkbox("Gaussian blur", key="v_blur_on")
+            blur_k = st.slider("kernel", 3, 31, 9, step=2, disabled=not do_blur, key="v_blur")
+            do_jpeg = st.checkbox("JPEG re-compress", key="v_jpeg_on")
+            jpeg_q = st.slider("quality", 5, 95, 30, disabled=not do_jpeg, key="v_jpeg")
+            do_ds = st.checkbox("Downscale→upscale", key="v_ds_on")
+            ds_factor = st.slider("scale", 0.1, 0.9, 0.25, disabled=not do_ds, key="v_ds")
 
         if any([do_sharpen, do_denoise, do_clahe, do_blur, do_jpeg, do_ds]):
             out = []
@@ -441,7 +445,8 @@ def render_audio():
         left, r = st.columns([1, 2])
         left.markdown("**1 · Resample**")
         do_resample = left.checkbox("Enable resample", value=True, key="a_resample")
-        target_sr = left.select_slider("target SR", [8000, 16000, 22050, 44100], 16000,
+        with left.expander("Advanced"):
+            target_sr = st.select_slider("target SR", [8000, 16000, 22050, 44100], 16000,
                                     disabled=not do_resample, key="a_sr")
         if do_resample:
             wav = AF.resample(wav, sr, target_sr)
@@ -458,7 +463,8 @@ def render_audio():
         # 64 ms on a clip with 64 ms of silence, which is a desynchronisation of
         # exactly the kind the cross-modal streams are built to detect. The
         # waveform is now left intact and the silence is only measured.
-        top_db = left.slider("top_db", 10.0, 60.0, 30.0, key="a_topdb")
+        with left.expander("Advanced"):
+            top_db = st.slider("top_db", 10.0, 60.0, 30.0, key="a_topdb")
         silence = AF.leading_silence_sec(wav, sr, top_db)
         left.metric("Leading silence", f"{silence:.3f}s")
         left.caption("Measured, not trimmed. `ddf cache build` offsets frame *and* audio "
@@ -472,14 +478,16 @@ def render_audio():
     with st.container(border=True):
         left, r = st.columns([1, 2])
         left.markdown("**3 · Enhancement**")
-        do_aden = left.checkbox("Noise reduction", key="a_denoise_on")
-        aden_str = left.slider("strength", 0.5, 3.0, 1.0, disabled=not do_aden, key="a_den")
-        do_rms = left.checkbox("RMS normalize", key="a_rms_on")
-        rms_db = left.slider("target dB", -30.0, -6.0, -20.0, disabled=not do_rms, key="a_rms")
-        do_band = left.checkbox("Bandpass", key="a_band_on")
-        band = left.slider("Hz", 50, 8000, (300, 3000), disabled=not do_band, key="a_band")
-        do_addnoise = left.checkbox("Add background noise", key="a_noise_on")
-        snr = left.slider("SNR dB", 0.0, 40.0, 20.0, disabled=not do_addnoise, key="a_snr")
+        left.caption("All off by default, the audio counterpart of the visual enhancement step.")
+        with left.expander("Advanced"):
+            do_aden = st.checkbox("Noise reduction", key="a_denoise_on")
+            aden_str = st.slider("strength", 0.5, 3.0, 1.0, disabled=not do_aden, key="a_den")
+            do_rms = st.checkbox("RMS normalize", key="a_rms_on")
+            rms_db = st.slider("target dB", -30.0, -6.0, -20.0, disabled=not do_rms, key="a_rms")
+            do_band = st.checkbox("Bandpass", key="a_band_on")
+            band = st.slider("Hz", 50, 8000, (300, 3000), disabled=not do_band, key="a_band")
+            do_addnoise = st.checkbox("Add background noise", key="a_noise_on")
+            snr = st.slider("SNR dB", 0.0, 40.0, 20.0, disabled=not do_addnoise, key="a_snr")
         if any([do_aden, do_rms, do_band, do_addnoise]):
             if do_aden:
                 wav = AX.spectral_denoise(wav, sr, aden_str)
@@ -531,8 +539,9 @@ def render_audio():
         left, r = st.columns([1, 2])
         left.markdown("**5 · Mel-spectrogram view**")
         do_mel = left.checkbox("Show mel-spectrogram", key="a_mel")
-        n_mels = left.slider("n_mels", 32, 128, 64, disabled=not do_mel, key="a_nmels")
-        hop = left.slider("hop", 128, 512, 256, step=64, disabled=not do_mel, key="a_hop")
+        with left.expander("Advanced"):
+            n_mels = st.slider("n_mels", 32, 128, 64, disabled=not do_mel, key="a_nmels")
+            hop = st.slider("hop", 128, 512, 256, step=64, disabled=not do_mel, key="a_hop")
         if do_mel:
             mel = AX.mel_spectrogram(wav, sr, n_mels, hop)
             fig, ax = plt.subplots(figsize=(10, 2.2))

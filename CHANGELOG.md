@@ -12,6 +12,16 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Moved the dashboard's tuning controls and reference detail behind `Advanced`
+  expanders, so each page opens on the thing it answers. Fusion leads with a
+  plain-language verdict and two numbers; Preprocessing leads with the steps and
+  hides the knobs that tune them; the Visual stream page leads with the pictures
+  and hides the architecture controls and the shape ladder. Every widget still
+  exists and returns the same value, so no step's behaviour changed.
+- The Fusion and Explainability pages now open with a sentence rather than a
+  table: whether combining branches helped, and whether the model is even across
+  manipulation methods.
+
 - Unlocked the Fusion and Explainability pages. Both were dimmed and
   unclickable because the only fusion artifact was a software fixture and there
   was no trained model to explain. `runs/program-20260906` holds a fusion model

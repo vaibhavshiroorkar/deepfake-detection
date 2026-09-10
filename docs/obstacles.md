@@ -521,3 +521,16 @@ chance and separated nothing.
 an override of `train` must return `self`: `nn.Module.train` does, and callers
 chain `.eval()` onto it, so an early return that yields None turns the next call
 into `TypeError: NoneType object is not callable`.
+
+## AppTest reaches inside an expander, but only through the typed accessors
+
+Moving page detail behind `st.expander` does not hide it from
+`streamlit.testing.v1.AppTest`, but the two ways of reaching an element stop
+agreeing. `page.dataframe` finds a table inside an expander; `page.get(
+"arrow_data_frame")` returns an empty list for the same page, and
+`page.get("expandable")` reports no expanders at all.
+
+So a test that asserts on rendered content keeps working after a collapse, and a
+test written against a `get("...")` key silently starts asserting on nothing.
+Prefer the typed accessors. Expander labels are not surfaced as markdown either,
+so an assertion on the label text will fail once the copy is reworded.

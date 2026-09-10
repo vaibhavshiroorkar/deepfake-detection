@@ -43,8 +43,7 @@ key = next((k for k in keys if names[k] == chosen_name), keys[0])
 st.session_state["visual_backbone"] = key
 backbone_name = stream_pages.VISUAL_MODELS[key][1]
 
-with st.container(border=True):
-    st.markdown("**Architecture**")
+with st.expander("Advanced: architecture"):
     st.caption(f"`{backbone_name}`  ·  shared with the Streams hub, so a change here follows you "
                "back there.")
     stream_pages.render_config_controls(st, key, ns="visual")
@@ -73,20 +72,21 @@ with st.container(border=True):
     if run_store["detail"] > last_frame:
         run_store["detail"] = last_frame
         st.session_state.pop(detail_key, None)
-    c1, c2, c3 = st.columns([2, 2, 3])
-    detail_frame = c1.number_input(
-        "Detail frame", 0, last_frame, key=detail_key,
-        **sticky.widget_default(run_store, "detail", detail_key),
-        help="Which frame keeps its full activations. Every frame gets a summary map; "
-             "holding all channels of all frames would cost a few hundred megabytes.")
-    fixed_seed = c2.checkbox(
-        "Fixed seed", value=bool(run_store["fixed_seed"]), key=f"visual_fixed_seed_{key}",
-        help="Seed before building, so an untrained model gives the same answer twice. "
-             "Ignored once a checkpoint is loaded.")
-    seed = c2.number_input("Seed", 0, 999999, int(run_store["seed"]),
-                           key=f"visual_seed_{key}", disabled=not fixed_seed)
-    run = c3.button("Run this clip through the model", type="primary", width="stretch",
+    run = st.button("Run this clip through the model", type="primary", width="stretch",
                     disabled=video_path is None, key="visual_run")
+    with st.expander("Advanced: run options"):
+        c1, c2 = st.columns(2)
+        detail_frame = c1.number_input(
+            "Detail frame", 0, last_frame, key=detail_key,
+            **sticky.widget_default(run_store, "detail", detail_key),
+            help="Which frame keeps its full activations. Every frame gets a summary map; "
+                 "holding all channels of all frames would cost a few hundred megabytes.")
+        fixed_seed = c2.checkbox(
+            "Fixed seed", value=bool(run_store["fixed_seed"]), key=f"visual_fixed_seed_{key}",
+            help="Seed before building, so an untrained model gives the same answer twice. "
+                 "Ignored once a checkpoint is loaded.")
+        seed = c2.number_input("Seed", 0, 999999, int(run_store["seed"]),
+                               key=f"visual_seed_{key}", disabled=not fixed_seed)
 
 run_store.update(detail=int(detail_frame), fixed_seed=bool(fixed_seed), seed=int(seed))
 
@@ -162,13 +162,11 @@ with st.container(border=True):
 
 # ------------------------------------------------------------------- 1 · fold
 
-with st.container(border=True):
-    left, right = st.columns([1, 2])
-    left.markdown("**1 · Fold**")
-    left.caption("Frames move into the batch dimension so the backbone sees a flat stack of "
-                 "images. It has no notion of time; that is the temporal model's job at step 4.")
-    right.code(f"{trace.input_shape}   ->   {trace.folded_shape}\n"
-               f"[B, T, 3, H, W]      ->   [B*T, 3, H, W]", language="text")
+with st.expander("Advanced: 1 · Fold"):
+    st.caption("Frames move into the batch dimension so the backbone sees a flat stack of "
+               "images. It has no notion of time; that is the temporal model's job at step 4.")
+    st.code(f"{trace.input_shape}   ->   {trace.folded_shape}\n"
+            f"[B, T, 3, H, W]      ->   [B*T, 3, H, W]", language="text")
 
 # --------------------------------------------------------------- 2 · backbone
 
@@ -306,9 +304,9 @@ with st.container(border=True):
                       "this last layer is not, because no stream head has been trained yet.")
 
 st.divider()
-st.subheader("Shape ladder")
 stage_lines = "\n".join(f"  {s.spec.name:<16} {str(s.shape):<20} per frame" for s in trace.stages)
-st.code(
+shape_ladder = st.expander("Advanced: shape ladder")
+shape_ladder.code(
     f"input     {trace.input_shape}\n"
     f"fold      {trace.folded_shape}\n"
     f"{stage_lines}\n"

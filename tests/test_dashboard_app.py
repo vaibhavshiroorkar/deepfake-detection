@@ -100,16 +100,21 @@ def test_documentation_page_links_the_repository_records() -> None:
 def test_fusion_page_reads_the_trained_model_and_its_ablation() -> None:
     """It was locked because the only fusion artifact was a software fixture.
     It now reads a model fitted on genuine out-of-fold features, so the page
-    has to show that rather than describe what it will hold."""
+    has to show that rather than describe what it will hold.
+
+    Checked by what renders rather than by wording: the detail moved behind
+    `Advanced` expanders, whose labels AppTest does not surface as markdown, so
+    asserting on a word here would break every time the copy is reworded."""
     page = run_page("fusion.py")
     assert not page.exception
     body = " ".join(
         item.value for item in list(page.markdown) + list(page.caption)
     ).lower()
     assert "out-of-fold" in body
-    # The ablation is the point of the page: objective 3 asks whether combining
-    # beats the parts, and the answer differs by partition.
-    assert "ablation" in body
+    # One table per subset comparison, plus the raw branch scores. Reached
+    # through page.dataframe, which sees inside an expander; the get("...")
+    # form does not.
+    assert len(page.dataframe) >= 2
 
 
 def test_fusion_page_does_not_claim_cross_corpus_success() -> None:
