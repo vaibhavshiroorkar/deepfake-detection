@@ -12,6 +12,22 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Added `ddf train fusion --model deep`, which reads the whole embedding per
+  stream instead of one calibrated scalar, and `training/fusion.py` to fit it.
+  The validation slice it stops early against is held out by source identity,
+  never by clip: FakeAVCeleb splits at random put the same speaker on both
+  sides, which would undo the cross-fitting of the branch checkpoints one layer
+  higher up.
+- Deep fusion assembles rows non-strictly, so a clip one stream cannot read is
+  zero-filled with a presence flag rather than dropped. The scalar path keeps
+  strict assembly, which is what stops a missing branch becoming a zero logit
+  there.
+- Added `scripts/train_design_b.ps1`, which trains the three visual streams and
+  the two audiovisual streams in sequence. It attempts loader workers and
+  retries single-process, matching `run_program.ps1`: at workers=0 the cache
+  loads at 65 ms per clip, an epoch over 7,637 clips is 8 minutes of pure I/O,
+  and the GPU measured 15 percent utilisation waiting for it.
+
 - The dashboard's checkpoint picker now finds trained weights. It looked only in
   a top-level `checkpoints/<stream>/` directory that has never existed in this
   repository, while `ddf run` writes into `runs/<run>/checkpoints/` and nothing

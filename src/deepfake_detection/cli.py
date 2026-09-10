@@ -913,11 +913,95 @@ def _evaluate(arguments: argparse.Namespace) -> int:
     return 0
 
 
+def _deep_fusion(arguments: argparse.Namespace, rows, branches) -> int:
+    """Feature-level fusion: the whole embedding per stream, not one scalar.
+
+    Split out from `_train_fusion` rather than folded into it because almost
+    nothing is shared past the row assembly. This fits a torch module with early
+    stopping against a grouped validation slice and saves a state dict; the
+    sklearn path fits in closed form and saves a joblib artifact.
+    """
+    import torch
+
+    from deepfake_detection.training.fusion import fit_stream_fusion
+
+    runtime.seed_everything(arguments.seed, deterministic=True)
+    model, history = fit_stream_fusion(
+        rows=rows,
+        epochs=arguments.epochs,
+        batch_size=arguments.batch_size,
+        learning_rate=arguments.learning_rate,
+        weight_decay=arguments.weight_decay,
+        stream_dropout=arguments.stream_dropout,
+        dropout=arguments.dropout,
+        hidden_sizes=tuple(arguments.hidden_sizes),
+        common_dim=arguments.common_dim,
+        validation_fraction=arguments.validation_fraction,
+        patience=arguments.patience,
+        seed=arguments.seed,
+        device=arguments.device,
+    )
+    best = history.epochs[history.best_epoch - 1]
+    print(
+        f"best epoch {history.best_epoch}/{len(history.epochs)}  "
+        f"val loss {best.validation_loss:.4f}  val AUC {best.validation_auc:.4f}",
+        flush=True,
+    )
+    arguments.output.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(
+        {
+            "model": model.state_dict(),
+            "stream_dims": history.stream_dims,
+            "common_dim": arguments.common_dim,
+            "hidden_sizes": list(arguments.hidden_sizes),
+            "split_hash": rows[0].split_hash,
+            "preprocessing_hash": rows[0].preprocessing_hash,
+        },
+        arguments.output,
+    )
+    _write_json(
+        arguments.metadata,
+        {
+            "samples": len(rows),
+            "branches": list(branches),
+            "model": "deep",
+            "feature_store": str(arguments.feature_store),
+            "split_hash": rows[0].split_hash,
+            "preprocessing_hash": rows[0].preprocessing_hash,
+            "stream_dims": history.stream_dims,
+            "best_epoch": history.best_epoch,
+            "train_clips": history.train_clips,
+            "validation_clips": history.validation_clips,
+            "epochs": [asdict(epoch) for epoch in history.epochs],
+            "oof_run_ids": sorted({row.run_id for row in rows}),
+        },
+    )
+    logger = getattr(arguments, "_run_logger", NullRunLogger())
+    logger.log_params({"fusion.model": "deep", "fusion.streams": ",".join(branches)})
+    logger.log_metrics(
+        {
+            "validation.loss": best.validation_loss,
+            "validation.auc": best.validation_auc,
+            "training.loss": best.train_loss,
+            "training.best_epoch": float(history.best_epoch),
+        }
+    )
+    logger.log_artifact(arguments.output, artifact_path="checkpoints")
+    logger.log_artifact(arguments.metadata, artifact_path="history")
+    return 0
+
+
 def _train_fusion(arguments: argparse.Namespace) -> int:
     branches = tuple(arguments.branches)
     if len(set(branches)) != len(branches):
         raise ValueError("Fusion branch names must be unique")
-    rows = FeatureStore(arguments.feature_store).assemble(required_branches=branches)
+    # Deep fusion tolerates a clip that one stream cannot read, zero-filling it
+    # with a presence flag, so it does not need every stream on every row. The
+    # scalar path has no such input, and strict assembly is what keeps a missing
+    # branch from silently becoming a zero logit there.
+    rows = FeatureStore(arguments.feature_store).assemble(
+        required_branches=branches, strict=arguments.model != "deep"
+    )
     if {row.partition_role for row in rows} != {"oof"}:
         raise ValueError("Fusion training requires out-of-fold feature rows")
     # The feature store is a blend, so the guard runs over every dataset that
@@ -925,6 +1009,8 @@ def _train_fusion(arguments: argparse.Namespace) -> int:
     reject_evaluation_only_datasets(
         (row.dataset for row in rows), operation="fusion training"
     )
+    if arguments.model == "deep":
+        return _deep_fusion(arguments, rows, branches)
     samples = [
         FusionSample(
             branch_logits=row.branch_logits,
@@ -2520,15 +2606,54 @@ def build_parser() -> argparse.ArgumentParser:
     train_fusion.add_argument("--metadata", type=Path, required=True)
     train_fusion.add_argument(
         "--model",
-        choices=("logistic", "mlp"),
+        choices=("logistic", "mlp", "deep"),
         default="logistic",
+        help=(
+            "logistic and mlp read one calibrated scalar per branch; deep reads "
+            "the whole embedding and trains the torch head in fusion/deep.py."
+        ),
     )
     train_fusion.add_argument(
         "--branches",
         nargs="+",
-        choices=("visual", "audio", "sync"),
+        choices=(
+            "visual",
+            "audio",
+            "sync",
+            "lipsync",
+            "emotion",
+            "dinov3",
+            "efficientnet",
+            "xception",
+        ),
         default=("visual", "audio", "sync"),
     )
+    # Deep fusion only. Ignored by the scalar path, which fits in closed form.
+    train_fusion.add_argument("--epochs", type=int, default=200)
+    train_fusion.add_argument("--batch-size", type=int, default=256)
+    train_fusion.add_argument("--learning-rate", type=float, default=1e-3)
+    train_fusion.add_argument("--weight-decay", type=float, default=1e-4)
+    train_fusion.add_argument(
+        "--stream-dropout",
+        type=float,
+        default=0.2,
+        help=(
+            "Chance of zeroing a whole stream during training, so the head "
+            "cannot build its decision on one stream always being present."
+        ),
+    )
+    train_fusion.add_argument("--dropout", type=float, default=0.2)
+    train_fusion.add_argument("--hidden-sizes", type=int, nargs="+", default=(128,))
+    train_fusion.add_argument("--common-dim", type=int, default=256)
+    train_fusion.add_argument(
+        "--validation-fraction",
+        type=float,
+        default=0.2,
+        help="Held out by source identity, never by clip.",
+    )
+    train_fusion.add_argument("--patience", type=int, default=20)
+    train_fusion.add_argument("--seed", type=int, default=17)
+    train_fusion.add_argument("--device", default="cpu")
     train_fusion.set_defaults(handler=_train_fusion)
 
     def add_branch_arguments(command: argparse.ArgumentParser) -> None:

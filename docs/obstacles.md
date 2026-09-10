@@ -453,3 +453,28 @@ dashboard defaults to a BiLSTM. Both load without raising, because the size
 mismatch is filtered out first, and the result is a trained backbone feeding a
 random temporal model. The picker now reads the gate count out of the tensor
 shapes and names the setting to change.
+
+## Visual training is I/O bound, not GPU bound
+
+A visual batch is 16 frames of 3x224x224 float32, about 77 MB, and it arrives as
+a compressed npz. Decompression on the main thread runs at 65 ms per clip, so an
+epoch over 7,637 clips spends 8 minutes doing nothing but reading, and the GPU
+measured 15 percent utilisation across a sampling window.
+
+The tempting fix, `--workers 0`, is the one that causes this. Workers are the
+fix, and they can also die on batches this size, which is why both
+`run_program.ps1` and `scripts/train_design_b.ps1` attempt a worker count and
+retry single-process rather than picking one. A dead worker fails the run
+outright instead of degrading the model, so the retry costs an epoch and never
+correctness.
+
+Worth knowing before diagnosing a slow run: no per-batch progress is printed, so
+a first epoch that has not finished after an hour looks identical to a hang.
+Check GPU utilisation and the process CPU time before assuming either.
+
+Worker count is bounded by host RAM, not by the GPU. Each worker holds its
+prefetch, and a visual batch of 8 is 616 MB, so three workers reached 2.5 GB
+each and drove free memory from 13 GB down to 3.8 GB. The first symptom was not
+a dead worker: it was an unrelated `pytest` run failing to start with
+`OSError: [WinError 1455] The paging file is too small`. Two workers is the
+setting that fits on a 32 GB host.
