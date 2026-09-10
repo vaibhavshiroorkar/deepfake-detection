@@ -143,3 +143,22 @@ the locked entries. `tests/test_dashboard_lib.py` covers selection, dataset
 discovery and checkpoint loading without a running app.
 `tests/test_dashboard_mlflow_runs.py` covers the tracking reader. The page smoke
 tests run with an empty `data/`, which is the state a fresh checkout is in.
+
+## Fusion and Explainability
+
+Both pages were locked and are not any more. Fusion reads the trained model in
+`runs/program-20260906`: the classifier and its provenance hashes, ROC-AUC on
+the held-out in-domain partition and on DFDC, and the ablation over every branch
+subset. The ablation leads, because objective 3 asks whether combining beats the
+parts and the answer depends on the partition: in-domain the combination wins,
+on DFDC it does not, and the page reports both verdicts rather than the flattering
+one.
+
+Explainability carries the one specified view with data behind it, per-method
+and per-manipulation-type accuracy with subgroup coverage, and names the two
+that do not exist. Grad-CAM needs a backward pass the dashboard does not run,
+and embedding shift needs stream embeddings on matched pairs that no run has
+exported. Both are listed as not built rather than stubbed.
+
+Neither page fits or runs a model. Every figure is read from a run directory, so
+it traces to a file and a checkpoint hash.

@@ -17,7 +17,6 @@ import streamlit as st
 
 from deepfake_detection.dashboard.configuration import dashboard_defaults
 from deepfake_detection.dashboard.lib import locked
-from deepfake_detection.dashboard.lib.stream_spec import EXPLAINABILITY, FUSION
 
 _THRESHOLD = 0.5
 _DEVICE = "cuda"
@@ -124,15 +123,18 @@ st.markdown(
 
 
 # One flat list in pipeline order, each entry carrying how to draw it. A spec
-# marks a page locked: Fusion and Explainability show in place, dimmed with a
-# lock icon, and do not respond to a click. `child` indents an entry under the
-# section above it.
+# marks a page locked: it shows in place, dimmed with a lock icon, and does not
+# respond to a click. `child` indents an entry under the section above it.
 #
-# The nav is drawn by hand because st.navigation has no disabled entry, so the
-# built-in one is hidden and st.page_link renders the list instead, with
-# disabled=True on the locked two. Registering them still keeps their routes
-# alive, which is deliberate: a direct visit lands on a body that says what the
-# section will hold and what unlocks it, rather than a dead end.
+# Nothing is locked now. Fusion and Explainability were, because the only fusion
+# artifact was a software fixture and there was no trained model to explain.
+# `runs/program-20260906` holds a fusion model fitted on genuine out-of-fold
+# features with an ablation over every branch subset, so both pages read
+# recorded results instead of describing what they will hold.
+#
+# The nav is still drawn by hand: st.navigation has no disabled entry, so the
+# built-in one stays hidden and st.page_link renders the list, ready to dim a
+# future stage the same way.
 PAGES = [
     (st.Page("pages/overview.py", title="Overview", default=True), None, False),
     (st.Page("pages/gate.py", title="Evidence gate"), None, False),
@@ -144,8 +146,8 @@ PAGES = [
     (st.Page("pages/audio_branch.py", title="Audio branch"), None, True),
     (st.Page("pages/sync_branch.py", title="Sync branch"), None, True),
     (st.Page("pages/experiments.py", title="Experiments"), None, False),
-    (st.Page("pages/fusion.py", title="Fusion"), FUSION, False),
-    (st.Page("pages/explainability.py", title="Explainability"), EXPLAINABILITY, False),
+    (st.Page("pages/fusion.py", title="Fusion"), None, False),
+    (st.Page("pages/explainability.py", title="Explainability"), None, False),
     (st.Page("pages/documentation.py", title="Documentation"), None, False),
 ]
 

@@ -12,10 +12,12 @@ the body with the real controls. The copy already lives in stream_spec.py.
 Streams went through exactly that and is no longer here.
 """
 
-from deepfake_detection.dashboard.lib.stream_spec import EXPLAINABILITY, FUSION
-
-# Pipeline order, matching where they sit in the nav.
-LOCKED = [FUSION, EXPLAINABILITY]
+# Pipeline order, matching where they sit in the nav. Empty: Fusion and
+# Explainability were the two entries and both now read recorded results from a
+# trained fusion run. The machinery stays because the next unbuilt stage will
+# want it, and because `render` is what a direct visit to a locked route lands
+# on.
+LOCKED: list[dict] = []
 
 
 def locked_titles() -> list[str]:

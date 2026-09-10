@@ -19,8 +19,8 @@ EXPECTED_NAVIGATION = [
     ("Audio branch", False),
     ("Sync branch", False),
     ("Experiments", False),
-    ("Fusion", True),
-    ("Explainability", True),
+    ("Fusion", False),
+    ("Explainability", False),
     ("Documentation", False),
 ]
 
@@ -97,14 +97,40 @@ def test_documentation_page_links_the_repository_records() -> None:
     assert labels[-1] == "Repository records"
 
 
-def test_locked_pages_state_what_unlocks_them() -> None:
-    for name in ("fusion.py", "explainability.py"):
-        page = run_page(name)
-        assert not page.exception
-        body = " ".join(
-            item.value for item in list(page.info) + list(page.error)
-        ).lower()
-        assert "not built" in body or "locked" in body
+def test_fusion_page_reads_the_trained_model_and_its_ablation() -> None:
+    """It was locked because the only fusion artifact was a software fixture.
+    It now reads a model fitted on genuine out-of-fold features, so the page
+    has to show that rather than describe what it will hold."""
+    page = run_page("fusion.py")
+    assert not page.exception
+    body = " ".join(
+        item.value for item in list(page.markdown) + list(page.caption)
+    ).lower()
+    assert "out-of-fold" in body
+    # The ablation is the point of the page: objective 3 asks whether combining
+    # beats the parts, and the answer differs by partition.
+    assert "ablation" in body
+
+
+def test_fusion_page_does_not_claim_cross_corpus_success() -> None:
+    """All three branches beat every single branch in-domain and do not on
+    DFDC. A page that showed only the in-domain verdict would answer the easier
+    question."""
+    page = run_page("fusion.py")
+    verdicts = " ".join(
+        item.value for item in list(page.success) + list(page.warning)
+    ).lower()
+    assert "does not beat" in verdicts
+
+
+def test_explainability_page_says_which_views_are_missing() -> None:
+    """Two of its three specified views have no data. Filling them with
+    something that looked like an explanation would be worse than the lock."""
+    page = run_page("explainability.py")
+    assert not page.exception
+    body = " ".join(item.value for item in page.markdown).lower()
+    assert "grad-cam" in body
+    assert "embedding shift" in body
 
 
 def test_prototype_pages_report_prototype_status() -> None:

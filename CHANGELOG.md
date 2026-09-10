@@ -12,6 +12,25 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Unlocked the Fusion and Explainability pages. Both were dimmed and
+  unclickable because the only fusion artifact was a software fixture and there
+  was no trained model to explain. `runs/program-20260906` holds a fusion model
+  fitted on out-of-fold branch features with an ablation over every subset, so
+  both pages now read recorded results.
+- The Fusion page leads with the ablation rather than the fused score, and
+  reports both verdicts: all three branches beat every single branch in-domain
+  and do not on DFDC. Showing only the in-domain verdict would answer the
+  easier question. It also shows the raw branch scores, where sync ranks below
+  chance.
+- The Explainability page builds the one specified view that has data,
+  per-method and per-manipulation-type accuracy with subgroup coverage, and
+  states plainly that Grad-CAM and embedding shift are not built. Filling them
+  with something that looked like an explanation would be worse than the lock.
+- Added `dashboard/lib/results.py` to read run artifacts. Nothing raises for a
+  missing file: a run that has not produced an artifact is a normal state, and
+  the page names the file it wanted.
+- `locked.LOCKED` is now empty. The machinery stays for the next unbuilt stage.
+
 - Fusion training now accepts `holdout` feature rows as well as `oof`. Streams
   train on the training partition and have never seen validation, so validation
   rows are as leakage-free as cross-fitted ones while costing one training run
