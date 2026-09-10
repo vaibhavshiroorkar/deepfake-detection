@@ -30,6 +30,7 @@ from torch.optim import Optimizer
 from deepfake_detection.data.datasets import AVPairBatch
 
 from .engine import run_accumulated_epoch
+from .ranking import roc_auc
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,6 +59,11 @@ class StreamEpochRecord:
     optimizer_steps: int
     encoders_trainable: bool
     validation_diagonal_mass: float
+    # Selection reads this, not the loss. See training/ranking.py: the lowest
+    # validation BCE picked an epoch-1 checkpoint that scored 0.4668 in-domain,
+    # below chance, because BCE measures calibration and the objectives are
+    # stated in ranking. Defaulted so existing history files still parse.
+    validation_auc: float = float("nan")
 
 
 @dataclass(frozen=True, slots=True)
@@ -83,19 +89,28 @@ def _validate(
     *,
     device: str,
     criterion: nn.Module,
-) -> tuple[float, float]:
-    """Mean validation loss and mean diagonal attention mass."""
+) -> tuple[float, float, float]:
+    """Mean validation loss, mean diagonal attention mass, and ROC-AUC."""
     if not batches:
         raise ValueError("Validation batches cannot be empty")
     model.eval()
     losses: list[float] = []
     masses: list[float] = []
+    scores: list[torch.Tensor] = []
+    labels: list[torch.Tensor] = []
     with torch.inference_mode():
         for batch in batches:
             output = model(video=batch.video.to(device), audio=batch.audio.to(device))
-            losses.append(float(criterion(output.logit, batch.labels.to(device))))
+            target = batch.labels.to(device)
+            losses.append(float(criterion(output.logit, target)))
             masses.append(float(output.diagonal_mass.mean()))
-    return sum(losses) / len(losses), sum(masses) / len(masses)
+            scores.append(output.logit.detach().cpu())
+            labels.append(target.detach().cpu())
+    return (
+        sum(losses) / len(losses),
+        sum(masses) / len(masses),
+        roc_auc(torch.cat(scores), torch.cat(labels)),
+    )
 
 
 def parameter_groups(
@@ -158,7 +173,10 @@ def fit_visual_stream(
     model.to(device)
     criterion = nn.BCEWithLogitsLoss()
     records: list[StreamEpochRecord] = []
-    best_loss = float("inf")
+    # Selection maximises AUC, so the sentinel is -inf rather than +inf. An
+    # epoch whose AUC is NaN, which happens when the validation split holds one
+    # class, never beats it and so is never selected.
+    best_auc = float("-inf")
     best_epoch = 0
     best_state: dict[str, torch.Tensor] | None = None
     stale = 0
@@ -181,13 +199,21 @@ def fit_visual_stream(
         )
         model.eval()
         losses: list[float] = []
+        scores: list[torch.Tensor] = []
+        labels: list[torch.Tensor] = []
         with torch.inference_mode():
             for batch in validation_batches:
-                losses.append(float(batch_loss(model, batch)))
+                logit, _ = model(batch.values.to(device))
+                target = batch.labels.to(device)
+                losses.append(float(criterion(logit, target)))
+                scores.append(logit.detach().cpu())
+                labels.append(target.detach().cpu())
         validation_loss = sum(losses) / len(losses)
+        validation_auc = roc_auc(torch.cat(scores), torch.cat(labels))
         print(
             f"epoch {epoch + 1}/{config.epochs}  train {train.mean_loss:.4f}  "
-            f"val {validation_loss:.4f}  backbone={'on' if trainable else 'frozen'}",
+            f"val {validation_loss:.4f}  AUC {validation_auc:.4f}  "
+            f"backbone={'on' if trainable else 'frozen'}",
             flush=True,
         )
         records.append(
@@ -200,10 +226,11 @@ def fit_visual_stream(
                 # Not applicable: a visual stream makes no correspondence claim,
                 # so there is no attention map to read a diagonal from.
                 validation_diagonal_mass=0.0,
+                validation_auc=validation_auc,
             )
         )
-        if validation_loss < best_loss - config.minimum_improvement:
-            best_loss, best_epoch, stale = validation_loss, epoch + 1, 0
+        if validation_auc > best_auc + config.minimum_improvement:
+            best_auc, best_epoch, stale = validation_auc, epoch + 1, 0
             best_state = copy.deepcopy(model.state_dict())
         else:
             stale += 1
@@ -229,7 +256,9 @@ def fit_stream(
         pos_weight=torch.tensor(config.positive_weight, device=device)
     )
     records: list[StreamEpochRecord] = []
-    best_loss = float("inf")
+    # Maximised, so the sentinel is -inf. See training/ranking.py for why this
+    # is AUC and not the loss.
+    best_auc = float("-inf")
     best_epoch = 0
     best_state: dict[str, torch.Tensor] | None = None
     stale_epochs = 0
@@ -255,7 +284,7 @@ def fit_stream(
                 current, batch, device=device, criterion=criterion
             ),
         )
-        validation_loss, diagonal = _validate(
+        validation_loss, diagonal, validation_auc = _validate(
             model, validation_batches, device=device, criterion=criterion
         )
         # Printed, not just logged. MLflow only receives metrics when the run
@@ -264,7 +293,8 @@ def fit_stream(
         print(
             f"epoch {epoch + 1}/{config.epochs}  "
             f"train {train.mean_loss:.4f}  val {validation_loss:.4f}  "
-            f"diag_mass {diagonal:.4f}  encoders={'on' if encoders_trainable else 'frozen'}",
+            f"AUC {validation_auc:.4f}  diag_mass {diagonal:.4f}  "
+            f"encoders={'on' if encoders_trainable else 'frozen'}",
             flush=True,
         )
         records.append(
@@ -275,10 +305,11 @@ def fit_stream(
                 optimizer_steps=train.optimizer_steps,
                 encoders_trainable=encoders_trainable,
                 validation_diagonal_mass=diagonal,
+                validation_auc=validation_auc,
             )
         )
-        if validation_loss < best_loss - config.minimum_improvement:
-            best_loss = validation_loss
+        if validation_auc > best_auc + config.minimum_improvement:
+            best_auc = validation_auc
             best_epoch = epoch + 1
             best_state = copy.deepcopy(model.state_dict())
             stale_epochs = 0

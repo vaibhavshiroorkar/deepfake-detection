@@ -12,6 +12,22 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Stream training now selects its checkpoint on validation ROC-AUC, not
+  validation loss. The old criterion kept a checkpoint that scores below
+  chance: `visual-efficientnet` reached its lowest BCE at epoch 1, while the
+  backbone was still frozen, and that checkpoint measured 0.4668 in-domain.
+  BCE scores calibration and punishes a confident mistake hard, so a model that
+  ranks well but is overconfident loses to one that hedges and ranks badly.
+  Every objective here is stated in ROC-AUC.
+- Loss is still recorded every epoch. It shows a run that is diverging rather
+  than merely miscalibrated, which AUC alone would hide.
+- Added `training/ranking.py`. It averages ranks inside a tie group, so an
+  untrained model emitting one logit for every clip scores 0.5 rather than
+  whatever order argsort produced, and returns NaN for a single-class split
+  rather than 0.5, which would read as a real measurement of a model at chance.
+- `scripts/score_streams.py` rebuilds its feature store instead of appending, so
+  re-scoring after training another stream no longer fails on a duplicate key.
+
 - Added `scripts/score_streams.py`, which scores every trained Design B stream
   on the held-out in-domain test set and on DFDC, and writes the feature store
   `ddf train fusion --model deep` reads. Both come from the same forward pass.

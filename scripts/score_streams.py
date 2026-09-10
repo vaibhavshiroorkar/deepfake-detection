@@ -176,6 +176,10 @@ def main(argv: list[str] | None = None) -> int:
             continue
         records = load_manifest(manifest, dataset=dataset).records
         store_path = features / f"{partition}.parquet"
+        # A scoring pass rebuilds the store rather than adding to it. The store
+        # rejects a duplicate key, so re-scoring after training one more stream
+        # would otherwise fail on the streams already in the file.
+        store_path.unlink(missing_ok=True)
         store = FeatureStore(store_path)
         print(f"\n{partition}: {len(records):,} clips -> {store_path}")
         report = export_stream_features(

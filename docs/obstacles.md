@@ -478,3 +478,21 @@ each and drove free memory from 13 GB down to 3.8 GB. The first symptom was not
 a dead worker: it was an unrelated `pytest` run failing to start with
 `OSError: [WinError 1455] The paging file is too small`. Two workers is the
 setting that fits on a 32 GB host.
+
+## Early stopping on loss keeps a checkpoint that scores below chance
+
+Stream training selected its checkpoint on validation BCE, and the two visual
+streams showed what that costs. `visual-efficientnet` reached its lowest loss at
+epoch 1, with the backbone still frozen, and every later epoch looked worse:
+0.8421, then 1.2327, then 1.8231. The saved epoch-1 checkpoint measured 0.4668
+ROC-AUC in-domain, which is below chance.
+
+The two metrics answer different questions. BCE measures calibration and
+punishes a confident mistake very hard, so a model that ranks clips correctly
+while being overconfident scores worse than one that hedges and ranks badly.
+Every objective in this project is stated in ROC-AUC.
+
+The symptom is easy to misread as divergence, and it was misread here first: a
+rising validation loss beside a collapsing training loss looks exactly like
+overfitting. Score the checkpoint before concluding anything from the curve.
+`training/ranking.py` now supplies the AUC that both stream trainers select on.

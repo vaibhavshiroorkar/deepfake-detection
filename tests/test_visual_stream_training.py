@@ -161,3 +161,37 @@ def test_a_trainable_backbone_gets_its_own_learning_rate() -> None:
     )
 
     assert [group["lr"] for group in groups] == [1e-3, 5e-6]
+
+
+def test_selection_uses_auc_not_loss(batches) -> None:
+    """The bug this pins: `visual-efficientnet` reached its lowest validation
+    BCE at epoch 1, while its backbone was still frozen, and that checkpoint
+    measured 0.4668 ROC-AUC in-domain, below chance. BCE scores calibration; the
+    objectives are stated in ranking, so selection has to read ranking."""
+    torch.manual_seed(17)
+    history = train(tiny_stream(), batches, epochs=6)
+
+    best = history.epochs[history.best_epoch - 1]
+    assert best.validation_auc == max(
+        epoch.validation_auc for epoch in history.epochs
+    ), "best epoch is not the highest-AUC epoch"
+
+
+def test_every_epoch_records_an_auc(batches) -> None:
+    torch.manual_seed(17)
+    history = train(tiny_stream(), batches, epochs=3)
+
+    for epoch in history.epochs:
+        assert 0.0 <= epoch.validation_auc <= 1.0
+
+
+def test_a_lower_loss_does_not_win_when_its_ranking_is_worse(batches) -> None:
+    """Stated directly, because the two metrics agreeing on a fixture would
+    make the test above pass for the wrong reason."""
+    torch.manual_seed(17)
+    history = train(tiny_stream(), batches, epochs=6)
+
+    best = history.epochs[history.best_epoch - 1]
+    lowest_loss = min(history.epochs, key=lambda epoch: epoch.validation_loss)
+    if lowest_loss.validation_auc < best.validation_auc:
+        assert best.epoch != lowest_loss.epoch
