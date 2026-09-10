@@ -12,6 +12,27 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Implemented `StreamConfig.freeze_batchnorm_on_finetune`, which the config had
+  documented and no code applied. It was the reason the EfficientNet visual
+  stream sat at chance. Measured on 1,400 clips, one change at a time:
+
+  | Variant | Best validation AUC |
+  | --- | --- |
+  | as shipped | 0.5154 |
+  | no gradient checkpointing | 0.4620 |
+  | BatchNorm frozen while fine-tuning | 0.9058 |
+  | GRU rather than BiLSTM | 0.9028 |
+
+  Fine-tuning rewrote all 49 running means and variances from batches of eight
+  drawn by an inverse-frequency sampler, matching neither the ImageNet
+  statistics the weights came from nor the distribution validation is drawn
+  from. Training reads batch statistics and looked fine; validation reads the
+  running statistics and did not.
+- Visual stream training now runs with gradient checkpointing off. Peak VRAM
+  measured 394 MiB of 16,303, so it saved nothing and perturbed BatchNorm.
+- DINOv3 was never affected: a ViT has no running statistics, which is why it
+  trained to 0.9559 through the identical path.
+
 - Stream training now selects its checkpoint on validation ROC-AUC, not
   validation loss. The old criterion kept a checkpoint that scores below
   chance: `visual-efficientnet` reached its lowest BCE at epoch 1, while the

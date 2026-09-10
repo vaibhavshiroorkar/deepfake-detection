@@ -496,3 +496,28 @@ The symptom is easy to misread as divergence, and it was misread here first: a
 rising validation loss beside a collapsing training loss looks exactly like
 overfitting. Score the checkpoint before concluding anything from the curve.
 `training/ranking.py` now supplies the AUC that both stream trainers select on.
+
+## Fine-tuning a CNN backbone destroys it unless BatchNorm is frozen
+
+`StreamConfig.freeze_batchnorm_on_finetune` defaulted to True and was applied
+nowhere, and the EfficientNet visual stream sat at chance because of it. Fixing
+it moved validation AUC from 0.5154 to 0.9058 on the same 1,400 clips.
+
+Fine-tuning updates every BatchNorm running mean and variance from whatever
+batches arrive. Here that is eight clips drawn by an inverse-frequency sampler,
+so the statistics drift toward a distribution that is neither ImageNet, which
+the pretrained weights assume, nor the validation split, which is 91 percent
+fake. Training reads batch statistics and looks healthy while validation reads
+the running statistics and collapses.
+
+Three things make this hard to spot. The symptom, a falling training loss beside
+a rising validation loss, reads as ordinary overfitting. A ViT backbone is
+immune, because LayerNorm keeps no running statistics, so DINOv3 through the
+same trainer reached 0.9559 and made the trainer look correct. And a diagnostic
+subset will not show it: on 160 clips both arms of the comparison sat near
+chance and separated nothing.
+
+`VisualStream.train` now holds the backbone's BatchNorm in eval mode. Note that
+an override of `train` must return `self`: `nn.Module.train` does, and callers
+chain `.eval()` onto it, so an early return that yields None turns the next call
+into `TypeError: NoneType object is not callable`.

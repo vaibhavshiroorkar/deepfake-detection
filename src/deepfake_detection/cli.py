@@ -1349,6 +1349,11 @@ def _visual_stream_train(arguments: argparse.Namespace) -> int:
         temporal_hidden=arguments.temporal_hidden,
         freeze_backbone=arguments.freeze_backbone,
         frame_chunk_size=arguments.frame_chunk_size,
+        # Off deliberately. Peak VRAM measured 394 MiB of 16,303, so it saves
+        # nothing here, and recomputing the forward during backward updates every
+        # BatchNorm running statistic twice per step. The configuration measured
+        # at 0.9058 had it off.
+        grad_checkpointing=False,
     )
 
     train_records = load_manifest(

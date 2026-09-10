@@ -159,3 +159,44 @@ def test_cls_similarity_needs_a_prefix_token() -> None:
     detail = np.random.default_rng(3).random((196, 8)).astype(np.float32)
     with pytest.raises(ValueError, match="no prefix token"):
         introspect.cls_similarity_map(detail)
+
+
+def test_batchnorm_stays_in_eval_mode_while_the_module_trains() -> None:
+    """`freeze_batchnorm_on_finetune` was documented in StreamConfig and
+    implemented nowhere. Without it, fine-tuning rewrites all 49 running means
+    and variances from batches of eight drawn by an inverse-frequency sampler,
+    which matches neither the ImageNet statistics the weights came from nor the
+    distribution validation is drawn from. Measured cost: 0.5154 validation AUC
+    against 0.9058 with it applied."""
+    from torch.nn.modules.batchnorm import _BatchNorm
+
+    model = build_visual_stream(
+        efficientnet_config(pretrained=False, common_dim=32)
+    ).train()
+
+    frozen = [
+        module
+        for module in model.backbone.modules()
+        if isinstance(module, _BatchNorm)
+    ]
+    assert frozen, "fixture backbone has no BatchNorm to freeze"
+    assert not any(module.training for module in frozen)
+    # Only the backbone: the head still has to train.
+    assert model.temporal.training
+    assert model.projection.training
+
+
+def test_batchnorm_freezing_can_be_turned_off() -> None:
+    from torch.nn.modules.batchnorm import _BatchNorm
+
+    model = build_visual_stream(
+        efficientnet_config(
+            pretrained=False, common_dim=32, freeze_batchnorm_on_finetune=False
+        )
+    ).train()
+
+    assert all(
+        module.training
+        for module in model.backbone.modules()
+        if isinstance(module, _BatchNorm)
+    )

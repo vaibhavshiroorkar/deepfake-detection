@@ -156,6 +156,31 @@ class VisualStream(nn.Module):
     def set_backbone_trainable(self, trainable: bool) -> None:
         for parameter in self.backbone.parameters():
             parameter.requires_grad = trainable
+        self._backbone_trainable = trainable
+
+    def train(self, mode: bool = True):
+        """Keep the backbone's BatchNorm in eval mode while fine-tuning.
+
+        `StreamConfig.freeze_batchnorm_on_finetune` promised this and nothing
+        implemented it, so it was a dead field. Without it, a fine-tune updates
+        every running mean and variance from batches of eight clips drawn by an
+        inverse-frequency sampler, which is neither the ImageNet distribution the
+        weights were fitted to nor the distribution validation is drawn from.
+        Training reads batch statistics and looks fine; validation reads the
+        running statistics and does not.
+
+        Only the backbone is affected. The temporal model, projection and head
+        follow the module's mode as usual.
+        """
+        super().train(mode)
+        if mode and self.config.freeze_batchnorm_on_finetune:
+            for module in self.backbone.modules():
+                if isinstance(module, nn.modules.batchnorm._BatchNorm):
+                    module.eval()
+        # nn.Module.train returns self and callers chain on it, so every path
+        # here must too. Returning None from the early exit made .eval() return
+        # None, and the next line called it.
+        return self
 
     def param_counts(self) -> dict:
         total = sum(p.numel() for p in self.parameters())
