@@ -54,10 +54,27 @@ full scale; the remaining seeds are queued behind the visual results.
 | XM-01 | Cross-modal | Lip-sync stream, audio queries mouth | Diagonal attention mass plus validation metrics | running |
 | XM-02 | Cross-modal | Emotion stream, voice queries face | Same, once the audio window alignment is fixed | planned |
 | XM-03 | Cross-corpus | Lip-sync stream on DFDC | Zero-shot, the only audio-bearing corpus not built on VoxCeleb2 | planned |
+| VST-01 | Visual stream | DINOv3 ViT-S/16, backbone frozen | In-domain test and DFDC ROC-AUC | done |
+| VST-02 | Visual stream | EfficientNet-B0, fine-tuned after 2 frozen epochs | Same | running |
+| VST-03 | Visual stream | Xception, fine-tuned after 2 frozen epochs | Same | queued |
 
 VIS-01 needs code before it can run: `branches/visual.py` builds only
 EfficientNet-B0, and `train visual` has no architecture flag, so the
-ConvNeXt-Tiny comparison is not currently expressible.
+ConvNeXt-Tiny comparison is not currently expressible. The VST rows are the
+Design B answer to the same question: `ddf train visual-stream` does carry an
+architecture flag, so the three backbones are one command apart.
+
+VST-01 tested a specific claim and refuted it. The argument for freezing a
+self-supervised backbone was that it cannot learn the training corpus, so it
+should trade in-domain accuracy for cross-corpus transfer. It traded away the
+accuracy and bought nothing: 0.9085 in-domain against the fine-tuned branch
+baseline's 0.9742, and 0.5106 on DFDC against 0.7583. Chance is 0.5.
+
+Two limits on that reading. Validation loss swung by 0.2 between epochs, so
+`lr 1e-3` was too high for a head on frozen features and the best epoch may not
+be the best this architecture reaches. And a frozen encoder puts the whole task
+on a BiLSTM head. So VST-01 refutes this configuration, not the idea; a rerun at
+a lower learning rate is what would separate the two.
 
 ## Cross-modal stream protocol
 

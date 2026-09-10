@@ -26,12 +26,26 @@ shift. And the sync branch does not work. Its largest fusion coefficient is
 validation 2.1097 against ln(8) = 2.0794) while training loss fell to 1.57, so
 data starvation was not the cause.
 
-Design B is the response, and it is being built now: configurable visual streams
+Design B is the response and is now training. Configurable visual streams
 (`ddf train visual-stream`), audiovisual cross-attention streams
-(`ddf train stream`), and feature-level fusion over their embeddings
-(`fusion/deep.py`) rather than over one calibrated scalar per branch. Commit
-`5611653`, tagged `pipeline-v1`, is the restore point for the pipeline as
-measured above.
+(`ddf train stream`), feature-level fusion over their embeddings
+(`ddf train fusion --model deep`), and `scripts/score_streams.py` to score them
+and export what fusion reads. Commit `5611653`, tagged `pipeline-v1`, is the
+restore point for the Design A pipeline measured above.
+
+The first Design B result refutes the claim that motivated it. A frozen
+self-supervised backbone was supposed to trade in-domain accuracy for
+cross-corpus transfer, because it cannot learn the training corpus:
+
+| Visual model | In-domain | DFDC |
+| --- | --- | --- |
+| DINOv3 ViT-S/16, frozen | 0.9085 | 0.5106 |
+| EfficientNet-B0, fine-tuned (Design A) | 0.9742 | 0.7583 |
+
+It gave up the accuracy and gained nothing. 0.5106 is chance. Read this as
+refuting the configuration rather than the idea: validation loss swung by 0.2
+between epochs, so `lr 1e-3` was too high for a head sitting on frozen features,
+and a frozen encoder leaves the whole task to a BiLSTM head.
 
 The teaching pages walk a clip through the pipeline stage by stage with three
 configurable visual backbones; the Evidence gate runs the frozen baseline.
