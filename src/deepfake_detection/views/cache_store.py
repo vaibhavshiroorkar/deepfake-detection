@@ -4,6 +4,7 @@ import hashlib
 import json
 import re
 import tempfile
+from collections.abc import Collection
 from dataclasses import asdict
 from pathlib import Path
 
@@ -104,28 +105,40 @@ class CacheStore:
                 temporary.unlink()
         return path
 
-    def load(self, path: Path) -> PreparedClip:
+    def load(self, path: Path, views: Collection[str] | None = None) -> PreparedClip:
+        """Read one cached clip. `views` limits which arrays are materialised.
+
+        A clip holds four views and they are not small: the visual view is 9.19
+        MiB and the mouth view another 7.18 MiB, so decompressing all of them
+        costs about 20 MiB per clip when a visual branch reads exactly one.
+
+        That is not only waste. Visual stream training died on it, twice with a
+        DataLoader worker and once single-process after two and a half hours,
+        each time inside the `sync_video_view` allocation of a run that never
+        touches the mouth crops.
+
+        A view that is not requested comes back None, which is the same thing a
+        view that was never cached does, so a caller that asks for less has to
+        mean it. Default stays every view, so existing callers are unchanged.
+        """
+        wanted = None if views is None else set(views)
+
+        def read(archive, name: str):
+            if wanted is not None and name not in wanted:
+                return None
+            return archive[name].copy() if name in archive else None
+
         with np.load(path, allow_pickle=False) as archive:
             metadata = json.loads(str(archive["metadata"].item()))
             quality = QualityReport(**metadata["quality"])
             return PreparedClip(
                 clip_id=metadata["clip_id"],
-                visual_view=archive["visual_view"].copy()
-                if "visual_view" in archive
-                else None,
-                audio_view=archive["audio_view"].copy()
-                if "audio_view" in archive
-                else None,
-                sync_video_view=archive["sync_video_view"].copy()
-                if "sync_video_view" in archive
-                else None,
-                sync_audio_view=archive["sync_audio_view"].copy()
-                if "sync_audio_view" in archive
-                else None,
+                visual_view=read(archive, "visual_view"),
+                audio_view=read(archive, "audio_view"),
+                sync_video_view=read(archive, "sync_video_view"),
+                sync_audio_view=read(archive, "sync_audio_view"),
                 quality=quality,
                 preprocessing_fingerprint=metadata["preprocessing_fingerprint"],
-                sync_audio_context=archive["sync_audio_context"].copy()
-                if "sync_audio_context" in archive
-                else None,
+                sync_audio_context=read(archive, "sync_audio_context"),
                 preprocessing_config_hash=metadata.get("preprocessing_config_hash", ""),
             )

@@ -104,3 +104,67 @@ class CacheFingerprintTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_load_can_skip_views_it_was_not_asked_for(tmp_path) -> None:
+    """A cached clip holds four views and they are not small: 9.19 MiB for the
+    visual view and 7.18 MiB for the mouth crops. Visual stream training died
+    inside the mouth-crop allocation of a run that never reads mouth crops."""
+    import numpy as np
+
+    from deepfake_detection.views.cache_store import CacheStore
+    from deepfake_detection.views.contracts import PreparedClip, QualityReport
+
+    store = CacheStore(tmp_path / "cache")
+    path = store.save(
+        PreparedClip(
+            clip_id="clip",
+            visual_view=np.zeros((2, 3, 4, 4), dtype=np.float32),
+            audio_view=np.zeros((8,), dtype=np.float32),
+            sync_video_view=np.zeros((2, 3, 4, 4), dtype=np.float32),
+            sync_audio_view=np.zeros((8,), dtype=np.float32),
+            quality=QualityReport(1.0, True, True, False, 0.0),
+            preprocessing_fingerprint="fingerprint",
+            preprocessing_config_hash="hash",
+        ),
+        dataset="fixture",
+    )
+
+    only_visual = store.load(path, views=("visual_view",))
+
+    assert only_visual.visual_view is not None
+    assert only_visual.sync_video_view is None
+    assert only_visual.audio_view is None
+    # Metadata is never optional: the preprocessing hash guard reads it on every
+    # clip, so skipping views must not skip that.
+    assert only_visual.preprocessing_config_hash == "hash"
+    assert only_visual.quality.face_coverage == 1.0
+
+
+def test_load_returns_every_view_by_default(tmp_path) -> None:
+    import numpy as np
+
+    from deepfake_detection.views.cache_store import CacheStore
+    from deepfake_detection.views.contracts import PreparedClip, QualityReport
+
+    store = CacheStore(tmp_path / "cache")
+    path = store.save(
+        PreparedClip(
+            clip_id="clip",
+            visual_view=np.zeros((2, 3, 4, 4), dtype=np.float32),
+            audio_view=np.zeros((8,), dtype=np.float32),
+            sync_video_view=np.zeros((2, 3, 4, 4), dtype=np.float32),
+            sync_audio_view=np.zeros((8,), dtype=np.float32),
+            quality=QualityReport(1.0, True, True, False, 0.0),
+            preprocessing_fingerprint="fingerprint",
+            preprocessing_config_hash="hash",
+        ),
+        dataset="fixture",
+    )
+
+    everything = store.load(path)
+
+    assert everything.visual_view is not None
+    assert everything.audio_view is not None
+    assert everything.sync_video_view is not None
+    assert everything.sync_audio_view is not None

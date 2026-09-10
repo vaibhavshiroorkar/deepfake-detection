@@ -12,6 +12,16 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- `CacheStore.load` now takes a `views` argument, and the datasets ask only for
+  the views they read. A cached clip holds four and they are not small: 9.19 MiB
+  for the visual view, 7.18 MiB for the mouth crops, about 20 MiB in total
+  against the one view a branch actually uses. Default is still every view.
+- This was a blocking failure, not an inefficiency. Visual stream training died
+  three times inside the `sync_video_view` allocation of a run that never reads
+  mouth crops: twice in a DataLoader worker, where the retry caught it, and once
+  single-process after two and a half hours, where nothing did and the stream
+  was lost.
+
 - Moved the dashboard's tuning controls and reference detail behind `Advanced`
   expanders, so each page opens on the thing it answers. Fusion leads with a
   plain-language verdict and two numbers; Preprocessing leads with the steps and

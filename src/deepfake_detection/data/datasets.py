@@ -72,7 +72,14 @@ class CachedBranchDataset(Dataset[BranchItem]):
 
     def __getitem__(self, index: int) -> BranchItem:
         record = self.records[index]
-        prepared = self.cache_store.load(self.cache_index[record.clip_id])
+        # Only the view this branch reads. A cached clip holds four, and
+        # decompressing all of them costs about 20 MiB against the 9.19 MiB the
+        # visual branch needs. Visual stream training ran out of memory inside
+        # the mouth-crop allocation of a run that never looks at mouth crops.
+        view = "visual_view" if self.branch == "visual" else "audio_view"
+        prepared = self.cache_store.load(
+            self.cache_index[record.clip_id], views=(view,)
+        )
         if (
             self.preprocessing_hash is not None
             and prepared.preprocessing_config_hash != self.preprocessing_hash
@@ -354,7 +361,10 @@ class CachedAVPairDataset(Dataset[AVPairItem]):
 
     def __getitem__(self, index: int) -> AVPairItem:
         record = self.records[index]
-        prepared = self.cache_store.load(self.cache_index[record.clip_id])
+        prepared = self.cache_store.load(
+            self.cache_index[record.clip_id],
+            views=(self.video_field, self.audio_field),
+        )
         if (
             self.preprocessing_hash is not None
             and prepared.preprocessing_config_hash != self.preprocessing_hash

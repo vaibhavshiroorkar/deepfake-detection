@@ -534,3 +534,20 @@ So a test that asserts on rendered content keeps working after a collapse, and a
 test written against a `get("...")` key silently starts asserting on nothing.
 Prefer the typed accessors. Expander labels are not surfaced as markdown either,
 so an assertion on the label text will fail once the copy is reworded.
+
+## Loading a cached clip materialises every view, not the one you asked for
+
+`CacheStore.load` decompressed all four views on every call. A visual branch
+reads one of them, so each clip cost about 20 MiB instead of 9.19 MiB, and the
+traceback pointed at `sync_video_view` in a run that never touches mouth crops.
+
+The failure mode is worth knowing because it is not a slowdown. Visual stream
+training ran out of memory three times inside that allocation: twice in a
+DataLoader worker, where the worker retry caught it, and once single-process
+after two and a half hours, where there is no fallback and the whole stream was
+lost. Host RAM read 14.7 GB free immediately afterwards, so a snapshot of free
+memory says nothing about whether a long run will survive.
+
+`load` now takes `views`. A view that was not requested comes back None, which
+is exactly what a view that was never cached returns, so a caller asking for
+less has to mean it.
