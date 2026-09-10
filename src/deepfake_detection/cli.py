@@ -1002,8 +1002,23 @@ def _train_fusion(arguments: argparse.Namespace) -> int:
     rows = FeatureStore(arguments.feature_store).assemble(
         required_branches=branches, strict=arguments.model != "deep"
     )
-    if {row.partition_role for row in rows} != {"oof"}:
-        raise ValueError("Fusion training requires out-of-fold feature rows")
+    # Two ways to get features a stream never trained on. `oof` cross-fits the
+    # branches so every clip is scored by a checkpoint that did not see it, and
+    # `holdout` scores the validation partition with a stream trained only on
+    # the training partition. Cross-fitting uses more of the data; holdout costs
+    # one training run instead of one per fold. Both keep the test partition
+    # untouched, which is the property that matters.
+    roles = {row.partition_role for row in rows}
+    if not roles <= {"oof", "holdout"} or not roles:
+        raise ValueError(
+            "Fusion training needs feature rows a branch never trained on: "
+            f"partition_role must be 'oof' or 'holdout', got {sorted(roles)}"
+        )
+    if roles == {"oof", "holdout"}:
+        raise ValueError(
+            "Fusion rows mix out-of-fold and holdout roles, so the same clip "
+            "may appear under two different provenance rules"
+        )
     # The feature store is a blend, so the guard runs over every dataset that
     # contributed a row rather than over a single --dataset flag.
     reject_evaluation_only_datasets(

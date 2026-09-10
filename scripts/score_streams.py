@@ -161,16 +161,30 @@ def main(argv: list[str] | None = None) -> int:
             cache_index[row["clip_id"]] = arguments.source_run / row["cache_path"]
     cache_store = CacheStore(arguments.source_run / "cache")
 
+    # `holdout` is the validation partition. The streams trained on
+    # train-usable and have never seen it, so fusion can be fitted on these rows
+    # without the test partition being touched. That is holdout stacking rather
+    # than out-of-fold stacking: it uses less data but costs one training run
+    # per stream instead of one per fold.
     partitions = {
-        "in-domain": (arguments.source_run / "split" / "test-usable.csv", "FakeAVCeleb"),
-        "dfdc": (arguments.source_run / "split" / "dfdc-visual.csv", "DFDC"),
+        "holdout": (
+            arguments.source_run / "split" / "val-usable.csv",
+            "FakeAVCeleb",
+            "holdout",
+        ),
+        "in-domain": (
+            arguments.source_run / "split" / "test-usable.csv",
+            "FakeAVCeleb",
+            "test",
+        ),
+        "dfdc": (arguments.source_run / "split" / "dfdc-visual.csv", "DFDC", "external"),
     }
 
     summary: dict[str, dict[str, float | None]] = {}
     features = arguments.run_dir / "features"
     features.mkdir(parents=True, exist_ok=True)
 
-    for partition, (manifest, dataset) in partitions.items():
+    for partition, (manifest, dataset, role) in partitions.items():
         if not manifest.is_file():
             print(f"\n{partition}: no manifest at {manifest}, skipping")
             continue
@@ -190,7 +204,7 @@ def main(argv: list[str] | None = None) -> int:
             streams=specs,
             split_hash=arguments.run_dir.name,
             preprocessing_hash=preprocessing_hash,
-            partition_role="external" if partition == "dfdc" else "test",
+            partition_role=role,
             run_id=f"score-{partition}",
             device=arguments.device,
         )

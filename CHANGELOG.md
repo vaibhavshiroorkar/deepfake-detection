@@ -12,6 +12,15 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Fusion training now accepts `holdout` feature rows as well as `oof`. Streams
+  train on the training partition and have never seen validation, so validation
+  rows are as leakage-free as cross-fitted ones while costing one training run
+  per stream rather than one per fold. Cross-fitting the five Design B streams
+  would have tripled a 13-hour run. Mixing the two roles in one store is
+  refused, and the test partition is still refused outright.
+- `scripts/score_streams.py` exports three partitions: `holdout` for fitting
+  fusion, in-domain test, and DFDC.
+
 - Implemented `StreamConfig.freeze_batchnorm_on_finetune`, which the config had
   documented and no code applied. It was the reason the EfficientNet visual
   stream sat at chance. Measured on 1,400 clips, one change at a time:

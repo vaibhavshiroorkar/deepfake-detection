@@ -171,3 +171,85 @@ def test_early_stopping_ends_the_run_before_the_epoch_budget() -> None:
     )
 
     assert len(history.epochs) < 200
+
+
+def store_with_role(tmp_path, role: str):
+    """A small feature store whose rows all carry one partition role."""
+    from deepfake_detection.fusion.store import FeatureRecord, FeatureStore
+
+    path = tmp_path / f"{role}.parquet"
+    records = [
+        FeatureRecord(
+            dataset="fixture",
+            clip_id=f"clip-{index}",
+            segment_id="segment-0",
+            branch=branch,
+            logit=float(value),
+            embedding=(float(value),),
+            available=True,
+            checkpoint_hash=f"{branch}-checkpoint",
+            preprocessing_hash="prep",
+            split_hash="split",
+            run_id="run",
+            label=int(value > 0),
+            source_identity=f"id-{index}",
+            method="real" if value < 0 else "fixture-fake",
+            race="fixture",
+            gender="fixture",
+            partition_role=role,
+        )
+        for index, value in enumerate((-4, -3, -2, -1, 1, 2, 3, 4))
+        for branch in ("visual", "audio", "sync")
+    ]
+    FeatureStore(path).write(records)
+    return path
+
+
+def train_fusion_cli(tmp_path, store_path):
+    from deepfake_detection.cli import main
+
+    return main(
+        [
+            "train",
+            "fusion",
+            "--feature-store",
+            str(store_path),
+            "--output",
+            str(tmp_path / "fusion.joblib"),
+            "--metadata",
+            str(tmp_path / "fusion.json"),
+        ]
+    )
+
+
+def test_holdout_rows_are_accepted_for_fusion(tmp_path) -> None:
+    """Streams trained on the training partition have never seen validation, so
+    validation rows are as leakage-free as cross-fitted ones and cost one
+    training run per stream instead of one per fold."""
+    assert train_fusion_cli(tmp_path, store_with_role(tmp_path, "holdout")) == 0
+
+
+def test_test_partition_rows_are_refused(tmp_path) -> None:
+    """Fitting fusion on the test partition is the leak the roles exist to
+    prevent."""
+    with pytest.raises(ValueError, match="never trained on"):
+        train_fusion_cli(tmp_path, store_with_role(tmp_path, "test"))
+
+
+def test_mixed_roles_are_refused(tmp_path) -> None:
+    """Two provenance rules in one store means a clip's row cannot be trusted to
+    follow either."""
+    from deepfake_detection.fusion.store import FeatureStore
+
+    mixed = tmp_path / "mixed.parquet"
+    rows = list(FeatureStore(store_with_role(tmp_path, "oof")).read())
+    swapped = [
+        dataclasses.replace(row, partition_role="holdout")
+        if row.clip_id == "clip-0"
+        else row
+        for row in rows
+    ]
+    FeatureStore(mixed).write(swapped)
+
+    with pytest.raises(ValueError, match="mix out-of-fold and holdout"):
+        train_fusion_cli(tmp_path, mixed)
