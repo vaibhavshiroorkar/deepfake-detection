@@ -33,6 +33,11 @@ RUN_DEFAULTS = {
     "seed": 42,
     "ckpt_choice": None,
     "mlflow_ref": "",
+    # Which checkpoint's architecture the controls were last set from, so
+    # adopting happens once per file rather than on every rerun. Pinning it
+    # every rerun would make the architecture panel read-only for anyone
+    # deliberately trying a different temporal model against the same weights.
+    "adopted": None,
     "trace": None,
     "signature": None,
 }

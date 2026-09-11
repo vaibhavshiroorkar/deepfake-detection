@@ -117,9 +117,21 @@ def architecture(state: dict) -> dict:
     mismatch is reported rather than raised, but "these four tensors are the
     wrong shape" does not tell you which control to move. This does.
     """
+    # The projection maps the temporal output to the shared width every stream
+    # is concatenated at, so its output dimension is the embedding dim. A Design
+    # A branch has a classifier instead and reports None, which is correct: it
+    # has no shared width to report.
+    projection = state.get("projection.0.weight")
+    common_dim = int(projection.shape[0]) if projection is not None else None
+
     weight = state.get("temporal.weight_hh_l0")
     if weight is None:
-        return {"temporal": "mean", "hidden": None, "bidirectional": False}
+        return {
+            "temporal": "mean",
+            "hidden": None,
+            "bidirectional": False,
+            "common_dim": common_dim,
+        }
     hidden = int(weight.shape[1])
     gates = int(weight.shape[0]) // max(hidden, 1)
     return {
@@ -127,6 +139,7 @@ def architecture(state: dict) -> dict:
         "temporal": {3: "gru", 4: "lstm"}.get(gates, f"{gates}-gate"),
         "hidden": hidden,
         "bidirectional": "temporal.weight_hh_l0_reverse" in state,
+        "common_dim": common_dim,
     }
 
 

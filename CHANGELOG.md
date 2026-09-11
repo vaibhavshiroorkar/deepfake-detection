@@ -12,6 +12,18 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Choosing a checkpoint on the Visual stream page now sets the architecture
+  controls to what that checkpoint was trained with, instead of printing what to
+  set them to. Loading is non-strict by design, so a mismatch does not raise:
+  the backbone lands, the temporal model silently stays randomly initialised,
+  and the page then shows a confident number computed from half a trained model.
+- Adoption happens once per file rather than on every rerun, so the architecture
+  panel stays editable for anyone deliberately trying a different temporal model
+  against the same weights.
+- `checkpoints.architecture` also reports the embedding width, read from the
+  projection layer. A Design A branch reports None there, correctly: it ends in
+  a classifier and has no shared width.
+
 - `CacheStore.load` now takes a `views` argument, and the datasets ask only for
   the views they read. A cached clip holds four and they are not small: 9.19 MiB
   for the visual view, 7.18 MiB for the mouth crops, about 20 MiB in total

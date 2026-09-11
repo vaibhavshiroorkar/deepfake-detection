@@ -21,6 +21,9 @@ Preprocessing tab and coming back does not reset anything.
 import numpy as np
 import streamlit as st
 
+from deepfake_detection.dashboard.lib import (
+    checkpoints as checkpoints_lib,
+)
 from deepfake_detection.dashboard.lib import sticky, stream_pages, stream_ui, trace_ui
 from deepfake_detection.streams import introspect
 
@@ -56,6 +59,23 @@ with st.container(border=True):
     st.markdown("**Weights**")
     checkpoint = stream_ui.render_checkpoint_picker(st, key, ns=f"visual_{key}",
                                                     store=run_store)
+
+    # Adopt the architecture the checkpoint was trained with, rather than
+    # telling you to go and set it yourself. Loading is non-strict, so a
+    # mismatch does not raise: the backbone lands, the temporal model stays
+    # randomly initialised, and the page then shows a confident number computed
+    # from half a trained model.
+    #
+    # Only on a change of file. Doing it every rerun would pin the controls and
+    # make the architecture panel read-only for anyone deliberately trying a
+    # different temporal model against the same weights.
+    if checkpoint is not None and run_store.get("adopted") != str(checkpoint):
+        run_store["adopted"] = str(checkpoint)
+        info = checkpoints_lib.describe(checkpoint)
+        if info["architecture"] and stream_pages.adopt_architecture(
+            key, info["architecture"]
+        ):
+            st.rerun()
 
 with st.container(border=True):
     st.markdown("**Run**")

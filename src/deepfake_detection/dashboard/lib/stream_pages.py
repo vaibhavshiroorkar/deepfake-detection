@@ -107,6 +107,49 @@ def build_config(key: str) -> StreamConfig:
     )
 
 
+# Every namespace that renders the architecture controls. Adopting a checkpoint
+# has to clear the widget state in all of them: a Streamlit widget with an
+# explicit key reads session_state and ignores the index it was given, so
+# writing the settings dict alone leaves the control showing its old value.
+CONTROL_NAMESPACES = ("visual", "hub")
+
+# The reverse of TEMPORAL: from what a checkpoint's tensors say back to the
+# label the control offers.
+_TEMPORAL_LABELS = {value: label for label, value in TEMPORAL.items()}
+
+
+def adopt_architecture(key: str, architecture: dict) -> bool:
+    """Set the controls to the architecture a checkpoint was trained with.
+
+    Returns whether anything changed, so the caller can rerun the page rather
+    than render controls that disagree with the weights just loaded.
+
+    Loading is non-strict by design, so a mismatch is reported and not raised.
+    That makes it quiet: the backbone lands, the temporal model silently stays
+    random, and the page shows a confident number computed from half a model.
+    """
+    label = _TEMPORAL_LABELS.get(
+        (architecture.get("temporal"), bool(architecture.get("bidirectional")))
+    )
+    if label is None:
+        return False
+
+    current = settings(key)
+    wanted = {"temporal": label}
+    if architecture.get("hidden"):
+        wanted["hidden"] = int(architecture["hidden"])
+    if architecture.get("common_dim"):
+        wanted["dim"] = int(architecture["common_dim"])
+    if all(current.get(name) == value for name, value in wanted.items()):
+        return False
+
+    current.update(wanted)
+    for namespace in CONTROL_NAMESPACES:
+        for field in ("temporal", "hidden", "dim"):
+            st.session_state.pop(f"{namespace}_{key}_{field}", None)
+    return True
+
+
 def render_config_controls(container, key: str, ns: str) -> dict:
     """The four architecture controls, writing back into the stored settings.
 

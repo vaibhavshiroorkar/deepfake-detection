@@ -118,10 +118,12 @@ def render_checkpoint_picker(
             (architecture["temporal"], architecture["bidirectional"]),
             architecture["temporal"],
         )
+        width = architecture.get("common_dim")
         st.caption(
-            f"Trained with **{wanted}** at hidden **{architecture['hidden']}**. "
-            "Set the Architecture controls above to match, or the temporal model "
-            "stays randomly initialised while everything else loads."
+            f"Trained with **{wanted}** at hidden **{architecture['hidden']}**"
+            + (f", embedding **{width}**" if width else "")
+            + ". The Architecture controls have been set to match; change them "
+            "there to try this checkpoint against a different temporal model."
         )
     return path
 
