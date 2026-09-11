@@ -132,6 +132,31 @@ def render(st, spec: dict, key: str, video_source: str):
 
     st.title(spec["title"])
     st.caption(spec["note"])
+
+    # Two encoders per stream, one per modality, and which two is the whole
+    # difference between lip-sync and emotion. The page used to name neither.
+    st.subheader("The two encoders")
+    built = spec.get("built") or []
+    planned = spec.get("models") or []
+    columns = st.columns(2)
+    for column, (name, role) in zip(columns, built or planned, strict=False):
+        with column.container(border=True):
+            st.markdown(f"**{name}**")
+            st.caption(role)
+
+    if built and planned:
+        with st.expander("Advanced: why these and not the designed pair"):
+            st.caption(
+                "The design named a different encoder on each side. The "
+                "mechanism is the contribution and the encoder is an ablation, "
+                "so the stream was built with what this environment runs. Both "
+                "substitutions are open work, and the audio one is the more "
+                "likely to matter: Wav2Vec2 encodes phonetic content rather "
+                "than audiovisual correspondence."
+            )
+            for name, role in planned:
+                st.markdown(f"**{name}** (designed) - {role}")
+
     st.info(spec["status"])
 
     video_path = stream_pages.render_inherited_clip(st)

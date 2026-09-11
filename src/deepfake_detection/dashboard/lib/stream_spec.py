@@ -45,6 +45,19 @@ LIPSYNC_STREAM = {
         ),
         ("Whisper", "audio encoder. Reads the audio track into an embedding (Query)"),
     ],
+    "built": [
+        (
+            "EfficientNet-B0",
+            "video encoder, per mouth frame (Key/Value). Standing in for AV-HuBERT, "
+            "which needs an isolated environment with an older torch.",
+        ),
+        (
+            "Wav2Vec2-base",
+            "audio encoder, raw waveform (Query). Standing in for Whisper, whose "
+            "encoder demands exactly 30 seconds of mel frames against this "
+            "stream's 2-second window.",
+        ),
+    ],
     "note": "Scaled dot-product cross-attention, audio attending to video, yields a "
     "synchronisation-mismatch vector. Nothing is transcribed; everything stays vectors.",
     "stage": 4,
@@ -64,6 +77,18 @@ EMOTION_STREAM = {
         (
             "Wav2Vec2",
             "voice-emotion encoder. Reads vocal affect into an embedding (Query)",
+        ),
+    ],
+    "built": [
+        (
+            "EfficientNet-B0",
+            "face encoder, per frame (Key/Value). Standing in for HSEmotions: "
+            "EmotiEffLib targets timm 0.9 and this environment runs 1.0.27.",
+        ),
+        (
+            "Wav2Vec2-base",
+            "voice encoder, raw waveform (Query). This one is the encoder the "
+            "design called for.",
         ),
     ],
     "note": "Cross-attention, voice attending to face, yields an emotional-consistency mismatch "

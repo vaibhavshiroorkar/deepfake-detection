@@ -167,14 +167,41 @@ def inherited_clip():
 
 
 def render_inherited_clip(container) -> str | None:
-    """Show the inherited clip read-only; return its path, or None."""
+    """The clip this page runs on: inherited if one was chosen, picked here if not.
+
+    It used to only inherit, and a first visit landed on a page whose every
+    control was disabled under a note telling you to go somewhere else. The
+    picker is the same one the Preprocessing page uses and writes to the same
+    session keys, so choosing here still leaves exactly one selected clip and an
+    upload still flows through.
+    """
     clip = inherited_clip()
-    if clip is None:
-        container.info(
-            "No clip selected. Choose one on the **Preprocessing** page (a dataset "
-            "clip or your own upload) and it appears here."
-        )
-        return None
-    clip_id, path = clip
-    container.caption(f"Clip inherited from the Preprocessing page: **{clip_id}**")
-    return path
+    if clip is not None:
+        clip_id, path = clip
+        container.caption(f"Clip: **{clip_id}**  ·  change it below or on Preprocessing.")
+        with container.expander("Choose a different clip"):
+            _render_picker(st)
+        return path
+
+    container.caption(
+        "Pick a clip to run. Anything chosen here also shows up on the "
+        "Preprocessing page, and the reverse."
+    )
+    with container.container(border=True):
+        _render_picker(st)
+    return (inherited_clip() or (None, None))[1]
+
+
+def _render_picker(container) -> None:
+    """The clip source controls, writing the selection where every page reads it."""
+    from deepfake_detection.dashboard.lib import selectors
+
+    row = selectors.render_selection()
+    if row is None:
+        return
+    video_path = selectors.clip_path(row)
+    if not video_path.exists():
+        container.error(f"Video not found: {video_path}")
+        return
+    st.session_state["pp_row"] = row.to_dict()
+    st.session_state["pp_video_path"] = str(video_path)

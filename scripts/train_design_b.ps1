@@ -41,8 +41,21 @@ foreach ($d in @($checkpoints, $logs)) {
     if (-not (Test-Path $d)) { New-Item -ItemType Directory -Force $d | Out-Null }
 }
 
-$train = Join-Path $SourceRun "split\train-usable.csv"
-$val = Join-Path $SourceRun "split\val-usable.csv"
+# Each stream trains on the manifest of clips it can actually read. These are
+# not interchangeable: `train-usable.csv` is the visual-usable set at 7,637
+# clips while `train-sync-usable.csv` is 7,628, and the nine-clip difference is
+# enough to kill a lip-sync run mid-epoch on a clip that has no mouth view.
+#
+# Emotion reads the face and audio views, and every visual-usable clip here is
+# also audio-usable, so the visual manifest is already the intersection.
+function Get-Manifests {
+    param([string]$Stream)
+    $suffix = if ($Stream -like "*lipsync*") { "sync-usable" } else { "usable" }
+    return @(
+        (Join-Path $SourceRun "split	rain-$suffix.csv"),
+        (Join-Path $SourceRun "splital-$suffix.csv")
+    )
+}
 
 function Invoke-Stream {
     param([string]$Name, [string[]]$Extra)
@@ -58,9 +71,10 @@ function Invoke-Stream {
     # Workers first, then single-process. A dead worker takes the run down with
     # a DataLoader error rather than a wrong answer, so retrying costs one
     # wasted epoch and never a silently degraded model.
+    $manifests = Get-Manifests -Stream $Name
     foreach ($attempt in @($Workers, 0)) {
         $common = @(
-            "--train-manifest", $train, "--validation-manifest", $val,
+            "--train-manifest", $manifests[0], "--validation-manifest", $manifests[1],
             "--cache-index", (Join-Path $SourceRun "cache-index.csv"),
             "--cache-root", (Join-Path $SourceRun "cache"),
             "--dataset", "FakeAVCeleb",
