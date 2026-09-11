@@ -22,6 +22,20 @@ from pathlib import Path
 
 from deepfake_detection.experiments.scopes import validate_evidence_scope
 
+# History-file field names to the keys a live run logs, so a backfilled run and
+# a live one plot on the same axis.
+HARDWARE_METRIC_NAMES = {"training.training_examples": "training.examples"}
+
+EPOCH_METRIC_NAMES = {
+    "train_loss": "training.loss",
+    "validation_loss": "validation.loss",
+    "validation_auc": "validation.auc",
+    "validation_diagonal_mass": "validation.diagonal_mass",
+    "optimizer_steps": "optimizer.steps",
+    "backbone_trainable": "stage.backbone_trainable",
+    "encoders_trainable": "stage.backbone_trainable",
+}
+
 
 def _numeric(values: dict, prefix: str = "") -> dict[str, float]:
     """Flatten a nested report into the scalar metrics MLflow accepts."""
@@ -91,11 +105,16 @@ def backfill(run_dir: Path, experiment: str, tracking_uri: str) -> int:
                 else:
                     mlflow.log_param(f"config.{key}", value)
             # Per-epoch curves, so the dashboard can plot them like a live run.
+            # Renamed on the way in: a history file stores the dataclass field
+            # names, which are underscored, while a live run logs the dotted
+            # convention. Logging them raw put the same curve under two keys,
+            # and comparing a backfilled run against a live one then showed
+            # empty columns rather than a difference.
             for record in epochs:
                 step = record.get("epoch", 0)
                 mlflow.log_metrics(
                     {
-                        k: float(v)
+                        EPOCH_METRIC_NAMES.get(k, k): float(v)
                         for k, v in record.items()
                         if isinstance(v, int | float) and k != "epoch"
                     },
@@ -110,7 +129,13 @@ def backfill(run_dir: Path, experiment: str, tracking_uri: str) -> int:
                         "training.best_epoch": float(history.get("best_epoch", 0)),
                     }
                 )
-            mlflow.log_metrics(_numeric(history.get("hardware", {}), "hardware."))
+            # "training." to match a live run. The history file calls this block
+            # "hardware", but the key a reader compares across runs has to be
+            # the same one the trainer writes.
+            hardware = _numeric(history.get("hardware", {}), "training.")
+            mlflow.log_metrics(
+                {HARDWARE_METRIC_NAMES.get(k, k): v for k, v in hardware.items()}
+            )
             mlflow.log_artifact(str(history_path), artifact_path="history")
         recorded += 1
         print(f"  recorded {name}")

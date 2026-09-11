@@ -148,6 +148,36 @@ class _MlflowRunLogger:
         self._mlflow.log_dict(dict(values), artifact_file)
 
 
+# The handful of settings worth reading at a glance, promoted out of the
+# "arguments." namespace. Everything a CLI flag produces lands under that
+# prefix, so the settings that distinguish two runs sort in among the file paths
+# that do not: arguments.batch-size sits next to arguments.cache-index and
+# arguments.checkpoint. These duplicates cost one row each and put the
+# comparison at the top of the table.
+HEADLINE_PARAMS = {
+    "arguments.backbone": "backbone",
+    "arguments.stream": "stream",
+    "arguments.learning-rate": "lr",
+    "arguments.encoder-learning-rate": "lr_encoder",
+    "arguments.batch-size": "batch",
+    "arguments.accumulation-steps": "accum",
+    "arguments.epochs": "epochs",
+    "arguments.freeze-epochs": "freeze_epochs",
+    "arguments.freeze-backbone": "frozen",
+    "arguments.seed": "seed",
+    "arguments.dataset": "dataset",
+}
+
+
+def _headline_params(parameters: Mapping[str, Any]) -> dict[str, Any]:
+    """Short aliases for the settings a reader scans first."""
+    return {
+        short: parameters[long]
+        for long, short in HEADLINE_PARAMS.items()
+        if long in parameters
+    }
+
+
 @contextmanager
 def start_tracked_run(
     settings: TrackingSettings,
@@ -172,6 +202,7 @@ def start_tracked_run(
     try:
         parameters = _scalar_values(configuration.values)
         parameters["configuration_sha256"] = configuration.sha256
+        parameters.update(_headline_params(parameters))
         logger.log_params(parameters)
         mlflow.set_tags(_normalize_tags(_run_tags(settings, configuration, runtime)))
         logger.log_dict(_redacted_values(configuration.values), "resolved-config.yaml")
