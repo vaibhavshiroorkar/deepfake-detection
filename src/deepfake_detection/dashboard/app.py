@@ -138,15 +138,21 @@ st.markdown(
 PAGES = [
     (st.Page("pages/overview.py", title="Overview", default=True), None, False),
     (st.Page("pages/gate.py", title="Evidence gate"), None, False),
+    # The pipeline spine, in the order a clip travels it: preprocessing turns
+    # a video into tensors, the three streams read those tensors, and fusion
+    # combines what they produce.
     (st.Page("pages/preprocess.py", title="Preprocessing"), None, False),
     (st.Page("pages/streams.py", title="Streams"), None, False),
     (st.Page("pages/stream_visual.py", title="Visual"), None, True),
     (st.Page("pages/stream_lipsync.py", title="Lip-Sync"), None, True),
     (st.Page("pages/stream_emotion.py", title="Emotion"), None, True),
-    (st.Page("pages/audio_branch.py", title="Audio branch"), None, True),
-    (st.Page("pages/sync_branch.py", title="Sync branch"), None, True),
-    (st.Page("pages/experiments.py", title="Experiments"), None, False),
     (st.Page("pages/fusion.py", title="Fusion"), None, False),
+    # The Design A branches. They used to sit indented under Streams, which put
+    # two pages from the other architecture between the streams and the fusion
+    # that reads them. They are their own lineage, so they stand on their own.
+    (st.Page("pages/audio_branch.py", title="Audio branch"), None, False),
+    (st.Page("pages/sync_branch.py", title="Sync branch"), None, False),
+    (st.Page("pages/experiments.py", title="Experiments"), None, False),
     (st.Page("pages/explainability.py", title="Explainability"), None, False),
     (st.Page("pages/documentation.py", title="Documentation"), None, False),
 ]

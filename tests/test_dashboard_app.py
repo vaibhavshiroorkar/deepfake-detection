@@ -8,6 +8,9 @@ from streamlit.testing.v1 import AppTest
 APP = Path("src/deepfake_detection/dashboard/app.py")
 PAGES = APP.parent / "pages"
 
+# The pipeline spine reads in the order a clip travels it: Preprocessing, the
+# three streams, then the Fusion that reads them. The Design A branches follow
+# as their own lineage rather than sitting between the streams and fusion.
 EXPECTED_NAVIGATION = [
     ("Overview", False),
     ("Evidence gate", False),
@@ -16,10 +19,10 @@ EXPECTED_NAVIGATION = [
     ("Visual", False),
     ("Lip-Sync", False),
     ("Emotion", False),
+    ("Fusion", False),
     ("Audio branch", False),
     ("Sync branch", False),
     ("Experiments", False),
-    ("Fusion", False),
     ("Explainability", False),
     ("Documentation", False),
 ]
