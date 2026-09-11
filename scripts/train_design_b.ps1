@@ -19,7 +19,7 @@ param(
     [string]$RunDir = "runs/design-b-20260910",
     [string]$SourceRun = "runs/program-20260906",
     [int]$Epochs = 10,
-    [int]$Workers = 2,
+    [int]$Workers = 0,
     [string]$Device = "cuda"
 )
 
@@ -114,7 +114,7 @@ Invoke-Stream -Name "visual-efficientnet" -Extra @(
 
 Invoke-Stream -Name "visual-xception" -Extra @(
     "train", "visual-stream", "--backbone", "xception", "--freeze-epochs", "2",
-    "--batch-size", "4", "--accumulation-steps", "4", "--frame-chunk-size", "4")
+    "--batch-size", "2", "--accumulation-steps", "8", "--frame-chunk-size", "2")
 
 # Batch 4 with four accumulation steps, not 8 with two. The effective batch is
 # the same 16, but a cross-modal stream holds two encoders and unfreezes both at
