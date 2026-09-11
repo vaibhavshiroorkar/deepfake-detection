@@ -551,3 +551,22 @@ memory says nothing about whether a long run will survive.
 `load` now takes `views`. A view that was not requested comes back None, which
 is exactly what a view that was never cached returns, so a caller asking for
 less has to mean it.
+
+## Two ways a PowerShell path breaks, both silent until a run dies
+
+`Join-Path` in Windows PowerShell 5.1 takes two positional arguments. The
+three-argument form, `Join-Path $root 'split' 'file.csv'`, is PowerShell 7 and
+fails here with "A positional parameter cannot be found", the same shape of trap
+as `Split-Path -LeafBase` which is also 6+.
+
+The other one is worse because it produces a path rather than an error. Writing
+a Windows path through a Python heredoc can collapse the escaped backslashes, so
+`"split\train-x.csv"` reaches the file as `split\train-x.csv` where `\t` is a
+literal tab. The failure surfaces far away as
+`OSError: [Errno 22] Invalid argument`, and `split\val-` fails the same way
+through `\v`.
+
+Use a forward slash inside a single quoted segment: `Join-Path $root
+"split/train-x.csv"`. Windows accepts it, there is no escape to lose, and it
+works on both PowerShell versions. Check the bytes with `cat -A` after any
+scripted edit that writes a Windows path.

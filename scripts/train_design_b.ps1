@@ -52,8 +52,8 @@ function Get-Manifests {
     param([string]$Stream)
     $suffix = if ($Stream -like "*lipsync*") { "sync-usable" } else { "usable" }
     return @(
-        (Join-Path $SourceRun "split	rain-$suffix.csv"),
-        (Join-Path $SourceRun "splital-$suffix.csv")
+        (Join-Path $SourceRun "split/train-$suffix.csv"),
+        (Join-Path $SourceRun "split/val-$suffix.csv")
     )
 }
 
