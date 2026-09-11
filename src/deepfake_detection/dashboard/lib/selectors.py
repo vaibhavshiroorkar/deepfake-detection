@@ -36,6 +36,10 @@ MANIP_TYPES = [
 
 SOURCE_DATASET = "Dataset"
 SOURCE_UPLOAD = "Upload a video"
+# Offered only where a clip may already have been chosen elsewhere, so the
+# Preprocessing page itself never shows it: there it would mean "the clip I am
+# currently choosing", which is not a source.
+SOURCE_PREPROCESSING = "From Preprocessing"
 
 # Uploads land outside the repo on purpose: data/ belongs to the dataset, and
 # the dashboard is read-only with respect to it.
@@ -162,20 +166,49 @@ def _keep_valid(key: str, options: list[str]):
         del st.session_state[key]
 
 
-def render_selection():
-    """Render the clip source controls; return the selected clip row, or None."""
+def render_selection(*, allow_preprocessing: bool = False, key: str = "sel_source"):
+    """Render the clip source controls; return the selected clip row, or None.
+
+    `allow_preprocessing` adds a third source that reuses whatever the
+    Preprocessing page has selected. A stream page wants it, because the clip
+    you want to run is usually the one you were just inspecting. The
+    Preprocessing page does not: there the option would mean "the clip I am
+    choosing right now".
+
+    `key` namespaces the widget, so two pages can each carry their own source
+    control without Streamlit treating them as the same widget.
+    """
     import streamlit as st
 
     st.header("Selection")
+    sources = [SOURCE_DATASET, SOURCE_UPLOAD]
+    inherited = preprocessing_row() if allow_preprocessing else None
+    if inherited is not None:
+        sources.insert(0, SOURCE_PREPROCESSING)
+
     source = st.segmented_control(
         "Clip source",
-        [SOURCE_DATASET, SOURCE_UPLOAD],
-        default=SOURCE_DATASET,
-        key="sel_source",
+        sources,
+        default=sources[0],
+        key=key,
     )
+    if source == SOURCE_PREPROCESSING:
+        st.caption(
+            f"Using **{inherited.get('clip_id', 'clip')}**, chosen on the "
+            "Preprocessing page."
+        )
+        return pd.Series(inherited)
     if source == SOURCE_UPLOAD:
         return _render_upload(st)
     return _render_dataset(st)
+
+
+def preprocessing_row() -> dict | None:
+    """The clip row the Preprocessing page selected, or None."""
+    import streamlit as st
+
+    row = st.session_state.get("pp_row")
+    return row if row else None
 
 
 # --------------------------------------------------------------------- upload

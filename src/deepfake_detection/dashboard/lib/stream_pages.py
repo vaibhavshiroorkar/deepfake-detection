@@ -210,41 +210,48 @@ def inherited_clip():
 
 
 def render_inherited_clip(container) -> str | None:
-    """The clip this page runs on: inherited if one was chosen, picked here if not.
+    """The clip this page runs on, and the control to change it.
 
-    It used to only inherit, and a first visit landed on a page whose every
-    control was disabled under a note telling you to go somewhere else. The
-    picker is the same one the Preprocessing page uses and writes to the same
-    session keys, so choosing here still leaves exactly one selected clip and an
-    upload still flows through.
+    Three sources: the clip chosen on Preprocessing, a dataset clip, or an
+    upload. Preprocessing is offered first when one exists, because the clip you
+    want to run is invariably the one you were just inspecting.
+
+    The page keeps its own selection rather than writing back into the
+    Preprocessing page's slot. Sharing one slot would make "From Preprocessing"
+    mean "whatever I last picked here", which is not a source.
     """
-    clip = inherited_clip()
-    if clip is not None:
-        clip_id, path = clip
-        container.caption(f"Clip: **{clip_id}**  ·  change it below or on Preprocessing.")
+    chosen = st.session_state.get("stream_row")
+    path = st.session_state.get("stream_video_path")
+    if chosen and path:
+        container.caption(f"Clip: **{chosen.get('clip_id', 'clip')}**")
         with container.expander("Choose a different clip"):
-            _render_picker(st)
-        return path
+            _render_picker(container)
+        return str(path)
 
-    container.caption(
-        "Pick a clip to run. Anything chosen here also shows up on the "
-        "Preprocessing page, and the reverse."
-    )
+    inherited = inherited_clip()
+    if inherited is not None:
+        clip_id, inherited_path = inherited
+        container.caption(f"Clip: **{clip_id}**, from the Preprocessing page.")
+        with container.expander("Choose a different clip"):
+            _render_picker(container)
+        return inherited_path
+
+    container.caption("Pick a clip to run.")
     with container.container(border=True):
-        _render_picker(st)
-    return (inherited_clip() or (None, None))[1]
+        _render_picker(container)
+    return st.session_state.get("stream_video_path")
 
 
 def _render_picker(container) -> None:
-    """The clip source controls, writing the selection where every page reads it."""
+    """The three-source clip control, storing the result for this page."""
     from deepfake_detection.dashboard.lib import selectors
 
-    row = selectors.render_selection()
+    row = selectors.render_selection(allow_preprocessing=True, key="stream_sel_source")
     if row is None:
         return
     video_path = selectors.clip_path(row)
     if not video_path.exists():
         container.error(f"Video not found: {video_path}")
         return
-    st.session_state["pp_row"] = row.to_dict()
-    st.session_state["pp_video_path"] = str(video_path)
+    st.session_state["stream_row"] = row.to_dict()
+    st.session_state["stream_video_path"] = str(video_path)
