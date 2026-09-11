@@ -25,7 +25,7 @@ from pathlib import Path
 import pandas as pd
 
 from deepfake_detection.dashboard.lib import datasets
-from deepfake_detection.dashboard.paths import DATA_DIR
+from deepfake_detection.dashboard.paths import DATA_DIR, RUNS_DIR
 
 MANIP_TYPES = [
     "RealVideo-RealAudio",
@@ -69,12 +69,37 @@ def label_text(row) -> str:
     return "real" if label == 0 else "fake"
 
 
+def manifest_dirs() -> list[Path]:
+    """Run directories that hold clip manifests.
+
+    The pipeline writes its splits into the run that produced them, not into
+    data/, so a dataset with no raw meta_data.csv is invisible without this.
+    Only Celeb-DF has one, which is why it was the only entry in the picker
+    while four other datasets sat fully downloaded on disk.
+
+    Shallow: a run's manifests are at its top level or under `split/`, and its
+    cache holds tens of thousands of files that must not be walked.
+    """
+    if not RUNS_DIR.is_dir():
+        return []
+    found = []
+    for run in sorted(RUNS_DIR.iterdir()):
+        if not run.is_dir():
+            continue
+        found.append(run)
+        if (run / "split").is_dir():
+            found.append(run / "split")
+    return found
+
+
 def registry(refresh: bool = False) -> dict[str, datasets.Dataset]:
     """Discovered datasets, scanned once per session (or on ↻)."""
     import streamlit as st
 
     if refresh or "ds_registry" not in st.session_state:
-        st.session_state["ds_registry"] = datasets.discover(DATA_DIR)
+        st.session_state["ds_registry"] = datasets.discover(
+            DATA_DIR, manifest_dirs=manifest_dirs()
+        )
         st.session_state["ds_manifests"] = {}
     return st.session_state["ds_registry"]
 

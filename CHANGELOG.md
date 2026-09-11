@@ -12,6 +12,22 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- The dataset picker now offers all five datasets on disk. It listed only
+  FakeAVCeleb, because discovery recognised a dataset only through a raw
+  `meta_data.csv` or a manifest carrying a `label` column, and only FakeAVCeleb
+  has either. Celeb-DF, DFDC, LAV-DF and MNW were fully downloaded and
+  invisible.
+- Three things had to change. A manifest is recognised by `clip_id` and
+  `video_path` plus any of `label`, `clip_fake` or `manipulation_type`, which
+  are the three shapes this pipeline actually writes. Discovery takes extra
+  manifest directories, because the pipeline writes splits into the run that
+  produced them rather than into `data/`. And a manifest with no owning raw drop
+  resolves to the top-level `data/` directory its clips live in, instead of to
+  whatever folder the CSV sat in.
+- A manifest whose clips are not under `data/` is skipped. Older runs carry
+  these, and each was otherwise inventing a dataset named after its run
+  directory.
+
 - Choosing a checkpoint on the Visual stream page now sets the architecture
   controls to what that checkpoint was trained with, instead of printing what to
   set them to. Loading is non-strict by design, so a mismatch does not raise:
