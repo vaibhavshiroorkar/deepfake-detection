@@ -120,7 +120,9 @@ Invoke-Stream -Name "visual-xception" -Extra @(
 # the same 16, but a cross-modal stream holds two encoders and unfreezes both at
 # once, and Wav2Vec2's gradients alone exhausted 16 GB at batch 8 the moment the
 # freeze schedule lifted. The first two epochs ran fine, which is why this only
-# shows up a third of the way in.# The audiovisual pair. Wav2Vec2 stands in for AV-HuBERT on the audio side,
+# shows up a third of the way in.
+
+# The audiovisual pair. Wav2Vec2 stands in for AV-HuBERT on the audio side,
 # which is the substitution to revisit first: it encodes phonetic content rather
 # than audiovisual correspondence, and every cross-modal stream trained here so
 # far has sat at chance.
