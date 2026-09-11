@@ -65,7 +65,9 @@ def test_page_renders_with_a_clip_selected(
             "source": "fixture",
         }
     )
-    monkeypatch.setattr(selectors, "render_selection", lambda: row)
+    # **kwargs because the real one takes allow_preprocessing and key: the
+    # stream pages offer three clip sources, so they pass both.
+    monkeypatch.setattr(selectors, "render_selection", lambda **_: row)
 
     page = AppTest.from_file(PAGES / name, default_timeout=600).run()
 

@@ -12,6 +12,14 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Every manifest now carries a `label` column, derived on load when the file
+  does not have one. Widening dataset discovery to accept `clip_fake` and
+  `manipulation_type` manifests made four datasets visible in the picker and
+  then crashed it with `KeyError: 'label'` when one was opened: discovery
+  accepted the new shapes and the rendering still assumed the old one.
+- A manifest with no label information gets -1, not 0. A clip nothing is known
+  about must not read as confirmed real.
+
 - The dataset picker now offers all five datasets on disk. It listed only
   FakeAVCeleb, because discovery recognised a dataset only through a raw
   `meta_data.csv` or a manifest carrying a `label` column, and only FakeAVCeleb

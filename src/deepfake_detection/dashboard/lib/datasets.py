@@ -36,6 +36,11 @@ MANIFEST_COLUMNS = {"clip_id", "video_path"}
 LABEL_COLUMNS = {"label", "clip_fake", "manipulation_type"}
 # Split name for the in-memory manifest derived straight from meta_data.csv.
 RAW_SPLIT = "all (raw)"
+# A clip whose manifest says nothing about whether it is fake. Not 0, which
+# would read as "confirmed real".
+UNKNOWN_LABEL = -1
+# The manipulation_type value that means nothing was manipulated.
+AUTHENTIC = "RealVideo-RealAudio"
 # Pipeline splits first, in pipeline order; anything else sorts after them.
 _SPLIT_ORDER = ["train", "val", "test", "full_manifest"]
 _MAX_DEPTH = 3
@@ -106,12 +111,47 @@ def discover(data_dir: Path, manifest_dirs=()) -> dict[str, Dataset]:
 
 
 def load_split(ds: Dataset, split: str, data_dir: Path) -> pd.DataFrame:
-    """The manifest frame for one split of a discovered dataset."""
+    """The manifest frame for one split of a discovered dataset.
+
+    Always carries a `label` column, derived when the file does not have one.
+    Three manifest shapes exist here and only the dashboard's own writes
+    `label`, so every caller downstream would otherwise have to know which
+    producer it was reading.
+    """
     if split in ds.manifests:
-        return pd.read_csv(ds.manifests[split])
+        return ensure_label(pd.read_csv(ds.manifests[split]))
     if split == RAW_SPLIT and ds.meta_csv is not None:
-        return manifest_from_meta(pd.read_csv(ds.meta_csv), ds.root, data_dir)
+        return ensure_label(
+            manifest_from_meta(pd.read_csv(ds.meta_csv), ds.root, data_dir)
+        )
     raise KeyError(f"{ds.name!r} has no split {split!r}")
+
+
+def ensure_label(frame: pd.DataFrame) -> pd.DataFrame:
+    """Add a `label` column, 1 for fake and 0 for real, if one is missing.
+
+    `clip_fake` is what `ddf manifest build` writes. `manipulation_type` is what
+    the external adapters emit, where anything other than RealVideo-RealAudio
+    involves a manipulation. A manifest with neither gets UNKNOWN_LABEL rather
+    than a guess, and the picker renders that as "unknown".
+    """
+    if "label" in frame.columns:
+        return frame
+    frame = frame.copy()
+    if "clip_fake" in frame.columns:
+        frame["label"] = (
+            frame["clip_fake"]
+            .astype(str)
+            .str.strip()
+            .str.lower()
+            .isin({"true", "1", "yes"})
+            .astype(int)
+        )
+    elif "manipulation_type" in frame.columns:
+        frame["label"] = (frame["manipulation_type"] != AUTHENTIC).astype(int)
+    else:
+        frame["label"] = UNKNOWN_LABEL
+    return frame
 
 
 # ------------------------------------------------------------------ internals

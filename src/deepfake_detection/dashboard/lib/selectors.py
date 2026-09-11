@@ -47,7 +47,7 @@ UPLOAD_DIR = Path(tempfile.gettempdir()) / "deepfake_dashboard_uploads"
 
 # An uploaded clip has no ground truth. -1 keeps the column integer-typed while
 # staying an obvious non-label; label_text() renders it as "unknown".
-LABEL_UNKNOWN = -1
+LABEL_UNKNOWN = datasets.UNKNOWN_LABEL
 
 
 def clip_path(row) -> Path:
@@ -63,7 +63,13 @@ def clip_path(row) -> Path:
 
 def label_text(row) -> str:
     """'real', 'fake', or 'unknown' for an upload with no ground truth."""
-    label = int(row["label"])
+    # .get, not [...]: a manifest may reach here without the column when it
+    # was read by something other than load_split.
+    raw = row.get("label", LABEL_UNKNOWN)
+    try:
+        label = int(raw)
+    except (TypeError, ValueError):
+        return "unknown"
     if label == LABEL_UNKNOWN:
         return "unknown"
     return "real" if label == 0 else "fake"
@@ -131,10 +137,8 @@ def filter_manifest(
         out = out[out["manipulation_type"].isin(manip_types)]
     if methods and "method" in out.columns:
         out = out[out["method"].isin(methods)]
-    if label_filter == "real":
-        out = out[out["label"] == 0]
-    elif label_filter == "fake":
-        out = out[out["label"] == 1]
+    if label_filter in ("real", "fake") and "label" in out.columns:
+        out = out[out["label"] == (0 if label_filter == "real" else 1)]
     return out.reset_index(drop=True)
 
 

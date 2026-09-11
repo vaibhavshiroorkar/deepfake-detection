@@ -254,6 +254,10 @@ def test_architecture_reads_a_gru_from_its_gate_count() -> None:
         "temporal": "gru",
         "hidden": 256,
         "bidirectional": False,
+        # None because a bare temporal state dict carries no projection layer,
+        # which is also what a Design A branch checkpoint looks like: it ends in
+        # a classifier and has no shared fusion width to report.
+        "common_dim": None,
     }
 
 
@@ -268,6 +272,7 @@ def test_architecture_reads_a_bidirectional_lstm() -> None:
         "temporal": "lstm",
         "hidden": 128,
         "bidirectional": True,
+        "common_dim": None,
     }
 
 
@@ -340,3 +345,89 @@ def test_a_generic_token_does_not_claim_another_backbone(tmp_path: Path) -> None
     assert names("xception") == {"visual-xception.pt"}
     # Its own, plus the Design A checkpoint that is EfficientNet-B0 unnamed.
     assert names("efficientnet") == {"visual-efficientnet.pt", "final-visual-seed17.pt"}
+
+
+def manifest_csv(path: Path, rows: list[dict]) -> Path:
+    import csv
+
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+    return path
+
+
+def test_clip_fake_manifest_gets_a_label(tmp_path: Path) -> None:
+    """`ddf manifest build` writes clip_fake, not label. Widening discovery to
+    accept it without deriving a label crashed the picker with KeyError."""
+    frame = pd.read_csv(
+        manifest_csv(
+            tmp_path / "m.csv",
+            [
+                {"clip_id": "a", "video_path": "d/a.mp4", "clip_fake": "True"},
+                {"clip_id": "b", "video_path": "d/b.mp4", "clip_fake": "False"},
+            ],
+        )
+    )
+
+    labelled = datasets.ensure_label(frame)
+
+    assert labelled["label"].tolist() == [1, 0]
+
+
+def test_manipulation_type_manifest_gets_a_label(tmp_path: Path) -> None:
+    """The external adapters emit manipulation_type, where anything other than
+    RealVideo-RealAudio involves a manipulation."""
+    frame = pd.read_csv(
+        manifest_csv(
+            tmp_path / "m.csv",
+            [
+                {
+                    "clip_id": "a",
+                    "video_path": "d/a.mp4",
+                    "manipulation_type": "RealVideo-RealAudio",
+                },
+                {
+                    "clip_id": "b",
+                    "video_path": "d/b.mp4",
+                    "manipulation_type": "FakeVideo-RealAudio",
+                },
+                {
+                    "clip_id": "c",
+                    "video_path": "d/c.mp4",
+                    "manipulation_type": "RealVideo-FakeAudio",
+                },
+            ],
+        )
+    )
+
+    assert datasets.ensure_label(frame)["label"].tolist() == [0, 1, 1]
+
+
+def test_an_existing_label_is_left_alone(tmp_path: Path) -> None:
+    frame = pd.read_csv(
+        manifest_csv(
+            tmp_path / "m.csv",
+            [{"clip_id": "a", "video_path": "d/a.mp4", "label": 1, "clip_fake": "False"}],
+        )
+    )
+
+    assert datasets.ensure_label(frame)["label"].tolist() == [1]
+
+
+def test_a_manifest_with_no_label_information_is_unknown(tmp_path: Path) -> None:
+    """Unknown, not 0: a clip nothing is known about must not read as
+    confirmed real."""
+    frame = pd.read_csv(
+        manifest_csv(tmp_path / "m.csv", [{"clip_id": "a", "video_path": "d/a.mp4"}])
+    )
+
+    labelled = datasets.ensure_label(frame)
+
+    assert labelled["label"].tolist() == [datasets.UNKNOWN_LABEL]
+    assert selectors.label_text(labelled.iloc[0]) == "unknown"
+
+
+def test_label_text_survives_a_row_with_no_label_column() -> None:
+    """A frame read by something other than load_split still has to render."""
+    assert selectors.label_text(pd.Series({"clip_id": "a"})) == "unknown"
