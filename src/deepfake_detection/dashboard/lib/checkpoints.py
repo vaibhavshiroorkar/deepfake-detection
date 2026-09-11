@@ -34,17 +34,38 @@ UNTRAINED = "(untrained, random weights)"
 STATE_KEYS = ("model_state", "state_dict", "model_state_dict", "model", "weights")
 
 
-# Filename tokens that mean a checkpoint belongs to a stream. `ddf train visual`
-# is welded to EfficientNet-B0 and names its output "visual", with no backbone in
-# the name, so "visual" has to map to efficientnet or every trained visual
-# checkpoint this project has produced stays invisible to the dashboard.
-RUN_TOKENS = {
-    "efficientnet": ("efficientnet", "visual"),
-    "xception": ("xception",),
-    "dinov3": ("dinov3",),
-    "lipsync": ("lipsync",),
-    "emotion": ("emotion",),
+# The token that names a stream in a checkpoint filename.
+STREAM_TOKENS = {
+    "efficientnet": "efficientnet",
+    "xception": "xception",
+    "dinov3": "dinov3",
+    "lipsync": "lipsync",
+    "emotion": "emotion",
 }
+
+# `ddf train visual` is welded to EfficientNet-B0 and names its output "visual"
+# with no backbone in it, so without this every Design A visual checkpoint stays
+# invisible. It cannot be a plain alias: `ddf train visual-stream` writes
+# `visual-dinov3.pt` and `visual-xception.pt`, which also contain "visual", so a
+# generic token only applies to a file that names no other stream.
+GENERIC_TOKENS = {"efficientnet": ("visual",)}
+
+
+def _belongs(path: Path, stream_name: str) -> bool:
+    """Does this checkpoint file belong to this stream?
+
+    A specific token wins outright. A generic one only counts when the filename
+    names no other stream, so `visual-dinov3.pt` goes to dinov3 rather than to
+    both dinov3 and efficientnet.
+    """
+    name = path.name.lower()
+    own = STREAM_TOKENS.get(stream_name, stream_name)
+    if own in name:
+        return True
+    others = {token for key, token in STREAM_TOKENS.items() if key != stream_name}
+    if any(token in name for token in others):
+        return False
+    return any(token in name for token in GENERIC_TOKENS.get(stream_name, ()))
 
 
 def discover(
@@ -69,14 +90,17 @@ def discover(
         ]
 
     runs = runs_root or RUNS_DIR
-    tokens = RUN_TOKENS.get(stream_name, (stream_name,))
     if runs.is_dir():
+        # Two shallow globs, not rglob. A run directory holds its preprocessed
+        # cache beside its weights, so walking the tree visits about 62,000
+        # entries and takes ten seconds, once per Streamlit rerun, which reads
+        # on screen as a page that stops rendering at the checkpoint picker.
+        # These two patterns find the same 32 files in three milliseconds.
+        candidates = list(runs.glob("*/checkpoints/*")) + list(runs.glob("*/*"))
         found += [
             p
-            for p in runs.rglob("*")
-            if p.is_file()
-            and p.suffix.lower() in SUFFIXES
-            and any(token in p.name.lower() for token in tokens)
+            for p in candidates
+            if p.is_file() and p.suffix.lower() in SUFFIXES and _belongs(p, stream_name)
         ]
 
     # Two runs can leave identically named files, so the path is the identity

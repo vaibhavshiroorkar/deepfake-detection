@@ -302,3 +302,41 @@ def test_load_into_reports_a_clean_load(tmp_path: Path) -> None:
     path = tmp_path / "same.pt"
     torch.save({"model_state": model.state_dict()}, path)
     assert checkpoints.load_into(model, path)["clean"] is True
+
+
+def test_discover_does_not_walk_a_run_cache(tmp_path: Path) -> None:
+    """A run directory holds its preprocessed cache beside its weights. Walking
+    the tree visits about 62,000 entries and takes ten seconds, once per
+    Streamlit rerun, which reads on screen as a page that stops rendering at the
+    checkpoint picker."""
+    runs = tmp_path / "runs"
+    run_checkpoint(runs, "program", "final-visual-seed17.pt")
+    buried = runs / "program" / "cache" / "a" / "b" / "c"
+    buried.mkdir(parents=True)
+    (buried / "stray-visual.pt").write_bytes(b"not a checkpoint")
+
+    found = checkpoints.discover("efficientnet", root=tmp_path, runs_root=runs)
+
+    assert [path.name for path in found] == ["final-visual-seed17.pt"]
+
+
+def test_a_generic_token_does_not_claim_another_backbone(tmp_path: Path) -> None:
+    """`ddf train visual` names its output "visual" with no backbone in it, so
+    "visual" has to reach efficientnet. But `ddf train visual-stream` writes
+    visual-dinov3.pt, which must not also land under efficientnet."""
+    runs = tmp_path / "runs"
+    run_checkpoint(runs, "design-b", "visual-dinov3.pt")
+    run_checkpoint(runs, "design-b", "visual-efficientnet.pt")
+    run_checkpoint(runs, "design-b", "visual-xception.pt")
+    run_checkpoint(runs, "program", "final-visual-seed17.pt")
+
+    def names(stream: str) -> set[str]:
+        return {
+            path.name
+            for path in checkpoints.discover(stream, root=tmp_path, runs_root=runs)
+        }
+
+    assert names("dinov3") == {"visual-dinov3.pt"}
+    assert names("xception") == {"visual-xception.pt"}
+    # Its own, plus the Design A checkpoint that is EfficientNet-B0 unnamed.
+    assert names("efficientnet") == {"visual-efficientnet.pt", "final-visual-seed17.pt"}

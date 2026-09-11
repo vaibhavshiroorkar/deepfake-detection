@@ -570,3 +570,21 @@ Use a forward slash inside a single quoted segment: `Join-Path $root
 "split/train-x.csv"`. Windows accepts it, there is no escape to lose, and it
 works on both PowerShell versions. Check the bytes with `cat -A` after any
 scripted edit that writes a Windows path.
+
+## The checkpoint picker must not walk a run directory
+
+`checkpoints.discover` scanned `runs/` with `rglob("*")`. A run holds its
+preprocessed cache beside its weights, so that visits about 62,000 entries and
+takes ten seconds. Streamlit reruns the whole script on every interaction, so
+the cost lands on every click, and what a user sees is a page that renders as
+far as the checkpoint picker and then stops. Nothing errors and nothing is
+logged.
+
+Two shallow globs, `*/checkpoints/*` and `*/*`, find the same 32 files in three
+milliseconds.
+
+The filename match needs care too. `ddf train visual` names its output `visual`
+with no backbone in it, so "visual" has to reach efficientnet or every Design A
+checkpoint is invisible. But `ddf train visual-stream` writes `visual-dinov3.pt`
+and `visual-xception.pt`, which contain "visual" as well, so a generic token
+only applies to a filename that names no other stream.
