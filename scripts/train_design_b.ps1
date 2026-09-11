@@ -116,16 +116,20 @@ Invoke-Stream -Name "visual-xception" -Extra @(
     "train", "visual-stream", "--backbone", "xception", "--freeze-epochs", "2",
     "--batch-size", "4", "--accumulation-steps", "4", "--frame-chunk-size", "4")
 
-# The audiovisual pair. Wav2Vec2 stands in for AV-HuBERT on the audio side,
+# Batch 4 with four accumulation steps, not 8 with two. The effective batch is
+# the same 16, but a cross-modal stream holds two encoders and unfreezes both at
+# once, and Wav2Vec2's gradients alone exhausted 16 GB at batch 8 the moment the
+# freeze schedule lifted. The first two epochs ran fine, which is why this only
+# shows up a third of the way in.# The audiovisual pair. Wav2Vec2 stands in for AV-HuBERT on the audio side,
 # which is the substitution to revisit first: it encodes phonetic content rather
 # than audiovisual correspondence, and every cross-modal stream trained here so
 # far has sat at chance.
 Invoke-Stream -Name "stream-lipsync" -Extra @(
     "train", "stream", "--stream", "lipsync", "--freeze-epochs", "2",
-    "--batch-size", "8", "--accumulation-steps", "2")
+    "--batch-size", "4", "--accumulation-steps", "4")
 
 Invoke-Stream -Name "stream-emotion" -Extra @(
     "train", "stream", "--stream", "emotion", "--freeze-epochs", "2",
-    "--batch-size", "8", "--accumulation-steps", "2")
+    "--batch-size", "4", "--accumulation-steps", "4")
 
 Write-Host "=== all streams done ($(Get-Date -Format HH:mm:ss)) ==="
