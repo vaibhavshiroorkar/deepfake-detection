@@ -15,7 +15,7 @@ split here would put it straight back in one layer higher.
 from __future__ import annotations
 
 import copy
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 import torch
@@ -122,6 +122,71 @@ def _auc(scores: Tensor, labels: Tensor) -> float:
     )
 
 
+
+# What an input can drive, and how often each case is expected at inference.
+# A video reaches every stream; a still image reaches only the visual ones; a
+# sound file only the audio branch. `dashboard/lib/media_kind.py` is the same
+# table on the serving side.
+#
+# This exists because i.i.d. stream dropout does not produce these patterns
+# often enough to train on. With four streams at p=0.2 the chance a row happens
+# to look like "visual only", which is every image upload, is 0.8 * 0.2^3, about
+# 49 rows of 7,621. The head is regularised against any one stream vanishing and
+# is effectively untrained on the regimes it will actually be asked to run in.
+VIDEO = "video"
+IMAGE = "image"
+AUDIO = "audio"
+
+# Which stream names belong to which modality. Matched by substring so a stream
+# called "visual-dinov3" or "final-audio-seed17" lands in the right group
+# without the trainer carrying a registry of checkpoint names.
+MODALITY_TOKENS = {
+    IMAGE: ("visual",),
+    AUDIO: ("audio",),
+}
+
+DEPLOYMENT_PATTERNS = {VIDEO: 0.7, IMAGE: 0.15, AUDIO: 0.15}
+
+
+def pattern_masks(
+    dims: dict[str, int], patterns: Mapping[str, float]
+) -> tuple[list[str], Tensor, Tensor]:
+    """Per-pattern stream masks and their sampling weights.
+
+    Returns the pattern names, a `[patterns, streams]` mask of 1 where a stream
+    is reachable, and the normalised weights to sample patterns with.
+
+    A pattern that reaches no stream at all is dropped: it would train the head
+    to produce a confident number from an all-zero input, which is the one case
+    where it should abstain instead.
+    """
+    names = sorted(dims)
+    kept: list[str] = []
+    rows: list[list[float]] = []
+    weights: list[float] = []
+    for pattern, weight in patterns.items():
+        if weight <= 0:
+            continue
+        tokens = MODALITY_TOKENS.get(pattern)
+        mask = [
+            1.0 if tokens is None or any(t in name for t in tokens) else 0.0
+            for name in names
+        ]
+        if not any(mask):
+            continue
+        kept.append(pattern)
+        rows.append(mask)
+        weights.append(float(weight))
+    if not kept:
+        raise ValueError("No presence pattern reaches any stream")
+    total = sum(weights)
+    return (
+        kept,
+        torch.tensor(rows, dtype=torch.float32),
+        torch.tensor([w / total for w in weights], dtype=torch.float32),
+    )
+
+
 def fit_stream_fusion(
     *,
     rows: Sequence[AssembledFeature],
@@ -129,8 +194,9 @@ def fit_stream_fusion(
     batch_size: int = 256,
     learning_rate: float = 1e-3,
     weight_decay: float = 1e-4,
-    stream_dropout: float = 0.2,
+    stream_dropout: float = 0.0,
     dropout: float = 0.2,
+    presence_patterns: Mapping[str, float] | None = None,
     hidden_sizes: Sequence[int] = (128,),
     common_dim: int = 256,
     validation_fraction: float = 0.2,
@@ -165,6 +231,14 @@ def fit_stream_fusion(
         pos_weight=torch.tensor(negative / max(positive, 1.0), device=device)
     )
 
+    # Sampled per row per epoch, so over a run the head sees every regime at
+    # roughly its configured rate rather than relying on dropout to stumble into
+    # them. Multiplied into the real presence flags, never replacing them: a
+    # stream a clip genuinely lacks stays absent whatever pattern is drawn.
+    patterns = DEPLOYMENT_PATTERNS if presence_patterns is None else presence_patterns
+    pattern_names, masks, pattern_weights = pattern_masks(dims, patterns)
+    stream_order = sorted(dims)
+
     records: list[FusionEpochRecord] = []
     best_loss = float("inf")
     best_epoch = 0
@@ -178,9 +252,17 @@ def fit_stream_fusion(
         losses: list[float] = []
         for start in range(0, order.numel(), batch_size):
             index = order[start : start + batch_size].to(device)
+            drawn = torch.multinomial(
+                pattern_weights, index.numel(), replacement=True, generator=generator
+            )
+            chosen = masks[drawn].to(device)
             output = model(
                 {name: block[index] for name, block in train[0].items()},
-                {name: flags[index] for name, flags in train[1].items()},
+                {
+                    name: flags[index] * chosen[:, position]
+                    for position, name in enumerate(stream_order)
+                    for flags in (train[1][name],)
+                },
             )
             loss = criterion(output.logit, labels[index])
             optimizer.zero_grad(set_to_none=True)

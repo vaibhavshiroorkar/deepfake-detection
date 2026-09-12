@@ -253,3 +253,70 @@ def test_mixed_roles_are_refused(tmp_path) -> None:
 
     with pytest.raises(ValueError, match="mix out-of-fold and holdout"):
         train_fusion_cli(tmp_path, mixed)
+
+
+def test_pattern_masks_route_each_modality_to_its_streams() -> None:
+    """An image reaches only the visual streams, a sound file only the audio
+    branch, a video everything. Matched by substring so a checkpoint called
+    visual-dinov3 or final-audio-seed17 lands correctly without a registry."""
+    from deepfake_detection.training.fusion import DEPLOYMENT_PATTERNS, pattern_masks
+
+    dims = {"visual-dinov3": 8, "stream-lipsync": 4, "final-audio-seed17": 6}
+    names, masks, weights = pattern_masks(dims, DEPLOYMENT_PATTERNS)
+    order = sorted(dims)
+
+    reach = {
+        name: {order[i] for i, on in enumerate(row) if on}
+        for name, row in zip(names, masks.tolist(), strict=False)
+    }
+    assert reach["video"] == set(order)
+    assert reach["image"] == {"visual-dinov3"}
+    assert reach["audio"] == {"final-audio-seed17"}
+    assert pytest.approx(float(weights.sum())) == 1.0
+
+
+def test_a_pattern_reaching_no_stream_is_dropped() -> None:
+    """Training the head to produce a confident number from an all-zero input
+    would teach it the one case where it should abstain."""
+    from deepfake_detection.training.fusion import pattern_masks
+
+    names, _masks, _weights = pattern_masks(
+        {"visual-dinov3": 8}, {"video": 0.5, "audio": 0.5}
+    )
+
+    assert names == ["video"]
+
+
+def test_every_pattern_reaching_nothing_is_an_error() -> None:
+    from deepfake_detection.training.fusion import pattern_masks
+
+    with pytest.raises(ValueError, match="reaches any stream"):
+        pattern_masks({"stream-lipsync": 4}, {"image": 1.0})
+
+
+def test_training_with_patterns_still_learns() -> None:
+    """The masking must not break the gradient path it rides on."""
+    _model, history = fit_stream_fusion(
+        rows=population(),
+        epochs=60,
+        batch_size=32,
+        patience=60,
+        presence_patterns={"video": 1.0},
+        seed=17,
+    )
+
+    best = history.epochs[history.best_epoch - 1]
+    assert best.validation_auc > 0.9, f"did not learn: {best.validation_auc:.3f}"
+
+
+def test_a_genuinely_absent_stream_stays_absent_whatever_pattern_is_drawn() -> None:
+    """Patterns multiply into the real presence flags rather than replacing
+    them. A clip that lacks a stream must not be handed one by a video pattern."""
+    rows = [
+        row(f"clip-{i}", label=i % 2, identity=f"id-{i}", streams={"visual": 8})
+        for i in range(12)
+    ]
+    values, presence, _labels = as_tensors(rows, DIMS, "cpu")
+
+    assert presence["lipsync"].sum().item() == 0.0
+    assert values["lipsync"].abs().sum().item() == 0.0
