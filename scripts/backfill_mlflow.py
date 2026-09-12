@@ -1,190 +1,161 @@
-"""Record a run directory's training and evaluation artefacts into MLflow.
+"""Put the Design B runs into MLflow, from the records they already wrote.
 
-`ddf run --config` opens a tracked run around a command, so anything launched
-that way lands in MLflow automatically. A supervisor that invokes
-`ddf train visual` directly does not, and `runs/program-20260906` was built that
-way: fourteen checkpoints, a fusion model and six evaluations that exist only as
-files. The dashboard reads MLflow, so none of it was visible.
+Tracking is wired to `ddf run --config`, and Design B was trained by calling the
+CLI directly, so none of its five streams has an MLflow run. Every number the
+paper will quote from them is therefore untraceable by the rule
+`docs/research/result-traceability.md` sets: a result must resolve to an
+analysis command, content hashes, and a run in the store.
 
-This reads the history and metrics JSON those commands already write and
-replays them into MLflow. It is idempotent by run name, so re-running it does
-not duplicate anything.
+Nothing here is recomputed or invented. Each run is built from one
+`*-history.json` and the checkpoint it names, both written by the trainer at the
+time, and the run is tagged `backfilled` with the file it came from and that
+file's SHA-256. A reader can tell a backfilled run from a live one, which is the
+point: a backfill that looked like a live run would be worse than no run.
 
-    uv run python scripts/backfill_mlflow.py --run-dir runs/program-20260906
+Re-running is safe. A stream whose checkpoint hash already has a run is skipped,
+so after a retrain this adds the new checkpoints and leaves the old ones alone.
+
+    uv run python scripts/backfill_mlflow.py --run-dir runs/design-b-20260910
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
 
-from deepfake_detection.experiments.scopes import validate_evidence_scope
-
-# History-file field names to the keys a live run logs, so a backfilled run and
-# a live one plot on the same axis.
-HARDWARE_METRIC_NAMES = {"training.training_examples": "training.examples"}
-
-EPOCH_METRIC_NAMES = {
-    "train_loss": "training.loss",
-    "validation_loss": "validation.loss",
-    "validation_auc": "validation.auc",
-    "validation_diagonal_mass": "validation.diagonal_mass",
-    "optimizer_steps": "optimizer.steps",
-    "backbone_trainable": "stage.backbone_trainable",
-    "encoders_trainable": "stage.backbone_trainable",
-}
+_EXPERIMENT = "design-b-20260910"
 
 
-def _numeric(values: dict, prefix: str = "") -> dict[str, float]:
-    """Flatten a nested report into the scalar metrics MLflow accepts."""
-    out: dict[str, float] = {}
-    for key, value in values.items():
-        name = f"{prefix}{key}"
-        if isinstance(value, bool):
-            continue
-        if isinstance(value, int | float):
-            out[name] = float(value)
-        elif isinstance(value, dict):
-            out.update(_numeric(value, prefix=f"{name}."))
-    return out
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1 << 20), b""):
+            digest.update(block)
+    return digest.hexdigest()
 
 
-def backfill(run_dir: Path, experiment: str, tracking_uri: str) -> int:
-    import mlflow
-    from mlflow.tracking import MlflowClient
+def _flat_params(history: dict) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for section, entries in history.get("config", {}).items():
+        if isinstance(entries, dict):
+            for key, value in entries.items():
+                values[f"{section}.{key}"] = str(value)
+        else:
+            values[section] = str(entries)
+    for key, value in history.get("metadata", {}).items():
+        values[f"metadata.{key}"] = str(value)
+    return values
 
-    mlflow.set_tracking_uri(tracking_uri)
-    mlflow.set_experiment(experiment)
-    client = MlflowClient()
-    known = {
-        run.info.run_name
-        for run in client.search_runs(
-            [client.get_experiment_by_name(experiment).experiment_id], max_results=500
-        )
-    }
 
-    recorded = 0
-    for history_path in sorted((run_dir / "checkpoints").glob("*-history.json")):
-        name = history_path.name.replace("-history.json", "")
-        if name in known:
-            print(f"  skip {name} (already recorded)")
-            continue
-        history = json.loads(history_path.read_text(encoding="utf-8"))
-        metadata = history.get("metadata", {})
-        epochs = history.get("epochs", [])
-        with mlflow.start_run(run_name=name):
-            mlflow.set_tags(
-                {
-                    "project": "deepfake-generalization",
-                    "environment": "local",
-                    "evidence_scope": validate_evidence_scope(
-                        "development_comparison"
-                    ),
-                    "dataset": history.get("config", {}).get("dataset", "FakeAVCeleb"),
-                    # Fold models exist only to produce honest out-of-fold
-                    # features; separating them keeps a fold's weaker numbers
-                    # from being read as a candidate result.
-                    "ablation_group": (
-                        "program-crossfit" if name.startswith("fold") else "program-final"
-                    ),
-                    "tier": "program",
-                    "branch": metadata.get("branch", "unknown"),
-                    "backfilled": "true",
-                }
-            )
-            mlflow.log_params(
-                {f"metadata.{k}": v for k, v in metadata.items() if v is not None}
-            )
-            for key, value in history.get("config", {}).items():
-                if isinstance(value, dict):
-                    mlflow.log_params(
-                        {f"config.{key}.{k}": v for k, v in value.items()}
-                    )
-                else:
-                    mlflow.log_param(f"config.{key}", value)
-            # Per-epoch curves, so the dashboard can plot them like a live run.
-            # Renamed on the way in: a history file stores the dataclass field
-            # names, which are underscored, while a live run logs the dotted
-            # convention. Logging them raw put the same curve under two keys,
-            # and comparing a backfilled run against a live one then showed
-            # empty columns rather than a difference.
-            for record in epochs:
-                step = record.get("epoch", 0)
-                mlflow.log_metrics(
-                    {
-                        EPOCH_METRIC_NAMES.get(k, k): float(v)
-                        for k, v in record.items()
-                        if isinstance(v, int | float) and k != "epoch"
-                    },
-                    step=step,
-                )
-            if epochs:
-                best = epochs[min(history.get("best_epoch", 1), len(epochs)) - 1]
-                mlflow.log_metrics(
-                    {
-                        "training.loss": float(best.get("train_loss", 0.0)),
-                        "validation.loss": float(best.get("validation_loss", 0.0)),
-                        "training.best_epoch": float(history.get("best_epoch", 0)),
-                    }
-                )
-            # "training." to match a live run. The history file calls this block
-            # "hardware", but the key a reader compares across runs has to be
-            # the same one the trainer writes.
-            hardware = _numeric(history.get("hardware", {}), "training.")
-            mlflow.log_metrics(
-                {HARDWARE_METRIC_NAMES.get(k, k): v for k, v in hardware.items()}
-            )
-            mlflow.log_artifact(str(history_path), artifact_path="history")
-        recorded += 1
-        print(f"  recorded {name}")
+def _epoch_metrics(history: dict) -> list[dict[str, float]]:
+    """Per-epoch metrics, so a backfilled run carries its curve and not a point.
 
-    for metrics_path in sorted((run_dir / "evaluation").glob("*-metrics.json")):
-        name = metrics_path.name.replace("-metrics.json", "") + "-evaluation"
-        if name in known:
-            print(f"  skip {name} (already recorded)")
-            continue
-        report = json.loads(metrics_path.read_text(encoding="utf-8"))
-        scope = report.get("evidence_scope", "development_test")
-        with mlflow.start_run(run_name=name):
-            mlflow.set_tags(
-                {
-                    "project": "deepfake-generalization",
-                    "environment": "local",
-                    "evidence_scope": validate_evidence_scope(scope),
-                    "dataset": report.get("dataset", "FakeAVCeleb"),
-                    "ablation_group": "program-evaluation",
-                    "tier": "program",
-                    "backfilled": "true",
-                }
-            )
-            source = report.get("overall", report)
-            metrics = source.get("metrics") or {}
-            mlflow.log_metrics(_numeric(metrics, "evaluation."))
-            for extra in ("confusion", "coverage", "class_balance"):
-                if isinstance(report.get(extra), dict):
-                    mlflow.log_metrics(_numeric(report[extra], f"{extra}."))
-            if isinstance(report.get("detection_rate"), int | float):
-                mlflow.log_metric("evaluation.detection_rate", report["detection_rate"])
-            mlflow.log_artifact(str(metrics_path), artifact_path="evaluation")
-        recorded += 1
-        print(f"  recorded {name}")
-    return recorded
+    `diagonal_mass` is included where the trainer recorded it. It is the measure
+    that showed a stream reaching 0.9991 AUC with attention that never moved,
+    and it is only evidence because it was never optimised, so it belongs in the
+    store beside the loss it was recorded next to.
+    """
+    rows = []
+    for epoch in history.get("epochs", []):
+        row = {
+            key: float(value)
+            for key, value in epoch.items()
+            if isinstance(value, (int, float)) and not isinstance(value, bool)
+        }
+        rows.append(row)
+    return rows
 
 
 def main(argv: list[str] | None = None) -> int:
+    import mlflow
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir", type=Path, required=True)
+    parser.add_argument("--tracking-uri", default="sqlite:///mlflow.db")
     parser.add_argument("--experiment", default=None)
-    parser.add_argument("--tracking-uri", default=None)
+    parser.add_argument(
+        "--checkpoints",
+        type=Path,
+        default=None,
+        help="Directory of checkpoints and history files. Defaults to the run's "
+        "own, and is how the frozen-BatchNorm arm gets its own runs.",
+    )
     arguments = parser.parse_args(argv)
 
+    directory = arguments.checkpoints or arguments.run_dir / "checkpoints"
+    histories = sorted(directory.glob("*-history.json"))
+    if not histories:
+        print(f"No history files in {directory}")
+        return 1
+
+    mlflow.set_tracking_uri(arguments.tracking_uri)
     experiment = arguments.experiment or arguments.run_dir.name
-    uri = arguments.tracking_uri or f"sqlite:///{Path('mlflow.db').resolve()}"
-    print(f"backfilling {arguments.run_dir} into experiment {experiment!r}")
-    count = backfill(arguments.run_dir, experiment, uri)
-    print(f"done: {count} runs recorded")
+    mlflow.set_experiment(experiment)
+
+    existing = set()
+    found = mlflow.search_runs(
+        experiment_names=[experiment], output_format="list", max_results=5000
+    )
+    for run in found:
+        value = run.data.tags.get("checkpoint_hash")
+        if value:
+            existing.add(value)
+
+    written = 0
+    for history_path in histories:
+        name = history_path.name.removesuffix("-history.json")
+        history = json.loads(history_path.read_text(encoding="utf-8"))
+        checkpoint = history_path.with_name(f"{name}.pt")
+        checkpoint_hash = str(history.get("checkpoint_hash", ""))
+        if checkpoint_hash in existing:
+            print(f"{name}: already in {experiment}, skipping")
+            continue
+
+        with mlflow.start_run(run_name=name):
+            mlflow.log_params(_flat_params(history))
+            for index, row in enumerate(_epoch_metrics(history), start=1):
+                mlflow.log_metrics(row, step=index)
+            best = history.get("best_epoch")
+            if best and history.get("epochs"):
+                final = history["epochs"][int(best) - 1]
+                mlflow.log_metrics(
+                    {
+                        f"best.{key}": float(value)
+                        for key, value in final.items()
+                        if isinstance(value, (int, float))
+                        and not isinstance(value, bool)
+                    }
+                )
+                mlflow.log_metric("best.epoch", float(best))
+            for key, value in (history.get("hardware") or {}).items():
+                if isinstance(value, (int, float)) and not isinstance(value, bool):
+                    mlflow.log_metric(f"hardware.{key}", float(value))
+            mlflow.set_tags(
+                {
+                    "backfilled": "true",
+                    "backfill_source": str(history_path.as_posix()),
+                    "backfill_source_sha256": _sha256(history_path),
+                    "checkpoint_hash": checkpoint_hash,
+                    "checkpoint_present": str(checkpoint.is_file()).lower(),
+                    "split_hash": str(
+                        history.get("metadata", {}).get("split_hash", "")
+                    ),
+                    "preprocessing_hash": str(
+                        history.get("metadata", {}).get("preprocessing_hash", "")
+                    ),
+                    "git_commit": str(
+                        history.get("metadata", {}).get("git_commit", "")
+                    ),
+                }
+            )
+            mlflow.log_dict(history, "history.json")
+            print(f"{name}: logged {len(history.get('epochs', []))} epochs")
+            written += 1
+
+    print(f"\n{written} run(s) written to experiment {experiment}")
     return 0
 
 
