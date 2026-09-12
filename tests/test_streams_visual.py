@@ -8,11 +8,9 @@ from deepfake_detection.streams import introspect
 from deepfake_detection.streams.config import (
     DINOV3,
     EFFICIENTNET_B0,
-    XCEPTION,
     StreamConfig,
     dinov3_config,
     efficientnet_config,
-    xception_config,
 )
 from deepfake_detection.streams.visual_stream import build_visual_stream
 
@@ -35,7 +33,6 @@ def clip(frames: int = 4) -> torch.Tensor:
 
 def test_presets_carry_their_own_backbone() -> None:
     assert efficientnet_config().backbone_name == EFFICIENTNET_B0
-    assert xception_config().backbone_name == XCEPTION
     assert dinov3_config().backbone_name == DINOV3
 
 

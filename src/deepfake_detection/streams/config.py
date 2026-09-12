@@ -1,7 +1,7 @@
 """Config for a visual stream. Everything that differs between streams is here.
 
 Backbone, temporal model, dims, freezing and the VRAM knobs are all fields, so
-the model code never hardcodes a choice. Xception and EfficientNet are two
+the model code never hardcodes a choice. EfficientNet and DINOv3 are two
 StreamConfigs with a different `backbone_name`.
 """
 
@@ -11,8 +11,7 @@ from dataclasses import dataclass
 
 # timm model ids for the visual backbones the dashboard exposes.
 EFFICIENTNET_B0 = "tf_efficientnet_b0.ns_jft_in1k"  # ~5M params, 1280-dim
-XCEPTION = "legacy_xception"  # ~22M params, 2048-dim
-# A ViT, unlike the two above, so it is built with an explicit img_size: its
+# A ViT, unlike EfficientNet, so it is built with an explicit img_size: its
 # pretrained config is 256 pixels and this pipeline feeds 224. 224/16 = 14, so a
 # face crop becomes a 14x14 patch grid, and the prefix is 5 rows (CLS plus 4
 # registers) rather than 1.
@@ -74,12 +73,6 @@ class StreamConfig:
 
 def efficientnet_config(**overrides) -> StreamConfig:
     base = {"stream_name": "efficientnet", "backbone_name": EFFICIENTNET_B0}
-    base.update(overrides)
-    return StreamConfig(**base)
-
-
-def xception_config(**overrides) -> StreamConfig:
-    base = {"stream_name": "xception", "backbone_name": XCEPTION}
     base.update(overrides)
     return StreamConfig(**base)
 

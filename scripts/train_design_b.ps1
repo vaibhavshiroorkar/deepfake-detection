@@ -1,7 +1,7 @@
 <#
 Design B training: the three visual streams, then the two audiovisual streams.
 
-Sequential, not parallel. One RTX 5070 Ti with 16 GB, and Xception at 224 pixels
+Sequential, not parallel. One RTX 5070 Ti with 16 GB, and a CNN at 224 pixels
 over 16 frames already needs a batch of 4, so two runs sharing the card would
 mean cutting both batch sizes and gaining nothing.
 
@@ -111,10 +111,6 @@ Invoke-Stream -Name "visual-dinov3" -Extra @(
 Invoke-Stream -Name "visual-efficientnet" -Extra @(
     "train", "visual-stream", "--backbone", "efficientnet", "--freeze-epochs", "2",
     "--batch-size", "8", "--accumulation-steps", "2", "--frame-chunk-size", "8")
-
-Invoke-Stream -Name "visual-xception" -Extra @(
-    "train", "visual-stream", "--backbone", "xception", "--freeze-epochs", "2",
-    "--batch-size", "2", "--accumulation-steps", "8", "--frame-chunk-size", "2")
 
 # Batch 4 with four accumulation steps, not 8 with two. The effective batch is
 # the same 16, but a cross-modal stream holds two encoders and unfreezes both at

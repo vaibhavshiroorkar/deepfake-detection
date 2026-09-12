@@ -332,7 +332,6 @@ def test_a_generic_token_does_not_claim_another_backbone(tmp_path: Path) -> None
     runs = tmp_path / "runs"
     run_checkpoint(runs, "design-b", "visual-dinov3.pt")
     run_checkpoint(runs, "design-b", "visual-efficientnet.pt")
-    run_checkpoint(runs, "design-b", "visual-xception.pt")
     run_checkpoint(runs, "program", "final-visual-seed17.pt")
 
     def names(stream: str) -> set[str]:
@@ -342,7 +341,6 @@ def test_a_generic_token_does_not_claim_another_backbone(tmp_path: Path) -> None
         }
 
     assert names("dinov3") == {"visual-dinov3.pt"}
-    assert names("xception") == {"visual-xception.pt"}
     # Its own, plus the Design A checkpoint that is EfficientNet-B0 unnamed.
     assert names("efficientnet") == {"visual-efficientnet.pt", "final-visual-seed17.pt"}
 

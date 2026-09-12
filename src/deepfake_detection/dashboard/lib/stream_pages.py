@@ -23,7 +23,6 @@ from deepfake_detection.dashboard.lib import sticky
 from deepfake_detection.streams.config import (
     DINOV3,
     EFFICIENTNET_B0,
-    XCEPTION,
     StreamConfig,
 )
 
@@ -45,7 +44,6 @@ TEMPORAL = {
 # The three visual backbones, in the order the Documentation page introduces
 # them. Each is the same module with a different backbone name.
 VISUAL_MODELS = {
-    "xception": ("Xception", XCEPTION),
     "efficientnet": ("EfficientNet-B0", EFFICIENTNET_B0),
     "dinov3": ("DINOv3 (ViT-S/16)", DINOV3),
 }
@@ -63,7 +61,7 @@ DEFAULTS = {
 # the trained checkpoints were written under these values. Building a stream
 # with the wrong one still loads every tensor -- the shapes match either way --
 # and then quietly computes a different vector than the one that was trained.
-GLOBAL_POOL = {"xception": "avg", "efficientnet": "avg", "dinov3": "token"}
+GLOBAL_POOL = {"efficientnet": "avg", "dinov3": "token"}
 
 # Only the visual streams are configurable: the cross-modal encoders are Stage
 # 4 and 5, so there is nothing yet to configure for them.

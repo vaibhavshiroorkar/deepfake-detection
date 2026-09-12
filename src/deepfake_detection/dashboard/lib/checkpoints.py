@@ -37,7 +37,6 @@ STATE_KEYS = ("model_state", "state_dict", "model_state_dict", "model", "weights
 # The token that names a stream in a checkpoint filename.
 STREAM_TOKENS = {
     "efficientnet": "efficientnet",
-    "xception": "xception",
     "dinov3": "dinov3",
     "lipsync": "lipsync",
     "emotion": "emotion",
@@ -46,7 +45,7 @@ STREAM_TOKENS = {
 # `ddf train visual` is welded to EfficientNet-B0 and names its output "visual"
 # with no backbone in it, so without this every Design A visual checkpoint stays
 # invisible. It cannot be a plain alias: `ddf train visual-stream` writes
-# `visual-dinov3.pt` and `visual-xception.pt`, which also contain "visual", so a
+# `visual-dinov3.pt`, which also contains "visual", so a
 # generic token only applies to a file that names no other stream.
 GENERIC_TOKENS = {"efficientnet": ("visual",)}
 

@@ -1305,7 +1305,7 @@ def _binary_branch_train(arguments: argparse.Namespace) -> int:
     return 0
 
 
-VISUAL_STREAM_PRESETS = ("dinov3", "efficientnet", "xception")
+VISUAL_STREAM_PRESETS = ("dinov3", "efficientnet")
 
 
 def _visual_stream_train(arguments: argparse.Namespace) -> int:
@@ -1337,7 +1337,6 @@ def _visual_stream_train(arguments: argparse.Namespace) -> int:
     from deepfake_detection.streams.config import (
         dinov3_config,
         efficientnet_config,
-        xception_config,
     )
     from deepfake_detection.streams.visual_stream import build_visual_stream
     from deepfake_detection.training.checkpoints import (
@@ -1354,7 +1353,6 @@ def _visual_stream_train(arguments: argparse.Namespace) -> int:
     presets = {
         "dinov3": dinov3_config,
         "efficientnet": efficientnet_config,
-        "xception": xception_config,
     }
     config = presets[arguments.backbone](
         pretrained=True,
@@ -2644,7 +2642,6 @@ def build_parser() -> argparse.ArgumentParser:
             "emotion",
             "dinov3",
             "efficientnet",
-            "xception",
         ),
         default=("visual", "audio", "sync"),
     )

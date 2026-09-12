@@ -43,6 +43,7 @@ uv run ddf --help
 - `ddf train stream`
 - `ddf train sync`
 - `ddf train visual`
+- `ddf train visual-stream`
 <!-- END GENERATED COMMANDS -->
 
 The command block comes from `build_parser()`. Run `uv run ddf-docs` after a
@@ -189,7 +190,7 @@ falling loss beside a flat diagonal mass means the stream found a shortcut
 rather than learning synchronisation. Run `uv run ddf train stream --help`.
 
 `ddf train visual-stream` trains one configurable visual stream: DINOv3,
-EfficientNet-B0 or Xception, each projected to a shared width so several can be
+or EfficientNet-B0, each projected to a shared width so several can be
 concatenated for feature-level fusion. `--freeze-backbone` is the flag that
 matters. A fine-tuned backbone can absorb the corpus it trains on: the
 EfficientNet baseline reached 0.9742 in-domain and then called 130 of 155

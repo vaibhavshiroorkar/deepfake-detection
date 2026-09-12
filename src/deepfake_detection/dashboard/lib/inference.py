@@ -12,7 +12,7 @@ deepfake_detection/streams/introspect.py.
 
 import numpy as np
 
-# ImageNet statistics. The default timm backbones (EfficientNet-NS, Xception)
+# ImageNet statistics. The default timm backbone (EfficientNet-NS)
 # were pretrained with these. Single source of truth in preprocessing.ops.
 from deepfake_detection.preprocessing.ops.constants import IMAGENET_MEAN, IMAGENET_STD
 

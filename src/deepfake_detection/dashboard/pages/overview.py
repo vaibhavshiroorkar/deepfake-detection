@@ -86,7 +86,7 @@ from another, and no weighted average of five scores can express it.
 |---|---|
 | Preprocessing | Built. Shared functions in `deepfake_detection/preprocessing/ops/`, called by both the batch pipeline and this dashboard. |
 | Manifests and splits | Built. Source-disjoint, verified by `ddf split build`, which reports every source and identity overlap. |
-| Visual stream module | Built. EfficientNet-B0, Xception and DINOv3 all wired. |
+| Visual stream module | Built. EfficientNet-B0 and DINOv3 both wired. |
 | Visual baseline training | Built and run. One frozen EfficientNet-B0 checkpoint, tracked in MLflow. |
 | Audio and sync branches | Prototypes. Trained on a fixture, not evaluated. |
 | Lip-sync and emotion streams | Designed. Stages 4 and 5. |

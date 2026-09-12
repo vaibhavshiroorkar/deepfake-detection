@@ -69,10 +69,9 @@ class VisualStream(nn.Module):
         self.backbone = _create_backbone(config)
         self.feature_dim = self.backbone.num_features
 
-        # Gradient checkpointing is a VRAM trade, not a correctness requirement,
-        # and legacy_xception does not implement it: timm's method is present
-        # but asserts on enable. Losing it costs memory, so it is recorded
-        # rather than swallowed, and it is never fatal.
+        # Gradient checkpointing is a VRAM trade, not a correctness requirement.
+        # Some timm backbones expose the method and assert on enable, so a
+        # refusal is recorded rather than swallowed, and it is never fatal.
         self.grad_checkpointing = False
         if config.grad_checkpointing and hasattr(
             self.backbone, "set_grad_checkpointing"

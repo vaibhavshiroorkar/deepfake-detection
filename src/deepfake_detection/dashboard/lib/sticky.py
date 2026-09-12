@@ -56,8 +56,9 @@ def clip_settings() -> dict:
 def run_state(key: str) -> dict:
     """The visual stream's run controls and last trace, for one backbone.
 
-    Per backbone rather than one shared slot, so switching from Xception to
-    DINOv3 shows DINOv3's own last run instead of Xception's flagged stale, and
+    Per backbone rather than one shared slot, so switching from EfficientNet
+    to DINOv3 shows DINOv3's own last run instead of EfficientNet's flagged
+    stale, and
     the two can be compared by flipping between them. A checkpoint is trained for
     one backbone and is never loadable into another, so it belongs here too.
     """

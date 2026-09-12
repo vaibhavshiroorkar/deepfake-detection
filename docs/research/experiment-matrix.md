@@ -56,7 +56,7 @@ full scale; the remaining seeds are queued behind the visual results.
 | XM-03 | Cross-corpus | Lip-sync stream on DFDC | Zero-shot, the only audio-bearing corpus not built on VoxCeleb2 | planned |
 | VST-01 | Visual stream | DINOv3 ViT-S/16, backbone frozen | In-domain test and DFDC ROC-AUC | superseded |
 | VST-02 | Visual stream | EfficientNet-B0, fine-tuned after 2 frozen epochs | Same | superseded |
-| VST-03 | Visual stream | Xception, fine-tuned after 2 frozen epochs | Same | queued |
+| VST-03 | Visual stream | Xception, fine-tuned after 2 frozen epochs | Same | dropped |
 | VST-04 | Visual stream | All three, checkpoint selected on ROC-AUC | Same | running |
 
 VIS-01 needs code before it can run: `branches/visual.py` builds only
@@ -148,3 +148,9 @@ See [docs/data-card.md](../data-card.md) for the full inventory and the
 Use only `planned`, `running`, `failed`, `accepted`, or `superseded`. Add MLflow
 run IDs only after runs exist. Never convert smoke fixture metrics into a
 research result.
+
+VST-03 is dropped rather than pending. Xception and EfficientNet are both
+ImageNet CNNs fine-tuned on the same clips, so they were expected to fail on the
+same videos and the second to add little. It never completed a run, so the
+redundancy was never measured: this is a design decision taken on the argument,
+not an ablation result, and it should be reported that way.

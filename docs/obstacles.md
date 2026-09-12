@@ -586,5 +586,5 @@ milliseconds.
 The filename match needs care too. `ddf train visual` names its output `visual`
 with no backbone in it, so "visual" has to reach efficientnet or every Design A
 checkpoint is invisible. But `ddf train visual-stream` writes `visual-dinov3.pt`
-and `visual-xception.pt`, which contain "visual" as well, so a generic token
+which contains "visual" as well, so a generic token
 only applies to a filename that names no other stream.

@@ -24,7 +24,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from deepfake_detection.dashboard.lib import datasets
+from deepfake_detection.dashboard.lib import datasets, media_kind
 from deepfake_detection.dashboard.paths import DATA_DIR, RUNS_DIR
 
 MANIP_TYPES = [
@@ -245,20 +245,56 @@ def preprocessing_row() -> dict | None:
 
 def _render_upload(st):
     uploaded = st.file_uploader(
-        "Video file",
-        type=["mp4", "mov", "mkv", "webm", "avi"],
+        "Video, image or audio",
+        type=list(media_kind.UPLOAD_SUFFIXES),
         key="sel_upload",
         help="Runs through the same pipeline as a dataset clip. Never copied into data/.",
     )
     if uploaded is None:
         st.caption(
-            "An uploaded clip has no ground truth, so its label reads *unknown*."
+            "A video drives every stream. An image drives the visual stream "
+            "only, and a sound file the audio branch only. An upload has no "
+            "ground truth, so its label reads *unknown*."
         )
         return None
 
     row = upload_row(uploaded.name, uploaded.getvalue(), str(uploaded.file_id))
     _selected_card(st, row, action_label=None)
+    render_routing(st, uploaded.name)
     return row
+
+
+def render_routing(st, filename: str) -> str:
+    """Say which streams this file can drive, and why the others cannot.
+
+    Shown at selection rather than at run time. Someone who uploads a photograph
+    should learn straight away that three of the four streams cannot read it,
+    instead of meeting three empty panels later and assuming a fault.
+    """
+    kind = media_kind.classify(filename)
+    if kind == media_kind.UNKNOWN:
+        st.warning(
+            f"`{Path(filename).suffix or filename}` is not a media type this "
+            "pipeline reads."
+        )
+        return kind
+
+    st.caption(f"Detected **{kind}**. {media_kind.describe(kind)}")
+    entries = media_kind.availability(kind)
+    for column, entry in zip(st.columns(len(entries)), entries, strict=False):
+        label = media_kind.STREAM_LABELS[entry.stream]
+        with column:
+            st.markdown(f"**{label}**")
+            if entry.degraded:
+                st.warning("limited")
+            elif entry.available:
+                st.success("runs")
+            else:
+                st.info("not available")
+    for entry in entries:
+        if entry.reason:
+            st.caption(f"**{media_kind.STREAM_LABELS[entry.stream]}**: {entry.reason}")
+    return kind
 
 
 # -------------------------------------------------------------------- dataset

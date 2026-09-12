@@ -17,7 +17,7 @@ STREAMS = {
     "views": [
         (
             "Visual",
-            "Xception, EfficientNet-B0 and DINOv3 over the face-crop sequence. Configure "
+            "EfficientNet-B0 and DINOv3 over the face-crop sequence. Configure "
             "the temporal model, hidden size, embedding dim and freezing, then run a clip "
             "and watch the activations at every backbone stage.",
         ),

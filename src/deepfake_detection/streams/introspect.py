@@ -10,7 +10,7 @@ tests without a running app; the colouring and layout live in
 the dashboard's lib/trace_ui.py.
 
 Two shapes of stage come back, because the backbones are not the same kind of
-network. A CNN stage (Xception, EfficientNet) emits a spatial map [C, H, W] per
+network. A CNN stage (EfficientNet) emits a spatial map [C, H, W] per
 frame. A ViT stage (DINOv3) emits a token matrix [prefix + P, D] per frame, one
 row per patch plus the CLS and register rows. `StageTrace.kind` says which, and
 callers must branch: a channel grid is meaningless for tokens, and a patch grid

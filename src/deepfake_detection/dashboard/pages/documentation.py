@@ -103,8 +103,7 @@ pipeline instead of the forgery.
     st.markdown("""
 | Stream | Inputs | What it contributes | Stage |
 |---|---|---|---|
-| **Xception** | faces | Low-level blending and colour artifacts. The long-standing FaceForensics++ baseline, strongest of the classic CNNs on manipulation residue. | 3 |
-| **EfficientNet-B0** | faces | A second artifact view from a different architecture family, and the lightest of the three, which is why it was built first and set the AUC 0.994 bar. | 2 |
+| **EfficientNet-B0** | faces | Low-level blending and colour artifacts, from a fine-tuned CNN. The lightest stream, built first, and the one that set the AUC 0.994 bar. | 2 |
 | **DINOv3 (ViT-S/16)** | faces | Self-supervised features, learned with no fake/real labels at all. The bet is that generic visual structure transfers to manipulation methods never seen in training. | 3 |
 | **Lip-sync** | mouth + audio | Cross-attention between AV-HuBERT (video) and Whisper (audio): a synchronisation-mismatch vector. | 4 |
 | **Emotion** | faces + audio | Cross-attention between HSEmotions (face) and Wav2Vec2 (voice): an affect-consistency mismatch vector. | 5 |
@@ -737,24 +736,6 @@ generally scores better, at a cost that scales with five backbones. The decision
 left open until Stage 6 rather than assumed.
 """)
 
-    with st.expander("**Xception**: depthwise separable convolutions"):
-        st.markdown("""
-Xception replaces the standard convolution with a **depthwise separable** pair: first a single
-k×k kernel per input channel, applied independently and mixing nothing across channels; then a
-1×1 convolution that mixes channels and mixes nothing spatially. The hypothesis in the name,
-"extreme Inception", is that spatial correlation and cross-channel correlation are separable
-enough to be modelled by two dedicated operations rather than one entangled one.
-""")
-        st.latex(r"\frac{\text{separable cost}}{\text{standard cost}} = "
-                 r"\frac{1}{C_{\text{out}}} + \frac{1}{k^{2}}")
-        st.markdown("""
-For k=3 and typical widths that is roughly 8–9× fewer multiply-accumulates. The saved parameters
-are spent on depth: 36 convolutional layers in 14 modules, all but the first and last wrapped in
-residual connections. It is the reference baseline in the FaceForensics++ benchmark, where it
-outperformed the alternatives on manipulation detection, which is why it is in this system rather
-than a newer general-purpose classifier.
-""")
-
     with st.expander("**EfficientNet-B0**: compound scaling"):
         st.markdown("""
 EfficientNet's contribution is the observation that depth, width and input resolution should not
@@ -797,8 +778,8 @@ representation at ~22M parameters. Patch 16 at a 224-pixel crop gives a 14x14 pa
 token matrix carries four register tokens behind the CLS token: extra rows the model can park
 global information in, so it stops overloading a few patch tokens to do the same job.
 
-The reason it is here is specific. Xception and EfficientNet were trained to recognise categories
-and are then fine-tuned to recognise the artifacts of the forgeries they were shown, which is
+The reason it is here is specific. EfficientNet was trained to recognise categories
+and is then fine-tuned to recognise the artifacts of the forgeries they were shown, which is
 exactly the kind of learning that fails on a generator it has never seen. DINOv3's features were
 never fitted to any manipulation, so the expectation is that it degrades more gracefully on unseen
 methods. Whether that expectation survives contact with the ablation is one of the results this
@@ -896,9 +877,10 @@ fusion weights. This is a real cost of the design, not an oversight.""")
     st.markdown("""
 **Ablation.** Every stream is evaluated alone and in combination. Because fusion is feature-level,
 removing a stream means changing the MLP's input dimension and retraining the head, not masking a
-column. The expected finding is that Xception and EfficientNet overlap, since both are
-artifact-focused CNNs likely to catch the same forgeries, in which case one is redundant and
-should be dropped. Dropping a stream because the data said so is a result, not a failure.
+column. This argument already removed one stream: Xception and EfficientNet are both
+ImageNet CNNs fine-tuned on the same clips, so they were expected to fail on the same videos, and
+Xception was cut rather than trained. That is a design decision taken on the argument, not a
+measured ablation result, and it should be described that way.
 
 **Per-category and per-method reporting.** Aggregate accuracy actively conceals the outcome that
 matters here. A model can score 96% overall by handling face swaps well while failing on every

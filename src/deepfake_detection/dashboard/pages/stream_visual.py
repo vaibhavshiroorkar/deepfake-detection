@@ -13,7 +13,7 @@ architecture invalidates it, and the page says so instead of showing stale
 pictures beside new settings.
 
 The trace and the controls that produced it are kept PER BACKBONE, in
-the dashboard's lib/sticky.py, so flipping between Xception and DINOv3 shows each one's
+the dashboard's lib/sticky.py, so flipping between EfficientNet and DINOv3 shows each one's
 own last run rather than the other's flagged stale, and leaving the page for the
 Preprocessing tab and coming back does not reset anything.
 """

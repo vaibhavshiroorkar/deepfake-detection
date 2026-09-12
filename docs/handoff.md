@@ -270,7 +270,7 @@ directly and puts every recorded run in one comparison table.
 
 The teaching pages need no checkpoint and no data. Preprocessing shows every
 step as a toggle applied cumulatively, ending in the exact tensor a model would
-receive. The Streams pages build EfficientNet-B0, Xception or DINOv3 from one
+receive. The Streams pages build EfficientNet-B0 or DINOv3 from one
 `StreamConfig` and show what each backbone stage responded to. They load
 whatever checkpoint you pick, from `checkpoints/<stream>/` or from an MLflow
 run, and report exactly which tensors did and did not fit.

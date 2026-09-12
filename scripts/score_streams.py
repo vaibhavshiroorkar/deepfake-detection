@@ -31,7 +31,6 @@ from pathlib import Path
 STREAM_KINDS = {
     "visual-dinov3": ("visual", "dinov3"),
     "visual-efficientnet": ("visual", "efficientnet"),
-    "visual-xception": ("visual", "xception"),
     "stream-lipsync": ("lipsync", None),
     "stream-emotion": ("emotion", None),
 }
@@ -62,14 +61,12 @@ def build_model(name: str, history: dict):
         from deepfake_detection.streams.config import (
             dinov3_config,
             efficientnet_config,
-            xception_config,
         )
         from deepfake_detection.streams.visual_stream import build_visual_stream
 
         presets = {
             "dinov3": dinov3_config,
             "efficientnet": efficientnet_config,
-            "xception": xception_config,
         }
         config = presets[backbone](
             pretrained=False,
