@@ -12,6 +12,16 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Added `docs/research/paper.md`, the draft. Its claim is the evaluation method
+  rather than the architecture or the accuracy: the negative answer to the
+  research question is reported, and so is how close the project came to
+  reporting the opposite.
+- Corrected the MNW claim while sourcing it for the paper. It was quoted as "29
+  percent detection on in-the-wild generators"; the file says 25 of 85
+  manipulated clips overall, and the in-the-wild clips are the ones it detects
+  best at 7 of 8. The failure is concentrated in the named generators, worst on
+  `vasa_1` at 0 of 10.
+
 - Added `scripts/run_fusion_ablations.py` and ran the two ablations the research
   design specifies and that had never been run. Late fusion over calibrated
   logits reads 0.5687 [0.5279, 0.6052] on DFDC against the deep head's 0.5411

@@ -93,6 +93,20 @@ RESULTS: tuple[Result, ...] = (
         seeds=1,
     ),
     Result(
+        result_id="A-visual-mnw",
+        paper_location="Results, how generalization fails",
+        command="ddf evaluate branch --branch visual --dataset MNW",
+        report=PROGRAM / "evaluation" / "visual-mnw-metrics.json",
+        predictions=PROGRAM / "evaluation" / "visual-mnw-predictions.csv",
+        mlflow=(("program-20260906", "visual-mnw-evaluation"),),
+        decision=(
+            "Detection is 25 of 85 and not uniform across generators: 0 of 10 on "
+            "vasa_1 against 7 of 8 in the wild"
+        ),
+        seeds=1,
+        notes="Fake-only, so no ranking metric exists. Detection rate only.",
+    ),
+    Result(
         result_id="B-stream-scores",
         paper_location="Results, per-stream ROC-AUC with intervals",
         command="python scripts/score_streams.py --run-dir runs/design-b-20260910",

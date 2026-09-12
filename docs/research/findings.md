@@ -103,8 +103,10 @@ and the error-overlap table answers only the first.
 ### F6. Generalization collapses in a specific, mechanistic way
 
 Result: `A-fusion-in-domain` and `A-fusion-dfdc`. The Design A pipeline reads
-0.9990 in-domain and 0.7500 on DFDC, with 29 percent detection on in-the-wild
-generators and 0 of 10 on `vasa_1`.
+0.9990 in-domain and 0.7500 on DFDC. On MNW, which is fake-only, it detects 25
+of 85 manipulated clips, and the breakdown is not uniform: 0 of 10 on `vasa_1`,
+0 of 4 on `raskai`, 1 of 6 on `diff2lip`, against 7 of 8 on the unnamed
+in-the-wild clips.
 
 `visual_view` samples 16 frames from across the whole clip, so genuine camera
 motion produces the same frame-to-frame variation a flickering forgery does.
