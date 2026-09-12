@@ -12,6 +12,16 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Measured that freezing BatchNorm during fine-tuning trades cross-corpus
+  transfer for in-domain accuracy, which an earlier entry recorded as a clean
+  win. One variable at a time on 1,400 clips, each arm scored on the full DFDC
+  set: frozen BatchNorm reads 0.9197 validation and 0.5005 DFDC, live BatchNorm
+  reads 0.5267 and 0.6482. Changing the epoch budget from 10 to 3 moved DFDC by
+  0.005, so the epoch count is not the lever.
+- Added `scripts/stream_correlation.py` and `scripts/run_deep_ablation.py`, which
+  report whether two streams fail on the same clips and whether fusing a subset
+  beats the best single stream on each partition.
+
 - Every manifest now carries a `label` column, derived on load when the file
   does not have one. Widening dataset discovery to accept `clip_fake` and
   `manipulation_type` manifests made four datasets visible in the picker and
