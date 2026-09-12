@@ -23,6 +23,7 @@ import argparse
 import itertools
 import json
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 
@@ -46,11 +47,47 @@ def _rows(path: Path, streams: tuple[str, ...]):
     ]
 
 
-def _score(model, rows, dims, device: str) -> float | None:
-    """ROC-AUC of a fitted head over one partition, or None for one class."""
+@dataclass(frozen=True, slots=True)
+class _Scored:
+    """One fused clip, carrying the identity the bootstrap clusters on."""
+
+    logit: float
+    label: int
+    source_identity: str
+
+
+def _auc_of(items) -> float:
+    """ROC-AUC over a resample. 0.5 when a draw lands on one class, so one
+    degenerate sample does not discard the whole interval."""
     import torch
 
-    from deepfake_detection.training.fusion import _auc, as_tensors
+    from deepfake_detection.training.fusion import _auc
+
+    labels = [item.label for item in items]
+    if len(set(labels)) != 2:
+        return 0.5
+    return float(
+        _auc(
+            torch.tensor([item.logit for item in items]),
+            torch.tensor([float(item.label) for item in items]),
+        )
+    )
+
+
+def _score(model, rows, dims, device: str, *, samples: int, seed: int):
+    """ROC-AUC with a confidence interval, or None when one class is present.
+
+    Clustered on `source_identity`, not on the clip. The question a reader has
+    is what happens on a different set of speakers, not on a different draw of
+    clips from these speakers. On DFDC that happens to give a narrower interval
+    than a clip-level bootstrap, 0.0776 against 0.1065, because identities there
+    carry balanced class proportions and resampling whole identities preserves
+    the ratio. Narrower is not the reason to choose it; matching the question is.
+    """
+    import torch
+
+    from deepfake_detection.evaluation.bootstrap import cluster_bootstrap_interval
+    from deepfake_detection.training.fusion import as_tensors
 
     usable = [row for row in rows if row.branch_embeddings]
     if not usable:
@@ -61,7 +98,12 @@ def _score(model, rows, dims, device: str) -> float | None:
     model.eval()
     with torch.inference_mode():
         output = model(values, presence)
-    return float(_auc(output.logit, labels))
+    logits = output.logit.cpu().tolist()
+    scored = [
+        _Scored(logit, int(row.label), row.source_identity)
+        for logit, row in zip(logits, usable, strict=False)
+    ]
+    return cluster_bootstrap_interval(scored, _auc_of, samples=samples, seed=seed)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -75,6 +117,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--epochs", type=int, default=150)
     parser.add_argument("--seed", type=int, default=17)
+    parser.add_argument(
+        "--bootstrap-samples",
+        type=int,
+        default=500,
+        help="Resamples per interval. 31 subsets times two partitions, so this "
+        "is the run's cost driver.",
+    )
     parser.add_argument("--output", type=Path, default=None)
     arguments = parser.parse_args(argv)
 
@@ -117,7 +166,17 @@ def main(argv: list[str] | None = None) -> int:
             row = {"streams": list(subset), "size": size,
                    "train_clips": history.train_clips}
             for name, path in partitions.items():
-                row[name] = _score(model, _rows(path, subset), dims, arguments.device)
+                interval = _score(
+                    model,
+                    _rows(path, subset),
+                    dims,
+                    arguments.device,
+                    samples=arguments.bootstrap_samples,
+                    seed=arguments.seed,
+                )
+                row[name] = None if interval is None else interval.estimate
+                if interval is not None:
+                    row[f"{name}_ci"] = [interval.lower, interval.upper]
             results.append(row)
             cells = "  ".join(
                 f"{name} {row[name]:.4f}" if row[name] is not None else f"{name} n/a"
@@ -132,7 +191,11 @@ def main(argv: list[str] | None = None) -> int:
     print("-" * len(header))
     for row in sorted(results, key=lambda r: (r["size"], r["streams"])):
         cells = "  ".join(
-            f"{row[n]:10.4f}" if row[n] is not None else f"{'n/a':>10}"
+            (
+                f"{row[n]:.4f} [{row[n + '_ci'][0]:.4f}, {row[n + '_ci'][1]:.4f}]"
+                if row.get(f"{n}_ci")
+                else (f"{row[n]:.4f}" if row[n] is not None else "n/a")
+            )
             for n in partitions
         )
         print(f"{' + '.join(row['streams']):{width}}  {cells}")
@@ -150,9 +213,29 @@ def main(argv: list[str] | None = None) -> int:
             and singles
             and all(full[name] > s[name] for s in singles)
         )
+        # Two claims, because they are not the same claim. "Beats" compares
+        # point estimates; "separated" asks whether the best combination's
+        # interval clears the best single stream's estimate. A table of
+        # overlapping intervals supports the first and not the second, and the
+        # second is the one a reader should be given.
+        best_single = max(singles, key=lambda r: r[name])
+        interval = best.get(f"{name}_ci")
+        separated = (
+            interval is not None
+            and best["size"] > 1
+            and interval[0] > best_single[name]
+        )
         print(
-            f"{name}: best is {' + '.join(best['streams'])} at {best[name]:.4f}; "
-            f"all streams {'beats' if beats else 'does NOT beat'} every single stream"
+            f"{name}: best is {' + '.join(best['streams'])} at {best[name]:.4f}"
+            + (f" [{interval[0]:.4f}, {interval[1]:.4f}]" if interval else "")
+            + f"; best single is {' + '.join(best_single['streams'])} at "
+            f"{best_single[name]:.4f}"
+        )
+        print(
+            f"   all streams {'beats' if beats else 'does NOT beat'} every single "
+            f"stream; best combination is "
+            f"{'separated from' if separated else 'NOT separated from'} the best "
+            f"single stream at 95 percent"
         )
 
     out = arguments.output or arguments.run_dir / "evaluation" / "deep-ablation.json"

@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 # Which cached views each stream reads, and so which trainer built it. Keyed by
@@ -46,6 +47,30 @@ STREAM_KINDS = {
 EXTERNAL_CHECKPOINTS = {
     "final-audio-seed17": Path("runs/program-20260906/checkpoints"),
 }
+
+
+@dataclass(frozen=True, slots=True)
+class _Scored:
+    """One scored clip, carrying the identity the bootstrap clusters on."""
+
+    logit: float
+    label: int
+    source_identity: str
+
+
+def _auc_of(items) -> float:
+    """ROC-AUC over a resampled set, for `cluster_bootstrap_interval`.
+
+    A resample can land on one class even when the full set has both, and a
+    bootstrap that raised there would lose the whole interval. Returning 0.5
+    keeps the sample and says the draw carried no ranking information.
+    """
+    from sklearn.metrics import roc_auc_score
+
+    labels = [item.label for item in items]
+    if len(set(labels)) != 2:
+        return 0.5
+    return float(roc_auc_score(labels, [item.logit for item in items]))
 
 
 def _sha256(path: Path) -> str:
@@ -150,9 +175,9 @@ def load_streams(run_dir: Path, device: str):
 
 def main(argv: list[str] | None = None) -> int:
     import numpy as np
-    from sklearn.metrics import roc_auc_score
 
     from deepfake_detection.data.manifest import load_manifest
+    from deepfake_detection.evaluation.bootstrap import cluster_bootstrap_interval
     from deepfake_detection.fusion.store import FeatureStore
     from deepfake_detection.fusion.stream_export import export_stream_features
     from deepfake_detection.views.cache_store import CacheStore
@@ -161,6 +186,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--run-dir", type=Path, required=True)
     parser.add_argument("--source-run", type=Path, default=Path("runs/program-20260906"))
     parser.add_argument("--device", default="cuda")
+    parser.add_argument(
+        "--bootstrap-samples",
+        type=int,
+        default=1000,
+        help="Resamples for the confidence interval.",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=17,
+        help="Bootstrap seed, so an interval is reproducible.",
+    )
     arguments = parser.parse_args(argv)
 
     audit = json.loads(
@@ -234,22 +271,35 @@ def main(argv: list[str] | None = None) -> int:
             f"{report.unavailable_rows:,} abstained"
         )
 
-        by_stream: dict[str, list[tuple[float, int]]] = {}
+        by_stream: dict[str, list[_Scored]] = {}
         for row in store.read():
             if row.available:
-                by_stream.setdefault(row.branch, []).append((row.logit, row.label))
-        for name, pairs in sorted(by_stream.items()):
-            labels = np.array([label for _logit, label in pairs])
-            scores = np.array([logit for logit, _label in pairs])
+                by_stream.setdefault(row.branch, []).append(
+                    _Scored(row.logit, row.label, row.source_identity)
+                )
+        for name, scored in sorted(by_stream.items()):
+            labels = np.array([item.label for item in scored])
             # One class means a ranking metric is undefined, which MNW's
             # fake-only lab set is the standing example of. Say so rather than
             # inventing a number.
-            auc = (
-                float(roc_auc_score(labels, scores)) if len(set(labels)) == 2 else None
+            if len(set(labels.tolist())) != 2:
+                summary.setdefault(name, {})[partition] = None
+                print(f"  {name:24} n/a (one class)   ({len(scored):,} clips)")
+                continue
+
+            interval = cluster_bootstrap_interval(
+                scored,
+                _auc_of,
+                samples=arguments.bootstrap_samples,
+                seed=arguments.seed,
             )
-            summary.setdefault(name, {})[partition] = auc
-            shown = f"{auc:.4f}" if auc is not None else "n/a (one class)"
-            print(f"  {name:24} {shown}   ({len(pairs):,} clips)")
+            summary.setdefault(name, {})[partition] = interval.estimate
+            summary[name][f"{partition}_ci"] = [interval.lower, interval.upper]
+            print(
+                f"  {name:24} {interval.estimate:.4f} "
+                f"[{interval.lower:.4f}, {interval.upper:.4f}]   "
+                f"({len(scored):,} clips, {len(set(i.source_identity for i in scored)):,} identities)"
+            )
 
     print("\nROC-AUC")
     columns = [p for p in partitions if any(p in row for row in summary.values())]

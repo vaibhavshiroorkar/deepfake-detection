@@ -643,3 +643,27 @@ $errors = $null
 
 The same missing newline has now bitten twice. After any scripted edit that
 inserts a comment block, check the line after it.
+
+## A cluster bootstrap is not automatically the wider one
+
+The usual argument for clustering a bootstrap on identity rather than clip is
+that clips from one speaker are correlated, so a clip-level interval understates
+uncertainty. On this data the opposite happened. For the emotion stream on DFDC:
+
+| Clustered on | Interval | Width |
+| --- | --- | --- |
+| source_identity | [0.5562, 0.6338] | 0.0776 |
+| clip_id | [0.5437, 0.6502] | 0.1065 |
+
+DFDC identities carry balanced class proportions, so resampling whole identities
+preserves the fake-to-real ratio while resampling clips lets it drift, and the
+drift adds variance.
+
+Cluster on identity anyway. The question a reader has is what happens on a
+different set of speakers, not on a different draw of clips from these speakers,
+and that is what identity resampling answers. Choose it because it matches the
+question, not because it is wider, and do not assert which way the width will go
+without measuring it.
+
+Note the in-domain partition shows nothing either way: at 0.9978 the interval is
+against the ceiling and both choices give a width near 0.004.
