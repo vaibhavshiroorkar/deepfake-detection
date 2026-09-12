@@ -61,6 +61,14 @@ class FFmpegMediaDecoder:
             capture.release()
         return tuple(frames)
 
+    def read_image(self, path: Path) -> tuple[np.ndarray, ...]:
+        """One still image as a one-frame sequence, in the same BGR layout
+        `read_frames` returns, so the tracker and crop need no special case."""
+        frame = cv2.imread(str(path), cv2.IMREAD_COLOR)
+        if frame is None:
+            raise ValueError(f"Cannot open image: {path}")
+        return (frame,)
+
     def read_audio(
         self,
         path: Path,

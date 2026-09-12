@@ -31,6 +31,8 @@ class MediaDecoder(Protocol):
         self, path: Path, timestamps_sec: tuple[float, ...]
     ) -> tuple[np.ndarray, ...]: ...
 
+    def read_image(self, path: Path) -> tuple[np.ndarray, ...]: ...
+
     def read_audio(
         self,
         path: Path,
@@ -265,6 +267,117 @@ class Preprocessor:
             clip_id=record.clip_id,
             visual_view=visual_view,
             audio_view=None,
+            sync_video_view=None,
+            sync_audio_view=None,
+            quality=quality,
+            preprocessing_fingerprint=cache_fingerprint(
+                media_path,
+                dataset=record.dataset,
+                config=self.config,
+                code_version=self.code_version,
+                leading_silence_sec=record.leading_silence_sec,
+                sync_start_sec=record.sync_start_sec,
+            ),
+            preprocessing_config_hash=preprocessing_config_hash(
+                config=self.config,
+                code_version=self.code_version,
+            ),
+        )
+
+    def prepare_image(self, record: ClipRecord, media_path: Path) -> PreparedClip:
+        """One still image, through the same detector and crop as a video frame.
+
+        `prepare_visual` cannot serve this: it probes for a duration, samples
+        sixteen timestamps and rejects anything that does not decode to exactly
+        that many frames. A photograph has no duration, so it fails before it
+        reaches a model.
+
+        The result is a `visual_view` of one frame rather than sixteen. That is
+        a real limitation and is left visible rather than papered over by
+        repeating the frame: a model trained on sixteen frames from across a
+        clip reads how the face changes between them, and a repeated frame
+        would claim that nothing changes, which is a different statement from
+        "this was one image".
+
+        Every other view is None, so the abstention machinery already treats an
+        image as a clip three streams cannot read.
+        """
+        frames = self.decoder.read_image(media_path)
+        track = self._track(frames)
+        visual_view = _face_view(
+            frames,
+            track,
+            height=self.config.visual_height,
+            width=self.config.visual_width,
+            margin=self.config.crop_margin,
+        )
+        quality = QualityReport(
+            face_coverage=track.coverage,
+            stable_face_track=track.stable,
+            audio_present=False,
+            audio_clipped=False,
+            av_duration_delta_sec=0.0,
+        )
+        return self._prepared(record, media_path, quality, visual_view=visual_view)
+
+    def prepare_audio(self, record: ClipRecord, media_path: Path) -> PreparedClip:
+        """One sound file, through the same window and normalisation as a video.
+
+        Reads the same `audio_seconds` window at the same sample rate and runs
+        it through the same `_normalize_and_pad`, so an uploaded wav reaches the
+        audio branch as the tensor it was trained on rather than a differently
+        scaled one.
+        """
+        info = self.decoder.probe(media_path)
+        if not info.audio_present:
+            raise ValueError("File has no audio track")
+        start = min(
+            record.leading_silence_sec if self.config.remove_leading_silence else 0.0,
+            max(0.0, info.audio_duration_sec - self.config.audio_seconds),
+        )
+        raw = self.decoder.read_audio(
+            media_path,
+            start_sec=start,
+            duration_sec=self.config.audio_seconds,
+            sample_rate=self.config.sample_rate,
+        )
+        valid = round(
+            min(self.config.audio_seconds, max(0.0, info.audio_duration_sec - start))
+            * self.config.sample_rate
+        )
+        audio_view = _normalize_and_pad(
+            raw,
+            length=round(self.config.audio_seconds * self.config.sample_rate),
+            valid_samples=valid,
+        )
+        quality = QualityReport(
+            face_coverage=0.0,
+            stable_face_track=False,
+            audio_present=True,
+            audio_clipped=False,
+            av_duration_delta_sec=0.0,
+        )
+        return self._prepared(record, media_path, quality, audio_view=audio_view)
+
+    def _prepared(
+        self,
+        record: ClipRecord,
+        media_path: Path,
+        quality: QualityReport,
+        *,
+        visual_view=None,
+        audio_view=None,
+    ) -> PreparedClip:
+        """A PreparedClip carrying the same provenance the video paths write.
+
+        Shared so a single-modality clip is hashed and stamped identically to a
+        video one. A prepared clip whose fingerprint was computed differently
+        would not match its cache entry.
+        """
+        return PreparedClip(
+            clip_id=record.clip_id,
+            visual_view=visual_view,
+            audio_view=audio_view,
             sync_video_view=None,
             sync_audio_view=None,
             quality=quality,
