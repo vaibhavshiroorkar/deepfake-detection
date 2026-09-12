@@ -294,3 +294,70 @@ def test_rejects_an_empty_stream_list(tmp_path: Path, cached) -> None:
 
     with pytest.raises(ValueError, match="At least one stream"):
         run_export(tmp_path, records, index, store, [])
+
+
+class RecordingAudioBranch(nn.Module):
+    """Returns what AudioSpoofBranch returns, including the plural `logits`."""
+
+    def __init__(self, width: int = 6) -> None:
+        super().__init__()
+        self.width = width
+        self.seen: list[torch.Tensor] = []
+
+    def forward(self, waveform: torch.Tensor):
+        self.seen.append(waveform.clone())
+        batch = waveform.shape[0]
+
+        class Output:
+            logits = torch.full((batch,), 0.5)
+            embedding = torch.ones(batch, self.width)
+
+        return Output()
+
+
+def test_an_audio_stream_reads_the_audio_view_alone(tmp_path: Path, cached) -> None:
+    """The Design A audio branch is the only model an audio-only input can
+    drive, so export has to accept it as a stream in its own right."""
+    records, index, store = cached
+    model = RecordingAudioBranch()
+    streams = [StreamSpec("audio", model, "hash-a", "audio")]
+
+    _report, feature_store = run_export(tmp_path, records, index, store, streams)
+
+    rows = list(feature_store.read())
+    assert all(row.available for row in rows)
+    assert all(len(row.embedding) == 6 for row in rows)
+    # One tensor per clip, and nothing was handed a video view.
+    assert len(model.seen) == len(records)
+    assert model.seen[0].ndim == 2
+
+
+def test_an_audio_stream_abstains_when_there_is_no_sound(tmp_path: Path) -> None:
+    """A still image has no audio view, and the branch must report that rather
+    than score silence."""
+    store = CacheStore(tmp_path / "cache")
+    path = store.save(
+        PreparedClip(
+            clip_id="silent",
+            visual_view=np.zeros((FRAMES, 3, SIZE, SIZE), dtype=np.float32),
+            audio_view=None,
+            sync_video_view=None,
+            sync_audio_view=None,
+            quality=QualityReport(1.0, False, True, False, 0.0),
+            preprocessing_fingerprint="fingerprint",
+            preprocessing_config_hash=HASH,
+        ),
+        dataset="fixture",
+    )
+    records = [record("silent", fake=True)]
+    streams = [StreamSpec("audio", RecordingAudioBranch(), "h", "audio")]
+
+    report, feature_store = run_export(tmp_path, records, {"silent": path}, store, streams)
+
+    assert [row.available for row in feature_store.read()] == [False]
+    assert report.failures["silent:audio"] == "missing_view: audio_view"
+
+
+def test_an_unknown_kind_names_every_kind_it_accepts() -> None:
+    with pytest.raises(ValueError, match="unknown kind"):
+        StreamSpec("thing", RecordingAudioBranch(), "h", "nonsense")

@@ -34,19 +34,27 @@ from deepfake_detection.views.cache_store import CacheStore
 
 from .store import FeatureRecord, FeatureStore
 
-# A visual stream reads one view and takes no audio, so it is not in
-# STREAM_VIEWS. Naming it here keeps the two kinds in one table.
+# The two single-modality kinds read one view each and take no second
+# modality, so neither is in STREAM_VIEWS. Naming them here keeps every kind in
+# one table.
 VISUAL_VIEW = "visual_view"
+AUDIO_VIEW = "audio_view"
+SINGLE_VIEWS = {"visual": VISUAL_VIEW, "audio": AUDIO_VIEW}
 
 
 @dataclass(frozen=True, slots=True)
 class StreamSpec:
     """One trained stream to export.
 
-    `kind` is "visual" for a `VisualStream`, which takes frames alone and
-    returns `(logit, embedding)`, or the name of an audiovisual stream in
-    STREAM_VIEWS, which takes video and audio by keyword and returns a
-    `StreamOutput`.
+    `kind` is one of three shapes, because the models predate each other and
+    return different things:
+
+      "visual"                 a `VisualStream`, frames alone, returns a plain
+                               `(logit, embedding)` tuple
+      "audio"                  an `AudioSpoofBranch`, waveform alone, returns a
+                               `BranchOutput` whose field is `logits`, plural
+      a key of STREAM_VIEWS    a `CrossModalStream`, video and audio by keyword,
+                               returns a `StreamOutput` with `logit`, singular
     """
 
     name: str
@@ -55,10 +63,11 @@ class StreamSpec:
     kind: str
 
     def __post_init__(self) -> None:
-        if self.kind != "visual" and self.kind not in STREAM_VIEWS:
+        if self.kind not in SINGLE_VIEWS and self.kind not in STREAM_VIEWS:
+            known = sorted(set(SINGLE_VIEWS) | set(STREAM_VIEWS))
             raise ValueError(
                 f"Stream {self.name!r} has unknown kind {self.kind!r}. Expected "
-                f"'visual' or one of {', '.join(sorted(STREAM_VIEWS))}."
+                f"one of {', '.join(known)}."
             )
 
 
@@ -90,11 +99,18 @@ def _normalized_audio(values: np.ndarray, device: str) -> torch.Tensor:
 
 def _forward(spec: StreamSpec, prepared, device: str) -> tuple[float, tuple[float, ...]]:
     """Run one stream over one prepared clip. Raises if a view is missing."""
-    if spec.kind == "visual":
-        frames = getattr(prepared, VISUAL_VIEW)
-        if frames is None:
-            raise LookupError(VISUAL_VIEW)
-        logit, embedding = spec.model(_tensor(frames, device))
+    if spec.kind in SINGLE_VIEWS:
+        field = SINGLE_VIEWS[spec.kind]
+        values = getattr(prepared, field)
+        if values is None:
+            raise LookupError(field)
+        if spec.kind == "audio":
+            output = spec.model(_normalized_audio(values, device))
+            # BranchOutput calls it `logits`; the stream models call it `logit`.
+            return float(output.logits[0].cpu()), tuple(
+                float(value) for value in output.embedding[0].cpu().flatten()
+            )
+        logit, embedding = spec.model(_tensor(values, device))
         return float(logit[0].cpu()), tuple(
             float(value) for value in embedding[0].cpu().flatten()
         )
