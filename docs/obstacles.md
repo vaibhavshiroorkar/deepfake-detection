@@ -624,3 +624,22 @@ cross-corpus number from a different configuration.
 
 Caveat on scale: these arms train on 1,400 clips, so the absolute values sit
 below a full-scale run. The comparison between arms is what was measured.
+
+## PSParser::Tokenize does not check that a PowerShell file parses
+
+A scripted edit glued a comment to the statement after it, so the parser read
+`# ...either way.Invoke-Stream -Name "x" -Extra @(` as one comment and the array
+was never opened. The file then failed at launch with "Unexpected token ')'"
+forty lines further down.
+
+`[System.Management.Automation.PSParser]::Tokenize` reported no problem, because
+tokenising is lexical: it splits the text into tokens and never checks that
+brackets balance. Use the real parser instead, which reports the error:
+
+```powershell
+$errors = $null
+[System.Management.Automation.Language.Parser]::ParseFile($path, [ref]$null, [ref]$errors)
+```
+
+The same missing newline has now bitten twice. After any scripted edit that
+inserts a comment block, check the line after it.

@@ -112,7 +112,9 @@ function Invoke-Stream {
 # BatchNorm while fine-tuning buys in-domain accuracy and costs cross-corpus
 # transfer: measured 0.9197 validation and 0.5005 DFDC frozen, against 0.5267
 # and 0.6482 live. DINOv3 is a ViT with no running statistics, so it is the
-# control arm and should be unaffected either way.Invoke-Stream -Name "visual-dinov3" -Extra @(
+# control arm and should be unaffected either way.
+
+Invoke-Stream -Name "visual-dinov3" -Extra @(
     "train", "visual-stream", "--backbone", "dinov3", "--freeze-backbone",
     $(if ($LiveBatchNorm) { "--live-batchnorm" } else { $null }),
     "--batch-size", "8", "--accumulation-steps", "2", "--frame-chunk-size", "8",
