@@ -27,6 +27,11 @@ Experiment metrics belong in the experiment tracker, not this file.
   drives the visual stream alone, and its cut-off came out at 0.76 against 0.50
   for a fused video and 0.26 for sound alone. The thresholds live in the
   checkpoint, so a head cannot be paired with someone else's cut-off.
+- A stream the head knows about and the server has no checkpoint for no longer
+  stops the gate. The head masks an absent stream to exactly zero, which is what
+  it already does for a clip that could not be read, and the missing stream is
+  named in the blockers on every verdict: a fusion of three where five were
+  expected is a weaker claim and nothing else on the page shows it.
 - The verdict panel now lists the streams the upload could have driven and
   whether each one produced a score. A stream that should have run and did not
   is the explanation for the verdict, and it was previously invisible: the panel

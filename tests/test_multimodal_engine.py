@@ -193,3 +193,53 @@ def test_a_head_that_never_saw_a_stream_is_refused(tmp_path: Path) -> None:
 )
 def test_stream_names_map_to_their_modality(name: str, expected: str) -> None:
     assert _modality(name) == expected
+
+
+def _partial_engine(tmp_path: Path) -> MultimodalEngine:
+    """A head trained over three streams, served with only the visual one."""
+    torch.manual_seed(17)
+    head = StreamFusion(stream_dims=DIMS, common_dim=8, hidden_sizes=(4,))
+    path = tmp_path / "fusion.pt"
+    torch.save(
+        {
+            "model": head.state_dict(),
+            "stream_dims": DIMS,
+            "common_dim": 8,
+            "hidden_sizes": [4],
+        },
+        path,
+    )
+    return MultimodalEngine(
+        preprocessor=StubPreprocessor(),
+        streams={
+            "visual-efficientnet": StreamSpec(
+                "visual-efficientnet", Stub("visual"), "h", "visual"
+            )
+        },
+        fusion=load_fusion(path),
+        device="cpu",
+    )
+
+
+def test_a_stream_with_no_checkpoint_is_reported_on_every_verdict(tmp_path) -> None:
+    """Mid-retrain, a run directory holds fewer checkpoints than the head knows.
+
+    The head masks the absent stream to zero, which is correct, and that is
+    exactly why it has to be said out loud: a verdict fused from two streams
+    where four were expected looks identical to a complete one.
+    """
+    engine = _partial_engine(tmp_path)
+
+    result = engine.predict(Path("clip.mp4"))
+
+    assert result.probability is not None
+    assert "no_checkpoint_for_stream-emotion" in result.blockers
+    assert "no_checkpoint_for_final-audio-seed17" in result.blockers
+
+
+def test_an_image_is_not_told_about_streams_it_could_never_drive(tmp_path) -> None:
+    engine = _partial_engine(tmp_path)
+
+    result = engine.predict(Path("face.jpg"))
+
+    assert not [b for b in result.blockers if b.startswith("no_checkpoint_for_")]

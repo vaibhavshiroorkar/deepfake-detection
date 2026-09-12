@@ -58,6 +58,12 @@ class MultimodalEngine:
             raise ValueError(
                 f"Streams the fusion head was not trained on: {', '.join(unknown)}"
             )
+        # A stream the head knows about and this server has no checkpoint for.
+        # Not an error: the head masks an absent stream to exactly zero, which is
+        # the same thing it does for a clip that could not be read. It is
+        # reported on every verdict, because a fusion of three where five were
+        # expected is a weaker claim and the reader cannot see it otherwise.
+        self.unavailable = tuple(sorted(set(fusion.stream_dims) - set(streams)))
         self.preprocessor = preprocessor
         self.streams = streams
         self.fusion = fusion
@@ -95,10 +101,14 @@ class MultimodalEngine:
         # view, so without this an image would silently reach a model that also
         # expects a voice.
         allowed = set(media_kind.runnable(kind))
+        absent = tuple(
+            name for name in self.unavailable if _modality(name) in allowed
+        )
 
         logits: dict[str, float] = {}
         embeddings: dict[str, tuple[float, ...]] = {}
         blockers: list[str] = list(prepared.quality.full_fusion_blockers())
+        blockers.extend(f"no_checkpoint_for_{name}" for name in absent)
 
         with torch.inference_mode():
             for name, spec in self.streams.items():
@@ -204,11 +214,10 @@ def load_multimodal_engine(
     specs = load_streams(
         run_dir, device, root=root, only=tuple(fusion.stream_dims)
     )
-    missing = sorted(set(fusion.stream_dims) - {spec.name for spec in specs})
-    if missing:
+    if not specs:
         raise ValueError(
-            "The fusion head needs streams whose checkpoints are not in "
-            f"{run_dir}: {', '.join(missing)}."
+            f"None of the head's streams have checkpoints in {run_dir}: "
+            f"{', '.join(sorted(fusion.stream_dims))}."
         )
     return MultimodalEngine(
         preprocessor=preprocessor,
