@@ -27,6 +27,12 @@ class PredictionResult:
     branch_logits: dict[str, float]
     blockers: tuple[str, ...]
     preprocessing_fingerprint: str
+    # Both empty on the Design A path, which serves one media kind at one fixed
+    # threshold. The multimodal engine fills them because there a verdict cannot
+    # be read without knowing which evidence produced it and where the cut-off
+    # for that evidence sat.
+    media_kind: str = ""
+    threshold: float | None = None
 
 
 class PredictionEngine:

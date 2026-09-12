@@ -56,7 +56,15 @@ superseded checkpoints are kept under
 `runs/design-b-20260910/checkpoints-loss-selected/` so the comparison survives.
 
 The teaching pages walk a clip through the pipeline stage by stage with three
-configurable visual backbones; the Evidence gate runs the frozen baseline.
+configurable visual backbones. The Evidence gate now serves the five Design B
+streams through the feature-level head rather than the single frozen visual
+model, and it takes a video, a photograph or a sound file, routing each to the
+streams it can drive. Its head is `runs/design-b-20260910/checkpoints/
+gate-fusion.pt`, fitted by `scripts/fit_gate_fusion.py`, which also chooses one
+decision threshold per media kind: 0.50 for a fused video, 0.76 for an image
+scored on the visual stream alone, 0.26 for sound alone. A checkout with no head
+falls back to the frozen visual baseline, and the verdict panel says which of
+the two produced it.
 
 [docs/dashboard.md](dashboard.md) describes the dashboard layout.
 [docs/obstacles.md](obstacles.md) collects the constraints and traps that cost
@@ -256,10 +264,12 @@ The dashboard reads the ignored `runs` artifacts of the active checkout, so
 launch it from a checkout where they are present.
 
 The Evidence gate is the only page that produces a verdict. Video input accepts
-one local clip. Preprocessing builds the visual view after the user starts it.
-Prediction loads the frozen visual engine only after its checkpoint hash, run
-ID, split hash, commit, seed and preprocessing hash match the dashboard
-defaults. Derived state is keyed by the upload's SHA-256, so a new upload
+one local video, image or sound file and says which streams it can drive before
+anything runs. Preprocessing builds the visual view after the user starts it.
+Prediction loads the multimodal engine only after the server's own preprocessing
+hash matches the one the fusion head was fitted under; when it falls back to the
+frozen visual engine, that engine still checks its checkpoint hash, run ID, split
+hash, commit, seed and preprocessing hash against the dashboard defaults. Derived state is keyed by the upload's SHA-256, so a new upload
 invalidates preprocessing and the prediction rather than leaving a stale result
 on screen.
 

@@ -27,27 +27,6 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-# Which cached views each stream reads, and so which trainer built it. Keyed by
-# the checkpoint stem the training script writes.
-STREAM_KINDS = {
-    "visual-dinov3": ("visual", "dinov3"),
-    "visual-efficientnet": ("visual", "efficientnet"),
-    "stream-lipsync": ("lipsync", None),
-    "stream-emotion": ("emotion", None),
-    # The Design A audio branch, reused rather than retrained: it already emits
-    # a 256-dim embedding, the same width the streams project to, so it drops
-    # into the fusion head unchanged. It is also the only model an audio-only
-    # input can drive.
-    "final-audio-seed17": ("audio", None),
-}
-
-# A stream whose checkpoint lives outside the run directory. The audio branch
-# was trained by the Design A program run and there is no reason to train it
-# again.
-EXTERNAL_CHECKPOINTS = {
-    "final-audio-seed17": Path("runs/program-20260906/checkpoints"),
-}
-
 
 @dataclass(frozen=True, slots=True)
 class _Scored:
@@ -73,106 +52,6 @@ def _auc_of(items) -> float:
     return float(roc_auc_score(labels, [item.logit for item in items]))
 
 
-def _sha256(path: Path) -> str:
-    import hashlib
-
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1 << 20), b""):
-            digest.update(block)
-    return digest.hexdigest()
-
-
-def build_model(name: str, history: dict):
-    """Rebuild a stream exactly as it was trained, from its own history file.
-
-    Reading the architecture back from the history rather than passing flags is
-    deliberate: a stream rebuilt with the wrong temporal model still loads most
-    of its tensors and then computes a different vector, which is the failure
-    the dashboard's checkpoint picker had to be taught to report.
-    """
-    kind, backbone = STREAM_KINDS[name]
-    model_config = history["config"]["model"]
-
-    if kind == "visual":
-        from deepfake_detection.streams.config import (
-            dinov3_config,
-            efficientnet_config,
-        )
-        from deepfake_detection.streams.visual_stream import build_visual_stream
-
-        presets = {
-            "dinov3": dinov3_config,
-            "efficientnet": efficientnet_config,
-        }
-        config = presets[backbone](
-            pretrained=False,
-            common_dim=model_config["common_dim"],
-            temporal_type=model_config["temporal"],
-            temporal_hidden=model_config["temporal_hidden"],
-            freeze_backbone=model_config["frozen_backbone"],
-            frame_chunk_size=8,
-        )
-        return build_visual_stream(config), kind
-
-    if kind == "audio":
-        from deepfake_detection.branches.audio import build_wav2vec2_audio_branch
-
-        return (
-            build_wav2vec2_audio_branch(
-                model_name=model_config.get("audio_model", "facebook/wav2vec2-base"),
-                pretrained=False,
-            ),
-            kind,
-        )
-
-    from deepfake_detection.streams.cross_modal_stream import (
-        build_emotion_stream,
-        build_lipsync_stream,
-    )
-
-    builder = build_lipsync_stream if kind == "lipsync" else build_emotion_stream
-    return (
-        builder(
-            pretrained=False,
-            common_dim=model_config.get("common_dim", 256),
-        ),
-        kind,
-    )
-
-
-def load_streams(run_dir: Path, device: str):
-    """Every trained checkpoint in the run, rebuilt and loaded."""
-    from deepfake_detection.fusion.stream_export import StreamSpec
-    from deepfake_detection.training.checkpoints import load_checkpoint
-
-    specs = []
-    for name in STREAM_KINDS:
-        directory = EXTERNAL_CHECKPOINTS.get(name, run_dir / "checkpoints")
-        checkpoint = directory / f"{name}.pt"
-        history_path = directory / f"{name}-history.json"
-        if not checkpoint.is_file() or not history_path.is_file():
-            print(f"  {name}: not trained yet, skipping")
-            continue
-        history = json.loads(history_path.read_text(encoding="utf-8"))
-        model, kind = build_model(name, history)
-        load_checkpoint(checkpoint, model=model)
-        specs.append(
-            StreamSpec(
-                name=name,
-                model=model.to(device).eval(),
-                checkpoint_hash=_sha256(checkpoint),
-                kind=kind,
-            )
-        )
-        best = history["epochs"][history["best_epoch"] - 1]
-        print(
-            f"  {name}: epoch {history['best_epoch']} of {len(history['epochs'])}, "
-            f"val loss {best['validation_loss']:.4f}"
-        )
-    return specs
-
-
 def main(argv: list[str] | None = None) -> int:
     import numpy as np
 
@@ -180,6 +59,7 @@ def main(argv: list[str] | None = None) -> int:
     from deepfake_detection.evaluation.bootstrap import cluster_bootstrap_interval
     from deepfake_detection.fusion.store import FeatureStore
     from deepfake_detection.fusion.stream_export import export_stream_features
+    from deepfake_detection.fusion.stream_loading import load_streams
     from deepfake_detection.views.cache_store import CacheStore
 
     parser = argparse.ArgumentParser(description=__doc__)
@@ -206,7 +86,7 @@ def main(argv: list[str] | None = None) -> int:
     preprocessing_hash = audit["preprocessing_hash"]
 
     print("trained streams:")
-    specs = load_streams(arguments.run_dir, arguments.device)
+    specs = load_streams(arguments.run_dir, arguments.device, report=print)
     if not specs:
         print("nothing trained yet")
         return 1

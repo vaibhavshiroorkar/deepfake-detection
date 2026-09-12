@@ -26,7 +26,7 @@ import numpy as np
 import torch
 
 from deepfake_detection.dashboard.lib import media_kind
-from deepfake_detection.fusion.deep_loading import LoadedFusion, fuse
+from deepfake_detection.fusion.deep_loading import LoadedFusion, fuse, load_fusion
 from deepfake_detection.fusion.stream_export import StreamSpec, _forward
 from deepfake_detection.inference.predictor import PredictionResult
 
@@ -85,6 +85,7 @@ class MultimodalEngine:
                 branch_logits={},
                 blockers=("unsupported_media_type",),
                 preprocessing_fingerprint="",
+                media_kind=kind,
             )
 
         prepared = self.prepare(Path(path), kind)
@@ -123,12 +124,21 @@ class MultimodalEngine:
                 branch_logits=logits,
                 blockers=tuple(dict.fromkeys(blockers)),
                 preprocessing_fingerprint=prepared.preprocessing_fingerprint,
+                media_kind=kind,
             )
 
         probability = fuse(self.fusion, embeddings, self.device)
+        # The head carries a cut-off per media kind because an image verdict and
+        # a video verdict come from different evidence through the same weights.
+        # A kind the head was never calibrated for falls back to the engine
+        # default and says so, rather than being read as if it were calibrated.
+        threshold = self.fusion.threshold_for(kind)
+        if threshold is None:
+            threshold = self.threshold
+            blockers.append(f"uncalibrated_threshold_for_{kind}")
         return PredictionResult(
             clip_id=prepared.clip_id,
-            verdict="fake" if probability >= self.threshold else "real",
+            verdict="fake" if probability >= threshold else "real",
             probability=probability,
             branch_logits=logits,
             # Quality blockers are reported even when a verdict is issued. A
@@ -136,6 +146,8 @@ class MultimodalEngine:
             # and the reader should see why it might be weak.
             blockers=tuple(dict.fromkeys(blockers)),
             preprocessing_fingerprint=prepared.preprocessing_fingerprint,
+            media_kind=kind,
+            threshold=threshold,
         )
 
 
@@ -151,3 +163,57 @@ def _modality(stream_name: str) -> str:
         if modality in lowered:
             return modality
     return "visual"
+
+
+def load_multimodal_engine(
+    *,
+    run_dir: Path,
+    code_version: str,
+    fusion_path: Path | None = None,
+    device: str = "cuda",
+    threshold: float = 0.5,
+    root: Path | None = None,
+) -> MultimodalEngine:
+    """Build the served engine from one run directory.
+
+    The preprocessing hash is checked against the head's, not assumed. A server
+    whose view settings differ from the cache the streams were trained on
+    produces face crops of a different size or a waveform with a different
+    silence rule, and every number that follows is quietly wrong. The two hashes
+    are the only thing that catches it.
+    """
+    from deepfake_detection.fusion.stream_loading import load_streams
+    from deepfake_detection.inference.loading import build_preprocessor
+    from deepfake_detection.views.cache import preprocessing_config_hash
+
+    fusion = load_fusion(
+        fusion_path or run_dir / "checkpoints" / "gate-fusion.pt", device=device
+    )
+    preprocessor = build_preprocessor(code_version=code_version, device=device)
+    actual = preprocessing_config_hash(
+        config=preprocessor.config, code_version=code_version
+    )
+    if fusion.preprocessing_hash and actual != fusion.preprocessing_hash:
+        raise ValueError(
+            "This server's preprocessing does not match the fusion head: it "
+            f"computes {actual[:12]} and the head was fitted on features built "
+            f"with {fusion.preprocessing_hash[:12]}. Serving through it would "
+            "feed the streams inputs they were not trained on."
+        )
+
+    specs = load_streams(
+        run_dir, device, root=root, only=tuple(fusion.stream_dims)
+    )
+    missing = sorted(set(fusion.stream_dims) - {spec.name for spec in specs})
+    if missing:
+        raise ValueError(
+            "The fusion head needs streams whose checkpoints are not in "
+            f"{run_dir}: {', '.join(missing)}."
+        )
+    return MultimodalEngine(
+        preprocessor=preprocessor,
+        streams={spec.name: spec for spec in specs},
+        fusion=fusion,
+        threshold=threshold,
+        device=device,
+    )

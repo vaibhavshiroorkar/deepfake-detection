@@ -13,6 +13,10 @@ from deepfake_detection.inference.loading import (
     build_preprocessor,
     load_visual_prediction_engine,
 )
+from deepfake_detection.inference.multimodal import (
+    MultimodalEngine,
+    load_multimodal_engine,
+)
 from deepfake_detection.inference.predictor import (
     PredictionResult,
     VisualPredictionEngine,
@@ -80,7 +84,50 @@ def load_frozen_visual_engine() -> VisualPredictionEngine:
     )
 
 
+@st.cache_resource
+def load_multimodal_gate_engine() -> MultimodalEngine:
+    """The five-stream engine, or a RuntimeError a reader can act on.
+
+    Cached because loading it means rebuilding five models and reading about
+    2.5 GB of checkpoints, which takes long enough that doing it per click would
+    look like a hang.
+    """
+    require_cuda()
+    defaults = dashboard_defaults(root=_PROJECT_ROOT)
+    if not defaults.gate_fusion_checkpoint.is_file():
+        raise RuntimeError(
+            "No fusion head is trained for the gate. Build one with "
+            "`uv run python scripts/fit_gate_fusion.py --run-dir "
+            f"{defaults.stream_run.name}`."
+        )
+    return load_multimodal_engine(
+        run_dir=defaults.stream_run,
+        code_version=defaults.stream_code_version,
+        fusion_path=defaults.gate_fusion_checkpoint,
+        device=_DEVICE,
+        root=_PROJECT_ROOT,
+    )
+
+
 def predict_upload(clip: UploadedClip) -> PredictionResult:
+    """Score the upload through every stream its media kind can drive.
+
+    Falls back to the frozen visual baseline only when no head is trained, and
+    says which one ran through `PredictionResult.media_kind`: a verdict from one
+    visual model and a verdict fused from five are different claims.
+    """
+    defaults = dashboard_defaults(root=_PROJECT_ROOT)
+    if not defaults.gate_fusion_checkpoint.is_file():
+        # No head trained yet. The frozen visual baseline still answers, and it
+        # reports no media kind, which is what makes the page label it as the
+        # single-model baseline rather than a fusion.
+        return predict_upload_visual_only(clip)
+    engine = load_multimodal_gate_engine()
+    with temporary_video(clip) as path:
+        return engine.predict(path)
+
+
+def predict_upload_visual_only(clip: UploadedClip) -> PredictionResult:
     engine = load_frozen_visual_engine()
     with temporary_video(clip) as path:
         return engine.predict(path)

@@ -79,9 +79,11 @@ def test_prediction_page_shows_one_fixed_action_after_upload() -> None:
     body = _page_body(page)
     assert not page.exception
     assert len(page.button) == 1
-    assert page.button[0].label == "Analyze video"
-    assert "Fixed decision threshold: 0.50" in body
-    assert "Visual-only development baseline" in body
+    assert page.button[0].label == "Analyze"
+    # No threshold is promised before the run. It is chosen per media kind, so
+    # only the result knows which one applied.
+    assert "threshold" not in body.lower()
+    assert "Visual-only development baseline" not in body
     assert not page.text_input
     assert not page.slider
     assert not page.selectbox

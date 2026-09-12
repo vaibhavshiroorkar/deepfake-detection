@@ -54,3 +54,55 @@ def test_dashboard_view_defaults_to_the_frozen_threshold() -> None:
     view = build_view_model(result)
 
     assert view.threshold_label == "Fixed decision threshold: 0.50"
+
+
+def _multimodal(kind: str, logits: dict[str, float], threshold: float):
+    return PredictionResult(
+        clip_id="clip-1",
+        verdict="fake",
+        probability=0.91,
+        branch_logits=logits,
+        blockers=(),
+        preprocessing_fingerprint="prep",
+        media_kind=kind,
+        threshold=threshold,
+    )
+
+
+def test_the_view_names_the_streams_that_ran_not_a_hardcoded_one() -> None:
+    view = build_view_model(
+        _multimodal(
+            "video",
+            {
+                "visual-efficientnet": 1.0,
+                "stream-emotion": 0.4,
+                "final-audio-seed17": -0.2,
+            },
+            0.5,
+        )
+    )
+
+    assert view.mode_label == "Five streams fused"
+    # Lip-sync could have run on a video and did not, so the reader is told.
+    assert view.channels == {
+        "Visual": "available",
+        "Audio": "available",
+        "Lip-sync": "missing",
+        "Emotion": "available",
+    }
+
+
+def test_an_image_verdict_is_marked_limited_and_carries_its_own_threshold() -> None:
+    view = build_view_model(_multimodal("image", {"visual-dinov3": 1.4}, 0.7631))
+
+    assert view.channels == {"Visual": "limited"}
+    assert view.threshold_label == "Decision threshold for image: 0.76"
+    assert "One frame" in view.limitations[0]
+
+
+def test_an_audio_verdict_reports_only_the_audio_channel() -> None:
+    view = build_view_model(_multimodal("audio", {"final-audio-seed17": 0.2}, 0.2619))
+
+    assert view.channels == {"Audio": "available"}
+    assert view.mode_label == "Audio stream only"
+    assert view.threshold_label == "Decision threshold for audio: 0.26"

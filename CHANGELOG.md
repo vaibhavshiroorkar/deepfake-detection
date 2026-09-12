@@ -12,6 +12,31 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- The Evidence gate takes a video, a photograph or a sound file, and routes each
+  to the streams it can actually drive. It took four video suffixes before, so a
+  photograph was refused at the uploader and the visual stream could never see
+  one. The gate now says which streams will run before Analyze is pressed.
+- The gate serves the five Design B streams through `MultimodalEngine` and the
+  feature-level head, replacing the single frozen visual model. A checkout with
+  no trained head still answers, through the visual baseline, and the result
+  says which of the two produced it rather than leaving them
+  indistinguishable.
+- Added `scripts/fit_gate_fusion.py`, which fits the served head under the
+  deployment presence patterns and chooses a decision threshold per media kind
+  on rows it was not fitted on. One threshold cannot serve all three: an image
+  drives the visual stream alone, and its cut-off came out at 0.76 against 0.50
+  for a fused video and 0.26 for sound alone. The thresholds live in the
+  checkpoint, so a head cannot be paired with someone else's cut-off.
+- The verdict panel now lists the streams the upload could have driven and
+  whether each one produced a score. A stream that should have run and did not
+  is the explanation for the verdict, and it was previously invisible: the panel
+  showed a hardcoded single "visual" row whatever ran.
+- Stream rebuilding moved from `scripts/score_streams.py` into
+  `deepfake_detection.fusion.stream_loading`, so the dashboard and the scoring
+  script rebuild a checkpoint the same way. A stream rebuilt with the wrong
+  temporal model loads most of its tensors and then computes a different vector,
+  silently, which is what a second copy of that logic would eventually do.
+
 - Measured that freezing BatchNorm during fine-tuning trades cross-corpus
   transfer for in-domain accuracy, which an earlier entry recorded as a clean
   win. One variable at a time on 1,400 clips, each arm scored on the full DFDC

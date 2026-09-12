@@ -1,4 +1,6 @@
 import sys
+from dataclasses import replace
+from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
@@ -72,7 +74,7 @@ def test_load_frozen_visual_engine_uses_all_frozen_defaults(
     assert config.device == "cuda"
 
 
-def test_predict_upload_runs_the_frozen_engine_on_temporary_upload_bytes(
+def test_predict_upload_runs_the_multimodal_engine_on_temporary_upload_bytes(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     calls: dict[str, object] = {}
@@ -91,7 +93,7 @@ def test_predict_upload_runs_the_frozen_engine_on_temporary_upload_bytes(
             calls["content"] = path.read_bytes()
             return expected
 
-    monkeypatch.setattr(runtime, "load_frozen_visual_engine", FakeEngine)
+    monkeypatch.setattr(runtime, "load_multimodal_gate_engine", FakeEngine)
     clip = UploadedClip("sample.mp4", ".mp4", b"video bytes", "a" * 64)
 
     result = runtime.predict_upload(clip)
@@ -99,6 +101,44 @@ def test_predict_upload_runs_the_frozen_engine_on_temporary_upload_bytes(
     assert result == expected
     assert calls["content"] == b"video bytes"
     assert not calls["path"].exists()
+
+
+def test_predict_upload_falls_back_to_the_visual_baseline_with_no_head(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    """A checkout with no trained fusion head still answers, through one model.
+
+    The fallback has to be visible rather than silent, and it is: the visual
+    engine reports no media kind, which is what makes the page label the verdict
+    as the single-model baseline instead of a fusion.
+    """
+    expected = PredictionResult(
+        clip_id="clip",
+        verdict="real",
+        probability=0.25,
+        branch_logits={"visual": -1.1},
+        blockers=(),
+        preprocessing_fingerprint="fixture",
+    )
+
+    class FakeEngine:
+        def predict(self, path):
+            return expected
+
+    defaults = runtime.dashboard_defaults(root=Path.cwd())
+    monkeypatch.setattr(
+        runtime,
+        "dashboard_defaults",
+        lambda *, root: replace(
+            defaults, gate_fusion_checkpoint=tmp_path / "absent.pt"
+        ),
+    )
+    monkeypatch.setattr(runtime, "load_frozen_visual_engine", FakeEngine)
+
+    result = runtime.predict_upload(UploadedClip("s.mp4", ".mp4", b"v", "a" * 64))
+
+    assert result is expected
+    assert result.media_kind == ""
 
 
 def test_display_face_frames_reverses_imagenet_normalization() -> None:

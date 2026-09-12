@@ -15,7 +15,7 @@ the contribution is exactly zero including the bias.
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import torch
@@ -32,6 +32,13 @@ class LoadedFusion:
     stream_dims: dict[str, int]
     split_hash: str
     preprocessing_hash: str
+    # One cut-off per media kind, empty for a head fitted without them. A kind
+    # with no entry has no calibrated threshold, and the caller is expected to
+    # say so rather than reaching for 0.5.
+    thresholds: dict[str, float] = field(default_factory=dict)
+
+    def threshold_for(self, kind: str) -> float | None:
+        return self.thresholds.get(kind)
 
     @property
     def streams(self) -> tuple[str, ...]:
@@ -67,6 +74,10 @@ def load_fusion(path: Path, device: str = "cpu") -> LoadedFusion:
         stream_dims=dims,
         split_hash=str(payload.get("split_hash", "")),
         preprocessing_hash=str(payload.get("preprocessing_hash", "")),
+        thresholds={
+            str(kind): float(cut)
+            for kind, cut in (payload.get("thresholds") or {}).items()
+        },
     )
 
 

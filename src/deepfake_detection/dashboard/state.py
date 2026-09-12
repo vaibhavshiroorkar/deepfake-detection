@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from deepfake_detection.dashboard.lib import media_kind
 from deepfake_detection.views.contracts import PreparedClip
 
 if TYPE_CHECKING:
@@ -31,8 +32,11 @@ def store_upload(
     values: MutableMapping[str, object], *, name: str, content: bytes
 ) -> UploadedClip:
     suffix = Path(name).suffix.lower()
-    if suffix not in {".mp4", ".mov", ".mkv", ".avi"}:
-        raise ValueError("Unsupported video format")
+    # Every media kind the pipeline can read, not the four video containers this
+    # once allowed. media_kind owns the list, so the gate and the Streams picker
+    # accept exactly the same set and neither drifts from what can be scored.
+    if media_kind.classify(name) == media_kind.UNKNOWN:
+        raise ValueError(f"Unsupported media format: {suffix or name}")
     clip = UploadedClip(
         name=name,
         suffix=suffix,

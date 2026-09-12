@@ -76,6 +76,7 @@ def _render_result(
     prepared: PreparedClip | None,
 ) -> None:
     view = build_view_model(result, threshold=0.5)
+
     for markup in _result_markup(view):
         st.markdown(markup, unsafe_allow_html=True)
 
@@ -87,6 +88,7 @@ def _render_result(
     defaults = dashboard_defaults(root=Path.cwd())
     with st.expander("Technical details"):
         st.markdown(f"**Visual coverage:** {_coverage_label(prepared)}")
+        st.markdown(f"**Media kind:** {result.media_kind or 'video'}")
         st.markdown("**Branch logits**")
         st.json(view.branch_scores)
         st.markdown(f"**Run ID:** `{defaults.run_id}`")
@@ -102,7 +104,7 @@ def render_prediction(*, embedded: bool = False) -> None:
         render_page_header(
             "Stage 4",
             "4. Prediction",
-            "Run the frozen visual baseline and read its evidence limits.",
+            "Score the upload through the streams its media kind can drive, and read the evidence limits.",
         )
         render_status(PageState.READY)
 
@@ -111,10 +113,11 @@ def render_prediction(*, embedded: bool = False) -> None:
     if clip is not None:
         prepared = prepared_for_upload(st.session_state, clip.sha256)
         result = prediction_for_upload(st.session_state, clip.sha256)
-        st.markdown("**Fixed decision threshold: 0.50**")
-        st.caption("Visual-only development baseline")
+        # What will run is said by the gate, on the upload itself. Repeating a
+        # threshold here would be a guess: it is chosen per media kind and only
+        # the result knows which one applied.
         if st.button(
-            "Analyze video",
+            "Analyze",
             key="analyze_video",
             type="primary",
             use_container_width=True,

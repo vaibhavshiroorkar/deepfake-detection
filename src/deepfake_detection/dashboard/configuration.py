@@ -39,6 +39,16 @@ class DashboardDefaults:
     validation_rows: int = 400
     threshold: float = 0.5
     evidence_scope: str = "development_validation"
+    # The Design B side of the gate: the run holding the stream checkpoints, the
+    # head fitted over them, and the code version whose view settings that run's
+    # cache was built with. Separate from `visual_checkpoint` because the two
+    # come from different runs and the frozen visual baseline is still served
+    # when no head is present.
+    stream_run: Path = Path("runs/design-b-20260910")
+    gate_fusion_checkpoint: Path = Path(
+        "runs/design-b-20260910/checkpoints/gate-fusion.pt"
+    )
+    stream_code_version: str = "program-v1"
 
 
 _FALLBACK = {
@@ -59,7 +69,15 @@ _FALLBACK = {
     "threshold": 0.5,
     "evidence_scope": "development_validation",
     "visual_checkpoint": "runs/initial-20260902/visual-initial.pt",
+    "stream_run": "runs/design-b-20260910",
+    "gate_fusion_checkpoint": "runs/design-b-20260910/checkpoints/gate-fusion.pt",
+    "stream_code_version": "program-v1",
 }
+
+
+def _resolve(root: Path, value: str) -> Path:
+    path = Path(value)
+    return path if path.is_absolute() else root / path
 
 
 def dashboard_defaults(
@@ -79,11 +97,8 @@ def dashboard_defaults(
             )
         values.update(loaded)
 
-    checkpoint = Path(values["visual_checkpoint"])
     return DashboardDefaults(
-        visual_checkpoint=(
-            checkpoint if checkpoint.is_absolute() else root / checkpoint
-        ),
+        visual_checkpoint=_resolve(root, values["visual_checkpoint"]),
         code_version=str(values["code_version"]),
         preprocessing_hash=str(values["preprocessing_hash"]),
         checkpoint_sha256=str(values["checkpoint_sha256"]),
@@ -96,4 +111,7 @@ def dashboard_defaults(
         validation_rows=int(values["validation_rows"]),
         threshold=float(values["threshold"]),
         evidence_scope=str(values["evidence_scope"]),
+        stream_run=_resolve(root, values["stream_run"]),
+        gate_fusion_checkpoint=_resolve(root, values["gate_fusion_checkpoint"]),
+        stream_code_version=str(values["stream_code_version"]),
     )
