@@ -40,24 +40,56 @@ streams use different query lengths, so that comparison was wrong: at 8 steps
 
 ### F2. Freezing BatchNorm while fine-tuning trades transfer for in-domain fit
 
-Result: `B-batchnorm-trade`, currently `pending`: the arms were measured in a
-scratch script whose output was never written under `runs/`, and
-`scripts/batchnorm_sweep.py` reproduces them. The measured values, one variable
-at a time on 1,400 clips with each arm scored on the full 2,410-clip DFDC set:
+Result: `B-batchnorm-arms`, at full scale, and `B-batchnorm-trade` for the
+controlled 1,400-clip sweep that isolates the epoch budget.
 
-| Arm | Validation | DFDC |
-| --- | --- | --- |
-| frozen BatchNorm, 10 epochs | 0.9197 | 0.5005 |
-| live BatchNorm, 10 epochs | 0.5267 | 0.6482 |
-| frozen BatchNorm, 3 epochs | 0.8932 | 0.5057 |
+Both visual streams trained twice on the full training partition, changing one
+flag. Labels are `video_fake`, the objective the visual stream was trained on:
 
-The epoch budget moves DFDC by 0.005; BatchNorm moves it by 0.148. Live
-BatchNorm statistics are an accidental domain adapter, which is what AdaBN does
-deliberately, and freezing them removed it.
+| Arm | Stream | Validation | In-domain | DFDC |
+| --- | --- | --- | --- | --- |
+| frozen | EfficientNet-B0 | 0.9997 | 0.9987 | 0.5067 |
+| live | EfficientNet-B0 | 0.4909 | 0.4557 | 0.6343 |
+| frozen | DINOv3, frozen ViT | 0.9559 | 0.9546 | 0.5147 |
+| live | DINOv3, frozen ViT | 0.9559 | 0.9546 | 0.5147 |
+
+Live BatchNorm moves EfficientNet by +0.1276 on DFDC and -0.5430 in-domain. The
+DINOv3 rows are identical to four decimals on every epoch of both runs, which is
+what rules out run-to-run variation: a frozen ViT has no running statistics, so
+the flag must change nothing there, and it changes nothing.
+
+Live BatchNorm statistics adapt to the data the model sees, which is what AdaBN
+does deliberately, and freezing them removed an accidental domain adapter.
+
+The trade is too steep to take. An in-domain ROC-AUC of 0.4557 is below chance,
+so the live arm is not a better-generalizing detector, it is a broken detector
+that happens to rank slightly above chance out of domain. The project ships the
+frozen arm and reports the trade. What the measurement establishes is the size
+of the lever, not a setting to adopt.
+
+The 1,400-clip sweep adds the control the full-scale comparison lacks: the live
+arm stopped at epoch 4 on patience while the frozen arm ran 10, so the epoch
+budget is not held fixed above. In the sweep it is, and it moves DFDC by 0.005
+against BatchNorm's 0.148.
 
 This supersedes the earlier reading that freezing BatchNorm was a clean win. It
 was recorded as one because it took a visual stream from 0.5154 to 0.9058 on
 validation, and validation was the only thing measured at the time.
+
+### F2b. The same checkpoint has two in-domain numbers, and both are correct
+
+Result: `B-batchnorm-arms` against `B-stream-scores`. The visual stream reads
+0.9987 in-domain when scored against `video_fake`, the label it was trained on,
+and 0.9719 when scored against `clip_fake`, the label the fusion store carries.
+
+A FakeAVCeleb clip with a real video track and spoofed audio is `clip_fake` and
+not `video_fake`, so the two labels disagree on exactly the clips a visual model
+cannot be expected to catch. They coincide on DFDC, where every manipulated clip
+has a manipulated video track, which is why the DFDC column agrees to four
+decimals between the two scoring paths.
+
+Neither number is wrong. Quoting them in the same table without saying which
+label each uses would be.
 
 ### F3. Selecting a checkpoint on validation loss kept one scoring below chance
 

@@ -20,8 +20,9 @@ Three results carry the paper. A cross-attention stream reached 0.9991 ROC-AUC
 while a correspondence measure recorded every epoch and never optimised sat at
 chance, so the accuracy is real and the stated mechanism is absent. Freezing
 BatchNorm during fine-tuning, a change that looked like a clear improvement on
-validation, moved cross-corpus ROC-AUC by 0.148 in the wrong direction, while
-the epoch budget moved it by 0.005. And selecting a checkpoint on validation
+validation, moved cross-corpus ROC-AUC by 0.1276 in the wrong direction while
+moving in-domain ROC-AUC by 0.5430 in the right one, against an epoch budget
+worth 0.005. And selecting a checkpoint on validation
 loss kept one that scored below chance, on a run where loss and ROC-AUC moved in
 opposite directions on the same epoch.
 
@@ -154,22 +155,40 @@ Whatever the stream learned, it is not audiovisual correspondence.
 
 ### 5.2 Freezing BatchNorm trades transfer for in-domain fit
 
-One variable at a time, 1,400 training clips, each arm scored on the full
-2,410-clip DFDC set:
+Both visual streams trained twice on the full training partition, one flag
+apart. Labels are `video_fake`, the objective the visual stream optimises:
 
-| Arm | Validation | DFDC |
-| --- | --- | --- |
-| frozen BatchNorm, 10 epochs | 0.9197 | 0.5005 |
-| live BatchNorm, 10 epochs | 0.5267 | 0.6482 |
-| frozen BatchNorm, 3 epochs | 0.8932 | 0.5057 |
+| Arm | Stream | Validation | In-domain | DFDC |
+| --- | --- | --- | --- | --- |
+| frozen | EfficientNet-B0 | 0.9997 | 0.9987 | 0.5067 |
+| live | EfficientNet-B0 | 0.4909 | 0.4557 | 0.6343 |
+| frozen | DINOv3, frozen ViT | 0.9559 | 0.9546 | 0.5147 |
+| live | DINOv3, frozen ViT | 0.9559 | 0.9546 | 0.5147 |
 
-The epoch budget moves DFDC by 0.005. BatchNorm moves it by 0.148. Live
-BatchNorm statistics adapt to the data the model sees, which is what AdaBN does
-deliberately; freezing them removed an accidental domain adapter.
+Live BatchNorm moves EfficientNet by +0.1276 on DFDC and -0.5430 in-domain. The
+DINOv3 rows are identical to four decimals on every epoch of both runs, which
+rules out run-to-run variation: a frozen ViT has no running statistics, so the
+flag must change nothing there, and it changes nothing.
 
-The control arm is a frozen DINOv3 ViT, which has no running statistics. It
-reproduced its frozen-BatchNorm run to four decimals on all eight epochs, which
-is what separates the effect from run-to-run noise.
+Live BatchNorm statistics adapt to the data the model sees, which is what AdaBN
+does deliberately, and freezing them removed an accidental domain adapter.
+
+The trade is too steep to take. An in-domain ROC-AUC of 0.4557 is below chance,
+so the live arm is not a detector that generalizes better, it is a broken
+detector that ranks slightly above chance out of domain. We ship the frozen arm
+and report the trade. The measurement establishes the size of the lever, not a
+setting to adopt.
+
+One confound remains in the table above: the live arm stopped at epoch 4 on
+patience while the frozen arm ran 10, so the epoch budget is not held fixed. A
+controlled 1,400-clip sweep holds it fixed and finds the epoch budget moves DFDC
+by 0.005 against BatchNorm's 0.148.
+
+The same checkpoint also has two legitimate in-domain numbers, 0.9987 against
+`video_fake` and 0.9719 against `clip_fake`, because a clip with a real video
+track and spoofed audio is one and not the other. They coincide on DFDC, where
+every manipulated clip has a manipulated video track. We state which label each
+number uses wherever both appear.
 
 ### 5.3 Selection on loss kept a checkpoint below chance
 

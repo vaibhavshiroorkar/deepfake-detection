@@ -145,6 +145,24 @@ RESULTS: tuple[Result, ...] = (
         seeds=1,
     ),
     Result(
+        result_id="B-batchnorm-arms",
+        paper_location="Results, freezing BatchNorm trades transfer for accuracy",
+        command=(
+            "python scripts/score_batchnorm_arms.py"
+        ),
+        report=DESIGN_B / "evaluation" / "batchnorm-arms.json",
+        predictions=None,
+        mlflow=(
+            ("design-b-frozen-bn", "visual-efficientnet"),
+            ("design-b-live-bn", "visual-efficientnet"),
+        ),
+        decision=(
+            "Live BatchNorm buys 0.1276 on DFDC and costs 0.5430 in-domain. The "
+            "frozen arm ships; the trade is the result"
+        ),
+        seeds=1,
+    ),
+    Result(
         result_id="B-batchnorm-trade",
         paper_location="Results, freezing BatchNorm trades transfer for accuracy",
         command=(
@@ -153,7 +171,9 @@ RESULTS: tuple[Result, ...] = (
         report=DESIGN_B / "evaluation" / "batchnorm-sweep.json",
         predictions=None,
         mlflow=(),
-        decision="The single largest lever measured on cross-corpus transfer",
+        decision=(
+            "Holds the epoch budget fixed, which the full-scale comparison cannot"
+        ),
         seeds=1,
         missing_reason=(
             "Measured in a scratch script whose output was never written under "

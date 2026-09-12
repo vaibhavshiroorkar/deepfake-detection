@@ -12,6 +12,22 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Measured the BatchNorm trade at full scale, which sharpens the earlier
+  1,400-clip result and changes what to do about it. Live BatchNorm moves
+  EfficientNet by +0.1276 on DFDC and -0.5430 in-domain, to 0.4557, which is
+  below chance. The frozen arm ships. The live arm is not a detector that
+  generalizes better, it is a broken one that ranks slightly above chance out of
+  domain, and the value of the measurement is the size of the lever.
+- DINOv3 is the control and behaved as a frozen ViT must: identical to four
+  decimals on every epoch of both arms, because it has no running statistics.
+- Recorded that the visual stream has two correct in-domain numbers, 0.9987
+  against `video_fake` and 0.9719 against `clip_fake`. A clip with a real video
+  track and spoofed audio is one and not the other. They agree on DFDC, where
+  every manipulated clip has a manipulated video track.
+- Added `scripts/score_batchnorm_arms.py`. Both arms of both visual streams are
+  kept under `checkpoints-frozen-bn/` and `checkpoints-live-bn/` and both are in
+  MLflow.
+
 - Added `docs/research/paper.md`, the draft. Its claim is the evaluation method
   rather than the architecture or the accuracy: the negative answer to the
   research question is reported, and so is how close the project came to
