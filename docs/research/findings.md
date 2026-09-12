@@ -122,6 +122,36 @@ An image and a video reach the head through the same weights with different
 streams present, so their fused probabilities sit on different scales. Serving
 one threshold would systematically under-call one kind and over-call another.
 
+### F8. The deep head does not beat the late head, cross-corpus
+
+Result: `B-fusion-ablations`. Both heads fitted on the same holdout rows and
+scored on the same partitions. The late head calibrates each stream's logit and
+fits a logistic regression over the calibrated scores plus three quality
+features; the deep head projects each stream's embedding and fuses in feature
+space.
+
+| Partition | Late fusion | Deep fusion |
+| --- | --- | --- |
+| in-domain | 0.9989 [0.9974, 1.0000] | 0.9988 [0.9971, 1.0000] |
+| DFDC | 0.5687 [0.5279, 0.6052] | 0.5411 [0.4984, 0.5828] |
+
+In-domain they are indistinguishable. On DFDC the late head reads 0.0276 higher,
+with intervals that overlap heavily, so this separates nothing. What it does
+rule out is the reason the deep head exists: the embedding was expected to carry
+something the scalar logit does not, and on these two partitions it does not
+show.
+
+### F9. Abstaining on partial coverage buys 0.0007 AUC and costs 2.4 percent of the clips
+
+Result: `B-fusion-ablations`. On DFDC the deep head reads 0.5418 when it refuses
+every clip missing a stream, covering 97.6 percent, and 0.5411 when it answers
+from the streams that ran, covering all of them.
+
+The abstention policy is still the right default, because a verdict with no
+evidence behind it is worse than a refusal. But it should not be argued for on
+accuracy: it does not buy accuracy here. The 2.4 percent of DFDC clips with
+partial coverage are not the clips the head is getting wrong.
+
 ## Superseded findings
 
 | Claim | Replaced by | Why it was wrong |

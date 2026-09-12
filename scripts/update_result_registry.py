@@ -147,6 +147,21 @@ RESULTS: tuple[Result, ...] = (
         ),
     ),
     Result(
+        result_id="B-fusion-ablations",
+        paper_location="Results, late against deep and abstention against fallback",
+        command=(
+            "python scripts/run_fusion_ablations.py --run-dir runs/design-b-20260910"
+        ),
+        report=DESIGN_B / "evaluation" / "fusion-ablations.json",
+        predictions=DESIGN_B / "features" / "dfdc.parquet",
+        mlflow=(),
+        decision=(
+            "The embedding carries nothing the logit does not, and abstention "
+            "buys no accuracy"
+        ),
+        seeds=1,
+    ),
+    Result(
         result_id="B-gate-thresholds",
         paper_location="Method, per-media-kind decision thresholds",
         command="python scripts/fit_gate_fusion.py --run-dir runs/design-b-20260910",
