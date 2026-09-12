@@ -1367,6 +1367,7 @@ def _visual_stream_train(arguments: argparse.Namespace) -> int:
         # BatchNorm running statistic twice per step. The configuration measured
         # at 0.9058 had it off.
         grad_checkpointing=False,
+        freeze_batchnorm_on_finetune=not arguments.live_batchnorm,
     )
 
     train_records = load_manifest(
@@ -1456,6 +1457,7 @@ def _visual_stream_train(arguments: argparse.Namespace) -> int:
             "temporal_hidden": config.temporal_hidden,
             "common_dim": config.common_dim,
             "frozen_backbone": arguments.freeze_backbone,
+            "frozen_batchnorm": not arguments.live_batchnorm,
             "pretrained": True,
         },
     }
@@ -2720,6 +2722,17 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Never unfreeze the backbone. Intended for DINOv3, whose "
             "self-supervised features are the reason to use it."
+        ),
+    )
+    train_visual_stream.add_argument(
+        "--live-batchnorm",
+        action="store_true",
+        help=(
+            "Let the backbone's BatchNorm keep updating while fine-tuning. "
+            "Freezing it is the default and buys in-domain accuracy: measured "
+            "0.9197 validation against 0.5267. It also costs cross-corpus "
+            "transfer, measured 0.5005 on DFDC against 0.6482. Pick the setting "
+            "for the question being asked and report which was used."
         ),
     )
     train_visual_stream.add_argument("--common-dim", type=int, default=256)

@@ -20,6 +20,7 @@ param(
     [string]$SourceRun = "runs/program-20260906",
     [int]$Epochs = 10,
     [int]$Workers = 0,
+    [switch]$LiveBatchNorm,
     [string]$Device = "cuda"
 )
 
@@ -71,6 +72,10 @@ function Invoke-Stream {
     # Workers first, then single-process. A dead worker takes the run down with
     # a DataLoader error rather than a wrong answer, so retrying costs one
     # wasted epoch and never a silently degraded model.
+    # Drop empty entries. A conditional flag built as $(if (...) { "--x" } else
+    # { $null }) leaves an empty string in the array, and argparse rejects that
+    # as an unrecognised argument rather than ignoring it.
+    $Extra = @($Extra | Where-Object { $_ })
     $manifests = Get-Manifests -Stream $Name
     foreach ($attempt in @($Workers, 0)) {
         $common = @(
@@ -103,13 +108,19 @@ function Invoke-Stream {
 # EfficientNet baseline reached 0.9742 in-domain and then called 130 of 155
 # genuine Celeb-DF videos fake. Only the head is fitted, so the features stay
 # the self-supervised ones.
-Invoke-Stream -Name "visual-dinov3" -Extra @(
+# --live-batchnorm is passed through to the visual streams only. Freezing
+# BatchNorm while fine-tuning buys in-domain accuracy and costs cross-corpus
+# transfer: measured 0.9197 validation and 0.5005 DFDC frozen, against 0.5267
+# and 0.6482 live. DINOv3 is a ViT with no running statistics, so it is the
+# control arm and should be unaffected either way.Invoke-Stream -Name "visual-dinov3" -Extra @(
     "train", "visual-stream", "--backbone", "dinov3", "--freeze-backbone",
+    $(if ($LiveBatchNorm) { "--live-batchnorm" } else { $null }),
     "--batch-size", "8", "--accumulation-steps", "2", "--frame-chunk-size", "8",
     "--learning-rate", "1e-3")
 
 Invoke-Stream -Name "visual-efficientnet" -Extra @(
     "train", "visual-stream", "--backbone", "efficientnet", "--freeze-epochs", "2",
+    $(if ($LiveBatchNorm) { "--live-batchnorm" } else { $null }),
     "--batch-size", "8", "--accumulation-steps", "2", "--frame-chunk-size", "8")
 
 # Batch 4 with four accumulation steps, not 8 with two. The effective batch is
