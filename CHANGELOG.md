@@ -12,6 +12,19 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Cached FaceForensics++ c23: 6,992 of 7,000 clips, 8 undecodable, under the
+  same code version as the program run so the preprocessing hash is identical
+  and a model trained here can be scored zero-shot against the already-cached
+  DFDC and Celeb-DF without re-caching.
+- Recorded that FF++ c23 carries no audio track at all, which `ffprobe` confirms
+  and the cache audit recorded as `missing_audio` on every clip. It can train
+  the visual stream and nothing else, and pointing an audio-bearing stream at it
+  yields an empty usable manifest rather than a silent error.
+- Face-track quality is worse than FakeAVCeleb's, as expected for uncontrolled
+  footage: of 7,000 clips, 1,089 had an unstable track and 387 low face
+  coverage, leaving 4,259 train, 902 validation and 954 test clips over 670,
+  142 and 145 source identities.
+
 - Scored the LAV-DF lip-sync stream, trained in an earlier run and never
   measured in ROC-AUC. It reads 0.9969 with diagonal mass at 0.0592 against a
   chance of 0.0600, on matched windows cut from the same file. The corpus that

@@ -131,6 +131,22 @@ identities, so an identity-disjoint half could join the training mixture without
 touching the test half, which is the cheapest available step towards real-world
 capture conditions.
 
+## FaceForensics++ c23, now cached here
+
+7,000 clips extracted, 6,992 cached, 8 undecodable. The cache was built under
+the same code version as the program run, so its preprocessing hash is
+`a6fe6c0d...`, identical to FakeAVCeleb, DFDC and Celeb-DF. A model trained on
+FF++ can therefore be scored zero-shot against those corpora with no re-caching,
+which is the protocol the published cross-dataset tables use.
+
+One discovered constraint: **FF++ c23 carries no audio track at all.** `ffprobe`
+reports a single h264 stream, and the cache audit recorded `missing_audio` for
+every one of the 6,992 clips. It can train the visual stream and nothing else.
+
+Face-track quality on it is worse than FakeAVCeleb's, as expected for
+uncontrolled YouTube footage: 1,089 clips with an unstable track and 387 with
+low face coverage, which the usable filter removes before training.
+
 ## Two traps to avoid before downloading anything
 
 **Watermarks are a shortcut, not a feature.** Commercial generators embed

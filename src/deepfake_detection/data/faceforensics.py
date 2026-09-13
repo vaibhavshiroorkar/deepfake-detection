@@ -9,9 +9,14 @@ The drop is six manipulation directories of 1,000 clips each plus 1,000
 originals. Three things about it differ from the other corpora here and each one
 has bitten a pipeline somewhere:
 
-  - FF++ manipulates video only. The audio track is the original in every fake,
-    so every manipulated row is `FakeVideo-RealAudio` and the audio branch must
-    never be trained on these labels.
+  - FF++ c23 has no audio at all. Not "unmanipulated audio": `ffprobe` reports a
+    single h264 stream and nothing else, and the cache audit recorded
+    `missing_audio` for all 6,992 clips it built. Rows are written as
+    `FakeVideo-RealAudio` because the vocabulary has no term for a silent clip
+    and `audio_fake` is correctly 0, but this corpus can only ever train the
+    visual stream. Pointing the audio, lip-sync or emotion streams at it yields
+    an empty usable manifest, which is the abstention policy working rather than
+    a bug to fix.
   - `DeepFakeDetection` is the Google/Jigsaw actor set, filmed separately from
     the 1,000 YouTube originals. Its filenames use actor ids rather than
     original-video numbers, so its identities do not overlap the rest of the
@@ -129,7 +134,9 @@ def manifest_from_ffpp(
                 "clip_id": f"ffpp__{method}__{video.stem}",
                 "dataset": DATASET,
                 "video_path": str(video.relative_to(data_dir)).replace("\\", "/"),
-                # Video only. The audio track of an FF++ fake is the original.
+                # There is no audio track at all; see the module docstring.
+                # The vocabulary has no term for a silent clip, and this keeps
+                # audio_fake at 0, which is the part that matters.
                 "manipulation_type": (
                     "FakeVideo-RealAudio" if fake else "RealVideo-RealAudio"
                 ),
