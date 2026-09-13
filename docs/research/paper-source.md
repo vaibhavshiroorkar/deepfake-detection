@@ -365,6 +365,10 @@ Stated in full, with their supersessions, in [findings](findings.md). In short:
 - **F1** Neither cross-modal stream measures correspondence. Both sit on chance
   `diagonal_mass` for every epoch of every run, and one of them is the most
   accurate model in the project at 0.9991.
+- **F1a** A lip-sync stream trained on LAV-DF's matched windows, where
+  correspondence is the only cue the corpus leaves available, reads 0.9969 with
+  its attention still at chance. The mechanism is absent even where the data
+  forbids every alternative.
 - **F1b** Lip-sync's collapse is head overfitting, not encoder instability. It
   breaks at epoch 2 while the encoders are still frozen, so the retrain at a
   lower encoder learning rate changed nothing.

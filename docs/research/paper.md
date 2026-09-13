@@ -163,6 +163,21 @@ The accuracy is real and the mechanism both streams are named for is not
 operating. An accuracy table ranks emotion first and says nothing about the cue
 it is named for being absent.
 
+The obvious objection is that FakeAVCeleb does not require correspondence: its
+fakes are whole-clip manipulations, so a model can separate them by recognising
+the generator and never needs to compare mouth to sound. LAV-DF removes that
+escape by construction. Its adapter cuts two windows from the same file, one
+containing the manipulated span and one avoiding every manipulated span, so
+speaker, lighting, microphone, codec and re-encoding are all held fixed and the
+windows differ in one thing.
+
+A lip-sync stream trained on those pairs reads 0.9969 ROC-AUC on 1,161 held-out
+windows with `diagonal_mass` at 0.0592 against a chance of 0.0600. At chance, on
+the corpus built to make correspondence the only available cue. The model is
+therefore not failing to learn correspondence because the data let it cheat: on
+data designed to forbid cheating it still found another route, and reached
+near-perfect accuracy on it.
+
 A second, smaller result sits underneath. Lip-sync degrades from 0.7593 every
 epoch after the first, which reads as the two pretrained encoders destabilising
 on unfreeze. Retraining at a fifth of the encoder learning rate, with an extra

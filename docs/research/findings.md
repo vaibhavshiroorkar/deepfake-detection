@@ -48,6 +48,35 @@ first called six times chance, against lip-sync's 0.0592 baseline. The two
 streams use different query lengths, so that comparison was wrong: at 8 steps
 0.3438 is chance, and emotion sits on it.
 
+### F1a. A shortcut-controlled corpus does not rescue the mechanism either
+
+Result: `B-lavdf-lipsync`. This is the strongest form of F1 and it rules out the
+comfortable explanation.
+
+The obvious defence of F1 is that FakeAVCeleb does not require correspondence:
+its fakes are whole-clip manipulations, so a model can separate them by
+recognising the generator and never needs to compare mouth to sound. LAV-DF is
+built to remove exactly that escape. Its adapter cuts two windows from the same
+file: one containing the manipulated span, one avoiding every manipulated span.
+Same speaker, same lighting, same microphone, same codec, same re-encoding pass.
+The two windows differ in one thing only.
+
+A lip-sync stream trained on those pairs reads **0.9969 ROC-AUC** on 1,161
+held-out windows, and its `diagonal_mass` is **0.0592 against a chance of
+0.0600**. At chance, on the corpus designed to make correspondence the only
+available cue.
+
+So the model is not failing to learn correspondence because the data let it
+cheat. On data built to forbid cheating it still solved the task by some other
+route, and reached near-perfect accuracy doing it. Whatever is diagnostic inside
+a manipulated window, whether the TTS audio's texture or the reenactment's
+rendering, is being read instead of the alignment between the two streams.
+
+This is the finding to lead with. A validity check that only fired on a
+convenient dataset would be weak evidence. One that fires at 0.9969 on the
+dataset specifically constructed to prevent the shortcut is the paper's claim in
+a single measurement.
+
 ### F1b. Lip-sync's collapse is head overfitting, not encoder instability
 
 Result: `B-training-histories`. The lip-sync stream reaches 0.7593 at epoch 1

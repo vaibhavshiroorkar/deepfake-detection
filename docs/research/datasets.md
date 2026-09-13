@@ -23,8 +23,12 @@ come from six current engines across lip-sync, face-swap and avatar generation:
 FaceFusion, Diff2Lip, HelloMeme, LatentSync, LivePortrait, Memo.
 
 Free to qualifying academic institutions through a request form, then gated on
-Hugging Face. `data/DeepSpeak_v2/` already exists here and is empty, so the
-download was started and never finished.
+Hugging Face. **Status: requested, awaiting review by the authors.** The token
+in `.env` reaches the repository metadata and the public README, and a data file
+returns "Your request to access dataset faridlab/deepspeak_v2 is awaiting a
+review from the repo authors". Nothing to do but wait. 25 zip files of about 5 GB
+each, 133.7 GB in total, so plan the download shard by shard and delete each
+archive after extracting it.
 
 <https://huggingface.co/datasets/faridlab/deepspeak_v2>
 
@@ -41,6 +45,11 @@ simulate real-world degradation. Research-only licence.
 
 <https://github.com/ControlNet/AV-Deepfake1M>
 
+**Status: needs a signed EULA.** There is no direct download and no Hugging Face
+mirror. Access goes through the challenge site, <https://deepfakes1m.github.io/2025>,
+and requires agreeing to the EULA. A `avdeepfake1m` pip package loads the data
+once it is obtained.
+
 Relevant beyond its size: the manipulations are localized in time, which is the
 temporal-localization task this project's sync branch was designed for and has
 never been evaluated on.
@@ -52,6 +61,11 @@ In-the-wild deepfakes actually circulated in 2024, collected from 88 websites in
 video, 56.5 hours of audio, 1,975 images.
 
 <https://huggingface.co/datasets/nuriachandra/Deepfake-Eval-2024>
+
+**Status: not requested.** The repository is gated and this account is not in
+the authorized list, so someone has to open that page and accept the terms. The
+video half is small, 2,045 files and 15.3 GB, against 4.0 GB of audio and 0.9 GB
+of images.
 
 Use as evaluation only, for the same reason MNW is evaluation-only here. If it
 is ever downloaded, add it to `EVALUATION_ONLY_DATASETS` in `data/guards.py`
@@ -85,6 +99,26 @@ quality loss of being shared and re-encoded.
 
 <https://github.com/chenhaoxing/DeMamba>
 
+## Already on disk and under-used
+
+**LAV-DF**, 25 GB and 136,304 clips, has been sitting in `data/` the whole time.
+It is the closest available corpus to AV-Deepfake1M: a short content-driven
+forgery hidden inside an otherwise genuine clip, TTS audio with matching facial
+reenactment, with the manipulated span annotated. `data/lavdf.py` already cuts
+two windows from every forgery, one containing the manipulated span and one
+avoiding it, which holds speaker, lighting, microphone and codec fixed across
+the pair.
+
+6,010 clips of it are already cached under `runs/streams-20260905`, and a
+lip-sync stream is already trained on it. Scoring that stream produced the
+project's strongest finding, F1a: 0.9969 ROC-AUC with attention at chance. Use
+this corpus before waiting on any download.
+
+**DFDC**, 21 GB, is used as a cross-corpus test set only. It has audio and 150
+identities, so an identity-disjoint half could join the training mixture without
+touching the test half, which is the cheapest available step towards real-world
+capture conditions.
+
 ## Two traps to avoid before downloading anything
 
 **Watermarks are a shortcut, not a feature.** Commercial generators embed
@@ -106,11 +140,13 @@ before it is used, not after.
 
 Ordered by value for this project:
 
-1. DeepSpeak v2 for training and for the practical question, since it is
-   person-centric webcam footage with modern engines.
-2. Generate a small set with the tools you have access to, a hundred or two per
+1. LAV-DF, which is already here, already cached in part, and already produced
+   a result. Nothing else has a better ratio of value to effort.
+2. DeepSpeak v2 for training and for the practical question, since it is
+   person-centric webcam footage with modern engines. Waiting on review.
+3. Generate a small set with the tools you have access to, a hundred or two per
    tool, as a held-out test set nobody has trained on. A corpus you generated
    yourself is the only one you can be certain no published detector has seen.
-3. CoCoVideo for the commercial generative class.
-4. AV-Deepfake1M++ if the temporal-localization task is taken up.
-5. Deepfake-Eval-2024 as a final evaluation, never for training.
+4. CoCoVideo for the commercial generative class.
+5. AV-Deepfake1M++ if the temporal-localization task is taken up.
+6. Deepfake-Eval-2024 as a final evaluation, never for training.

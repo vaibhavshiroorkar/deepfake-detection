@@ -57,6 +57,7 @@ class Result:
 
 PROGRAM = Path("runs/program-20260906")
 DESIGN_B = Path("runs/design-b-20260910")
+STREAMS = Path("runs/streams-20260905")
 
 RESULTS: tuple[Result, ...] = (
     Result(
@@ -146,6 +147,20 @@ RESULTS: tuple[Result, ...] = (
             ("design-b-frozen-bn", "stream-emotion"),
         ),
         decision="Every stream except emotion reads near chance cross-corpus",
+        seeds=1,
+    ),
+    Result(
+        result_id="B-lavdf-lipsync",
+        paper_location="Results, attention at chance on a shortcut-controlled corpus",
+        command="python scripts/score_lavdf_stream.py",
+        report=STREAMS / "lavdf-lipsync-score.json",
+        predictions=STREAMS / "lavdf-val-usable.csv",
+        mlflow=(),
+        decision=(
+            "0.9969 ROC-AUC with diagonal mass at chance, on matched windows "
+            "from the same file, so the mechanism is absent even where the "
+            "corpus forbids every other cue"
+        ),
         seeds=1,
     ),
     Result(
