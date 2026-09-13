@@ -66,6 +66,11 @@ scored on the visual stream alone, 0.26 for sound alone. A checkout with no head
 falls back to the frozen visual baseline, and the verdict panel says which of
 the two produced it.
 
+[docs/research/paper-source.md](research/paper-source.md) is the single place to
+write the paper from: hand-written judgement around generated tables, refreshed
+by `uv run python scripts/update_paper_source.py` after any training or scoring
+run.
+
 [docs/dashboard.md](dashboard.md) describes the dashboard layout.
 [docs/obstacles.md](obstacles.md) collects the constraints and traps that cost
 time in each area of this repository. Read it before changing preprocessing,

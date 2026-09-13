@@ -143,15 +143,32 @@ FaceForensics++ is absent, so no number here is comparable to a published table.
 
 ## 5. Results
 
-### 5.1 A stream reached 0.9991 with attention that never moved
+### 5.1 Neither cross-modal stream measures correspondence
 
 The emotion stream reads 0.9991 ROC-AUC on holdout and 0.9978 in-domain, the
-best of five streams on both. Its `diagonal_mass` stayed between 0.3435 and
-0.3457 across nine epochs while its ROC-AUC rose from 0.9847 to 0.9991. Chance
-at its query length is 0.3438.
+best of five streams on both. Chance `diagonal_mass` depends on the query
+length: 0.3438 at 8 steps, 0.0592 at 50.
 
-The accuracy is real and the mechanism the stream is named for is not operating.
-Whatever the stream learned, it is not audiovisual correspondence.
+| Stream | Query steps | Chance | Measured range |
+| --- | --- | --- | --- |
+| emotion | 8 | 0.3438 | 0.3434 to 0.3457, 9 epochs |
+| lip-sync | 50 | 0.0592 | 0.0592 to 0.0595, 4 epochs |
+| lip-sync, lower encoder LR | 50 | 0.0592 | 0.0592 to 0.0595, 6 epochs |
+
+Both sit on chance and stay there across three separate training runs. Emotion's
+ROC-AUC rose from 0.9847 to 0.9991 across its nine epochs without its attention
+moving.
+
+The accuracy is real and the mechanism both streams are named for is not
+operating. An accuracy table ranks emotion first and says nothing about the cue
+it is named for being absent.
+
+A second, smaller result sits underneath. Lip-sync degrades from 0.7593 every
+epoch after the first, which reads as the two pretrained encoders destabilising
+on unfreeze. Retraining at a fifth of the encoder learning rate, with an extra
+frozen epoch and more patience, changed nothing: validation loss quadruples at
+epoch 2, while the encoders are still frozen. The head alone overfits, on a cue
+its attention map says it is not reading.
 
 ### 5.2 Freezing BatchNorm trades transfer for in-domain fit
 

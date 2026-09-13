@@ -12,6 +12,20 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Added `docs/research/paper-source.md`, the single document to write the paper
+  from, and `scripts/update_paper_source.py` which regenerates its tables from
+  the artifacts under `runs/`. Prose holds the judgement, generated blocks hold
+  the numbers, and a table that says "not generated yet" names the command that
+  would fill it. A hand-typed number goes stale the first time a run repeats.
+- Retrained lip-sync at a fifth of the encoder learning rate to test whether
+  unfreezing the encoders was what collapsed it. It was not: validation loss
+  quadruples at epoch 2, while the encoders are still frozen. The head overfits
+  on its own. Both runs select epoch 1, so the shipped model is unchanged, and
+  the hypothesis is recorded as wrong.
+- Both cross-modal streams, not just one, sit on chance diagonal mass for every
+  epoch of every run: emotion 0.3434 to 0.3457 against a chance of 0.3438 at 8
+  query steps, lip-sync 0.0592 to 0.0595 against 0.0592 at 50.
+
 - Measured the BatchNorm trade at full scale, which sharpens the earlier
   1,400-clip result and changes what to do about it. Live BatchNorm moves
   EfficientNet by +0.1276 on DFDC and -0.5430 in-domain, to 0.4557, which is

@@ -122,6 +122,22 @@ RESULTS: tuple[Result, ...] = (
         seeds=1,
     ),
     Result(
+        result_id="B-training-histories",
+        paper_location="Results, attention that never moved; lip-sync collapse",
+        command="pwsh scripts/train_design_b.ps1",
+        report=DESIGN_B / "checkpoints" / "stream-emotion-history.json",
+        predictions=DESIGN_B / "checkpoints" / "stream-lipsync-lowlr-history.json",
+        mlflow=(
+            ("design-b-frozen-bn", "stream-emotion"),
+            ("design-b-frozen-bn", "stream-lipsync"),
+        ),
+        decision=(
+            "Both cross-modal streams sit on chance diagonal mass for every "
+            "epoch of every run"
+        ),
+        seeds=1,
+    ),
+    Result(
         result_id="B-deep-ablation",
         paper_location="Results, does fusing streams beat the best single stream",
         command="python scripts/run_deep_ablation.py --run-dir runs/design-b-20260910",

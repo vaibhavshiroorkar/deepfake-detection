@@ -18,25 +18,62 @@ None. No result row has reached `accepted`, for the seed reason above.
 
 ## Provisional findings
 
-### F1. A stream can reach 0.9991 ROC-AUC with attention that never moved
+### F1. Neither cross-modal stream measures correspondence, and one of them is the most accurate model in the project
 
-Result: `B-stream-scores`. The emotion stream reads 0.9991 on the holdout
-partition and 0.9978 in-domain, the best of the five on both.
+Result: `B-stream-scores` and `B-training-histories`. The emotion stream reads
+0.9991 on holdout and 0.9978 in-domain, the best of the five on both.
 
 `diagonal_mass` is the fraction of attention mass near the diagonal, recorded
 every epoch and never optimised, which is what makes it evidence rather than a
-target. Uniform attention scores 0.0592 at 50 query steps and 0.3438 at 8.
-Measured: lip-sync 0.0592 at 50 steps, emotion 0.3439 at 8. Emotion's AUC rose
-from 0.9847 to 0.9991 across nine epochs while its diagonal mass stayed between
-0.3435 and 0.3457.
+target. Its chance value depends on the query length: uniform attention scores
+0.0592 at 50 query steps and 0.3438 at 8.
 
-The accuracy is real and the stated mechanism is not. The stream is named for
-audiovisual correspondence and is not measuring it.
+Measured across every epoch of three separate training runs:
+
+| Stream | Query steps | Chance | Measured range |
+| --- | --- | --- | --- |
+| emotion | 8 | 0.3438 | 0.3434 to 0.3457 over 9 epochs |
+| lip-sync | 50 | 0.0592 | 0.0592 to 0.0595 over 4 epochs |
+| lip-sync, lower encoder LR | 50 | 0.0592 | 0.0592 to 0.0595 over 6 epochs |
+
+Both streams sit on chance and stay there. Emotion's ROC-AUC rose from 0.9847 to
+0.9991 across its nine epochs without its attention moving at all.
+
+The accuracy is real and the stated mechanism is not operating in either stream.
+This is the paper's central instance: an accuracy table ranks emotion first and
+says nothing about the fact that the cue it is named for is absent.
 
 This also corrects an earlier reading of the same number. Emotion's 0.3439 was
 first called six times chance, against lip-sync's 0.0592 baseline. The two
 streams use different query lengths, so that comparison was wrong: at 8 steps
 0.3438 is chance, and emotion sits on it.
+
+### F1b. Lip-sync's collapse is head overfitting, not encoder instability
+
+Result: `B-training-histories`. The lip-sync stream reaches 0.7593 at epoch 1
+and degrades every epoch after. The obvious reading was that unfreezing the two
+pretrained encoders destabilised it, so it was retrained at an encoder learning
+rate of 1e-6 instead of 5e-6, with three frozen epochs instead of two and
+patience 5 instead of 3.
+
+It made no difference, and the reason is visible in the epoch where it breaks:
+
+| Epoch | Encoders | Train loss | Validation loss | ROC-AUC |
+| --- | --- | --- | --- | --- |
+| 1 | frozen | 0.5628 | 0.5746 | 0.7593 |
+| 2 | frozen | 0.4710 | 2.1972 | 0.5077 |
+| 3 | frozen | 0.2620 | 2.2333 | 0.5217 |
+| 4 | on | 0.1620 | 3.8077 | 0.4090 |
+| 5 | on | 0.1030 | 2.9206 | 0.4838 |
+| 6 | on | 0.0589 | 3.0748 | 0.4474 |
+
+Validation loss quadruples at epoch 2, while the encoders are still frozen. The
+encoder learning rate cannot be the cause of a collapse that happens before the
+encoders train. The head alone overfits, on a cue the attention map says it is
+not reading.
+
+Both runs select epoch 1, so the shipped model is unchanged. The hypothesis was
+wrong and the experiment that tested it is worth reporting for that reason.
 
 ### F2. Freezing BatchNorm while fine-tuning trades transfer for in-domain fit
 
