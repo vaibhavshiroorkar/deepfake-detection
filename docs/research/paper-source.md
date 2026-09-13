@@ -301,25 +301,28 @@ MNW is fake-only, so the aggregate is a detection count rather than a ranking
 metric. The aggregate hides the shape, which is in the per-generator split.
 
 <!-- BEGIN GENERATED MNW -->
-| Generator | Detected | Clips |
-|---|---:|---:|
-| `mnw-raskai` | 0 | 4 |
-| `mnw-vasa_1` | 0 | 10 |
-| `mnw-diff2lip` | 1 | 6 |
-| `mnw-wav2lip_gfpgan` | 1 | 6 |
-| `mnw-sadtalker_video` | 1 | 5 |
-| `mnw-video_retalking` | 2 | 7 |
-| `mnw-wav2lip` | 2 | 7 |
-| `mnw-echo_mimic` | 3 | 10 |
-| `mnw-heygen_v1` | 2 | 6 |
-| `mnw-musetalk` | 2 | 6 |
-| `mnw-wav2liphq_esrgan` | 2 | 6 |
-| `mnw-sadtalker_video_v2` | 2 | 4 |
-| `mnw-wild-likely-manipulated` | 6 | 7 |
-| `mnw-wild-likely-authentic` | 1 | 1 |
-| **all** | **25** | **85** |
+| Generator | Detected | Clips | Rate | 95% interval |
+|---|---:|---:|---:|---|
+| `mnw-raskai` | 0 | 4 | 0% | [0%, 49%] |
+| `mnw-vasa_1` | 0 | 10 | 0% | [0%, 28%] |
+| `mnw-diff2lip` | 1 | 6 | 17% | [3%, 56%] |
+| `mnw-wav2lip_gfpgan` | 1 | 6 | 17% | [3%, 56%] |
+| `mnw-sadtalker_video` | 1 | 5 | 20% | [4%, 62%] |
+| `mnw-video_retalking` | 2 | 7 | 29% | [8%, 64%] |
+| `mnw-wav2lip` | 2 | 7 | 29% | [8%, 64%] |
+| `mnw-echo_mimic` | 3 | 10 | 30% | [11%, 60%] |
+| `mnw-heygen_v1` | 2 | 6 | 33% | [10%, 70%] |
+| `mnw-musetalk` | 2 | 6 | 33% | [10%, 70%] |
+| `mnw-wav2liphq_esrgan` | 2 | 6 | 33% | [10%, 70%] |
+| `mnw-sadtalker_video_v2` | 2 | 4 | 50% | [15%, 85%] |
+| `mnw-wild-likely-manipulated` | 6 | 7 | 86% | [49%, 97%] |
+| **all** | **24** | **84** | **29%** | [20%, 39%] |
 
-MNW is fake-only, so no ranking metric exists and the column is a detection count at the fixed threshold.
+- named generators: 18 of 77, 23% [15%, 34%]
+- in the wild: 6 of 7, 86% [49%, 97%]
+- the 1 genuine clip(s) in the set: 1 called fake
+
+Almost fake-only, so no ranking metric exists and the column is a detection count at the fixed threshold. Intervals are Wilson, because the per-generator counts are 4 to 10 clips and a normal interval on 0 of 10 would read as certainty. The honest reading of a single generator's row is therefore weak; the pattern across rows is what carries.
 <!-- END GENERATED MNW -->
 
 Motion was measured against the score rather than assumed, and the result went
@@ -452,10 +455,10 @@ surveyed in [corpora for the generative-video problem](datasets.md).
 ## 10. Provenance
 
 <!-- BEGIN GENERATED REGISTRY -->
-14 registered results.
+15 registered results.
 
 - 1 `pending`
-- 13 `provisional (1 seed)`
+- 14 `provisional (1 seed)`
 
 The rows themselves, with each artifact's SHA-256 and MLflow run, are in [result traceability](result-traceability.md).
 <!-- END GENERATED REGISTRY -->

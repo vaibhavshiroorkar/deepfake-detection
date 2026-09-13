@@ -12,6 +12,17 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Scored the LAV-DF lip-sync stream, trained in an earlier run and never
+  measured in ROC-AUC. It reads 0.9969 with diagonal mass at 0.0592 against a
+  chance of 0.0600, on matched windows cut from the same file. The corpus that
+  forbids every cue except correspondence is solved without correspondence, so
+  the finding no longer depends on FakeAVCeleb being permissive.
+- Put confidence intervals on the MNW detection counts, which exposed a counting
+  error: one MNW clip is genuine and was being counted as a detection. The set
+  is 84 manipulated clips, not 85, and detection is 24 of 84. Named generators
+  reach 23 percent [15, 34] and in-the-wild clips 86 percent [49, 97], intervals
+  that do not overlap.
+
 - Added `docs/research/datasets.md`, a survey of the corpora that would close
   the generative-video gap, with licences, sizes and access routes. It records
   two traps found while surveying: commercial generators embed watermarks that a

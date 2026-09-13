@@ -62,10 +62,22 @@ video, 56.5 hours of audio, 1,975 images.
 
 <https://huggingface.co/datasets/nuriachandra/Deepfake-Eval-2024>
 
-**Status: not requested.** The repository is gated and this account is not in
-the authorized list, so someone has to open that page and accept the terms. The
-video half is small, 2,045 files and 15.3 GB, against 4.0 GB of audio and 0.9 GB
-of images.
+**Status: refused.** Access was requested and not granted. The video half would
+have been 2,045 files and 15.3 GB.
+
+Losing it costs less than it appears to. What it provides is an external
+validity check on content nobody in this project chose, and MNW already fills
+that role: it is evaluation-only, it carries twelve named modern generators and
+a set of genuinely circulated clips, and the detector's behaviour on it is
+already the project's honest external result. What MNW does not provide is
+scale. Its per-generator counts are 4 to 10 clips, so the interval on 0 of 10 is
+[0, 28] and no single generator's row can carry a claim.
+
+The substitute with the better properties is a corpus generated here, which is
+the one thing no public benchmark can offer: no published detector has trained
+on it, and it can be made to match the generators that actually matter. A
+hundred clips per tool would produce tighter intervals than MNW gives on any
+single generator.
 
 Use as evaluation only, for the same reason MNW is evaluation-only here. If it
 is ever downloaded, add it to `EVALUATION_ONLY_DATASETS` in `data/guards.py`
@@ -149,4 +161,5 @@ Ordered by value for this project:
    yourself is the only one you can be certain no published detector has seen.
 4. CoCoVideo for the commercial generative class.
 5. AV-Deepfake1M++ if the temporal-localization task is taken up.
-6. Deepfake-Eval-2024 as a final evaluation, never for training.
+6. Deepfake-Eval-2024 as a final evaluation, never for training. Refused, so
+   the self-generated set in step 3 takes over this role.

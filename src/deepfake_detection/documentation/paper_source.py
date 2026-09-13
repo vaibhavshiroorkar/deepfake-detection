@@ -343,6 +343,25 @@ def render_designa(program_run: Path) -> str:
     return "\n".join(lines)
 
 
+def _wilson(successes: int, total: int) -> tuple[float, float]:
+    """95 percent Wilson interval for a proportion.
+
+    Wilson rather than the normal approximation because these counts are tiny,
+    4 to 10 clips per generator, and the normal interval on 0 of 10 is [0, 0],
+    which reads as certainty where there is none.
+    """
+    if total == 0:
+        return (0.0, 1.0)
+    z = 1.96
+    p = successes / total
+    denominator = 1 + z * z / total
+    centre = (p + z * z / (2 * total)) / denominator
+    margin = (
+        z * ((p * (1 - p) / total + z * z / (4 * total * total)) ** 0.5) / denominator
+    )
+    return (max(0.0, centre - margin), min(1.0, centre + margin))
+
+
 def render_mnw(program_run: Path) -> str:
     """Detection per generator, which the aggregate detection rate hides."""
     path = Path(program_run) / "evaluation" / "visual-mnw-predictions.csv"
@@ -353,23 +372,66 @@ def render_mnw(program_run: Path) -> str:
         return _missing("mnw", Path(program_run))
     if not rows:
         return _missing("mnw", Path(program_run))
+    # Split on the label. MNW is described as fake-only and is not quite: one
+    # clip is genuine, and counting its prediction as a detection turns a false
+    # positive into a success.
     counts: dict[str, list[int]] = {}
+    authentic: list[int] = [0, 0]
     for row in rows:
+        called = int(row.get("predicted", 0))
+        if int(row.get("label", 1)) == 0:
+            authentic[1] += 1
+            authentic[0] += called
+            continue
         key = row.get("method") or "unknown"
         entry = counts.setdefault(key, [0, 0])
         entry[1] += 1
-        if int(row.get("predicted", 0)):
-            entry[0] += 1
-    lines = ["| Generator | Detected | Clips |", "|---|---:|---:|"]
-    for key, (hit, total) in sorted(counts.items(), key=lambda item: item[1][0] / item[1][1]):
-        lines.append(f"| `{key}` | {hit} | {total} |")
+        entry[0] += called
+    lines = [
+        "| Generator | Detected | Clips | Rate | 95% interval |",
+        "|---|---:|---:|---:|---|",
+    ]
+    for key, (hit, total) in sorted(
+        counts.items(), key=lambda item: item[1][0] / item[1][1]
+    ):
+        low, high = _wilson(hit, total)
+        lines.append(
+            f"| `{key}` | {hit} | {total} | {hit / total:.0%} | "
+            f"[{low:.0%}, {high:.0%}] |"
+        )
     detected = sum(v[0] for v in counts.values())
     total = sum(v[1] for v in counts.values())
-    lines.append(f"| **all** | **{detected}** | **{total}** |")
+    low, high = _wilson(detected, total)
+    lines.append(
+        f"| **all** | **{detected}** | **{total}** | **{detected / total:.0%}** | "
+        f"[{low:.0%}, {high:.0%}] |"
+    )
+    named = {k: v for k, v in counts.items() if "wild" not in k}
+    wild = {k: v for k, v in counts.items() if "wild" in k}
+    lines.append("")
+    for label, group in (("named generators", named), ("in the wild", wild)):
+        if not group:
+            continue
+        hit = sum(v[0] for v in group.values())
+        total = sum(v[1] for v in group.values())
+        low, high = _wilson(hit, total)
+        lines.append(
+            f"- {label}: {hit} of {total}, {hit / total:.0%} "
+            f"[{low:.0%}, {high:.0%}]"
+        )
+    if authentic[1]:
+        lines.append(
+            f"- the {authentic[1]} genuine clip(s) in the set: {authentic[0]} "
+            "called fake"
+        )
     lines.append("")
     lines.append(
-        "MNW is fake-only, so no ranking metric exists and the column is a "
-        "detection count at the fixed threshold."
+        "Almost fake-only, so no ranking metric exists and the column is a "
+        "detection count at the fixed threshold. Intervals are Wilson, because "
+        "the per-generator counts are 4 to 10 clips and a normal interval on 0 "
+        "of 10 would read as certainty. The honest reading of a single "
+        "generator's row is therefore weak; the pattern across rows is what "
+        "carries."
     )
     return "\n".join(lines)
 

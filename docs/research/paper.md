@@ -335,20 +335,22 @@ probability on a different scale.
 
 ### 5.11 How generalization fails
 
-0.9990 in-domain, 0.7500 on DFDC, and 25 of 85 manipulated clips detected on
-MNW, which is fake-only and so has no ROC-AUC. The per-generator breakdown is
-where the shape shows:
+0.9990 in-domain, 0.7500 on DFDC, and 24 of 84 manipulated clips detected on
+MNW, 29 percent [20, 39], which is almost fake-only and so has no ROC-AUC. The
+breakdown is where the shape shows:
 
-| MNW generator | Detected |
-| --- | --- |
-| vasa_1 | 0 of 10 |
-| raskai | 0 of 4 |
-| diff2lip | 1 of 6 |
-| sadtalker_video | 1 of 5 |
-| wav2lip_gfpgan | 1 of 6 |
-| echo_mimic | 3 of 10 |
-| the remaining named generators | 2 of 4 to 2 of 7 each |
-| unnamed in-the-wild clips | 7 of 8 |
+| MNW group | Detected | 95% interval |
+| --- | --- | --- |
+| named generators | 18 of 77, 23% | [15%, 34%] |
+| in-the-wild clips | 6 of 7, 86% | [49%, 97%] |
+| worst named: vasa_1 | 0 of 10 | [0%, 28%] |
+| worst named: raskai | 0 of 4 | [0%, 49%] |
+
+The per-generator counts are 4 to 10 clips, so no single row carries weight on
+its own and the interval on 0 of 10 reaches 28 percent. What does carry is the
+separation between the two groups, whose intervals do not overlap: the detector
+finds in-the-wild clips, which have been re-encoded and edited, and misses the
+raw output of named generators.
 
 The direction of the failure is measurable. Frame-to-frame motion, computed on
 the exact view the model is handed, correlates negatively with the fake
