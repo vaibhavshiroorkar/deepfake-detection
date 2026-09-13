@@ -94,7 +94,7 @@ not edit the table by hand. Run the command again after any dataset change.
 | `data/LAV-DF` | Cross-modal stream training, localized forgeries | present | 136,304 | 23.6 GB |
 | `data/Celeb-DF-v2` | Cross-dataset generalization, no audio | present | 6,529 | 9.5 GB |
 | `data/DFDC` | Cross-corpus test, the only one with audio not from VoxCeleb2 | present | 3,032 | 20.9 GB |
-| `data/FaceForensics++` | Declared visual experiments | absent | 0 | 0 B |
+| `data/FaceForensics++` | Declared visual experiments | present | 7,000 | 16.7 GB |
 | `data/MNW` | Locked external benchmark, evaluation only | present | 134 | 424.0 MB |
 <!-- END GENERATED DATASETS -->
 
@@ -135,6 +135,9 @@ where no ranking metric exists; its detection rate is shown instead.
 <!-- BEGIN GENERATED MLFLOW -->
 | Experiment | Runs |
 |---|---|
+| `design-b-20260910` | 5 (5 finished) |
+| `design-b-frozen-bn` | 4 (4 finished) |
+| `design-b-live-bn` | 2 (2 finished) |
 | `full-20260904` | 5 (5 finished) |
 | `initial-baseline-20260902` | 10 (10 finished) |
 | `program-20260906` | 21 (21 finished) |

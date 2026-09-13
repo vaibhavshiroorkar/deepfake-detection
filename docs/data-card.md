@@ -15,7 +15,21 @@ are comparable with published work. Note that its list writes `1` for real,
 which is the opposite of this project's label; `data/celebdf.py` inverts it once
 so no call site has to remember.
 
-FaceForensics++ is not present in the working tree.
+FaceForensics++ c23 is present, and its provenance is weaker than the others.
+The corpus is officially distributed under a EULA with TUM, where you complete
+their form and they send a download script. This copy came from a third-party
+Hugging Face mirror that states no licence, pulled by `scripts/fetch_ffpp.py`.
+The data is research-available either way, but "third-party mirror" is a weaker
+claim than "signed EULA" and the difference belongs on the record rather than in
+someone's memory. Prefer the official route when there is time for it.
+
+What is actually in the tree: 7,000 clips, 1,000 originals and 1,000 from each
+of six manipulation families, of which 6,992 cached successfully. The corpus
+carries no audio track at all, which `ffprobe` confirms and the cache audit
+recorded as `missing_audio` on every clip, so it can train the visual stream and
+nothing else. Its role here is the cross-dataset training corpus: a model
+trained on FF++ and scored zero-shot on Celeb-DF-v2 and DFDC is the one result
+in this project directly comparable with published tables.
 
 The [Microsoft-Northwestern-WITNESS benchmark](https://github.com/microsoft/MNW)
 is the locked external evaluation target. MNW is evaluation-only. It cannot be
