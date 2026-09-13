@@ -361,6 +361,19 @@ Fusion against the visual baseline, paired source bootstrap:
 The paired bootstrap is the protocol's comparison and the one the research question turns on: it resamples identities and takes the difference within each resample, so the two systems are never compared across different draws.
 <!-- END GENERATED OPERATING -->
 
+### 5.10 Trained on FaceForensics++, scored on corpora it never saw
+
+The protocol behind nearly every published cross-dataset table, and the first
+number here a reader can compare with someone else's. Every other model in this
+project was trained on FakeAVCeleb, which almost nobody uses as a training
+corpus, so its cross-corpus figures could only be compared against themselves.
+
+FF++ c23 carries no audio, so this is the visual stream alone.
+
+<!-- BEGIN GENERATED ZEROSHOT -->
+Not generated yet. Run `python scripts/score_ffpp_zeroshot.py`.
+<!-- END GENERATED ZEROSHOT -->
+
 ## 6. The findings
 
 Stated in full, with their supersessions, in [findings](findings.md). In short:

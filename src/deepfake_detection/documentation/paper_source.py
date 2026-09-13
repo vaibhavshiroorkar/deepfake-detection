@@ -38,6 +38,7 @@ BLOCK_MARKERS = {
         "designa",
         "mnw",
         "motion",
+        "zeroshot",
         "operating",
         "registry",
     )
@@ -56,6 +57,7 @@ COMMANDS = {
     "designa": "pwsh scripts/run_program.ps1",
     "mnw": "ddf evaluate branch --branch visual --dataset MNW",
     "motion": "python scripts/motion_vs_error.py --dataset dfdc",
+    "zeroshot": "python scripts/score_ffpp_zeroshot.py",
     "operating": "pwsh scripts/run_program.ps1",
     "registry": "python scripts/update_result_registry.py",
 }
@@ -530,6 +532,42 @@ def render_operating(program_run: Path) -> str:
     return NEWLINE.join(lines)
 
 
+def render_zeroshot(ffpp_run: Path) -> str:
+    """The FF++ model on corpora it never saw, the one comparable number here."""
+    payload = _load(Path(ffpp_run) / "evaluation" / "zero-shot.json")
+    if not payload:
+        return _missing("zeroshot", Path(ffpp_run))
+    labels = {
+        "ffpp-test": "FaceForensics++ test, in-domain",
+        "celebdf": "Celeb-DF-v2, zero-shot",
+        "dfdc": "DFDC, zero-shot",
+        "fakeavceleb-test": "FakeAVCeleb test, zero-shot",
+    }
+    lines = ["| Partition | ROC-AUC | Clips | Identities |", "|---|---|---:|---:|"]
+    for key, label in labels.items():
+        row = payload.get("partitions", {}).get(key)
+        if not row:
+            continue
+        bounds = row.get("ci")
+        value = (
+            f"{row['roc_auc']:.4f} [{bounds[0]:.4f}, {bounds[1]:.4f}]"
+            if row.get("roc_auc") is not None and bounds
+            else _cell(row.get("roc_auc"))
+        )
+        lines.append(
+            f"| {label} | {value} | {row.get('clips', 0):,} | "
+            f"{row.get('identities', 0):,} |"
+        )
+    lines.append("")
+    lines.append(
+        "Trained on FaceForensics++ c23 and scored without re-caching, since "
+        "every corpus here shares one preprocessing hash. FakeAVCeleb is "
+        "included to turn the usual comparison around: it is the corpus every "
+        "other model in this project was trained on."
+    )
+    return NEWLINE.join(lines)
+
+
 def render_registry(registry_path: Path) -> str:
     try:
         text = Path(registry_path).read_text(encoding="utf-8")
@@ -570,6 +608,7 @@ def build_blocks(
     run_dir: Path,
     program_run: Path,
     registry: Path,
+    ffpp_run: Path = Path("runs/ffpp-20260913"),
 ) -> dict[str, str]:
     return {
         "streams": render_streams(run_dir),
@@ -582,6 +621,7 @@ def build_blocks(
         "designa": render_designa(program_run),
         "mnw": render_mnw(program_run),
         "motion": render_motion(program_run),
+        "zeroshot": render_zeroshot(ffpp_run),
         "operating": render_operating(program_run),
         "registry": render_registry(registry),
     }
@@ -593,12 +633,16 @@ def update_paper_source(
     run_dir: Path,
     program_run: Path,
     registry: Path,
+    ffpp_run: Path = Path("runs/ffpp-20260913"),
 ) -> bool:
     """Rewrite every generated block. True when the file changed."""
     text = Path(path).read_text(encoding="utf-8")
     updated = text
     for name, body in build_blocks(
-        run_dir=run_dir, program_run=program_run, registry=registry
+        run_dir=run_dir,
+        program_run=program_run,
+        registry=registry,
+        ffpp_run=ffpp_run,
     ).items():
         updated = replace_block(updated, name, body)
     if updated == text:
