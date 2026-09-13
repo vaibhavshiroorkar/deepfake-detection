@@ -131,11 +131,11 @@ served.
 <!-- BEGIN GENERATED STREAMS -->
 | Stream | holdout | in-domain | DFDC |
 |---|---|---|---|
-| `final-audio-seed17` | 0.7919 | 0.7739 | 0.5070 |
-| `stream-emotion` | 0.9991 | 0.9978 | 0.5951 |
-| `stream-lipsync` | 0.7593 | 0.7587 | 0.4890 |
-| `visual-dinov3` | 0.9216 | 0.9199 | 0.5147 |
-| `visual-efficientnet` | 0.9733 | 0.9719 | 0.5067 |
+| `final-audio-seed17` | 0.7919 [0.7717, 0.8137] | 0.7739 [0.7564, 0.7940] | 0.5070 [0.4771, 0.5359] |
+| `stream-emotion` | 0.9991 [0.9981, 0.9999] | 0.9978 [0.9956, 0.9996] | 0.5951 [0.5558, 0.6351] |
+| `stream-lipsync` | 0.7593 [0.7360, 0.7819] | 0.7587 [0.7345, 0.7825] | 0.4890 [0.4569, 0.5217] |
+| `visual-dinov3` | 0.9216 [0.8912, 0.9457] | 0.9199 [0.8882, 0.9446] | 0.5147 [0.4795, 0.5516] |
+| `visual-efficientnet` | 0.9733 [0.9712, 0.9750] | 0.9719 [0.9692, 0.9741] | 0.5067 [0.4710, 0.5458] |
 
 Labels are `clip_fake`, which the fusion store carries. The visual stream optimises `video_fake`, so its in-domain figure differs there; see the BatchNorm table.
 <!-- END GENERATED STREAMS -->
@@ -149,37 +149,37 @@ which streams are in the input.
 <!-- BEGIN GENERATED ABLATION -->
 | Streams | in-domain | dfdc |
 |---|---|---|
-| final-audio-seed17 | 0.7780 | 0.4933 |
-| stream-emotion | 0.9978 | 0.5991 |
-| stream-lipsync | 0.8249 | 0.5543 |
-| visual-dinov3 | 0.9205 | 0.5112 |
-| visual-efficientnet | 0.9753 | 0.5027 |
-| final-audio-seed17 + stream-emotion | 0.9979 | 0.5999 |
-| final-audio-seed17 + stream-lipsync | 0.8473 | 0.5676 |
-| final-audio-seed17 + visual-dinov3 | 0.9662 | 0.5137 |
-| final-audio-seed17 + visual-efficientnet | 0.9979 | 0.4915 |
-| stream-emotion + stream-lipsync | 0.9979 | 0.6076 |
-| stream-emotion + visual-dinov3 | 0.9979 | 0.5372 |
-| stream-emotion + visual-efficientnet | 0.9988 | 0.5452 |
-| stream-lipsync + visual-dinov3 | 0.9493 | 0.5182 |
-| stream-lipsync + visual-efficientnet | 0.9952 | 0.5139 |
-| visual-dinov3 + visual-efficientnet | 0.9769 | 0.5180 |
-| final-audio-seed17 + stream-emotion + stream-lipsync | 0.9980 | 0.6003 |
-| final-audio-seed17 + stream-emotion + visual-dinov3 | 0.9981 | 0.6017 |
-| final-audio-seed17 + stream-emotion + visual-efficientnet | 0.9990 | 0.5450 |
-| final-audio-seed17 + stream-lipsync + visual-dinov3 | 0.9625 | 0.5144 |
-| final-audio-seed17 + stream-lipsync + visual-efficientnet | 0.9979 | 0.4984 |
-| final-audio-seed17 + visual-dinov3 + visual-efficientnet | 0.9981 | 0.5138 |
-| stream-emotion + stream-lipsync + visual-dinov3 | 0.9981 | 0.5924 |
-| stream-emotion + stream-lipsync + visual-efficientnet | 0.9987 | 0.5416 |
-| stream-emotion + visual-dinov3 + visual-efficientnet | 0.9988 | 0.5376 |
-| stream-lipsync + visual-dinov3 + visual-efficientnet | 0.9963 | 0.5204 |
-| final-audio-seed17 + stream-emotion + stream-lipsync + visual-dinov3 | 0.9981 | 0.5407 |
-| final-audio-seed17 + stream-emotion + stream-lipsync + visual-efficientnet | 0.9988 | 0.5493 |
-| final-audio-seed17 + stream-emotion + visual-dinov3 + visual-efficientnet | 0.9989 | 0.5415 |
-| final-audio-seed17 + stream-lipsync + visual-dinov3 + visual-efficientnet | 0.9977 | 0.5250 |
-| stream-emotion + stream-lipsync + visual-dinov3 + visual-efficientnet | 0.9987 | 0.5451 |
-| final-audio-seed17 + stream-emotion + stream-lipsync + visual-dinov3 + visual-efficientnet | 0.9988 | 0.5411 |
+| final-audio-seed17 | 0.7780 [0.7603, 0.7961] | 0.4933 [0.4652, 0.5227] |
+| stream-emotion | 0.9978 [0.9952, 0.9996] | 0.5991 [0.5593, 0.6361] |
+| stream-lipsync | 0.8249 [0.7995, 0.8480] | 0.5543 [0.5189, 0.5885] |
+| visual-dinov3 | 0.9205 [0.8943, 0.9438] | 0.5112 [0.4754, 0.5454] |
+| visual-efficientnet | 0.9753 [0.9722, 0.9779] | 0.5027 [0.4663, 0.5402] |
+| final-audio-seed17 + stream-emotion | 0.9979 [0.9957, 0.9996] | 0.5999 [0.5611, 0.6384] |
+| final-audio-seed17 + stream-lipsync | 0.8473 [0.8279, 0.8679] | 0.5676 [0.5324, 0.6034] |
+| final-audio-seed17 + visual-dinov3 | 0.9662 [0.9501, 0.9801] | 0.5137 [0.4779, 0.5469] |
+| final-audio-seed17 + visual-efficientnet | 0.9979 [0.9957, 0.9995] | 0.4915 [0.4545, 0.5335] |
+| stream-emotion + stream-lipsync | 0.9979 [0.9959, 0.9996] | 0.6076 [0.5666, 0.6488] |
+| stream-emotion + visual-dinov3 | 0.9979 [0.9958, 0.9995] | 0.5372 [0.4964, 0.5749] |
+| stream-emotion + visual-efficientnet | 0.9988 [0.9974, 0.9999] | 0.5452 [0.5064, 0.5858] |
+| stream-lipsync + visual-dinov3 | 0.9493 [0.9304, 0.9655] | 0.5182 [0.4833, 0.5527] |
+| stream-lipsync + visual-efficientnet | 0.9952 [0.9912, 0.9983] | 0.5139 [0.4768, 0.5537] |
+| visual-dinov3 + visual-efficientnet | 0.9769 [0.9744, 0.9793] | 0.5180 [0.4805, 0.5549] |
+| final-audio-seed17 + stream-emotion + stream-lipsync | 0.9980 [0.9960, 0.9997] | 0.6003 [0.5585, 0.6409] |
+| final-audio-seed17 + stream-emotion + visual-dinov3 | 0.9981 [0.9960, 0.9998] | 0.6017 [0.5611, 0.6408] |
+| final-audio-seed17 + stream-emotion + visual-efficientnet | 0.9990 [0.9976, 1.0000] | 0.5450 [0.5066, 0.5866] |
+| final-audio-seed17 + stream-lipsync + visual-dinov3 | 0.9625 [0.9463, 0.9762] | 0.5144 [0.4796, 0.5491] |
+| final-audio-seed17 + stream-lipsync + visual-efficientnet | 0.9979 [0.9959, 0.9995] | 0.4984 [0.4610, 0.5386] |
+| final-audio-seed17 + visual-dinov3 + visual-efficientnet | 0.9981 [0.9963, 0.9995] | 0.5138 [0.4749, 0.5550] |
+| stream-emotion + stream-lipsync + visual-dinov3 | 0.9981 [0.9961, 0.9997] | 0.5924 [0.5491, 0.6348] |
+| stream-emotion + stream-lipsync + visual-efficientnet | 0.9987 [0.9969, 0.9999] | 0.5416 [0.5032, 0.5826] |
+| stream-emotion + visual-dinov3 + visual-efficientnet | 0.9988 [0.9975, 0.9999] | 0.5376 [0.4982, 0.5783] |
+| stream-lipsync + visual-dinov3 + visual-efficientnet | 0.9963 [0.9937, 0.9987] | 0.5204 [0.4799, 0.5578] |
+| final-audio-seed17 + stream-emotion + stream-lipsync + visual-dinov3 | 0.9981 [0.9962, 0.9996] | 0.5407 [0.4980, 0.5812] |
+| final-audio-seed17 + stream-emotion + stream-lipsync + visual-efficientnet | 0.9988 [0.9972, 1.0000] | 0.5493 [0.5090, 0.5905] |
+| final-audio-seed17 + stream-emotion + visual-dinov3 + visual-efficientnet | 0.9989 [0.9974, 1.0000] | 0.5415 [0.4995, 0.5827] |
+| final-audio-seed17 + stream-lipsync + visual-dinov3 + visual-efficientnet | 0.9977 [0.9953, 0.9995] | 0.5250 [0.4844, 0.5647] |
+| stream-emotion + stream-lipsync + visual-dinov3 + visual-efficientnet | 0.9987 [0.9970, 1.0000] | 0.5451 [0.5042, 0.5855] |
+| final-audio-seed17 + stream-emotion + stream-lipsync + visual-dinov3 + visual-efficientnet | 0.9988 [0.9971, 1.0000] | 0.5411 [0.4984, 0.5828] |
 
 - in-domain: best is final-audio-seed17 + stream-emotion + visual-efficientnet at 0.9990; best single is stream-emotion at 0.9978; all 5 streams reach 0.9988.
 - dfdc: best is stream-emotion + stream-lipsync at 0.6076; best single is stream-emotion at 0.5991; all 5 streams reach 0.5411.
@@ -402,6 +402,9 @@ Stated in full, with their supersessions, in [findings](findings.md). In short:
 - **F3** Selecting on validation loss kept a checkpoint scoring below chance.
 - **F4** Fusing a subset beats fusing everything, cross-corpus.
 - **F5** Redundancy is measurable and was not where it was predicted.
+- **F11** The identity-strict stress test the protocol requires changes nothing:
+  0.8761 [0.8039, 0.9356] against 0.8723 [0.8425, 0.9008]. The ordinary split
+  was not inflated by the face donor leaking across partitions.
 - **F10** Training on FF++ c23, the corpus the literature treats as the
   cross-dataset standard, did not improve transfer: DFDC fell from 0.7611 to
   0.4920 and Celeb-DF was a tie. More manipulation families in training is not

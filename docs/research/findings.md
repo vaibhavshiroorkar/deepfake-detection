@@ -179,8 +179,13 @@ head fitted on the same holdout rows and scored on the same two partitions.
 
 | Partition | Best combination | Best single | All five |
 | --- | --- | --- | --- |
-| in-domain | audio + emotion + visual-efficientnet, 0.9990 | emotion, 0.9978 | 0.9988 |
-| DFDC | emotion + lip-sync, 0.6076 | emotion, 0.5991 | 0.5411 |
+| in-domain | audio + emotion + visual-efficientnet, 0.9990 [0.9976, 1.0000] | emotion, 0.9978 | 0.9988 |
+| DFDC | emotion + lip-sync, 0.6076 [0.5666, 0.6488] | emotion, 0.5991 | 0.5411 |
+
+On DFDC the best combination's interval, [0.5666, 0.6488], contains the best
+single stream's 0.5991, so the two are not separated. The claim that survives is
+the negative one: the full five-stream fusion at 0.5411 sits below three of its
+own inputs.
 
 Fusion beats the best single stream on both partitions. The full fusion does
 not: on DFDC it falls below three of its own inputs. More streams is not the
@@ -307,6 +312,29 @@ that is also visual-only but was trained with a GRU rather than an LSTM. The
 DFDC subset here is 94 percent manipulated across 150 identities and is not the
 standard DFDC test set, so the absolute numbers are comparable within this
 project and only roughly comparable with published ones.
+
+### F11. The identity-strict condition does not change the number
+
+Result: `C-ffpp-zeroshot`. The protocol requires an identity-strict stress test
+and it had never been run. FF++ names a fake `target_source`, and the ordinary
+split groups on the target, the identity being replaced, so a clip's face donor
+can sit in another partition. The strict subset keeps only clips where both
+identities fall inside the same partition, so nothing in it shares a source or a
+target with anything the model trained on.
+
+| Test set | Clips | ROC-AUC |
+| --- | --- | --- |
+| FF++ test, ordinary split | 954 | 0.8723 [0.8425, 0.9008] |
+| FF++ test, identity-strict | 292 | 0.8761 [0.8039, 0.9356] |
+
+The point estimates are within 0.004 of each other and the intervals overlap
+almost entirely. The strict interval is wider because the subset is a third of
+the size, which is the cost of the stricter condition rather than a result.
+
+The finding is the absence of a finding, and it is worth stating: the ordinary
+split's number was not inflated by the face donor leaking across partitions.
+That was a live risk, it is what the strict subset exists to detect, and on this
+corpus it did not happen.
 
 ## Superseded findings
 

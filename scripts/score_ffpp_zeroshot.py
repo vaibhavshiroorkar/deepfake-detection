@@ -37,6 +37,16 @@ PARTITIONS = {
         Path("runs/ffpp-20260913/split/test-usable.csv"),
         "FaceForensics++",
     ),
+    # The identity-strict subset the protocol requires and that had never been
+    # run. A fake's two identities can both be in the test partition here, so no
+    # clip shares a source or a target with anything the model trained on. It is
+    # smaller and closer to balanced than the full test set, which is the price
+    # of the stricter condition and belongs beside its number.
+    "ffpp-test-identity-strict": (
+        Path("runs/ffpp-20260913"),
+        Path("runs/ffpp-20260913/split/test-identity-strict-usable.csv"),
+        "FaceForensics++",
+    ),
     "celebdf": (
         PROGRAM,
         Path("runs/full-20260904/celebdf-test-manifest.csv"),
