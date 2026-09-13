@@ -36,6 +36,7 @@ resolves.
 | `B-stream-correlation` | Results, redundancy between streams | `python scripts/stream_correlation.py --run-dir runs/design-b-20260910` | `c0cee4a4124e51eb` | `203cd4134de01b4e` | none | Redundancy is measurable and was not where it was predicted | provisional (1 seed) |
 | `B-stream-scores` | Results, per-stream ROC-AUC with intervals | `python scripts/score_streams.py --run-dir runs/design-b-20260910` | `10bf3ef7fd939d67` | `d89e08e953338ea4` | `52ba1b6cebc9`, `30247f8933e5`, `5a34ee910530`, `486fc02d6eb8` | Every stream except emotion reads near chance cross-corpus | provisional (1 seed) |
 | `B-training-histories` | Results, attention that never moved; lip-sync collapse | `pwsh scripts/train_design_b.ps1` | `bc8e26f58a3b7862` | `24577f532759a99a` | `486fc02d6eb8`, `5a34ee910530` | Both cross-modal streams sit on chance diagonal mass for every epoch of every run | provisional (1 seed) |
+| `C-ffpp-zeroshot` | Results, trained on FF++ and scored on unseen corpora | `python scripts/score_ffpp_zeroshot.py` | missing | missing | not logged | The only number in this project trained under the protocol the published cross-dataset tables use | pending |
 <!-- END GENERATED REGISTRY -->
 
 ## Acceptance rules

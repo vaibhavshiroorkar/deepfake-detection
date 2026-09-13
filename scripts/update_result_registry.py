@@ -58,6 +58,7 @@ class Result:
 PROGRAM = Path("runs/program-20260906")
 DESIGN_B = Path("runs/design-b-20260910")
 STREAMS = Path("runs/streams-20260905")
+FFPP = Path("runs/ffpp-20260913")
 
 RESULTS: tuple[Result, ...] = (
     Result(
@@ -237,6 +238,19 @@ RESULTS: tuple[Result, ...] = (
             "Measured in a scratch script whose output was never written under "
             "runs/. Re-run before citing."
         ),
+    ),
+    Result(
+        result_id="C-ffpp-zeroshot",
+        paper_location="Results, trained on FF++ and scored on unseen corpora",
+        command="python scripts/score_ffpp_zeroshot.py",
+        report=FFPP / "evaluation" / "zero-shot.json",
+        predictions=FFPP / "checkpoints" / "visual-efficientnet-history.json",
+        mlflow=(("ffpp-20260913", "visual-efficientnet"),),
+        decision=(
+            "The only number in this project trained under the protocol the "
+            "published cross-dataset tables use"
+        ),
+        seeds=1,
     ),
     Result(
         result_id="B-fusion-ablations",
