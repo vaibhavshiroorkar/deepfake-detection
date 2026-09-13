@@ -408,6 +408,15 @@ Several required evaluations in the protocol have not been run: the
 identity-strict stress subset, leave-one-method-family-out, and the compression,
 noise and resolution stress tests.
 
+Fully generated video is out of scope and the system is close to blind on it: 0
+of 10 on `vasa_1` and 0 of 4 on `raskai`. Every corpus here manipulates a real
+recording, so the traces the models learned are seams and boundary artifacts
+that generated video does not have. The motion result compounds it, since
+smoothness reads as authenticity and generated video is smooth. Detecting that
+class needs the whole frame, frequency-domain features and a
+leave-one-generator-out protocol, and is a separate question from the one this
+paper asks.
+
 ## 8. Conclusion
 
 Cue-specific fusion did not beat the visual baseline cross-corpus on our data,

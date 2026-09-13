@@ -412,7 +412,37 @@ because the first diagnosis was wrong.
   leave-one-method-family-out, and the compression, noise and resolution stress
   tests.
 
-## 9. Provenance
+## 9. What this system is not built for
+
+Fully generated video is a different manipulation class and the measurements say
+so. Every corpus here manipulates a real recording: a face region swapped, a
+mouth re-rendered. The traces are blending seams, boundary warping and flicker
+along the seam. Video from a generative model has no real source and no seam,
+and the per-generator table in section 5.7 shows what that costs: 0 of 10 on
+`vasa_1`, 0 of 4 on `raskai`, 1 of 6 on `diff2lip`, against 7 of 8 on the
+unnamed in-the-wild clips.
+
+One measured result makes it worse than a blind spot. Motion correlates
+negatively with the fake score (section 5.8), so the model treats smoothness as
+evidence of authenticity, and generated video is typically smooth. The learned
+feature points the wrong way for this class.
+
+What a system for that class would need, none of which is here:
+
+- The whole frame, not a 224-pixel face crop. Generative implausibility shows in
+  backgrounds, hands, text and reflections, which this pipeline discards.
+- Frequency-domain features. Diffusion decoders and GAN upsamplers leave
+  periodic artifacts; nothing here computes a spectrum.
+- A leave-one-generator-out protocol, so the reported number is what happens on
+  the next model rather than the one trained on. It is a required ablation in
+  [the research design](../research-design.md) and has never been run.
+- Provenance checks first: SynthID and C2PA are exact when present and prove
+  nothing when absent.
+
+Treating this as a refinement of the current question would be a mistake. It is
+a second question, and the evidence for that is in the table.
+
+## 10. Provenance
 
 <!-- BEGIN GENERATED REGISTRY -->
 14 registered results.

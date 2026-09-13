@@ -12,6 +12,19 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Extracted FaceForensics++ c23, which had been downloaded and left as a 17.9 GB
+  zip. 7,000 clips: 1,000 originals and 1,000 each from six manipulation
+  families. Added `data/faceforensics.py` and
+  `scripts/build_ffpp_manifest.py`, built a source-disjoint split of 4,840 train
+  and 1,032 validation and 1,128 test over 720, 154 and 154 identities, and
+  started caching under the same code version as every other corpus so the views
+  are interchangeable. This is the corpus the published cross-dataset tables
+  train on, so it is what makes any number here comparable to one.
+- Recorded that fully generated video is a separate problem this system is not
+  built for, with the per-generator evidence: 0 of 10 on `vasa_1`, 0 of 4 on
+  `raskai`. The motion result compounds it, since the model reads smoothness as
+  authenticity and generated video is smooth.
+
 - Added `docs/research/paper-source.md`, the single document to write the paper
   from, and `scripts/update_paper_source.py` which regenerates its tables from
   the artifacts under `runs/`. Prose holds the judgement, generated blocks hold
