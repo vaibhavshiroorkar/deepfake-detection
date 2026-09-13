@@ -322,11 +322,41 @@ metric. The aggregate hides the shape, which is in the per-generator split.
 MNW is fake-only, so no ranking metric exists and the column is a detection count at the fixed threshold.
 <!-- END GENERATED MNW -->
 
-The visual view samples 16 frames spread across a clip, so genuine camera motion
-produces the same frame-to-frame variation a flickering forgery does. The
-generators missed completely are the ones whose artifacts are temporally smooth,
-and the clips the detector does find are the in-the-wild ones, which carry
-compression and editing artifacts as well.
+Motion was measured against the score rather than assumed, and the result went
+the other way. See section 5.8: motion suppresses the fake score, so the failure
+on moving video is missed detections rather than false alarms. The generators
+missed completely are the ones whose artifacts are temporally smooth, and the
+clips the detector does find are the in-the-wild ones, which carry compression
+and editing artifacts as well.
+
+### 5.8 Motion, and what the model does with it
+
+<!-- BEGIN GENERATED MOTION -->
+| Corpus | Clips | Mean motion | Top quartile | Correlation, manipulated | Correlation, authentic | False alarms, calm | False alarms, moving |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| FakeAVCeleb | 1,648 | 0.2429 | 0.3038 | -0.202 | -0.010 | 0.0% | 0.0% |
+| DFDC | 2,410 | 0.2710 | 0.3627 | -0.316 | -0.035 | 0.0% | 2.7% |
+
+Motion is the mean absolute difference between consecutive frames of the cached view, which is the tensor the model is handed. A negative correlation means more motion pushes the score towards `real`.
+<!-- END GENERATED MOTION -->
+
+### 5.9 Calibration and the operating point
+
+<!-- BEGIN GENERATED OPERATING -->
+| Partition | ROC-AUC | Precision | Recall | FPR | FPR at 95% TPR | EER | Brier | Calibration error |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| FakeAVCeleb, in-domain | 0.9990 | 1.0000 | 0.9981 | 0.0000 | 0.0000 | 0.0010 | 0.0018 | 0.0022 |
+| DFDC, cross-corpus | 0.7500 | 0.9904 | 0.2820 | 0.0414 | 0.8690 | 0.2958 | 0.5466 | 0.6366 |
+
+Fusion against the visual baseline, paired source bootstrap:
+
+| Partition | Difference in ROC-AUC | 95% interval | Separated |
+|---|---:|---|---|
+| FakeAVCeleb, in-domain | 0.0247 | [0.0220, 0.0280] | yes |
+| DFDC, cross-corpus | -0.0083 | [-0.0185, 0.0024] | no, the interval includes zero |
+
+The paired bootstrap is the protocol's comparison and the one the research question turns on: it resamples identities and takes the difference within each resample, so the two systems are never compared across different draws.
+<!-- END GENERATED OPERATING -->
 
 ## 6. The findings
 
@@ -345,7 +375,8 @@ Stated in full, with their supersessions, in [findings](findings.md). In short:
 - **F3** Selecting on validation loss kept a checkpoint scoring below chance.
 - **F4** Fusing a subset beats fusing everything, cross-corpus.
 - **F5** Redundancy is measurable and was not where it was predicted.
-- **F6** Generalization collapses per generator, not uniformly.
+- **F6** Motion hides manipulation rather than causing false alarms, which
+  supersedes the mechanism asserted in earlier drafts.
 - **F7** One decision threshold cannot serve three media kinds.
 - **F8** The deep head does not beat the late head.
 - **F9** Abstaining on partial coverage buys no accuracy.
@@ -384,10 +415,10 @@ because the first diagnosis was wrong.
 ## 9. Provenance
 
 <!-- BEGIN GENERATED REGISTRY -->
-12 registered results.
+14 registered results.
 
 - 1 `pending`
-- 11 `provisional (1 seed)`
+- 13 `provisional (1 seed)`
 
 The rows themselves, with each artifact's SHA-256 and MLflow run, are in [result traceability](result-traceability.md).
 <!-- END GENERATED REGISTRY -->

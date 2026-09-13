@@ -169,18 +169,33 @@ should be dropped. That was wrong: lip-sync is in the best DFDC combination
 (F4). Redundancy in-domain and usefulness cross-corpus are different questions,
 and the error-overlap table answers only the first.
 
-### F6. Generalization collapses in a specific, mechanistic way
+### F6. Motion hides manipulation, it does not create false alarms
 
-Result: `A-fusion-in-domain` and `A-fusion-dfdc`. The Design A pipeline reads
-0.9990 in-domain and 0.7500 on DFDC. On MNW, which is fake-only, it detects 25
-of 85 manipulated clips, and the breakdown is not uniform: 0 of 10 on `vasa_1`,
-0 of 4 on `raskai`, 1 of 6 on `diff2lip`, against 7 of 8 on the unnamed
-in-the-wild clips.
+Result: `A-motion`. Measured as the mean absolute difference between consecutive
+frames of the cached view, which is what the model is handed, against the fake
+probability it returns.
 
-`visual_view` samples 16 frames from across the whole clip, so genuine camera
-motion produces the same frame-to-frame variation a flickering forgery does.
-The failure is not uniform across generators, and the generator it misses
-completely is the one whose artifacts are temporally smooth.
+| Corpus | Mean motion | Top quartile | Correlation, manipulated clips | Correlation, authentic clips |
+| --- | --- | --- | --- | --- |
+| FakeAVCeleb, in-domain | 0.2429 | 0.3038 | -0.202 | -0.010 |
+| DFDC, cross-corpus | 0.2710 | 0.3627 | -0.316 | -0.035 |
+
+The sign is negative and it lives entirely in the manipulated class. More motion
+means a lower fake score, on both corpora, and motion barely moves the score on
+genuine clips at all. DFDC's upper quartile carries 19 percent more motion than
+FakeAVCeleb's, so the clips that corpus adds are exactly the ones the model is
+least likely to call fake. That is a mechanism for the transfer gap and it lines
+up with the operating point: on DFDC at threshold 0.5 the pipeline has precision
+0.9904 and recall 0.2820, so it misses 72 percent of manipulated clips while
+almost never crying wolf.
+
+**This supersedes the mechanism written into earlier drafts.** The claim there
+was that sampling 16 frames from across a clip makes genuine camera motion look
+like the flicker of a forgery, producing false alarms. Measured, false alarms on
+genuine clips rise only from 0.0 percent in the calmest quartile to 2.7 percent
+in the most moving one on DFDC, and not at all in-domain. The dominant failure
+on moving video is the opposite of the one claimed: missed detections, not false
+positives.
 
 ### F7. One decision threshold cannot serve three media kinds
 
@@ -231,4 +246,5 @@ partial coverage are not the clips the head is getting wrong.
 | The emotion stream duplicates the visual stream | F1, F4 | It is the best single stream on both partitions and appears in the best combination on each |
 | Lip-sync is a redundant audio duplicate and should be dropped | F5, F4 | It carries the best DFDC combination |
 | Freezing BatchNorm is a clean win | F2 | It is a trade: in-domain fit for cross-corpus transfer |
+| Camera motion makes the model call genuine clips fake | F6 | Measured with the opposite sign: motion lowers the fake score, and the failure on moving video is missed detections, not false alarms |
 | A clip-level bootstrap would report intervals several times too narrow | none | Measured the other way: the identity-clustered interval on DFDC is narrower, 0.0776 against 0.1065, because identities there carry balanced class proportions. Clustering by identity is still right, because it matches the question, not because it is wider |

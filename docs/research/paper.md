@@ -251,10 +251,37 @@ everything it holds is choosing the worse of two options already in its hands.
 
 ### 5.6 The negative answer to the research question
 
-Design A's late fusion reads 0.7500 on DFDC against its own visual branch at
-0.7611. Design B's best cross-corpus combination reads 0.6076. Cue-specific
-fusion did not generalize better than the visual baseline here, and the full
-five-stream fusion generalized worse than three of its parts.
+The protocol's comparison is a paired source bootstrap: identities are resampled
+and the difference between the two systems is taken within each resample, so
+they are never compared across different draws.
+
+| Partition | Fusion minus visual | 95% interval |
+| --- | --- | --- |
+| in-domain | +0.0247 | [+0.0220, +0.0280] |
+| DFDC | -0.0083 | [-0.0185, +0.0024] |
+
+Fusion helps in-domain, and the interval is clear of zero. Cross-corpus the
+difference is negative and the interval includes zero, so the honest statement
+is not that fusion is worse but that no difference is detectable. The
+in-domain advantage does not survive the change of corpus. Design B's best
+cross-corpus combination reads 0.6076, below both.
+
+### 5.6b Calibration collapses further than accuracy does
+
+| Partition | ROC-AUC | Precision | Recall | FPR at 95% TPR | Brier | Calibration error |
+| --- | --- | --- | --- | --- | --- | --- |
+| in-domain | 0.9990 | 1.0000 | 0.9981 | 0.0000 | 0.0018 | 0.0022 |
+| DFDC | 0.7500 | 0.9904 | 0.2820 | 0.8690 | 0.5466 | 0.6366 |
+
+ROC-AUC falls by a quarter. Expected calibration error rises by a factor of 289.
+At the fixed threshold the pipeline catches 28 percent of manipulated clips
+cross-corpus while keeping precision at 0.99, so it is not accusing genuine
+clips, it is failing to accuse manipulated ones and reporting confident
+probabilities while it does.
+
+For a reader deciding whether to deploy such a system, the calibration row
+matters more than the ROC-AUC row: a ranking metric says the scores are ordered
+usefully, and the Brier score says the numbers attached to them are not.
 
 ### 5.7 Redundancy was not where it was predicted
 
@@ -308,11 +335,26 @@ where the shape shows:
 | the remaining named generators | 2 of 4 to 2 of 7 each |
 | unnamed in-the-wild clips | 7 of 8 |
 
-The visual view samples 16 frames spread across a clip, so genuine camera motion
-produces the same frame-to-frame variation a flickering forgery does. The two
-generators missed completely are the ones whose artifacts are temporally smooth,
-and the clips the detector does find are the in-the-wild ones, which carry
-compression and editing artifacts as well.
+The direction of the failure is measurable. Frame-to-frame motion, computed on
+the exact view the model is handed, correlates negatively with the fake
+probability: -0.316 among manipulated DFDC clips and -0.202 among manipulated
+in-domain clips, while barely moving the score on genuine clips in either
+corpus, -0.035 and -0.010. DFDC's top motion quartile carries 19 percent more
+motion than FakeAVCeleb's, so the clips it adds are the ones the model is least
+willing to call fake.
+
+That is consistent with the operating point rather than with the intuition.
+Precision on DFDC is 0.9904 and recall is 0.2820: the pipeline misses 72 percent
+of manipulated clips and almost never accuses a genuine one. An earlier draft of
+this paper asserted the opposite mechanism, that motion looks like forgery
+flicker and produces false alarms. False alarms on genuine clips rise only from
+0.0 to 2.7 percent between the calmest and most moving quartiles. The claim was
+wrong and the measurement that corrected it is one line of analysis over
+artifacts that already existed.
+
+The two generators missed completely are the ones whose artifacts are temporally
+smooth, and the clips the detector does find are the in-the-wild ones, which
+carry compression and editing artifacts as well.
 
 ## 6. Failures that changed a result
 

@@ -107,6 +107,33 @@ RESULTS: tuple[Result, ...] = (
         notes="Fake-only, so no ranking metric exists. Detection rate only.",
     ),
     Result(
+        result_id="A-motion",
+        paper_location="Results, motion hides manipulation",
+        command="python scripts/motion_vs_error.py --dataset dfdc",
+        report=PROGRAM / "evaluation" / "motion-dfdc.json",
+        predictions=PROGRAM / "evaluation" / "visual-dfdc-predictions.csv",
+        mlflow=(),
+        decision=(
+            "Motion lowers the fake score on manipulated clips in both corpora, "
+            "so moving video produces missed detections rather than false alarms"
+        ),
+        seeds=1,
+    ),
+    Result(
+        result_id="A-operating-point",
+        paper_location="Results, calibration and the paired comparison",
+        command="ddf evaluate fusion --dataset DFDC",
+        report=PROGRAM / "evaluation" / "fusion-dfdc-metrics.json",
+        predictions=PROGRAM / "evaluation" / "fusion-dfdc-predictions.csv",
+        mlflow=(("program-20260906", "fusion-dfdc-evaluation"),),
+        decision=(
+            "Paired difference -0.0083 [-0.0185, 0.0024], so fusion is not "
+            "separated from the visual baseline cross-corpus; calibration error "
+            "rises from 0.0022 to 0.6366"
+        ),
+        seeds=1,
+    ),
+    Result(
         result_id="B-stream-scores",
         paper_location="Results, per-stream ROC-AUC with intervals",
         command="python scripts/score_streams.py --run-dir runs/design-b-20260910",

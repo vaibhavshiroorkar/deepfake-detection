@@ -23,6 +23,8 @@ import json
 from collections.abc import Iterable, Mapping
 from pathlib import Path
 
+NEWLINE = "\n"
+
 BLOCK_MARKERS = {
     name: (f"<!-- BEGIN GENERATED {name.upper()} -->", f"<!-- END GENERATED {name.upper()} -->")
     for name in (
@@ -35,6 +37,8 @@ BLOCK_MARKERS = {
         "thresholds",
         "designa",
         "mnw",
+        "motion",
+        "operating",
         "registry",
     )
 }
@@ -51,6 +55,8 @@ COMMANDS = {
     "thresholds": "python scripts/fit_gate_fusion.py --run-dir {run}",
     "designa": "pwsh scripts/run_program.ps1",
     "mnw": "ddf evaluate branch --branch visual --dataset MNW",
+    "motion": "python scripts/motion_vs_error.py --dataset dfdc",
+    "operating": "pwsh scripts/run_program.ps1",
     "registry": "python scripts/update_result_registry.py",
 }
 
@@ -65,6 +71,10 @@ def _load(path: Path):
 def _missing(name: str, run_dir: Path) -> str:
     command = COMMANDS[name].format(run=run_dir.as_posix())
     return f"Not generated yet. Run `{command}`."
+
+
+def _percent(value) -> str:
+    return "n/a" if value is None else f"{value:.1%}"
 
 
 def _cell(value, digits: int = 4) -> str:
@@ -364,6 +374,100 @@ def render_mnw(program_run: Path) -> str:
     return "\n".join(lines)
 
 
+def render_motion(program_run: Path) -> str:
+    """Motion against the score, per corpus, with the distributions beside it."""
+    directory = Path(program_run) / "evaluation"
+    payloads = [
+        _load(directory / f"motion-{name}.json")
+        for name in ("in-domain", "dfdc", "celebdf")
+    ]
+    payloads = [payload for payload in payloads if payload]
+    if not payloads:
+        return _missing("motion", Path(program_run))
+    lines = [
+        "| Corpus | Clips | Mean motion | Top quartile | Correlation, "
+        "manipulated | Correlation, authentic | False alarms, calm | "
+        "False alarms, moving |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for payload in payloads:
+        quartiles = payload.get("motion_quartiles") or [None, None, None]
+        lines.append(
+            f"| {payload.get('dataset', '?')} | {payload.get('clips', 0):,} | "
+            f"{_cell(payload.get('motion_mean'))} | {_cell(quartiles[2])} | "
+            f"{_cell(payload.get('spearman_manipulated'), 3)} | "
+            f"{_cell(payload.get('spearman_authentic'), 3)} | "
+            f"{_percent(payload.get('false_alarm_low_motion'))} | "
+            f"{_percent(payload.get('false_alarm_high_motion'))} |"
+        )
+    lines.append("")
+    lines.append(
+        "Motion is the mean absolute difference between consecutive frames of "
+        "the cached view, which is the tensor the model is handed. A negative "
+        "correlation means more motion pushes the score towards `real`."
+    )
+    return NEWLINE.join(lines)
+
+
+def render_operating(program_run: Path) -> str:
+    """What the pipeline does at its fixed threshold, and how well calibrated."""
+    directory = Path(program_run) / "evaluation"
+    wanted = (
+        ("fusion-test-metrics.json", "FakeAVCeleb, in-domain"),
+        ("fusion-dfdc-metrics.json", "DFDC, cross-corpus"),
+    )
+    rows = []
+    for name, label in wanted:
+        payload = _load(directory / name)
+        if not payload:
+            continue
+        overall = payload.get("overall", {})
+        metrics = overall.get("metrics", {})
+        paired = payload.get("fusion_vs_visual_auc", {})
+        rows.append((label, metrics, paired, overall))
+    if not rows:
+        return _missing("operating", Path(program_run))
+
+    lines = [
+        "| Partition | ROC-AUC | Precision | Recall | FPR | FPR at 95% TPR | "
+        "EER | Brier | Calibration error |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for label, metrics, _, _ in rows:
+        lines.append(
+            f"| {label} | {_cell(metrics.get('roc_auc'))} | "
+            f"{_cell(metrics.get('precision'))} | {_cell(metrics.get('recall'))} | "
+            f"{_cell(metrics.get('fpr'))} | {_cell(metrics.get('fpr_at_95_tpr'))} | "
+            f"{_cell(metrics.get('eer'))} | {_cell(metrics.get('brier'))} | "
+            f"{_cell(metrics.get('expected_calibration_error'))} |"
+        )
+    lines.append("")
+    lines.append("Fusion against the visual baseline, paired source bootstrap:")
+    lines.append("")
+    lines.append("| Partition | Difference in ROC-AUC | 95% interval | Separated |")
+    lines.append("|---|---:|---|---|")
+    for label, _, paired, _ in rows:
+        if not paired:
+            continue
+        lower, upper = paired.get("lower"), paired.get("upper")
+        separated = (
+            "yes" if lower is not None and upper is not None and lower * upper > 0
+            else "no, the interval includes zero"
+        )
+        lines.append(
+            f"| {label} | {_cell(paired.get('estimate'))} | "
+            f"[{_cell(lower)}, {_cell(upper)}] | {separated} |"
+        )
+    lines.append("")
+    lines.append(
+        "The paired bootstrap is the protocol's comparison and the one the "
+        "research question turns on: it resamples identities and takes the "
+        "difference within each resample, so the two systems are never compared "
+        "across different draws."
+    )
+    return NEWLINE.join(lines)
+
+
 def render_registry(registry_path: Path) -> str:
     try:
         text = Path(registry_path).read_text(encoding="utf-8")
@@ -415,6 +519,8 @@ def build_blocks(
         "thresholds": render_thresholds(run_dir),
         "designa": render_designa(program_run),
         "mnw": render_mnw(program_run),
+        "motion": render_motion(program_run),
+        "operating": render_operating(program_run),
         "registry": render_registry(registry),
     }
 
