@@ -19,8 +19,8 @@ that says "not generated yet" means that experiment has not been run, and it
 names the command that would run it. That is the honest state, not a gap to fill
 in by hand.
 
-Companion documents: [findings](findings.md) states what the measurements
-support, [result traceability](result-traceability.md) resolves every number to
+Companion documents: [corpora](datasets.md) surveys the datasets this project
+could use next, [findings](findings.md) states what the measurements support, [result traceability](result-traceability.md) resolves every number to
 a file hash and an MLflow run, [the draft](paper.md) is the paper itself, and
 [obstacles](../obstacles.md) is the full failure log.
 
@@ -441,6 +441,9 @@ What a system for that class would need, none of which is here:
 
 Treating this as a refinement of the current question would be a mistake. It is
 a second question, and the evidence for that is in the table.
+
+The corpora that would answer it, with licences and the two traps to avoid, are
+surveyed in [corpora for the generative-video problem](datasets.md).
 
 ## 10. Provenance
 

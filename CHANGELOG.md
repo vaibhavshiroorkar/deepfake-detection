@@ -12,6 +12,13 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Added `docs/research/datasets.md`, a survey of the corpora that would close
+  the generative-video gap, with licences, sizes and access routes. It records
+  two traps found while surveying: commercial generators embed watermarks that a
+  detector will learn instead of the content, which is why a de-watermarked Sora
+  benchmark exists at all; and several corpora are evaluation-only, which
+  `data/guards.py` has to enforce in code before the data is touched.
+
 - Extracted FaceForensics++ c23, which had been downloaded and left as a 17.9 GB
   zip. 7,000 clips: 1,000 originals and 1,000 each from six manipulation
   families. Added `data/faceforensics.py` and
