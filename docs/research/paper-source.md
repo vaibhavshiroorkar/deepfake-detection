@@ -371,7 +371,14 @@ corpus, so its cross-corpus figures could only be compared against themselves.
 FF++ c23 carries no audio, so this is the visual stream alone.
 
 <!-- BEGIN GENERATED ZEROSHOT -->
-Not generated yet. Run `python scripts/score_ffpp_zeroshot.py`.
+| Partition | ROC-AUC | Clips | Identities |
+|---|---|---:|---:|
+| FaceForensics++ test, in-domain | 0.8723 [0.8425, 0.9008] | 954 | 145 |
+| Celeb-DF-v2, zero-shot | 0.6348 [0.5766, 0.6920] | 462 | 106 |
+| DFDC, zero-shot | 0.4920 [0.4478, 0.5350] | 2,410 | 150 |
+| FakeAVCeleb test, zero-shot | 0.8253 [0.7921, 0.8638] | 1,648 | 75 |
+
+Trained on FaceForensics++ c23 and scored without re-caching, since every corpus here shares one preprocessing hash. FakeAVCeleb is included to turn the usual comparison around: it is the corpus every other model in this project was trained on.
 <!-- END GENERATED ZEROSHOT -->
 
 ## 6. The findings
@@ -395,6 +402,10 @@ Stated in full, with their supersessions, in [findings](findings.md). In short:
 - **F3** Selecting on validation loss kept a checkpoint scoring below chance.
 - **F4** Fusing a subset beats fusing everything, cross-corpus.
 - **F5** Redundancy is measurable and was not where it was predicted.
+- **F10** Training on FF++ c23, the corpus the literature treats as the
+  cross-dataset standard, did not improve transfer: DFDC fell from 0.7611 to
+  0.4920 and Celeb-DF was a tie. More manipulation families in training is not
+  the lever.
 - **F6** Motion hides manipulation rather than causing false alarms, which
   supersedes the mechanism asserted in earlier drafts.
 - **F7** One decision threshold cannot serve three media kinds.
@@ -468,10 +479,10 @@ surveyed in [corpora for the generative-video problem](datasets.md).
 ## 10. Provenance
 
 <!-- BEGIN GENERATED REGISTRY -->
-15 registered results.
+16 registered results.
 
 - 1 `pending`
-- 14 `provisional (1 seed)`
+- 15 `provisional (1 seed)`
 
 The rows themselves, with each artifact's SHA-256 and MLflow run, are in [result traceability](result-traceability.md).
 <!-- END GENERATED REGISTRY -->

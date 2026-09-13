@@ -123,13 +123,33 @@ def main(argv: list[str] | None = None) -> int:
             stores[run_dir] = (index, CacheStore(run_dir / "cache"))
         index, store = stores[run_dir]
 
-        records = [
-            record
-            for record in load_manifest(manifest, dataset=dataset).records
-            if record.clip_id in index
-        ]
+        # Two filters, and both are the abstention policy rather than
+        # convenience. A clip with no cache entry was never built; a clip whose
+        # entry carries no visual view had no stable face track, which is
+        # exactly the case the protocol says to report rather than drop
+        # silently. Coverage is reported beside the metric for that reason.
+        listed = load_manifest(manifest, dataset=dataset).records
+        records = []
+        no_entry = 0
+        no_view = 0
+        for record in listed:
+            path = index.get(record.clip_id)
+            if path is None:
+                no_entry += 1
+                continue
+            prepared = store.load(path, views=("visual_view",))
+            if prepared.visual_view is None:
+                no_view += 1
+                continue
+            if prepared.preprocessing_config_hash != expected_hash:
+                raise SystemExit(
+                    f"{name} was cached under "
+                    f"{prepared.preprocessing_config_hash[:12]} but the model "
+                    f"was trained under {expected_hash[:12]}"
+                )
+            records.append(record)
         if not records:
-            print(f"{name}: no cached clip in {manifest.name}, skipping")
+            print(f"{name}: no usable clip in {manifest.name}, skipping")
             continue
         data = CachedBranchDataset(
             records=records, cache_index=index, cache_store=store, branch="visual"
@@ -138,7 +158,6 @@ def main(argv: list[str] | None = None) -> int:
 
         by_id = {record.clip_id: record for record in records}
         scored: list[_Scored] = []
-        checked = False
         with torch.inference_mode():
             for batch in batches:
                 logit, _ = model(batch.values.to(arguments.device))
@@ -149,15 +168,6 @@ def main(argv: list[str] | None = None) -> int:
                     scored.append(
                         _Scored(float(value), int(label), by_id[clip_id].source)
                     )
-                if not checked:
-                    prepared = store.load(index[records[0].clip_id])
-                    if prepared.preprocessing_config_hash != expected_hash:
-                        raise SystemExit(
-                            f"{name} was cached under "
-                            f"{prepared.preprocessing_config_hash[:12]} but the "
-                            f"model was trained under {expected_hash[:12]}"
-                        )
-                    checked = True
 
         labels = {item.label for item in scored}
         if len(labels) != 2:
@@ -169,6 +179,10 @@ def main(argv: list[str] | None = None) -> int:
         )
         results[name] = {
             "clips": len(scored),
+            "listed": len(listed),
+            "abstained_no_entry": no_entry,
+            "abstained_no_view": no_view,
+            "coverage": len(scored) / len(listed),
             "identities": len({item.source_identity for item in scored}),
             "roc_auc": interval.estimate,
             "ci": [interval.lower, interval.upper],
@@ -176,7 +190,8 @@ def main(argv: list[str] | None = None) -> int:
         print(
             f"{name:18} {interval.estimate:.4f} "
             f"[{interval.lower:.4f}, {interval.upper:.4f}]   "
-            f"{len(scored):,} clips"
+            f"{len(scored):,} of {len(listed):,} clips, "
+            f"coverage {len(scored) / len(listed):.1%}"
         )
 
     output = (

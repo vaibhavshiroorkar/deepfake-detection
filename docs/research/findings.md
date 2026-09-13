@@ -267,6 +267,47 @@ evidence behind it is worse than a refusal. But it should not be argued for on
 accuracy: it does not buy accuracy here. The 2.4 percent of DFDC clips with
 partial coverage are not the clips the head is getting wrong.
 
+### F10. Training on the standard cross-dataset corpus did not improve transfer
+
+Result: `C-ffpp-zeroshot`. The visual stream trained on FaceForensics++ c23 and
+scored on corpora it never saw, against the same stream trained on FakeAVCeleb
+and scored on the same clips:
+
+| Trained on | FF++ test | Celeb-DF-v2 | DFDC | FakeAVCeleb test |
+| --- | --- | --- | --- | --- |
+| FF++ c23 | 0.8723 [0.8425, 0.9008] | 0.6348 [0.5766, 0.6920] | 0.4920 [0.4478, 0.5350] | 0.8253 [0.7921, 0.8638] |
+| FakeAVCeleb, Design A | not scored | 0.6682 | 0.7611 | 0.9988 |
+
+Three things in that table.
+
+**The DFDC column goes the wrong way.** The FF++ model reads 0.4920 with an
+interval spanning 0.5, which is chance. The FakeAVCeleb model reads 0.7611 on
+the same clips. Training on the corpus the literature treats as the
+cross-dataset standard made transfer to DFDC worse, not better.
+
+**Celeb-DF is a tie.** 0.6348 against 0.6682, intervals overlapping heavily. The
+expected benefit of FF++'s six manipulation families over FakeAVCeleb's does not
+appear.
+
+**Each model is best on its own corpus and second best on the other's.** The
+FF++ model reads 0.8253 on FakeAVCeleb, well below FakeAVCeleb's own 0.9988 but
+far above its 0.4920 on DFDC. So the transfer penalty is not a fixed property of
+leaving the training corpus; it depends on which corpus you leave it for, and
+DFDC is the hard one for both.
+
+This is the direct answer to whether more varied training data fixes
+generalization, and on this evidence it does not. The practical reading is that
+the failure is not a shortage of manipulation families in training. Both corpora
+are studio-grade face manipulations; DFDC is consumer video, and neither
+training set contains anything like it.
+
+Caveats, all of which cut against over-reading the table. One seed. FF++ c23
+carries no audio, so this is the visual stream alone against a Design A number
+that is also visual-only but was trained with a GRU rather than an LSTM. The
+DFDC subset here is 94 percent manipulated across 150 identities and is not the
+standard DFDC test set, so the absolute numbers are comparable within this
+project and only roughly comparable with published ones.
+
 ## Superseded findings
 
 | Claim | Replaced by | Why it was wrong |
@@ -275,5 +316,6 @@ partial coverage are not the clips the head is getting wrong.
 | The emotion stream duplicates the visual stream | F1, F4 | It is the best single stream on both partitions and appears in the best combination on each |
 | Lip-sync is a redundant audio duplicate and should be dropped | F5, F4 | It carries the best DFDC combination |
 | Freezing BatchNorm is a clean win | F2 | It is a trade: in-domain fit for cross-corpus transfer |
+| Training on a more varied corpus would improve transfer | F10 | FF++ c23 has six manipulation families against FakeAVCeleb's, and transfer to DFDC got worse, from 0.7611 to 0.4920 |
 | Camera motion makes the model call genuine clips fake | F6 | Measured with the opposite sign: motion lowers the fake score, and the failure on moving video is missed detections, not false alarms |
 | A clip-level bootstrap would report intervals several times too narrow | none | Measured the other way: the identity-clustered interval on DFDC is narrower, 0.0776 against 0.1065, because identities there carry balanced class proportions. Clustering by identity is still right, because it matches the question, not because it is wider |
