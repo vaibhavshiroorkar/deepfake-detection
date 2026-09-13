@@ -54,6 +54,25 @@ deliberate: a CPU run would produce a checkpoint with different numerics from
 every recorded run, and there is no way to tell the two apart afterwards. Fix
 the environment rather than the gate.
 
+## Long-running chains
+
+### A wrapper script that waits for another job can fail silently
+
+`scripts/train_ffpp.sh` chained cache-merge, manifest filtering and training
+behind a loop that waited for the cache build to exit. It printed its first two
+stages, ran the merge correctly, and then stopped without printing the next line
+or any error, under `set -e`, with the log complete at 122 bytes.
+
+Two lessons, neither about the specific bug. A chain that guards each stage on
+"does its output exist" will happily start a second training run while the first
+is still going, because the checkpoint appears only at the end. And a silent
+exit under `set -e` is indistinguishable from "still waiting" when the thing it
+waits for is a process count.
+
+Run the stages yourself and watch them, or have each stage write a marker file
+the next stage checks. The chain was deleted rather than repaired: it was one
+command's worth of convenience guarding several hours of GPU.
+
 ## Repository shape
 
 ### `main` and `old` share no history

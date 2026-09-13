@@ -481,6 +481,14 @@ Reproduction, in order:
 ```powershell
 pwsh scripts/run_program.ps1            # Design A: cache, folds, branches, fusion
 pwsh scripts/train_design_b.ps1         # Design B streams
+
+# FaceForensics++, the cross-dataset corpus. Five shards, about four hours.
+uv run python scripts/build_ffpp_manifest.py
+uv run python -m deepfake_detection.cli split build --manifest data/manifests/faceforensics.csv --output-dir runs/ffpp-20260913/split --dataset FaceForensics++ --seed 17
+# then one `cache build --shard i/5` per shard, `cache merge`, and
+# `manifest usable --branch visual` per partition, followed by
+# `train visual-stream --backbone efficientnet`.
+uv run python scripts/score_ffpp_zeroshot.py
 uv run python scripts/score_streams.py --run-dir runs/design-b-20260910
 uv run python scripts/run_deep_ablation.py --run-dir runs/design-b-20260910
 uv run python scripts/stream_correlation.py --run-dir runs/design-b-20260910
