@@ -111,6 +111,14 @@ def main(argv: list[str] | None = None) -> int:
     # the target corpus actually has more of it, which is what turns a
     # correlation into an explanation of the transfer gap.
     quantiles = [float(np.quantile(motion_array, q)) for q in (0.25, 0.5, 0.75)]
+    # The tails as well as the middle. The distribution gate needs a lower
+    # bound, and an interquartile fence puts it below zero, where no clip can
+    # ever fall: motion is an absolute difference. Generated video being
+    # unnaturally smooth is the case that bound exists to catch.
+    tails = {
+        f"p{int(q * 100):02d}": float(np.quantile(motion_array, q))
+        for q in (0.01, 0.05, 0.95, 0.99)
+    }
     result = {
         "dataset": dataset,
         "clips": len(motion),
@@ -118,11 +126,18 @@ def main(argv: list[str] | None = None) -> int:
         "spearman_motion_vs_score": overall,
         "motion_mean": float(motion_array.mean()),
         "motion_quartiles": quantiles,
+        "motion_tails": tails,
+        "motion_min": float(motion_array.min()),
+        "motion_max": float(motion_array.max()),
     }
     print(f"{dataset}: {len(motion):,} clips scored, {missing:,} without a view")
     print(
         f"motion: mean {motion_array.mean():.4f}, quartiles "
         + ", ".join(f"{value:.4f}" for value in quantiles)
+    )
+    print(
+        "        tails " + ", ".join(f"{k} {v:.4f}" for k, v in tails.items())
+        + f", min {motion_array.min():.4f}, max {motion_array.max():.4f}"
     )
     print(f"motion against fake probability, all clips : {overall:+.3f}")
 

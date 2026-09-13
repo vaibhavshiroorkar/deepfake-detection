@@ -28,6 +28,7 @@ import torch
 from deepfake_detection.dashboard.lib import media_kind
 from deepfake_detection.fusion.deep_loading import LoadedFusion, fuse, load_fusion
 from deepfake_detection.fusion.stream_export import StreamSpec, _forward
+from deepfake_detection.inference import distribution_gate
 from deepfake_detection.inference.predictor import PredictionResult
 
 
@@ -109,6 +110,15 @@ class MultimodalEngine:
         embeddings: dict[str, tuple[float, ...]] = {}
         blockers: list[str] = list(prepared.quality.full_fusion_blockers())
         blockers.extend(f"no_checkpoint_for_{name}" for name in absent)
+
+        # Reported, not enforced. A clip outside the training corpus's motion
+        # range still gets a verdict, because refusing outright would hide the
+        # number from someone who can judge it. What it must not do is arrive
+        # looking like an ordinary answer.
+        if prepared.visual_view is not None:
+            distribution = distribution_gate.check(prepared.visual_view)
+            if distribution.blocker is not None:
+                blockers.append(distribution.blocker)
 
         with torch.inference_mode():
             for name, spec in self.streams.items():
