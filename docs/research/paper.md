@@ -139,7 +139,12 @@ On DFDC the identity-clustered interval is narrower than a clip-level one,
 0.0776 against 0.1065, because identities there carry balanced class
 proportions. Narrower is not why we chose it.
 
-FaceForensics++ is absent, so no number here is comparable to a published table.
+FaceForensics++ c23 is also present and is used as a second training corpus, so
+one result here follows the protocol published cross-dataset tables use: train
+on FF++, evaluate zero-shot on Celeb-DF-v2 and DFDC. Its provenance is weaker
+than the rest, a third-party mirror rather than the TUM EULA route, which the
+data card records. It carries no audio track at all, so it trains the visual
+stream alone.
 
 ## 5. Results
 
@@ -281,6 +286,29 @@ is not that fusion is worse but that no difference is detectable. The
 in-domain advantage does not survive the change of corpus. Design B's best
 cross-corpus combination reads 0.6076, below both.
 
+### 5.6a Training on the standard cross-dataset corpus did not improve transfer
+
+The visual stream trained on FF++ c23 and scored on corpora it never saw,
+beside the same stream trained on FakeAVCeleb and scored on the same clips:
+
+| Trained on | FF++ test | Celeb-DF-v2 | DFDC | FakeAVCeleb test |
+| --- | --- | --- | --- | --- |
+| FF++ c23 | 0.8723 [0.8425, 0.9008] | 0.6348 [0.5766, 0.6920] | 0.4920 [0.4478, 0.5350] | 0.8253 [0.7921, 0.8638] |
+| FakeAVCeleb | not scored | 0.6682 | 0.7611 | 0.9988 |
+
+Transfer to DFDC gets worse, from 0.7611 to 0.4920, an interval spanning chance.
+Celeb-DF is a tie with heavily overlapping intervals. Whatever FF++'s six
+manipulation families buy, it is not cross-corpus transfer here.
+
+The penalty is not a fixed cost of leaving the training corpus, though. The FF++
+model reads 0.8253 on FakeAVCeleb, far above its 0.4920 on DFDC, so each model
+is best on its own corpus and second best on the other's while DFDC is hard for
+both. Both training corpora are studio-grade manipulations of reasonably clean
+footage; DFDC is consumer video, and neither contains anything resembling it.
+
+One seed, and FF++'s no-audio constraint means this compares visual streams
+only, against a Design A number trained with a GRU rather than an LSTM.
+
 ### 5.6b Calibration collapses further than accuracy does
 
 | Partition | ROC-AUC | Precision | Recall | FPR at 95% TPR | Brier | Calibration error |
@@ -409,8 +437,10 @@ cross-corpus combination.
 
 ## 7. Limitations
 
-Trained on FakeAVCeleb, not FaceForensics++, so no number here is comparable to
-a published table.
+Design A and Design B are trained on FakeAVCeleb, which almost nobody uses as a
+training corpus, so their numbers are comparable only against each other. The
+FF++ result in 5.6a follows the published protocol and is the exception, at one
+seed and visual-only.
 
 One seed for every Design B stream where the protocol asks for three. Every
 result is `provisional` for that reason alone.
