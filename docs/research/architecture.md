@@ -1,13 +1,85 @@
-# Open-world synthetic-media detection: architecture and build plan
+# Synthetic-media detection: the system to build now, and the one after it
 
-This is the design for the next system, written against the measurements this
-project produced rather than against model release dates. Every number in the
-evidence table below resolves to a row in
+Two designs, for two different jobs, and the first one is the priority.
+
+**The demo detector** has to survive people generating fakes in front of it with
+whatever tool they have and testing it live. It is narrow, it is trained on the
+distribution it will meet, and it says so. That is section 0 and it is what to
+build.
+
+**The open-world design** is the research system: generator-agnostic, no
+assumption of cross-modal inconsistency, built to survive unseen future
+generators. It is everything from section 1 onward. It is the right long-term
+shape and it is not what wins a live demo next month.
+
+Every number below resolves to a row in
 [result traceability](result-traceability.md) and is reproducible from `runs/`.
 
-The current system detects manipulation of a real recording. This design covers
-that and the case it cannot handle: media generated whole, where nothing is
-inconsistent because one model produced all of it.
+## 0. The demo detector
+
+### What it must do
+
+Someone generates a clip with Veo, Sora, Higgsfield or a phone app, uploads it,
+and the system answers. Real comparison clips are phone videos shot by the
+audience. The measured state of the current system against that job is bad:
+0 of 10 on the one modern generator family measured, 0.4920 on the only
+consumer-capture corpus available, and a learned prior that reads smoothness as
+authenticity, which is backwards for generated video.
+
+### Three layers, in order
+
+**Provenance first.** Gemini and Veo embed SynthID; several pipelines carry
+C2PA Content Credentials. When present this is exact, instant and needs no
+training, and it is the most reliable thing in the system. It is defeated by
+re-encoding and screen recording, so it is a first pass and never the answer.
+
+**A specialist trained on the demo distribution.** Frozen DINOv3 or CLIP on full
+frames, three windows of 32 contiguous frames, with a linear probe on top and a
+cheap SRM residual branch beside it. A frozen encoder with a light probe is the
+configuration that generalizes best to unseen generators, and it trains in
+hours. Add the WavLM plus AASIST head when audio is present, since these tools
+generate speech too.
+
+**An abstention gate.** When the input is outside what the specialist was
+trained on, it says so instead of guessing. In a live demo "I do not recognise
+this, I will not guess" is defensible. A confident miss is not.
+
+### Why a specialist rather than the general system
+
+The binding constraint is capture conditions, not manipulation type. Three
+independent measurements say so: an unseen manipulation family costs 0.11 and
+still works while an unseen corpus reads 0.49; training on FaceForensics++
+instead of FakeAVCeleb moved DFDC from 0.7611 to 0.4920; and a lip-sync stream
+moved from 0.9969 to 0.7407 across two corpora that share VoxCeleb2 footage,
+then to 0.5059 on the one that does not. Matching the training distribution to
+the demo distribution is therefore the only intervention that reliably works,
+and it is the one that fits the timeline.
+
+### The data, which is the whole project now
+
+- 200 to 500 clips per tool, from the tools the audience will actually use.
+- The same number of real clips, recorded the way the audience records: phones,
+  webcams, varied lighting, varied framing.
+- **Both sides through identical post-processing.** Same container, codec,
+  resolution, frame rate. `scripts/normalize_media.py` does this and it is not
+  optional: the current system already learned post-processing instead of
+  manipulation, detecting re-encoded in-the-wild clips at 86 percent and raw
+  generator output at 23 percent, intervals that do not overlap.
+- One tool held out entirely, never used in any decision. That number is the
+  honest answer to "what about a tool you have not seen", and it should be known
+  before anyone asks.
+
+### What to claim on stage
+
+Name the tools it covers. Per-generator collapse is the norm: a 2026 evaluation
+found one detector at 69.8 percent on one generator and 15.4 percent on another.
+A demo that says "these five tools, and anything else gets flagged as
+unrecognised" survives contact. A demo claiming to catch everything is broken by
+the first person with an unusual tool.
+
+## 1. The open-world design
+
+### Context
 
 ## Context
 
@@ -30,7 +102,7 @@ identity-clustered 95 percent interval, each is registered in
 `docs/research/result-traceability.md`, and each is single-seed and therefore
 `provisional`.
 
-### Measured evidence from this repository that bears on the design
+### Measured evidence from this repository
 
 | Design assumption | Measurement here |
 | --- | --- |

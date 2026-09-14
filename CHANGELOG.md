@@ -12,6 +12,20 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Reorganised `docs/research/architecture.md` around the constraint that
+  actually matters now: a live demo where people generate fakes on the spot and
+  test them. Section 0 is the narrow detector to build for that, three layers of
+  provenance, a specialist trained on the demo distribution, and an abstention
+  gate. The open-world research design follows it, still valid and not what wins
+  a demo next month.
+- Added `scripts/normalize_media.py`, which re-encodes every collected clip
+  identically, real and generated alike, and strips metadata. This is the step
+  that decides whether a collected dataset teaches manipulation or teaches
+  post-processing. The failure is measured here: the detector finds re-encoded
+  in-the-wild clips at 86 percent and raw generator output at 23 percent, so it
+  learned the encoder. Verified on twelve mixed clips, which all came out
+  h264 640x360 at 25fps.
+
 - LAV-DF did not need re-caching after all. Its cache and the program run's used
   the same `ViewConfig` and the same preprocessing code, differing only in the
   `code_version` string, so the two hashes label byte-identical data. Verified
