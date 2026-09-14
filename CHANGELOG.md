@@ -12,6 +12,19 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Made leave-one-generator-out the only headline metric. There is no in-domain
+  column any more: detecting a generator you trained on is not the problem, and
+  a strong in-domain number has three times in this project turned out to be a
+  shortcut rather than skill, most recently a 0.9997 on Veo 3 that was pure
+  content confound. Model selection uses the held-out generator, and any change
+  that buys in-domain accuracy at the cost of transfer is refused by the
+  protocol rather than by judgement.
+- Measured per-branch coverage on 314 Veo 3 clips. The face-dependent branches
+  answer on 52.5 percent of them and the audio branch on 100 percent, because
+  generated video that is not a talking head has no face to track. That is the
+  no-face constraint measured rather than argued, and it is the one result from
+  that run worth keeping: every AUC in it is confounded by content.
+
 - Pointed the near-term work at DF26, the benchmark that matches this project's
   actual target: 2,691 single-person public-speaking clips, 271 real and 2,420
   from seven modern generators including Veo 3.1, Kling 3.0 and Grok. Its real

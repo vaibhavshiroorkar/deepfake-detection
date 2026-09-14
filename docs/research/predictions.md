@@ -34,6 +34,23 @@ stopped after three arms because FaceForensics++ carries no audio and the
 project's focus is audiovisual. The DeepFakeDetection prediction stands as an
 open shortcut test for whenever it runs.
 
+## Leave-one-generator-out on DF26, the only metric that counts
+
+Predicted before running, under the protocol where the scored generator is never
+in training.
+
+| Claim | Prediction |
+| --- | --- |
+| Macro mean across seven unseen DF26 generators | 0.78 to 0.86 |
+| Best single unseen generator | above 0.93 |
+| Worst single unseen generator | below 0.65 |
+| Spread between best and worst | at least 0.25 |
+| Any unseen generator above 0.99 | would indicate a leak, not success |
+
+The spread prediction is the one worth checking. Per-generator collapse is the
+norm in this problem, and a narrow spread would be more surprising than a low
+mean.
+
 ## The wider system
 
 | Question | Prediction | Settled by |

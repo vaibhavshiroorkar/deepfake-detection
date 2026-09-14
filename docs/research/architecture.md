@@ -69,6 +69,38 @@ and it is the one that fits the timeline.
   honest answer to "what about a tool you have not seen", and it should be known
   before anyone asks.
 
+### The only metric that counts
+
+Leave-one-generator-out, and nothing else is a headline.
+
+Every reported number comes from a model trained on every generator except the
+one it is scored on. There is no in-domain column, because detecting a generator
+you trained on is not the problem and a strong in-domain number has repeatedly
+been the sign of a shortcut rather than of skill. This project has three
+measurements of that: 0.9990 in-domain against 0.4920 cross-corpus, a 0.9969
+matched-pair stream that reads 0.5059 on a corpus with different capture
+conditions, and a 0.9997 on Veo 3 that was pure content confound.
+
+Consequences, all of which follow mechanically:
+
+- With seven DF26 generators, the deliverable is seven rows plus a macro mean,
+  each with an interval, not one aggregate.
+- Model selection uses the held-out generator, never validation accuracy.
+- Any change that buys in-domain accuracy and costs cross-generator transfer is
+  refused. The BatchNorm measurement here priced exactly that trade at 0.5430
+  in-domain for 0.1276 cross-corpus, and under this protocol the answer is no
+  longer a judgement call.
+- A frozen encoder with a light probe is preferred over fine-tuning, because
+  fine-tuning is what converts a general representation into a generator-specific
+  one.
+- One generator is held back from every development decision, not just from the
+  final training run, so the last row is honest rather than tuned against.
+
+Realistic expectation, from the closest published run of this protocol: macro
+mean around 0.82 across unseen generators, with per-generator values spanning
+roughly 0.66 to 0.97. A single number near 0.99 under this protocol would be
+evidence of a leak, not of success.
+
 ### What to claim on stage
 
 Name the tools it covers. Per-generator collapse is the norm: a 2026 evaluation
