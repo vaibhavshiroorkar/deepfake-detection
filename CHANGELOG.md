@@ -12,6 +12,20 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Added `scripts/score_media_folder.py`, which scores a folder of clips through
+  the served engine and groups the result by source directory. It exists for the
+  case the system fails hardest at: a number on clips from Veo, Sora or
+  Higgsfield, which is the baseline every later improvement gets compared
+  against. Detection rates carry Wilson intervals, and the distribution gate is
+  reported beside the verdict rather than folded into it.
+- Measured leave-one-family-out for the first family. FaceForensics++ Deepfakes
+  reads 0.8912 [0.8610, 0.9225] when seen in training and 0.7771 [0.7365,
+  0.8216] when held out, intervals that do not overlap. That decomposes the
+  failure usefully: an unseen manipulation family costs 0.11 and still works, an
+  unseen corpus reads 0.4920, and an unseen media class reads 0 of 10. The
+  problem is the capture pipeline and the media class, not the manipulation
+  method.
+
 - Added `docs/research/architecture.md`, the design for an open-world
   synthetic-media detector. It reorganises the system around one conclusion: a
   jointly generated clip is internally consistent, so cross-modal disagreement
