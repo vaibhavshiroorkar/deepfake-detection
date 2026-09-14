@@ -19,8 +19,9 @@ that says "not generated yet" means that experiment has not been run, and it
 names the command that would run it. That is the honest state, not a gap to fill
 in by hand.
 
-Companion documents: [architecture](architecture.md) is the design for the next
-system, built against these measurements, [corpora](datasets.md) surveys the
+Companion documents: [predictions](predictions.md) records what was expected
+before each measurement, [architecture](architecture.md) is the design for the
+next system, built against these measurements, [corpora](datasets.md) surveys the
 datasets this project could use next, [findings](findings.md) states what the measurements support, [result traceability](result-traceability.md) resolves every number to
 a file hash and an MLflow run, [the draft](paper.md) is the paper itself, and
 [obstacles](../obstacles.md) is the full failure log.
