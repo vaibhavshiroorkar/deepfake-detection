@@ -12,6 +12,20 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Pointed the near-term work at DF26, the benchmark that matches this project's
+  actual target: 2,691 single-person public-speaking clips, 271 real and 2,420
+  from seven modern generators including Veo 3.1, Kling 3.0 and Grok. Its real
+  clips are content-matched to its fakes, which removes the confound that made
+  the public per-generator sets unusable here, and it is 3.6 GB behind an
+  automatic gate.
+- Added `scripts/fetch_df26.py`, which downloads it and flattens the upstream
+  `fake/<scenario>/<generator>/` layout into the `real/` and `fake/<generator>/`
+  shape the folder scorer already groups by, keeping the scenario in a sidecar
+  index so the per-scenario analysis stays possible.
+- Amended the frozen-probe recommendation from DINOv3 to Perception Encoder. The
+  same method with three encoders on DF26 reads 72.7 macro for PE, 57.0 for
+  DINOv3 and 55.6 for CLIP, so the encoder choice is worth 15 points.
+
 - Reorganised `docs/research/architecture.md` around the constraint that
   actually matters now: a live demo where people generate fakes on the spot and
   test them. Section 0 is the narrow detector to build for that, three layers of
