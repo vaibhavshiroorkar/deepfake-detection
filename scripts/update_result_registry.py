@@ -257,6 +257,19 @@ RESULTS: tuple[Result, ...] = (
         ),
     ),
     Result(
+        result_id="C-df26-audio-audit",
+        paper_location="Results, DF26 cannot support audiovisual work",
+        command="ffprobe over 30 clips per DF26 group",
+        report=Path("data/df26-scored/df26-index.csv"),
+        predictions=None,
+        mlflow=(),
+        decision=(
+            "Audio presence predicts the label: 30 of 30 for every commercial "
+            "generator, 0 of 30 for every open-source one, 3 of 30 for real"
+        ),
+        seeds=1,
+    ),
+    Result(
         result_id="C-ffpp-logo",
         paper_location="Results, the region of interest decides the result",
         command=(

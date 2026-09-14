@@ -418,6 +418,39 @@ A secondary result worth keeping: the pipeline returned 0.54 with wide intervals
 on a corpus where a leak would have been easy, after two leaks were found and
 closed. An honest near-chance number is evidence the harness works.
 
+### F14. DF26 cannot support audiovisual work, and would have looked like it could
+
+Result: `C-df26-audio-audit`. Audio-track presence in DF26, sampled 30 clips per
+group:
+
+| Group | With an audio track |
+| --- | --- |
+| real | 3 of 30 |
+| Grok Imagine, Kling 3.0, Veo 3.1, Wan 2.6 | 30 of 30 each |
+| HunyuanVideo 1.5, LTX 2.3, Wan 2.2 | 0 of 30 each |
+
+Audio presence predicts the label almost perfectly. A single boolean, whether
+the container carries an audio stream, separates the commercial generators from
+everything else. Any audio branch scored on DF26 would report near 1.0 while
+detecting a container property, and it would have arrived looking like exactly
+the contribution the paper invites: its limitations section names audio, speech
+quality and lip-sync as future work.
+
+Only 27 of the 271 real clips carry audio at all, so even after discarding the
+open-source generators there is no usable authentic-audio comparison set.
+
+The corpus is visual-only in a stronger sense than its authors stated. They
+describe not having *evaluated* audio; the data cannot support the evaluation.
+The audiovisual track therefore needs a different corpus, and the candidates are
+in [corpora](datasets.md): DeepSpeak v2 for webcam speech, AV-Deepfake1M for
+localized audiovisual edits, and LAV-DF which is already on disk.
+
+The pattern is worth naming because it recurs: three times today a corpus
+promised a result and delivered a shortcut instead. Veo 3 lab clips against
+talking-head reals, real clips on both sides of a generator split, and now audio
+presence as a label proxy. Each was visible in one cheap check run before
+training rather than after.
+
 ## Superseded findings
 
 | Claim | Replaced by | Why it was wrong |

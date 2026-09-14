@@ -72,6 +72,20 @@ def main(argv: list[str] | None = None) -> int:
         "convention. 'stem' takes the whole filename.",
     )
     parser.add_argument(
+        "--modes-are-one-generator",
+        action="store_true",
+        default=True,
+        help="Treat a model's image-to-video and text-to-video outputs as one "
+        "generator. They share weights, so holding out one while training on "
+        "the other is not an unseen generator.",
+    )
+    parser.add_argument(
+        "--split-modes",
+        dest="modes_are_one_generator",
+        action="store_false",
+        help="Score each generation mode as its own generator.",
+    )
+    parser.add_argument(
         "--test-fraction",
         type=float,
         default=0.4,
@@ -88,6 +102,16 @@ def main(argv: list[str] | None = None) -> int:
     labels = payload["labels"]
     groups = payload["groups"]
     names = payload["files"]
+    if arguments.modes_are_one_generator:
+        # LTX_2.3_distilled_i2v and LTX_2.3_distilled_t2v are one model in two
+        # modes. Holding out a mode while training on its sibling leaks the
+        # model, which is the same class of leak as sharing a source video.
+        groups = np.asarray(
+            [
+                g[:-4] if g.endswith(("_i2v", "_t2v")) else g
+                for g in groups.tolist()
+            ]
+        )
     generators = sorted({g for g in groups.tolist() if g != "real"})
     real = groups == "real"
 

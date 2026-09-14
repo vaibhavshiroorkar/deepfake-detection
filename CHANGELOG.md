@@ -12,6 +12,19 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Fetched DF26: 2,691 clips, 271 real and ten generator variants over 209 source
+  videos, each source carrying a real clip and its generated counterparts.
+- Audited its audio before using it and found DF26 cannot support audiovisual
+  work at all. Audio presence predicts the label: every commercial generator has
+  a track on every clip, every open-source generator has none, and only 3 of 30
+  sampled real clips carry one. An audio branch would have scored near 1.0 by
+  detecting a container property, and would have looked like the contribution
+  the paper's limitations section invites.
+- Closed a second leak in the holdout protocol. A model's image-to-video and
+  text-to-video outputs share weights, so holding out one mode while training on
+  its sibling is not an unseen generator. Modes are now grouped under one model,
+  giving the seven generators the paper reports.
+
 - Ran the first source-grouped leave-one-generator-out measurement. A frozen
   DINOv3 probe over full frames is at chance on FaceForensics++, macro 0.5387
   with all six intervals containing 0.5, against 0.7077 to 0.7839 for face crops
