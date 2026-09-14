@@ -336,6 +336,48 @@ split's number was not inflated by the face donor leaking across partitions.
 That was a live risk, it is what the strict subset exists to detect, and on this
 corpus it did not happen.
 
+### F12. Capture conditions bind generalization, not manipulation type or training protocol
+
+Result: `B-lavdf-transfer`. The lip-sync stream trained on LAV-DF's matched
+windows, scored on three corpora without retraining:
+
+| Scored on | ROC-AUC | Clips | Diagonal mass |
+| --- | --- | --- | --- |
+| LAV-DF, in-domain | 0.9969 | 1,161 | 0.0592 |
+| FakeAVCeleb, never seen | 0.7407 | 1,648 | 0.0592 |
+| DFDC, never seen | 0.5059 | 2,351 | 0.0592 |
+
+The middle row looks like a breakthrough and is not. A stream that never saw
+FakeAVCeleb reads 0.7407 on it, against 0.7587 for a stream trained on
+FakeAVCeleb itself. Transfer is nearly free.
+
+**LAV-DF and FakeAVCeleb are both built on VoxCeleb2.** They share their real
+footage, so they share speakers, lighting, microphones, codecs and capture
+pipeline. That row is not cross-capture transfer. It is transfer across
+manipulation types inside one capture distribution, and it is free because the
+hard part was never varied.
+
+DFDC is the only audio-bearing corpus here not built on VoxCeleb2, and both
+streams sit at chance on it: 0.5059 for the LAV-DF-trained one and 0.4890 for
+the FakeAVCeleb-trained one.
+
+So the binding constraint is the capture pipeline. It is not the manipulation
+type, which transfers freely within a capture distribution. It is not the
+training protocol either: matched-pair training, which is the most
+shortcut-controlled setup in the project and which produced 0.9969 in-domain,
+buys nothing at all once the capture conditions change.
+
+This is the third independent line of evidence for the same conclusion. The
+family holdout said an unseen manipulation family costs 0.11 and still works
+while an unseen corpus reads 0.49. Training on FaceForensics++ instead of
+FakeAVCeleb moved DFDC from 0.7611 to 0.4920. And now a corpus change inside
+VoxCeleb2 costs almost nothing while a corpus change outside it costs
+everything.
+
+Diagonal mass sat at 0.0592 against a chance of 0.0600 on all three partitions,
+so whatever transfers between the two VoxCeleb2 corpora, it is not
+correspondence.
+
 ## Superseded findings
 
 | Claim | Replaced by | Why it was wrong |

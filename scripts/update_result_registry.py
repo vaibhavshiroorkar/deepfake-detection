@@ -165,6 +165,23 @@ RESULTS: tuple[Result, ...] = (
         seeds=1,
     ),
     Result(
+        result_id="B-lavdf-transfer",
+        paper_location="Results, capture conditions bind generalization",
+        command=(
+            "python scripts/score_lavdf_stream.py --cache-run "
+            "runs/program-20260906 --dataset DFDC --manifest "
+            "runs/program-20260906/split/dfdc-sync.csv --label dfdc"
+        ),
+        report=STREAMS / "lavdf-lipsync-score-dfdc.json",
+        predictions=STREAMS / "lavdf-lipsync-score-fakeavceleb.json",
+        mlflow=(),
+        decision=(
+            "A matched-pair-trained stream transfers freely inside VoxCeleb2, "
+            "0.9969 to 0.7407, and reads chance outside it at 0.5059"
+        ),
+        seeds=1,
+    ),
+    Result(
         result_id="B-training-histories",
         paper_location="Results, attention that never moved; lip-sync collapse",
         command="pwsh scripts/train_design_b.ps1",

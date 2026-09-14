@@ -13,12 +13,16 @@ separate them by recognising the generator, so the correspondence cue is the one
 thing left to read. If the architecture can learn it at all, it should learn it
 here.
 
-The stream, its cache and its split all come from `runs/streams-20260905`, which
-used a different preprocessing hash from the main program run. That is why this
-scores only in-domain: the model and the cache must agree, and no FakeAVCeleb or
-DFDC clip is cached under that hash.
+The stream and its cache come from `runs/streams-20260905`, which recorded a
+different preprocessing hash from the main program run. Those two hashes were
+since verified to label byte-identical data, see `views/equivalence.py`, so this
+can now score the same checkpoint on FakeAVCeleb and DFDC as well. That
+comparison, a stream trained on matched pairs and tested on a different corpus,
+is the direct test of whether shortcut-controlled audiovisual training buys
+generalization.
 
     uv run python scripts/score_lavdf_stream.py
+    uv run python scripts/score_lavdf_stream.py         --cache-run runs/program-20260906 --dataset DFDC         --manifest runs/program-20260906/split/dfdc-sync.csv --label dfdc
 """
 
 from __future__ import annotations
@@ -44,9 +48,19 @@ def main(argv: list[str] | None = None) -> int:
     from deepfake_detection.training.checkpoints import load_checkpoint
     from deepfake_detection.training.ranking import roc_auc
     from deepfake_detection.views.cache_store import CacheStore
+    from deepfake_detection.views.equivalence import evidence_for, same_preprocessing
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir", type=Path, default=Path("runs/streams-20260905"))
+    parser.add_argument(
+        "--cache-run",
+        type=Path,
+        default=None,
+        help="Run directory holding the cache to score against. Defaults to "
+        "--run-dir, and pointing it elsewhere is how a cross-corpus pass works.",
+    )
+    parser.add_argument("--dataset", default="LAV-DF")
+    parser.add_argument("--label", default="in-domain")
     parser.add_argument(
         "--checkpoint",
         type=Path,
@@ -73,20 +87,45 @@ def main(argv: list[str] | None = None) -> int:
     load_checkpoint(arguments.checkpoint, model=model)
     model = model.to(arguments.device).eval()
 
+    cache_run = arguments.cache_run or arguments.run_dir
     index: dict[str, Path] = {}
-    with (arguments.run_dir / "cache-index.csv").open(encoding="utf-8") as handle:
+    with (cache_run / "cache-index.csv").open(encoding="utf-8") as handle:
         for row in csv.DictReader(handle):
-            index[row["clip_id"]] = arguments.run_dir / row["cache_path"]
-    store = CacheStore(arguments.run_dir / "cache")
+            index[row["clip_id"]] = cache_run / row["cache_path"]
+    store = CacheStore(cache_run / "cache")
 
-    records = load_manifest(arguments.manifest, dataset="LAV-DF").records
+    expected_hash = history["metadata"]["preprocessing_hash"]
+    listed = load_manifest(arguments.manifest, dataset=arguments.dataset).records
+    records = []
+    for record in listed:
+        path = index.get(record.clip_id)
+        if path is None:
+            continue
+        records.append(record)
+    if not records:
+        print(f"No cached clip in {arguments.manifest}")
+        return 1
+    probe = store.load(index[records[0].clip_id], views=("visual_view",))
+    if not same_preprocessing(probe.preprocessing_config_hash, expected_hash):
+        print(
+            f"Cache {probe.preprocessing_config_hash[:12]} and checkpoint "
+            f"{expected_hash[:12]} are not the same preprocessing."
+        )
+        return 1
+    if probe.preprocessing_config_hash != expected_hash:
+        print(f"note: hashes differ but are verified equivalent. "
+              f"{evidence_for(probe.preprocessing_config_hash, expected_hash)[:90]}")
     dataset = CachedAVPairDataset(
         records=records, cache_index=index, cache_store=store, stream="lipsync"
     )
     batches = DataLoader(
         dataset, batch_size=arguments.batch_size, collate_fn=collate_av_pair_items
     )
-    print(f"{len(dataset):,} clips from {arguments.manifest.name}", flush=True)
+    print(
+        f"{len(dataset):,} of {len(listed):,} clips from "
+        f"{arguments.manifest.name}",
+        flush=True,
+    )
 
     logits, labels, masses = [], [], []
     with torch.inference_mode():
@@ -104,6 +143,8 @@ def main(argv: list[str] | None = None) -> int:
     truth = torch.cat(labels)
     auc = roc_auc(scores, truth)
     result = {
+        "label": arguments.label,
+        "dataset": arguments.dataset,
         "clips": len(dataset),
         "roc_auc": auc,
         "positive_rate": float(truth.mean()),
@@ -126,7 +167,10 @@ def main(argv: list[str] | None = None) -> int:
             "  above chance" if float(mass.mean()) > chance * 1.05 else "  at chance"
         )
 
-    output = arguments.output or arguments.run_dir / "lavdf-lipsync-score.json"
+    output = (
+        arguments.output
+        or arguments.run_dir / f"lavdf-lipsync-score-{arguments.label}.json"
+    )
     output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", "utf-8")
     print(f"wrote {output}")
     return 0

@@ -404,6 +404,10 @@ Stated in full, with their supersessions, in [findings](findings.md). In short:
 - **F3** Selecting on validation loss kept a checkpoint scoring below chance.
 - **F4** Fusing a subset beats fusing everything, cross-corpus.
 - **F5** Redundancy is measurable and was not where it was predicted.
+- **F12** Capture conditions bind generalization. The LAV-DF-trained stream
+  reads 0.7407 on FakeAVCeleb, which shares VoxCeleb2 as its source footage, and
+  0.5059 on DFDC, which does not. Manipulation type transfers freely; the
+  capture pipeline does not.
 - **F11** The identity-strict stress test the protocol requires changes nothing:
   0.8761 [0.8039, 0.9356] against 0.8723 [0.8425, 0.9008]. The ordinary split
   was not inflated by the face donor leaking across partitions.
@@ -484,10 +488,10 @@ surveyed in [corpora for the generative-video problem](datasets.md).
 ## 10. Provenance
 
 <!-- BEGIN GENERATED REGISTRY -->
-16 registered results.
+17 registered results.
 
 - 1 `pending`
-- 15 `provisional (1 seed)`
+- 16 `provisional (1 seed)`
 
 The rows themselves, with each artifact's SHA-256 and MLflow run, are in [result traceability](result-traceability.md).
 <!-- END GENERATED REGISTRY -->
