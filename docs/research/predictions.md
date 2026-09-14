@@ -19,11 +19,9 @@ the Deepfakes arm.
 
 | Family | Seen, measured | Unseen, predicted | Reasoning |
 | --- | --- | --- | --- |
-| Deepfakes | 0.8912 | 0.7771, measured | Settled. Drop of 0.1141, intervals do not overlap. |
-| Face2Face, outcome | 0.8600 | **0.7839 measured**, predicted 0.74 to 0.78 | Point estimate landed just above the band; the interval covers it. |
-| FaceShifter, outcome | 0.8531 | **0.7077 measured**, predicted 0.76 to 0.80 | **Wrong, and the reasoning was wrong.** Category membership does not predict transfer. FaceShifter is designed for better blending, so it does not leave the seams the older swaps leave, and sharing the "swap" label bought nothing. Fifth wrong prediction in this project. |
-| Face2Face | 0.8600 | 0.74 to 0.78 | Reenactment, and NeuralTextures remains in training, so partial transfer. |
-| FaceShifter | 0.8531 | 0.76 to 0.80 | A swap, and two other swap families stay in training. Should transfer best. |
+| Deepfakes | 0.8912 | **0.7771 measured** | Settled. Drop of 0.1141, intervals do not overlap. |
+| Face2Face | 0.8600 | **0.7839 measured**, predicted 0.74 to 0.78 | Point estimate landed just above the band; the interval covers it. |
+| FaceShifter | 0.8531 | **0.7077 measured**, predicted 0.76 to 0.80 | **Wrong, and the reasoning was wrong.** Category membership does not predict transfer. FaceShifter is designed for better blending, so it does not leave the seams the older swaps leave, and sharing the "swap" label bought nothing. Fifth wrong prediction in this project. |
 | FaceSwap | 0.8110 | 0.68 to 0.74 | Graphics-based rather than learned, so the least like anything left in training. |
 | NeuralTextures | 0.8486 | 0.66 to 0.73 | Subtlest family, usually the hardest in published tables. |
 | DeepFakeDetection | 0.9817 | above 0.92 | **This is a shortcut test, not an accuracy prediction.** It is the Google actor set, filmed separately from the 1,000 YouTube originals. If an arm that never saw it still scores above 0.92, the model is separating it on capture conditions rather than on manipulation, and that margin is not detection skill. A fall to the 0.75 range would mean the opposite. |
