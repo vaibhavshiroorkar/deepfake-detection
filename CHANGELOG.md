@@ -12,12 +12,17 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
-- Re-caching LAV-DF under the program run's code version. It is the only fully
-  audiovisual corpus on disk, 6,010 clips with no missing audio and 842 clips
-  whose audio alone is manipulated, and it was stranded under a different
-  preprocessing hash so no cross-corpus audiovisual experiment was possible. A
-  shared hash makes it comparable with FakeAVCeleb, DFDC and Celeb-DF without
-  re-caching those.
+- LAV-DF did not need re-caching after all. Its cache and the program run's used
+  the same `ViewConfig` and the same preprocessing code, differing only in the
+  `code_version` string, so the two hashes label byte-identical data. Verified
+  rather than assumed: `scripts/verify_cache_equivalence.py` compared 60 clips
+  spread across the 1,099 that both caches held, and all five arrays matched on
+  every one. That stopped a five-hour GPU job two hours in.
+- Added `views/equivalence.py`, a narrow table of hash pairs proven to label the
+  same data, each naming its evidence. It unblocks the project's only fully
+  audiovisual corpus, which could not be compared against any other corpus while
+  its hash differed. The check accepts equal hashes and verified pairs and
+  nothing else, and the tests pin that a near-identical hash is still refused.
 - Stopped the FaceForensics++ leave-one-family-out sweep after three of six
   arms. FF++ carries no audio, so the sweep is visual-only and off the
   audiovisual path. The harness and the three measured arms are committed and

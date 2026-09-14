@@ -89,6 +89,7 @@ def main(argv: list[str] | None = None) -> int:
     from deepfake_detection.evaluation.bootstrap import cluster_bootstrap_interval
     from deepfake_detection.fusion.stream_loading import build_model
     from deepfake_detection.training.checkpoints import load_checkpoint
+    from deepfake_detection.views.equivalence import same_preprocessing
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -151,7 +152,9 @@ def main(argv: list[str] | None = None) -> int:
             if prepared.visual_view is None:
                 no_view += 1
                 continue
-            if prepared.preprocessing_config_hash != expected_hash:
+            if not same_preprocessing(
+                prepared.preprocessing_config_hash, expected_hash
+            ):
                 raise SystemExit(
                     f"{name} was cached under "
                     f"{prepared.preprocessing_config_hash[:12]} but the model "

@@ -55,6 +55,7 @@ def main(argv: list[str] | None = None) -> int:
     from deepfake_detection.fusion.stream_loading import build_model
     from deepfake_detection.training.checkpoints import load_checkpoint
     from deepfake_detection.views.cache_store import CacheStore
+    from deepfake_detection.views.equivalence import same_preprocessing
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir", type=Path, default=Path("runs/ffpp-20260913"))
@@ -102,7 +103,9 @@ def main(argv: list[str] | None = None) -> int:
         prepared = store.load(path, views=("visual_view",))
         if prepared.visual_view is None:
             continue
-        if prepared.preprocessing_config_hash != expected_hash:
+        if not same_preprocessing(
+            prepared.preprocessing_config_hash, expected_hash
+        ):
             raise SystemExit(
                 f"Cache hash {prepared.preprocessing_config_hash[:12]} does not "
                 f"match the checkpoint's {expected_hash[:12]}"
