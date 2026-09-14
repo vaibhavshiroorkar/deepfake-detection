@@ -12,6 +12,17 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Re-caching LAV-DF under the program run's code version. It is the only fully
+  audiovisual corpus on disk, 6,010 clips with no missing audio and 842 clips
+  whose audio alone is manipulated, and it was stranded under a different
+  preprocessing hash so no cross-corpus audiovisual experiment was possible. A
+  shared hash makes it comparable with FakeAVCeleb, DFDC and Celeb-DF without
+  re-caching those.
+- Stopped the FaceForensics++ leave-one-family-out sweep after three of six
+  arms. FF++ carries no audio, so the sweep is visual-only and off the
+  audiovisual path. The harness and the three measured arms are committed and
+  the remaining arms can be run at any time.
+
 - Added `scripts/score_media_folder.py`, which scores a folder of clips through
   the served engine and groups the result by source directory. It exists for the
   case the system fails hardest at: a number on clips from Veo, Sora or
