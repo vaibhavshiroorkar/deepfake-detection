@@ -12,6 +12,18 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Added `docs/research/architecture.md`, the design for an open-world
+  synthetic-media detector. It reorganises the system around one conclusion: a
+  jointly generated clip is internally consistent, so cross-modal disagreement
+  cannot answer "is this real". That question moves to whether the signal
+  carries the statistics of a physical capture chain, and lip-sync and emotion
+  drop to deciding which kind of manipulation it is.
+- The design is argued from this project's own measurements, including the ones
+  that contradict its earlier assumptions: the cross-modal streams never
+  measured correspondence, frozen DINOv3 lost to a fine-tuned EfficientNet,
+  late fusion beat the cross-attention head, and the detector keys on
+  post-processing rather than on manipulation.
+
 - Cached FaceForensics++ c23: 6,992 of 7,000 clips, 8 undecodable, under the
   same code version as the program run so the preprocessing hash is identical
   and a model trained here can be scored zero-shot against the already-cached
