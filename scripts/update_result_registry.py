@@ -257,6 +257,24 @@ RESULTS: tuple[Result, ...] = (
         ),
     ),
     Result(
+        result_id="C-ffpp-logo",
+        paper_location="Results, the region of interest decides the result",
+        command=(
+            "python scripts/extract_probe_features.py --folder "
+            "data/FaceForensics++/FaceForensics++_C23 --limit 150; "
+            "python scripts/train_logo_probe.py --features "
+            "runs/probe-20260914/ffpp-dinov3.npz"
+        ),
+        report=Path("runs/probe-20260914/ffpp-dinov3-logo.json"),
+        predictions=Path("runs/probe-20260914/ffpp-dinov3.json"),
+        mlflow=(),
+        decision=(
+            "A frozen full-frame probe is at chance on face manipulation, "
+            "macro 0.5387 with every interval containing 0.5"
+        ),
+        seeds=1,
+    ),
+    Result(
         result_id="C-ffpp-zeroshot",
         paper_location="Results, trained on FF++ and scored on unseen corpora",
         command="python scripts/score_ffpp_zeroshot.py",

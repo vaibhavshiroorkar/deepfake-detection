@@ -173,7 +173,12 @@ def main(argv: list[str] | None = None) -> int:
         # deviation across windows beside it: a generated clip is often steadier
         # across time than a real one, and averaging alone would discard that.
         per_window = embedded.mean(dim=1)
-        vector = torch.cat([per_window.mean(dim=0), per_window.std(dim=0)])
+        # unbiased=False so a clip short enough to yield a single window gets a
+        # spread of zero rather than NaN. Zero is the honest value: no variation
+        # was observed because there was nothing to vary across.
+        vector = torch.cat(
+            [per_window.mean(dim=0), per_window.std(dim=0, unbiased=False)]
+        )
         vectors.append(vector.numpy())
         labels.append(label)
         groups.append(group)

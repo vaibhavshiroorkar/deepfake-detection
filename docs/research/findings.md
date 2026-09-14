@@ -378,6 +378,46 @@ Diagonal mass sat at 0.0592 against a chance of 0.0600 on all three partitions,
 so whatever transfers between the two VoxCeleb2 corpora, it is not
 correspondence.
 
+### F13. The region of interest decides the result, and there is no single right one
+
+Result: `C-ffpp-logo`. A frozen DINOv3 probe over full frames, under
+source-grouped leave-one-family-out on FaceForensics++:
+
+| Held-out family | ROC-AUC |
+| --- | --- |
+| NeuralTextures | 0.5635 [0.4583, 0.6698] |
+| Deepfakes | 0.5553 [0.4505, 0.6703] |
+| Face2Face | 0.5477 [0.4506, 0.6539] |
+| FaceSwap | 0.5281 [0.4217, 0.6397] |
+| DeepFakeDetection | 0.5204 [0.4367, 0.6023] |
+| FaceShifter | 0.5169 [0.4104, 0.6200] |
+| macro mean | 0.5387 |
+
+Every interval contains 0.5. The probe is at chance.
+
+The cause is almost certainly the input rather than the model. FF++ manipulates
+the face alone, and a 1280x720 frame resized to 224 leaves the face a few dozen
+pixels across, so the evidence is gone before the encoder sees it. On the same
+corpus and the same held-out-family protocol, face crops through a fine-tuned
+EfficientNet read 0.7077 to 0.7839. Two variables differ between those rows, the
+region and the model, so the attribution is not clean, but the direction is.
+
+The design consequence is that the full-frame choice is not universally right.
+It is right for media generated whole, where the entire scene is synthetic, and
+wrong for face manipulation, where the evidence is local. A system covering both
+needs both paths, routed by what the input contains, rather than one ROI chosen
+on principle.
+
+This also corrects the way the full-frame choice was argued earlier in this
+project. It was justified by the Veo 3 coverage measurement, where face-dependent
+branches answered on 52.5 percent of clips. That argument is still right about
+person-free generated video and says nothing about face manipulation, which is
+what this measures.
+
+A secondary result worth keeping: the pipeline returned 0.54 with wide intervals
+on a corpus where a leak would have been easy, after two leaks were found and
+closed. An honest near-chance number is evidence the harness works.
+
 ## Superseded findings
 
 | Claim | Replaced by | Why it was wrong |

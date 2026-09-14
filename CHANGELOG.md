@@ -12,6 +12,18 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Ran the first source-grouped leave-one-generator-out measurement. A frozen
+  DINOv3 probe over full frames is at chance on FaceForensics++, macro 0.5387
+  with all six intervals containing 0.5, against 0.7077 to 0.7839 for face crops
+  through a fine-tuned model on the same corpus and protocol. The region of
+  interest, not the encoder, is what decides it: FF++ manipulates the face and a
+  720p frame resized to 224 leaves the face a few dozen pixels across.
+- That corrects how the full-frame choice was argued here. It is right for media
+  generated whole and wrong for face manipulation, so a system covering both
+  needs both paths routed by content rather than one region chosen on principle.
+- Fixed a NaN in the extractor: a clip short enough to yield one window produced
+  a sample standard deviation over a single element. Zero is the honest value.
+
 - Made leave-one-generator-out the only headline metric. There is no in-domain
   column any more: detecting a generator you trained on is not the problem, and
   a strong in-domain number has three times in this project turned out to be a
