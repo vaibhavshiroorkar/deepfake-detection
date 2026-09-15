@@ -2,83 +2,80 @@
 
 ## Current state
 
-The repository now holds a trained end-to-end pipeline, not just a development
-baseline. Three Design A branches (visual, audio, sync) are trained on
-FakeAVCeleb, out-of-fold branch features are exported through source-grouped
-cross-fitting, a late-fusion model is fitted on them, and the whole set is
-scored on a held-out in-domain partition and on DFDC as the cross-corpus test.
+Two tracks, and they answer different questions.
 
-Measured ROC-AUC:
+**Track one, the research pipeline**, is complete and measured. Design A trains
+three cue-specific branches on FakeAVCeleb with source-grouped cross-fitting and
+a calibrated late-fusion head. Design B replaces them with configurable streams
+and a feature-level head. Both score through one evaluation path, every headline
+number carries an identity-clustered interval, and every number resolves to a
+row in [result traceability](research/result-traceability.md). Fifteen findings
+are recorded in [findings](research/findings.md), including the five claims this
+project made and later withdrew.
 
-| Stream | In-domain | DFDC |
+**Track two, open-world generated media**, is newer and is where the work is
+pointed now. The system detects manipulation of a real recording; media
+generated whole is a different problem, and the design for it is in
+[architecture](research/architecture.md). DF26 is the benchmark: 2,691 clips,
+271 real and 2,420 from seven modern generators including Veo 3.1, Kling 3.0,
+Grok Imagine and Wan 2.6.
+
+### Where the four stated targets stand
+
+| Target | Status | Evidence |
 | --- | --- | --- |
-| Visual | 0.9742 | 0.7583 |
-| Audio | 0.7739 | 0.5054 |
-| Sync | 0.4364 | 0.4848 |
-| Fusion | 0.9990 | 0.7500 |
+| 0.991 visual detection, in-domain | **met** | Design A fusion 0.9990 on the FakeAVCeleb test partition, visual branch 0.9988 |
+| 0.844+ from audiovisual cues on genuine-frame fakes | **met on the number, failed on the mechanism** | Lip-sync stream 0.9969 on LAV-DF, which is exactly that case. Its `diagonal_mass` sat at chance in every epoch of three runs, so the audiovisual cue is not what produced the number |
+| Fusion beats the strongest single stream | **met, and four times smaller than the cited 0.099** | Paired source bootstrap: +0.0247 [0.0220, 0.0280] over the visual baseline in-domain, separated from zero. Cross-corpus -0.0083 [-0.0185, 0.0024], not separated |
+| 0.64+ on unseen generators without fine-tuning | **met** | DF26 leave-one-generator-out macro **0.6786**, container-controlled, range 0.5867 to 0.7622 |
 
-Two findings drive the current work. Nothing here is overfitting: validation
-loss sits below training loss in every run, so the 0.999 to 0.75 drop is domain
-shift. And the sync branch does not work. Its largest fusion coefficient is
--3.019 on a branch scoring below chance, which calibration inverts into a
-+0.0247 in-domain gain that vanishes cross-corpus. Retraining it on LAV-DF's
-2,779 authentic clips, eight times FakeAVCeleb's 348, left it at chance (best
-validation 2.1097 against ln(8) = 2.0794) while training loss fell to 1.57, so
-data starvation was not the cause.
+### The protocol, which is the actual contribution
 
-Design B is the response and is now training. Configurable visual streams
-(`ddf train visual-stream`), audiovisual cross-attention streams
-(`ddf train stream`), feature-level fusion over their embeddings
-(`ddf train fusion --model deep`), and `scripts/score_streams.py` to score them
-and export what fusion reads. Commit `5611653`, tagged `pipeline-v1`, is the
-restore point for the Design A pipeline measured above.
+Leave-one-generator-out is the only headline. There is no in-domain column,
+because a strong in-domain number has four times in this project turned out to
+be a shortcut rather than skill: 0.9990 against 0.4920 cross-corpus, a 0.9969
+matched-pair stream reading 0.5059 once capture conditions changed, a 0.9997 on
+Veo 3 that was pure content confound, and a 1.0000 on every arm of a smoke test
+that was a split leak.
 
-The first two Design B streams are trained but their results are withdrawn, and
-the reason is the most useful thing learned so far. Both selected their
-checkpoint on validation BCE, and that kept the wrong epoch:
+Four shortcuts were caught before they produced a reported result, each by one
+cheap check run before training rather than after:
 
-| Superseded run | Selected epoch | In-domain | DFDC |
-| --- | --- | --- | --- |
-| DINOv3 ViT-S/16, frozen | 4 of 7 | 0.9085 | 0.5106 |
-| EfficientNet-B0, fine-tuned | 1 of 4, backbone still frozen | 0.4668 | 0.6343 |
+- Veo 3 lab clips scored against talking-head reals, which would have given a
+  perfect-looking content classifier.
+- Real clips on both sides of a generator split, and in FaceForensics++ a fake
+  can be matched to its own source video, so the split is on source as well as
+  generator.
+- Generation modes of one model treated as separate generators, which leaks the
+  model through its sibling.
+- Audio presence in DF26 predicting the label almost perfectly, which would have
+  given a near-perfect audio branch measuring a container property.
 
-EfficientNet's checkpoint scores below chance in-domain because epoch 1 had the
-lowest loss and every later epoch looked worse. BCE measures calibration and
-punishes a confident mistake hard, so a model that ranks well while being
-overconfident loses to one that hedges and ranks badly. Every objective here is
-stated in ROC-AUC. Both trainers now select on it, through
-`training/ranking.py`, and the streams are retraining.
+### What is measured and settled
 
-The lesson generalises past this bug: a rising validation loss beside a falling
-training loss looks exactly like overfitting and is not sufficient evidence of
-it. Score the checkpoint before concluding anything from the curve. The
-superseded checkpoints are kept under
-`runs/design-b-20260910/checkpoints-loss-selected/` so the comparison survives.
+| Result | Number |
+| --- | --- |
+| DF26 leave-one-generator-out, container-controlled | macro 0.6786, spread 0.1755 |
+| Frame-rate confound found by that control | Wan 2.6 fell 0.094, HunyuanVideo 0.045, others unchanged |
+| Design A in-domain fusion | 0.9990 |
+| Design A cross-corpus fusion on DFDC | 0.7500, paired difference against visual not separated from zero |
+| Design B streams cross-corpus | four of five have intervals containing 0.5; only emotion separates, 0.5951 [0.5558, 0.6351] |
+| Capture conditions versus manipulation type | an unseen manipulation family costs 0.11 and still works; an unseen corpus reads 0.49 |
+| Full-frame probe on face manipulation | at chance, macro 0.5387, every interval containing 0.5 |
+| Calibration cross-corpus | expected calibration error 0.0022 in-domain against 0.6366 on DFDC |
 
-The teaching pages walk a clip through the pipeline stage by stage with three
-configurable visual backbones. The Evidence gate now serves the five Design B
-streams through the feature-level head rather than the single frozen visual
-model, and it takes a video, a photograph or a sound file, routing each to the
-streams it can drive. Its head is `runs/design-b-20260910/checkpoints/
-gate-fusion.pt`, fitted by `scripts/fit_gate_fusion.py`, which also chooses one
-decision threshold per media kind: 0.50 for a fused video, 0.76 for an image
-scored on the visual stream alone, 0.26 for sound alone. A checkout with no head
-falls back to the frozen visual baseline, and the verdict panel says which of
-the two produced it.
+### What is running or blocked
 
-[docs/research/paper-source.md](research/paper-source.md) is the single place to
-write the paper from: hand-written judgement around generated tables, refreshed
-by `uv run python scripts/update_paper_source.py` after any training or scoring
-run.
+Nothing is running. Blocked on other people: DeepSpeak v2 awaits author review,
+AV-Deepfake1M needs a signed EULA, Deepfake-Eval-2024 was refused.
 
-[docs/dashboard.md](dashboard.md) describes the dashboard layout.
-[docs/obstacles.md](obstacles.md) collects the constraints and traps that cost
-time in each area of this repository. Read it before changing preprocessing,
-the stream models, a training run, or the dashboard.
+### The audiovisual gap, which is the open opportunity
 
-The primary checkout at
-`C:\Users\vaibh\Documents\GitHub\deepfake-generalization` contains ignored
-`mlflow.db` and run evidence under `runs\`.
+DF26 cannot support audiovisual work: audio presence predicts its labels and
+only 27 of 271 real clips carry audio at all. Its authors name audio, speech
+quality and lip-sync as future work, so the gap is real and unclaimed. The
+corpora that could fill it are in [corpora](research/datasets.md), and LAV-DF is
+already on disk and hash-unified with the main cache.
 
 ## Dataset inventory
 
@@ -138,6 +135,7 @@ where no ranking metric exists; its detection rate is shown instead.
 | `design-b-20260910` | 5 (5 finished) |
 | `design-b-frozen-bn` | 4 (4 finished) |
 | `design-b-live-bn` | 2 (2 finished) |
+| `ffpp-20260913` | 1 (1 finished) |
 | `full-20260904` | 5 (5 finished) |
 | `initial-baseline-20260902` | 10 (10 finished) |
 | `program-20260906` | 21 (21 finished) |
@@ -370,31 +368,49 @@ and the two shell runners that produced them.
 
 ## Verification limits and next work
 
-What is verified now:
+### Limits on everything above
 
-- The full CUDA environment installs and `torch.cuda.is_available()` is `True`.
-- `uv run pytest`, `uv run ruff check .` and `uv run ddf-docs` all pass. Every
-  dashboard page renders with a clip selected, not only at its empty-state guard.
-- The pipeline runs end to end: cache, three branches, out-of-fold cross-fitting,
-  feature export, fusion, scoring on two partitions.
-- Cross-corpus generalization is measured, on DFDC. The gap is real and stated
-  above rather than smoothed over.
-- The fusion ablation runs every subset of the three branches on the same
-  out-of-fold features. In-domain, all three beat every single stream. On DFDC
-  they do not: the best subset is visual plus sync at 0.7587.
+Single seed throughout, so every result is `provisional` rather than `accepted`
+under the protocol in [research design](research-design.md), which asks for
+three. That is the single largest gap and it is about eight hours of GPU.
 
-What is still blocked:
+The DF26 intervals are bootstrap over clips, not clustered on identity, because
+generated clips have no speaker to cluster on. They are therefore narrower than
+the identity-clustered intervals elsewhere here and should not be compared
+against them directly.
 
-- The sync branch is at chance and four independent measurements agree on it.
-  Do not report it as a working synchronisation detector.
-- The audiovisual streams have not been trained on real data yet, so no
-  `diagonal_mass` evidence exists. Until it does, no claim about cross-modal
-  correspondence is supported.
-- AV-HuBERT, Whisper and HSEmotion or EmotiEffLib all need a network fetch and
-  are not installed.
+The DF26 probe uses DINOv3 because it is cached locally and works offline.
+Perception Encoder is about 15 AUROC points better on this task and needs
+`open_clip_torch`, which is not installed and the venv has no pip.
 
-Next work, cheapest decisive step first: get AV-HuBERT extracting features,
-train one lip-sync stream on them, and run the cross-pairing probe. Only commit
-to the full out-of-fold stream matrix if that probe shows the stream separates
-matched from mismatched audio. Then train the three visual streams, wire stream
-embeddings into `features export`, and train `StreamFusion` over them.
+The commercial generators still outscore the open-source ones after the
+container control, 0.72 against 0.62, which inverts the DF26 paper. The
+remaining explanation is training set rather than shortcut: their detectors
+transfer from face manipulation, this probe transfers between generative models,
+and the four commercial generators were all produced through one platform and
+may simply be more similar to each other. That is untested.
+
+### Next, in order
+
+1. **Three seeds.** The only thing standing between every result and `accepted`.
+   About eight hours of GPU, no new data.
+2. **The face-crop path.** Measured as necessary: full frames are at chance on
+   face manipulation, face crops are at chance on person-free generated scenes,
+   so both paths must exist and be routed by content.
+3. **Perception Encoder**, once `open_clip_torch` is installable.
+4. **The audiovisual track**, which needs a corpus DF26 cannot provide. LAV-DF
+   is on disk; DeepSpeak v2 and AV-Deepfake1M need their access granted.
+5. **The paper.** [paper-source.md](research/paper-source.md) regenerates its
+   tables from `runs/` and is the place to write from;
+   [paper.md](research/paper.md) is the draft.
+
+### Commands that reproduce the current state
+
+```powershell
+uv run python scripts/fetch_df26.py
+uv run python scripts/normalize_media.py --source data/df26-scored --target data/df26-norm --fps 24
+uv run python scripts/extract_probe_features.py --folder data/df26-norm --output runs/probe-20260914/df26-norm-dinov3.npz
+uv run python scripts/train_logo_probe.py --features runs/probe-20260914/df26-norm-dinov3.npz
+uv run python scripts/update_result_registry.py
+uv run python scripts/update_paper_source.py
+```

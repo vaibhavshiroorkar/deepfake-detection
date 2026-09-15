@@ -27,10 +27,14 @@ def test_the_document_carries_every_marker_the_generator_writes() -> None:
 def test_every_block_renders_against_a_run_that_has_produced_nothing(
     tmp_path: Path,
 ) -> None:
+    # Every path explicitly, including ones added later with a default that
+    # points at the real filesystem. A default like that makes this test read
+    # actual results while claiming to test an empty run.
     blocks = build_blocks(
         run_dir=tmp_path / "runs" / "absent",
         program_run=tmp_path / "runs" / "also-absent",
         registry=tmp_path / "missing.md",
+        ffpp_run=tmp_path / "runs" / "absent-ffpp",
     )
 
     assert set(blocks) == set(BLOCK_MARKERS)

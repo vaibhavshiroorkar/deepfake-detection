@@ -12,6 +12,20 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Ran the frame-rate control on DF26 and it found a real confound, confined to
+  one generator. Re-encoding every clip to 640x360 at 24fps moves the macro from
+  0.6942 to 0.6786: Wan 2.6, the only generator at 30fps, falls 0.094 and
+  HunyuanVideo falls 0.045, while the other five move by under 0.014. The
+  controlled table is the reportable one.
+- Rewrote the handoff against settled numbers, including where the four stated
+  targets stand: 0.991 visual met at 0.9990; 0.844 audiovisual met on the number
+  at 0.9969 and failed on the mechanism, since diagonal mass sat at chance;
+  fusion gain real at +0.0247 [0.0220, 0.0280] but four times smaller than the
+  cited 0.099; and 0.64 on unseen generators met at 0.6786 container-controlled.
+- Fixed a test that had stopped testing what it claimed. `build_blocks` gained a
+  parameter with a default pointing at the real filesystem, so the empty-run
+  case was silently reading actual results.
+
 - Fetched DF26: 2,691 clips, 271 real and ten generator variants over 209 source
   videos, each source carrying a real clip and its generated counterparts.
 - Audited its audio before using it and found DF26 cannot support audiovisual

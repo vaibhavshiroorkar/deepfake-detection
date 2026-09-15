@@ -471,7 +471,25 @@ appears on both sides and generation modes grouped under their model.
 Every interval clears 0.5, and the macro sits level with the best published
 FF++-trained detector on DF26 at 0.697.
 
-**Held pending one control.** The four commercial generators score 0.72 to 0.76
+**Control run, and it found a real confound.** Re-encoding every clip to 640x360
+at 24 frames per second and re-running gives macro 0.6786 against 0.6942. The
+loss is concentrated: Wan 2.6, the only generator at 30 fps, fell 0.094, and
+HunyuanVideo fell 0.045, while the other five moved by less than 0.014. So frame
+rate was leaking, through one generator, and the controlled table is the one to
+report:
+
+| Held-out generator | Controlled ROC-AUC |
+| --- | --- |
+| Veo 3.1 | 0.7622 [0.6890, 0.8255] |
+| Grok Imagine | 0.7308 [0.6466, 0.8057] |
+| Kling 3.0 | 0.7217 [0.6429, 0.7911] |
+| Wan 2.6 | 0.6686 [0.5871, 0.7484] |
+| Wan 2.2 | 0.6414 [0.5772, 0.7062] |
+| LTX 2.3 distilled | 0.6386 [0.5721, 0.7031] |
+| HunyuanVideo 1.5 | 0.5867 [0.5137, 0.6544] |
+| macro mean | 0.6786 |
+
+**What remains unexplained.** The four commercial generators score 0.72 to 0.76
 and the three open-source ones 0.63, which inverts the paper's finding that
 closed-source generators are markedly harder, 34.5 and 48.3 against 57.4 and
 70.5. When a result inverts a published one the first suspect is a shortcut.
@@ -483,9 +501,12 @@ vector includes a spread-across-windows term that is motion-sensitive, and frame
 rate changes apparent motion directly, so frame rate is a plausible path into
 the score.
 
-The control is to re-encode every clip to one frame rate, resolution and codec
-with `scripts/normalize_media.py` and re-run. Until that lands this number is
-not reportable.
+The commercial-versus-open-source inversion survives the control, 0.72 against
+0.62. The remaining explanation is the training set rather than a shortcut:
+the paper's detectors transfer from face manipulation while this probe transfers
+between generative models, and the four commercial generators were all produced
+through one platform and may be more similar to each other than the open-source
+three are. That is untested and worth testing before the inversion is quoted.
 
 ## Superseded findings
 
