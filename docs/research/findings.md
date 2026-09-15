@@ -553,6 +553,53 @@ clears a high-precision bar, "no evidence of manipulation" otherwise, and
 "outside what I was trained on" when the distribution gate fires. Calling the
 second of those "real" is the claim the measurements do not support.
 
+### F17. A density model over authentic footage cuts false accusations by four fifths
+
+Result: `A-authenticity-density`. F16 measured the problem: 90.97 percent of
+genuine Celeb-DF clips are called fake, and no threshold fixes it because the
+score distributions overlap. Two gates were tried.
+
+**The motion gate intercepts 5.7 percent of those false alarms.** Celeb-DF's
+genuine clips sit at motion 0.2964, inside the training range of 0.1017 to
+0.4789. They are unfamiliar in appearance, not in motion, and one hand-picked
+statistic cannot see that.
+
+**A Gaussian fitted over frozen encoder features of authentic clips only, scored
+by Mahalanobis distance, does much better.** No fake example is involved, so it
+generalises to capture conditions nobody anticipated.
+
+| Abstention on familiar genuine footage | Unfamiliar genuine clips intercepted |
+| --- | --- |
+| 5.3 percent | 64.4 percent |
+| 8.7 percent | 79.4 percent |
+| 21.3 percent | 90.6 percent |
+
+At the middle setting the false-accusation rate on unfamiliar real video falls
+from about 91 percent to roughly 19 percent, and to about 9 percent if
+abstaining on a fifth of familiar clips is acceptable.
+
+Two things this cost to get right, both my own errors caught by a check rather
+than by reasoning.
+
+The first threshold was set on the clips the model was fitted on, and held-out
+clips from the *same* corpus then flagged at 100 percent. A Gaussian over 768
+dimensions fitted on 250 samples reports optimistically small in-sample
+distances. The fix is PCA to 48 components and a threshold set on a held-out
+half of the reference.
+
+The second run still showed 26.7 percent on held-out familiar clips against a 5
+percent target, which looked like residual miscalibration and was not. The
+reference and held-out sets were the first 250 and next 150 entries of a
+directory listing ordered by demographic folder, so they were different subsets
+of the corpus rather than an unbiased split. Shuffling first brings the measured
+rate to 5.3 percent against the 5 percent target.
+
+**What it does not do.** It does not reach zero, and nothing does: 9 percent of
+unfamiliar genuine clips still get accused at the most aggressive setting. It
+also buys the improvement with abstentions, which are only useful if the system
+is allowed to answer "outside what I was trained on" rather than being forced to
+choose.
+
 ## Superseded findings
 
 | Claim | Replaced by | Why it was wrong |

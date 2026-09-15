@@ -12,6 +12,19 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Added `scripts/fit_authenticity_density.py`, a Gaussian over frozen encoder
+  features of authentic clips only, scored by Mahalanobis distance. It exists
+  because the motion gate intercepted only 5.7 percent of the false accusations
+  on Celeb-DF: those clips are unfamiliar in appearance, not in motion.
+- It intercepts 79.4 percent of unfamiliar genuine clips while abstaining on 8.7
+  percent of familiar ones, taking false accusations on unfamiliar real video
+  from about 91 percent to about 19. It does not reach zero and nothing does.
+- Two of my own errors were caught while measuring it. A threshold set on the
+  fitted clips made held-out clips from the same corpus flag at 100 percent, and
+  a reference split taken from an ordered directory listing made two different
+  demographic subsets look like miscalibration. Both are recorded in the finding
+  because the corrected numbers only mean something alongside them.
+
 - Measured the false-alarm rate on genuine video and it ranges from 0 to 91
   percent with capture conditions: 0.00 percent in-domain, 4.14 on DFDC, and
   90.97 on Celeb-DF, where the visual branch calls 141 of 155 authentic videos

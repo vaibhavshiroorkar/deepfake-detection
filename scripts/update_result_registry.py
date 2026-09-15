@@ -109,6 +109,23 @@ RESULTS: tuple[Result, ...] = (
         notes="Fake-only, so no ranking metric exists. Detection rate only.",
     ),
     Result(
+        result_id="A-authenticity-density",
+        paper_location="Results, abstaining instead of accusing",
+        command=(
+            "python scripts/fit_authenticity_density.py --features "
+            "runs/probe-20260914/ood2-dinov3.npz --reference real"
+        ),
+        report=Path("runs/probe-20260914/ood2-density-0.10.json"),
+        predictions=Path("runs/probe-20260914/ood2-dinov3.json"),
+        mlflow=(),
+        decision=(
+            "Intercepts 79.4 percent of unfamiliar genuine clips at 8.7 percent "
+            "abstention on familiar ones, taking false accusations from 91 to "
+            "about 19 percent"
+        ),
+        seeds=1,
+    ),
+    Result(
         result_id="A-false-alarms",
         paper_location="Results, false alarms on genuine video",
         command="ddf evaluate branch, then threshold sweep over the predictions",
