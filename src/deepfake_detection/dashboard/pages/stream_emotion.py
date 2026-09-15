@@ -1,8 +1,11 @@
-"""Emotion stream: vocal affect against facial expression. See the dashboard's lib/cross_modal.py."""
+"""Emotion stream: the trained model on one clip, stage by stage.
+
+Runs the real checkpoint rather than the random projections this page used to
+show. See the dashboard's lib/cross_modal_page.py.
+"""
 
 import streamlit as st
 
-from deepfake_detection.dashboard.lib import cross_modal
-from deepfake_detection.dashboard.lib.stream_spec import EMOTION_STREAM
+from deepfake_detection.dashboard.lib import cross_modal_page
 
-cross_modal.render(st, EMOTION_STREAM, key="emotion", video_source="faces")
+cross_modal_page.render(st, "emotion")

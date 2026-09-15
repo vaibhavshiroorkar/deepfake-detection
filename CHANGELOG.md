@@ -12,6 +12,21 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- The Lip-Sync and Emotion pages run the trained streams instead of random
+  projections. They were written before either stream existed and said so in
+  their own docstring; both have checkpoints now, so the pages load the weights,
+  preprocess the clip the way the pipeline does, and show the real attention
+  map, the real diagonal mass and the real score, stage by stage like the Visual
+  page.
+- The pages compute the chance diagonal mass from the map's actual shape rather
+  than a constant. That is the mistake this project already made once, calling
+  emotion's 0.3439 six times chance against lip-sync's fifty-step baseline, and
+  the tests pin both recorded values: 0.3438 for an eight-step map and 0.0592
+  for a fifty-step one.
+- A page that finds attention at chance says so in plain terms, with the
+  measured ranges from three training runs beside it, because an attention
+  heatmap reads as a finding whether or not it is one.
+
 - Ran the frame-rate control on DF26 and it found a real confound, confined to
   one generator. Re-encoding every clip to 640x360 at 24fps moves the macro from
   0.6942 to 0.6786: Wan 2.6, the only generator at 30fps, falls 0.094 and
