@@ -12,6 +12,17 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Measured the false-alarm rate on genuine video and it ranges from 0 to 91
+  percent with capture conditions: 0.00 percent in-domain, 4.14 on DFDC, and
+  90.97 on Celeb-DF, where the visual branch calls 141 of 155 authentic videos
+  manipulated. Forcing zero false alarms on Celeb-DF needs a 0.9998 threshold,
+  at which nothing is caught at all.
+- That makes the per-media-kind thresholds wrong for any deployment that cannot
+  accuse a genuine video. They are chosen by Youden's J, which weights
+  sensitivity and specificity equally; the requirement needs a threshold chosen
+  at a target false-alarm rate on real clips matching the deployment's capture
+  conditions.
+
 - The Lip-Sync and Emotion pages run the trained streams instead of random
   projections. They were written before either stream existed and said so in
   their own docstring; both have checkpoints now, so the pages load the weights,

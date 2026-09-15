@@ -21,6 +21,7 @@ resolves.
 <!-- BEGIN GENERATED REGISTRY -->
 | Result ID | Paper location | Analysis command | Report SHA-256 | Prediction SHA-256 | MLflow run IDs | Decision | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| `A-false-alarms` | Results, false alarms on genuine video | `ddf evaluate branch, then threshold sweep over the predictions` | `553c325fcd0b97a2` | `f0fda5150c1d1ef2` | `83f95e9f382d` | Genuine clips called fake: 0.00 percent in-domain, 4.14 on DFDC, 90.97 on Celeb-DF, where no threshold gives both zero false alarms and any detection | provisional (1 seed) |
 | `A-fusion-dfdc` | Results, late fusion cross-corpus | `ddf evaluate fusion --dataset DFDC` | `258b6357cc9ea462` | `29c39dbe0773001d` | `a9ffd37c25f9` | Late fusion does not beat its own visual branch cross-corpus | provisional (1 seed) |
 | `A-fusion-in-domain` | Results, late fusion in-domain | `ddf evaluate fusion --dataset FakeAVCeleb --partition test` | `5b1128f499be0804` | `a62ea676c18ae6f4` | `f31728fa29a1` | In-domain ceiling for the Design A pipeline | provisional (1 seed) |
 | `A-motion` | Results, motion hides manipulation | `python scripts/motion_vs_error.py --dataset dfdc` | `104f5db4fe6249dd` | `b30d5251103b4417` | none | Motion lowers the fake score on manipulated clips in both corpora, so moving video produces missed detections rather than false alarms | provisional (1 seed) |

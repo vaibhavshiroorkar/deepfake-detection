@@ -508,6 +508,51 @@ between generative models, and the four commercial generators were all produced
 through one platform and may be more similar to each other than the open-source
 three are. That is untested and worth testing before the inversion is quoted.
 
+### F16. False alarms on genuine video range from 0 to 91 percent with capture conditions
+
+Result: `A-false-alarms`. Genuine clips called fake at the fixed 0.50 threshold:
+
+| Corpus | Genuine clips | Called fake |
+| --- | --- | --- |
+| FakeAVCeleb test, in-domain | 75 | 0.00 percent |
+| DFDC, cross-corpus | 145 | 4.14 percent |
+| Celeb-DF, cross-corpus | 155 | **90.97 percent** |
+
+On Celeb-DF the visual branch calls 141 of 155 authentic videos manipulated. Its
+genuine clips are YouTube celebrity interviews rather than FakeAVCeleb's
+recordings, and that difference alone moves the false-alarm rate by ninety-one
+points.
+
+The cost of removing the false alarms is the other half:
+
+| Corpus | Threshold for zero false alarms | Manipulated clips still caught |
+| --- | --- | --- |
+| FakeAVCeleb | 0.1311 | 99.8 percent |
+| DFDC | 0.8777 | 12.2 percent |
+| Celeb-DF | 0.9998 | 0.0 percent |
+
+On Celeb-DF no threshold gives both zero false alarms and any detection. The two
+score distributions overlap almost completely, so the ordering carries no usable
+information there, which the 0.6682 ROC-AUC on that corpus already said in a way
+that is easier to overlook.
+
+Three consequences for anything deployed.
+
+**A guarantee of never accusing a genuine video is not available from a
+classifier.** Every threshold trades false alarms against detection, and on
+out-of-distribution capture the trade has no acceptable point.
+
+**The thresholds in this project optimise the wrong thing for that requirement.**
+They are chosen by Youden's J, which weights sensitivity and specificity
+equally. A deployment that cannot accuse a genuine video needs the threshold
+chosen at a target false-alarm rate on a held-out set of real clips that match
+the deployment's capture conditions.
+
+**The honest output is three-valued, not two.** "Manipulated" when the evidence
+clears a high-precision bar, "no evidence of manipulation" otherwise, and
+"outside what I was trained on" when the distribution gate fires. Calling the
+second of those "real" is the claim the measurements do not support.
+
 ## Superseded findings
 
 | Claim | Replaced by | Why it was wrong |

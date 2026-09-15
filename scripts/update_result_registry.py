@@ -109,6 +109,20 @@ RESULTS: tuple[Result, ...] = (
         notes="Fake-only, so no ranking metric exists. Detection rate only.",
     ),
     Result(
+        result_id="A-false-alarms",
+        paper_location="Results, false alarms on genuine video",
+        command="ddf evaluate branch, then threshold sweep over the predictions",
+        report=PROGRAM / "evaluation" / "visual-celebdf-metrics.json",
+        predictions=PROGRAM / "evaluation" / "visual-celebdf-predictions.csv",
+        mlflow=(("program-20260906", "visual-celebdf-evaluation"),),
+        decision=(
+            "Genuine clips called fake: 0.00 percent in-domain, 4.14 on DFDC, "
+            "90.97 on Celeb-DF, where no threshold gives both zero false alarms "
+            "and any detection"
+        ),
+        seeds=1,
+    ),
+    Result(
         result_id="A-motion",
         paper_location="Results, motion hides manipulation",
         command="python scripts/motion_vs_error.py --dataset dfdc",
