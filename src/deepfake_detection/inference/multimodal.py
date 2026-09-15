@@ -53,6 +53,7 @@ class MultimodalEngine:
         fusion: LoadedFusion,
         threshold: float = 0.5,
         device: str = "cuda",
+        familiarity: object | None = None,
     ) -> None:
         unknown = sorted(set(streams) - set(fusion.stream_dims))
         if unknown:
@@ -70,6 +71,11 @@ class MultimodalEngine:
         self.fusion = fusion
         self.threshold = threshold
         self.device = device
+        # When present, a clip whose capture conditions are unlike the authentic
+        # footage the model knows gets no verdict. On such footage the detector
+        # accuses genuine video about nine times in ten, so abstaining is the
+        # only defensible answer.
+        self.familiarity = familiarity
 
     def prepare(self, path: Path, kind: str):
         """The views this media kind can produce, by the matching entry point."""
@@ -94,6 +100,20 @@ class MultimodalEngine:
                 preprocessing_fingerprint="",
                 media_kind=kind,
             )
+
+        familiarity = None
+        if self.familiarity is not None and kind == media_kind.VIDEO:
+            familiarity = self.familiarity.check_clip(Path(path))
+            if familiarity is not None and not familiarity.familiar:
+                return PredictionResult(
+                    clip_id=Path(path).stem,
+                    verdict="indeterminate",
+                    probability=None,
+                    branch_logits={},
+                    blockers=(familiarity.blocker,),
+                    preprocessing_fingerprint="",
+                    media_kind=kind,
+                )
 
         prepared = self.prepare(Path(path), kind)
         # Ask the routing table, not the views. A stream whose views happen to
@@ -193,6 +213,7 @@ def load_multimodal_engine(
     device: str = "cuda",
     threshold: float = 0.5,
     root: Path | None = None,
+    density_path: Path | None = None,
 ) -> MultimodalEngine:
     """Build the served engine from one run directory.
 
@@ -229,10 +250,24 @@ def load_multimodal_engine(
             f"None of the head's streams have checkpoints in {run_dir}: "
             f"{', '.join(sorted(fusion.stream_dims))}."
         )
+    from deepfake_detection.inference.authenticity import load_gate
+
+    # Absent is a normal state. A checkout with no fitted density model serves
+    # verdicts as before rather than failing, and the caller can see which it
+    # got from `engine.familiarity`.
+    familiarity = load_gate(
+        density_path
+        or (root or Path.cwd())
+        / "runs"
+        / "probe-20260914"
+        / "authenticity-density.npz",
+        device=device,
+    )
     return MultimodalEngine(
         preprocessor=preprocessor,
         streams={spec.name: spec for spec in specs},
         fusion=fusion,
         threshold=threshold,
         device=device,
+        familiarity=familiarity,
     )

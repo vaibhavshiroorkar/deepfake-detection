@@ -67,6 +67,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--seed", type=int, default=17)
     parser.add_argument("--output", type=Path, default=None)
+    parser.add_argument(
+        "--save-model",
+        type=Path,
+        default=Path("runs/probe-20260914/authenticity-density.npz"),
+        help="Where the served gate loads the fitted model from.",
+    )
+    parser.add_argument("--encoder", default="dinov3")
     arguments = parser.parse_args(argv)
 
     payload = np.load(arguments.features, allow_pickle=False)
@@ -130,6 +137,24 @@ def main(argv: list[str] | None = None) -> int:
         print(
             f"{group:32} {len(values):6} {np.median(values):16.2f} {flagged:8.1%}"
         )
+
+    from deepfake_detection.inference.authenticity import AuthenticityDensity, save
+
+    arguments.save_model.parent.mkdir(parents=True, exist_ok=True)
+    save(
+        arguments.save_model,
+        AuthenticityDensity(
+            mean=projection.mean_,
+            components=projection.components_,
+            centre=mean,
+            inverse=inverse,
+            threshold=threshold,
+            encoder=arguments.encoder,
+            reference=arguments.reference,
+            flag_rate=arguments.flag_rate,
+        ),
+    )
+    print(f"model saved to {arguments.save_model}")
 
     output = arguments.output or arguments.features.with_name(
         arguments.features.stem + "-density.json"

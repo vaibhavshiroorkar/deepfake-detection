@@ -127,6 +127,36 @@ def render(st, stream: str) -> None:
     elif report is not None:
         st.caption(f"Loaded `{getattr(checkpoint, 'name', checkpoint)}`")
 
+    # -------------------------------------------------------------- verdict
+    score = result["probability"]
+    calls_fake = score >= 0.5
+    with st.container(border=True):
+        v1, v2 = st.columns([1, 2])
+        v1.metric(
+            "Score, 0 to 1",
+            f"{score:.3f}",
+            "fake" if calls_fake else "real",
+            delta_color="inverse" if calls_fake else "normal",
+        )
+        v2.markdown(
+            f"### This stream calls it **{'FAKE' if calls_fake else 'REAL'}**"
+        )
+        v2.caption(
+            f"Score {score:.3f} against a 0.500 cut-off, from the "
+            f"{spec['title'].lower()} alone. 0 is authentic, 1 is manipulated."
+        )
+        if checkpoint is None:
+            v2.caption(
+                "No checkpoint loaded, so this number came from an untrained "
+                "head and means nothing."
+            )
+    st.caption(
+        "One stream is not the system's verdict. The Evidence gate fuses every "
+        "stream the media kind can drive and applies a threshold chosen per "
+        "kind, which for video is 0.50 but for an image is 0.76. This page "
+        "exists to show what one stream saw and why."
+    )
+
     # ------------------------------------------------------------ 1 · inputs
     st.subheader("1 · What the two encoders receive")
     left, right = st.columns([3, 2])
@@ -202,15 +232,21 @@ def render(st, stream: str) -> None:
         )
 
     # ------------------------------------------------------------- 4 · score
-    st.subheader("4 · Embedding and score")
+    st.subheader("4 · How that score was produced")
     s1, s2, s3 = st.columns(3)
     s1.metric("Logit", f"{result['logit']:+.3f}")
-    s2.metric("Probability", f"{result['probability']:.1%}")
+    s2.metric("Score after sigmoid", f"{score:.3f}")
     s3.metric("Embedding width", f"{result['embedding'].shape[0]}")
     st.caption(
-        "The embedding is what the fusion head consumes; the probability is this "
-        "stream alone, before fusion and before any per-media-kind threshold. "
-        "A single stream is not a verdict."
+        "The head emits a logit; the sigmoid maps it to 0 to 1. The embedding "
+        "beside it is what the fusion head consumes, and it carries more than "
+        "the single number does, which is why fusion is not just an average of "
+        "stream scores."
+    )
+    st.caption(
+        "Treat the score as uncalibrated off-corpus. Expected calibration error "
+        "measured 0.0022 in-domain and 0.6366 cross-corpus, so a confident "
+        "number on unfamiliar footage is not evidence of confidence."
     )
     quality = run_store.get("quality") or {}
     if quality.get("blockers"):

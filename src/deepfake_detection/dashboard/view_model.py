@@ -63,11 +63,22 @@ def _threshold_label(result: PredictionResult, fallback: float) -> str:
     return f"Decision threshold for {kind}: {result.threshold:.2f}"
 
 
+UNFAMILIAR = "unfamiliar_capture_conditions"
+
+
 def _limitations(result: PredictionResult) -> tuple[str, ...]:
     shared = (
         "Validated on a source-disjoint FakeAVCeleb development split only.",
         "This score does not establish cross-dataset generalization.",
     )
+    if UNFAMILIAR in result.blockers:
+        return (
+            "No verdict was issued because this clip's capture conditions are "
+            "unlike the authentic footage this model was fitted on. On such "
+            "footage it accuses genuine video about nine times in ten, so a "
+            "verdict would be worth less than a refusal.",
+            *shared,
+        )
     if result.media_kind == media_kind.IMAGE:
         return (
             "One frame. The visual stream was trained on sixteen frames from "
