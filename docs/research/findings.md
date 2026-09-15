@@ -451,6 +451,42 @@ talking-head reals, real clips on both sides of a generator split, and now audio
 presence as a label proxy. Each was visible in one cheap check run before
 training rather than after.
 
+### F15. First leave-one-generator-out result on DF26, pending a frame-rate control
+
+Result: `C-df26-logo`. A frozen DINOv3 probe over full frames, trained on six
+generators and scored on the seventh, with source videos split so no source
+appears on both sides and generation modes grouped under their model.
+
+| Held-out generator | ROC-AUC |
+| --- | --- |
+| Wan 2.6 | 0.7621 [0.6808, 0.8322] |
+| Veo 3.1 | 0.7516 [0.6781, 0.8202] |
+| Grok Imagine | 0.7316 [0.6556, 0.8093] |
+| Kling 3.0 | 0.7216 [0.6445, 0.7928] |
+| LTX 2.3 distilled | 0.6325 [0.5646, 0.7024] |
+| HunyuanVideo 1.5 | 0.6316 [0.5616, 0.7010] |
+| Wan 2.2 | 0.6285 [0.5596, 0.6970] |
+| macro mean | 0.6942 |
+
+Every interval clears 0.5, and the macro sits level with the best published
+FF++-trained detector on DF26 at 0.697.
+
+**Held pending one control.** The four commercial generators score 0.72 to 0.76
+and the three open-source ones 0.63, which inverts the paper's finding that
+closed-source generators are markedly harder, 34.5 and 48.3 against 57.4 and
+70.5. When a result inverts a published one the first suspect is a shortcut.
+
+Container properties nearly identify the group. Real clips run at 25 or 29.97
+frames per second and nothing else does; generated clips run at 24 except Wan
+2.2 at 16 and Wan 2.6 at 30, with durations from 81 to 150 frames. The feature
+vector includes a spread-across-windows term that is motion-sensitive, and frame
+rate changes apparent motion directly, so frame rate is a plausible path into
+the score.
+
+The control is to re-encode every clip to one frame rate, resolution and codec
+with `scripts/normalize_media.py` and re-run. Until that lands this number is
+not reportable.
+
 ## Superseded findings
 
 | Claim | Replaced by | Why it was wrong |

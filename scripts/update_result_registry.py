@@ -257,6 +257,22 @@ RESULTS: tuple[Result, ...] = (
         ),
     ),
     Result(
+        result_id="C-df26-logo",
+        paper_location="Results, leave-one-generator-out on DF26",
+        command=(
+            "python scripts/train_logo_probe.py --features "
+            "runs/probe-20260914/df26-dinov3.npz"
+        ),
+        report=Path("runs/probe-20260914/df26-dinov3-logo.json"),
+        predictions=Path("runs/probe-20260914/df26-dinov3.json"),
+        mlflow=(),
+        decision=(
+            "Macro 0.6942 across seven unseen generators, held pending a "
+            "frame-rate control: real clips are the only ones at 25 or 29.97 fps"
+        ),
+        seeds=1,
+    ),
+    Result(
         result_id="C-df26-audio-audit",
         paper_location="Results, DF26 cannot support audiovisual work",
         command="ffprobe over 30 clips per DF26 group",
