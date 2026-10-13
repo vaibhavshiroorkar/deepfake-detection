@@ -607,6 +607,96 @@ not. The in-domain fusion gain is entirely attributable to the 75
 finding that 1,585 of 2,351 cross-corpus errors are beyond any head follows
 directly rather than needing a separate explanation.
 
+### 5.18 Open-world generated video, and four shortcuts caught before training
+
+Results: `C-df26-audio-audit`, `C-df26-logo`.
+
+Everything above detects manipulation of a real recording. Video generated
+whole is a different problem, and 5.11 shows this pipeline is close to blind on
+it: 0 of 10 on `vasa_1`. So the second half of this paper asks a narrower
+question on a different corpus. Can a frozen encoder with a linear probe detect
+a video generator it has never seen?
+
+DF26 holds 2,691 clips: 271 real and 2,420 from seven generators. Four are
+commercial (Veo 3.1, Kling 3.0, Grok Imagine, Wan 2.6) and three are open source
+(HunyuanVideo 1.5, LTX 2.3, Wan 2.2). The probe trains on six generators and is
+scored on the seventh, once per generator. There is no in-domain column. Source
+videos are split before generators, so no source appears on both sides, and a
+model's image-to-video and text-to-video modes count as one generator.
+
+Each of those rules exists because a check found the leak it closes, and all
+four checks ran before any number was reported:
+
+1. **Content.** Veo 3 lab clips scored against talking-head reals came out
+   near perfect. That was a classifier for what was in the scene.
+2. **Shared real clips.** A generator-only split put the same real clips in
+   training and test. A smoke test scored perfectly on every arm, and no
+   probe is that good.
+3. **Sibling modes.** Holding out one mode of a model while training on its
+   other mode leaks the model's weights.
+4. **Audio presence.** Every sampled commercial clip carries an audio track, no
+   open-source clip does, and 3 of 30 real clips do. Any audio branch scored on
+   DF26 would read near 1.0 while measuring a container property, so DF26 is
+   treated as visual-only.
+
+Intervals in 5.18 to 5.20 resample clips, or source videos for paired
+differences. Generated clips have no speaker to cluster on, so these intervals
+are narrower than the identity-clustered ones above and should not be compared
+with them.
+
+### 5.19 Frame rate leaked through one generator
+
+Results: `C-df26-logo`, `C-df26-logo-controlled`.
+
+The first DF26 table, a frozen DINOv3 probe, read macro 0.6942. Real clips were
+the only ones at 25 or 29.97 frames per second, and the feature vector includes
+a term that responds to motion, so frame rate was a plausible path into the
+score. Re-encoding every clip to 640x360 at 24 frames per second gives 0.6786.
+The loss is concentrated: Wan 2.6, the only generator at 30 fps, fell 0.094 and
+HunyuanVideo fell 0.045, while the other five moved by less than 0.014. Every
+DF26 number below uses the re-encoded clips.
+
+### 5.20 The encoder is worth 0.07, against the argument for the one we kept
+
+Results: `A-encoder-comparison`, `C-df26-logo-pe`.
+
+| Encoder | Macro ROC-AUC | Paired difference against DINOv3 |
+| --- | ---: | --- |
+| Perception Encoder, PE-Core-B/16 | **0.7527** | +0.0741 [+0.0121, +0.1317] |
+| CLIP ViT-B/16 | 0.7454 | +0.0668 [+0.0049, +0.1289] |
+| DINOv3 ViT-S/16 | 0.6786 | reference |
+
+Same clips, same split, same probe; only the frozen encoder changes. Perception
+Encoder leads on all seven held-out generators, and PE against CLIP is not
+separated, -0.0073 [-0.0603, +0.0463].
+
+| Held-out generator | Perception Encoder |
+| --- | --- |
+| Veo 3.1 | 0.8496 [0.7886, 0.9015] |
+| Wan 2.6 | 0.8164 [0.7472, 0.8785] |
+| Grok Imagine | 0.7905 [0.7158, 0.8552] |
+| Kling 3.0 | 0.7821 [0.7073, 0.8447] |
+| Wan 2.2 | 0.6996 [0.6340, 0.7603] |
+| HunyuanVideo 1.5 | 0.6764 [0.6071, 0.7401] |
+| LTX 2.3 distilled | 0.6542 [0.5866, 0.7166] |
+
+This comparison has a history that belongs in a paper about validity checks. A
+figure of 72.7 for PE against 57.0 for DINOv3 changed the project's encoder
+choice for weeks with no artifact behind it. Its DINOv3 number was eleven points
+below this pipeline's own measurement, so the claim was withdrawn and DINOv3
+kept. The reason given for keeping it was mechanistic: a vision-language
+objective pulls features toward semantics and away from the texture detail
+forensics reads. Re-run under the protocol, the withdrawn claim had the right
+direction at half the size, and the mechanism argument was wrong for generated
+video: both vision-language encoders beat the self-supervised one.
+
+The commercial generators score higher than the open-source ones, 0.81 against
+0.68. The DF26 authors report the opposite for their detectors. Theirs transfer
+from face manipulation, while this probe transfers between generators, and all
+four commercial generators were collected through one platform and may resemble
+each other more than the open-source three do. That explanation is untested, and
+the gap should not be quoted until it is.
+
 ## 6. Failures that changed a result
 
 The failure log holds about 50 entries. These are the ones that changed a

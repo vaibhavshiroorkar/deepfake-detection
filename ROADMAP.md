@@ -66,9 +66,13 @@ acceptance of the measured choice.
 - [x] Compare ConvNeXt-Tiny under the same visual training budget, three seeds each.
 - [x] Train Wav2Vec2 Base as the audio baseline.
 - [x] Compare WavLM under the same audio protocol (undecided: both at 1.0000).
-- [ ] Compare AASIST, which has no implementation.
+- Descoped: compare AASIST. WavLM was the audio challenger, and F28 shows the
+  in-domain partition cannot separate two encoders that both read 1.0000. A
+  third cannot be decided either until a cross-corpus audio partition exists.
 - [x] Train the current synchronization branch on authentic correspondence.
-- [ ] Compare it with a published synchronization baseline.
+- Descoped: compare it with a published synchronization baseline. The branch
+  is below chance at all three seeds (F26) and its objective is not learnable
+  at this budget (F32), so a baseline comparison has nothing to compare.
 - [x] Train every branch on three fixed seeds.
 - [x] Score them: `scripts/score_sync_branch.py` gives sync one, and the audio and visual seeds are scored. Fusion still needs per-seed folds.
 
@@ -94,7 +98,10 @@ through the same branch, which was always architecture-agnostic.
 - [ ] Cross-fit the folds per seed, which the head's own three seeds need. `pwsh scripts/run_crossfit_seeds.ps1`, six to eight hours.
 - [x] Fit calibrated logistic fusion from out-of-fold predictions only.
 - [x] Run branch, pair, calibration, cue-label, abstention and sync-label ablations.
-- [ ] Run the leading-silence ablation, which needs a second cache.
+- [ ] Run the leading-silence ablation. It needs the cache rebuilt with
+  `--keep-leading-silence`, which re-runs face detection over 59 GB. F25's
+  half-second shift at inference found no silence shortcut, but that is not
+  the cache-level ablation the research design names.
 - [x] Compare logistic fusion with the small MLP.
 - [x] Select and freeze the decision threshold on validation data.
 - [x] Freeze model settings, checkpoints, and hashes before test access.
