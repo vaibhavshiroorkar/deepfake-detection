@@ -61,7 +61,7 @@ now explicit, and a row marked `required` is a commitment, not a safeguard.
 | Threat | Failure | Control | Status |
 |---|---|---|---|
 | Source identity leakage | The model recognizes people instead of fakes | Source-disjoint splits and overlap audits | **in place**, tested |
-| Generator shortcut | Scores collapse on an unseen method | Method-family holdouts and external zero-shot evaluation | **partial**: zero-shot done, leave-one-method-family-out never run |
+| Generator shortcut | Scores collapse on an unseen method | Method-family holdouts and external zero-shot evaluation | **partial**: zero-shot done; visual-stream family holdout on FF++ done (F34), FaceSwap at chance; three-branch holdout on FakeAVCeleb not run |
 | Codec or resolution shortcut | The model learns dataset encoding | Corruption tests and distribution reports | **partial**: corruption tests done (F24, F25); no distribution report exists |
 | Silence shortcut | Audio labels leak through leading silence | Silence ablation and explicit audio quality fields | **partial**: quality fields exist and `cache build --keep-leading-silence` exists, but the cache-level ablation has never been run. F25 measures a half-second shift at inference and finds no effect |
 | Padding shortcut | The sync or audio branch learns sequence length | Real-context offsets and required audio masks | **partial**: masking implemented and tested, but no shipped checkpoint was trained with it and the caches those used record no sample count |

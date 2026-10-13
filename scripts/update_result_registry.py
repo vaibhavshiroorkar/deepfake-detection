@@ -390,6 +390,26 @@ RESULTS: tuple[Result, ...] = (
         seeds=1,
     ),
     Result(
+        result_id="C-ffpp-family-holdout",
+        paper_location="Results, the region of interest decides the result",
+        command=(
+            "sh scripts/train_family_holdout.sh; "
+            "python scripts/summarize_family_holdout.py"
+        ),
+        report=FFPP / "evaluation" / "family-holdout.json",
+        predictions=FFPP / "checkpoints" / "holdout-ffpp-faceswap-history.json",
+        mlflow=(),
+        decision=(
+            "Holding a family out costs 0.1231 macro ROC-AUC, 0.8743 to 0.7511; "
+            "faceswap falls to chance at 0.5195 and two drops overlap"
+        ),
+        seeds=1,
+        notes=(
+            "Visual stream only: FaceForensics++ has no audio. Unpaired "
+            "comparison against the all-family model on the same test clips."
+        ),
+    ),
+    Result(
         result_id="B-fusion-ablations",
         paper_location="Results, late against deep and abstention against fallback",
         command=(

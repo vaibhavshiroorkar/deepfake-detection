@@ -9,7 +9,7 @@ three cue-specific branches on FakeAVCeleb with source-grouped cross-fitting and
 a calibrated late-fusion head. Design B replaces them with configurable streams
 and a feature-level head. Both score through one evaluation path, every headline
 number carries an identity-clustered interval, and every number resolves to a
-row in [result traceability](research/result-traceability.md). Thirty-three
+row in [result traceability](research/result-traceability.md). Thirty-four
 findings are recorded in [findings](research/findings.md), including the seven
 claims this project made and later withdrew.
 
@@ -66,7 +66,7 @@ cheap check run before training rather than after:
 | Unweighted mean against the fitted head, DFDC | not separated on AUC, and ECE 0.0554 against 0.6366 |
 | Head-only method holdout, rtvc | AUC falls 0.0437 while 73 of 75 clips go missed at the frozen threshold |
 | Design B streams cross-corpus | four of five have intervals containing 0.5; only emotion separates, 0.5951 [0.5558, 0.6351] |
-| Capture conditions versus manipulation type | an unseen manipulation family costs 0.11 and still works; an unseen corpus reads 0.49 |
+| Capture conditions versus manipulation type | an unseen manipulation family costs 0.12 macro, five of six above 0.70 and FaceSwap at chance; an unseen corpus reads 0.49 |
 | Full-frame probe on face manipulation | at chance, macro 0.5387, every interval containing 0.5 |
 | Calibration cross-corpus | expected calibration error 0.0022 in-domain against 0.6366 on DFDC |
 | Seed spread, fused system on DFDC | 0.1057, from 0.6442 to 0.7500; in-domain 0.0001 |
@@ -135,11 +135,29 @@ where no ranking metric exists; its detection rate is shown instead.
 | `runs/full-20260904/evaluation/pilot-visual-validation-metrics.json` | FakeAVCeleb | development_validation | 598 | 1.0000 | 1.0000 |
 | `runs/initial-20260902/visual-validation-metrics.json` | FakeAVCeleb | development_validation | 400 | 0.9992 | 0.9975 |
 | `runs/program-20260906/evaluation/audio-in-domain-test-metrics.json` | FakeAVCeleb | development_test | 1,648 | 1.0000 | 1.0000 |
+| `runs/program-20260906/evaluation/audio-in-domain-test-seed29-metrics.json` | FakeAVCeleb | development_test | 1,648 | 1.0000 | 0.9962 |
+| `runs/program-20260906/evaluation/audio-in-domain-test-seed43-metrics.json` | FakeAVCeleb | development_test | 1,648 | 0.9986 | 0.9906 |
+| `runs/program-20260906/evaluation/audio-wavlm-in-domain-test-metrics.json` | FakeAVCeleb | development_test | 1,648 | 1.0000 | 0.9981 |
 | `runs/program-20260906/evaluation/fusion-dfdc-metrics.json` | FakeAVCeleb | fusion | 2,351 | 0.7500 | 0.6203 |
 | `runs/program-20260906/evaluation/fusion-test-metrics.json` | FakeAVCeleb | fusion | 1,648 | 0.9990 | 0.9990 |
+| `runs/program-20260906/evaluation/sync-final-sync-seed17-metrics.json` | FakeAVCeleb | ? | 0 | 0.4364 | 0.5000 |
+| `runs/program-20260906/evaluation/sync-final-sync-seed29-metrics.json` | FakeAVCeleb | ? | 0 | 0.4570 | 0.5000 |
+| `runs/program-20260906/evaluation/sync-final-sync-seed43-metrics.json` | FakeAVCeleb | ? | 0 | 0.4931 | 0.5000 |
 | `runs/program-20260906/evaluation/visual-celebdf-metrics.json` | Celeb-DF-v2 | generalization_celebdf | 462 | 0.6682 | 0.5435 |
+| `runs/program-20260906/evaluation/visual-convnext-dfdc-metrics.json` | DFDC | generalization_celebdf | 2,410 | 0.7272 | 0.5066 |
+| `runs/program-20260906/evaluation/visual-convnext-dfdc-seed29-metrics.json` | DFDC | generalization_celebdf | 2,410 | 0.6776 | 0.5358 |
+| `runs/program-20260906/evaluation/visual-convnext-dfdc-seed43-metrics.json` | DFDC | generalization_celebdf | 2,410 | 0.6301 | 0.5720 |
+| `runs/program-20260906/evaluation/visual-convnext-in-domain-test-metrics.json` | FakeAVCeleb | development_test | 1,648 | 0.9992 | 0.9973 |
+| `runs/program-20260906/evaluation/visual-convnext-in-domain-test-seed29-metrics.json` | FakeAVCeleb | development_test | 1,648 | 0.9986 | 0.9957 |
+| `runs/program-20260906/evaluation/visual-convnext-in-domain-test-seed43-metrics.json` | FakeAVCeleb | development_test | 1,648 | 0.9032 | 0.7919 |
 | `runs/program-20260906/evaluation/visual-dfdc-metrics.json` | DFDC | generalization_celebdf | 2,410 | 0.7611 | 0.5677 |
+| `runs/program-20260906/evaluation/visual-dfdc-seed17-metrics.json` | DFDC | generalization_celebdf | 2,410 | 0.7611 | 0.5677 |
+| `runs/program-20260906/evaluation/visual-dfdc-seed29-metrics.json` | DFDC | generalization_celebdf | 2,410 | 0.6963 | 0.5354 |
+| `runs/program-20260906/evaluation/visual-dfdc-seed43-metrics.json` | DFDC | generalization_celebdf | 2,410 | 0.6878 | 0.5216 |
 | `runs/program-20260906/evaluation/visual-in-domain-test-metrics.json` | FakeAVCeleb | development_test | 1,648 | 0.9988 | 0.9990 |
+| `runs/program-20260906/evaluation/visual-in-domain-test-seed17-metrics.json` | FakeAVCeleb | development_test | 1,648 | 0.9988 | 0.9990 |
+| `runs/program-20260906/evaluation/visual-in-domain-test-seed29-metrics.json` | FakeAVCeleb | development_test | 1,648 | 0.9991 | 0.9990 |
+| `runs/program-20260906/evaluation/visual-in-domain-test-seed43-metrics.json` | FakeAVCeleb | development_test | 1,648 | 0.9993 | 0.9987 |
 | `runs/program-20260906/evaluation/visual-mnw-metrics.json` | MNW | external_mnw | 85 | 0.0000 | 0.1429 |
 <!-- END GENERATED EVIDENCE -->
 

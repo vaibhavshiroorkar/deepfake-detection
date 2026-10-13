@@ -397,8 +397,8 @@ shortcut-controlled setup in the project and which produced 0.9969 in-domain,
 buys nothing at all once the capture conditions change.
 
 This is the third independent line of evidence for the same conclusion. The
-family holdout said an unseen manipulation family costs 0.11 and still works
-while an unseen corpus reads 0.49. Training on FaceForensics++ instead of
+family holdout (F34) said an unseen manipulation family costs 0.12 on average
+and five of six still score above 0.70, while an unseen corpus reads 0.49. Training on FaceForensics++ instead of
 FakeAVCeleb moved DFDC from 0.7611 to 0.4920. And now a corpus change inside
 VoxCeleb2 costs almost nothing while a corpus change outside it costs
 everything.
@@ -428,8 +428,11 @@ The cause is almost certainly the input rather than the model. FF++ manipulates
 the face alone, and a 1280x720 frame resized to 224 leaves the face a few dozen
 pixels across, so the evidence is gone before the encoder sees it. On the same
 corpus and the same held-out-family protocol, face crops through a fine-tuned
-EfficientNet read 0.7077 to 0.7839. Two variables differ between those rows, the
-region and the model, so the attribution is not clean, but the direction is.
+EfficientNet read 0.7077 to 0.9322 on five of six families (F34). Two variables
+differ between those rows, the region and the model, so the attribution is not
+clean, but the direction is. The sixth family, FaceSwap, is at chance under both
+(0.5281 full frame, 0.5195 face crop), so for that family neither the region
+nor the model rescues it.
 
 The design consequence is that the full-frame choice is not universally right.
 It is right for media generated whole, where the entire scene is synthetic, and
@@ -1276,6 +1279,51 @@ remains untested and matters more.
 
 One seed and one split. The probe is linear and deterministic given the split,
 so the remaining variance is which source videos land in the test set.
+
+### F34. An unseen manipulation family costs 0.12, and one family is at chance
+
+Result: `C-ffpp-family-holdout`. The visual stream, face crops through a
+fine-tuned EfficientNet, retrained six times on FaceForensics++ c23 with one
+family held out each time. Each arm is scored on its held-out family's test
+clips and the shared real test clips. The seen column is the all-family model
+on the same clips.
+
+| Held-out family | Seen | Unseen | Drop |
+| --- | ---: | ---: | ---: |
+| FaceSwap | 0.8110 | 0.5195 [0.4718, 0.5663] | 0.2915 |
+| FaceShifter | 0.8531 | 0.7077 [0.6680, 0.7497] | 0.1454 |
+| Deepfakes | 0.8912 | 0.7771 [0.7365, 0.8216] | 0.1140 |
+| Face2Face | 0.8600 | 0.7839 [0.7505, 0.8237] | 0.0761 |
+| NeuralTextures | 0.8486 | 0.7863 [0.7534, 0.8231] | 0.0623 |
+| DeepFakeDetection | 0.9817 | 0.9322 [0.8816, 0.9739] | 0.0495 |
+| macro mean | 0.8743 | 0.7511 | 0.1231 |
+
+Four drops are separated: the unseen interval sits entirely below the seen one.
+NeuralTextures and DeepFakeDetection overlap. The comparison is unpaired because
+`score_by_family.py` keeps no per-clip scores, so two overlapping intervals do
+not show the drop is zero, only that this test cannot see it.
+
+FaceSwap is the outlier and the only family at chance. It is also the only
+graphics-based identity swap in the set: Deepfakes and FaceShifter swap
+identity with learned models, and Face2Face and NeuralTextures keep the
+identity and change the expression. A detector that has seen learned swaps does
+not recognise a graphics-based one. That explanation fits the table but was not
+tested separately.
+
+DeepFakeDetection barely moves, and the likely reason is capture rather than
+manipulation. Its fakes come from paid actors filmed for the dataset, while
+every real test clip is a FaceForensics++ YouTube original. The model can
+separate the two on footage alone, whichever fakes it trained on.
+
+This closes the Phase 5 leave-one-family-out item at its feasible scope: the
+visual stream on FaceForensics++. FaceForensics++ has no audio, so the
+three-branch version of this test cannot exist on it. The earlier three-arm
+figure, 0.1119, moved to 0.1231 with the three missing arms, and FaceSwap is
+the reason.
+
+One seed per arm. F21 measured 0.0733 of seed spread for this architecture
+cross-corpus. That is larger than two of the six drops, though this test is
+closer to in-domain, where the seed spread was not measured.
 
 ## Superseded findings
 

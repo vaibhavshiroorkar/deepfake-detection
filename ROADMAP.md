@@ -126,7 +126,7 @@ seed every result reports is the best of three.
 
 - [x] Run the frozen FakeAVCeleb test once.
 - [x] Run the identity-strict evaluation.
-- [ ] Run the leave-one-method-family-out evaluation.
+- [x] Run the leave-one-method-family-out evaluation (visual stream, FaceForensics++).
 - [x] Run the locked zero-shot Microsoft-Northwestern-WITNESS evaluation.
 - [x] Report subgroup, coverage, and abstention results.
 - [x] Report corruption results.
@@ -160,11 +160,14 @@ they bound the classifier rather than the pipeline: the face track is held fixed
 so detector failures under corruption are not measured. The headline is F24, that
 JPEG 75 costs 0.0054 of ROC-AUC and takes false alarms from 0 to 51 percent.
 
-Leave-one-method-family-out is the one still genuinely open. The head-only
-holdout in the same result refits the fusion head alone, which bounds the head's
-method-specificity and nothing wider, because the branch checkpoints saw every
-method. The real study retrains the branches per fold through
-`split method-holdout` and is GPU work.
+Leave-one-method-family-out ran on the visual stream over FaceForensics++, six
+arms, one family held out per arm (`C-ffpp-family-holdout`, F34). An unseen
+family costs 0.1231 macro, 0.8743 to 0.7511, and FaceSwap alone falls to chance.
+FaceForensics++ has no audio, so this is the feasible scope there. The
+three-branch version on FakeAVCeleb, retraining every branch per fold through
+`split method-holdout`, was not run. The head-only holdout refits the fusion
+head alone and bounds only the head's method-specificity, because the branch
+checkpoints saw every method.
 
 ## Scope controls
 

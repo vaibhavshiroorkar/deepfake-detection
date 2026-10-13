@@ -12,6 +12,11 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Ran the three missing FaceForensics++ family-holdout arms and recorded all six
+  as `C-ffpp-family-holdout`. Added `scripts/summarize_family_holdout.py`, which
+  joins each held-out arm with the all-family baseline. An unseen family costs
+  0.1231 macro ROC-AUC, and FaceSwap falls to 0.5195. The arms never logged to
+  MLflow, so the row cites no run.
 - Settled `A-encoder-comparison`, the registry's last `pending` row. The PE and
   CLIP arms ran on 2026-09-27 and were never recorded. Added
   `scripts/compare_probe_encoders.py`, which scores every encoder on one split
