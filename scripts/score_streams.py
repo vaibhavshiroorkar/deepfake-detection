@@ -40,15 +40,22 @@ class _Scored:
 def _auc_of(items) -> float:
     """ROC-AUC over a resampled set, for `cluster_bootstrap_interval`.
 
-    A resample can land on one class even when the full set has both, and a
-    bootstrap that raised there would lose the whole interval. Returning 0.5
-    keeps the sample and says the draw carried no ranking information.
+    A resample can land on one class even when the full set has both. This
+    raises there, and `cluster_bootstrap_interval` skips the draw and counts it
+    out of `successful_samples`. It used to return 0.5 instead, on the reasoning
+    that the draw carried no ranking information, but 0.5 is a value rather than
+    an absence: it lands in the middle of the percentile distribution and pulls
+    the interval toward chance.
     """
     from sklearn.metrics import roc_auc_score
 
     labels = [item.label for item in items]
     if len(set(labels)) != 2:
-        return 0.5
+        # Raise rather than return 0.5. `cluster_bootstrap_interval` skips the
+        # draw and counts it out of `successful_samples`; a 0.5 would instead put
+        # a point mass in the middle of the percentile distribution and pull the
+        # interval toward chance.
+        raise ValueError("Bootstrap sample does not contain both classes")
     return float(roc_auc_score(labels, [item.logit for item in items]))
 
 

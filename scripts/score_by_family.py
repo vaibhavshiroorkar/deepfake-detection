@@ -38,7 +38,11 @@ def _auc_of(items) -> float:
 
     labels = [item.label for item in items]
     if len(set(labels)) != 2:
-        return 0.5
+        # Raise rather than return 0.5. `cluster_bootstrap_interval` skips the
+        # draw and counts it out of `successful_samples`; a 0.5 would instead put
+        # a point mass in the middle of the percentile distribution and pull the
+        # interval toward chance.
+        raise ValueError("Bootstrap sample does not contain both classes")
     return float(roc_auc_score(labels, [item.score for item in items]))
 
 
@@ -133,12 +137,37 @@ def main(argv: list[str] | None = None) -> int:
                     _Scored(float(value), int(label), by_id[clip_id].source)
                 )
 
+    # One label definition throughout. `item.label` comes from the visual branch
+    # dataset, which is `video_fake`, so the family arm must use `video_fake`
+    # too. It used to use `clip_fake`, and the two disagree on a
+    # RealVideo-FakeAudio clip: `video_fake` is 0 and `clip_fake` is 1, so such a
+    # clip entered `real` *and* its family's fake list, labelled 0 in both, and
+    # the family's own positives were scored as negatives inside one interval.
+    #
+    # It never fired, because this script is FaceForensics++ only and FF++ has no
+    # audio track, so no row there has the two labels disagreeing. The guard
+    # below keeps that an assumption this script states rather than one it
+    # depends on silently.
+    divergent = [
+        record.clip_id
+        for record in records
+        if record.video_fake != record.clip_fake
+    ]
+    if divergent:
+        raise SystemExit(
+            f"{len(divergent)} clips have video_fake != clip_fake, starting with "
+            f"{divergent[0]}. This script scores the visual branch, whose label is "
+            "video_fake, against per-family arms. On a corpus with audio-only "
+            "manipulations the two labels disagree and the arms would overlap. "
+            "Score that corpus with a cue-specific label instead."
+        )
+
     # The same real clips for every family, so the rows compare with each other
     # rather than each carrying its own baseline.
     real = [item for item in scored if item.label == 0]
     families: dict[str, list[_Scored]] = {}
     for item, record in zip(scored, records, strict=True):
-        if record.clip_fake:
+        if record.video_fake:
             families.setdefault(record.method, []).append(item)
 
     print(f"{len(real):,} real clips shared across {len(families)} families\n")

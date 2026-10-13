@@ -57,15 +57,19 @@ class _Scored:
 
 
 def _auc_of(items) -> float:
-    """ROC-AUC over a resample. 0.5 when a draw lands on one class, so one
-    degenerate sample does not discard the whole interval."""
+    """ROC-AUC over a resample, raising when a draw lands on one class.
+
+    `cluster_bootstrap_interval` skips such a draw and counts it out, so one
+    degenerate sample discards neither the interval nor the honesty of it."""
     import torch
 
     from deepfake_detection.training.fusion import _auc
 
     labels = [item.label for item in items]
     if len(set(labels)) != 2:
-        return 0.5
+        # See score_streams.py: raising lets the interval skip the draw instead
+        # of absorbing a 0.5 that pulls it toward chance.
+        raise ValueError("Bootstrap sample does not contain both classes")
     return float(
         _auc(
             torch.tensor([item.logit for item in items]),

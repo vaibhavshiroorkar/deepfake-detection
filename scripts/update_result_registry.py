@@ -279,12 +279,15 @@ RESULTS: tuple[Result, ...] = (
         predictions=None,
         mlflow=(),
         decision=(
-            "Holds the epoch budget fixed, which the full-scale comparison cannot"
+            "With the epoch budget held fixed, BatchNorm moves DFDC by +0.0177, "
+            "not the +0.1276 of the uncontrolled full-scale comparison, and "
+            "epochs alone move it by 0.0042. The in-domain cost survives the "
+            "control: validation falls 0.9072 to 0.5500"
         ),
         seeds=1,
-        missing_reason=(
-            "Measured in a scratch script whose output was never written under "
-            "runs/. Re-run before citing."
+        notes=(
+            "1,400-clip arms, so read the difference between arms rather than "
+            "the absolute numbers."
         ),
     ),
     Result(
@@ -361,6 +364,342 @@ RESULTS: tuple[Result, ...] = (
             "buys no accuracy"
         ),
         seeds=1,
+    ),
+    Result(
+        result_id="A-corruption-visual",
+        paper_location="Results, corruption robustness",
+        command=(
+            "python scripts/run_corruption_eval.py "
+            "--run-dir runs/program-20260906 --branch visual"
+        ),
+        report=PROGRAM / "evaluation" / "corruption-visual.json",
+        predictions=None,
+        mlflow=(("program-20260906", "final-visual-seed17"),),
+        decision=(
+            "JPEG 75 costs 0.0054 of ROC-AUC and takes false alarms from 0 to 76 "
+            "of 150 genuine clips; by JPEG 50 every genuine clip is called fake "
+            "while AUC still reads 0.9187. Ranking survives degradation, the "
+            "decision does not"
+        ),
+        seeds=1,
+        notes=(
+            "Corruption applied to the cached crop with the face track held "
+            "fixed, so this bounds the classifier only. Corrupting the source "
+            "would also break detection. Optimistic bound, not an estimate."
+        ),
+    ),
+    Result(
+        result_id="A-corruption-audio",
+        paper_location="Results, corruption robustness",
+        command=(
+            "python scripts/run_corruption_eval.py "
+            "--run-dir runs/program-20260906 --branch audio"
+        ),
+        report=PROGRAM / "evaluation" / "corruption-audio.json",
+        predictions=None,
+        mlflow=(("program-20260906", "final-audio-seed17"),),
+        decision=(
+            "Noise at 20 dB SNR costs 0.0227 of ROC-AUC and misses 857 of 859 "
+            "fakes, the opposite failure direction to the visual branch. A 0.5 "
+            "second silence shift changes nothing, so the silence shortcut the "
+            "threat model names is absent from this checkpoint"
+        ),
+        seeds=1,
+    ),
+    Result(
+        result_id="A-error-analysis",
+        paper_location="Results, what the locked system gets wrong",
+        command=(
+            "python scripts/run_error_analysis.py --run-dir runs/program-20260906"
+        ),
+        report=PROGRAM / "evaluation" / "error-analysis.json",
+        predictions=PROGRAM / "evaluation" / "fusion-dfdc-predictions.csv",
+        mlflow=(),
+        decision=(
+            "Cross-corpus the model is more confident when wrong than when "
+            "right, 0.8742 against 0.8299 on DFDC, so no confidence threshold "
+            "can abstain its way out. Fusion repairs 314 of the visual branch's "
+            "DFDC errors and breaks 5, while 1,585 are beyond any head"
+        ),
+        seeds=1,
+        notes=(
+            "Reads the frozen evaluation predictions. No model is loaded and no "
+            "threshold is selected, as Phase 5 requires."
+        ),
+    ),
+    Result(
+        result_id="A-sync-label-mode",
+        paper_location="Results, the sync label-mode ablation",
+        command=(
+            "ddf train sync --label-mode global-fake, against the shipped "
+            "authentic-offset checkpoint"
+        ),
+        report=PROGRAM / "checkpoints" / "final-sync-globalfake-seed17-history.json",
+        predictions=None,
+        mlflow=(),
+        decision=(
+            "Required ablation, never run until now. Read against each arm's own "
+            "chance loss: the shipped authentic-offset arm sits at or above its "
+            "2.079 at 2.1842, so it did not learn its objective, while the "
+            "rejected global-fake arm reaches 0.0558 against its 0.693. The "
+            "design's reason for rejecting the fake label is better supported, "
+            "not reversed: a binary head separates whole-clip manipulation by "
+            "generator artifacts"
+        ),
+        seeds=1,
+        notes=(
+            "The two losses are different tasks and are not comparable as "
+            "numbers. No ROC-AUC for the global-fake arm: sync_anomaly_logit "
+            "assumes offset semantics and is meaningless for a binary head."
+        ),
+    ),
+    Result(
+        result_id="A-research-design-audit",
+        paper_location="Limitations, what the design asked for and did not get",
+        command=(
+            "read docs/research-design.md against the registry and the sync "
+            "training history"
+        ),
+        report=PROGRAM / "checkpoints" / "final-sync-seed17-history.json",
+        predictions=None,
+        mlflow=(("program-20260906", "final-sync-seed17"),),
+        decision=(
+            "The exit criterion 'the sync offset confidence interval must exclude "
+            "chance' has never been measured: the history records only total "
+            "loss, and the loss combines offset cross-entropy with a contrastive "
+            "term so it cannot be decomposed after the fact. Two of eight "
+            "required ablations, the sync label mode and leading silence, were "
+            "never run"
+        ),
+        seeds=3,
+        notes=(
+            "The artifact is the history file, cited as evidence of what it does "
+            "not contain. Both unrun ablations are expressible today."
+        ),
+    ),
+    Result(
+        result_id="A-encoder-comparison",
+        paper_location="Method, which frozen encoder for the open-world probe",
+        command=(
+            "python scripts/extract_probe_features.py --folder data/df26-norm "
+            "--encoder pe|dinov3|clip, then scripts/train_logo_probe.py on each"
+        ),
+        report=Path("runs/probe-20260914/df26-norm-encoder-comparison.json"),
+        predictions=None,
+        mlflow=(),
+        decision=(
+            "Claimed 72.7 macro for Perception Encoder against 57.0 for DINOv3 "
+            "and 55.6 for CLIP, and the frozen-probe recommendation was changed "
+            "on it. Unverified: no PE or CLIP artifact exists, and its DINOv3 "
+            "figure contradicts this project's own registered DF26 probe at "
+            "0.6786 controlled and 0.6942 uncontrolled"
+        ),
+        seeds=1,
+        missing_reason=(
+            "No artifact. The DINOv3 figure of 57.0 is eleven points from this "
+            "project's own measurement of the same encoder on the same corpus, "
+            "so the comparison cannot have come from this pipeline. Do not cite "
+            "it and do not change the encoder recommendation until it is re-run. "
+            "`extract_probe_features.py` supports dinov3 and dinov3-b only; PE "
+            "needs open_clip_torch, which is not installed."
+        ),
+    ),
+    Result(
+        result_id="A-audio-crosscorpus-gap",
+        paper_location="Results, the audio branch has no cross-corpus test",
+        command=(
+            "score the audio rows of runs/program-20260906/features/dfdc.parquet "
+            "against the clip-level label, identity-clustered"
+        ),
+        report=PROGRAM / "features" / "dfdc-report.json",
+        predictions=PROGRAM / "features" / "dfdc.parquet",
+        mlflow=(),
+        decision=(
+            "The audio branch is at chance cross-corpus: 0.5054 [0.4747, 0.5371] "
+            "on DFDC against 0.7739 in-domain, clip-level label. A cue-specific "
+            "audio evaluation is impossible there because DFDC does not publish "
+            "which modality it manipulated, but the clip-level one was available "
+            "in the feature store all along"
+        ),
+        seeds=1,
+        notes=(
+            "Supersedes an earlier reading of audio_fake=0 on DFDC as evidence "
+            "the audio is genuine. It is a placeholder for cue unknown, as the "
+            "DFDC ingestion docstring states."
+        ),
+    ),
+    Result(
+        result_id="A-visual-convnext",
+        paper_location="Results, the visual challenger",
+        command=(
+            "ddf train visual --architecture convnext-tiny, then "
+            "ddf evaluate branch --branch visual --architecture convnext-tiny"
+        ),
+        report=PROGRAM / "evaluation" / "visual-convnext-dfdc-metrics.json",
+        predictions=PROGRAM / "evaluation" / "visual-convnext-dfdc-predictions.csv",
+        mlflow=(),
+        decision=(
+            "VIS-01 decided for EfficientNet-B0 on stability, not accuracy. "
+            "ConvNeXt is worse on DFDC at all three seeds, mean 0.6783 against "
+            "0.7151, and diverged outright at seed 43 under an identical "
+            "budget: validation loss 0.218, 0.6473, 0.7172, leaving a "
+            "never-fine-tuned frozen-backbone checkpoint"
+        ),
+        seeds=3,
+        notes=(
+            "The only seed whose paired interval separates is the failed one. "
+            "On the two healthy seeds the difference is -0.0340 and -0.0187, "
+            "neither separated."
+        ),
+    ),
+    Result(
+        result_id="A-audio-wavlm",
+        paper_location="Results, the audio challenger",
+        command=(
+            "ddf train audio --audio-model microsoft/wavlm-base, then "
+            "ddf evaluate branch --branch audio --audio-model microsoft/wavlm-base"
+        ),
+        report=PROGRAM / "evaluation" / "audio-wavlm-in-domain-test-metrics.json",
+        predictions=(
+            PROGRAM / "evaluation" / "audio-wavlm-in-domain-test-predictions.csv"
+        ),
+        mlflow=(),
+        decision=(
+            "AUD-01 undecided: both encoders read ROC-AUC 1.0000 in-domain, so "
+            "the partition cannot separate them and the incumbent stays by "
+            "scope control rather than evidence. The audio branch has no "
+            "cross-corpus evaluation to decide it"
+        ),
+        seeds=1,
+        notes=(
+            "Before this run the flag built a truncated Wav2Vec2 from the WavLM "
+            "checkpoint, 94,371,712 parameters against 94,381,936."
+        ),
+    ),
+    Result(
+        result_id="A-fusion-seed-spread",
+        paper_location="Results, what a seed is worth cross-corpus",
+        command=(
+            "python scripts/run_fusion_seed_spread.py "
+            "--run-dir runs/program-20260906"
+        ),
+        report=PROGRAM / "evaluation" / "fusion-seed-spread.json",
+        predictions=PROGRAM / "features" / "dfdc-seed29.parquet",
+        mlflow=(),
+        decision=(
+            "Fused DFDC moves 0.7500, 0.6814, 0.6442 with the branch seed, a "
+            "spread of 0.1057 against 0.0001 in-domain. The reported 0.7500 is "
+            "the best of three and the mean is 0.6919, so the headline needs "
+            "the range beside it"
+        ),
+        seeds=3,
+        notes=(
+            "Branch checkpoints vary; the head is the seed-17 fit reused, "
+            "because the fold models exist at seed 17 only."
+        ),
+    ),
+    Result(
+        result_id="A-sync-seeds",
+        paper_location="Results, the synchronization branch",
+        command=(
+            "python scripts/score_sync_branch.py --run-dir runs/program-20260906 "
+            "--checkpoint runs/program-20260906/checkpoints/final-sync-seed17.pt"
+        ),
+        report=PROGRAM / "evaluation" / "sync-final-sync-seed17-metrics.json",
+        predictions=PROGRAM / "evaluation" / "sync-final-sync-seed17-predictions.csv",
+        mlflow=(("program-20260906", "final-sync-seed17"),),
+        decision=(
+            "The branch's first measured number, and it is below chance on all "
+            "three seeds: 0.4364, 0.4570, 0.4931, with two intervals excluding "
+            "0.5. The scalar fusion reads from this branch carries no usable "
+            "signal at any seed"
+        ),
+        seeds=3,
+        notes=(
+            "Scored on clip_fake, matching the fusion store. A re-synchronised "
+            "fake may be genuinely aligned, so this is a floor rather than a "
+            "measurement of alignment detection."
+        ),
+    ),
+    Result(
+        result_id="A-visual-seeds",
+        paper_location="Results, what a seed is worth cross-corpus",
+        command=(
+            "pwsh scripts/run_seeds.ps1 -Branches visual -SkipTraining"
+        ),
+        report=PROGRAM / "evaluation" / "visual-dfdc-seed29-metrics.json",
+        predictions=PROGRAM / "evaluation" / "visual-dfdc-seed29-predictions.csv",
+        mlflow=(),
+        decision=(
+            "Seed alone spreads DFDC across 0.7611, 0.6963 and 0.6878 while "
+            "in-domain holds to three decimals. The spread of 0.0733 is four and "
+            "a half times the in-domain fusion gain, and the reported seed 17 is "
+            "the best of the three against a mean of 0.7151"
+        ),
+        seeds=3,
+        notes=(
+            "Checkpoints trained 2026-09-08 by run_program.ps1 and never scored, "
+            "because its stage 5 names the seed-17 checkpoint directly."
+        ),
+    ),
+    Result(
+        result_id="A-branch-ablation",
+        paper_location="Results, does fusing branches beat the best single branch",
+        command="python scripts/run_ablation.py --run-dir runs/program-20260906",
+        report=PROGRAM / "evaluation" / "fusion-ablation.json",
+        predictions=PROGRAM / "features" / "test.parquet",
+        mlflow=(),
+        decision=(
+            "All three branches beat every single branch in-domain, "
+            "+0.0159 [+0.0129, +0.0190] against visual, and do not cross-corpus, "
+            "-0.0085 [-0.0196, +0.0027]"
+        ),
+        seeds=1,
+        notes=(
+            "Clip-level label throughout, so the visual row is 0.9742 and not "
+            "the 0.9988 of the cue-labelled branch report."
+        ),
+    ),
+    Result(
+        result_id="A-fusion-model-ablation",
+        paper_location="Results, which fusion head and what its inputs are worth",
+        command=(
+            "python scripts/run_fusion_model_ablation.py "
+            "--run-dir runs/program-20260906"
+        ),
+        report=PROGRAM / "evaluation" / "fusion-model-ablation.json",
+        predictions=PROGRAM / "features" / "dfdc.parquet",
+        mlflow=(),
+        decision=(
+            "FUS-01 settled for logistic: the MLP is indistinguishable in-domain "
+            "and loses 0.1508 [0.0995, 0.2052] cross-corpus. Calibration and the "
+            "quality features buy no ranking, and an unweighted mean of the "
+            "calibrated branches is better calibrated cross-corpus than the "
+            "learned head, 0.0554 against 0.6366"
+        ),
+        seeds=1,
+    ),
+    Result(
+        result_id="A-generalization-slices",
+        paper_location="Results, where the fused system fails",
+        command=(
+            "python scripts/run_generalization_slices.py "
+            "--run-dir runs/program-20260906"
+        ),
+        report=PROGRAM / "evaluation" / "generalization-slices.json",
+        predictions=PROGRAM / "features" / "test.parquet",
+        mlflow=(),
+        decision=(
+            "No method or subgroup gap is visible in-domain, at a ceiling that "
+            "could not show one. Dropping rtvc from the head's fit misses 73 of "
+            "its 75 clips while ROC-AUC only falls to 0.9563, so the head's "
+            "audio weighting is method-specific and AUC hides it"
+        ),
+        seeds=1,
+        notes=(
+            "The method holdout refits the head only. Branch checkpoints saw "
+            "every method, so this is not an unseen-manipulation result."
+        ),
     ),
     Result(
         result_id="B-gate-thresholds",

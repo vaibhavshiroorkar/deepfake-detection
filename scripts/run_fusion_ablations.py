@@ -41,7 +41,11 @@ def _auc_of(items) -> float:
 
     labels = [item.label for item in items]
     if len(set(labels)) != 2:
-        return 0.5
+        # Raise rather than return 0.5. `cluster_bootstrap_interval` skips the
+        # draw and counts it out of `successful_samples`; a 0.5 would instead put
+        # a point mass in the middle of the percentile distribution and pull the
+        # interval toward chance.
+        raise ValueError("Bootstrap sample does not contain both classes")
     return float(roc_auc_score(labels, [item.score for item in items]))
 
 

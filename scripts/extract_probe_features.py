@@ -33,13 +33,16 @@ import json
 import sys
 from pathlib import Path
 
-# Cached locally and therefore usable offline. Perception Encoder is the better
-# choice on this task by about 15 AUROC points, and needs `open_clip_torch`,
-# which is not installed here. Pass --encoder to switch once it is.
-ENCODERS = {
-    "dinov3": ("vit_small_patch16_dinov3.lvd1689m", 224),
-    "dinov3-b": ("vit_base_patch16_dinov3.lvd1689m", 224),
-}
+# Imported rather than redeclared. This file used to carry its own copy of the
+# table alongside a comment claiming Perception Encoder was better here "by about
+# 15 AUROC points" and could not be installed. Neither held: the claim had no
+# artifact and contradicted this project's own DINOv3 measurement, and
+# `open_clip_torch` installs fine through the `probe` extra. Both encoders are
+# now selectable and `A-encoder-comparison` is runnable.
+from deepfake_detection.inference.frozen_features import (  # noqa: E402
+    ENCODERS,
+    load_encoder,
+)
 
 
 def _windows(total: int, count: int, length: int) -> list[int]:
@@ -96,7 +99,6 @@ def _read_windows(path: Path, count: int, length: int, size: int):
 
 def main(argv: list[str] | None = None) -> int:
     import numpy as np
-    import timm
     import torch
 
     from deepfake_detection.dashboard.lib import media_kind
@@ -137,9 +139,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"No video under {arguments.folder}, expected real/ and fake/<gen>/")
         return 1
 
-    name, size = ENCODERS[arguments.encoder]
-    model = timm.create_model(name, pretrained=True, num_classes=0)
-    model = model.to(arguments.device).eval()
+    # Through the shared loader, so a timm name and an open_clip name behave the
+    # same and this script cannot drift from the served gate's embedding.
+    model, size = load_encoder(arguments.encoder, device=arguments.device)
     mean = torch.tensor(IMAGENET_MEAN, device=arguments.device).view(1, 3, 1, 1)
     std = torch.tensor(IMAGENET_STD, device=arguments.device).view(1, 3, 1, 1)
     print(
@@ -208,7 +210,8 @@ def main(argv: list[str] | None = None) -> int:
     meta.write_text(
         json.dumps(
             {
-                "encoder": name,
+                "encoder": arguments.encoder,
+                "encoder_model": ENCODERS[arguments.encoder][0],
                 "size": size,
                 "windows": arguments.windows,
                 "window_length": arguments.window_length,
