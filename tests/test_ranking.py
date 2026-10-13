@@ -27,11 +27,15 @@ def test_matches_sklearn_on_random_input() -> None:
 
 
 def test_perfect_ranking_scores_one() -> None:
-    assert roc_auc(torch.tensor([0.1, 0.2, 0.9, 1.0]), torch.tensor([0, 0, 1, 1])) == 1.0
+    assert (
+        roc_auc(torch.tensor([0.1, 0.2, 0.9, 1.0]), torch.tensor([0, 0, 1, 1])) == 1.0
+    )
 
 
 def test_reversed_ranking_scores_zero() -> None:
-    assert roc_auc(torch.tensor([0.9, 1.0, 0.1, 0.2]), torch.tensor([0, 0, 1, 1])) == 0.0
+    assert (
+        roc_auc(torch.tensor([0.9, 1.0, 0.1, 0.2]), torch.tensor([0, 0, 1, 1])) == 0.0
+    )
 
 
 def test_all_scores_tied_is_chance_not_a_perfect_score() -> None:

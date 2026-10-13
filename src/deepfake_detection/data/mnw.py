@@ -78,9 +78,7 @@ def _row(
         "dataset": DATASET,
         "video_path": str(video.relative_to(data_dir)),
         # See the module docstring: the enum cannot express "no audio track".
-        "manipulation_type": (
-            "FakeVideo-RealAudio" if fake else "RealVideo-RealAudio"
-        ),
+        "manipulation_type": ("FakeVideo-RealAudio" if fake else "RealVideo-RealAudio"),
         "method": method,
         # Every MNW clip is its own identity. The benchmark publishes no
         # identity metadata, and assuming shared identities would fabricate a

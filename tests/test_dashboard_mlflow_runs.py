@@ -2,6 +2,9 @@ from pathlib import Path
 
 import pytest
 
+pytest.importorskip("streamlit")
+
+
 from deepfake_detection.dashboard.lib import mlflow_runs
 
 

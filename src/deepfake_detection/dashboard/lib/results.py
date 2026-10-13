@@ -85,9 +85,7 @@ def ablation_rows(ablation: dict) -> list[dict]:
                 "streams": " + ".join(row["branches"]),
                 "count": row["size"],
                 **{
-                    name: row.get(name)
-                    for name in ("in-domain", "dfdc")
-                    if name in row
+                    name: row.get(name) for name in ("in-domain", "dfdc") if name in row
                 },
             }
         )

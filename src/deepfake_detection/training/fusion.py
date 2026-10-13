@@ -122,7 +122,6 @@ def _auc(scores: Tensor, labels: Tensor) -> float:
     )
 
 
-
 # What an input can drive, and how often each case is expected at inference.
 # A video reaches every stream; a still image reaches only the visual ones; a
 # sound file only the audio branch. `dashboard/lib/media_kind.py` is the same

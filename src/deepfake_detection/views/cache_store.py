@@ -75,6 +75,16 @@ class CacheStore:
             "preprocessing_config_hash": prepared.preprocessing_config_hash,
             "quality": asdict(prepared.quality),
         }
+        # Metadata only, so this does not change the preprocessing hash, which
+        # covers the view config and the code version rather than the stored
+        # payload. Adding it to the arrays would invalidate every cached clip
+        # in the project and force a full rebuild for a pair of integers.
+        for name, value in (
+            ("audio_valid_samples", prepared.audio_valid_samples),
+            ("sync_audio_valid_samples", prepared.sync_audio_valid_samples),
+        ):
+            if value is not None:
+                metadata[name] = int(value)
         arrays = {
             name: value
             for name, value in {
@@ -141,4 +151,6 @@ class CacheStore:
                 preprocessing_fingerprint=metadata["preprocessing_fingerprint"],
                 sync_audio_context=read(archive, "sync_audio_context"),
                 preprocessing_config_hash=metadata.get("preprocessing_config_hash", ""),
+                audio_valid_samples=metadata.get("audio_valid_samples"),
+                sync_audio_valid_samples=metadata.get("sync_audio_valid_samples"),
             )

@@ -50,3 +50,9 @@ class PreparedClip:
     preprocessing_fingerprint: str
     sync_audio_context: Any | None = None
     preprocessing_config_hash: str = ""
+    # How many samples of each padded audio buffer are real audio. None means
+    # the entry predates the field, not that the buffer is entirely valid: a
+    # cache built before this was recorded cannot say, and a reader that
+    # assumed "all valid" would silently reintroduce the padding shortcut.
+    audio_valid_samples: int | None = None
+    sync_audio_valid_samples: int | None = None

@@ -49,13 +49,39 @@ class VisualArtifactBranch(nn.Module):
             parameter.requires_grad = trainable
 
 
-def build_efficientnet_b0(
-    *, pretrained: bool = True, hidden_dim: int = 256
+# The architectures VIS-01 compares, and the timm name each resolves to. The
+# branch itself is architecture-agnostic: it pools whatever the backbone returns
+# and runs a GRU over the frame axis, so a challenger is a name rather than a
+# new module. Only this mapping decided otherwise, which is why the roadmap
+# recorded the ConvNeXt comparison as "not currently expressible".
+VISUAL_ARCHITECTURES: dict[str, str] = {
+    "efficientnet-b0": "efficientnet_b0",
+    "convnext-tiny": "convnext_tiny",
+}
+
+
+def build_visual_branch(
+    *,
+    architecture: str = "efficientnet-b0",
+    pretrained: bool = True,
+    hidden_dim: int = 256,
 ) -> VisualArtifactBranch:
+    """One visual branch, with the backbone chosen by name.
+
+    Both candidates are ImageNet CNNs fine-tuned on the same clips under the
+    same budget, which is what the frozen selection rules ask for. `num_classes`
+    of zero and average pooling give a feature vector rather than logits, so the
+    GRU sees per-frame features whichever backbone is used.
+    """
+    if architecture not in VISUAL_ARCHITECTURES:
+        supported = ", ".join(sorted(VISUAL_ARCHITECTURES))
+        raise ValueError(
+            f"Unsupported visual architecture {architecture!r}. Supported: {supported}"
+        )
     import timm
 
     backbone = timm.create_model(
-        "efficientnet_b0",
+        VISUAL_ARCHITECTURES[architecture],
         pretrained=pretrained,
         num_classes=0,
         global_pool="avg",
@@ -63,5 +89,20 @@ def build_efficientnet_b0(
     return VisualArtifactBranch(
         backbone=backbone,
         backbone_dim=backbone.num_features,
+        hidden_dim=hidden_dim,
+    )
+
+
+def build_efficientnet_b0(
+    *, pretrained: bool = True, hidden_dim: int = 256
+) -> VisualArtifactBranch:
+    """The frozen default, kept as its own name.
+
+    Every shipped checkpoint was built through this call. It stays so existing
+    callers and loaders are untouched by the architecture flag.
+    """
+    return build_visual_branch(
+        architecture="efficientnet-b0",
+        pretrained=pretrained,
         hidden_dim=hidden_dim,
     )

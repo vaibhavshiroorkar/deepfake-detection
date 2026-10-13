@@ -59,7 +59,9 @@ def test_detect_crop_returns_fixed_shapes_with_a_face() -> None:
 
 def test_crop_and_resize_rejects_an_empty_region() -> None:
     frame = make_frame()
-    assert faces.crop_and_resize(frame, np.array([10, 10, 10, 10.0]), margin=0.0) is None
+    assert (
+        faces.crop_and_resize(frame, np.array([10, 10, 10, 10.0]), margin=0.0) is None
+    )
 
 
 def test_imagenet_normalize_centres_the_crop() -> None:
@@ -157,4 +159,6 @@ def test_build_rejects_an_unknown_detector() -> None:
 
 def test_yunet_reports_where_its_weights_should_be() -> None:
     with pytest.raises(FileNotFoundError, match="fetch-yunet"):
-        detectors.YuNetDetector(weights=detectors.YUNET_WEIGHTS.with_name("absent.onnx"))
+        detectors.YuNetDetector(
+            weights=detectors.YUNET_WEIGHTS.with_name("absent.onnx")
+        )

@@ -6,6 +6,9 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
+pytest.importorskip("streamlit")
+
+
 from deepfake_detection.dashboard import runtime
 from deepfake_detection.dashboard.configuration import DashboardDefaults
 from deepfake_detection.dashboard.runtime import (
@@ -95,6 +98,16 @@ def test_predict_upload_runs_the_multimodal_engine_on_temporary_upload_bytes(
 
     monkeypatch.setattr(runtime, "load_multimodal_gate_engine", FakeEngine)
     clip = UploadedClip("sample.mp4", ".mp4", b"video bytes", "a" * 64)
+
+    # `predict_upload` only reaches the multimodal engine when a gate fusion
+    # checkpoint exists; without one it falls back to the visual baseline, which
+    # this test does not patch. Checkpoints are gitignored, so a fresh checkout
+    # and CI take the fallback and the branch under test is unreachable. The
+    # fallback has its own test directly below.
+    if not runtime.dashboard_defaults(
+        root=runtime._PROJECT_ROOT
+    ).gate_fusion_checkpoint.is_file():
+        pytest.skip("No gate fusion checkpoint; predict_upload takes the fallback")
 
     result = runtime.predict_upload(clip)
 

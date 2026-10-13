@@ -97,7 +97,9 @@ def _normalized_audio(values: np.ndarray, device: str) -> torch.Tensor:
     return _normalize_waveform(_tensor(values, device))
 
 
-def _forward(spec: StreamSpec, prepared, device: str) -> tuple[float, tuple[float, ...]]:
+def _forward(
+    spec: StreamSpec, prepared, device: str
+) -> tuple[float, tuple[float, ...]]:
     """Run one stream over one prepared clip. Raises if a view is missing."""
     if spec.kind in SINGLE_VIEWS:
         field = SINGLE_VIEWS[spec.kind]

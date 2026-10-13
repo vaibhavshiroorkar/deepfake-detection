@@ -26,7 +26,9 @@ def lavdf_tree(root: Path, entries: list[dict]) -> Path:
     return drop
 
 
-def entry(name, *, periods, duration, split="train", video=False, audio=False, original=None):
+def entry(
+    name, *, periods, duration, split="train", video=False, audio=False, original=None
+):
     return {
         "file": f"{split}/{name}.mp4",
         "n_fakes": len(periods),
@@ -78,16 +80,22 @@ def test_genuine_window_is_none_when_no_room_remains() -> None:
 def test_a_forgery_yields_a_matched_pair_from_one_file(tmp_path: Path) -> None:
     drop = lavdf_tree(
         tmp_path,
-        [entry("000001", periods=[[3.0, 3.7]], duration=8.0, video=True, audio=True,
-               original="train/000009.mp4")],
+        [
+            entry(
+                "000001",
+                periods=[[3.0, 3.7]],
+                duration=8.0,
+                video=True,
+                audio=True,
+                original="train/000009.mp4",
+            )
+        ],
     )
 
     frame = manifest_from_lavdf(drop, tmp_path)
 
     assert len(frame) == 2
-    kinds = dict(
-        zip(frame["clip_id"], frame["manipulation_type"], strict=True)
-    )
+    kinds = dict(zip(frame["clip_id"], frame["manipulation_type"], strict=True))
     assert kinds["lavdf__000001__forged"] == "FakeVideo-FakeAudio"
     assert kinds["lavdf__000001__genuine"] == "RealVideo-RealAudio"
     # One file, two windows: the codec and the speaker are held constant.
@@ -100,8 +108,15 @@ def test_matched_pair_shares_an_identity_group(tmp_path: Path) -> None:
     forgery must group with the clip it was made from."""
     drop = lavdf_tree(
         tmp_path,
-        [entry("000001", periods=[[3.0, 3.7]], duration=8.0, video=True,
-               original="train/000009.mp4")],
+        [
+            entry(
+                "000001",
+                periods=[[3.0, 3.7]],
+                duration=8.0,
+                video=True,
+                original="train/000009.mp4",
+            )
+        ],
     )
 
     frame = manifest_from_lavdf(drop, tmp_path)

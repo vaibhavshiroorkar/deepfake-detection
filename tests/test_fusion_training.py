@@ -42,9 +42,7 @@ def row(
         label=label,
         branch_logits={name: float(bias) for name in present},
         branch_embeddings={
-            name: tuple(
-                (torch.randn(width, generator=generator) * 0.1 + bias).tolist()
-            )
+            name: tuple((torch.randn(width, generator=generator) * 0.1 + bias).tolist())
             for name, width in present.items()
         },
         face_coverage=1.0,

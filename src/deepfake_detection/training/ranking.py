@@ -50,7 +50,10 @@ def roc_auc(scores: Tensor, labels: Tensor) -> float:
     sorted_scores = scores[order]
     start = 0
     for index in range(1, sorted_scores.numel() + 1):
-        if index == sorted_scores.numel() or sorted_scores[index] != sorted_scores[start]:
+        if (
+            index == sorted_scores.numel()
+            or sorted_scores[index] != sorted_scores[start]
+        ):
             if index - start > 1:
                 ranks[order[start:index]] = ranks[order[start:index]].mean()
             start = index

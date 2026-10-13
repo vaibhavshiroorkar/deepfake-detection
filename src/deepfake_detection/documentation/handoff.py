@@ -142,7 +142,9 @@ def render_evidence(reports: Iterable[dict]) -> str:
             # One class means no ranking metric exists. Say so rather than
             # leaving a blank that reads like a missing measurement.
             roc = "undefined"
-            balanced = f"{rate:.4f} ({single.get('class', '?')} only)" if rate else "n/a"
+            balanced = (
+                f"{rate:.4f} ({single.get('class', '?')} only)" if rate else "n/a"
+            )
         rows.append(
             f"| `{report['_path']}` | {report.get('dataset', '?')} | "
             f"{report.get('evidence_scope', '?')} | {report.get('rows', 0):,} | "
@@ -204,9 +206,15 @@ def replace_block(text: str, name: str, body: str) -> str:
 
 def render_handoff(root: Path, text: str) -> str:
     root = Path(root)
-    text = replace_block(text, "datasets", render_datasets(survey_datasets(root / "data")))
-    text = replace_block(text, "evidence", render_evidence(collect_evidence(root / "runs")))
-    text = replace_block(text, "mlflow", render_mlflow(collect_mlflow(root / "mlflow.db")))
+    text = replace_block(
+        text, "datasets", render_datasets(survey_datasets(root / "data"))
+    )
+    text = replace_block(
+        text, "evidence", render_evidence(collect_evidence(root / "runs"))
+    )
+    text = replace_block(
+        text, "mlflow", render_mlflow(collect_mlflow(root / "mlflow.db"))
+    )
     return text
 
 

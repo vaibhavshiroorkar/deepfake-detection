@@ -25,6 +25,9 @@ class BranchItem:
     values: Tensor
     label: Tensor
     quality: QualityReport
+    # Audio only, and None for a cache entry that predates the field. See
+    # PreparedClip: absent means unknown, not "the whole buffer is real audio".
+    valid_samples: Tensor | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,15 +35,25 @@ class BranchBatch:
     clip_ids: tuple[str, ...]
     values: Tensor
     labels: Tensor
+    valid_samples: Tensor | None = None
 
 
 def collate_branch_items(items: Sequence[BranchItem]) -> BranchBatch:
     if not items:
         raise ValueError("Cannot collate an empty branch batch")
+    counts = [item.valid_samples for item in items]
+    # All or nothing. A batch mixing clips that know their length with clips
+    # that do not cannot be masked consistently, and filling the unknown rows
+    # with the full width would mask some clips and not others inside one
+    # softmax, which is worse than masking none of them.
+    stacked = (
+        torch.stack(counts) if all(count is not None for count in counts) else None
+    )
     return BranchBatch(
         clip_ids=tuple(item.clip_id for item in items),
         values=torch.stack([item.values for item in items]),
         labels=torch.stack([item.label for item in items]),
+        valid_samples=stacked,
     )
 
 
@@ -95,11 +108,17 @@ class CachedBranchDataset(Dataset[BranchItem]):
             label = record.audio_fake
         if values is None:
             raise ValueError(f"Cache entry {record.clip_id} has no {self.branch} view")
+        valid_samples = None
+        if self.branch == "audio" and prepared.audio_valid_samples is not None:
+            valid_samples = torch.tensor(
+                int(prepared.audio_valid_samples), dtype=torch.long
+            )
         return BranchItem(
             clip_id=record.clip_id,
             values=torch.from_numpy(values).float(),
             label=torch.tensor(float(label), dtype=torch.float32),
             quality=prepared.quality,
+            valid_samples=valid_samples,
         )
 
 

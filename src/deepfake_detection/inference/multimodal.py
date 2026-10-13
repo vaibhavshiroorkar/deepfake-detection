@@ -122,9 +122,7 @@ class MultimodalEngine:
         # view, so without this an image would silently reach a model that also
         # expects a voice.
         allowed = set(media_kind.runnable(kind))
-        absent = tuple(
-            name for name in self.unavailable if _modality(name) in allowed
-        )
+        absent = tuple(name for name in self.unavailable if _modality(name) in allowed)
 
         logits: dict[str, float] = {}
         embeddings: dict[str, tuple[float, ...]] = {}
@@ -242,9 +240,7 @@ def load_multimodal_engine(
             "feed the streams inputs they were not trained on."
         )
 
-    specs = load_streams(
-        run_dir, device, root=root, only=tuple(fusion.stream_dims)
-    )
+    specs = load_streams(run_dir, device, root=root, only=tuple(fusion.stream_dims))
     if not specs:
         raise ValueError(
             f"None of the head's streams have checkpoints in {run_dir}: "

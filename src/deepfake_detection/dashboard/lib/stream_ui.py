@@ -107,7 +107,9 @@ def render_checkpoint_picker(
     detail = f"{info['tensors']} tensors"
     if info["metadata"]:
         meta = info["metadata"]
-        detail += f"  ·  run `{meta.get('run_id', '?')}`  ·  seed {meta.get('seed', '?')}"
+        detail += (
+            f"  ·  run `{meta.get('run_id', '?')}`  ·  seed {meta.get('seed', '?')}"
+        )
     if info["config"]:
         detail += f"  ·  saved config: `{info['config']}`"
     st.caption(f"`{path}`  ·  {detail}")

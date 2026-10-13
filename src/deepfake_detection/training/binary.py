@@ -55,8 +55,20 @@ def _batch_loss(
 ) -> torch.Tensor:
     values = batch.values.to(device)
     labels = batch.labels.to(device)
-    output = model(values)
+    output = _forward(model, batch, values)
     return criterion(output.logits, labels)
+
+
+def _forward(model: nn.Module, batch: BranchBatch, values: torch.Tensor):
+    """Call the branch, passing valid lengths only when both sides have them.
+
+    Visual batches never carry a sample count and the visual branch takes no
+    such argument, so the keyword is passed only for audio batches from a cache
+    that recorded it. Everything else is the original single-argument call.
+    """
+    if batch.valid_samples is None:
+        return model(values)
+    return model(values, valid_samples=batch.valid_samples.to(values.device))
 
 
 def _validation_loss(

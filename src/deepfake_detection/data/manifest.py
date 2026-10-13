@@ -98,6 +98,7 @@ class ManifestLoadResult:
 def load_manifest(path: Path, *, dataset: str) -> ManifestLoadResult:
     with path.open(newline="", encoding="utf-8-sig") as handle:
         rows: Sequence[dict[str, str]] = tuple(csv.DictReader(handle))
+
     def window_of(row: dict[str, str]) -> float:
         return float(row.get("sync_start_sec", "0") or 0)
 

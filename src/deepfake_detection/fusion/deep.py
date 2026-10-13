@@ -64,7 +64,10 @@ class StreamFusion(nn.Module):
         self.common_dim = common_dim
         self.stream_dropout = stream_dropout
         self.projections = nn.ModuleDict(
-            {name: nn.Linear(stream_dims[name], common_dim) for name in self.stream_names}
+            {
+                name: nn.Linear(stream_dims[name], common_dim)
+                for name in self.stream_names
+            }
         )
         # One extra input per stream carrying whether it was present, so the
         # head can tell "this stream said nothing" from "this stream said zero".
@@ -94,7 +97,9 @@ class StreamFusion(nn.Module):
             present = (
                 presence[name].to(values.dtype)
                 if presence is not None and name in presence
-                else torch.ones(values.shape[0], device=values.device, dtype=values.dtype)
+                else torch.ones(
+                    values.shape[0], device=values.device, dtype=values.dtype
+                )
             )
             projected = self.projections[name](values) * present.unsqueeze(1)
             if self.training and self.stream_dropout:

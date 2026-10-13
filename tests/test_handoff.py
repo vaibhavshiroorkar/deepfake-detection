@@ -116,14 +116,18 @@ def test_evidence_renders_ranking_metrics_when_both_classes_exist(
 
 def test_evidence_states_plainly_when_there_is_none(tmp_path: Path) -> None:
     (tmp_path / "runs").mkdir()
-    assert "No evaluation reports" in render_evidence(collect_evidence(tmp_path / "runs"))
+    assert "No evaluation reports" in render_evidence(
+        collect_evidence(tmp_path / "runs")
+    )
 
 
 def test_mlflow_summary_counts_runs_by_experiment_and_status(tmp_path: Path) -> None:
     database = tmp_path / "mlflow.db"
     connection = sqlite3.connect(database)
     connection.execute("CREATE TABLE experiments (experiment_id INTEGER, name TEXT)")
-    connection.execute("CREATE TABLE runs (run_uuid TEXT, experiment_id INTEGER, status TEXT)")
+    connection.execute(
+        "CREATE TABLE runs (run_uuid TEXT, experiment_id INTEGER, status TEXT)"
+    )
     connection.execute("INSERT INTO experiments VALUES (1, 'pilot')")
     connection.executemany(
         "INSERT INTO runs VALUES (?, 1, ?)",

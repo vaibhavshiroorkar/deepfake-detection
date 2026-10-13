@@ -26,7 +26,10 @@ from pathlib import Path
 NEWLINE = "\n"
 
 BLOCK_MARKERS = {
-    name: (f"<!-- BEGIN GENERATED {name.upper()} -->", f"<!-- END GENERATED {name.upper()} -->")
+    name: (
+        f"<!-- BEGIN GENERATED {name.upper()} -->",
+        f"<!-- END GENERATED {name.upper()} -->",
+    )
     for name in (
         "streams",
         "training",
@@ -269,7 +272,10 @@ def render_fusionablations(run_dir: Path) -> str:
         "deep_abstaining": "deep fusion, abstains on partial coverage",
         "deep_masking": "deep fusion, answers from what ran",
     }
-    lines = ["| Partition | Head | ROC-AUC | Coverage | Clips scored |", "|---|---|---|---:|---:|"]
+    lines = [
+        "| Partition | Head | ROC-AUC | Coverage | Clips scored |",
+        "|---|---|---|---:|---:|",
+    ]
     for partition, entry in sorted(payload.get("partitions", {}).items()):
         for key, label in labels.items():
             row = entry.get(key)
@@ -311,7 +317,10 @@ def render_designa(program_run: Path) -> str:
     reports = sorted(directory.glob("*-metrics.json"))
     if not reports:
         return _missing("designa", Path(program_run))
-    lines = ["| Report | Dataset | Rows | ROC-AUC | Balanced accuracy |", "|---|---|---:|---:|---:|"]
+    lines = [
+        "| Report | Dataset | Rows | ROC-AUC | Balanced accuracy |",
+        "|---|---|---:|---:|---:|",
+    ]
     for path in reports:
         payload = _load(path)
         if not payload:
@@ -324,8 +333,10 @@ def render_designa(program_run: Path) -> str:
             # dataset there, so reading only the top level prints "?".
             # The fusion reports carry no dataset field anywhere, so the
             # partition in the filename is the only honest source.
-            dataset = payload.get("dataset") or overall.get("dataset") or (
-                "DFDC" if "dfdc" in path.name else "FakeAVCeleb"
+            dataset = (
+                payload.get("dataset")
+                or overall.get("dataset")
+                or ("DFDC" if "dfdc" in path.name else "FakeAVCeleb")
             )
         else:
             metrics = payload.get("metrics")
@@ -339,9 +350,7 @@ def render_designa(program_run: Path) -> str:
             rate = single.get("detection_rate")
             roc = "undefined, one class"
             balanced = f"{rate:.4f} detected" if rate is not None else "n/a"
-        lines.append(
-            f"| `{path.name}` | {dataset} | {rows:,} | {roc} | {balanced} |"
-        )
+        lines.append(f"| `{path.name}` | {dataset} | {rows:,} | {roc} | {balanced} |")
     return "\n".join(lines)
 
 
@@ -418,8 +427,7 @@ def render_mnw(program_run: Path) -> str:
         total = sum(v[1] for v in group.values())
         low, high = _wilson(hit, total)
         lines.append(
-            f"- {label}: {hit} of {total}, {hit / total:.0%} "
-            f"[{low:.0%}, {high:.0%}]"
+            f"- {label}: {hit} of {total}, {hit / total:.0%} [{low:.0%}, {high:.0%}]"
         )
     if authentic[1]:
         lines.append(
@@ -515,7 +523,8 @@ def render_operating(program_run: Path) -> str:
             continue
         lower, upper = paired.get("lower"), paired.get("upper")
         separated = (
-            "yes" if lower is not None and upper is not None and lower * upper > 0
+            "yes"
+            if lower is not None and upper is not None and lower * upper > 0
             else "no, the interval includes zero"
         )
         lines.append(

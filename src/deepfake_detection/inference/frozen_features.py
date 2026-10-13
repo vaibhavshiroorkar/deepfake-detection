@@ -20,6 +20,22 @@ import numpy as np
 ENCODERS = {
     "dinov3": ("vit_small_patch16_dinov3.lvd1689m", 224),
     "dinov3-b": ("vit_base_patch16_dinov3.lvd1689m", 224),
+    # open_clip, so they need the `probe` extra. `pe` is Perception Encoder,
+    # the arm `A-encoder-comparison` claimed a 15-point win for without an
+    # artifact; `clip` is the third arm of that same claim.
+    "pe": ("PE-Core-B-16", 224),
+    # `-quickgelu`, not plain `ViT-B-16`. OpenAI trained these weights with
+    # QuickGELU, and open_clip will load them into the standard-GELU
+    # architecture with only a warning. That is the same defect as loading a
+    # WavLM checkpoint into a Wav2Vec2 body: it runs, it is subtly the wrong
+    # model, and nothing in the output says so.
+    "clip": ("ViT-B-16-quickgelu", 224),
+}
+
+# Which ENCODERS entries come from open_clip, and the pretrained tag each needs.
+OPEN_CLIP_ENCODERS = {
+    "pe": "meta",
+    "clip": "openai",
 }
 
 WINDOWS = 3
@@ -107,24 +123,64 @@ def embed_windows(model, windows: np.ndarray, device: str, batch_size: int = 32)
             pieces.append(model(batch).float().cpu())
     embedded = torch.cat(pieces).reshape(windows.shape[0], windows.shape[1], -1)
     per_window = embedded.mean(dim=1)
-    vector = torch.cat(
-        [per_window.mean(dim=0), per_window.std(dim=0, unbiased=False)]
-    )
+    vector = torch.cat([per_window.mean(dim=0), per_window.std(dim=0, unbiased=False)])
     return vector.numpy()
 
 
+def _open_clip_visual(model):
+    """Wrap an open_clip model so it looks like the timm probes to callers.
+
+    `embed_windows` calls the encoder and expects one vector per frame, which is
+    what `encode_image` returns. Built here rather than at module scope because
+    this module imports torch lazily to keep CLI startup cheap.
+    """
+    import torch
+
+    class OpenClipVisual(torch.nn.Module):
+        def __init__(self, wrapped) -> None:
+            super().__init__()
+            self.model = wrapped
+
+        def forward(self, frames):
+            return self.model.encode_image(frames)
+
+    return OpenClipVisual(model)
+
+
 def load_encoder(name: str = "dinov3", device: str = "cuda"):
-    """The frozen encoder and the input size it expects."""
+    """The frozen encoder and the input size it expects.
+
+    Two families. The timm names are loaded directly. The open_clip names, which
+    are Perception Encoder and CLIP, need the `probe` extra and come back wrapped
+    so both look the same to `embed_windows`.
+
+    Perception Encoder is here because `A-encoder-comparison` claimed it beat
+    DINOv3 by 15 points on DF26 and stood unverified: no artifact existed, and
+    the recorded reason was that `open_clip_torch` could not be installed. It
+    installs fine, so the comparison is now runnable and the claim can be
+    settled rather than repeated.
+    """
+    model_name, size = ENCODERS[name]
+    if name in OPEN_CLIP_ENCODERS:
+        try:
+            import open_clip
+        except ImportError as error:  # pragma: no cover - depends on the extra
+            raise RuntimeError(
+                f"Encoder {name!r} needs open_clip_torch. Install the probe "
+                "extra: uv sync --extra probe"
+            ) from error
+        model, _, _ = open_clip.create_model_and_transforms(
+            model_name, pretrained=OPEN_CLIP_ENCODERS[name]
+        )
+        return _open_clip_visual(model).to(device).eval(), size
+
     import timm
 
-    model_name, size = ENCODERS[name]
     model = timm.create_model(model_name, pretrained=True, num_classes=0)
     return model.to(device).eval(), size
 
 
-def embed_clip(
-    path: Path, model, size: int, device: str = "cuda"
-) -> np.ndarray | None:
+def embed_clip(path: Path, model, size: int, device: str = "cuda") -> np.ndarray | None:
     """One video file to one feature vector, or None when it cannot be read."""
     windows = read_windows(Path(path), size=size)
     if windows is None:

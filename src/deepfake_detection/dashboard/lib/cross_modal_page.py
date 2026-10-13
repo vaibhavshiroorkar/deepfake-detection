@@ -138,9 +138,7 @@ def render(st, stream: str) -> None:
             "fake" if calls_fake else "real",
             delta_color="inverse" if calls_fake else "normal",
         )
-        v2.markdown(
-            f"### This stream calls it **{'FAKE' if calls_fake else 'REAL'}**"
-        )
+        v2.markdown(f"### This stream calls it **{'FAKE' if calls_fake else 'REAL'}**")
         v2.caption(
             f"Score {score:.3f} against a 0.500 cut-off, from the "
             f"{spec['title'].lower()} alone. 0 is authentic, 1 is manipulated."

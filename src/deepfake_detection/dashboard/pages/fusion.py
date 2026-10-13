@@ -63,11 +63,11 @@ for column, (name, payload) in zip(
 ):
     title, explanation = LABELS.get(name, (name, ""))
     overall = (payload.get("overall") or {}).get("metrics", {})
-    column.metric(title, f"{overall.get('roc_auc', float('nan')):.3f}", help=explanation)
+    column.metric(
+        title, f"{overall.get('roc_auc', float('nan')):.3f}", help=explanation
+    )
 
-st.caption(
-    "Scores are ROC-AUC: 1.0 is perfect, 0.5 is a coin flip. Higher is better."
-)
+st.caption("Scores are ROC-AUC: 1.0 is perfect, 0.5 is a coin flip. Higher is better.")
 
 # ------------------------------------------------------------- the detail
 

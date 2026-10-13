@@ -7,6 +7,9 @@ whatever number fell out, which looks like a result and is not one.
 
 import pytest
 
+pytest.importorskip("streamlit")
+
+
 from deepfake_detection.dashboard.lib import media_kind
 
 

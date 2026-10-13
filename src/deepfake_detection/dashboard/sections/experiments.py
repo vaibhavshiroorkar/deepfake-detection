@@ -14,6 +14,7 @@ _HISTORY_PATH = (
     _PROJECT_ROOT / "runs" / "initial-20260902" / "visual-initial-history.json"
 )
 
+
 def render_experiments(*, embedded: bool = False) -> None:
     if not embedded:
         render_page_header(
@@ -56,10 +57,22 @@ def render_experiments(*, embedded: bool = False) -> None:
         st.subheader("FakeAVCeleb development validation confusion counts")
         st.table(
             [
-                {"Count": "True positives", "Rows": evidence.confusion["true_positive"]},
-                {"Count": "True negatives", "Rows": evidence.confusion["true_negative"]},
-                {"Count": "False positives", "Rows": evidence.confusion["false_positive"]},
-                {"Count": "False negatives", "Rows": evidence.confusion["false_negative"]},
+                {
+                    "Count": "True positives",
+                    "Rows": evidence.confusion["true_positive"],
+                },
+                {
+                    "Count": "True negatives",
+                    "Rows": evidence.confusion["true_negative"],
+                },
+                {
+                    "Count": "False positives",
+                    "Rows": evidence.confusion["false_positive"],
+                },
+                {
+                    "Count": "False negatives",
+                    "Rows": evidence.confusion["false_negative"],
+                },
             ]
         )
         st.subheader("Local MLflow record")

@@ -29,6 +29,13 @@ ml = [
     "timm==1.0.27",
     "transformers==5.13.0",
 ]
+# Perception Encoder for the frozen-probe encoder comparison. Its own extra
+# because it is needed only by `scripts/extract_probe_features.py --encoder pe`,
+# and the handoff recorded for weeks that it could not be installed, which was
+# the stated reason `A-encoder-comparison` stayed unmeasured. It installs fine.
+probe = [
+    "open-clip-torch==3.3.0",
+]
 dashboard = [
     "matplotlib==3.11.0",
     "streamlit==1.60.0",

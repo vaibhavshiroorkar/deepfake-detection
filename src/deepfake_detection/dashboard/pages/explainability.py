@@ -27,9 +27,7 @@ if not breakdowns and not fusion.available:
     st.stop()
 
 if breakdowns:
-    labels = {
-        f"{item.branch} on {item.dataset}": item for item in breakdowns
-    }
+    labels = {f"{item.branch} on {item.dataset}": item for item in breakdowns}
     chosen = st.selectbox("Which result to look at", list(labels), key="explain_eval")
     item = labels[chosen]
 

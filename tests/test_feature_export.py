@@ -1,13 +1,17 @@
 from pathlib import Path
 
 import numpy as np
+import pytest
 import torch
 from torch import nn
 
 from deepfake_detection.branches.contracts import BranchOutput
 from deepfake_detection.branches.sync import SyncOutput
 from deepfake_detection.data.manifest import ClipRecord
-from deepfake_detection.fusion.export import export_features
+from deepfake_detection.fusion.export import (
+    export_features,
+    verify_out_of_fold,
+)
 from deepfake_detection.fusion.store import FeatureStore
 from deepfake_detection.views.cache_store import CacheStore
 from deepfake_detection.views.contracts import PreparedClip, QualityReport
@@ -127,3 +131,75 @@ def test_feature_export_keeps_missing_cache_entries_as_unavailable_rows(
     assert len(rows) == 3
     assert not any(row.available for row in rows)
     assert {row.quality_flags for row in rows} == {("missing_cache",)}
+
+
+def _fixture_record(clip_id: str, source: str) -> ClipRecord:
+    return ClipRecord.from_mapping(
+        {
+            "clip_id": clip_id,
+            "dataset": "fixture",
+            "video_path": f"{clip_id}.mp4",
+            "manipulation_type": "FakeVideo-RealAudio",
+            "method": "faceswap",
+            "source": source,
+        }
+    )
+
+
+def test_out_of_fold_export_is_refused_when_a_branch_trained_on_the_clips() -> None:
+    """The defect this guards: `--partition-role oof` was an unverified string.
+
+    Every fold shares one split hash, so no hash check can see fold
+    contamination. Pointing one fold's checkpoint at another fold's manifest
+    produced a fusion head fitted on branch scores for clips the branch had
+    memorised, with provenance that looked clean.
+    """
+    records = [_fixture_record("clip-1", "id1"), _fixture_record("clip-2", "id2")]
+
+    with pytest.raises(ValueError, match="contaminated"):
+        verify_out_of_fold(
+            records=records,
+            partition_role="oof",
+            trained_source_identities={"visual": ("id2", "id9")},
+        )
+
+
+def test_out_of_fold_export_is_allowed_when_no_source_overlaps() -> None:
+    records = [_fixture_record("clip-1", "id1")]
+
+    verify_out_of_fold(
+        records=records,
+        partition_role="oof",
+        trained_source_identities={"visual": ("id2",), "audio": ("id3",)},
+    )
+
+
+def test_only_the_out_of_fold_role_is_checked() -> None:
+    """A test or external export is meant to score unseen clips through a
+    trained checkpoint, so an overlap there is the point, not a fault."""
+    records = [_fixture_record("clip-1", "id1")]
+
+    for role in ("test", "external", "validation", "stress"):
+        verify_out_of_fold(
+            records=records,
+            partition_role=role,
+            trained_source_identities={"visual": ("id1",)},
+        )
+
+
+def test_a_checkpoint_without_recorded_sources_skips_rather_than_passes() -> None:
+    """Empty means "not recorded", not "trained on nothing".
+
+    Checkpoints written before the field existed report an empty tuple, so the
+    check must not read that as a clean bill of health.
+    """
+    records = [_fixture_record("clip-1", "id1")]
+
+    verify_out_of_fold(
+        records=records,
+        partition_role="oof",
+        trained_source_identities={"visual": ()},
+    )
+    verify_out_of_fold(
+        records=records, partition_role="oof", trained_source_identities=None
+    )

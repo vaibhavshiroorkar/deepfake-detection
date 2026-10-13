@@ -1,5 +1,10 @@
 from pathlib import Path
 
+import pytest
+
+pytest.importorskip("streamlit")
+
+
 from deepfake_detection.dashboard.state import (
     clear_upload,
     prediction_for_upload,

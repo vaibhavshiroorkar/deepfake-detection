@@ -47,7 +47,9 @@ class Wav2Vec2TokenEncoder(nn.Module):
     video over time.
     """
 
-    def __init__(self, *, model_name: str = "facebook/wav2vec2-base", pretrained: bool = True) -> None:
+    def __init__(
+        self, *, model_name: str = "facebook/wav2vec2-base", pretrained: bool = True
+    ) -> None:
         super().__init__()
         from transformers import Wav2Vec2Config, Wav2Vec2Model
 

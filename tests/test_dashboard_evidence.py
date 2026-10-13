@@ -3,6 +3,9 @@ from pathlib import Path
 
 import pytest
 
+pytest.importorskip("streamlit")
+
+
 from deepfake_detection.dashboard.evidence import load_validation_evidence
 
 

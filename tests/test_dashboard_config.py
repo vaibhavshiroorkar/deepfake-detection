@@ -3,6 +3,9 @@ from pathlib import Path
 
 import pytest
 
+pytest.importorskip("streamlit")
+
+
 from deepfake_detection.dashboard import configuration
 from deepfake_detection.dashboard.configuration import dashboard_defaults
 
@@ -55,7 +58,10 @@ def test_defaults_load_a_promoted_baseline_from_configs(tmp_path: Path) -> None:
 
     assert defaults.run_id == "new-run"
     assert defaults.validation_rows == 3288
-    assert defaults.visual_checkpoint == tmp_path / "runs/full-20260904/checkpoints/full.pt"
+    assert (
+        defaults.visual_checkpoint
+        == tmp_path / "runs/full-20260904/checkpoints/full.pt"
+    )
     # Unspecified keys keep the current baseline's values.
     assert defaults.seed == 17
 

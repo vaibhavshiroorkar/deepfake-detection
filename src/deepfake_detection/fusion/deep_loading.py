@@ -116,9 +116,9 @@ def fuse(
         values[name] = torch.tensor(
             [list(found)] if found else [[0.0] * width], dtype=torch.float32
         ).to(device)
-        presence[name] = torch.tensor(
-            [1.0 if found else 0.0], dtype=torch.float32
-        ).to(device)
+        presence[name] = torch.tensor([1.0 if found else 0.0], dtype=torch.float32).to(
+            device
+        )
 
     with torch.inference_mode():
         output = loaded.model(values, presence)

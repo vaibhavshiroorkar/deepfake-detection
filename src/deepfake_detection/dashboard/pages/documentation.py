@@ -21,7 +21,6 @@ lives inside expanders so each section reads as an outline first and a reference
 second.
 """
 
-
 import streamlit as st
 
 from deepfake_detection.dashboard.paths import PROJECT_ROOT
@@ -30,8 +29,10 @@ from deepfake_detection.dashboard.sections.documentation import DOCUMENTS
 DIAGRAM = PROJECT_ROOT / "assets" / "flow.png"
 
 st.title("Documentation")
-st.caption("The problem, every processing step, every model, and the reasoning behind the "
-           "decisions that are easy to get wrong.")
+st.caption(
+    "The problem, every processing step, every model, and the reasoning behind the "
+    "decisions that are easy to get wrong."
+)
 
 
 # ====================== 1 · PROBLEM AND ARCHITECTURE ======================= #
@@ -67,8 +68,10 @@ survives compression, resolution loss and a well-trained generator.
 """)
 
     st.header("The signal chain")
-    st.caption("Two parallel paths turn a clip into tensors, five streams turn those tensors into "
-               "embeddings, one fusion head turns the embeddings into a decision.")
+    st.caption(
+        "Two parallel paths turn a clip into tensors, five streams turn those tensors into "
+        "embeddings, one fusion head turns the embeddings into a decision."
+    )
 
     # The diagram is the fastest way into the rest of this page; the tables below
     # give it the exact shapes it cannot carry.
@@ -77,8 +80,10 @@ survives compression, resolution loss and a well-trained generator.
         if DIAGRAM.exists():
             st.image(str(DIAGRAM), width="stretch")
         else:
-            st.warning(f"Architecture diagram not found at "
-                       f"`{DIAGRAM.relative_to(PROJECT_ROOT)}`.")
+            st.warning(
+                f"Architecture diagram not found at "
+                f"`{DIAGRAM.relative_to(PROJECT_ROOT)}`."
+            )
 
     st.markdown("""
 | Path | Steps applied in order | Tensor produced |
@@ -99,7 +104,9 @@ pipeline instead of the forgery.
 """)
 
     st.header("The five streams")
-    st.caption("What each stream is for. How each one works is the *Stream models* tab.")
+    st.caption(
+        "What each stream is for. How each one works is the *Stream models* tab."
+    )
     st.markdown("""
 | Stream | Inputs | What it contributes | Stage |
 |---|---|---|---|
@@ -124,10 +131,12 @@ embeddings.
 # ===================== 2 · END-TO-END PREPROCESSING ======================== #
 def render_pipeline():
     st.header("Input to tensors")
-    st.caption("Every stage between an mp4 arriving and a batch reaching a model, in the order the "
-               "code runs them, with the exact data representation at each handoff. The *Visual "
-               "path* and *Audio path* tabs explain how the individual operations work; this tab is "
-               "the control flow and the contract.")
+    st.caption(
+        "Every stage between an mp4 arriving and a batch reaching a model, in the order the "
+        "code runs them, with the exact data representation at each handoff. The *Visual "
+        "path* and *Audio path* tabs explain how the individual operations work; this tab is "
+        "the control flow and the contract."
+    )
 
     st.markdown("""
 Two entry points share one implementation. `ddf cache build` is the batch
@@ -158,8 +167,10 @@ Fixed by `ops/constants.py`: `NUM_FRAMES=16`, `FRAME_SIZE=224`, `MOUTH_SIZE=96`,
 """)
 
     st.subheader("Representation at every boundary")
-    st.caption("No image or audio file format is involved after decode. Frames never become PNGs "
-               "and audio never becomes a WAV; everything is NumPy in memory and `.npy` on disk.")
+    st.caption(
+        "No image or audio file format is involved after decode. Frames never become PNGs "
+        "and audio never becomes a WAV; everything is NumPy in memory and `.npy` on disk."
+    )
     st.markdown("""
 | Boundary | Type | Shape | dtype | Range |
 |---|---|---|---|---|
@@ -231,8 +242,10 @@ to a 1:3 real:fake ratio in every split.
 
 Training a visual stream on the clip label asks it to detect a forgery absent from its input.""")
 
-    with st.expander("**Stages 3-5 · Audio first, because the timestamps depend on it**",
-                     expanded=True):
+    with st.expander(
+        "**Stages 3-5 · Audio first, because the timestamps depend on it**",
+        expanded=True,
+    ):
         st.markdown("""
 The ordering looks backwards and is deliberate: the whole audio track is decoded and resampled
 *before* a single frame is read, because the frame timestamps depend on a measurement taken from the
@@ -254,24 +267,31 @@ kernel before dropping samples, or everything above the new Nyquist frequency fo
 **Leading silence** is measured with an energy gate at `top_db = 30`, meaning frames whose level sits
 more than 30 dB below the clip's reference count as silence:
 """)
-        st.latex(r"\text{dB} = 20\,\log_{10}\!\left(\frac{a}{a_{\text{ref}}}\right)"
-                 r"\quad\Longrightarrow\quad -30\,\text{dB} \approx \tfrac{1}{32}"
-                 r"\ \text{of reference amplitude}")
+        st.latex(
+            r"\text{dB} = 20\,\log_{10}\!\left(\frac{a}{a_{\text{ref}}}\right)"
+            r"\quad\Longrightarrow\quad -30\,\text{dB} \approx \tfrac{1}{32}"
+            r"\ \text{of reference amplitude}"
+        )
         st.markdown("""
 FakeAVCeleb's fake-audio clips carry extra near-silence at `t=0`. It is an artifact of assembly, not
 of forgery, and a model left alone with it learns "silence at the start means fake", reports an
 excellent AUC, and has learned nothing transferable. The measurement becomes the `start_offset` for
 sampling:
 """)
-        st.code("""waveform   = resample(downmix(decode(video)), native_sr, 16_000)
+        st.code(
+            """waveform   = resample(downmix(decode(video)), native_sr, 16_000)
 silence    = leading_silence_sec(waveform, 16_000, top_db=30.0)
 duration   = frame_count / fps                     # from cv2.VideoCapture
-timestamps = sample_timestamps(duration, 16, 0.35, start_offset=silence)""", language="python")
-        st.info("The waveform is never cut. Trimming shortens the audio while the frame timestamps "
-                "stay put, which slides every window later in real time and manufactures exactly "
-                "the desynchronisation the cross-modal streams exist to detect. "
-                "``ddf manifest build`` also records the measurement per clip as `leading_silence_sec`, "
-                "so later analysis can check the correction instead of trusting it.")
+timestamps = sample_timestamps(duration, 16, 0.35, start_offset=silence)""",
+            language="python",
+        )
+        st.info(
+            "The waveform is never cut. Trimming shortens the audio while the frame timestamps "
+            "stay put, which slides every window later in real time and manufactures exactly "
+            "the desynchronisation the cross-modal streams exist to detect. "
+            "``ddf manifest build`` also records the measurement per clip as `leading_silence_sec`, "
+            "so later analysis can check the correction instead of trusting it."
+        )
 
     with st.expander("**Stages 6-7 · The shared timestamp array**"):
         st.markdown("""
@@ -279,9 +299,11 @@ Video metadata comes from OpenCV: `CAP_PROP_FPS` and `CAP_PROP_FRAME_COUNT`, wit
 `duration = frame_count / fps`. `sample_timestamps` then places 16 evenly spaced instants, inset at
 both ends by half an audio window so every window stays inside the recording:
 """)
-        st.latex(r"t_i = \mathrm{lo} + \frac{i}{N-1}\,(\mathrm{hi} - \mathrm{lo}), \qquad "
-                 r"\mathrm{lo} = \max\!\left(\text{offset} + \tfrac{w}{2},\ \tfrac{w}{2}\right),"
-                 r"\quad \mathrm{hi} = \max\!\left(T - \tfrac{w}{2},\ \mathrm{lo}\right)")
+        st.latex(
+            r"t_i = \mathrm{lo} + \frac{i}{N-1}\,(\mathrm{hi} - \mathrm{lo}), \qquad "
+            r"\mathrm{lo} = \max\!\left(\text{offset} + \tfrac{w}{2},\ \tfrac{w}{2}\right),"
+            r"\quad \mathrm{hi} = \max\!\left(T - \tfrac{w}{2},\ \mathrm{lo}\right)"
+        )
         st.markdown("""
 This single array is the join between the modalities. Frames are seeked by *timestamp*, not by frame
 index, which is what lets clips of differing frame rates share an index with an audio path that has
@@ -338,12 +360,15 @@ One compressed `.npz` per clip, written by `CacheStore` under the run's cache ro
 what makes a stale cache detectable: a clip preprocessed under different settings lands at a
 different path instead of overwriting the old one.
 """)
-        st.code("""visual_view        (16, 3, 224, 224)  float32   # CHW, ImageNet-normalised
+        st.code(
+            """visual_view        (16, 3, 224, 224)  float32   # CHW, ImageNet-normalised
 audio_view         (64000,)           float32   # 4 s @ 16 kHz
 sync_video_view    (50, 3, 112, 112)  float32   # mouth crops for the sync branch
 sync_audio_view    (32000,)           float32   # 2 s @ 16 kHz
 sync_audio_context (42240,)           float32   # padded window around it
-metadata           JSON                         # quality report and fingerprints""", language="text")
+metadata           JSON                         # quality report and fingerprints""",
+            language="text",
+        )
         st.markdown("""
 Storing uint8 rather than normalised float32 is a deliberate four-fold saving, and it keeps the
 expensive part (decode plus 16 detections) separate from the cheap part (a divide and a
@@ -365,13 +390,17 @@ several workers do not contend over one GPU. With `--detector yunet` that pinnin
 YuNet has no GPU path in the first place.
 """)
 
-    with st.expander("**Stage 11 · Normalisation, and the tensors the model sees**", expanded=True):
+    with st.expander(
+        "**Stage 11 · Normalisation, and the tensors the model sees**", expanded=True
+    ):
         st.markdown("""
 Normalisation happens per batch in `ClipDataset.__getitem__`, not at cache time. Two operations,
 then a transpose:
 """)
-        st.latex(r"x_{\text{norm}} = \frac{x/255 - \mu}{\sigma}, \qquad "
-                 r"\mu = (0.485,\,0.456,\,0.406), \quad \sigma = (0.229,\,0.224,\,0.225)")
+        st.latex(
+            r"x_{\text{norm}} = \frac{x/255 - \mu}{\sigma}, \qquad "
+            r"\mu = (0.485,\,0.456,\,0.406), \quad \sigma = (0.229,\,0.224,\,0.225)"
+        )
         st.markdown("""
 The constants are the per-channel mean and standard deviation of the ImageNet training set, which is
 why they differ between R, G and B: natural images carry more red and less blue. All three visual
@@ -394,19 +423,26 @@ So on a dark indoor face crop most values are negative: one measured crop with a
 out 86% negative. That is expected, and it does not trouble the network, because the first operation
 is a convolution with signed weights and ReLU comes after it, not before the input.
 """)
-        st.code("""faces  (B, 16, 3, 224, 224)  float32   # ImageNet-normalised, HWC -> CHW
+        st.code(
+            """faces  (B, 16, 3, 224, 224)  float32   # ImageNet-normalised, HWC -> CHW
 audio  (B, 16, 5600)         float32   # 16 kHz windows, NOT normalised
-label  (B,)                  int64     # per label_mode""", language="text")
-        st.info("**The audio is never normalised in the contract.** Nothing in `ops/audio.py` or "
-                "`ddf cache build` touches amplitude, so `audio.npy` keeps whatever level the source "
-                "had. `rms_normalize` exists but sits in the extras, off by default. Defensible, "
-                "since Whisper and Wav2Vec2 both normalise internally, but worth being deliberate "
-                "about: if real and fake audio differ systematically in loudness, that is an "
-                "exploitable shortcut sitting in the input, exactly like the leading silence was.")
+label  (B,)                  int64     # per label_mode""",
+            language="text",
+        )
+        st.info(
+            "**The audio is never normalised in the contract.** Nothing in `ops/audio.py` or "
+            "`ddf cache build` touches amplitude, so `audio.npy` keeps whatever level the source "
+            "had. `rms_normalize` exists but sits in the extras, off by default. Defensible, "
+            "since Whisper and Wav2Vec2 both normalise internally, but worth being deliberate "
+            "about: if real and fake audio differ systematically in loudness, that is an "
+            "exploitable shortcut sitting in the input, exactly like the leading silence was."
+        )
 
     st.subheader("Where the dashboard differs from the batch pipeline")
-    st.caption("Worth knowing before reading a number off the Preprocessing page and assuming "
-               "training saw the same thing.")
+    st.caption(
+        "Worth knowing before reading a number off the Preprocessing page and assuming "
+        "training saw the same thing."
+    )
     st.markdown("""
 | | Batch pipeline | Preprocessing page |
 |---|---|---|
@@ -425,8 +461,10 @@ The silence offset and the fixed 16 / 0.35 contract are the two differences that
 # ========================== 3 · VISUAL PATH ================================ #
 def render_visual():
     st.header("Visual path")
-    st.caption("Five steps, applied per sampled frame, producing one [16, 3, 224, 224] tensor per "
-               "clip plus a parallel mouth tensor.")
+    st.caption(
+        "Five steps, applied per sampled frame, producing one [16, 3, 224, 224] tensor per "
+        "clip plus a parallel mouth tensor."
+    )
 
     with st.expander("**1 · Frame sampling**: choosing 16 moments", expanded=True):
         st.markdown("""
@@ -547,12 +585,14 @@ its own: every pixel in the crop came from the source frame.
 Framing therefore follows the detector, so a rolled or off-centre head stays rolled and off-centre,
 and the temporal model sees rigid head motion on top of expression and articulation.
 """)
-        st.info("**Five-point alignment used to sit here and was removed.** It warped the face onto "
-                "a canonical ArcFace template so eyes and mouth landed on the same pixels in every "
-                "frame. The two traps it carried, the black-padding fix and the template inset, are "
-                "recorded in `docs/obstacles.md`, so bringing it back does not start from "
-                "scratch. Removing it bumped `PIPELINE_VERSION` to 4, since the cached crop pixels "
-                "changed.")
+        st.info(
+            "**Five-point alignment used to sit here and was removed.** It warped the face onto "
+            "a canonical ArcFace template so eyes and mouth landed on the same pixels in every "
+            "frame. The two traps it carried, the black-padding fix and the template inset, are "
+            "recorded in `docs/obstacles.md`, so bringing it back does not start from "
+            "scratch. Removing it bumped `PIPELINE_VERSION` to 4, since the cached crop pixels "
+            "changed."
+        )
 
     with st.expander("**4 · Mouth ROI**: a parallel output, not a substitute"):
         st.markdown("""
@@ -571,8 +611,10 @@ detector's five points, and the gap is a known item rather than an oversight.
 """)
 
     with st.expander("**5 · ImageNet normalisation**: once, here, for everyone"):
-        st.latex(r"x_{\text{norm}} = \frac{x/255 - \mu}{\sigma}, \qquad "
-                 r"\mu = (0.485,\,0.456,\,0.406), \quad \sigma = (0.229,\,0.224,\,0.225)")
+        st.latex(
+            r"x_{\text{norm}} = \frac{x/255 - \mu}{\sigma}, \qquad "
+            r"\mu = (0.485,\,0.456,\,0.406), \quad \sigma = (0.229,\,0.224,\,0.225)"
+        )
         st.markdown("""
 All three visual backbones are ImageNet-pretrained through `timm`, and a pretrained network's
 early filters are calibrated to the input distribution they were trained on. Feeding raw [0, 255]
@@ -594,8 +636,10 @@ range underneath it is the honest check.
 # =========================== 3 · AUDIO PATH ================================ #
 def render_audio():
     st.header("Audio path")
-    st.caption("Short, but it contains the single most important correctness detail in the whole "
-               "preprocessing stage.")
+    st.caption(
+        "Short, but it contains the single most important correctness detail in the whole "
+        "preprocessing stage."
+    )
 
     with st.expander("**1 · Decode**: PyAV", expanded=True):
         st.markdown("""
@@ -637,9 +681,11 @@ The duration of the near-silent prefix is measured with an energy gate: frames w
 falls more than `top_db = 30` below the clip's reference level count as silence, where level is
 measured in decibels.
 """)
-        st.latex(r"\text{dB} = 20\,\log_{10}\!\left(\frac{a}{a_{\text{ref}}}\right) "
-                 r"\quad\Longrightarrow\quad -30\,\text{dB} \approx \tfrac{1}{32}"
-                 r"\ \text{of reference amplitude}")
+        st.latex(
+            r"\text{dB} = 20\,\log_{10}\!\left(\frac{a}{a_{\text{ref}}}\right) "
+            r"\quad\Longrightarrow\quad -30\,\text{dB} \approx \tfrac{1}{32}"
+            r"\ \text{of reference amplitude}"
+        )
         st.markdown("""
 The fix is **not** to trim the audio. Trimming shortens the waveform while the frames stay where
 they were, which desynchronises the two modalities and corrupts the exact signal the cross-modal
@@ -692,18 +738,24 @@ the mel scale, and the result is converted to decibels. It is there because the 
 artifacts of a vocoder are far easier to see in a spectrogram than in a waveform.
 """)
     st.latex(r"m = 2595\,\log_{10}\!\left(1 + \frac{f}{700}\right)")
-    st.caption("The mel scale: roughly linear below 1 kHz, logarithmic above, matching how human "
-               "pitch perception spaces frequencies.")
+    st.caption(
+        "The mel scale: roughly linear below 1 kHz, logarithmic above, matching how human "
+        "pitch perception spaces frequencies."
+    )
 
 
 # ============================= 4 · STREAMS ================================= #
 def render_streams():
     st.header("Visual streams")
-    st.caption("All three are the same config-driven module with a different backbone name, so "
-               "adding a fourth is a configuration change rather than an engineering project.")
-    st.info("This tab is the design. The **Streams** section is the same thing running: pick a "
-            "clip on Preprocessing, open Streams and run it, and every stage in the table below "
-            "appears as the activations it actually produced on that clip.")
+    st.caption(
+        "All three are the same config-driven module with a different backbone name, so "
+        "adding a fourth is a configuration change rather than an engineering project."
+    )
+    st.info(
+        "This tab is the design. The **Streams** section is the same thing running: pick a "
+        "clip on Preprocessing, open Streams and run it, and every stage in the table below "
+        "appears as the activations it actually produced on that clip."
+    )
     st.markdown("""
 | Stage in the module | Operation | Shape out |
 |---|---|---|
@@ -743,9 +795,11 @@ be scaled independently. Deeper networks with narrow layers underuse their capac
 networks without resolution have nothing fine-grained to look at. Compound scaling ties all three
 to a single coefficient φ.
 """)
-        st.latex(r"\text{depth} = \alpha^{\varphi},\quad \text{width} = \beta^{\varphi},\quad "
-                 r"\text{resolution} = \gamma^{\varphi} \qquad "
-                 r"\text{subject to } \alpha\beta^{2}\gamma^{2} \approx 2")
+        st.latex(
+            r"\text{depth} = \alpha^{\varphi},\quad \text{width} = \beta^{\varphi},\quad "
+            r"\text{resolution} = \gamma^{\varphi} \qquad "
+            r"\text{subject to } \alpha\beta^{2}\gamma^{2} \approx 2"
+        )
         st.markdown("""
 The constraint keeps FLOPs growing as roughly 2^φ, so each step up the family is a predictable
 doubling. B0 is the base network found by neural architecture search, built from inverted-residual
@@ -756,7 +810,9 @@ laptop that produced the earlier results. That build reached test accuracy 0.963
 F1 0.974 and EER 0.018, in-distribution: the bar the rebuild has to clear.
 """)
 
-    with st.expander("**DINOv3 (ViT-S/16)**: self-supervised, and the generalisation bet"):
+    with st.expander(
+        "**DINOv3 (ViT-S/16)**: self-supervised, and the generalisation bet"
+    ):
         st.markdown("""
 DINOv3 is a vision transformer trained with **no labels of any kind**. Two networks are involved:
 a student, and a teacher whose weights are an exponential moving average of the student's. Both
@@ -787,10 +843,14 @@ project is meant to produce.
 """)
 
     st.header("Cross-modal streams")
-    st.caption("Both streams share one mechanism: one modality asks the questions, the other "
-               "supplies the evidence, and how cleanly the evidence answers is the signal.")
-    st.latex(r"\text{Attention}(Q,K,V) = \text{softmax}\!\left(\frac{QK^{\top}}"
-             r"{\sqrt{d_k}}\right)V")
+    st.caption(
+        "Both streams share one mechanism: one modality asks the questions, the other "
+        "supplies the evidence, and how cleanly the evidence answers is the signal."
+    )
+    st.latex(
+        r"\text{Attention}(Q,K,V) = \text{softmax}\!\left(\frac{QK^{\top}}"
+        r"{\sqrt{d_k}}\right)V"
+    )
     st.markdown("""
 Read it as a soft lookup. Each row of *Q* is one moment of audio asking a question. Each row of
 *K* is one moment of video offering itself as an answer. The dot product scores every audio moment
@@ -1006,7 +1066,6 @@ def _measured(render):
         render()
 
 
-
 # ============================ 8 · REPOSITORY RECORDS ======================= #
 def render_records():
     st.header("The records this page cannot replace")
@@ -1028,11 +1087,28 @@ def render_records():
 # reference it calls into. "Stream models", not "Streams": the architecture tab
 # already lists what the five streams are for, and two tabs with the same name is
 # what made this page hard to navigate.
-tabs = st.tabs(["Problem & architecture", "Input → tensors", "Visual path", "Audio path",
-                "Stream models", "Fusion & evaluation", "Data & splits",
-                "Repository records"])
-renderers = [render_architecture, render_pipeline, render_visual, render_audio,
-             render_streams, render_fusion, render_data, render_records]
+tabs = st.tabs(
+    [
+        "Problem & architecture",
+        "Input → tensors",
+        "Visual path",
+        "Audio path",
+        "Stream models",
+        "Fusion & evaluation",
+        "Data & splits",
+        "Repository records",
+    ]
+)
+renderers = [
+    render_architecture,
+    render_pipeline,
+    render_visual,
+    render_audio,
+    render_streams,
+    render_fusion,
+    render_data,
+    render_records,
+]
 for tab, render in zip(tabs, renderers, strict=True):
     with tab:
         _measured(render)

@@ -6,7 +6,9 @@ from deepfake_detection.data.manifest import ClipRecord
 from deepfake_detection.data.protocols import stratified_subsample
 
 
-def record(clip_id: str, manipulation_type: str, method: str, source: str) -> ClipRecord:
+def record(
+    clip_id: str, manipulation_type: str, method: str, source: str
+) -> ClipRecord:
     return ClipRecord.from_mapping(
         {
             "clip_id": clip_id,

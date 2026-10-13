@@ -29,6 +29,51 @@ def _tensor(values: np.ndarray, device: str) -> torch.Tensor:
     )
 
 
+def verify_out_of_fold(
+    *,
+    records: Sequence[ClipRecord],
+    partition_role: str,
+    trained_source_identities: Mapping[str, Sequence[str]] | None,
+) -> None:
+    """Refuse an out-of-fold export whose clips a branch actually trained on.
+
+    `--partition-role oof` is what tells `train fusion` these rows are safe to
+    fit a head on. It was a string the operator typed and nothing verified it:
+    every fold shares one `split_hash`, so `validate_branch_states` cannot see
+    fold contamination, and `export_features` never saw which sources a
+    checkpoint trained on. Pointing fold 0's checkpoint at fold 1's manifest
+    passed every guard and produced a head fitted on branch scores of clips the
+    branch had memorised, with clean-looking provenance.
+
+    The check is a set intersection and the data was already present: each
+    record carries `source`, and checkpoints now record
+    `trained_source_identities`.
+
+    Only `oof` is checked. A test or external export is *supposed* to run
+    checkpoints over unseen clips, and holdout rows are the fold's own holdout.
+
+    A checkpoint written before that field existed reports an empty set, which
+    means "not recorded" and not "trained on nothing". Absence skips the check
+    rather than passing it, so this tightens over time as checkpoints are
+    rewritten and never silently blesses an old one.
+    """
+    if partition_role != "oof" or not trained_source_identities:
+        return
+    exported = {record.source for record in records}
+    for branch, trained in sorted(trained_source_identities.items()):
+        if not trained:
+            continue
+        leaked = sorted(exported & set(trained))
+        if leaked:
+            raise ValueError(
+                f"Out-of-fold export is contaminated: {len(leaked)} source "
+                f"identities appear both in this manifest and in the {branch} "
+                f"checkpoint's training set, starting with {leaked[0]}. "
+                "A fusion head fitted on these rows would read branch scores "
+                "for clips that branch trained on."
+            )
+
+
 def export_features(
     *,
     records: Sequence[ClipRecord],
@@ -44,10 +89,16 @@ def export_features(
     partition_role: str,
     run_id: str,
     device: str,
+    trained_source_identities: Mapping[str, Sequence[str]] | None = None,
 ) -> ExportReport:
     for name in ("visual", "audio", "sync"):
         if name not in checkpoint_hashes:
             raise ValueError(f"Missing checkpoint hash for {name}")
+    verify_out_of_fold(
+        records=records,
+        partition_role=partition_role,
+        trained_source_identities=trained_source_identities,
+    )
     visual_model.to(device).eval()
     audio_model.to(device).eval()
     sync_model.to(device).eval()

@@ -15,6 +15,7 @@ decoding and detection go through the memoized entry points in the dashboard's l
 so the two slow steps are paid for once per (clip, setting) rather than per
 rerun. Read-only: never writes into data/ or the cache, and never trains.
 """
+
 from pathlib import Path
 
 import cv2
@@ -42,7 +43,7 @@ from deepfake_detection.preprocessing.ops import (
     faces as VF,
 )
 
-PREVIEW_COLS = 8          # thumbnails per row in the half-width Config preview
+PREVIEW_COLS = 8  # thumbnails per row in the half-width Config preview
 
 st.title("Preprocessing")
 st.caption("Steps are applied cumulatively; each panel shows the result after it runs.")
@@ -65,7 +66,8 @@ def _record_timing(detector: str, detect_ms: float, n_frames: int):
     cost even when this render was a cache hit.
     """
     st.session_state.setdefault("v_detect_timings", {})[detector] = {
-        "ms": float(detect_ms), "frames": int(n_frames),
+        "ms": float(detect_ms),
+        "frames": int(n_frames),
     }
 
 
@@ -89,8 +91,10 @@ def _show_timings(col, selected: str):
             col.caption(f"`{name}`  ·  not run yet{mark}")
             continue
         per_frame = entry["ms"] / max(entry["frames"], 1)
-        col.caption(f"`{name}`  ·  **{entry['ms']:.0f} ms** for {entry['frames']} frames "
-                    f"({per_frame:.1f} ms/frame){mark}")
+        col.caption(
+            f"`{name}`  ·  **{entry['ms']:.0f} ms** for {entry['frames']} frames "
+            f"({per_frame:.1f} ms/frame){mark}"
+        )
 
 
 def waveform_fig(y, rate, title, figsize=(10, 1.9), xlabel="s"):
@@ -178,10 +182,18 @@ def render_config():
     clip_cfg = sticky.clip_settings()
     g1, g2 = st.columns(2)
     with g1:
-        n_frames = st.slider("Frames (N)", 4, 32, int(clip_cfg["n_frames"]), key="pp_n_frames")
+        n_frames = st.slider(
+            "Frames (N)", 4, 32, int(clip_cfg["n_frames"]), key="pp_n_frames"
+        )
     with g2:
-        window_sec = st.slider("Audio window (s)", 0.10, 1.00, float(clip_cfg["window"]), 0.05,
-                               key="pp_window")
+        window_sec = st.slider(
+            "Audio window (s)",
+            0.10,
+            1.00,
+            float(clip_cfg["window"]),
+            0.05,
+            key="pp_window",
+        )
     clip_cfg.update(n_frames=int(n_frames), window=float(window_sec))
 
     # Cache the selection so the Visual and Audio tabs can read it.
@@ -201,8 +213,10 @@ def render_config():
 
     duration, fps = media.frame_meta(str(video_path))
     timestamps = media.sample_timestamps(duration, n_frames, window_sec)
-    prev = [cv2.resize(f, (224, 224), interpolation=cv2.INTER_CUBIC)
-            for f in media.cached_decode_frames(video_path, timestamps)]
+    prev = [
+        cv2.resize(f, (224, 224), interpolation=cv2.INTER_CUBIC)
+        for f in media.cached_decode_frames(video_path, timestamps)
+    ]
 
     # 3:2 rather than 3:1. The sampled frames stay 8-per-row and simply get
     # smaller, since that row exists to show temporal order and survives
@@ -224,7 +238,11 @@ def render_config():
         raw2d, native_sr = media.decode_audio(str(video_path))
         if raw2d.size:
             mono = AF.downmix(raw2d)
-            st.pyplot(waveform_fig(mono, native_sr, f"Audio ({native_sr} Hz)", figsize=(9, 1.2)))
+            st.pyplot(
+                waveform_fig(
+                    mono, native_sr, f"Audio ({native_sr} Hz)", figsize=(9, 1.2)
+                )
+            )
             st.audio(mono, sample_rate=native_sr)
         else:
             st.caption("No audio stream in this clip.")
@@ -240,8 +258,10 @@ def render_config():
             video_bytes, reencoded_from = media.cached_playable_video(video_path)
         st.video(video_bytes, format="video/mp4")
         if reencoded_from:
-            st.caption(f"Re-encoded from `{reencoded_from}` to H.264 for playback only. "
-                       "The pipeline reads the original file.")
+            st.caption(
+                f"Re-encoded from `{reencoded_from}` to H.264 for playback only. "
+                "The pipeline reads the original file."
+            )
         mtype = row["manipulation_type"] if "manipulation_type" in row else "unknown"
         method = row["method"] if "method" in row else "unknown"
         st.caption(
@@ -262,7 +282,9 @@ def render_visual():
     st.header("Visual pipeline")
 
     full_frames = media.cached_decode_frames(video_path, timestamps)
-    cur = [cv2.resize(f, (224, 224), interpolation=cv2.INTER_CUBIC) for f in full_frames]
+    cur = [
+        cv2.resize(f, (224, 224), interpolation=cv2.INTER_CUBIC) for f in full_frames
+    ]
 
     with st.container(border=True):
         left, r = st.columns([1, 2])
@@ -274,16 +296,22 @@ def render_visual():
         left, r = st.columns([1, 2])
         left.markdown("**1 · Face detection + crop**")
         do_detect = left.checkbox("Enable face crop", value=True, key="v_detect")
-        left.caption("Highest-scoring face only. Below the threshold the step falls back to the "
-                  "whole frame rather than to a guess.")
+        left.caption(
+            "Highest-scoring face only. Below the threshold the step falls back to the "
+            "whole frame rather than to a guess."
+        )
         with left.expander("Advanced"):
-            detector = st.selectbox("Detector", media.DETECTOR_NAMES, key="v_detector",
-                               format_func=DETECTOR_LABELS.get,
-                               help="Swap to compare. Timings for both are shown below.")
+            detector = st.selectbox(
+                "Detector",
+                media.DETECTOR_NAMES,
+                key="v_detector",
+                format_func=DETECTOR_LABELS.get,
+                help="Swap to compare. Timings for both are shown below.",
+            )
             conf = st.slider("Confidence", 0.50, 0.99, 0.90, 0.01, key="v_conf")
-        # margin pads the box and clamps to the frame, so it can never introduce
-        # padding of its own. Five-point alignment used to be the alternative
-        # here; it is removed; see docs/obstacles.md.
+            # margin pads the box and clamps to the frame, so it can never introduce
+            # padding of its own. Five-point alignment used to be the alternative
+            # here; it is removed; see docs/obstacles.md.
             margin = st.slider("Crop margin", 0.0, 0.6, 0.20, 0.05, key="v_margin")
 
         # Neither slider is disabled with the crop off: the mouth branch runs its
@@ -292,7 +320,8 @@ def render_visual():
         # detector), so the two calls are one detection pass.
         if do_detect:
             faces, _mouths, n_detected, detect_ms = media.cached_face_mouth(
-                video_path, timestamps, conf, margin, detector=detector)
+                video_path, timestamps, conf, margin, detector=detector
+            )
             cur = faces
             left.metric("Faces detected", f"{n_detected}/{n_frames}")
             _record_timing(detector, detect_ms, n_frames)
@@ -305,21 +334,33 @@ def render_visual():
     with st.container(border=True):
         left, r = st.columns([1, 2])
         left.markdown("**2 · Enhancement**")
-        left.caption("All off by default. These are the corruptions a clip meets in the wild, "
-                     "kept here so you can see what each one does to the input.")
+        left.caption(
+            "All off by default. These are the corruptions a clip meets in the wild, "
+            "kept here so you can see what each one does to the input."
+        )
         with left.expander("Advanced"):
             do_sharpen = st.checkbox("Sharpen", key="v_sharpen_on")
-            sharpen_amt = st.slider("amount", 0.0, 3.0, 1.0, disabled=not do_sharpen, key="v_sharp")
+            sharpen_amt = st.slider(
+                "amount", 0.0, 3.0, 1.0, disabled=not do_sharpen, key="v_sharp"
+            )
             do_denoise = st.checkbox("Denoise", key="v_denoise_on")
-            denoise_str = st.slider("strength", 1, 20, 5, disabled=not do_denoise, key="v_den")
+            denoise_str = st.slider(
+                "strength", 1, 20, 5, disabled=not do_denoise, key="v_den"
+            )
             do_clahe = st.checkbox("CLAHE contrast", key="v_clahe_on")
-            clahe_clip = st.slider("clip", 1.0, 8.0, 2.0, disabled=not do_clahe, key="v_clahe")
+            clahe_clip = st.slider(
+                "clip", 1.0, 8.0, 2.0, disabled=not do_clahe, key="v_clahe"
+            )
             do_blur = st.checkbox("Gaussian blur", key="v_blur_on")
-            blur_k = st.slider("kernel", 3, 31, 9, step=2, disabled=not do_blur, key="v_blur")
+            blur_k = st.slider(
+                "kernel", 3, 31, 9, step=2, disabled=not do_blur, key="v_blur"
+            )
             do_jpeg = st.checkbox("JPEG re-compress", key="v_jpeg_on")
             jpeg_q = st.slider("quality", 5, 95, 30, disabled=not do_jpeg, key="v_jpeg")
             do_ds = st.checkbox("Downscale→upscale", key="v_ds_on")
-            ds_factor = st.slider("scale", 0.1, 0.9, 0.25, disabled=not do_ds, key="v_ds")
+            ds_factor = st.slider(
+                "scale", 0.1, 0.9, 0.25, disabled=not do_ds, key="v_ds"
+            )
 
         if any([do_sharpen, do_denoise, do_clahe, do_blur, do_jpeg, do_ds]):
             out = []
@@ -351,14 +392,21 @@ def render_visual():
             arrs = [VF.imagenet_normalize(img) for img in cur]
             lo, hi = VF.normalized_range(arrs[len(arrs) // 2])
             left.metric("Pixel range", f"[{lo:.2f}, {hi:.2f}]")
-            disp = [np.clip((a * C.IMAGENET_STD + C.IMAGENET_MEAN) * 255, 0, 255).astype(np.uint8)
-                    for a in arrs]
+            disp = [
+                np.clip((a * C.IMAGENET_STD + C.IMAGENET_MEAN) * 255, 0, 255).astype(
+                    np.uint8
+                )
+                for a in arrs
+            ]
             show_frames(r, disp, "Normalized (shown de-normalized)")
-            model_faces = np.stack([np.transpose(a, (2, 0, 1)) for a in arrs]).astype(np.float32)
+            model_faces = np.stack([np.transpose(a, (2, 0, 1)) for a in arrs]).astype(
+                np.float32
+            )
         else:
             show_frames(r, cur, "Raw [0,255]" + SKIPPED)
-            model_faces = np.stack([np.transpose(img.astype(np.float32) / 255.0, (2, 0, 1))
-                                    for img in cur])
+            model_faces = np.stack(
+                [np.transpose(img.astype(np.float32) / 255.0, (2, 0, 1)) for img in cur]
+            )
 
     # Parallel branch: the mouth crop is a SEPARATE output for the lip-sync
     # stream (AV-HuBERT). It does not replace the face: the visual and emotion
@@ -369,25 +417,34 @@ def render_visual():
         left, r = st.columns([1, 2])
         left.markdown("**⑃ Mouth branch** (lip-sync input, parallel)")
         do_mouth = left.checkbox("Produce 96² mouth crop", key="v_mouth")
-        left.caption("Mouth-corner landmarks from the detector above, cropped at 96². "
-                  "Independent of the face crop, which the visual and emotion streams keep.")
+        left.caption(
+            "Mouth-corner landmarks from the detector above, cropped at 96². "
+            "Independent of the face crop, which the visual and emotion streams keep."
+        )
         if do_mouth:
             # Its own call rather than a hand-off from step 1, so the mouth crop
             # is produced whether or not the face crop is enabled. Same cache
             # entry as step 1 when both run, so it costs one detect pass.
             _faces, mouth_crops, mouth_detected, _ms = media.cached_face_mouth(
-                video_path, timestamps, conf, margin, detector=detector)
+                video_path, timestamps, conf, margin, detector=detector
+            )
             left.metric("Landmarks found", f"{mouth_detected}/{n_frames}")
             show_frames(r, mouth_crops, "Mouth 96²")
-            model_mouth = np.stack([np.transpose(m.astype(np.float32) / 255.0, (2, 0, 1))
-                                    for m in mouth_crops]).astype(np.float32)
+            model_mouth = np.stack(
+                [
+                    np.transpose(m.astype(np.float32) / 255.0, (2, 0, 1))
+                    for m in mouth_crops
+                ]
+            ).astype(np.float32)
         else:
             r.caption("Not produced" + SKIPPED)
 
     st.divider()
     st.header("Visual model input")
-    st.caption(f"Face tensor `{tuple(model_faces.shape)}` to the visual stream, "
-               "shown de-normalized.")
+    st.caption(
+        f"Face tensor `{tuple(model_faces.shape)}` to the visual stream, "
+        "shown de-normalized."
+    )
     disp_model = []
     for f in model_faces:
         hwc = np.transpose(f, (1, 2, 0))
@@ -399,21 +456,29 @@ def render_visual():
         for j, col in enumerate(cols):
             if start + j < len(disp_model):
                 col.image(disp_model[start + j], width="stretch")
-    st.code(f"faces : shape={tuple(model_faces.shape)} dtype={model_faces.dtype} "
-            f"range=[{model_faces.min():.3f}, {model_faces.max():.3f}]", language="text")
+    st.code(
+        f"faces : shape={tuple(model_faces.shape)} dtype={model_faces.dtype} "
+        f"range=[{model_faces.min():.3f}, {model_faces.max():.3f}]",
+        language="text",
+    )
 
     if model_mouth is not None:
         st.divider()
         st.header("Mouth model input")
-        st.caption(f"Mouth tensor `{tuple(model_mouth.shape)}` to the lip-sync stream "
-                   "(AV-HuBERT), separate from the face tensor above.")
+        st.caption(
+            f"Mouth tensor `{tuple(model_mouth.shape)}` to the lip-sync stream "
+            "(AV-HuBERT), separate from the face tensor above."
+        )
         for start in range(0, len(mouth_crops), 8):
             cols = st.columns(8)
             for j, col in enumerate(cols):
                 if start + j < len(mouth_crops):
                     col.image(mouth_crops[start + j], width="stretch")
-        st.code(f"mouth : shape={tuple(model_mouth.shape)} dtype={model_mouth.dtype} "
-                f"range=[{model_mouth.min():.3f}, {model_mouth.max():.3f}]", language="text")
+        st.code(
+            f"mouth : shape={tuple(model_mouth.shape)} dtype={model_mouth.dtype} "
+            f"range=[{model_mouth.min():.3f}, {model_mouth.max():.3f}]",
+            language="text",
+        )
 
 
 # =============================== AUDIO ===================================== #
@@ -438,7 +503,9 @@ def render_audio():
     with st.container(border=True):
         left, r = st.columns([1, 2])
         left.markdown("**0 · Decode**")
-        left.caption(f"Native {native_sr} Hz, {raw2d.shape[0]} channel(s) mixed to mono.")
+        left.caption(
+            f"Native {native_sr} Hz, {raw2d.shape[0]} channel(s) mixed to mono."
+        )
         r.pyplot(waveform_fig(wav, native_sr, "Original"))
 
     with st.container(border=True):
@@ -446,8 +513,13 @@ def render_audio():
         left.markdown("**1 · Resample**")
         do_resample = left.checkbox("Enable resample", value=True, key="a_resample")
         with left.expander("Advanced"):
-            target_sr = st.select_slider("target SR", [8000, 16000, 22050, 44100], 16000,
-                                    disabled=not do_resample, key="a_sr")
+            target_sr = st.select_slider(
+                "target SR",
+                [8000, 16000, 22050, 44100],
+                16000,
+                disabled=not do_resample,
+                key="a_sr",
+            )
         if do_resample:
             wav = AF.resample(wav, sr, target_sr)
             sr = target_sr
@@ -467,9 +539,11 @@ def render_audio():
             top_db = st.slider("top_db", 10.0, 60.0, 30.0, key="a_topdb")
         silence = AF.leading_silence_sec(wav, sr, top_db)
         left.metric("Leading silence", f"{silence:.3f}s")
-        left.caption("Measured, not trimmed. `ddf cache build` offsets frame *and* audio "
-                  "sampling past it together; this page samples from t=0, so the shaded "
-                  "head is still included.")
+        left.caption(
+            "Measured, not trimmed. `ddf cache build` offsets frame *and* audio "
+            "sampling past it together; this page samples from t=0, so the shaded "
+            "head is still included."
+        )
         fig = waveform_fig(wav, sr, "Full waveform, nothing removed")
         if silence > 0:
             fig.axes[0].axvspan(0, silence, color="#ef4444", alpha=0.22)
@@ -478,16 +552,26 @@ def render_audio():
     with st.container(border=True):
         left, r = st.columns([1, 2])
         left.markdown("**3 · Enhancement**")
-        left.caption("All off by default, the audio counterpart of the visual enhancement step.")
+        left.caption(
+            "All off by default, the audio counterpart of the visual enhancement step."
+        )
         with left.expander("Advanced"):
             do_aden = st.checkbox("Noise reduction", key="a_denoise_on")
-            aden_str = st.slider("strength", 0.5, 3.0, 1.0, disabled=not do_aden, key="a_den")
+            aden_str = st.slider(
+                "strength", 0.5, 3.0, 1.0, disabled=not do_aden, key="a_den"
+            )
             do_rms = st.checkbox("RMS normalize", key="a_rms_on")
-            rms_db = st.slider("target dB", -30.0, -6.0, -20.0, disabled=not do_rms, key="a_rms")
+            rms_db = st.slider(
+                "target dB", -30.0, -6.0, -20.0, disabled=not do_rms, key="a_rms"
+            )
             do_band = st.checkbox("Bandpass", key="a_band_on")
-            band = st.slider("Hz", 50, 8000, (300, 3000), disabled=not do_band, key="a_band")
+            band = st.slider(
+                "Hz", 50, 8000, (300, 3000), disabled=not do_band, key="a_band"
+            )
             do_addnoise = st.checkbox("Add background noise", key="a_noise_on")
-            snr = st.slider("SNR dB", 0.0, 40.0, 20.0, disabled=not do_addnoise, key="a_snr")
+            snr = st.slider(
+                "SNR dB", 0.0, 40.0, 20.0, disabled=not do_addnoise, key="a_snr"
+            )
         if any([do_aden, do_rms, do_band, do_addnoise]):
             if do_aden:
                 wav = AX.spectral_denoise(wav, sr, aden_str)
@@ -504,11 +588,15 @@ def render_audio():
     with st.container(border=True):
         left, r = st.columns([1, 2])
         left.markdown("**4 · Window extraction**")
-        left.caption(f"One {window_sec:.2f}s window per frame timestamp, clamped to the "
-                  "waveform and zero-padded to a fixed length.")
+        left.caption(
+            f"One {window_sec:.2f}s window per frame timestamp, clamped to the "
+            "waveform and zero-padded to a fixed length."
+        )
         windows = AF.extract_windows(wav, sr, timestamps, window_sec)
         if sr != media.AUDIO_SR:
-            model_audio = np.stack([AF.resample(w, sr, media.AUDIO_SR) for w in windows])
+            model_audio = np.stack(
+                [AF.resample(w, sr, media.AUDIO_SR) for w in windows]
+            )
         else:
             model_audio = windows
         left.metric("Windows", f"{windows.shape[0]} × {windows.shape[1]}")
@@ -521,34 +609,52 @@ def render_audio():
         # cares about.
         off_by = _centring_error(timestamps, len(wav), sr, window_sec)
         worst = float(np.abs(off_by).max()) if len(off_by) else 0.0
-        left.metric("Worst off-centre", f"{worst * 1000:.0f} ms",
-                 help="How far the least-centred window sits from its frame timestamp. "
-                      "Non-zero means the audio track is shorter than the video duration "
-                      "the timestamps were derived from.")
+        left.metric(
+            "Worst off-centre",
+            f"{worst * 1000:.0f} ms",
+            help="How far the least-centred window sits from its frame timestamp. "
+            "Non-zero means the audio track is shorter than the video duration "
+            "the timestamps were derived from.",
+        )
         if worst > 0.005:
             n_off = int((np.abs(off_by) > 1e-6).sum())
-            left.warning(f"{n_off} of {len(off_by)} windows are not centred on their frame.")
+            left.warning(
+                f"{n_off} of {len(off_by)} windows are not centred on their frame."
+            )
 
         total = windows.size / sr
-        r.pyplot(waveform_fig(
-            windows.reshape(-1), sr,
-            f"{windows.shape[0]} windows end to end ({total:.2f}s of audio, not clip time)",
-            xlabel="s within the concatenation"))
+        r.pyplot(
+            waveform_fig(
+                windows.reshape(-1),
+                sr,
+                f"{windows.shape[0]} windows end to end ({total:.2f}s of audio, not clip time)",
+                xlabel="s within the concatenation",
+            )
+        )
 
     with st.container(border=True):
         left, r = st.columns([1, 2])
         left.markdown("**5 · Mel-spectrogram view**")
         do_mel = left.checkbox("Show mel-spectrogram", key="a_mel")
         with left.expander("Advanced"):
-            n_mels = st.slider("n_mels", 32, 128, 64, disabled=not do_mel, key="a_nmels")
-            hop = st.slider("hop", 128, 512, 256, step=64, disabled=not do_mel, key="a_hop")
+            n_mels = st.slider(
+                "n_mels", 32, 128, 64, disabled=not do_mel, key="a_nmels"
+            )
+            hop = st.slider(
+                "hop", 128, 512, 256, step=64, disabled=not do_mel, key="a_hop"
+            )
         if do_mel:
             mel = AX.mel_spectrogram(wav, sr, n_mels, hop)
             fig, ax = plt.subplots(figsize=(10, 2.2))
             # extent, or the x axis reads as STFT frame index while looking like
             # seconds. One frame is hop/sr seconds.
-            im = ax.imshow(mel, aspect="auto", origin="lower", cmap="magma",
-                           extent=[0, mel.shape[1] * hop / sr, 0, n_mels])
+            im = ax.imshow(
+                mel,
+                aspect="auto",
+                origin="lower",
+                cmap="magma",
+                extent=[0, mel.shape[1] * hop / sr, 0, n_mels],
+            )
             fig.colorbar(im, ax=ax, format="%+.0f dB")
             ax.set_title(f"Mel ({n_mels} bands, hop {hop})", fontsize=9)
             ax.set_xlabel("s", fontsize=8)
@@ -560,10 +666,15 @@ def render_audio():
 
     st.divider()
     st.header("Audio model input")
-    st.caption(f"Audio windows `{tuple(model_audio.shape)}` @ {media.AUDIO_SR} Hz "
-               "to the cross-modal streams.")
-    st.code(f"audio : shape={tuple(model_audio.shape)} dtype={model_audio.dtype} "
-            f"range=[{model_audio.min():.3f}, {model_audio.max():.3f}]", language="text")
+    st.caption(
+        f"Audio windows `{tuple(model_audio.shape)}` @ {media.AUDIO_SR} Hz "
+        "to the cross-modal streams."
+    )
+    st.code(
+        f"audio : shape={tuple(model_audio.shape)} dtype={model_audio.dtype} "
+        f"range=[{model_audio.min():.3f}, {model_audio.max():.3f}]",
+        language="text",
+    )
 
 
 config_tab, visual_tab, audio_tab = st.tabs(["Config", "Visual", "Audio"])

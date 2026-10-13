@@ -5,6 +5,9 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+pytest.importorskip("streamlit")
+
+
 from deepfake_detection.dashboard.lib import checkpoints, datasets, selectors
 from deepfake_detection.data.meta import (
     clip_label,
@@ -102,9 +105,9 @@ def test_discover_attaches_a_manifest_to_the_drop_it_points_into(
 ) -> None:
     write_drop(tmp_path)
     video_path = "FakeAVCeleb/RealVideo-RealAudio/Asian/men/id00018/00109.mp4"
-    pd.DataFrame(
-        {"clip_id": ["a"], "video_path": [video_path], "label": [0]}
-    ).to_csv(tmp_path / "train.csv", index=False)
+    pd.DataFrame({"clip_id": ["a"], "video_path": [video_path], "label": [0]}).to_csv(
+        tmp_path / "train.csv", index=False
+    )
     found = datasets.discover(tmp_path)
     assert found["FakeAVCeleb"].splits == ["train", datasets.RAW_SPLIT]
 
@@ -134,7 +137,9 @@ def test_load_split_rejects_an_unknown_split(tmp_path: Path) -> None:
 
 def test_filter_manifest_narrows_by_type_method_and_label() -> None:
     frame = manifest_frame()
-    assert len(selectors.filter_manifest(frame, ["FakeVideo-RealAudio"], [], "all")) == 1
+    assert (
+        len(selectors.filter_manifest(frame, ["FakeVideo-RealAudio"], [], "all")) == 1
+    )
     assert len(selectors.filter_manifest(frame, [], ["wav2lip"], "all")) == 1
     assert len(selectors.filter_manifest(frame, [], [], "real")) == 1
     assert len(selectors.filter_manifest(frame, [], [], "fake")) == 2
@@ -406,7 +411,14 @@ def test_an_existing_label_is_left_alone(tmp_path: Path) -> None:
     frame = pd.read_csv(
         manifest_csv(
             tmp_path / "m.csv",
-            [{"clip_id": "a", "video_path": "d/a.mp4", "label": 1, "clip_fake": "False"}],
+            [
+                {
+                    "clip_id": "a",
+                    "video_path": "d/a.mp4",
+                    "label": 1,
+                    "clip_fake": "False",
+                }
+            ],
         )
     )
 

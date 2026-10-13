@@ -11,7 +11,6 @@ Static by construction: no model loads, no decoding, no data/ access, so it open
 instantly and is safe as the default page.
 """
 
-
 import streamlit as st
 
 from deepfake_detection.dashboard.paths import PROJECT_ROOT
@@ -29,8 +28,10 @@ body, _ = st.columns([5, 3], gap="large")
 
 with body:
     st.title("Audio-Visual Deepfake Detection")
-    st.caption("Three detection principles over one clip: visual artifacts, audio-visual "
-               "synchrony, and audio-visual affect.")
+    st.caption(
+        "Three detection principles over one clip: visual artifacts, audio-visual "
+        "synchrony, and audio-visual affect."
+    )
 
     st.header("The problem")
     st.markdown("""
@@ -60,15 +61,20 @@ standalone audio classifier.
         if DIAGRAM.exists():
             st.image(str(DIAGRAM), width="stretch")
         else:
-            st.warning(f"Architecture diagram not found at `{DIAGRAM.relative_to(PROJECT_ROOT)}`.")
+            st.warning(
+                f"Architecture diagram not found at `{DIAGRAM.relative_to(PROJECT_ROOT)}`."
+            )
 
     st.markdown("""
 Preprocessing samples 16 timestamps per clip and runs a video path and an audio path over them,
 producing three tensors:
 """)
-    st.code("""faces  [16, 3, 224, 224]   ->  visual streams, emotion stream
+    st.code(
+        """faces  [16, 3, 224, 224]   ->  visual streams, emotion stream
 mouth  [16, 3,  96,  96]   ->  lip-sync stream
-audio  [16, 5600]          ->  lip-sync stream, emotion stream""", language="text")
+audio  [16, 5600]          ->  lip-sync stream, emotion stream""",
+        language="text",
+    )
     st.markdown("""
 Both paths are indexed by the **same 16 timestamps**, so frame *i* and audio window *i* describe the
 same instant. Without that, every clip would look desynchronised and the cross-modal streams would
@@ -92,9 +98,11 @@ from another, and no weighted average of five scores can express it.
 | Lip-sync and emotion streams | Designed. Stages 4 and 5. |
 | Fusion, evaluation, explainability | Designed. Stages 6, 7 and 10. |
 """)
-    st.caption("The frozen visual baseline reached ROC AUC 0.9992 on 400 source-disjoint "
-               "FakeAVCeleb validation rows at a fixed threshold of 0.5. That is a development "
-               "result on one dataset, not a generalization result.")
+    st.caption(
+        "The frozen visual baseline reached ROC AUC 0.9992 on 400 source-disjoint "
+        "FakeAVCeleb validation rows at a fixed threshold of 0.5. That is a development "
+        "result on one dataset, not a generalization result."
+    )
 
     st.header("The pages")
     st.markdown("""
@@ -117,9 +125,11 @@ own clip, and states what its answer is allowed to mean.
 **Documentation** covers how every step works, what each model does, and how fusion, evaluation and
 the splits are designed, and links the repository records underneath it all.
 """)
-    st.info("Nothing in this dashboard trains a model or writes into `data/`. Training runs through "
-            "`uv run ddf run --config <config>.yaml` and is tracked in the local MLflow store; what "
-            "comes back here is a checkpoint the Streams pages can load.")
+    st.info(
+        "Nothing in this dashboard trains a model or writes into `data/`. Training runs through "
+        "`uv run ddf run --config <config>.yaml` and is tracked in the local MLflow store; what "
+        "comes back here is a checkpoint the Streams pages can load."
+    )
 
     st.header("Evidence boundary")
     st.caption("What the frozen baseline is allowed to claim, and over which data.")

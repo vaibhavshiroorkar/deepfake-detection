@@ -12,6 +12,8 @@ import numpy as np
 import pytest
 
 pytest.importorskip("torch")
+# The stream builds its backbone through timm, which lives in the `ml` extra.
+pytest.importorskip("timm")
 import torch
 
 from deepfake_detection.data.datasets import (

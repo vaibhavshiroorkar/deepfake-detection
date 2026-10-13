@@ -53,8 +53,12 @@ def test_ci_workflow_uses_read_only_windows_job_and_required_actions() -> None:
 def test_ci_workflow_runs_the_local_quality_and_smoke_contract() -> None:
     steps = workflow_steps(load_workflow())
 
+    # `dashboard` is required, not optional: the dashboard tests guard
+    # themselves with `importorskip("streamlit")`, so without the extra they
+    # skip silently and the dashboard goes untested in CI.
     assert step_with_name(steps, "Install")["run"] == (
-        "uv sync --extra cpu --extra media --extra ml --extra tracking --group dev"
+        "uv sync --extra cpu --extra media --extra ml --extra tracking "
+        "--extra dashboard --group dev"
     )
     assert step_with_name(steps, "Lint")["run"] == "uv run ruff check src tests"
     assert step_with_name(steps, "Format")["run"] == (

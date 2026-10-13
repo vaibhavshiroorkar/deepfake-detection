@@ -48,8 +48,7 @@ def test_celebdf_inverts_the_published_label_convention(tmp_path: Path) -> None:
         == "RealVideo-RealAudio"
     )
     assert (
-        by_id["celebdf__YouTube-real__00063"].manipulation_type
-        == "RealVideo-RealAudio"
+        by_id["celebdf__YouTube-real__00063"].manipulation_type == "RealVideo-RealAudio"
     )
 
 
@@ -75,7 +74,9 @@ def test_celebdf_gives_each_youtube_clip_its_own_source(tmp_path: Path) -> None:
     frame = manifest_from_celebdf(drop, tmp_path)
 
     row = next(
-        item for item in frame.itertuples() if item.clip_id == "celebdf__YouTube-real__00063"
+        item
+        for item in frame.itertuples()
+        if item.clip_id == "celebdf__YouTube-real__00063"
     )
     assert row.source == "youtube-00063"
 

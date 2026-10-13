@@ -200,3 +200,42 @@ def test_shard_rejects_an_index_outside_the_count(tmp_path: Path) -> None:
             cache_store=CacheStore(tmp_path / "cache"),
             shard=(3, 3),
         )
+
+
+def test_cache_round_trips_audio_valid_samples_and_tolerates_their_absence(
+    tmp_path: Path,
+) -> None:
+    store = CacheStore(tmp_path / "cache")
+    quality = QualityReport(
+        face_coverage=1.0,
+        stable_face_track=True,
+        audio_present=True,
+        audio_clipped=False,
+        av_duration_delta_sec=0.0,
+    )
+
+    def prepared(**extra) -> PreparedClip:
+        return PreparedClip(
+            clip_id=extra.pop("clip_id"),
+            visual_view=None,
+            audio_view=np.zeros(8, dtype=np.float32),
+            sync_video_view=None,
+            sync_audio_view=None,
+            quality=quality,
+            preprocessing_fingerprint="fingerprint",
+            preprocessing_config_hash="hash",
+            **extra,
+        )
+
+    recorded = store.save(
+        prepared(clip_id="with", audio_valid_samples=5, sync_audio_valid_samples=6),
+        dataset="D",
+    )
+    assert store.load(recorded).audio_valid_samples == 5
+    assert store.load(recorded).sync_audio_valid_samples == 6
+
+    # A cache entry written before the field existed must still load, and must
+    # report None rather than claiming the whole buffer is real audio.
+    older = store.save(prepared(clip_id="without"), dataset="D")
+    assert store.load(older).audio_valid_samples is None
+    assert store.load(older).sync_audio_valid_samples is None

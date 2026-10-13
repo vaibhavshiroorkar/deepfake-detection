@@ -94,7 +94,9 @@ def build_model(name: str, history: dict):
     )
 
     builder = build_lipsync_stream if kind == "lipsync" else build_emotion_stream
-    return builder(pretrained=False, common_dim=model_config.get("common_dim", 256)), kind
+    return builder(
+        pretrained=False, common_dim=model_config.get("common_dim", 256)
+    ), kind
 
 
 def load_streams(

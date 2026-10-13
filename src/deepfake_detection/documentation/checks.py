@@ -17,7 +17,11 @@ class DocumentationIssue:
     message: str
 
 
-IGNORED_PARTS = frozenset({".git", ".pytest_cache", ".venv", "data"})
+# Nested checkouts hold their own copy of every document, so walking them
+# reports each issue twice and reports issues already fixed in the primary tree.
+IGNORED_PARTS = frozenset(
+    {".git", ".pytest_cache", ".venv", "data", ".worktrees", ".kilo"}
+)
 INCOMPLETE_MARKERS = ("[IN" + "COMPLETE]", "PENDING" + " CONTENT")
 FORBIDDEN_CHARACTERS = frozenset(
     {"\u2013", "\u2014", "\u2022", "\u00b7", "\u2026", "\u2192"}

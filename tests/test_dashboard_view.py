@@ -1,3 +1,7 @@
+import pytest
+
+pytest.importorskip("streamlit")
+
 from deepfake_detection.dashboard.view_model import build_view_model
 from deepfake_detection.inference.predictor import PredictionResult
 

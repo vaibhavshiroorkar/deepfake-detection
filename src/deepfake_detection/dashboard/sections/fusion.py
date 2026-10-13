@@ -21,7 +21,9 @@ def render_fusion(*, embedded: bool = False) -> None:
         "Processing: strict provenance checks, per-branch calibration, then logistic "
         "late fusion over complete evidence."
     )
-    st.write("Output: a fused probability only when every required branch is available.")
+    st.write(
+        "Output: a fused probability only when every required branch is available."
+    )
     st.error(
         "Fusion is locked. The current artifact is a software fixture, not a trained "
         "research fusion model."

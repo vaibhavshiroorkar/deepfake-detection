@@ -28,9 +28,7 @@ STREAMS_V1 = "e20c01466223cb37df8f3502deaba13c883eca49c5e572ff9a042f80a4dcdc1a"
 
 # Each group holds hashes proven to label identical views. The evidence file and
 # the sample size are named so the claim can be rechecked rather than believed.
-VERIFIED_EQUIVALENT: tuple[frozenset[str], ...] = (
-    frozenset({PROGRAM_V1, STREAMS_V1}),
-)
+VERIFIED_EQUIVALENT: tuple[frozenset[str], ...] = (frozenset({PROGRAM_V1, STREAMS_V1}),)
 
 EVIDENCE = {
     frozenset({PROGRAM_V1, STREAMS_V1}): (
@@ -46,9 +44,7 @@ def same_preprocessing(left: str, right: str) -> bool:
     """True when two hashes are equal or verified to label the same data."""
     if left == right:
         return True
-    return any(
-        left in group and right in group for group in VERIFIED_EQUIVALENT
-    )
+    return any(left in group and right in group for group in VERIFIED_EQUIVALENT)
 
 
 def evidence_for(left: str, right: str) -> str:

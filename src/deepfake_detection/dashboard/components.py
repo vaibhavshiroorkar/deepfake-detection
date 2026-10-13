@@ -9,6 +9,8 @@ from deepfake_detection.dashboard.workflow import StepState
 
 if TYPE_CHECKING:
     from deepfake_detection.dashboard.state import UploadedClip
+
+
 def render_page_header(step: str, title: str, summary: str) -> None:
     st.caption(step.upper())
     st.title(title)

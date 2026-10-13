@@ -30,6 +30,7 @@ DOCUMENTS = (
     ),
 )
 
+
 def render_documentation(*, embedded: bool = False) -> None:
     if not embedded:
         render_page_header(

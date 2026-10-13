@@ -88,7 +88,9 @@ def preprocessor(decoder: StubDecoder) -> Preprocessor:
 def test_an_image_produces_one_visual_frame(tmp_path: Path) -> None:
     """One frame, not sixteen. Repeating it would claim the face does not
     change, which is a different statement from "this was one image"."""
-    prepared = preprocessor(StubDecoder()).prepare_image(record(), media(tmp_path, "a.jpg"))
+    prepared = preprocessor(StubDecoder()).prepare_image(
+        record(), media(tmp_path, "a.jpg")
+    )
 
     assert prepared.visual_view is not None
     assert prepared.visual_view.shape[0] == 1
@@ -98,7 +100,9 @@ def test_an_image_produces_one_visual_frame(tmp_path: Path) -> None:
 def test_an_image_has_no_other_view(tmp_path: Path) -> None:
     """Three streams cannot read it, and the abstention machinery already knows
     what a None view means."""
-    prepared = preprocessor(StubDecoder()).prepare_image(record(), media(tmp_path, "a.jpg"))
+    prepared = preprocessor(StubDecoder()).prepare_image(
+        record(), media(tmp_path, "a.jpg")
+    )
 
     assert prepared.audio_view is None
     assert prepared.sync_video_view is None
@@ -108,7 +112,9 @@ def test_an_image_has_no_other_view(tmp_path: Path) -> None:
 
 def test_audio_produces_the_window_the_branch_was_trained_on(tmp_path: Path) -> None:
     config = ViewConfig()
-    prepared = preprocessor(StubDecoder()).prepare_audio(record(), media(tmp_path, "a.wav"))
+    prepared = preprocessor(StubDecoder()).prepare_audio(
+        record(), media(tmp_path, "a.wav")
+    )
 
     assert prepared.audio_view is not None
     assert prepared.audio_view.shape == (
@@ -120,7 +126,9 @@ def test_audio_produces_the_window_the_branch_was_trained_on(tmp_path: Path) -> 
 def test_audio_is_normalised_like_the_video_path(tmp_path: Path) -> None:
     """Same _normalize_and_pad, so an uploaded wav reaches the branch as the
     tensor it was trained on rather than a differently scaled one."""
-    prepared = preprocessor(StubDecoder()).prepare_audio(record(), media(tmp_path, "a.wav"))
+    prepared = preprocessor(StubDecoder()).prepare_audio(
+        record(), media(tmp_path, "a.wav")
+    )
 
     assert abs(float(prepared.audio_view.mean())) < 1e-5
     assert abs(float(prepared.audio_view.std()) - 1.0) < 1e-3

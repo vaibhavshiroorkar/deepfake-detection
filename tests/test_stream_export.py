@@ -49,9 +49,9 @@ class RecordingVisualStream(nn.Module):
     def forward(self, frames: torch.Tensor):
         self.seen.append(frames.clone())
         batch = frames.shape[0]
-        return torch.zeros(batch), torch.arange(
-            self.width, dtype=torch.float32
-        ).repeat(batch, 1)
+        return torch.zeros(batch), torch.arange(self.width, dtype=torch.float32).repeat(
+            batch, 1
+        )
 
 
 class RecordingCrossModalStream(nn.Module):
@@ -218,9 +218,7 @@ def test_emotion_reads_the_face_views_not_the_mouth_views(
     assert torch.allclose(model.video[0][0], dataset[0].video)
 
 
-def test_a_missing_view_abstains_rather_than_dropping_the_clip(
-    tmp_path: Path
-) -> None:
+def test_a_missing_view_abstains_rather_than_dropping_the_clip(tmp_path: Path) -> None:
     """The clip is still counted, which is what keeps the abstention rate
     honest. Dropping it would shrink the denominator instead."""
     store = CacheStore(tmp_path / "cache")
@@ -352,7 +350,9 @@ def test_an_audio_stream_abstains_when_there_is_no_sound(tmp_path: Path) -> None
     records = [record("silent", fake=True)]
     streams = [StreamSpec("audio", RecordingAudioBranch(), "h", "audio")]
 
-    report, feature_store = run_export(tmp_path, records, {"silent": path}, store, streams)
+    report, feature_store = run_export(
+        tmp_path, records, {"silent": path}, store, streams
+    )
 
     assert [row.available for row in feature_store.read()] == [False]
     assert report.failures["silent:audio"] == "missing_view: audio_view"

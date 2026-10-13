@@ -22,6 +22,16 @@ class RunMetadata:
     preprocessing_hash: str
     config_hash: str
     seed: int
+    # The source identities this checkpoint trained on, so an out-of-fold export
+    # can be verified rather than asserted. Without it `--partition-role oof` is
+    # a string the operator types and nothing can check: every fold shares one
+    # `split_hash`, so `validate_branch_states` cannot see fold contamination.
+    #
+    # Empty means "not recorded", which is what every checkpoint written before
+    # this field existed reports. Absence is not a claim of purity, so the
+    # verification in `fusion/export.py` skips rather than passes when it is
+    # empty. Loading is by keyword, so old checkpoints still load.
+    trained_source_identities: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -116,7 +126,14 @@ def load_checkpoint(
     model.load_state_dict(payload["model"])
     if optimizer is not None:
         optimizer.load_state_dict(payload["optimizer"])
+    metadata = dict(payload["metadata"])
+    # `asdict` writes the tuple as a list, and a checkpoint written before the
+    # field existed has no key at all. Normalise both so callers always get a
+    # tuple and the dataclass default covers the old files.
+    metadata["trained_source_identities"] = tuple(
+        metadata.get("trained_source_identities") or ()
+    )
     return CheckpointState(
-        metadata=RunMetadata(**payload["metadata"]),
+        metadata=RunMetadata(**metadata),
         epoch=int(payload["epoch"]),
     )

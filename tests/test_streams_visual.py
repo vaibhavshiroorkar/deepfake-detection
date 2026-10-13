@@ -2,6 +2,8 @@ import numpy as np
 import pytest
 
 pytest.importorskip("torch")
+# The stream builds its backbone through timm, which lives in the `ml` extra.
+pytest.importorskip("timm")
 import torch
 
 from deepfake_detection.streams import introspect
@@ -172,9 +174,7 @@ def test_batchnorm_stays_in_eval_mode_while_the_module_trains() -> None:
     ).train()
 
     frozen = [
-        module
-        for module in model.backbone.modules()
-        if isinstance(module, _BatchNorm)
+        module for module in model.backbone.modules() if isinstance(module, _BatchNorm)
     ]
     assert frozen, "fixture backbone has no BatchNorm to freeze"
     assert not any(module.training for module in frozen)

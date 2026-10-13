@@ -32,7 +32,10 @@ AUDIO = "audio"
 UNKNOWN = "unknown"
 
 UPLOAD_SUFFIXES = tuple(
-    sorted(suffix.lstrip(".") for suffix in VIDEO_SUFFIXES | IMAGE_SUFFIXES | AUDIO_SUFFIXES)
+    sorted(
+        suffix.lstrip(".")
+        for suffix in VIDEO_SUFFIXES | IMAGE_SUFFIXES | AUDIO_SUFFIXES
+    )
 )
 
 

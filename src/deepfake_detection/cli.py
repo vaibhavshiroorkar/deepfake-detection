@@ -257,9 +257,7 @@ def _manifest_usable(arguments: argparse.Namespace) -> int:
             "input_rows": len(records),
             "usable_rows": len(usable),
             "abstained_rows": len(abstained),
-            "abstention_rate": (
-                len(abstained) / len(records) if records else 0.0
-            ),
+            "abstention_rate": (len(abstained) / len(records) if records else 0.0),
             "abstained_by_reason": dict(sorted(reasons.items())),
             "abstained_clip_ids": sorted(abstained),
             "both_classes_present": labels == {True, False},
@@ -582,7 +580,18 @@ def _evaluate_branch(arguments: argparse.Namespace) -> int:
     loss_sum = 0.0
     with torch.inference_mode():
         for batch in loader:
-            logits = model(batch.values.to(arguments.device)).logits
+            values = batch.values.to(arguments.device)
+            # Masked only when the cache recorded the sample count. A checkpoint
+            # trained without masks is still scored without them, so evaluation
+            # matches training rather than silently changing the model's input.
+            logits = (
+                model(values).logits
+                if batch.valid_samples is None
+                else model(
+                    values,
+                    valid_samples=batch.valid_samples.to(arguments.device),
+                ).logits
+            )
             loss_sum += float(
                 functional.binary_cross_entropy_with_logits(
                     logits,
@@ -663,12 +672,19 @@ def _coverage(manifest_records, rows, abstained: dict[str, str]) -> dict[str, ob
 
 
 def _build_branch_model(arguments: argparse.Namespace):
-    from deepfake_detection.branches.audio import build_wav2vec2_audio_branch
-    from deepfake_detection.branches.visual import build_efficientnet_b0
+    from deepfake_detection.branches.audio import build_audio_branch
+    from deepfake_detection.branches.visual import build_visual_branch
 
     if arguments.branch == "visual":
-        return build_efficientnet_b0(pretrained=False)
-    return build_wav2vec2_audio_branch(
+        # Scoring has to build the architecture the checkpoint was trained as.
+        # Defaulting to EfficientNet here meant a ConvNeXt checkpoint failed to
+        # load with a size mismatch, which at least failed loudly; the audio
+        # equivalent did not, and that is what F28 records.
+        return build_visual_branch(
+            architecture=getattr(arguments, "architecture", "efficientnet-b0"),
+            pretrained=False,
+        )
+    return build_audio_branch(
         model_name=arguments.audio_model,
         pretrained=False,
     )
@@ -1144,7 +1160,7 @@ def _binary_branch_train(arguments: argparse.Namespace) -> int:
     from torch.utils.data import DataLoader, WeightedRandomSampler
 
     from deepfake_detection.branches.audio import build_wav2vec2_audio_branch
-    from deepfake_detection.branches.visual import build_efficientnet_b0
+    from deepfake_detection.branches.visual import build_visual_branch
     from deepfake_detection.data.datasets import (
         CachedBranchDataset,
         collate_branch_items,
@@ -1215,7 +1231,9 @@ def _binary_branch_train(arguments: argparse.Namespace) -> int:
         num_workers=arguments.workers,
     )
     if arguments.train_command == "visual":
-        model = build_efficientnet_b0(pretrained=True)
+        model = build_visual_branch(
+            architecture=arguments.architecture, pretrained=True
+        )
     else:
         model = build_wav2vec2_audio_branch(model_name=arguments.audio_model)
     optimizer = torch.optim.AdamW(
@@ -1273,6 +1291,11 @@ def _binary_branch_train(arguments: argparse.Namespace) -> int:
         preprocessing_hash=arguments.preprocessing_hash,
         config_hash=_configuration_hash(arguments, run_config, hash_config),
         seed=arguments.seed,
+        # Recorded so an out-of-fold export can verify its claim rather
+        # than assert it. See `fusion/export.py::verify_out_of_fold`.
+        trained_source_identities=tuple(
+            sorted({record.source for record in train_records})
+        ),
     )
     checkpoint_hash = save_checkpoint(
         arguments.checkpoint,
@@ -1437,7 +1460,9 @@ def _visual_stream_train(arguments: argparse.Namespace) -> int:
     training = StreamTrainingConfig(
         epochs=arguments.epochs,
         accumulation_steps=arguments.accumulation_steps,
-        freeze_epochs=arguments.epochs if arguments.freeze_backbone else arguments.freeze_epochs,
+        freeze_epochs=arguments.epochs
+        if arguments.freeze_backbone
+        else arguments.freeze_epochs,
         early_stopping_patience=arguments.patience,
     )
     run_config = {
@@ -1486,6 +1511,11 @@ def _visual_stream_train(arguments: argparse.Namespace) -> int:
         preprocessing_hash=arguments.preprocessing_hash,
         config_hash=_configuration_hash(arguments, run_config, hash_config),
         seed=arguments.seed,
+        # Recorded so an out-of-fold export can verify its claim rather
+        # than assert it. See `fusion/export.py::verify_out_of_fold`.
+        trained_source_identities=tuple(
+            sorted({record.source for record in train_records})
+        ),
     )
     checkpoint_hash = save_checkpoint(
         arguments.checkpoint,
@@ -1671,6 +1701,11 @@ def _stream_train(arguments: argparse.Namespace) -> int:
         preprocessing_hash=arguments.preprocessing_hash,
         config_hash=_configuration_hash(arguments, run_config, hash_config),
         seed=arguments.seed,
+        # Recorded so an out-of-fold export can verify its claim rather
+        # than assert it. See `fusion/export.py::verify_out_of_fold`.
+        trained_source_identities=tuple(
+            sorted({record.source for record in train_records})
+        ),
     )
     checkpoint_hash = save_checkpoint(
         arguments.checkpoint,
@@ -1693,7 +1728,9 @@ def _stream_train(arguments: argparse.Namespace) -> int:
     )
 
     logger = getattr(arguments, "_run_logger", NullRunLogger())
-    logger.log_params({f"stream.{key}": value for key, value in run_config["model"].items()})
+    logger.log_params(
+        {f"stream.{key}": value for key, value in run_config["model"].items()}
+    )
     logger.log_metrics(
         {
             "training.loss": best.train_loss,
@@ -1703,9 +1740,7 @@ def _stream_train(arguments: argparse.Namespace) -> int:
             "validation.diagonal_mass": best.validation_diagonal_mass,
             "training.best_epoch": float(history.best_epoch),
             "training.samples_per_second": float(training_cost["samples_per_second"]),
-            "training.peak_gpu_memory_mib": float(
-                training_cost["peak_gpu_memory_mib"]
-            ),
+            "training.peak_gpu_memory_mib": float(training_cost["peak_gpu_memory_mib"]),
             "training.elapsed_seconds": time.perf_counter() - started_at,
         }
     )
@@ -1846,6 +1881,11 @@ def _sync_branch_train(arguments: argparse.Namespace) -> int:
         preprocessing_hash=arguments.preprocessing_hash,
         config_hash=_configuration_hash(arguments, run_config, hash_config),
         seed=arguments.seed,
+        # Recorded so an out-of-fold export can verify its claim rather
+        # than assert it. See `fusion/export.py::verify_out_of_fold`.
+        trained_source_identities=tuple(
+            sorted({record.source for record in train_records})
+        ),
     )
     checkpoint_hash = save_checkpoint(
         arguments.checkpoint,
@@ -2237,6 +2277,13 @@ def _features_export(arguments: argparse.Namespace) -> int:
         partition_role=arguments.partition_role,
         run_id=arguments.run_id,
         device=arguments.device,
+        # Lets the export verify an out-of-fold claim instead of recording it.
+        # Checkpoints predating the field report an empty tuple, which skips the
+        # check rather than passing it. See `verify_out_of_fold`.
+        trained_source_identities={
+            branch: state.metadata.trained_source_identities
+            for branch, state in states.items()
+        },
     )
     _write_json(arguments.report, asdict(report))
     return 2 if report.unavailable_rows else 0
@@ -2378,9 +2425,7 @@ def build_parser() -> argparse.ArgumentParser:
     handoff_commands = handoff.add_subparsers(dest="handoff_command", required=True)
     handoff_update = handoff_commands.add_parser("update")
     handoff_update.add_argument("--root", type=Path, default=Path("."))
-    handoff_update.add_argument(
-        "--path", type=Path, default=Path("docs/handoff.md")
-    )
+    handoff_update.add_argument("--path", type=Path, default=Path("docs/handoff.md"))
     handoff_update.set_defaults(handler=_handoff_update)
 
     smoke = commands.add_parser("smoke")
@@ -2586,9 +2631,7 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate_commands = evaluate.add_subparsers(dest="evaluate_command", required=True)
 
     evaluate_branch = evaluate_commands.add_parser("branch")
-    evaluate_branch.add_argument(
-        "--branch", choices=("visual", "audio"), required=True
-    )
+    evaluate_branch.add_argument("--branch", choices=("visual", "audio"), required=True)
     evaluate_branch.add_argument("--checkpoint", type=Path, required=True)
     evaluate_branch.add_argument("--manifest", type=Path, required=True)
     evaluate_branch.add_argument("--cache-index", type=Path, required=True)
@@ -2603,6 +2646,12 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate_branch.add_argument("--batch-size", type=int, default=8)
     evaluate_branch.add_argument("--workers", type=int, default=0)
     evaluate_branch.add_argument("--audio-model", default="facebook/wav2vec2-base")
+    # Must match the checkpoint. See the note in `_build_branch_model`.
+    evaluate_branch.add_argument(
+        "--architecture",
+        choices=("convnext-tiny", "efficientnet-b0"),
+        default="efficientnet-b0",
+    )
     evaluate_branch.set_defaults(handler=_evaluate_branch)
 
     evaluate_predictions = evaluate_commands.add_parser("predictions")
@@ -2699,6 +2748,19 @@ def build_parser() -> argparse.ArgumentParser:
     train_visual = train_commands.add_parser("visual")
     add_branch_arguments(train_visual)
     train_visual.add_argument("--freeze-epochs", type=int, default=3)
+    # Spelled out rather than imported from branches/visual.py, which pulls in
+    # torch and would pay that import on every CLI invocation just to build the
+    # parser. `test_visual_architecture_choices_match_the_builder` fails if the
+    # two ever drift.
+    train_visual.add_argument(
+        "--architecture",
+        choices=("convnext-tiny", "efficientnet-b0"),
+        default="efficientnet-b0",
+        help=(
+            "Visual backbone. The default is the frozen baseline; convnext-tiny "
+            "is the VIS-01 challenger, compared under the same training budget."
+        ),
+    )
     train_visual.set_defaults(handler=_binary_branch_train)
 
     train_audio = train_commands.add_parser("audio")

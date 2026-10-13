@@ -40,7 +40,9 @@ def select_shard(
         raise ValueError("Shard count must be positive")
     if not 0 <= index < count:
         raise ValueError("Shard index must be in [0, count)")
-    return [record for position, record in enumerate(records) if position % count == index]
+    return [
+        record for position, record in enumerate(records) if position % count == index
+    ]
 
 
 def build_cache(

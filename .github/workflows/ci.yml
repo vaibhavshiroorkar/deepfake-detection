@@ -22,7 +22,11 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install
-        run: uv sync --extra cpu --extra media --extra ml --extra tracking --group dev
+        # `dashboard` is needed for the tests to actually run rather than skip.
+        # The dashboard tests guard themselves with `importorskip("streamlit")`,
+        # so without this extra they are silently skipped and the dashboard goes
+        # untested in CI.
+        run: uv sync --extra cpu --extra media --extra ml --extra tracking --extra dashboard --group dev
       - name: Lint
         run: uv run ruff check src tests
       - name: Format

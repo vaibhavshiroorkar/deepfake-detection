@@ -107,7 +107,9 @@ class CrossModalAttention(nn.Module):
         batch, time, _ = values.shape
         return values.view(batch, time, self.num_heads, self.head_dim).transpose(1, 2)
 
-    def forward(self, *, query: Tensor, key: Tensor, value: Tensor) -> CrossAttentionOutput:
+    def forward(
+        self, *, query: Tensor, key: Tensor, value: Tensor
+    ) -> CrossAttentionOutput:
         batch, queries, _ = query.shape
         heads_query = self._split(self.query_projection(query))
         heads_key = self._split(self.key_projection(key))

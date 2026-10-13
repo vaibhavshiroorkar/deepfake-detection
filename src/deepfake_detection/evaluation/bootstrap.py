@@ -60,7 +60,25 @@ def cluster_bootstrap_interval(
     for _ in range(samples):
         selected = generator.choice(identities, size=len(identities), replace=True)
         resampled = [item for identity in selected for item in grouped[str(identity)]]
-        values.append(float(statistic(resampled)))
+        # A resample can land on one class even when the full set has both, and
+        # a statistic that needs both raises. Such a draw is skipped and counted
+        # out, exactly as `bootstrap_binary_metrics` and `paired_auc_difference`
+        # already do, so `successful_samples` means survivors here too.
+        #
+        # The callers used to decide this themselves and disagreed: five scripts
+        # returned 0.5, five raised. Returning 0.5 is not neutral. It puts a
+        # point mass in the middle of the percentile distribution, which drags
+        # the lower bound down and the upper bound in, so an interval could
+        # contain 0.5 because of the fallback rather than because of the data.
+        # Raising lost the whole interval over one degenerate draw. Skipping
+        # does neither, and conditions the interval on draws where the statistic
+        # is defined, which is what the sibling functions already assume.
+        try:
+            values.append(float(statistic(resampled)))
+        except ValueError:
+            continue
+    if not values:
+        raise ValueError("No valid bootstrap samples contained both classes")
     tail = (1 - confidence) / 2
     return BootstrapInterval(
         estimate=float(statistic(items)),

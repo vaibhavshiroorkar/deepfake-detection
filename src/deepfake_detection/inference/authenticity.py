@@ -71,7 +71,9 @@ class AuthenticityDensity:
     flag_rate: float
 
     def distance(self, features: np.ndarray) -> float:
-        reduced = (np.asarray(features, dtype=np.float64) - self.mean) @ self.components.T
+        reduced = (
+            np.asarray(features, dtype=np.float64) - self.mean
+        ) @ self.components.T
         delta = reduced - self.centre
         return float(np.sqrt(delta @ self.inverse @ delta))
 

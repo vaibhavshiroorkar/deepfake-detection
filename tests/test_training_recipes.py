@@ -27,6 +27,30 @@ def test_branch_collation_stacks_values_and_cue_labels() -> None:
     assert batch.clip_ids == ("a", "b")
     assert batch.values.shape == (2, 2)
     assert batch.labels.tolist() == [0.0, 1.0]
+    assert batch.valid_samples is None
+
+
+def test_branch_collation_keeps_valid_lengths_only_when_every_clip_has_one() -> None:
+    quality = QualityReport(1.0, True, True, False, 0.0)
+
+    def item(clip_id: str, valid: int | None) -> BranchItem:
+        return BranchItem(
+            clip_id,
+            torch.ones(2),
+            torch.tensor(0.0),
+            quality,
+            valid_samples=None if valid is None else torch.tensor(valid),
+        )
+
+    both = collate_branch_items([item("a", 5), item("b", 7)])
+    assert both.valid_samples is not None
+    assert both.valid_samples.tolist() == [5, 7]
+
+    # One clip from a cache that predates the field drops the mask for the whole
+    # batch. Filling the unknown row with the full width would mask some clips
+    # and not others inside one softmax.
+    mixed = collate_branch_items([item("a", 5), item("b", None)])
+    assert mixed.valid_samples is None
 
 
 def test_sync_loss_rewards_the_correct_offset_class() -> None:

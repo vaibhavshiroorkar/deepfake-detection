@@ -357,7 +357,13 @@ class Preprocessor:
             audio_clipped=False,
             av_duration_delta_sec=0.0,
         )
-        return self._prepared(record, media_path, quality, audio_view=audio_view)
+        return self._prepared(
+            record,
+            media_path,
+            quality,
+            audio_view=audio_view,
+            audio_valid_samples=valid,
+        )
 
     def _prepared(
         self,
@@ -367,6 +373,7 @@ class Preprocessor:
         *,
         visual_view=None,
         audio_view=None,
+        audio_valid_samples: int | None = None,
     ) -> PreparedClip:
         """A PreparedClip carrying the same provenance the video paths write.
 
@@ -393,6 +400,7 @@ class Preprocessor:
                 config=self.config,
                 code_version=self.code_version,
             ),
+            audio_valid_samples=audio_valid_samples,
         )
 
     def prepare(self, record: ClipRecord, media_path: Path) -> PreparedClip:
@@ -566,4 +574,6 @@ class Preprocessor:
                 config=self.config,
                 code_version=self.code_version,
             ),
+            audio_valid_samples=audio_valid_samples,
+            sync_audio_valid_samples=sync_valid_samples,
         )

@@ -11,6 +11,9 @@ import pytest
 pytest.importorskip("torch")
 import torch
 
+pytest.importorskip("streamlit")
+
+
 from deepfake_detection.dashboard.lib import cross_modal
 from deepfake_detection.streams.cross_attention import (
     CrossModalAttention,

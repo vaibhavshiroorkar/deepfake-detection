@@ -2,9 +2,7 @@ from deepfake_detection.dashboard.workflow import StepState, workflow_state
 
 
 def test_empty_workflow_waits_for_video() -> None:
-    state = workflow_state(
-        has_upload=False, has_prepared=False, has_prediction=False
-    )
+    state = workflow_state(has_upload=False, has_prepared=False, has_prediction=False)
     assert state.video is StepState.READY
     assert state.preprocessing is StepState.WAITING
     assert state.visual_model is StepState.READY
@@ -12,9 +10,7 @@ def test_empty_workflow_waits_for_video() -> None:
 
 
 def test_prepared_video_unlocks_prediction() -> None:
-    state = workflow_state(
-        has_upload=True, has_prepared=True, has_prediction=False
-    )
+    state = workflow_state(has_upload=True, has_prepared=True, has_prediction=False)
     assert state.video is StepState.COMPLETE
     assert state.preprocessing is StepState.COMPLETE
     assert state.visual_model is StepState.READY
@@ -22,9 +18,7 @@ def test_prepared_video_unlocks_prediction() -> None:
 
 
 def test_prediction_completes_the_workflow() -> None:
-    state = workflow_state(
-        has_upload=True, has_prepared=True, has_prediction=True
-    )
+    state = workflow_state(has_upload=True, has_prepared=True, has_prediction=True)
     assert state.prediction is StepState.COMPLETE
 
 

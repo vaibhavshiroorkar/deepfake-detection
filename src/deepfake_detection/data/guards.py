@@ -38,9 +38,7 @@ def reject_evaluation_only(dataset: str, *, operation: str) -> None:
         )
 
 
-def reject_evaluation_only_datasets(
-    datasets: Iterable[str], *, operation: str
-) -> None:
+def reject_evaluation_only_datasets(datasets: Iterable[str], *, operation: str) -> None:
     """The same rule for a mixed set of datasets, so a blend cannot smuggle one in."""
     for dataset in sorted(set(datasets)):
         reject_evaluation_only(dataset, operation=operation)
