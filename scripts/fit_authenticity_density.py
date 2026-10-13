@@ -66,6 +66,15 @@ def main(argv: list[str] | None = None) -> int:
         "small.",
     )
     parser.add_argument("--seed", type=int, default=17)
+    parser.add_argument(
+        "--splits",
+        type=int,
+        default=20,
+        help="Also refit on this many reference splits, seeds counting up from "
+        "--seed, and report the spread. One split is one draw: at a 0.10 flag "
+        "rate, seed 17 intercepts 74.4 percent where twenty splits range from "
+        "49.4 to 83.1.",
+    )
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument(
         "--save-model",
@@ -86,34 +95,40 @@ def main(argv: list[str] | None = None) -> int:
 
     from sklearn.decomposition import PCA
 
-    # The reference splits in two. One half fits the model, the other sets the
-    # threshold. Setting it on the fitted half is what produced a first run
-    # where held-out clips from the *same* corpus flagged at 100 percent: the
-    # distances the model was fitted on are not the distances it will see.
-    rng = np.random.default_rng(arguments.seed)
-    index = rng.permutation(int(reference.sum()))
-    pool = features[reference]
-    split = len(index) // 2
-    fitted, calibration = pool[index[:split]], pool[index[split:]]
+    def fit(seed: int):
+        # The reference splits in two. One half fits the model, the other sets
+        # the threshold. Setting it on the fitted half is what produced a first
+        # run where held-out clips from the *same* corpus flagged at 100
+        # percent: the distances the model was fitted on are not the distances
+        # it will see.
+        rng = np.random.default_rng(seed)
+        index = rng.permutation(int(reference.sum()))
+        pool = features[reference]
+        split = len(index) // 2
+        fitted, calibration = pool[index[:split]], pool[index[split:]]
 
-    components = min(arguments.components, len(fitted) - 1, features.shape[1])
-    projection = PCA(n_components=components, whiten=False).fit(fitted)
-    reduced = projection.transform(fitted)
-    mean = reduced.mean(axis=0)
-    centred = reduced - mean
-    covariance = centred.T @ centred / (len(reduced) - 1)
-    covariance += arguments.shrinkage * np.trace(covariance) / components * np.eye(
-        components
-    )
-    inverse = np.linalg.inv(covariance)
+        components = min(arguments.components, len(fitted) - 1, features.shape[1])
+        # The exact solver. With 768 dimensions and 125 rows, "auto" picks the
+        # randomized one, and with no random state the same seed then gave
+        # 75.0 and 77.5 percent interception on consecutive runs.
+        projection = PCA(n_components=components, svd_solver="full").fit(fitted)
+        reduced = projection.transform(fitted)
+        mean = reduced.mean(axis=0)
+        centred = reduced - mean
+        covariance = centred.T @ centred / (len(reduced) - 1)
+        covariance += (
+            arguments.shrinkage * np.trace(covariance) / components * np.eye(components)
+        )
+        inverse = np.linalg.inv(covariance)
 
-    def distance(values):
-        delta = projection.transform(values) - mean
-        return np.sqrt(np.einsum("ij,jk,ik->i", delta, inverse, delta))
+        def distance(values):
+            delta = projection.transform(values) - mean
+            return np.sqrt(np.einsum("ij,jk,ik->i", delta, inverse, delta))
 
-    threshold = float(
-        np.quantile(distance(calibration), 1 - arguments.flag_rate)
-    )
+        threshold = float(np.quantile(distance(calibration), 1 - arguments.flag_rate))
+        return projection, mean, inverse, threshold, distance
+
+    projection, mean, inverse, threshold, distance = fit(arguments.seed)
     print(
         f"fitted on {int(reference.sum())} authentic clips from "
         f"{arguments.reference!r}, {features.shape[1]} dimensions"
@@ -137,6 +152,26 @@ def main(argv: list[str] | None = None) -> int:
         print(
             f"{group:32} {len(values):6} {np.median(values):16.2f} {flagged:8.1%}"
         )
+
+    spread: dict[str, dict] = {}
+    if arguments.splits > 1:
+        draws: dict[str, list[float]] = {g: [] for g in results}
+        for seed in range(arguments.seed, arguments.seed + arguments.splits):
+            *_, split_threshold, split_distance = fit(seed)
+            for group in results:
+                values = split_distance(features[groups == group])
+                draws[group].append(float((values > split_threshold).mean()))
+        print(f"\nflagged over {arguments.splits} reference splits")
+        for group, values in draws.items():
+            spread[group] = {
+                "mean": float(np.mean(values)),
+                "min": float(np.min(values)),
+                "max": float(np.max(values)),
+            }
+            print(
+                f"{group:32} mean {np.mean(values):6.1%}, "
+                f"{np.min(values):.1%} to {np.max(values):.1%}"
+            )
 
     from deepfake_detection.inference.authenticity import AuthenticityDensity, save
 
@@ -166,6 +201,9 @@ def main(argv: list[str] | None = None) -> int:
                 "flag_rate": arguments.flag_rate,
                 "threshold": threshold,
                 "groups": results,
+                "seed": arguments.seed,
+                "splits": arguments.splits,
+                "split_spread": spread,
             },
             indent=2,
             sort_keys=True,

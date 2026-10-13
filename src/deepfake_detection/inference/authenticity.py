@@ -12,8 +12,9 @@ there needs a 0.9998 cut-off at which nothing is detected. The motion gate next
 door catches 5.7 percent of those accusations, because the clips are unfamiliar
 in appearance rather than in motion.
 
-This catches 79.4 percent of them at an 8.7 percent abstention rate on familiar
-genuine footage, taking false accusations from about 91 percent to about 19.
+This catches 74.4 percent of them at an 8.7 percent abstention rate on familiar
+genuine footage, and 67.3 percent averaged over twenty reference splits, taking
+false accusations from about 91 percent to between a quarter and a third.
 It does not reach zero at any setting, and the gain is paid for in abstentions,
 so it is only useful where the system may answer "outside what I was trained on"
 instead of being forced to choose.

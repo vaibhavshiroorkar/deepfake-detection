@@ -218,9 +218,10 @@ abstaining on partial coverage buys no accuracy; this shows abstaining on low
 confidence cannot work either, because confidence does not separate right from
 wrong once the corpus changes. It is also why the density model in F17 works:
 it scores the input rather than trusting the detector's certainty, and it
-intercepts 79.4 percent of unfamiliar genuine clips at 8.7 percent abstention on
-familiar ones, taking false accusations on unfamiliar real video from about 91
-percent to roughly 19.
+intercepts 74.4 percent of unfamiliar genuine clips at 8.7 percent abstention on
+familiar ones, 67.3 percent averaged over twenty reference splits, taking false
+accusations on unfamiliar real video from about 91 percent to between a quarter
+and a third.
 
 **Prior work exists** on miscalibration under distribution shift, which is a
 well-established result. Our contribution is the operational consequence

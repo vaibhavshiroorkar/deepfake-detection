@@ -12,6 +12,17 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- `fit_authenticity_density.py` is now deterministic. Its PCA used sklearn's
+  randomized solver with no seed, so one seed gave 75.0 and 77.5 percent
+  interception on consecutive runs, and the served gate model was a different
+  fit from the report that described it. The exact solver gives byte-identical
+  models. The gate's figure moves from 79.4 to 74.4 percent at 8.7 percent
+  abstention, and the report now carries the spread over twenty reference
+  splits, 49.4 to 83.1. The served model file was refitted.
+- Tried Perception Encoder in the authenticity gate and kept DINOv3. PE
+  intercepts 32.8 percent of unfamiliar genuine clips over twenty splits against
+  DINOv3's 67.3, and abstains on more familiar ones. Recorded as
+  `A-gate-encoder`.
 - Ran the three missing FaceForensics++ family-holdout arms and recorded all six
   as `C-ffpp-family-holdout`. Added `scripts/summarize_family_holdout.py`, which
   joins each held-out arm with the all-family baseline. An unseen family costs
@@ -391,9 +402,9 @@ Experiment metrics belong in the experiment tracker, not this file.
   features of authentic clips only, scored by Mahalanobis distance. It exists
   because the motion gate intercepted only 5.7 percent of the false accusations
   on Celeb-DF: those clips are unfamiliar in appearance, not in motion.
-- It intercepts 79.4 percent of unfamiliar genuine clips while abstaining on 8.7
-  percent of familiar ones, taking false accusations on unfamiliar real video
-  from about 91 percent to about 19. It does not reach zero and nothing does.
+- It intercepts 74.4 percent of unfamiliar genuine clips while abstaining on 8.7
+  percent of familiar ones, and 67.3 percent averaged over twenty reference
+  splits. It does not reach zero and nothing does.
 - Two of my own errors were caught while measuring it. A threshold set on the
   fitted clips made held-out clips from the same corpus flag at 100 percent, and
   a reference split taken from an ordered directory listing made two different

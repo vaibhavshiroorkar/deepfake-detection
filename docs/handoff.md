@@ -10,7 +10,7 @@ a calibrated late-fusion head. Design B replaces them with configurable streams
 and a feature-level head. Both score through one evaluation path, every headline
 number carries an identity-clustered interval, and every number resolves to a
 row in [result traceability](research/result-traceability.md). Thirty-four
-findings are recorded in [findings](research/findings.md), including the seven
+findings are recorded in [findings](research/findings.md), including the eight
 claims this project made and later withdrew.
 
 **Track two, open-world generated media**, is newer and is where the work is

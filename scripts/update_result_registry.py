@@ -119,9 +119,30 @@ RESULTS: tuple[Result, ...] = (
         predictions=Path("runs/probe-20260914/ood2-dinov3.json"),
         mlflow=(),
         decision=(
-            "Intercepts 79.4 percent of unfamiliar genuine clips at 8.7 percent "
-            "abstention on familiar ones, taking false accusations from 91 to "
-            "about 19 percent"
+            "Intercepts 74.4 percent of unfamiliar genuine clips at 8.7 percent "
+            "abstention on familiar ones; 67.3 percent averaged over twenty "
+            "reference splits, 49.4 to 83.1"
+        ),
+        seeds=1,
+    ),
+    Result(
+        result_id="A-gate-encoder",
+        paper_location="Results, abstaining instead of accusing",
+        command=(
+            "python scripts/extract_probe_features.py --folder data/ood-probe "
+            "--encoder pe --output runs/probe-20260914/ood2-pe.npz; "
+            "python scripts/fit_authenticity_density.py --features "
+            "runs/probe-20260914/ood2-pe.npz --reference real --flag-rate 0.10 "
+            "--encoder pe --output runs/probe-20260914/ood2-pe-density-0.10.json "
+            "--save-model runs/probe-20260914/authenticity-density-pe.npz"
+        ),
+        report=Path("runs/probe-20260914/ood2-pe-density-0.10.json"),
+        predictions=Path("runs/probe-20260914/ood2-pe.json"),
+        mlflow=(),
+        decision=(
+            "Perception Encoder intercepts 32.8 percent over twenty splits "
+            "against DINOv3's 67.3 and abstains on more familiar clips; the "
+            "gate keeps DINOv3"
         ),
         seeds=1,
     ),

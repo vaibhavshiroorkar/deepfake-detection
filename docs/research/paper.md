@@ -584,6 +584,18 @@ loss is 2.1843 against a chance cross-entropy of ln(8) = 2.079 for the 8-way tas
 subtracting an estimated contrastive contribution puts offset cross-entropy near
 2.05, marginally under chance. That is suggestive and it is not a measurement.
 
+The design chose this offset objective over a global fake label, on the grounds
+that a fake need not have broken lip sync. That ablation has now run
+(`A-sync-label-mode`), same corpus, budget and seed. The shipped offset arm's
+best validation loss is 2.1842 against a chance of ln(8) = 2.079; the rejected
+binary arm reaches 0.0558 against ln(2) = 0.693. The two losses cannot be
+compared with each other, only each with its own chance level. Read that way,
+the shipped objective was not learned at this budget, and the rejected one was
+learned easily because whole-clip fakes are separable by generator artifacts,
+the shortcut 5.1 documents. Neither arm measures synchronisation. No ROC-AUC is
+given for the binary arm, because the anomaly reduction assumes offset classes
+and a fair reduction for both arms was not fixed before the losses were seen.
+
 ### 5.17 One branch transfers and two do not
 
 Results: `A-visual-seeds`, `A-audio-crosscorpus-gap`, `A-sync-seeds`.
@@ -697,6 +709,91 @@ four commercial generators were collected through one platform and may resemble
 each other more than the open-source three do. That explanation is untested, and
 the gap should not be quoted until it is.
 
+### 5.21 The region of interest decides the result
+
+Results: `C-ffpp-logo`, `C-ffpp-family-holdout`.
+
+The full-frame design that works on generated video fails on face manipulation.
+The same frozen-probe pipeline, run on FaceForensics++ with one manipulation
+family held out per arm, reads macro 0.5387, and every arm's interval contains
+0.5. FF++ alters the face alone, and a 1280x720 frame resized to 224 leaves the
+face a few dozen pixels across.
+
+Face crops through the fine-tuned EfficientNet visual stream, retrained six times
+with one family held out each time, do much better:
+
+| Held-out family | Seen | Unseen |
+| --- | ---: | ---: |
+| FaceSwap | 0.8110 | 0.5195 [0.4718, 0.5663] |
+| FaceShifter | 0.8531 | 0.7077 [0.6680, 0.7497] |
+| Deepfakes | 0.8912 | 0.7771 [0.7365, 0.8216] |
+| Face2Face | 0.8600 | 0.7839 [0.7505, 0.8237] |
+| NeuralTextures | 0.8486 | 0.7863 [0.7534, 0.8231] |
+| DeepFakeDetection | 0.9817 | 0.9322 [0.8816, 0.9739] |
+| macro mean | 0.8743 | 0.7511 |
+
+"Seen" is the model trained on all six families, scored on the same test clips.
+An unseen family costs 0.1231 macro. Two variables separate this table from the
+full-frame one, the region and the model, so the attribution is not clean. The
+direction is.
+
+Two rows need reading with care. FaceSwap, the only graphics-based identity swap
+in the set, falls to chance under both pipelines, so a detector that has seen
+learned swaps does not recognise it. DeepFakeDetection barely moves, likely
+because its fakes come from actors filmed for the dataset while every real test
+clip is a YouTube original, so the model can separate them on footage alone.
+FF++ carries no audio, so this is the visual stream only; the three-branch
+version on FakeAVCeleb was not run.
+
+The design consequence is that neither region is right on its own. Full frames
+suit media generated whole; face crops suit manipulation of a real face. A
+system that covers both has to route by what the input contains. This also sets
+the scale of the problems against each other: an unseen manipulation family
+costs 0.12, while the same stream trained on all six families reads 0.4920 on
+DFDC (5.6a). An unseen capture pipeline costs the rest of the signal.
+
+### 5.22 Abstaining instead of accusing
+
+Results: `A-false-alarms`, `A-authenticity-density`, `A-gate-encoder`.
+
+At the fixed 0.50 threshold the visual branch calls genuine clips fake at 0.00
+percent in-domain, 4.14 percent on DFDC and 90.97 percent on Celeb-DF: 141 of 155
+authentic videos accused. No threshold repairs this. Zero false alarms on
+Celeb-DF needs a cut-off of 0.9998, where nothing is detected, because the two
+score distributions overlap almost completely. 5.15 already showed the model is
+more confident when wrong, so abstaining on low confidence cannot help either.
+
+What does help is asking a different question: is this footage like anything
+the model was trained on? A Gaussian over frozen DINOv3 features of authentic
+clips only, scored by Mahalanobis distance, never sees a fake. Fitted on
+FakeAVCeleb's genuine clips:
+
+| Flag rate | Abstention, familiar | Intercepted, unfamiliar | Over 20 reference splits |
+| --- | ---: | ---: | --- |
+| 0.05 | 5.3 percent | 65.0 percent | 52.4 percent, 38.8 to 69.4 |
+| 0.10, served | 8.7 percent | 74.4 percent | 67.3 percent, 49.4 to 83.1 |
+| 0.20 | 20.7 percent | 89.4 percent | 81.8 percent, 68.1 to 91.2 |
+
+"Familiar" is held-out FakeAVCeleb genuine footage; "unfamiliar" is Celeb-DF's.
+At the served setting false accusations on unfamiliar genuine video fall from
+about 91 percent to between a quarter and a third. They do not reach zero at any
+setting, and the gain is paid in abstentions, so this is only useful where the
+system may answer "outside what I was trained on".
+
+The table is itself a validity-check result. Its first version read 79.4
+percent at the served setting and could not be reproduced. The PCA step used a
+randomized solver with no seed, so the same split gave 75.0 and 77.5 percent on
+consecutive runs, and the served model was a different fit from the report that
+described it. The fit is now exact and the report carries the split spread,
+because one split is one draw: the served split reads 74.4 percent, and twenty
+splits range from 49.4 to 83.1.
+
+The encoder that wins on unseen generators loses here. Perception Encoder
+intercepts 32.8 percent over twenty splits against DINOv3's 67.3, and abstains
+on more familiar clips. Recognising an unseen generator and recognising
+unfamiliar capture are different tasks, so the open-world probe uses Perception
+Encoder and the gate keeps DINOv3.
+
 ## 6. Failures that changed a result
 
 The failure log holds about 50 entries. These are the ones that changed a
@@ -752,11 +849,14 @@ The cross-modal streams do not measure correspondence (5.1), so the
 architecture's stated mechanism is unverified and the streams should be
 described by what they do rather than by what they are named.
 
-Required evaluations still not run: leave-one-method-family-out, the
-authentic-only against global-fake sync label comparison, and the
-leading-silence-removal ablation. The identity-strict stress subset and the
-compression, noise and resolution stress tests have since been run and are
-reported in 5.12 and 5.14.
+Two required evaluations are only partly run. Leave-one-method-family-out ran
+on the visual stream over FF++ (5.21), which has no audio; the three-branch
+version on FakeAVCeleb did not run. The leading-silence ablation needs the view
+cache rebuilt with leading silence kept, and that rebuild did not happen. The
+half-second waveform shift in 5.14 tests the shortcut at inference only, so it
+is evidence about this checkpoint rather than the ablation. The sync label
+comparison (5.16), the identity-strict subset (5.12) and the compression, noise
+and resolution tests (5.14) have run.
 
 One exit criterion of the research design has never been measured at all: "the
 sync offset confidence interval must exclude chance". The sync branch's history

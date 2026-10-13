@@ -586,7 +586,7 @@ clears a high-precision bar, "no evidence of manipulation" otherwise, and
 "outside what I was trained on" when the distribution gate fires. Calling the
 second of those "real" is the claim the measurements do not support.
 
-### F17. A density model over authentic footage cuts false accusations by four fifths
+### F17. A density model over authentic footage cuts false accusations by about two thirds
 
 Result: `A-authenticity-density`. F16 measured the problem: 90.97 percent of
 genuine Celeb-DF clips are called fake, and no threshold fixes it because the
@@ -601,15 +601,35 @@ statistic cannot see that.
 by Mahalanobis distance, does much better.** No fake example is involved, so it
 generalises to capture conditions nobody anticipated.
 
-| Abstention on familiar genuine footage | Unfamiliar genuine clips intercepted |
-| --- | --- |
-| 5.3 percent | 64.4 percent |
-| 8.7 percent | 79.4 percent |
-| 21.3 percent | 90.6 percent |
+| Flag rate | Abstention, familiar | Intercepted, unfamiliar | Over 20 reference splits |
+| --- | ---: | ---: | --- |
+| 0.05 | 5.3 percent | 65.0 percent | 52.4 percent, 38.8 to 69.4 |
+| 0.10, served | 8.7 percent | 74.4 percent | 67.3 percent, 49.4 to 83.1 |
+| 0.20 | 20.7 percent | 89.4 percent | 81.8 percent, 68.1 to 91.2 |
 
-At the middle setting the false-accusation rate on unfamiliar real video falls
-from about 91 percent to roughly 19 percent, and to about 9 percent if
-abstaining on a fifth of familiar clips is acceptable.
+The middle columns are the served split, seed 17. The last column refits on
+twenty different halvings of the 250 reference clips and reports the mean and
+range of interception. The served split is a favourable draw: seed 17 reads
+74.4 percent where the mean is 67.3. At the served setting the false-accusation
+rate on unfamiliar real video falls from about 91 percent to roughly a quarter
+on the served split, and to about a third on an average one.
+
+**The first version of this table was not reproducible.** It read 64.4, 79.4 and
+90.6 percent. The PCA step had no fixed solver, and with 768 dimensions over 125
+rows sklearn picks a randomized one, so the same seed gave 75.0, 77.5 and 77.5
+percent on three consecutive runs. The served model file and the report it was
+quoted from were not even the same fit: their thresholds differ, 6.7136 against
+6.6959. The solver is now exact, two runs produce byte-identical models, and
+the report carries the split spread so one draw cannot stand in for the method.
+
+**Perception Encoder does worse here.** It beats DINOv3 on unseen generators
+(F33), so it was tried in the gate on the same 560 clips. At the 0.10 flag rate
+it intercepts 38.8 percent of unfamiliar genuine clips on the served split and
+32.8 percent over twenty splits, against DINOv3's 74.4 and 67.3, while
+abstaining on 16.0 percent of familiar clips rather than 8.7. Every one of the
+twenty splits favours DINOv3. The gate keeps DINOv3. Detecting an unseen
+generator and recognising unfamiliar capture are different tasks, and the
+encoder that suits one does not suit the other (`A-gate-encoder`).
 
 Two things this cost to get right, both my own errors caught by a check rather
 than by reasoning.
@@ -1336,3 +1356,4 @@ closer to in-domain, where the seed spread was not measured.
 | Training on a more varied corpus would improve transfer | F10 | FF++ c23 has six manipulation families against FakeAVCeleb's, and transfer to DFDC got worse, from 0.7611 to 0.4920 |
 | Camera motion makes the model call genuine clips fake | F6 | Measured with the opposite sign: motion lowers the fake score, and the failure on moving video is missed detections, not false alarms |
 | A clip-level bootstrap would report intervals several times too narrow | none | Measured the other way: the identity-clustered interval on DFDC is narrower, 0.0776 against 0.1065, because identities there carry balanced class proportions. Clustering by identity is still right, because it matches the question, not because it is wider |
+| The density gate intercepts 79.4 percent of unfamiliar genuine clips | F17 | One draw from an unseeded randomized PCA. The exact fit reads 74.4 percent on the same split and 67.3 percent averaged over twenty splits |
