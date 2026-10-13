@@ -17,8 +17,8 @@ def _page_body(page: AppTest) -> str:
 @pytest.mark.parametrize(
     ("page_path", "required_text"),
     (
-        ("audio_branch.py", ("prototype", "full training is incomplete")),
-        ("sync_branch.py", ("prototype", "full training is incomplete")),
+        ("audio_branch.py", ("prototype", "at chance cross-corpus", "no checkpoint")),
+        ("sync_branch.py", ("prototype", "below chance", "no checkpoint")),
         ("fusion.py", ("locked", "software fixture")),
     ),
 )

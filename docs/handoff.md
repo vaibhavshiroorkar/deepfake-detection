@@ -307,8 +307,9 @@ receive. The Streams pages build EfficientNet-B0 or DINOv3 from one
 whatever checkpoint you pick, from `checkpoints/<stream>/` or from an MLflow
 run, and report exactly which tensors did and did not fit.
 
-Audio and sync are prototype pages. Full training is incomplete, so they load no
-checkpoint and calculate no probability. Fusion is locked: its current artifact
+Audio and sync are teaching pages. Both branches are trained at three seeds,
+and the pages state what that measured: audio at chance cross-corpus, sync below
+chance at every seed. They load no checkpoint and calculate no probability. Fusion is locked: its current artifact
 is a software fixture, so the page does not load it or return a probability.
 
 The dashboard reports missing local evidence as an error. It does not query a

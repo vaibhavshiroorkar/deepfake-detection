@@ -20,14 +20,16 @@ def render_audio_branch(*, embedded: bool = False) -> None:
         "attention pool, and linear head produce an audio-spoof logit."
     )
     st.write("Output: one uncalibrated audio logit and a clip embedding.")
-    st.info("This is a prototype. Full training is incomplete.")
-    st.write(
-        "No prototype checkpoint is loaded here and this page does not calculate a "
-        "probability."
+    st.info(
+        "Trained at three seeds, and at chance cross-corpus: ROC-AUC 0.5054 "
+        "[0.4747, 0.5371] on DFDC against 0.7739 in-domain (F30)."
     )
     st.write(
-        "Unlock condition: train and evaluate the branch with valid-length masks, "
-        "source-disjoint evidence, and the planned candidate comparison."
+        "No checkpoint is loaded here and this page does not calculate a probability."
+    )
+    st.write(
+        "Unlock condition: a corpus with manipulated audio that is not built on "
+        "VoxCeleb2, so the branch can be scored on capture it has not seen."
     )
 
 

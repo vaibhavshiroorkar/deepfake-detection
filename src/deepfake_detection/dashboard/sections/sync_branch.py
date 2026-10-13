@@ -22,14 +22,17 @@ def render_sync_branch(*, embedded: bool = False) -> None:
         "temporal Transformers compare aligned tokens across eight offset classes."
     )
     st.write("Output: an offset-class vector and a raw synchronization anomaly logit.")
-    st.info("This is a prototype. Full training is incomplete.")
-    st.write(
-        "No prototype checkpoint is loaded here and this page does not calculate a "
-        "probability."
+    st.info(
+        "Trained at three seeds, and below chance at all three: ROC-AUC 0.4364 "
+        "to 0.4931 (F26). Its offset loss never fell below the chance level of "
+        "ln(8) (F32)."
     )
     st.write(
-        "Unlock condition: complete source-disjoint training and evaluate the "
-        "alignment objective before using synchronization evidence."
+        "No checkpoint is loaded here and this page does not calculate a probability."
+    )
+    st.write(
+        "Unlock condition: an alignment objective the branch can learn, with an "
+        "offset interval that excludes chance."
     )
 
 
