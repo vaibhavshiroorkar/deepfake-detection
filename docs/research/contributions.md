@@ -103,15 +103,17 @@ the shortcuts it caught before reporting, with the check that caught each one.
 
 ## 4. A project that publishes the claims it withdrew
 
-**Measured.** The superseded table in [findings](findings.md), seven rows.
+**Measured.** The superseded table in [findings](findings.md), eight rows.
 
 Claims this project made and later retracted with the measurement that killed
 them, including: that emotion's diagonal mass was six times chance (it was
 compared against a different query length, and at 8 steps 0.3438 *is* chance);
 that freezing BatchNorm was a clean win (it is a trade, F2); that training on a
 more varied corpus would improve transfer (FF++ made DFDC transfer worse, 0.7611
-to 0.4920, F10); and that camera motion causes false alarms (measured with the
-opposite sign, F6).
+to 0.4920, F10); that camera motion causes false alarms (measured with the
+opposite sign, F6); and that the density gate intercepts 79.4 percent of
+unfamiliar genuine clips (one draw from an unseeded solver; 74.4 on the same
+split, 67.3 over twenty, F17).
 
 **Not found in prior work** at this granularity. Papers report limitations;
 a retraction log with the superseding measurement for each withdrawn claim is

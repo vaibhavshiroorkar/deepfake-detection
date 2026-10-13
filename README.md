@@ -4,6 +4,10 @@ This repository tests whether three cue-specific detectors generalize better tog
 
 The branches inspect visual artifacts, audio spoofing, and mouth-audio alignment. The final model uses calibrated late fusion. It does not issue a full verdict when required evidence is missing.
 
+A second track asks whether a frozen encoder with a linear probe can detect a video generator it has never seen. On DF26, holding out each of seven generators in turn, a Perception Encoder probe reads macro ROC-AUC 0.7527.
+
+The answer to the first question is no on our data: fusion does not beat the visual branch cross-corpus. The [paper draft](docs/research/paper.md) reports both tracks, and every number in it resolves to a row in [result traceability](docs/research/result-traceability.md). The [handoff](docs/handoff.md) is the shortest route to the current state.
+
 ## Project documents
 
 - [Research design](docs/research-design.md): question, protocol, ablations, and exit criteria.
