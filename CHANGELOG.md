@@ -12,6 +12,16 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Cut the feature export's peak commit charge from 6.1 to 5.0 GB.
+  `load_checkpoint` now memory-maps the file when no optimizer is restored, so
+  the AdamW state that makes up most of a checkpoint is never read. Training
+  resumes still read the whole file.
+- `FeatureStore.write` writes to a temporary file and swaps it in, so a process
+  killed mid-append no longer truncates the store and loses earlier folds.
+- `run_crossfit_seeds.ps1` skips an out-of-fold export whose report exists, and
+  stops cleanly between stages when free commit falls below
+  `-MinFreeCommitGB` (default 12). The first run was stopped for low memory at
+  the first export, with 54 GB of commit held by no live process.
 - `fit_authenticity_density.py` is now deterministic. Its PCA used sklearn's
   randomized solver with no seed, so one seed gave 75.0 and 77.5 percent
   interception on consecutive runs, and the served gate model was a different

@@ -55,6 +55,28 @@ def test_feature_store_rejects_duplicate_provenance_keys(tmp_path: Path) -> None
         store.write([duplicate])
 
 
+def test_feature_store_keeps_earlier_rows_when_an_append_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from deepfake_detection.fusion import store as store_module
+
+    store = FeatureStore(tmp_path / "features.parquet")
+    first = record("clip-1", "visual")
+    store.write([first])
+
+    def killed_mid_write(table, where) -> None:
+        Path(where).write_bytes(b"truncated")
+        raise OSError("killed")
+
+    monkeypatch.setattr(store_module.parquet, "write_table", killed_mid_write)
+    with pytest.raises(OSError, match="killed"):
+        store.write([record("clip-2", "visual")])
+
+    monkeypatch.undo()
+    assert store.read() == (first,)
+    assert list(tmp_path.iterdir()) == [tmp_path / "features.parquet"]
+
+
 def test_feature_store_treats_unavailable_rows_as_missing_coverage(
     tmp_path: Path,
 ) -> None:

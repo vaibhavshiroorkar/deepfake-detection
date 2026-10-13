@@ -122,7 +122,13 @@ def load_checkpoint(
     model: nn.Module,
     optimizer: Optimizer | None = None,
 ) -> CheckpointState:
-    payload = torch.load(path, map_location="cpu", weights_only=True)
+    # Without an optimizer to restore, map the file instead of reading it. A
+    # checkpoint is about two thirds AdamW state, 1.1 GB for the audio branch,
+    # and a full read commits all of it although only the weights are used.
+    # On Windows that commit charge is what has run this host out of memory.
+    payload = torch.load(
+        path, map_location="cpu", weights_only=True, mmap=optimizer is None
+    )
     model.load_state_dict(payload["model"])
     if optimizer is not None:
         optimizer.load_state_dict(payload["optimizer"])

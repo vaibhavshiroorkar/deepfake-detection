@@ -138,10 +138,19 @@ class FeatureStore:
         if not combined:
             return
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        parquet.write_table(
-            arrow.Table.from_pylist([self._to_row(record) for record in combined]),
-            self.path,
-        )
+        # Write beside the store and swap it in. The store is appended to one
+        # fold at a time, so a process killed mid-write would otherwise leave a
+        # truncated file and take the earlier folds' rows with it.
+        temporary = self.path.with_name(self.path.name + ".partial")
+        try:
+            parquet.write_table(
+                arrow.Table.from_pylist([self._to_row(record) for record in combined]),
+                temporary,
+            )
+            temporary.replace(self.path)
+        finally:
+            if temporary.exists():
+                temporary.unlink()
 
     def assemble(
         self,

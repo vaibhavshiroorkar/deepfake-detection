@@ -36,11 +36,19 @@ Seeds to cross-fit. 17 already exists, so the default adds the other two.
 
 .PARAMETER Folds
 Fold count. Three is what the existing out-of-fold store used.
+
+.PARAMETER MinFreeCommitGB
+Stop cleanly before a stage when Windows has less than this much commit charge
+free. A training or export process peaks near 5 GB, and each CUDA process that
+exits leaves some commit behind that only a reboot returns, so the free amount
+shrinks over a long run. Stopping between stages costs nothing, because a rerun
+skips what is done. Being killed mid-stage loses the stage.
 #>
 [CmdletBinding()]
 param(
     [int[]]$Seeds = @(29, 43),
-    [int]$Folds = 3
+    [int]$Folds = 3,
+    [int]$MinFreeCommitGB = 12
 )
 
 $ErrorActionPreference = "Continue"
@@ -65,6 +73,17 @@ function Write-Stage {
     Add-Content -Path $transcript -Value $line -Encoding utf8
 }
 
+function Assert-Headroom {
+    param([string]$Stage)
+    $os = Get-CimInstance Win32_OperatingSystem
+    $free = $os.FreeVirtualMemory / 1MB
+    if ($free -lt $MinFreeCommitGB) {
+        $message = "stopping before $Stage, {0:N1} GB commit free against a floor of $MinFreeCommitGB GB. Reboot to return leaked commit, then rerun; finished stages are skipped." -f $free
+        Write-Stage $message
+        throw $message
+    }
+}
+
 function Train-Fold {
     param([string]$Branch, [string]$Name, [int]$Fold, [int]$Seed)
     $checkpoint = "$run/checkpoints/$Name.pt"
@@ -77,6 +96,7 @@ function Train-Fold {
     if ($Branch -eq "sync") { $extra = @("--batch-size","4","--accumulation-steps","4","--heads-epochs","1") }
     else { $extra = @("--batch-size","8","--accumulation-steps","2","--freeze-epochs","1") }
     # Zero workers throughout. See the note in the synopsis.
+    Assert-Headroom $Name
     Write-Stage "$Name start"
     $started = Get-Date
     & $python -m deepfake_detection.cli train $Branch `
@@ -116,6 +136,14 @@ try {
                 Write-Stage "features-oof-fold$f-seed$seed skipped, a checkpoint is missing"
                 continue
             }
+            # The report is written only after the store holds this fold's rows,
+            # so its presence means the fold is in. Exporting again would
+            # recompute every clip and then be refused as duplicate keys.
+            if (Test-Path "$run/features/oof-fold$f-seed$seed-report.json") {
+                Write-Stage "features-oof-fold$f-seed$seed already present, skipping"
+                continue
+            }
+            Assert-Headroom "features-oof-fold$f-seed$seed"
             Write-Stage "features-oof-fold$f-seed$seed start"
             & $python -m deepfake_detection.cli features export `
                 --manifest "$run/folds/fold-$f-holdout-visual.csv" `
@@ -131,6 +159,7 @@ try {
         }
 
         if (Test-Path $store) {
+            Assert-Headroom "train-fusion-seed$seed"
             Write-Stage "train-fusion-seed$seed start"
             & $python -m deepfake_detection.cli train fusion `
                 --feature-store $store `
@@ -143,6 +172,7 @@ try {
     }
 
     # Re-measure the spread now that the head varies too, not just the branches.
+    Assert-Headroom "fusion-seed-spread"
     Write-Stage "fusion-seed-spread start"
     & $python scripts/run_fusion_seed_spread.py --run-dir $run 2>&1 |
         Tee-Object -FilePath "$logs/fusion-seed-spread.log"
