@@ -12,6 +12,23 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Settled `A-encoder-comparison`, the registry's last `pending` row. The PE and
+  CLIP arms ran on 2026-09-27 and were never recorded. Added
+  `scripts/compare_probe_encoders.py`, which scores every encoder on one split
+  and bootstraps the paired difference by source video. Perception Encoder beats
+  DINOv3 by +0.0741 [+0.0121, +0.1317] and leads on all seven generators. CLIP
+  beats DINOv3 by +0.0668 and is not separated from PE.
+- The leave-one-generator-out probe now uses Perception Encoder, and the DF26
+  headline moves from 0.6786 to 0.7527. `extract_probe_features.py` defaults to
+  `--encoder pe`. The served authenticity gate keeps DINOv3, because it was
+  fitted on DINOv3 features and reads its encoder from the model file.
+- Gave the frame-rate-controlled DINOv3 probe its own registry row,
+  `C-df26-logo-controlled`. The handoff cited 0.6786 as the headline while the
+  only DF26 row still read "held pending a frame-rate control".
+- `train_logo_probe.py` exposes `held_out_scores`, so a comparison reuses the
+  exact split instead of copying it. All three recorded `-logo.json` files
+  reproduce byte for byte through it.
+
 - Ran the sync label-mode ablation, one of two the research design required and
   nobody had run. Read against each arm's own chance loss, not against each other:
   the shipped authentic-offset arm sits at 2.1842 against its chance of ln(8) =

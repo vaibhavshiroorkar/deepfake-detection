@@ -512,11 +512,10 @@ surveyed in [corpora for the generative-video problem](datasets.md).
 ## 10. Provenance
 
 <!-- BEGIN GENERATED REGISTRY -->
-36 registered results.
+39 registered results.
 
 - 5 `accepted`
-- 1 `pending`
-- 30 `provisional (1 seed)`
+- 34 `provisional (1 seed)`
 
 The rows themselves, with each artifact's SHA-256 and MLflow run, are in [result traceability](result-traceability.md).
 <!-- END GENERATED REGISTRY -->

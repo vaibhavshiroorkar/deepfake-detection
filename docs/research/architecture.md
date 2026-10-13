@@ -30,8 +30,10 @@ was reproducible from `runs/`. That was not true of the external claims, and a
 blanket guarantee is how an unverifiable number gains credibility: the
 Perception Encoder comparison that drove the frozen-probe recommendation for
 weeks had no artifact behind it and contradicted this project's own registered
-measurement of the same encoder. It is now tracked as
-`A-encoder-comparison`, status `pending`.
+measurement of the same encoder. It has since been re-run as
+`A-encoder-comparison`: Perception Encoder does beat DINOv3, by 0.0741 rather
+than 15 points, and is now the probe encoder (F33 in
+[findings](findings.md)).
 
 ## 0. The demo detector
 
@@ -51,8 +53,8 @@ C2PA Content Credentials. When present this is exact, instant and needs no
 training, and it is the most reliable thing in the system. It is defeated by
 re-encoding and screen recording, so it is a first pass and never the answer.
 
-**A specialist trained on the demo distribution.** Frozen DINOv3 or CLIP on full
-frames, three windows of 32 contiguous frames, with a linear probe on top and a
+**A specialist trained on the demo distribution.** Frozen Perception Encoder on
+full frames, three windows of 32 contiguous frames, with a linear probe on top and a
 cheap SRM residual branch beside it. A frozen encoder with a light probe is the
 configuration that generalizes best to unseen generators, and it trains in
 hours. Add the WavLM plus AASIST head when audio is present, since these tools
@@ -300,7 +302,7 @@ one calibrated score per branch.
 | Branch | Backbone | Features | Dim |
 | --- | --- | --- | --- |
 | Forensic residual | SRM plus 6-block CNN, full frame at native resolution | pooled | 256 |
-| Frozen probe | DINOv3 ViT-S or CLIP ViT-B, full frame | penultimate block | 768 |
+| Frozen probe | Perception Encoder PE-Core-B/16, full frame | image embedding | 1024 |
 | Temporal | 4-layer transformer over per-frame probe and residual embeddings | - | 512 |
 | Physical consistency | monocular depth plus flow, blur-vs-motion and depth-vs-aperture residuals | 12 scalars plus 128-d | 128 |
 | Face artifact, when a face is present | EfficientNetV2-S or ConvNeXt-T | penultimate | 512 |
@@ -316,7 +318,7 @@ and physical branches alone.
 
 ### C. Production, 0.2x
 
-Frozen CLIP or DINOv3-S probe plus the SRM residual CNN on full frames, a GRU
+Frozen Perception Encoder probe plus the SRM residual CNN on full frames, a GRU
 over 32 contiguous frames, WavLM-Base+ with an AASIST-lite head when audio
 exists, the authenticity density model for the OOD score, provenance check
 first, reliability-aware late fusion, per-media-kind thresholds. Face and
@@ -380,7 +382,10 @@ head should be trained on full mixtures rather than clean speech alone, and a
 
 DINOv3 gives semantic appearance, V-JEPA 2 gives motion, and both suppress the
 pixel detail forensics needs, which is exactly why the residual branch is not
-optional. DINOv3 should run on **full frames**, not face crops. Face and mouth
+optional. The frozen probe runs on **full frames**, not face crops. On DF26 the
+two vision-language encoders beat DINOv3 under leave-one-generator-out, PE by
+0.0741 and CLIP by 0.0668 (F33), so the argument that their semantic objective
+costs forensic signal did not hold for generated video. Face and mouth
 crops feed the Level 2 branches only. A face-only pipeline cannot satisfy
 constraint 11.
 
@@ -492,7 +497,7 @@ input
 
 ALWAYS ON, no face or speech required
  ├── forensic residual CNN, full frame, native resolution      256
- ├── frozen probe: DINOv3 / CLIP ViT, full frame               768   (never fine-tuned)
+ ├── frozen probe: Perception Encoder, full frame              1024  (never fine-tuned)
  ├── physical consistency: depth, flow, blur, lighting         128
  ├── sensor forensics: CFA, PRNU, ISP                          128   (masked if laundered)
  └── temporal transformer over 3 windows x 32 contiguous frames

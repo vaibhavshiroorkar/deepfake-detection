@@ -9,7 +9,7 @@ three cue-specific branches on FakeAVCeleb with source-grouped cross-fitting and
 a calibrated late-fusion head. Design B replaces them with configurable streams
 and a feature-level head. Both score through one evaluation path, every headline
 number carries an identity-clustered interval, and every number resolves to a
-row in [result traceability](research/result-traceability.md). Thirty-one
+row in [result traceability](research/result-traceability.md). Thirty-three
 findings are recorded in [findings](research/findings.md), including the seven
 claims this project made and later withdrew.
 
@@ -27,7 +27,7 @@ Grok Imagine and Wan 2.6.
 | 0.991 visual detection, in-domain | **met** | Design A fusion 0.9990 on the FakeAVCeleb test partition, visual branch 0.9988 |
 | 0.844+ from audiovisual cues on genuine-frame fakes | **met on the number, failed on the mechanism** | Lip-sync stream 0.9969 on LAV-DF, which is exactly that case. Its `diagonal_mass` sat at chance in every epoch of three runs, so the audiovisual cue is not what produced the number |
 | Fusion beats the strongest single stream | **met in-domain, not cross-corpus, and smaller than the cited 0.099** | Paired source bootstrap: +0.0247 [0.0220, 0.0280] over the calibrated visual score in-domain, separated from zero. Against a visual-plus-quality head it is +0.0159 [+0.0129, +0.0190] (F19). Cross-corpus -0.0083 [-0.0185, 0.0024], not separated, and the seed spread there is 0.1057 (F27) |
-| 0.64+ on unseen generators without fine-tuning | **met** | DF26 leave-one-generator-out macro **0.6786**, container-controlled, range 0.5867 to 0.7622 |
+| 0.64+ on unseen generators without fine-tuning | **met** | DF26 leave-one-generator-out macro **0.7527** with a frozen Perception Encoder probe, container-controlled, range 0.6542 to 0.8496. DINOv3 reads 0.6786 on the same split (F33) |
 
 ### The protocol, which is the actual contribution
 
@@ -55,7 +55,8 @@ cheap check run before training rather than after:
 
 | Result | Number |
 | --- | --- |
-| DF26 leave-one-generator-out, container-controlled | macro 0.6786, spread 0.1755 |
+| DF26 leave-one-generator-out, container-controlled | Perception Encoder macro 0.7527, spread 0.1954 |
+| Encoder comparison, paired by source video | PE beats DINOv3 by +0.0741 [+0.0121, +0.1317], CLIP by +0.0668 [+0.0049, +0.1289]; PE against CLIP not separated |
 | Frame-rate confound found by that control | Wan 2.6 fell 0.094, HunyuanVideo 0.045, others unchanged |
 | Design A in-domain fusion | 0.9990 |
 | Design A cross-corpus fusion on DFDC | seed 17 reads 0.7500; across three seeds 0.6442 to 0.7500, mean 0.6919. Paired difference against visual not separated from zero |
@@ -401,22 +402,16 @@ generated clips have no speaker to cluster on. They are therefore narrower than
 the identity-clustered intervals elsewhere here and should not be compared
 against them directly.
 
-The DF26 probe uses DINOv3 because it is cached locally and works offline.
-Perception Encoder was recorded here as about 15 AUROC points better on this
-task, and **that claim is withdrawn as unverified**: no PE or CLIP artifact
-exists under `runs/`, and the comparison's DINOv3 figure of 57.0 contradicts this
-project's own registered probe at 0.6786 controlled and 0.6942 uncontrolled. It
-is tracked as `A-encoder-comparison`, status `pending`. Running it needs
-`open_clip_torch`, which is not installed and the venv has no pip.
-
-Until it is run, DINOv3 stays, which is also what
-[architecture](research/architecture.md) argues on mechanism grounds: a
-vision-language contrastive objective pushes representations toward semantics and
-away from the texture and frequency detail forensics reads. A frozen DINOv3
-probe is also the configuration with published face-forgery evidence behind it.
+The DF26 probe uses Perception Encoder. The claim that it beat DINOv3 by about
+15 points was withdrawn for weeks because no artifact existed. The re-run in
+`A-encoder-comparison` confirms the direction at half the size: +0.0741
+[+0.0121, +0.1317], paired and resampled by source video. CLIP is level with PE.
+That also retires the mechanism argument for DINOv3, that a vision-language
+objective trades away forensic detail; on generated video it did not.
 
 The commercial generators still outscore the open-source ones after the
-container control, 0.72 against 0.62, which inverts the DF26 paper. The
+container control, 0.81 against 0.68 under PE (0.72 against 0.62 under DINOv3),
+which inverts the DF26 paper. The
 remaining explanation is training set rather than shortcut: their detectors
 transfer from face manipulation, this probe transfers between generative models,
 and the four commercial generators were all produced through one platform and
@@ -471,12 +466,10 @@ may simply be more similar to each other. That is untested.
    face manipulation, face crops are at chance on person-free generated scenes,
    so both paths must exist and be routed by content.
 
-5. **Perception Encoder**, once `open_clip_torch` is installable.
-
-6. **The audiovisual track**, which needs a corpus DF26 cannot provide. LAV-DF
+5. **The audiovisual track**, which needs a corpus DF26 cannot provide. LAV-DF
    is on disk; DeepSpeak v2 and AV-Deepfake1M need their access granted.
 
-7. **The paper.** [paper-source.md](research/paper-source.md) regenerates its
+6. **The paper.** [paper-source.md](research/paper-source.md) regenerates its
    tables from `runs/` and is the place to write from;
    [paper.md](research/paper.md) is the draft.
 
@@ -501,8 +494,10 @@ Visual training must run with `--workers 0` on this machine. A visual batch is
 ```powershell
 uv run python scripts/fetch_df26.py
 uv run python scripts/normalize_media.py --source data/df26-scored --target data/df26-norm --fps 24
-uv run python scripts/extract_probe_features.py --folder data/df26-norm --output runs/probe-20260914/df26-norm-dinov3.npz
-uv run python scripts/train_logo_probe.py --features runs/probe-20260914/df26-norm-dinov3.npz
+uv sync --extra probe
+uv run python scripts/extract_probe_features.py --folder data/df26-norm --encoder pe --output runs/probe-20260914/df26-norm-pe.npz
+uv run python scripts/train_logo_probe.py --features runs/probe-20260914/df26-norm-pe.npz
+uv run python scripts/compare_probe_encoders.py --features runs/probe-20260914/df26-norm-dinov3.npz runs/probe-20260914/df26-norm-pe.npz runs/probe-20260914/df26-norm-clip.npz --output runs/probe-20260914/df26-norm-encoder-comparison.json
 uv run python scripts/update_result_registry.py
 uv run python scripts/update_paper_source.py
 ```

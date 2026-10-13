@@ -21,8 +21,8 @@ ENCODERS = {
     "dinov3": ("vit_small_patch16_dinov3.lvd1689m", 224),
     "dinov3-b": ("vit_base_patch16_dinov3.lvd1689m", 224),
     # open_clip, so they need the `probe` extra. `pe` is Perception Encoder,
-    # the arm `A-encoder-comparison` claimed a 15-point win for without an
-    # artifact; `clip` is the third arm of that same claim.
+    # the probe encoder since `A-encoder-comparison` measured it 0.0741 above
+    # DINOv3 on unseen generators. `clip` is not separated from it.
     "pe": ("PE-Core-B-16", 224),
     # `-quickgelu`, not plain `ViT-B-16`. OpenAI trained these weights with
     # QuickGELU, and open_clip will load them into the standard-GELU
@@ -154,11 +154,9 @@ def load_encoder(name: str = "dinov3", device: str = "cuda"):
     are Perception Encoder and CLIP, need the `probe` extra and come back wrapped
     so both look the same to `embed_windows`.
 
-    Perception Encoder is here because `A-encoder-comparison` claimed it beat
-    DINOv3 by 15 points on DF26 and stood unverified: no artifact existed, and
-    the recorded reason was that `open_clip_torch` could not be installed. It
-    installs fine, so the comparison is now runnable and the claim can be
-    settled rather than repeated.
+    The default stays `dinov3` because the served authenticity gate was fitted
+    on DINOv3 features, and a gate queried with another encoder's features
+    reports meaningless distances. The leave-one-generator-out probe uses `pe`.
     """
     model_name, size = ENCODERS[name]
     if name in OPEN_CLIP_ENCODERS:

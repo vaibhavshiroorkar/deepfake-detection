@@ -55,11 +55,72 @@ def _bootstrap(scores, labels, samples: int, seed: int):
     return (float(np.percentile(values, 2.5)), float(np.percentile(values, 97.5)))
 
 
-def main(argv: list[str] | None = None) -> int:
+def held_out_scores(
+    features,
+    labels,
+    groups,
+    names,
+    *,
+    source_pattern: str = "prefix",
+    modes_are_one_generator: bool = True,
+    test_fraction: float = 0.4,
+    regularization: float = 1.0,
+    seed: int = 17,
+):
+    """Score every generator with a probe that never saw it.
+
+    Returns the per-clip source ids, the merged generator labels, and one
+    ``(test_index, scores, train_count)`` triple per generator. Comparisons
+    between encoders call this so that both arms use the same split.
+    """
     import numpy as np
     from sklearn.linear_model import LogisticRegression
-    from sklearn.metrics import roc_auc_score
     from sklearn.preprocessing import StandardScaler
+
+    if modes_are_one_generator:
+        # LTX_2.3_distilled_i2v and LTX_2.3_distilled_t2v are one model in two
+        # modes. Holding out a mode while training on its sibling leaks the
+        # model, which is the same class of leak as sharing a source video.
+        groups = np.asarray(
+            [g[:-4] if g.endswith(("_i2v", "_t2v")) else g for g in groups.tolist()]
+        )
+    generators = sorted({g for g in groups.tolist() if g != "real"})
+    real = groups == "real"
+
+    def source_of(name: str) -> str:
+        stem = Path(str(name)).stem
+        return stem.split("_", 1)[0] if source_pattern == "prefix" else stem
+
+    sources = np.asarray([source_of(n) for n in names.tolist()])
+    unique = sorted(set(sources.tolist()))
+    rng = np.random.default_rng(seed)
+    order = rng.permutation(len(unique))
+    cut = max(1, int(len(unique) * test_fraction))
+    test_sources = {unique[i] for i in order[:cut]}
+    in_test_source = np.asarray([s in test_sources for s in sources.tolist()])
+
+    arms: dict[str, tuple] = {}
+    for generator in generators:
+        held = groups == generator
+        # Two exclusions, not one. The held-out generator never appears in
+        # training, and no source video appears on both sides, so neither the
+        # real clips nor a fake's own source can be memorised.
+        train_mask = (~held) & (~in_test_source)
+        test_mask = (held | real) & in_test_source
+
+        scaler = StandardScaler().fit(features[train_mask])
+        probe = LogisticRegression(
+            C=regularization, max_iter=2000, class_weight="balanced"
+        )
+        probe.fit(scaler.transform(features[train_mask]), labels[train_mask])
+        scores = probe.predict_proba(scaler.transform(features[test_mask]))[:, 1]
+        arms[generator] = (np.flatnonzero(test_mask), scores, int(train_mask.sum()))
+    return sources, groups, test_sources, arms
+
+
+def main(argv: list[str] | None = None) -> int:
+    import numpy as np
+    from sklearn.metrics import roc_auc_score
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--features", type=Path, required=True)
@@ -102,35 +163,23 @@ def main(argv: list[str] | None = None) -> int:
     labels = payload["labels"]
     groups = payload["groups"]
     names = payload["files"]
-    if arguments.modes_are_one_generator:
-        # LTX_2.3_distilled_i2v and LTX_2.3_distilled_t2v are one model in two
-        # modes. Holding out a mode while training on its sibling leaks the
-        # model, which is the same class of leak as sharing a source video.
-        groups = np.asarray(
-            [
-                g[:-4] if g.endswith(("_i2v", "_t2v")) else g
-                for g in groups.tolist()
-            ]
-        )
-    generators = sorted({g for g in groups.tolist() if g != "real"})
-    real = groups == "real"
-
-    def source_of(name: str) -> str:
-        stem = Path(str(name)).stem
-        return stem.split("_", 1)[0] if arguments.source_pattern == "prefix" else stem
-
-    sources = np.asarray([source_of(n) for n in names.tolist()])
-    unique = sorted(set(sources.tolist()))
-    rng = np.random.default_rng(arguments.seed)
-    order = rng.permutation(len(unique))
-    cut = max(1, int(len(unique) * arguments.test_fraction))
-    test_sources = {unique[i] for i in order[:cut]}
-    in_test_source = np.asarray([s in test_sources for s in sources.tolist()])
+    sources, groups, test_sources, arms = held_out_scores(
+        features,
+        labels,
+        groups,
+        names,
+        source_pattern=arguments.source_pattern,
+        modes_are_one_generator=arguments.modes_are_one_generator,
+        test_fraction=arguments.test_fraction,
+        regularization=arguments.regularization,
+        seed=arguments.seed,
+    )
+    generators = list(arms)
     print(
-        f"{len(labels)} clips, {int(real.sum())} real, "
+        f"{len(labels)} clips, {int((groups == 'real').sum())} real, "
         f"{len(generators)} generators, {features.shape[1]} dimensions"
     )
-    print(f"{len(unique)} source videos, {len(test_sources)} held out\n")
+    print(f"{len(set(sources.tolist()))} source videos, {len(test_sources)} held out\n")
     if len(generators) < 2:
         print("Leave-one-generator-out needs at least two generators.")
         return 1
@@ -138,21 +187,8 @@ def main(argv: list[str] | None = None) -> int:
     rows: dict[str, dict] = {}
     print(f"{'held-out generator':28} {'ROC-AUC':>8}  {'95% interval':>18}  clips")
     print("-" * 70)
-    for generator in generators:
-        held = groups == generator
-        # Two exclusions, not one. The held-out generator never appears in
-        # training, and no source video appears on both sides, so neither the
-        # real clips nor a fake's own source can be memorised.
-        train_mask = (~held) & (~in_test_source)
-        test_mask = (held | real) & in_test_source
-
-        scaler = StandardScaler().fit(features[train_mask])
-        probe = LogisticRegression(
-            C=arguments.regularization, max_iter=2000, class_weight="balanced"
-        )
-        probe.fit(scaler.transform(features[train_mask]), labels[train_mask])
-        scores = probe.predict_proba(scaler.transform(features[test_mask]))[:, 1]
-        truth = labels[test_mask]
+    for generator, (test_index, scores, train_count) in arms.items():
+        truth = labels[test_index]
         if len(set(truth.tolist())) != 2:
             print(f"{generator:28} one class, skipped")
             continue
@@ -163,12 +199,11 @@ def main(argv: list[str] | None = None) -> int:
         rows[generator] = {
             "roc_auc": auc,
             "ci": [low, high],
-            "test_clips": int(test_mask.sum()),
-            "train_clips": int(train_mask.sum()),
+            "test_clips": len(test_index),
+            "train_clips": train_count,
         }
         print(
-            f"{generator:28} {auc:8.4f}  [{low:.4f}, {high:.4f}]  "
-            f"{int(test_mask.sum()):5}"
+            f"{generator:28} {auc:8.4f}  [{low:.4f}, {high:.4f}]  {len(test_index):5}"
         )
 
     if rows:

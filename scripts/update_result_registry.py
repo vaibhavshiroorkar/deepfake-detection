@@ -301,8 +301,47 @@ RESULTS: tuple[Result, ...] = (
         predictions=Path("runs/probe-20260914/df26-dinov3.json"),
         mlflow=(),
         decision=(
-            "Macro 0.6942 across seven unseen generators, held pending a "
-            "frame-rate control: real clips are the only ones at 25 or 29.97 fps"
+            "Macro 0.6942 across seven unseen generators before the frame-rate "
+            "control. Real clips were the only ones at 25 or 29.97 fps, and "
+            "C-df26-logo-controlled is the same probe with that removed"
+        ),
+        seeds=1,
+    ),
+    Result(
+        result_id="C-df26-logo-controlled",
+        paper_location="Results, leave-one-generator-out on DF26, frame rate held fixed",
+        command=(
+            "python scripts/normalize_media.py --source data/df26-scored "
+            "--target data/df26-norm --fps 24; python "
+            "scripts/extract_probe_features.py --folder data/df26-norm "
+            "--encoder dinov3; python scripts/train_logo_probe.py --features "
+            "runs/probe-20260914/df26-norm-dinov3.npz"
+        ),
+        report=Path("runs/probe-20260914/df26-norm-dinov3-logo.json"),
+        predictions=Path("runs/probe-20260914/df26-norm-dinov3.json"),
+        mlflow=(),
+        decision=(
+            "Macro 0.6786 with every clip re-encoded at 24 fps. Wan 2.6 fell "
+            "0.094 and HunyuanVideo 0.045, so frame rate carried part of the "
+            "uncontrolled number"
+        ),
+        seeds=1,
+    ),
+    Result(
+        result_id="C-df26-logo-pe",
+        paper_location="Results, leave-one-generator-out on DF26, the headline",
+        command=(
+            "python scripts/extract_probe_features.py --folder data/df26-norm "
+            "--encoder pe; python scripts/train_logo_probe.py --features "
+            "runs/probe-20260914/df26-norm-pe.npz"
+        ),
+        report=Path("runs/probe-20260914/df26-norm-pe-logo.json"),
+        predictions=Path("runs/probe-20260914/df26-norm-pe.json"),
+        mlflow=(),
+        decision=(
+            "Macro 0.7527 across seven unseen generators, frame-rate controlled, "
+            "range 0.6542 on LTX 2.3 to 0.8496 on Veo 3.1. The headline, since "
+            "A-encoder-comparison separates Perception Encoder from DINOv3"
         ),
         seeds=1,
     ),
@@ -481,27 +520,28 @@ RESULTS: tuple[Result, ...] = (
         result_id="A-encoder-comparison",
         paper_location="Method, which frozen encoder for the open-world probe",
         command=(
-            "python scripts/extract_probe_features.py --folder data/df26-norm "
-            "--encoder pe|dinov3|clip, then scripts/train_logo_probe.py on each"
+            "bash scripts/run_encoder_comparison.sh; python "
+            "scripts/compare_probe_encoders.py --features "
+            "runs/probe-20260914/df26-norm-dinov3.npz "
+            "runs/probe-20260914/df26-norm-pe.npz "
+            "runs/probe-20260914/df26-norm-clip.npz --output "
+            "runs/probe-20260914/df26-norm-encoder-comparison.json"
         ),
         report=Path("runs/probe-20260914/df26-norm-encoder-comparison.json"),
         predictions=None,
         mlflow=(),
         decision=(
-            "Claimed 72.7 macro for Perception Encoder against 57.0 for DINOv3 "
-            "and 55.6 for CLIP, and the frozen-probe recommendation was changed "
-            "on it. Unverified: no PE or CLIP artifact exists, and its DINOv3 "
-            "figure contradicts this project's own registered DF26 probe at "
-            "0.6786 controlled and 0.6942 uncontrolled"
+            "Perception Encoder beats DINOv3 by +0.0741 [+0.0121, +0.1317] macro, "
+            "paired and resampled by source video, and leads on all seven arms. "
+            "CLIP beats DINOv3 by +0.0668 [+0.0049, +0.1289]. PE against CLIP is "
+            "not separated, -0.0073 [-0.0603, +0.0463]. The probe switches to PE. "
+            "The earlier unverified claim, 72.7 against 57.0, had the right "
+            "direction and twice the gap"
         ),
         seeds=1,
-        missing_reason=(
-            "No artifact. The DINOv3 figure of 57.0 is eleven points from this "
-            "project's own measurement of the same encoder on the same corpus, "
-            "so the comparison cannot have come from this pipeline. Do not cite "
-            "it and do not change the encoder recommendation until it is re-run. "
-            "`extract_probe_features.py` supports dinov3 and dinov3-b only; PE "
-            "needs open_clip_torch, which is not installed."
+        notes=(
+            "Source-video intervals are wider than the per-arm clip intervals in "
+            "each -logo.json, because every arm shares its real clips."
         ),
     ),
     Result(

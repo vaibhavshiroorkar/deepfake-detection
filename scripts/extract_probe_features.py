@@ -33,12 +33,10 @@ import json
 import sys
 from pathlib import Path
 
-# Imported rather than redeclared. This file used to carry its own copy of the
-# table alongside a comment claiming Perception Encoder was better here "by about
-# 15 AUROC points" and could not be installed. Neither held: the claim had no
-# artifact and contradicted this project's own DINOv3 measurement, and
-# `open_clip_torch` installs fine through the `probe` extra. Both encoders are
-# now selectable and `A-encoder-comparison` is runnable.
+# Imported rather than redeclared, so this probe and the served gate embed the
+# same way. The default is Perception Encoder, which `A-encoder-comparison`
+# measured 0.0741 above DINOv3 under leave-one-generator-out. It needs the
+# `probe` extra.
 from deepfake_detection.inference.frozen_features import (  # noqa: E402
     ENCODERS,
     load_encoder,
@@ -110,7 +108,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--folder", type=Path, required=True)
     parser.add_argument("--output", type=Path, default=None)
-    parser.add_argument("--encoder", choices=sorted(ENCODERS), default="dinov3")
+    parser.add_argument("--encoder", choices=sorted(ENCODERS), default="pe")
     parser.add_argument("--windows", type=int, default=3)
     parser.add_argument("--window-length", type=int, default=32)
     parser.add_argument("--batch-size", type=int, default=32)

@@ -482,7 +482,8 @@ training rather than after.
 
 ### F15. First leave-one-generator-out result on DF26, pending a frame-rate control
 
-Result: `C-df26-logo`. A frozen DINOv3 probe over full frames, trained on six
+Results: `C-df26-logo`, and `C-df26-logo-controlled` for the control below.
+A frozen DINOv3 probe over full frames, trained on six
 generators and scored on the seventh, with source videos split so no source
 appears on both sides and generation modes grouped under their model.
 
@@ -1226,6 +1227,55 @@ aligned one, and that reduction is meaningless for a head trained on a binary
 target. Scoring the two arms on one axis needs a reduction that is fair to both,
 and inventing one after seeing the losses is how a comparison becomes a
 rationalisation.
+
+### F33. Perception Encoder beats DINOv3 on unseen generators, by half what was claimed
+
+Result: `A-encoder-comparison`, with `C-df26-logo-pe` as the new headline. Three
+frozen encoders, one probe, one split: the frame-rate-controlled DF26 corpus
+under leave-one-generator-out. The differences are paired and resampled by
+source video, because every arm scores the same real clips.
+
+| Encoder | Macro ROC-AUC | Against DINOv3 |
+| --- | ---: | --- |
+| Perception Encoder, PE-Core-B/16 | **0.7527** | +0.0741 [+0.0121, +0.1317] |
+| CLIP ViT-B/16 | 0.7454 | +0.0668 [+0.0049, +0.1289] |
+| DINOv3 ViT-S/16 | 0.6786 | reference |
+
+Perception Encoder leads DINOv3 on all seven held-out generators. The largest
+gains are Wan 2.6 at +0.148 and HunyuanVideo at +0.090, the two generators the
+frame-rate control hit hardest. PE against CLIP is not separated, -0.0073
+[-0.0603, +0.0463], so PE ships on its point estimate and because it was the
+encoder the recommendation already named.
+
+| Held-out generator | PE ROC-AUC |
+| --- | --- |
+| Veo 3.1 | 0.8496 [0.7886, 0.9015] |
+| Wan 2.6 | 0.8164 [0.7472, 0.8785] |
+| Grok Imagine | 0.7905 [0.7158, 0.8552] |
+| Kling 3.0 | 0.7821 [0.7073, 0.8447] |
+| Wan 2.2 | 0.6996 [0.6340, 0.7603] |
+| HunyuanVideo 1.5 | 0.6764 [0.6071, 0.7401] |
+| LTX 2.3 distilled | 0.6542 [0.5866, 0.7166] |
+| macro mean | 0.7527 |
+
+Two earlier statements were wrong, in opposite directions.
+
+- The unverified claim, 72.7 for PE against 57.0 for DINOv3, had the right
+  order and about twice the gap. Its DINOv3 figure was eleven points below this
+  pipeline's own, which is why it was withdrawn.
+- The mechanism argument for keeping DINOv3 was that a vision-language
+  contrastive objective pulls features toward semantics and away from the
+  texture detail forensics reads. Both vision-language encoders beat the
+  self-supervised one here. On full frames of generated video, the semantic
+  features carry more of the signal than that argument allowed.
+
+The commercial generators still outscore the open-source ones, now 0.81 against
+0.68. Under PE that gap widened, so the explanation the handoff records, that
+the four commercial clips came through one platform and resemble each other,
+remains untested and matters more.
+
+One seed and one split. The probe is linear and deterministic given the split,
+so the remaining variance is which source videos land in the test set.
 
 ## Superseded findings
 
