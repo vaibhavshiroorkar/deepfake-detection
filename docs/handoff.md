@@ -9,9 +9,9 @@ three cue-specific branches on FakeAVCeleb with source-grouped cross-fitting and
 a calibrated late-fusion head. Design B replaces them with configurable streams
 and a feature-level head. Both score through one evaluation path, every headline
 number carries an identity-clustered interval, and every number resolves to a
-row in [result traceability](research/result-traceability.md). Fifteen findings
-are recorded in [findings](research/findings.md), including the five claims this
-project made and later withdrew.
+row in [result traceability](research/result-traceability.md). Thirty-one
+findings are recorded in [findings](research/findings.md), including the seven
+claims this project made and later withdrew.
 
 **Track two, open-world generated media**, is newer and is where the work is
 pointed now. The system detects manipulation of a real recording; media
@@ -26,7 +26,7 @@ Grok Imagine and Wan 2.6.
 | --- | --- | --- |
 | 0.991 visual detection, in-domain | **met** | Design A fusion 0.9990 on the FakeAVCeleb test partition, visual branch 0.9988 |
 | 0.844+ from audiovisual cues on genuine-frame fakes | **met on the number, failed on the mechanism** | Lip-sync stream 0.9969 on LAV-DF, which is exactly that case. Its `diagonal_mass` sat at chance in every epoch of three runs, so the audiovisual cue is not what produced the number |
-| Fusion beats the strongest single stream | **met, and four times smaller than the cited 0.099** | Paired source bootstrap: +0.0247 [0.0220, 0.0280] over the visual baseline in-domain, separated from zero. Cross-corpus -0.0083 [-0.0185, 0.0024], not separated |
+| Fusion beats the strongest single stream | **met in-domain, not cross-corpus, and smaller than the cited 0.099** | Paired source bootstrap: +0.0247 [0.0220, 0.0280] over the calibrated visual score in-domain, separated from zero. Against a visual-plus-quality head it is +0.0159 [+0.0129, +0.0190] (F19). Cross-corpus -0.0083 [-0.0185, 0.0024], not separated, and the seed spread there is 0.1057 (F27) |
 | 0.64+ on unseen generators without fine-tuning | **met** | DF26 leave-one-generator-out macro **0.6786**, container-controlled, range 0.5867 to 0.7622 |
 
 ### The protocol, which is the actual contribution
@@ -58,11 +58,26 @@ cheap check run before training rather than after:
 | DF26 leave-one-generator-out, container-controlled | macro 0.6786, spread 0.1755 |
 | Frame-rate confound found by that control | Wan 2.6 fell 0.094, HunyuanVideo 0.045, others unchanged |
 | Design A in-domain fusion | 0.9990 |
-| Design A cross-corpus fusion on DFDC | 0.7500, paired difference against visual not separated from zero |
+| Design A cross-corpus fusion on DFDC | seed 17 reads 0.7500; across three seeds 0.6442 to 0.7500, mean 0.6919. Paired difference against visual not separated from zero |
+| Fusion against the strongest single branch, one task | +0.0159 [+0.0129, +0.0190] in-domain, -0.0085 [-0.0196, +0.0027] on DFDC |
+| Fusion head, logistic against the small MLP | indistinguishable in-domain, MLP loses 0.1508 [0.0995, 0.2052] on DFDC |
+| Calibration and quality features | no ranking gain either way; calibration earns its place on ECE alone |
+| Unweighted mean against the fitted head, DFDC | not separated on AUC, and ECE 0.0554 against 0.6366 |
+| Head-only method holdout, rtvc | AUC falls 0.0437 while 73 of 75 clips go missed at the frozen threshold |
 | Design B streams cross-corpus | four of five have intervals containing 0.5; only emotion separates, 0.5951 [0.5558, 0.6351] |
 | Capture conditions versus manipulation type | an unseen manipulation family costs 0.11 and still works; an unseen corpus reads 0.49 |
 | Full-frame probe on face manipulation | at chance, macro 0.5387, every interval containing 0.5 |
 | Calibration cross-corpus | expected calibration error 0.0022 in-domain against 0.6366 on DFDC |
+| Seed spread, fused system on DFDC | 0.1057, from 0.6442 to 0.7500; in-domain 0.0001 |
+| Sync branch, first measured number | below chance at all three seeds: 0.4364, 0.4570, 0.4931 |
+| VIS-01, ConvNeXt against EfficientNet | undecided: -0.0340 [-0.0761, +0.0066] on DFDC, smaller than the seed spread |
+| AUD-01, WavLM against Wav2Vec2 | undecided: both read 1.0000 in-domain, no cross-corpus partition exists |
+| Corruption, JPEG 75 | ROC-AUC falls 0.0054 while false alarms go from 0 to 76 of 150 |
+| Corruption, audio noise at 20 dB | ROC-AUC falls 0.0227 while 857 of 859 fakes go missed |
+| Silence shortcut | absent: a half-second shift changes nothing |
+| Confidence cross-corpus | more confident when wrong, 0.8742 against 0.8299 on DFDC |
+| Fusion against its own visual branch, DFDC | repairs 314, breaks 5, both wrong on 1,585 of 2,351 |
+| BatchNorm with epochs held fixed | +0.0177 on DFDC, not the +0.1276 of the uncontrolled comparison |
 
 ### What is running or blocked
 
@@ -370,9 +385,16 @@ and the two shell runners that produced them.
 
 ### Limits on everything above
 
-Single seed throughout, so every result is `provisional` rather than `accepted`
-under the protocol in [research design](research-design.md), which asks for
-three. That is the single largest gap and it is about eight hours of GPU.
+Single seed for the audio and sync branches, so nearly every result is
+`provisional` rather than `accepted` under the protocol in
+[research design](research-design.md), which asks for three. That is still the
+single largest gap.
+
+The visual branch now has all three, and what they show is the reason the gap
+matters: cross-corpus, seed alone moves DFDC by 0.0733, which is wider than most
+effects reported here, and the reported seed is the most favourable of the
+three. Read every single-seed cross-corpus number in this document with that
+spread in mind.
 
 The DF26 intervals are bootstrap over clips, not clustered on identity, because
 generated clips have no speaker to cluster on. They are therefore narrower than
@@ -380,8 +402,18 @@ the identity-clustered intervals elsewhere here and should not be compared
 against them directly.
 
 The DF26 probe uses DINOv3 because it is cached locally and works offline.
-Perception Encoder is about 15 AUROC points better on this task and needs
+Perception Encoder was recorded here as about 15 AUROC points better on this
+task, and **that claim is withdrawn as unverified**: no PE or CLIP artifact
+exists under `runs/`, and the comparison's DINOv3 figure of 57.0 contradicts this
+project's own registered probe at 0.6786 controlled and 0.6942 uncontrolled. It
+is tracked as `A-encoder-comparison`, status `pending`. Running it needs
 `open_clip_torch`, which is not installed and the venv has no pip.
+
+Until it is run, DINOv3 stays, which is also what
+[architecture](research/architecture.md) argues on mechanism grounds: a
+vision-language contrastive objective pushes representations toward semantics and
+away from the texture and frequency detail forensics reads. A frozen DINOv3
+probe is also the configuration with published face-forgery evidence behind it.
 
 The commercial generators still outscore the open-source ones after the
 container control, 0.72 against 0.62, which inverts the DF26 paper. The
@@ -392,17 +424,77 @@ may simply be more similar to each other. That is untested.
 
 ### Next, in order
 
-1. **Three seeds.** The only thing standing between every result and `accepted`.
-   About eight hours of GPU, no new data.
-2. **The face-crop path.** Measured as necessary: full frames are at chance on
+1. **Seeds, still, but the diagnosis has changed.** All three branches now have
+   checkpoints at seeds 17, 29 and 43, and the visual branch, the audio branch
+   and the fused system are all scored across them. What that revealed is the
+   reason seeds now sit at the top of this list rather than the bottom:
+
+   | System | In-domain spread | DFDC spread |
+   | --- | ---: | ---: |
+   | visual branch (F21) | 0.0005 | 0.0733 |
+   | fused system (F27) | 0.0001 | **0.1057** |
+   | sync branch (F26) | 0.0567 | not scored |
+
+   The fused DFDC headline of 0.7500 is the **best of three**; the mean is
+   0.6919. The spread is twelve times the fusion-against-visual difference it is
+   used to discuss, and it is larger for the fused system than for the visual
+   branch alone, so combining branches compounded the noise rather than
+   averaging it. Every paired comparison in this project is unaffected, because
+   those hold the seed fixed.
+
+   What remains is the head's own three seeds, which needs the folds cross-fitted
+   per seed: three folds by three branches by two more seeds, eighteen runs that
+   are not on disk.
+
+2. **Three seeds per challenger, before any new challenger.** VIS-01 and AUD-01
+   are both run and both undecided, and neither is undecided because the
+   architectures are close. ConvNeXt differs from EfficientNet by 0.0340 on
+   DFDC against a 0.0733 seed spread (F29), and WavLM and Wav2Vec2 both sit at
+   the in-domain ceiling with no cross-corpus partition to separate them (F28).
+   A third candidate cannot resolve a comparison that cannot resolve two.
+   AASIST and the SyncNet-style baseline are the scope controls' "one or two
+   challengers" already spent.
+
+3. **A corpus with manipulated audio that is not VoxCeleb2.** The audio branch
+   is at chance cross-corpus, 0.5054 [0.4747, 0.5371] on DFDC against 0.7739
+   in-domain (F30), so two of the three branches do not transfer and only the
+   visual one does.
+
+   DFDC can only answer this at clip level: it does not publish which modality
+   each forgery manipulated, so a cue-specific audio test needs a corpus that
+   does. LAV-DF has audio manipulations but is built on VoxCeleb2 exactly as
+   FakeAVCeleb is, which by this project's own rule is a different-generator
+   test rather than a cross-corpus one. DeepSpeak v2 and AV-Deepfake1M are the
+   candidates and both are blocked on access.
+
+4. **The face-crop path.** Measured as necessary: full frames are at chance on
    face manipulation, face crops are at chance on person-free generated scenes,
    so both paths must exist and be routed by content.
-3. **Perception Encoder**, once `open_clip_torch` is installable.
-4. **The audiovisual track**, which needs a corpus DF26 cannot provide. LAV-DF
+
+5. **Perception Encoder**, once `open_clip_torch` is installable.
+
+6. **The audiovisual track**, which needs a corpus DF26 cannot provide. LAV-DF
    is on disk; DeepSpeak v2 and AV-Deepfake1M need their access granted.
-5. **The paper.** [paper-source.md](research/paper-source.md) regenerates its
+
+7. **The paper.** [paper-source.md](research/paper-source.md) regenerates its
    tables from `runs/` and is the place to write from;
    [paper.md](research/paper.md) is the draft.
+
+### What a run actually costs
+
+Measured on 2026-09-23 and 2026-09-24, because the estimates this file carried
+were wrong by two orders of magnitude and deterred the replication for weeks:
+
+| Job | Measured |
+| --- | --- |
+| audio branch, full scale | 8 to 16 minutes |
+| sync branch, full scale | 12 minutes |
+| visual branch, full scale | about 40 minutes |
+| feature export, one partition | 3m22s |
+| BatchNorm sweep, three arms | about 75 minutes |
+
+Visual training must run with `--workers 0` on this machine. A visual batch is
+77 MB and prefetching workers have now taken the host out of memory twice.
 
 ### Commands that reproduce the current state
 

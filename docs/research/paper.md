@@ -1,11 +1,12 @@
 # Validity checks catch a detector that looks right and is not
 
 Draft. Every number here resolves to a row in
-[result traceability](result-traceability.md), and the rows that depend on the
-Design B visual streams are regenerated after the live-BatchNorm retrain. No row
-has reached `accepted`: the frozen protocol asks for three training seeds and
-these streams were trained on one, so every result is `provisional (1 seed)`.
-Section 7 states that and the rest of the limits plainly.
+[result traceability](result-traceability.md). Of 36 rows, 5 are `accepted`, 30
+are `provisional (1 seed)` and 1 is `pending`. The protocol asks for three
+training seeds; Design A's three branches now have them, every Design B stream
+has one, and the fusion rows stay provisional because the head reads out-of-fold
+features exported from seed-17 fold models. Section 7 states that and the rest of
+the limits plainly, and section 5.13 measures what a seed is worth.
 
 ## Abstract
 
@@ -20,11 +21,18 @@ Three results carry the paper. A cross-attention stream reached 0.9991 ROC-AUC
 while a correspondence measure recorded every epoch and never optimised sat at
 chance, so the accuracy is real and the stated mechanism is absent. Freezing
 BatchNorm during fine-tuning, a change that looked like a clear improvement on
-validation, moved cross-corpus ROC-AUC by 0.1276 in the wrong direction while
-moving in-domain ROC-AUC by 0.5430 in the right one, against an epoch budget
-worth 0.005. And selecting a checkpoint on validation
-loss kept one that scored below chance, on a run where loss and ROC-AUC moved in
-opposite directions on the same epoch.
+validation, cost 0.5430 of in-domain ROC-AUC and bought 0.1276 cross-corpus in an
+uncontrolled comparison; with the epoch budget held fixed that cross-corpus
+figure is **0.0177**, so the lever is real, one-seventh the size, and the
+in-domain cost is what survives the control. And selecting a checkpoint on
+validation loss kept one that scored below chance, on a run where loss and
+ROC-AUC moved in opposite directions on the same epoch.
+
+A fourth result frames the other three. Cross-corpus ROC-AUC on this pipeline
+moves by **0.1057** with the training seed alone, against 0.0001 in-domain, and
+the seed this paper reports is the best of three. Every unpaired cross-corpus
+comparison below is therefore stated with its range, and the paired comparisons,
+which hold the seed fixed and resample clips, are unaffected.
 
 ## 1. Introduction
 
@@ -84,6 +92,11 @@ artifact. Scoring the Design A checkpoint through the Design B path returned
 0.7611, matching to four decimals, which established the regression as real
 before anything was concluded from it.
 
+Both figures are seed 17. Design A's branch spans 0.6878 to 0.7611 across three
+seeds (5.13), so the gap is between the most favourable Design A draw and a
+single Design B arm. It remains far larger than the seed spread, so the conclusion
+holds, but the margin is smaller than one seed each suggests.
+
 ### 3.2 Validity checks, recorded and never optimised
 
 The central instrument is `diagonal_mass`: the fraction of attention mass near
@@ -131,6 +144,17 @@ Training data is FakeAVCeleb, split 70/15/15 by source identity. The
 cross-corpus test set is DFDC, the only audio-bearing corpus here not built on
 VoxCeleb2. Celeb-DF-v2 and the evaluation-only MNW benchmark are used for
 external checks; MNW is never tuned on.
+
+Seeds. The protocol fixes 17, 29 and 43. All three Design A branches have all
+three; every Design B stream has seed 17 alone. **Unless a number below says
+otherwise it is seed 17**, and seed 17 is the best of the three on DFDC, so
+single-seed cross-corpus figures here are the most favourable draw rather than a
+central one. Section 5.13 measures what that is worth.
+
+A resample that lands on one class is skipped and counted out of the reported
+sample count, rather than scored as 0.5. Scoring it 0.5 places a point mass in
+the middle of the percentile distribution, which can make an interval contain
+chance because of the fallback rather than because of the data.
 
 Confidence intervals are 95 percent bootstrap intervals clustered on source
 identity, not on the clip. The question a reader has is what happens on a
@@ -218,8 +242,30 @@ setting to adopt.
 
 One confound remains in the table above: the live arm stopped at epoch 4 on
 patience while the frozen arm ran 10, so the epoch budget is not held fixed. A
-controlled 1,400-clip sweep holds it fixed and finds the epoch budget moves DFDC
-by 0.005 against BatchNorm's 0.148.
+controlled 1,400-clip sweep holds it fixed, and **it does not reproduce the size
+of the effect**:
+
+| Arm | Epochs | Validation | DFDC |
+| --- | ---: | ---: | ---: |
+| frozen BatchNorm | 10 | 0.9072 | 0.5508 |
+| live BatchNorm | 10 | 0.5500 | 0.5686 |
+| frozen BatchNorm | 3 | 0.8728 | 0.5466 |
+
+With the budget held at 10, BatchNorm moves DFDC by **+0.0177**, not the +0.1276
+of the uncontrolled comparison. Varying epochs with BatchNorm frozen moves it by
+0.0042, so the epoch budget is not the explanation either. Neither lever is worth
+what the uncontrolled numbers implied.
+
+What survives the control is the direction and the in-domain cost: live BatchNorm
+still collapses validation from 0.9072 to 0.5500. The trade is real and still too
+steep to take, and its cross-corpus half is roughly seven times smaller than the
+uncontrolled comparison suggested. These are 1,400-clip arms, so read the
+difference between them rather than the absolute values.
+
+An earlier version of this section reported the controlled sweep as giving 0.148
+for BatchNorm against 0.005 for epochs. That was quoted from a run whose output
+was never written under `runs/`. The sweep has since been run and recorded, the
+epoch figure held, and the BatchNorm figure did not.
 
 The same checkpoint also has two legitimate in-domain numbers, 0.9987 against
 `video_fake` and 0.9719 against `clip_fake`, because a clip with a real video
@@ -280,6 +326,18 @@ they are never compared across different draws.
 | in-domain | +0.0247 | [+0.0220, +0.0280] |
 | DFDC | -0.0083 | [-0.0185, +0.0024] |
 
+The baseline here is the Platt-calibrated visual score alone. Against a head
+fitted on the visual branch **plus the three quality features**, a stronger
+baseline, the in-domain gain is +0.0159 [+0.0129, +0.0190]. Both are paired on the
+same clips under the clip-level label; they differ only in what "visual" means,
+and we report both rather than the more flattering one.
+
+The in-domain gain is also narrower than it looks in kind, not just in size. It is
+attributable almost entirely to the 75 `RealVideo-FakeAudio` clips, where the
+video is genuine and only the audio was replaced, so no visual branch can detect
+them even in principle. Fusion's measured in-domain benefit here is the cue
+coverage it was built for rather than a general improvement.
+
 Fusion helps in-domain, and the interval is clear of zero. Cross-corpus the
 difference is negative and the interval includes zero, so the honest statement
 is not that fusion is worse but that no difference is detectable. The
@@ -299,6 +357,12 @@ beside the same stream trained on FakeAVCeleb and scored on the same clips:
 Transfer to DFDC gets worse, from 0.7611 to 0.4920, an interval spanning chance.
 Celeb-DF is a tie with heavily overlapping intervals. Whatever FF++'s six
 manipulation families buy, it is not cross-corpus transfer here.
+
+Both rows are one seed each, and the FakeAVCeleb row is seed 17, the best of its
+three on DFDC. Against that model's three-seed mean of 0.7151 the drop is 0.7151
+to 0.4920, and against its worst draw 0.6878 to 0.4920. The conclusion is
+unchanged at every seed, because 0.4920 sits below the whole range, but the
+headline difference is 0.22 rather than the 0.27 a best-draw comparison gives.
 
 The penalty is not a fixed cost of leaving the training corpus, though. The FF++
 model reads 0.8253 on FakeAVCeleb, far above its 0.4920 on DFDC, so each model
@@ -401,6 +465,148 @@ The two generators missed completely are the ones whose artifacts are temporally
 smooth, and the clips the detector does find are the in-the-wild ones, which
 carry compression and editing artifacts as well.
 
+### 5.12 The identity-strict condition does not change the number
+
+Result: `A-visual-dfdc` and the identity-strict subset. Scoring the frozen visual
+branch on the identity-strict stress subset, where no target identity appears in
+more than one partition, leaves the number where the source-disjoint split put
+it. Source-disjointness was already doing the work; the stricter condition adds
+nothing to detect.
+
+### 5.13 A seed moves the cross-corpus number more than any effect we report
+
+Results: `A-visual-seeds`, `A-fusion-seed-spread`. Three seeds, everything else
+held fixed.
+
+| System | Seed 17 | Seed 29 | Seed 43 | In-domain spread | DFDC spread |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| visual branch, DFDC | 0.7611 | 0.6963 | 0.6878 | 0.0005 | **0.0733** |
+| fused system, DFDC | 0.7500 | 0.6814 | 0.6442 | 0.0001 | **0.1057** |
+
+In-domain the seeds agree to three or four decimal places. Cross-corpus the fused
+system ranges over 0.1057, which is twelve times the fusion-against-visual
+difference of -0.0085 that 5.6 reports, and six times the in-domain gain. **The
+seed we report, 17, is the best of the three in both rows**, against a fused mean
+of 0.6919.
+
+Fusing three branches did not average the noise away, it compounded it: 0.1057
+for the fused system against 0.0733 for the visual branch alone.
+
+This does not touch the paired comparisons in 5.6, 5.8 or 5.15, which hold the
+seed fixed and resample clips, so seed variance sits outside their intervals by
+construction. It bounds what an unpaired cross-corpus comparison between two
+differently seeded systems can claim.
+
+### 5.14 Corruption destroys the operating point while ROC-AUC barely moves
+
+Results: `A-corruption-visual`, `A-corruption-audio`. Corruption applied to the
+cached view, so the face track is held fixed and only the pixels the model sees
+degrade.
+
+| Condition | ROC-AUC | Genuine called fake | Fakes missed |
+| --- | ---: | ---: | ---: |
+| clean | 0.9988 | 0 of 150 | 3 of 1,498 |
+| JPEG 75 | 0.9934 | **76 of 150** | 1 |
+| JPEG 50 | 0.9187 | **150 of 150** | 0 |
+| resize 0.50 | 0.4316 | 150 of 150 | 0 |
+
+JPEG at quality 75 is lighter than a messaging app applies. It costs 0.0054 of
+ROC-AUC, which any table reads as robustness, while taking the false-alarm rate
+from 0 to 51 percent. At quality 50 the model calls every genuine clip fake and
+misses nothing, which is a detector that has stopped discriminating, and its AUC
+there is still 0.9187.
+
+The audio branch fails in the opposite direction. Noise at 20 dB SNR costs 0.0227
+of ROC-AUC and misses 857 of 859 fakes. Visual degradation calls everything fake;
+audio degradation calls everything genuine. A fused system inherits both and they
+do not cancel.
+
+One clean negative: shifting the waveform by half a second changes nothing,
+1.0000 against 1.0000, so the leading-silence shortcut the threat model names is
+absent from this checkpoint.
+
+Scope. These numbers hold the face track fixed, so they isolate the classifier
+from the detector. Corrupting a source video would also break face detection and
+produce abstentions this cannot see, and JPEG artifacts at 224 pixels are not
+those of compressing a 720p source and then cropping. Every figure above is an
+optimistic bound rather than an estimate.
+
+### 5.15 The model is more confident when it is wrong, cross-corpus
+
+Result: `A-error-analysis`. Confidence here is how sure the model was of whatever
+answer it gave.
+
+| Evaluation | Errors | Sure when right | Sure when wrong | Errors past 0.9 |
+| --- | ---: | ---: | ---: | ---: |
+| fusion, in-domain | 3 of 1,648 | 0.9990 | 0.9949 | 3 |
+| fusion, DFDC | 1,590 of 2,351 | 0.8299 | **0.8742** | 951 |
+| visual, DFDC | 1,942 of 2,410 | 0.8517 | **0.9244** | 1,482 |
+
+On both cross-corpus sets the model is more confident when wrong than when right.
+This closes an escape route 5.9 leaves open: abstaining on partial coverage buys
+no accuracy, and abstaining on low confidence cannot work either, because
+confidence does not separate right from wrong once the corpus changes. There is no
+threshold on this score that drops errors faster than correct answers.
+
+The same analysis bounds what any fusion head could do here. On DFDC the fused
+score and its own visual branch are both wrong on **1,585 of 2,351** compared
+clips, so 67 percent of that corpus is not recoverable by combining these
+branches at all. Fusion repairs 314 of the branch's errors and breaks 5, an
+asymmetric trade that ROC-AUC does not show because it changes threshold
+decisions without improving the ranking.
+
+### 5.16 The sync branch, and an exit criterion never measured
+
+Results: `A-sync-seeds`, `A-research-design-audit`.
+
+The synchronization branch had no evaluation path: `evaluate branch` takes visual
+or audio only, because sync predicts an offset class rather than a label. Scoring
+the anomaly logit the fusion head actually reads, against the clip-level label:
+
+| Seed | ROC-AUC | 95% interval |
+| --- | ---: | --- |
+| 17 | 0.4364 | [0.3888, 0.4832] |
+| 29 | 0.4570 | [0.4136, 0.4999] |
+| 43 | 0.4931 | [0.4341, 0.5524] |
+
+Every seed is below 0.5 and two intervals exclude it. The scalar fusion reads
+from this branch carries no usable signal at any seed. The label is clip-level and
+therefore wrong for a re-synchronised fake, which is genuinely fake and may be
+well aligned, so these are a floor rather than a measurement of alignment
+detection.
+
+The research design states an exit criterion for this branch: the sync offset
+confidence interval must exclude chance. **It has never been measured.** The
+branch's history records only a combined loss, and that loss is offset
+cross-entropy plus 0.1 times a contrastive term, so the offset task's own
+performance cannot be recovered from what was written. The best-epoch validation
+loss is 2.1843 against a chance cross-entropy of ln(8) = 2.079 for the 8-way task;
+subtracting an estimated contrastive contribution puts offset cross-entropy near
+2.05, marginally under chance. That is suggestive and it is not a measurement.
+
+### 5.17 One branch transfers and two do not
+
+Results: `A-visual-seeds`, `A-audio-crosscorpus-gap`, `A-sync-seeds`.
+
+| Branch | In-domain | Cross-corpus |
+| --- | --- | --- |
+| visual | 0.9988 | 0.7151 mean over three seeds |
+| audio | 0.7739 | **0.5054 [0.4747, 0.5371]**, contains chance |
+| sync | 0.4364 to 0.4931 over three seeds | not scored |
+
+The audio branch's cross-corpus number was long absent and read as work nobody
+had done. It is measurable at clip level and it is chance. A cue-specific audio
+evaluation is not available: DFDC does not publish which modality each forgery
+touched, so its audio-only label is a placeholder, and the corpora that would
+resolve it either carry no audio or are built on the same VoxCeleb2 footage as the
+training set.
+
+So the system this paper studies has one branch that transfers and two that do
+not. The in-domain fusion gain is entirely attributable to the 75
+`RealVideo-FakeAudio` clips a visual branch cannot detect in principle, and 5.15's
+finding that 1,585 of 2,351 cross-corpus errors are beyond any head follows
+directly rather than needing a separate explanation.
+
 ## 6. Failures that changed a result
 
 The failure log holds about 50 entries. These are the ones that changed a
@@ -442,8 +648,13 @@ training corpus, so their numbers are comparable only against each other. The
 FF++ result in 5.6a follows the published protocol and is the exception, at one
 seed and visual-only.
 
-One seed for every Design B stream where the protocol asks for three. Every
-result is `provisional` for that reason alone.
+One seed for every Design B stream where the protocol asks for three, so every
+Design B result is `provisional` for that reason alone. Design A now has three
+seeds on all three branches, and what they show is in 5.13: the fused
+cross-corpus number moves 0.1057 with the seed. The fusion rows remain
+`provisional` because the head is fitted on out-of-fold features exported from
+seed-17 fold models, and cross-fitting the folds per seed is eighteen further
+training runs that have not been done.
 
 No in-the-wild training data.
 
@@ -451,9 +662,17 @@ The cross-modal streams do not measure correspondence (5.1), so the
 architecture's stated mechanism is unverified and the streams should be
 described by what they do rather than by what they are named.
 
-Several required evaluations in the protocol have not been run: the
-identity-strict stress subset, leave-one-method-family-out, and the compression,
-noise and resolution stress tests.
+Required evaluations still not run: leave-one-method-family-out, the
+authentic-only against global-fake sync label comparison, and the
+leading-silence-removal ablation. The identity-strict stress subset and the
+compression, noise and resolution stress tests have since been run and are
+reported in 5.12 and 5.14.
+
+One exit criterion of the research design has never been measured at all: "the
+sync offset confidence interval must exclude chance". The sync branch's history
+records only a combined loss, and that loss adds a contrastive term to the offset
+cross-entropy, so the offset task's own performance cannot be recovered from the
+artifacts. Section 5.16 reports what can be said.
 
 Fully generated video is out of scope and the system is close to blind on it: 0
 of 10 on `vasa_1` and 0 of 4 on `raskai`. Every corpus here manipulates a real
@@ -477,3 +696,17 @@ below-chance checkpoint would each have passed unnoticed under an evaluation
 protocol built on accuracy tables alone. Each was caught by a quantity recorded
 next to the objective and never optimised against it. We think that practice,
 rather than any architecture here, is what transfers.
+
+Two limits on that claim, since the same practice was applied unevenly to this
+work. One of the three levers above shrank by a factor of seven once its control
+was actually run, having been reported for months from a run whose output was
+never written down. And the branch decomposition is thinner than the framing
+suggests: of three cue-specific branches, one transfers cross-corpus, one is at
+chance and one is below it, so this is a study of one working detector and two
+that do not rather than of fusion between three. Both are in section 7.
+
+A final observation the seed result forces. Reporting a single cross-corpus
+number to four decimal places invites comparisons the measurement cannot support:
+here the seed alone moves that number by 0.1057, more than any architectural
+choice we tested. A validity protocol that records mechanism metrics but not
+seed spread is still incomplete, and ours was.

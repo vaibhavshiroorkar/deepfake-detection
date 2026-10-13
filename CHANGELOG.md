@@ -12,6 +12,359 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Ran the sync label-mode ablation, one of two the research design required and
+  nobody had run. Read against each arm's own chance loss, not against each other:
+  the shipped authentic-offset arm sits at 2.1842 against its chance of ln(8) =
+  2.079, so it never learned its objective, and the rejected global-fake arm
+  reaches 0.0558 against its chance of ln(2) = 0.693.
+- That supports the design's reasoning rather than reversing it. A binary head
+  learns quickly here because whole-clip manipulation is separable by generator
+  artifacts, which is the shortcut F1 and F1a already document. An arm that learns
+  fast on a label that does not mean lip-sync is not evidence of lip-sync. What the
+  ablation establishes is that the branch's chosen objective is not learnable at
+  this budget and the alternative measures something else, so the label mode is
+  not what makes the branch unviable.
+- No ROC-AUC for the global-fake arm: `sync_anomaly_logit` assumes offset
+  semantics and is meaningless for a binary head. Inventing a fair reduction after
+  seeing the losses is how a comparison turns into a rationalisation.
+- Added `scripts/run_crossfit_seeds.ps1` for the one remaining thing that moves
+  the provisional count. All three branches now have three seeds, but the fusion
+  head reads out-of-fold features from seed-17 fold models, so the head has one
+  seed however many the branches have. That is eighteen fold runs, six to eight
+  hours, and it is the first job the new out-of-fold purity check will actually
+  protect, because the checkpoints it trains will carry their trained-source sets.
+
+- Made `A-encoder-comparison` runnable, and the stated reason it was not turns
+  out to have been false. The handoff and `extract_probe_features.py` both
+  recorded that Perception Encoder needed `open_clip_torch`, "which is not
+  installed and the venv has no pip". It resolves and installs in under a second.
+  It is now the `probe` extra, and `--encoder` takes `pe`, `clip`, `dinov3` and
+  `dinov3-b`. Both open_clip encoders were verified to load and embed.
+- `extract_probe_features.py` no longer keeps its own copy of the encoder table
+  and no longer hardcodes timm. It imports the shared loader, so the offline
+  probe and the served abstention gate cannot drift apart in how they embed, which
+  is the failure `frozen_features.py` exists to prevent.
+- Caught a third instance of the wrong-architecture defect while adding CLIP.
+  OpenAI trained those weights with QuickGELU, and open_clip loads them into the
+  standard-GELU body with only a warning, exactly as `Wav2Vec2Model` loaded WavLM
+  and as `evaluate branch` loaded ConvNeXt. Pinned to `ViT-B-16-quickgelu` and
+  confirmed the warning is gone.
+
+- Rewrote the paper against the registry. It cited none of the thirteen findings
+  recorded since it was drafted, including every one that weakens it, and one of
+  the three results its abstract says carry the paper did not survive its own
+  control: it reported the controlled BatchNorm sweep as 0.148 when the sweep,
+  now run and recorded, gives **0.0177**. The direction and the in-domain cost
+  hold; the magnitude was wrong by a factor of seven and the sentence claiming
+  the control confirmed it cited a number the control disproves.
+- De-anchored every unpaired cross-corpus figure from seed 17, which is the best
+  of three on DFDC. Sections 3.1, 5.6 and 5.6a now carry the range or the mean,
+  and section 4 states the seed count where a reader calibrates rather than
+  leaving it to the limitations.
+- Section 5.6 now names which visual baseline its +0.0247 uses and reports the
+  +0.0159 against the stronger baseline beside it, because both were in
+  circulation under one description.
+- Added sections 5.12 to 5.17 for the absent findings, leading with the seed
+  spread, the corruption result, the confidence inversion, and the branch
+  decomposition: one branch transfers, one is at chance, one is below it.
+- Corrected the limitations, which were stale in both directions: it listed the
+  corruption tests and the identity-strict subset as un-run when both were done,
+  and understated which ablations remain.
+- The conclusion now carries the two limits on its own central claim, that one of
+  its three levers shrank sevenfold under control, and that a validity protocol
+  recording mechanism metrics but not seed spread is incomplete, as this one was.
+
+- Made out-of-fold purity a thing the code checks rather than a string the
+  operator types. `--partition-role oof` is what tells `train fusion` a feature
+  store is safe to fit a head on, and nothing verified it: every fold shares one
+  `split_hash`, so `validate_branch_states` cannot see fold contamination, and
+  `export_features` never knew which sources a checkpoint trained on. Pointing
+  fold 0's checkpoint at fold 1's manifest passed every guard and produced a head
+  fitted on branch scores for clips the branch had memorised, with clean-looking
+  provenance.
+- `RunMetadata` now records `trained_source_identities`, and `export_features`
+  refuses an `oof` export whose manifest shares a source with any branch's
+  training set. The check is a set intersection and the data was already there:
+  every record carries `source`. Only the `oof` role is checked, because a test
+  or external export is supposed to score unseen clips.
+- A checkpoint written before the field existed reports an empty tuple, which
+  means "not recorded" rather than "trained on nothing", so the check skips
+  rather than passes. It tightens as checkpoints are rewritten and never
+  silently blesses an old one. This is the same defect class as the WavLM and
+  ConvNeXt loaders: code accepting an assertion it was capable of verifying.
+
+- Unified the bootstrap's single-class policy, which had two contradictory
+  definitions in the layer that computes every reported interval. Five scripts
+  returned 0.5 for a resample that landed on one class and five raised. Returning
+  0.5 is not neutral: it puts a point mass in the middle of the percentile
+  distribution, so an interval could contain 0.5 because of the fallback rather
+  than because of the data.
+- `cluster_bootstrap_interval` now skips such a draw and counts it out of
+  `successful_samples`, which is what `bootstrap_binary_metrics` and
+  `paired_auc_difference` already did. The module is internally consistent for
+  the first time, and `successful_samples` means survivors in all three rather
+  than being permanently equal to the requested count in one of them.
+- **No reported number moved.** `stream-scores.json`, `fusion-ablations.json` and
+  `deep-ablation.json` were re-run and are bit-identical to their pre-change
+  snapshots, so the fallback never actually fired on this data: the identity
+  counts and class balances were large enough that no resample lost a class. The
+  fix is insurance against a hazard, not a correction. F1's "four of five contain
+  chance" verdict is unchanged, and no finding needed revising.
+- Added the test that the existing one only claimed. `cluster_bootstrap_interval`
+  is now checked to resample whole identities by inspecting the sample the
+  statistic receives; the previous test asserted this in its name while using a
+  mean statistic that cannot distinguish identity resampling from clip
+  resampling.
+- Fixed a latent label bug in `scripts/score_by_family.py`. It defined the
+  negative arm by `item.label`, which for the visual branch is `video_fake`, and
+  each family arm by `clip_fake`. A `RealVideo-FakeAudio` clip has those
+  disagreeing, so it entered the real pool *and* its family's fake list, labelled
+  0 in both, and that family's own positives were scored as negatives inside one
+  interval. It never fired: the script is FaceForensics++ only and FF++ has 0 rows
+  where the two labels disagree, so the recorded family numbers are unaffected. It
+  now uses one label and refuses a corpus where they diverge rather than silently
+  producing a plausible number.
+
+- Measured the audio branch cross-corpus for the first time and it is at
+  **chance**: 0.5054 [0.4747, 0.5371] on DFDC against 0.7739 in-domain, both at
+  clip level. All three branches now have a cross-corpus number and two of the
+  three are at or below chance, the sync branch being the other. A fused system
+  built on one branch that transfers and two that do not is the honest
+  description of what this project built.
+- That number corrects a claim made here hours earlier and withdrawn. Counting
+  `audio_fake` over the DFDC manifest gives 0 of 2,410, which was read as "DFDC
+  contains no manipulated audio, so no audio generalization test is possible".
+  The ingestion module says otherwise in its own docstring: DFDC does not publish
+  which modality each forgery touched, so every forgery is written
+  `FakeVideo-RealAudio` and that cue label "is not trustworthy here". The count
+  was right and the inference from it was wrong.
+- What is genuinely impossible on DFDC is a **cue-specific** audio evaluation,
+  which needs labels the corpus does not publish. The clip-level one was sitting
+  in the feature store the whole time. AUD-01 is still undecided, now for a
+  reported reason rather than an absence: the incumbent is at chance on the only
+  independent corpus, so there is no performance there for a challenger to
+  improve on.
+
+- Decided VIS-01 at three seeds per backbone, and the deciding evidence is
+  stability rather than accuracy. ConvNeXt is worse on DFDC at every seed, mean
+  0.6783 against 0.7151, and at seed 43 it **diverged**: validation loss 0.218,
+  0.6473, 0.7172, stopping on patience so the selection rule kept epoch 1, the
+  frozen-backbone epoch. That checkpoint was never fine-tuned, which is why its
+  in-domain reads 0.9032 against its siblings' 0.999. EfficientNet's curves fall
+  and stay down at all three seeds. A backbone that fails one run in three under
+  an identical budget does not ship on the strength of a favourable one.
+- The only seed whose paired interval separates is the failed one. On the two
+  healthy seeds the difference is -0.0340 and -0.0187, neither separated, which
+  is the undecidable comparison a single seed had produced. Three seeds did not
+  sharpen that comparison; they replaced it with a different and better reason
+  to choose.
+- The failure mode is the one F3 already recorded: checkpoint selection quietly
+  kept a frozen-backbone epoch because everything after it was worse, and no
+  metric in the result announces that the model was never fine-tuned.
+
+- Ran VIS-01 at one seed. ConvNeXt-Tiny reads 0.9992 in-domain and 0.7272 on DFDC against
+  the baseline's 0.9988 and 0.7611, and paired over the same clips neither
+  difference separates from zero. The comparison is undecided, and the reason is
+  the seed: the backbone gap of 0.0340 is less than half the visual branch's
+  0.0733 seed spread, so one seed each cannot settle it. Deciding it needs three
+  seeds per backbone, which at the corrected cost is an afternoon.
+- ConvNeXt accuses no genuine DFDC clip at all and reads 0.5066 balanced
+  accuracy, the degenerate operating point. Its 0.7272 ROC-AUC does not show
+  that, which is the same gap between ranking and decision that F20, F22 and F24
+  found by three other routes.
+- `evaluate branch` gained the `--architecture` flag it needed. Without it the
+  evaluator built EfficientNet and tried to load ConvNeXt weights, which failed
+  loudly on a tensor size mismatch. That is the difference between this and the
+  audio defect below: the wrong visual architecture cannot be loaded silently,
+  the wrong audio one could.
+
+- Fixed a builder that would have produced a false AUD-01 result. `--audio-model`
+  went through `Wav2Vec2Model.from_pretrained`, which accepts any checkpoint and
+  drops whatever does not fit the Wav2Vec2 body: `microsoft/wavlm-base` loaded
+  that way carries 94,371,712 parameters against `WavLMModel`'s 94,381,936, so
+  WavLM's gated relative position embeddings were simply absent. A "WavLM
+  comparison" run through it would have measured a truncated Wav2Vec2 and
+  nothing in the output would have said so.
+- The builder now goes through `AutoModel`, which instantiates the architecture
+  each checkpoint was trained as. `facebook/wav2vec2-base` resolves to the same
+  `Wav2Vec2Model`, so no shipped checkpoint changes, and every call site picks
+  the fix up through the existing name.
+- With the comparison correctly expressible, AUD-01 is undecidable on this
+  partition: Wav2Vec2 and WavLM both read ROC-AUC 1.0000 in-domain. The audio
+  branch has no cross-corpus evaluation at any seed, so there is nothing to
+  break the tie. Recorded as undecided rather than settled, with the incumbent
+  kept by scope control rather than by evidence.
+
+- Measured what the seed is worth to the fused system, and it is the largest
+  effect in the project. Scoring all three branch seeds through the same head
+  gives DFDC 0.7500, 0.6814 and 0.6442: a spread of 0.1057 against 0.0001
+  in-domain. The 0.7500 this repository reports as its cross-corpus headline is
+  the best of the three and the mean is 0.6919, so the headline now carries the
+  range. The spread is twelve times the fusion-against-visual difference it is
+  used to discuss, and fusing three branches compounded the seed noise rather
+  than averaging it away.
+- Every paired comparison here is unaffected, because those hold the seed fixed
+  and resample clips. What changes is the status of any unpaired cross-corpus
+  number quoted to four decimal places.
+- Gave the synchronization branch an evaluation path. `ddf evaluate branch`
+  takes visual or audio only, because sync predicts an offset class rather than
+  a label, so three trained checkpoints had never produced a metric.
+  `scripts/score_sync_branch.py` scores the sync anomaly logit, the same scalar
+  the fusion store records, and validates itself against that store: on seed 17
+  it reproduces the recorded logits to 8.5e-6 of ROC-AUC.
+- The branch reads 0.4364, 0.4570 and 0.4931 across seeds, below chance on all
+  three with two intervals excluding 0.5. It ranks manipulated clips as slightly
+  more aligned than genuine ones. The label is clip-level and therefore wrong
+  for a re-synchronised fake, so this is a floor, but the scalar fusion actually
+  reads from that branch carries no usable signal at any seed.
+
+- Ran the BatchNorm sweep that had been the registry's only `pending` row since
+  it was written, and it does not reproduce the effect it was cited for. With
+  the epoch budget held at 10, BatchNorm moves DFDC by +0.0177 against the
+  +0.1276 of the uncontrolled full-scale comparison, and varying epochs alone
+  moves it by 0.0042. The in-domain cost survives the control: validation falls
+  0.9072 to 0.5500. F2 is corrected rather than withdrawn, since the direction
+  and the steepness of the trade still hold.
+- With that artifact written, every row in the result registry resolves to a
+  file for the first time: 29 rows, 0 pending.
+- Trained the remaining seeds for the audio and sync branches. The handoff
+  costed these at nine and twelve hours each; measured, they are 8 to 16
+  minutes. That estimate was wrong by two orders of magnitude and is corrected.
+
+- Verified the project from a clean environment for the first time, and it did
+  not pass. The test suite could not be **collected** with the install set
+  `ci.yml` itself uses: `streamlit` lives only in the `dashboard` extra, CI did
+  not install it, and nine test modules imported the dashboard at module level,
+  so one ImportError aborted the entire run. Two of the project's dashboard test
+  modules already guarded themselves with `importorskip("streamlit")`; the rest
+  had simply been missed.
+- Those nine now carry the same guard, and `ci.yml` installs the `dashboard`
+  extra so the tests actually run rather than silently skipping. Both halves are
+  needed: the guard keeps a clean checkout working, the extra keeps CI honest.
+- Four further tests failed in a clean checkout because they depended on
+  gitignored `runs/` artifacts and checkpoints. The pages they exercise behave
+  correctly without those, stopping early and reporting missing evidence rather
+  than inventing it, so the tests now skip with that reason instead of failing.
+- Also added `importorskip("timm")` to the two stream test modules that build a
+  backbone, matching how the same files already guard `torch`.
+- The result: a fresh copy with no `runs/`, no `data/`, no checkpoints and no
+  `mlflow.db` installs from `uv.lock`, reproduces the tracked smoke run with one
+  command, and passes the full suite. That is Phase 1's exit gate, checked
+  rather than assumed.
+
+- Added `scripts/run_corruption_eval.py` and ran it on both branches, closing
+  the corruption tests the threat model names as the check against the codec
+  shortcut. The headline is that ranking survives degradation and the decision
+  does not: JPEG at quality 75 costs 0.0054 of ROC-AUC and takes false alarms
+  from 0 to 76 of 150 genuine clips, and by quality 50 every genuine clip is
+  called fake while ROC-AUC still reads 0.9187.
+- The audio branch fails the opposite way. Noise at 20 dB SNR costs 0.0227 of
+  ROC-AUC and misses 857 of 859 fakes, so visual degradation calls everything
+  fake and audio degradation calls everything genuine. A fused system inherits
+  both and they do not cancel.
+- The silence shortcut is absent, measured rather than assumed: a half-second
+  shift changes nothing. That is a mitigation the threat model asked for and it
+  holds on this checkpoint.
+- That script states its own scope in its docstring and in the artifact, because
+  it is narrower than it looks. Corruption is applied to the cached crop with
+  the face track held fixed, so it bounds the classifier and cannot see the
+  detector failures and abstentions that corrupting a source video would cause.
+  Every number is an optimistic bound rather than an estimate.
+- `train visual --architecture convnext-tiny` now builds the VIS-01 challenger.
+  The branch was always architecture-agnostic, pooling whatever the backbone
+  returns and running a GRU over the frame axis, so only a hardcoded name in the
+  builder made the roadmap record this comparison as "not currently
+  expressible". It is now GPU time rather than code. `build_efficientnet_b0`
+  stays as its own name because every shipped checkpoint was built through it.
+- Ran `ruff format` over `src` and `tests`, which reformatted 57 files. The
+  Format step in CI had been failing on main: it runs the ruff pinned in the dev
+  group, the same version used locally, so this was a red check rather than a
+  version difference between CI and a developer machine.
+
+- Closed the padding shortcut in the audio branch. `AudioSpoofBranch.forward`
+  takes an optional valid sample count and masks the attention scores before
+  the softmax, so padding no longer reaches the pooled embedding. The threat
+  model has named "required audio masks" as a mitigation since it was written
+  and nothing implemented it: a short clip and a long one differ in how much
+  silence they end with, which is a cue about the clip rather than the voice.
+- The count is carried in the cache metadata rather than the arrays, so the
+  preprocessing hash is unchanged and no existing cache is invalidated. Entries
+  written earlier report `None`, which means unknown rather than fully valid,
+  and a batch holding one of them is scored unmasked exactly as before. No
+  shipped checkpoint was trained with masking; that needs a rebuilt audio cache.
+- Collation is all or nothing: one clip without a count drops the mask for the
+  whole batch, because masking some rows and not others inside one softmax is
+  worse than masking none.
+- Added `scripts/run_error_analysis.py`, which reads the frozen evaluation
+  predictions and loads no model, as Phase 5 requires. Two results came out of
+  it. Cross-corpus the system is more confident when it is wrong than when it is
+  right, 0.8742 against 0.8299 on DFDC with 951 of 1,590 errors past 0.9, so no
+  confidence threshold can abstain its way out. And fusion repairs 314 of the
+  visual branch's DFDC errors while breaking 5, with 1,585 beyond any possible
+  head, which bounds head work to a third of that corpus.
+- That script excludes two things rather than averaging over them, and both
+  would have inflated the repair count: 59 DFDC clips the fusion head never
+  scored, and the 75 in-domain clips where the branch report and the fusion
+  report disagree about whether a `RealVideo-FakeAudio` clip is genuine. The
+  second is the trap recorded a few entries below, caught automatically here.
+- Added `docs/model-card.md` from measured results only. It leads with the fact
+  that the system should not be deployed and gives four measured reasons.
+- Drafted `CITATION.cff` and `LICENSE.md`, both deliberately incomplete. The
+  citation carries the git identity with the institution and ORCID left as
+  TODOs, because the roadmap asks for a verified academic identity and a
+  plausible guess is the opposite of that. The license says in its first
+  paragraph that it is not in force: the code terms need a university check on
+  who owns dissertation work, so until then the repository is all rights
+  reserved.
+- The data half of that file is the part that already binds. No corpus is
+  redistributed here, every one carries research-only terms, and a trained
+  checkpoint may count as a redistribution of the data it was trained on under
+  some of those agreements. That has not been checked and is recorded as
+  unchecked rather than assumed safe.
+
+- Ran the fusion ablations the research design named and the roadmap never
+  closed. `scripts/run_fusion_model_ablation.py` settles FUS-01: the small MLP
+  matches the logistic head in-domain and loses 0.1508 [0.0995, 0.2052] on DFDC,
+  so the logistic head ships and the scope control about preferring the cheaper
+  model never had to be invoked. Calibration and the three quality features buy
+  no ranking either way; calibration earns its place on calibration error alone.
+- The floor arm is the result worth carrying. An unweighted mean of the
+  calibrated branch probabilities, nothing learned, is not separated from the
+  fitted head on DFDC and its calibration error there is 0.0554 against the
+  fitted head's 0.6366. The head's learned weights are what fails to cross
+  corpora, not the branches under them.
+- Added `scripts/run_generalization_slices.py`: per-method, subgroup and
+  head-only method-holdout breakdowns. It reports no method or subgroup gap
+  in-domain and says plainly that this partition sits at a ceiling where no gap
+  could appear, which is why the false-alarm work had to go elsewhere to find
+  the 0 to 91 percent range.
+- That script caught something AUC was hiding. Dropping `rtvc` from the fusion
+  head's fit costs 0.0437 of ROC-AUC and misses 73 of its 75 clips at the frozen
+  threshold. Reported on AUC alone it reads as a 4-point effect; it is the
+  difference between catching 75 and catching 2. Error counts at the threshold
+  are now printed beside every slice for that reason.
+- `scripts/run_ablation.py` now carries identity-clustered intervals and a
+  paired bootstrap of all three branches against the strongest single branch.
+  The headline claim was a comparison reported as two bare numbers.
+- Recorded why the fusion gain looked like nothing. The branch reports score
+  each branch against its own cue, where a `RealVideo-FakeAudio` clip is genuine
+  for the visual branch and it reads 0.9988; fusion answers the clip-level
+  question, where the same clip is fake and the identical logits read 0.9742.
+  Quoting the two side by side makes fusion look worth +0.0002. On one task the
+  gain is +0.0159 [+0.0129, +0.0190], and all of it is the 75 clips a visual
+  branch cannot detect in principle.
+- Registered `A-branch-ablation`, `A-fusion-model-ablation` and
+  `A-generalization-slices`. The branch ablation had been run since 2026-09-06
+  and was never in the registry, so the project's headline fusion claim rested
+  on a file no result row pointed at.
+- Evaluated the visual seed-29 and seed-43 checkpoints, which had been on disk
+  since 2026-09-08 without ever being scored: `run_program.ps1` trains the
+  visual branch on all three seeds and stage 5 only evaluates seed 17. The
+  spread was already paid for in GPU and was being reported as a missing seed.
+- Reconciled `ROADMAP.md` with what happened. Phases 3 to 5 had run ahead of
+  Phase 2's evidence gate while their boxes stayed unticked, so the file said
+  the next work was a body of work finished weeks earlier.
+
 - Added `scripts/fit_authenticity_density.py`, a Gaussian over frozen encoder
   features of authentic clips only, scored by Mahalanobis distance. It exists
   because the motion gate intercepted only 5.7 percent of the false accusations
@@ -113,9 +466,18 @@ Experiment metrics belong in the experiment tracker, not this file.
   `fake/<scenario>/<generator>/` layout into the `real/` and `fake/<generator>/`
   shape the folder scorer already groups by, keeping the scenario in a sidecar
   index so the per-scenario analysis stays possible.
-- Amended the frozen-probe recommendation from DINOv3 to Perception Encoder. The
-  same method with three encoders on DF26 reads 72.7 macro for PE, 57.0 for
-  DINOv3 and 55.6 for CLIP, so the encoder choice is worth 15 points.
+- Amended the frozen-probe recommendation from DINOv3 to Perception Encoder, on
+  the basis that the same method with three encoders on DF26 read 72.7 macro for
+  PE, 57.0 for DINOv3 and 55.6 for CLIP.
+
+  **That claim is withdrawn as unverified.** No PE or CLIP artifact exists under
+  `runs/`, there is no registry row for the comparison, and its DINOv3 figure of
+  57.0 contradicts this project's own registered DF26 probe, which reads 0.6942
+  uncontrolled and 0.6786 frame-rate controlled with the artifacts to prove it.
+  A number eleven points away from our own measurement of the same encoder on
+  the same corpus cannot have come from the same pipeline. Recorded as
+  `A-encoder-comparison`, status `pending`, with the command that would produce
+  it. The architecture recommendation stays DINOv3 until an artifact exists.
 
 - Reorganised `docs/research/architecture.md` around the constraint that
   actually matters now: a live demo where people generate fakes on the spot and

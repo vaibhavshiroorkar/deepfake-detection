@@ -52,21 +52,32 @@ exclusion beside any robustness claim.
 
 ## Main threats and controls
 
-| Threat | Failure | Current or required control |
-|---|---|---|
-| Source identity leakage | The model recognizes people instead of fakes | Source-disjoint splits and overlap audits |
-| Generator shortcut | Scores collapse on an unseen method | Method-family holdouts and external zero-shot evaluation |
-| Codec or resolution shortcut | The model learns dataset encoding | Corruption tests and distribution reports |
-| Silence shortcut | Audio labels leak through leading silence | Silence ablation and explicit audio quality fields |
-| Padding shortcut | The sync or audio branch learns sequence length | Real-context offsets and required audio masks |
-| Face detector failure | Wrong crops create false evidence | Quality gates, abstention, and detector benchmark |
-| Identity switch | The mouth and audio belong to different people | Track stability checks and identity-switch measurement |
-| Missing modality | Fusion treats absence as evidence | Explicit coverage gate and blank fusion result |
-| Class imbalance | Accuracy hides failure on real media | PR-AUC, balanced metrics, and natural test frequencies |
-| Validation overfit | Repeated choices consume the validation set | Predeclared comparisons and limited search budgets |
-| Calibration shift | A probability looks more certain than it is | Brier score, calibration error, and external reporting |
-| Unsafe model loading | A joblib file executes local code | Load only artifacts created by this project |
-| Demographic harm | Error rates differ across groups | Subgroup intervals, coverage reports, and restrained claims |
+The third column was headed "Current **or** required control", which never
+distinguished a control that exists from one the project intends. That ambiguity
+hid a real gap for months: "required audio masks" sat here while the audio branch
+pooled over padding unmasked in every trained checkpoint. The status column is
+now explicit, and a row marked `required` is a commitment, not a safeguard.
+
+| Threat | Failure | Control | Status |
+|---|---|---|---|
+| Source identity leakage | The model recognizes people instead of fakes | Source-disjoint splits and overlap audits | **in place**, tested |
+| Generator shortcut | Scores collapse on an unseen method | Method-family holdouts and external zero-shot evaluation | **partial**: zero-shot done, leave-one-method-family-out never run |
+| Codec or resolution shortcut | The model learns dataset encoding | Corruption tests and distribution reports | **partial**: corruption tests done (F24, F25); no distribution report exists |
+| Silence shortcut | Audio labels leak through leading silence | Silence ablation and explicit audio quality fields | **partial**: quality fields exist and `cache build --keep-leading-silence` exists, but the cache-level ablation has never been run. F25 measures a half-second shift at inference and finds no effect |
+| Padding shortcut | The sync or audio branch learns sequence length | Real-context offsets and required audio masks | **partial**: masking implemented and tested, but no shipped checkpoint was trained with it and the caches those used record no sample count |
+| Face detector failure | Wrong crops create false evidence | Quality gates, abstention, and detector benchmark | **partial**: gates and abstention in place; the benchmark's human review is unrun, so Phase 2's gate is open |
+| Identity switch | The mouth and audio belong to different people | Track stability checks and identity-switch measurement | **partial**: stability checks in place; **no identity-switch measurement exists anywhere in the codebase** |
+| Missing modality | Fusion treats absence as evidence | Explicit coverage gate and blank fusion result | **in place**: coverage reported beside every metric, absent streams masked to exactly zero including bias |
+| Class imbalance | Accuracy hides failure on real media | PR-AUC, balanced metrics, and natural test frequencies | **partial**: PR-AUC and balanced accuracy reported; no natural-frequency evaluation exists |
+| Validation overfit | Repeated choices consume the validation set | Predeclared comparisons and limited search budgets | **partial**: comparisons are predeclared in the experiment matrix; no search budget is enforced or counted |
+| Calibration shift | A probability looks more certain than it is | Brier score, calibration error, and external reporting | **in place**, and it fired: ECE 0.0022 in-domain against 0.6366 on DFDC |
+| Unsafe model loading | A joblib file executes local code | Load only artifacts created by this project | **convention only**: `joblib.load` is called in `cli.py` and `inference/loading.py` with no provenance check on the file |
+| Demographic harm | Error rates differ across groups | Subgroup intervals, coverage reports, and restrained claims | **in place but uninformative**: F20 finds no gap at a ceiling where none could appear, and neither cross-corpus set carries demographic annotation |
+
+Three rows have **no implementation at all** behind part of their control and are
+the honest gaps: the identity-switch measurement, the distribution report, and
+the natural-frequency evaluation. Two more are convention rather than control:
+joblib provenance and the search budget.
 
 ## Trust boundaries
 

@@ -118,11 +118,29 @@ served.
 | Report | Dataset | Rows | ROC-AUC | Balanced accuracy |
 |---|---|---:|---:|---:|
 | `audio-in-domain-test-metrics.json` | FakeAVCeleb | 1,648 | 1.0000 | 1.0000 |
+| `audio-in-domain-test-seed29-metrics.json` | FakeAVCeleb | 1,648 | 1.0000 | 0.9962 |
+| `audio-in-domain-test-seed43-metrics.json` | FakeAVCeleb | 1,648 | 0.9986 | 0.9906 |
+| `audio-wavlm-in-domain-test-metrics.json` | FakeAVCeleb | 1,648 | 1.0000 | 0.9981 |
 | `fusion-dfdc-metrics.json` | DFDC | 2,351 | 0.7500 | 0.6203 |
 | `fusion-test-metrics.json` | FakeAVCeleb | 1,648 | 0.9990 | 0.9990 |
+| `sync-final-sync-seed17-metrics.json` | FakeAVCeleb | 0 | 0.4364 | 0.5000 |
+| `sync-final-sync-seed29-metrics.json` | FakeAVCeleb | 0 | 0.4570 | 0.5000 |
+| `sync-final-sync-seed43-metrics.json` | FakeAVCeleb | 0 | 0.4931 | 0.5000 |
 | `visual-celebdf-metrics.json` | Celeb-DF-v2 | 462 | 0.6682 | 0.5435 |
+| `visual-convnext-dfdc-metrics.json` | DFDC | 2,410 | 0.7272 | 0.5066 |
+| `visual-convnext-dfdc-seed29-metrics.json` | DFDC | 2,410 | 0.6776 | 0.5358 |
+| `visual-convnext-dfdc-seed43-metrics.json` | DFDC | 2,410 | 0.6301 | 0.5720 |
+| `visual-convnext-in-domain-test-metrics.json` | FakeAVCeleb | 1,648 | 0.9992 | 0.9973 |
+| `visual-convnext-in-domain-test-seed29-metrics.json` | FakeAVCeleb | 1,648 | 0.9986 | 0.9957 |
+| `visual-convnext-in-domain-test-seed43-metrics.json` | FakeAVCeleb | 1,648 | 0.9032 | 0.7919 |
 | `visual-dfdc-metrics.json` | DFDC | 2,410 | 0.7611 | 0.5677 |
+| `visual-dfdc-seed17-metrics.json` | DFDC | 2,410 | 0.7611 | 0.5677 |
+| `visual-dfdc-seed29-metrics.json` | DFDC | 2,410 | 0.6963 | 0.5354 |
+| `visual-dfdc-seed43-metrics.json` | DFDC | 2,410 | 0.6878 | 0.5216 |
 | `visual-in-domain-test-metrics.json` | FakeAVCeleb | 1,648 | 0.9988 | 0.9990 |
+| `visual-in-domain-test-seed17-metrics.json` | FakeAVCeleb | 1,648 | 0.9988 | 0.9990 |
+| `visual-in-domain-test-seed29-metrics.json` | FakeAVCeleb | 1,648 | 0.9991 | 0.9990 |
+| `visual-in-domain-test-seed43-metrics.json` | FakeAVCeleb | 1,648 | 0.9993 | 0.9987 |
 | `visual-mnw-metrics.json` | MNW | 85 | 0.0000 | 0.1429 |
 <!-- END GENERATED DESIGNA -->
 
@@ -277,7 +295,13 @@ change nothing there.
 | live | `visual-efficientnet` | 0.4909 | 0.4557 | 0.6343 |
 | live | `visual-dinov3` | 0.9559 | 0.9546 | 0.5147 |
 
-The controlled sweep that holds the epoch budget fixed has not run. `python scripts/score_batchnorm_arms.py` measures the arms; `python scripts/batchnorm_sweep.py --run-dir runs/design-b-20260910` adds the epoch control.
+Controlled sweep, 1400 training clips, epoch budget held fixed:
+
+| Arm | Validation | DFDC |
+|---|---:|---:|
+| frozen BatchNorm, 10 epochs | 0.9072 | 0.5508 |
+| live BatchNorm, 10 epochs | 0.5500 | 0.5686 |
+| frozen BatchNorm, 3 epochs | 0.8728 | 0.5466 |
 <!-- END GENERATED BATCHNORM -->
 
 ### 5.6 Per-media-kind thresholds
@@ -488,10 +512,11 @@ surveyed in [corpora for the generative-video problem](datasets.md).
 ## 10. Provenance
 
 <!-- BEGIN GENERATED REGISTRY -->
-17 registered results.
+36 registered results.
 
+- 5 `accepted`
 - 1 `pending`
-- 16 `provisional (1 seed)`
+- 30 `provisional (1 seed)`
 
 The rows themselves, with each artifact's SHA-256 and MLflow run, are in [result traceability](result-traceability.md).
 <!-- END GENERATED REGISTRY -->

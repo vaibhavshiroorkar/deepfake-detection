@@ -36,19 +36,23 @@ identities in total. Real clips are the scarce resource in every partition.
 ## Fixed seeds
 
 Research branch comparisons use seeds 17, 29, and 43. A candidate remains
-incomplete until all three runs finish or retain an explained failure. Audio and
-sync run seed 17 first because each seed costs roughly nine and twelve hours at
-full scale; the remaining seeds are queued behind the visual results.
+incomplete until all three runs finish or retain an explained failure.
+
+All three branches now have all three seeds. The cost was long quoted here as
+roughly nine hours for an audio seed and twelve for a sync seed at full scale.
+Measured on 2026-09-23 those are **8 to 16 minutes** and **12 minutes**, and a
+feature export is 3m22s. The old figures were estimates that nothing had
+checked, and they deterred the replication for weeks.
 
 ## Experiment stages
 
 | ID | Stage | Candidates | Selection evidence | Status |
 | --- | --- | --- | --- | --- |
 | DET-01 | Detector | MTCNN, YuNet | Reviewed training-only benchmark | planned |
-| VIS-01 | Visual | EfficientNet-B0 plus GRU, ConvNeXt-Tiny | Validation and method-holdout metrics | planned |
-| AUD-01 | Audio | Wav2Vec2 Base, WavLM, AASIST | Validation and method-holdout metrics | planned |
+| VIS-01 | Visual | EfficientNet-B0 plus GRU, ConvNeXt-Tiny | Validation and method-holdout metrics | accepted |
+| AUD-01 | Audio | Wav2Vec2 Base, WavLM, AASIST | Validation and method-holdout metrics | running |
 | SYN-01 | Sync | Current temporal branch, SyncNet-style baseline | Offset and mismatch metrics | planned |
-| FUS-01 | Fusion | Logistic regression, small MLP | Out-of-fold validation metrics | planned |
+| FUS-01 | Fusion | Logistic regression, small MLP | Out-of-fold validation metrics | accepted |
 | GEN-01 | Generalization | Frozen visual branch on Celeb-DF-v2 | Official 518-clip test list, zero-shot | running |
 | EXT-01 | External | Frozen selected system on MNW | Locked zero-shot metrics | running |
 | XM-01 | Cross-modal | Lip-sync stream, audio queries mouth | Diagonal attention mass plus validation metrics | running |
@@ -59,11 +63,32 @@ full scale; the remaining seeds are queued behind the visual results.
 | VST-03 | Visual stream | Xception, fine-tuned after 2 frozen epochs | Same | dropped |
 | VST-04 | Visual stream | All three, checkpoint selected on ROC-AUC | Same | running |
 
-VIS-01 needs code before it can run: `branches/visual.py` builds only
-EfficientNet-B0, and `train visual` has no architecture flag, so the
-ConvNeXt-Tiny comparison is not currently expressible. The VST rows are the
-Design B answer to the same question: `ddf train visual-stream` does carry an
-architecture flag, so the three backbones are one command apart.
+AUD-01 is half-run and undecided. WavLM is measured against Wav2Vec2 and both
+read ROC-AUC 1.0000 in-domain, so this partition cannot separate them; the audio
+branch has no cross-corpus evaluation to decide it, and AASIST has no
+implementation. See `A-audio-wavlm` and F28, which also records that the
+`--audio-model` flag was building a truncated Wav2Vec2 from the WavLM checkpoint
+until it was fixed.
+
+FUS-01 is settled and the logistic head ships. The MLP matches it in-domain and
+loses 0.1508 [0.0995, 0.2052] on DFDC, so the scope control about preferring the
+cheaper model never had to be invoked: the cheaper model is also the better one.
+Both arms read the same out-of-fold features, so the comparison needed no
+training and inherits the one-seed limit of the branches underneath it. See
+`A-fusion-model-ablation`.
+
+VIS-01 is decided for EfficientNet-B0, at three seeds per backbone, and the
+deciding evidence is stability rather than accuracy. ConvNeXt is worse on DFDC
+at every seed, mean 0.6783 against 0.7151, and at seed 43 it diverged outright
+under an identical budget: validation loss 0.218, 0.6473, 0.7172, stopping on
+patience and leaving a frozen-backbone checkpoint that was never fine-tuned. On
+the two seeds where it trained the difference is -0.0340 and -0.0187, neither
+separated; the only separated interval is the failed run's. A backbone that
+fails one run in three does not ship on the strength of a favourable one. See
+`A-visual-convnext` and F29.
+
+The VST rows are the Design B answer to the same question, where
+`ddf train visual-stream` already carried the flag.
 
 VST-01 and VST-02 are superseded, and the reason is worth keeping. Both selected
 their checkpoint on validation BCE, which kept the wrong epoch. VST-02 reached
@@ -113,6 +138,12 @@ Corpus independence governs which evaluations count as cross-dataset:
 Scoring LAV-DF on FakeAVCeleb changes the generator, not the corpus. Only DFDC
 is both independent and complete in both modalities.
 
+DFDC does not publish which modality each forgery manipulated, so its
+`audio_fake` column is a placeholder for "cue unknown" rather than a measurement,
+as `data/dfdc.py` states. That allows a clip-level audio evaluation there but not
+a cue-specific one. The clip-level number is 0.5054 [0.4747, 0.5371], which is
+chance. See F30.
+
 ## Ablation groups
 
 Every run carries `ablation_group`, `tier` and `dataset` tags, so a study can be
@@ -127,6 +158,21 @@ CLI already supports without new code:
 | Leading silence | `cache build --keep-leading-silence` |
 | Method holdout | `split method-holdout --methods` |
 | Seeds | `--seed 17\|29\|43` |
+
+Four of these are measured and three of the four needed no training, because
+they vary only the head over out-of-fold features that already exist:
+
+| Study | Script | Result |
+| --- | --- | --- |
+| Branch combinations | `scripts/run_ablation.py` | `A-branch-ablation` |
+| Fusion model, calibration, quality features | `scripts/run_fusion_model_ablation.py` | `A-fusion-model-ablation` |
+| Per-method, subgroup, head-only method holdout | `scripts/run_generalization_slices.py` | `A-generalization-slices` |
+| Late against deep, abstention against fallback | `scripts/run_fusion_ablations.py` | `B-fusion-ablations` |
+
+The method-holdout row is the one to be careful with. `split method-holdout`
+retrains the branches and is the real study; the slices script refits the head
+alone and bounds only the head's method-specificity. They answer different
+questions and only the first is an unseen-manipulation result.
 
 ## External evaluation constraints
 

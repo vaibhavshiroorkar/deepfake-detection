@@ -1,0 +1,49 @@
+cff-version: 1.2.0
+message: "If you use this software or its results, please cite it as below."
+title: "Deepfake Generalization: shortcut-controlled multimodal deepfake detection"
+abstract: >-
+  A research platform testing whether cue-specific fusion of visual artifacts,
+  audio spoofing and mouth-audio alignment generalizes better than a strong
+  visual baseline, under source-disjoint and shortcut-controlled evaluation.
+  The contribution is the validity protocol rather than the accuracy: the
+  measured answer on this data is negative and is reported with its intervals.
+type: software
+version: "0.1.0"
+license-url: "https://github.com/vaibhavshiroorkar/deepfake-generalization/blob/main/LICENSE.md"
+repository-code: "https://github.com/vaibhavshiroorkar/deepfake-generalization"
+keywords:
+  - deepfake detection
+  - multimodal fusion
+  - generalization
+  - shortcut learning
+  - model calibration
+
+# TODO before submission: three fields below are unverified and must be
+# confirmed by the author rather than inferred from the git history.
+#
+#   1. `given-names` and `family-names`: taken from the git committer name and
+#      split on whitespace. Correct them to the form used academically.
+#   2. `orcid`: removed rather than guessed. Add it as
+#      "https://orcid.org/0000-0000-0000-0000" once registered.
+#   3. `affiliation`: the awarding institution for the dissertation.
+#
+# The roadmap asks for a verified academic identity, so this file stays
+# incomplete until a person confirms these rather than being filled in with a
+# plausible guess.
+authors:
+  - given-names: "Vaibhav"
+    family-names: "Shiroorkar"
+    email: "vaibhavjtgz@gmail.com"
+    affiliation: "TODO: awarding institution"
+
+preferred-citation:
+  type: thesis
+  title: "Deepfake Generalization: shortcut-controlled multimodal deepfake detection"
+  thesis-type: "TODO: dissertation type, for example MSc dissertation"
+  year: 2026
+  institution:
+    name: "TODO: awarding institution"
+  authors:
+    - given-names: "Vaibhav"
+      family-names: "Shiroorkar"
+      email: "vaibhavjtgz@gmail.com"

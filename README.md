@@ -11,6 +11,9 @@ The branches inspect visual artifacts, audio spoofing, and mouth-audio alignment
 - [Roadmap](ROADMAP.md): implementation order and phase gates.
 - [Model selection](docs/model-selection.md): controlled component comparisons and selection rules.
 - [Reproducibility](docs/reproducibility.md): required run metadata and local tracking.
+- [License and use terms](LICENSE.md): a draft, not yet in force; the data terms are the binding part.
+- [Contributions](docs/research/contributions.md): what is new here, and what is already published.
+- [Model card](docs/model-card.md): what the system is, what it measures, and why it should not be deployed.
 - [Threat model](docs/threat-model.md): supported threats, failure modes, and claim limits.
 - [Dashboard](docs/dashboard.md): the two halves of the dashboard and how state crosses pages.
 - [Obstacles](docs/obstacles.md): constraints and traps to read before touching an area.

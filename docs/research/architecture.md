@@ -12,8 +12,26 @@ assumption of cross-modal inconsistency, built to survive unseen future
 generators. It is everything from section 1 onward. It is the right long-term
 shape and it is not what wins a live demo next month.
 
-Every number below resolves to a row in
+Numbers in this document come from two places and the difference matters.
+
+Anything attributed to a measurement **here** resolves to a row in
 [result traceability](result-traceability.md) and is reproducible from `runs/`.
+The table in "Measured evidence from this repository" is all of that kind.
+
+Anything describing an **external** method is read from its publication and is
+not reproducible from this repository. Those appear mainly in the option tables
+in "Three architectures" and "Branch-specific answers": "roughly 72 percent
+on Chinese content", "0.843 AUC zero-shot", "the strongest ASVspoof 5 results".
+They **carry no citation in this document**, which is a gap to close before
+any of them is quoted in the paper.
+
+This header used to say that every number below resolved to a registry row and
+was reproducible from `runs/`. That was not true of the external claims, and a
+blanket guarantee is how an unverifiable number gains credibility: the
+Perception Encoder comparison that drove the frozen-probe recommendation for
+weeks had no artifact behind it and contradicted this project's own registered
+measurement of the same encoder. It is now tracked as
+`A-encoder-comparison`, status `pending`.
 
 ## 0. The demo detector
 
@@ -488,7 +506,7 @@ WHEN A FACE IS PRESENT                    WHEN AUDIO IS PRESENT
      reliability-weighted late fusion, absent branches masked to exactly zero
               ▼
  Level 1: authentic vs synthetic        Level 2: family, conditioned on Level 1
- OOD score · per-branch evidence · per-window localization · calibrated confidence
+ OOD score | per-branch evidence | per-window localization | calibrated confidence
 ```
 
 ## Roadmap
