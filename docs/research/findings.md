@@ -710,6 +710,13 @@ Cross-corpus the sign flips and the interval does not clear zero,
 -0.0085 [-0.0196, +0.0027], which agrees with the -0.0083 already recorded
 under `A-operating-point` from a different route.
 
+Seeds 29 and 43 repeat the whole ablation on their own fold models, head and
+branches. The in-domain gain holds at every seed, +0.0170 and +0.0184, each
+separated from zero. Cross-corpus the sign stays negative and both later seeds
+separate it: -0.0215 [-0.0371, -0.0052] and -0.0417 [-0.0698, -0.0129]. Seed
+17's -0.0085 is the mildest of the three. Fusion never beats its visual branch
+on DFDC, and at two of three seeds it is measurably worse.
+
 The whole of the in-domain gain is the 75 `RealVideo-FakeAudio` clips, which a
 visual branch cannot detect even in principle because there is nothing visual to
 detect. That is the cue-label ablation the research design asks for, and the
@@ -980,42 +987,41 @@ The scoring script validates itself against the feature store: on seed 17 it
 reproduces the recorded logits to 8.5e-6 of ROC-AUC, the residual being float32
 convolution nondeterminism rather than a logic difference.
 
-### F27. The fused cross-corpus headline moves 0.1057 with the seed, and 0.7500 is the best of three
+### F27. The fused cross-corpus headline moves 0.1078 with the seed, and 0.7500 is the best of three
 
-Result: `A-fusion-seed-spread`. The three final branch checkpoints at seeds 17,
-29 and 43 export their own test and DFDC feature stores; the fusion head fitted
-on the seed-17 out-of-fold store scores all three unchanged.
+Result: `A-fusion-seed-spread`. Each seed has its own three-fold cross-fit, its
+own out-of-fold store, its own fusion head and its own final branches. Each
+scores its own test and DFDC feature stores.
 
 | Partition | Seed 17 | Seed 29 | Seed 43 | Spread |
 | --- | ---: | ---: | ---: | ---: |
-| in-domain | 0.9990 | 0.9990 | 0.9990 | **0.0001** |
-| DFDC | **0.7500** | 0.6814 | 0.6442 | **0.1057** |
+| in-domain | 0.9990 | 0.9990 | 0.9989 | **0.0000** |
+| DFDC | **0.7500** | 0.6698 | 0.6422 | **0.1078** |
 
-In-domain the seeds are identical to four decimal places. Cross-corpus they
-range over 0.1057, and **0.7500, the number this repository reports everywhere
-as its cross-corpus headline, is the best of the three.** The mean is 0.6919.
+In-domain the seeds agree to four decimal places. Cross-corpus they range over
+0.1078, and **0.7500, the number this repository reports everywhere as its
+cross-corpus headline, is the best of the three.** The mean is 0.6873.
 
-The spread is twelve times the -0.0085 paired difference that F19 reports
-between fusion and its visual branch on this corpus, and six times the +0.0159
+An earlier version of this finding varied the branches only and reused the
+seed-17 head on every seed, because the fold models existed at seed 17 alone.
+That read 0.7500, 0.6814, 0.6442, a spread of 0.1057. Fitting each seed its own
+head moved the later seeds by about 0.01 and the spread by 0.002. Nearly all of
+the variance comes from the branches, not the head.
+
+The spread is thirteen times the -0.0085 paired difference that F19 reports at
+seed 17 between fusion and its visual branch, and seven times the +0.0159
 in-domain fusion gain. Any unpaired comparison at this corpus between two
 differently seeded systems is measuring the seed first and the change second.
 
 It also compounds: F21 found 0.0733 for the visual branch alone, and fusing
-three branches whose seeds all move produces 0.1057 rather than averaging the
+three branches whose seeds all move produces 0.1078 rather than averaging the
 noise away. More branches did not buy stability here.
 
-What survives unharmed is every paired comparison in this project. Those hold
-the seed fixed and resample clips, so seed variance sits outside their intervals
-by construction. F18's MLP collapse, F19's fusion gain, F23's repair counts and
-the corruption results in F24 and F25 are all within-seed and are unaffected.
-What does not survive is quoting 0.7500 as *the* cross-corpus number: the honest
-form is the mean and the range, or the seed stated beside it.
-
-**Scope.** Only the branch checkpoints vary. The fold models that produced the
-out-of-fold features exist at seed 17 alone, so the head's weights are constant
-across all three arms. A full three-seed replication needs three folds by three
-branches by two further seeds, eighteen training runs that are not on disk, and
-would likely widen this rather than narrow it.
+Paired comparisons survive. They hold the seed fixed and resample clips, so seed
+variance sits outside their intervals by construction. F19's fusion comparison
+is now repeated at all three seeds and keeps its sign at each. What does not
+survive is quoting 0.7500 as *the* cross-corpus number. Quote the mean and the
+range, or state the seed beside it.
 
 ### F28. The audio challenger flag would have built the wrong model, and the comparison it enables cannot be decided in-domain
 

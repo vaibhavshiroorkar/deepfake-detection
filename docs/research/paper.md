@@ -1,12 +1,11 @@
 # Validity checks catch a detector that looks right and is not
 
 Draft. Every number here resolves to a row in
-[result traceability](result-traceability.md). Of 36 rows, 5 are `accepted`, 30
-are `provisional (1 seed)` and 1 is `pending`. The protocol asks for three
-training seeds; Design A's three branches now have them, every Design B stream
-has one, and the fusion rows stay provisional because the head reads out-of-fold
-features exported from seed-17 fold models. Section 7 states that and the rest of
-the limits plainly, and section 5.13 measures what a seed is worth.
+[result traceability](result-traceability.md). Of 41 rows, 6 are `accepted`, 35
+are `provisional (1 seed)` and none is `pending`. The protocol asks for three
+training seeds. Design A's three branches and its fusion head now have them, and
+every Design B stream has one. Section 7 states that and the rest of the limits
+plainly, and section 5.13 measures what a seed is worth.
 
 ## Abstract
 
@@ -29,7 +28,7 @@ validation loss kept one that scored below chance, on a run where loss and
 ROC-AUC moved in opposite directions on the same epoch.
 
 A fourth result frames the other three. Cross-corpus ROC-AUC on this pipeline
-moves by **0.1057** with the training seed alone, against 0.0001 in-domain, and
+moves by **0.1078** with the training seed alone, against 0.0000 in-domain, and
 the seed this paper reports is the best of three. Every unpaired cross-corpus
 comparison below is therefore stated with its range, and the paired comparisons,
 which hold the seed fixed and resample clips, are unaffected.
@@ -165,7 +164,8 @@ VoxCeleb2. Celeb-DF-v2 and the evaluation-only MNW benchmark are used for
 external checks; MNW is never tuned on.
 
 Seeds. The protocol fixes 17, 29 and 43. All three Design A branches have all
-three; every Design B stream has seed 17 alone. **Unless a number below says
+three, and so does the fusion head, cross-fitted on each seed's own fold models.
+Every Design B stream has seed 17 alone. **Unless a number below says
 otherwise it is seed 17**, and seed 17 is the best of the three on DFDC, so
 single-seed cross-corpus figures here are the most favourable draw rather than a
 central one. Section 5.13 measures what that is worth.
@@ -367,9 +367,22 @@ them even in principle. Fusion's measured in-domain benefit here is the cue
 coverage it was built for rather than a general improvement.
 
 Fusion helps in-domain, and the interval is clear of zero. Cross-corpus the
-difference is negative and the interval includes zero, so the honest statement
-is not that fusion is worse but that no difference is detectable. The
-in-domain advantage does not survive the change of corpus. Design B's best
+difference is negative and the interval includes zero, so at seed 17 no
+difference is detectable. The in-domain advantage does not survive the change of
+corpus.
+
+Seeds 29 and 43 repeat the comparison against the visual-plus-quality head, each
+on its own fold models, fusion head and branches (`A-branch-ablation`).
+
+| Seed | In-domain | DFDC |
+| --- | --- | --- |
+| 17 | +0.0159 [+0.0129, +0.0190] | -0.0085 [-0.0196, +0.0027] |
+| 29 | +0.0170 [+0.0143, +0.0195] | -0.0215 [-0.0371, -0.0052] |
+| 43 | +0.0184 [+0.0159, +0.0209] | -0.0417 [-0.0698, -0.0129] |
+
+The in-domain gain holds at every seed. Cross-corpus, seed 17 is the mildest
+draw. At the other two seeds fusion is measurably worse than its own visual
+branch. Design B's best
 cross-corpus combination reads 0.6076, below both.
 
 ### 5.6a Training on the standard cross-dataset corpus did not improve transfer
@@ -504,21 +517,23 @@ nothing to detect.
 ### 5.13 A seed moves the cross-corpus number more than any effect we report
 
 Results: `A-visual-seeds`, `A-fusion-seed-spread`. Three seeds, everything else
-held fixed.
+held fixed. Each fused seed has its own cross-fitted fold models and its own head.
 
 | System | Seed 17 | Seed 29 | Seed 43 | In-domain spread | DFDC spread |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | visual branch, DFDC | 0.7611 | 0.6963 | 0.6878 | 0.0005 | **0.0733** |
-| fused system, DFDC | 0.7500 | 0.6814 | 0.6442 | 0.0001 | **0.1057** |
+| fused system, DFDC | 0.7500 | 0.6698 | 0.6422 | 0.0000 | **0.1078** |
 
 In-domain the seeds agree to three or four decimal places. Cross-corpus the fused
-system ranges over 0.1057, which is twelve times the fusion-against-visual
-difference of -0.0085 that 5.6 reports, and six times the in-domain gain. **The
-seed we report, 17, is the best of the three in both rows**, against a fused mean
-of 0.6919.
+system ranges over 0.1078, which is thirteen times the seed-17
+fusion-against-visual difference of -0.0085 that 5.6 reports, and seven times
+the in-domain gain. **The seed we report, 17, is the best of the three in both
+rows**, against a fused mean of 0.6873.
 
-Fusing three branches did not average the noise away, it compounded it: 0.1057
-for the fused system against 0.0733 for the visual branch alone.
+Fusing three branches did not average the noise away, it compounded it: 0.1078
+for the fused system against 0.0733 for the visual branch alone. Reusing the
+seed-17 head on every seed's branches gives 0.1057, so nearly all of the spread
+comes from the branches rather than the head.
 
 This does not touch the paired comparisons in 5.6, 5.8 or 5.15, which hold the
 seed fixed and resample clips, so seed variance sits outside their intervals by
@@ -865,11 +880,10 @@ seed and visual-only.
 
 One seed for every Design B stream where the protocol asks for three, so every
 Design B result is `provisional` for that reason alone. Design A now has three
-seeds on all three branches, and what they show is in 5.13: the fused
-cross-corpus number moves 0.1057 with the seed. The fusion rows remain
-`provisional` because the head is fitted on out-of-fold features exported from
-seed-17 fold models, and cross-fitting the folds per seed is eighteen further
-training runs that have not been done.
+seeds on all three branches and on the fusion head, and what they show is in
+5.13: the fused cross-corpus number moves 0.1078 with the seed. Most Design A
+rows still quote seed 17 alone, the most favourable draw, and stay `provisional`
+for that reason.
 
 No in-the-wild training data.
 
@@ -936,6 +950,6 @@ practice found its own author's errors as readily as anyone else's.
 
 A final observation the seed result forces. Reporting a single cross-corpus
 number to four decimal places invites comparisons the measurement cannot support:
-here the seed alone moves that number by 0.1057, more than any architectural
+here the seed alone moves that number by 0.1078, more than any architectural
 choice we tested. A validity protocol that records mechanism metrics but not
 seed spread is still incomplete, and ours was.

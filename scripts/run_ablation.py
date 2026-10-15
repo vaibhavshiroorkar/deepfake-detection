@@ -28,6 +28,11 @@ principle, and the cue-label ablation the research design asks for is really
 this distinction, measured.
 
     uv run python scripts/run_ablation.py --run-dir runs/program-20260906
+
+`--branch-seed 29` or `43` repeats the whole ablation on that seed's stores: the
+out-of-fold store `run_crossfit_seeds.ps1` exported from its fold models, and
+the test and DFDC stores scored by its final branches. It writes
+`fusion-ablation-seed<N>.json` beside the seed-17 report.
 """
 
 from __future__ import annotations
@@ -109,13 +114,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--bootstrap-samples", type=int, default=2_000)
     parser.add_argument("--seed", type=int, default=17)
+    parser.add_argument("--branch-seed", type=int, default=17)
     arguments = parser.parse_args(argv)
     run = arguments.run_dir
+    # Seed 17 wrote its stores without a suffix, and its out-of-fold store is
+    # `oof.parquet`. The later seeds' stores carry the seed in the name.
+    suffix = "" if arguments.branch_seed == 17 else f"-seed{arguments.branch_seed}"
+    oof = "oof.parquet" if not suffix else f"store{suffix}.parquet"
 
-    train_ids, train_data, train_labels = _assemble(run / "features" / "oof.parquet")
+    train_ids, train_data, train_labels = _assemble(run / "features" / oof)
     partitions = {}
-    for name, store in (("in-domain", "test.parquet"), ("dfdc", "dfdc.parquet")):
-        path = run / "features" / store
+    for name, stem in (("in-domain", "test"), ("dfdc", "dfdc")):
+        path = run / "features" / f"{stem}{suffix}.parquet"
         if path.is_file():
             partitions[name] = _assemble(path)
 
@@ -258,6 +268,7 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     payload = {
+        "branch_seed": arguments.branch_seed,
         "out_of_fold_clips": len(train_ids),
         "partitions": {n: len(p[0]) for n, p in partitions.items()},
         "bootstrap_samples": arguments.bootstrap_samples,
@@ -267,7 +278,7 @@ def main(argv: list[str] | None = None) -> int:
         "raw_branch_auc": raw,
         "all_three_vs_strongest_single": paired_report,
     }
-    out = arguments.output or run / "evaluation" / "fusion-ablation.json"
+    out = arguments.output or run / "evaluation" / f"fusion-ablation{suffix}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"\nwrote {out}")

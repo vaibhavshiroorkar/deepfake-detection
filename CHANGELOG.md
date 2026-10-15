@@ -12,6 +12,16 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- The cross-fit per seed is done. Seeds 29 and 43 each have three fold models
+  per branch, their own out-of-fold store and their own fusion head. With each
+  seed's own head, fused DFDC reads 0.7500, 0.6698, 0.6422: mean 0.6873, spread
+  0.1078 (F27, was 0.1057 with the seed-17 head reused).
+- `run_ablation.py --branch-seed` repeats the branch ablation on a seed's own
+  stores. Fusion beats its visual branch in-domain at every seed. On DFDC it
+  never does, and at seeds 29 and 43 it is measurably worse: -0.0215
+  [-0.0371, -0.0052] and -0.0417 [-0.0698, -0.0129]. `A-branch-ablation` and
+  `A-fusion-seed-spread` are now three-seed rows; the registry reads 6
+  accepted, 35 provisional, 0 pending.
 - `ddf train fusion` takes `--drop-incomplete`. It fits the scalar head on the
   clips every stream could read, and writes `dropped_incomplete` to the
   metadata. Sixteen clips from one source have no readable sync stream. The

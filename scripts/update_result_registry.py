@@ -668,15 +668,16 @@ RESULTS: tuple[Result, ...] = (
         predictions=PROGRAM / "features" / "dfdc-seed29.parquet",
         mlflow=(),
         decision=(
-            "Fused DFDC moves 0.7500, 0.6814, 0.6442 with the branch seed, a "
-            "spread of 0.1057 against 0.0001 in-domain. The reported 0.7500 is "
-            "the best of three and the mean is 0.6919, so the headline needs "
-            "the range beside it"
+            "With each seed's own fold models and head, fused DFDC reads 0.7500, "
+            "0.6698, 0.6422, a spread of 0.1078 against 0.0001 in-domain. The "
+            "reported 0.7500 is the best of three and the mean is 0.6873, so the "
+            "headline needs the range beside it"
         ),
         seeds=3,
         notes=(
-            "Branch checkpoints vary; the head is the seed-17 fit reused, "
-            "because the fold models exist at seed 17 only."
+            "The report holds two tables. The own-head one is quoted here. The "
+            "other reuses the seed-17 head on every seed's branches and reads "
+            "0.7500, 0.6814, 0.6442, so the head adds little of the spread."
         ),
     ),
     Result(
@@ -726,19 +727,25 @@ RESULTS: tuple[Result, ...] = (
     Result(
         result_id="A-branch-ablation",
         paper_location="Results, does fusing branches beat the best single branch",
-        command="python scripts/run_ablation.py --run-dir runs/program-20260906",
+        command=(
+            "python scripts/run_ablation.py --run-dir runs/program-20260906 "
+            "--branch-seed {17,29,43}"
+        ),
         report=PROGRAM / "evaluation" / "fusion-ablation.json",
         predictions=PROGRAM / "features" / "test.parquet",
         mlflow=(),
         decision=(
-            "All three branches beat every single branch in-domain, "
-            "+0.0159 [+0.0129, +0.0190] against visual, and do not cross-corpus, "
-            "-0.0085 [-0.0196, +0.0027]"
+            "All three branches beat the visual branch in-domain at every seed, "
+            "+0.0159, +0.0170, +0.0184, each separated from zero. Cross-corpus "
+            "they never do: -0.0085 [-0.0196, +0.0027] at seed 17, and "
+            "-0.0215 [-0.0371, -0.0052] and -0.0417 [-0.0698, -0.0129] at seeds "
+            "29 and 43, where fusion is measurably worse"
         ),
-        seeds=1,
+        seeds=3,
         notes=(
-            "Clip-level label throughout, so the visual row is 0.9742 and not "
-            "the 0.9988 of the cue-labelled branch report."
+            "Seeds 29 and 43 write fusion-ablation-seed29.json and -seed43.json "
+            "beside this report. Clip-level label throughout, so the visual row "
+            "is 0.9742 and not the 0.9988 of the cue-labelled branch report."
         ),
     ),
     Result(

@@ -95,7 +95,7 @@ through the same branch, which was always architecture-agnostic.
 
 - [x] Export source-grouped out-of-fold predictions for every branch.
 - [x] Repeat the test and DFDC export for the remaining two seeds.
-- [ ] Cross-fit the folds per seed, which the head's own three seeds need. `pwsh scripts/run_crossfit_seeds.ps1`, six to eight hours.
+- [x] Cross-fit the folds per seed, which the head's own three seeds need. `scripts/run_crossfit_seeds.ps1`.
 - [x] Fit calibrated logistic fusion from out-of-fold predictions only.
 - [x] Run branch, pair, calibration, cue-label, abstention and sync-label ablations.
 - [ ] Run the leading-silence ablation. It needs the cache rebuilt with
@@ -112,15 +112,14 @@ The ablations are measured and recorded as `A-branch-ablation`,
 `A-fusion-model-ablation`, `A-generalization-slices` and `B-fusion-ablations`.
 The logistic head ships: the MLP matches it in-domain and loses 0.1508 on DFDC.
 
-The gate is not met, and seeds are still what holds it, but the diagnosis has
-moved. All three branches now have all three seeds and are scored. The fusion rows
-stay `provisional (1 seed)` because the head reads out-of-fold features exported
-from seed-17 fold models, so the head itself has one seed however many the
-branches have. `run_crossfit_seeds.ps1` is the remaining work.
+The gate is not met, and seeds are still what holds it. All three branches and
+the fusion head now have all three seeds, each head fitted on its own cross-fitted
+fold models. The branch ablation and the seed spread are three-seed results. Most
+other Design A rows still quote seed 17 alone and stay `provisional (1 seed)`.
 
-What the seeds already show is why this matters rather than being bookkeeping:
-cross-corpus, the fused number moves 0.1057 with the branch seed alone, and the
-seed every result reports is the best of three.
+What the seeds show is why this matters rather than being bookkeeping:
+cross-corpus, the fused number moves 0.1078 with the seed, and the seed every
+result reports is the best of three.
 
 ## Phase 5: Locked evaluation and submission
 

@@ -68,7 +68,7 @@ Cross-corpus, which is the number that matters:
 
 | Corpus | ROC-AUC | What happens |
 | --- | --- | --- |
-| DFDC | 0.6919 mean, 0.6442 to 0.7500 | Three seeds. Fusion not separated from its own visual branch, -0.0085 [-0.0196, +0.0027] |
+| DFDC | 0.6873 mean, 0.6422 to 0.7500 | Three seeds, each with its own head. Fusion never beats its own visual branch, and is measurably worse at two of three seeds |
 | Celeb-DF-v2 | 0.6682 | 141 of 155 genuine videos called manipulated |
 | MNW (locked, external) | detection 25 of 85 | 0 of 10 on `vasa_1`, 7 of 8 in the wild |
 
@@ -135,12 +135,12 @@ large:
 | System | Seeds | In-domain spread | DFDC spread |
 | --- | --- | ---: | ---: |
 | visual branch (F21) | 17, 29, 43 | 0.0005 | 0.0733 |
-| fused system (F27) | 17, 29, 43 | 0.0001 | **0.1057** |
+| fused system (F27) | 17, 29, 43 | 0.0000 | **0.1078** |
 | sync branch (F26) | 17, 29, 43 | 0.0567 | not scored |
 
 In-domain the seeds agree to three or four decimal places. Cross-corpus the
-fused system ranges over 0.1057, which is twelve times the fusion-against-visual
-difference it is used to discuss, and **the seed this repository reports is the
+fused system ranges over 0.1078, which is thirteen times the seed-17
+fusion-against-visual difference it is used to discuss, and **the seed this repository reports is the
 best of the three in both cases**. The honest form of a cross-corpus number here
 is the mean and range, or the seed stated beside it.
 

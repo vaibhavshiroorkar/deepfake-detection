@@ -26,7 +26,7 @@ Grok Imagine and Wan 2.6.
 | --- | --- | --- |
 | 0.991 visual detection, in-domain | **met** | Design A fusion 0.9990 on the FakeAVCeleb test partition, visual branch 0.9988 |
 | 0.844+ from audiovisual cues on genuine-frame fakes | **met on the number, failed on the mechanism** | Lip-sync stream 0.9969 on LAV-DF, which is exactly that case. Its `diagonal_mass` sat at chance in every epoch of three runs, so the audiovisual cue is not what produced the number |
-| Fusion beats the strongest single stream | **met in-domain, not cross-corpus, and smaller than the cited 0.099** | Paired source bootstrap: +0.0247 [0.0220, 0.0280] over the calibrated visual score in-domain, separated from zero. Against a visual-plus-quality head it is +0.0159 [+0.0129, +0.0190] (F19). Cross-corpus -0.0083 [-0.0185, 0.0024], not separated, and the seed spread there is 0.1057 (F27) |
+| Fusion beats the strongest single stream | **met in-domain, not cross-corpus, and smaller than the cited 0.099** | Paired source bootstrap: +0.0247 [0.0220, 0.0280] over the calibrated visual score in-domain, separated from zero. Against a visual-plus-quality head it is +0.0159 [+0.0129, +0.0190] (F19). Cross-corpus -0.0083 [-0.0185, 0.0024], not separated, at seed 17; at seeds 29 and 43 fusion is measurably worse, -0.0215 and -0.0417 (F19). The seed spread there is 0.1078 (F27) |
 | 0.64+ on unseen generators without fine-tuning | **met** | DF26 leave-one-generator-out macro **0.7527** with a frozen Perception Encoder probe, container-controlled, range 0.6542 to 0.8496. DINOv3 reads 0.6786 on the same split (F33) |
 
 ### The protocol, which is the actual contribution
@@ -59,8 +59,8 @@ cheap check run before training rather than after:
 | Encoder comparison, paired by source video | PE beats DINOv3 by +0.0741 [+0.0121, +0.1317], CLIP by +0.0668 [+0.0049, +0.1289]; PE against CLIP not separated |
 | Frame-rate confound found by that control | Wan 2.6 fell 0.094, HunyuanVideo 0.045, others unchanged |
 | Design A in-domain fusion | 0.9990 |
-| Design A cross-corpus fusion on DFDC | seed 17 reads 0.7500; across three seeds 0.6442 to 0.7500, mean 0.6919. Paired difference against visual not separated from zero |
-| Fusion against the strongest single branch, one task | +0.0159 [+0.0129, +0.0190] in-domain, -0.0085 [-0.0196, +0.0027] on DFDC |
+| Design A cross-corpus fusion on DFDC | seed 17 reads 0.7500; across three seeds, each with its own cross-fitted head, 0.6422 to 0.7500, mean 0.6873. Never above its visual branch; below it, separated, at seeds 29 and 43 |
+| Fusion against the strongest single branch, one task | in-domain +0.0159, +0.0170, +0.0184 across seeds 17, 29, 43, all separated; DFDC -0.0085 [-0.0196, +0.0027], -0.0215 [-0.0371, -0.0052], -0.0417 [-0.0698, -0.0129] |
 | Fusion head, logistic against the small MLP | indistinguishable in-domain, MLP loses 0.1508 [0.0995, 0.2052] on DFDC |
 | Calibration and quality features | no ranking gain either way; calibration earns its place on ECE alone |
 | Unweighted mean against the fitted head, DFDC | not separated on AUC, and ECE 0.0554 against 0.6366 |
@@ -69,7 +69,7 @@ cheap check run before training rather than after:
 | Capture conditions versus manipulation type | an unseen manipulation family costs 0.12 macro, five of six above 0.70 and FaceSwap at chance; an unseen corpus reads 0.49 |
 | Full-frame probe on face manipulation | at chance, macro 0.5387, every interval containing 0.5 |
 | Calibration cross-corpus | expected calibration error 0.0022 in-domain against 0.6366 on DFDC |
-| Seed spread, fused system on DFDC | 0.1057, from 0.6442 to 0.7500; in-domain 0.0001 |
+| Seed spread, fused system on DFDC | 0.1078, from 0.6422 to 0.7500; in-domain 0.0000 |
 | Sync branch, first measured number | below chance at all three seeds: 0.4364, 0.4570, 0.4931 |
 | VIS-01, ConvNeXt against EfficientNet | undecided: -0.0340 [-0.0761, +0.0066] on DFDC, smaller than the seed spread |
 | AUD-01, WavLM against Wav2Vec2 | undecided: both read 1.0000 in-domain, no cross-corpus partition exists |
@@ -438,27 +438,22 @@ may simply be more similar to each other. That is untested.
 
 ### Next, in order
 
-1. **Seeds, still, but the diagnosis has changed.** All three branches now have
-   checkpoints at seeds 17, 29 and 43, and the visual branch, the audio branch
-   and the fused system are all scored across them. What that revealed is the
-   reason seeds now sit at the top of this list rather than the bottom:
+1. **Report seeds, not a seed.** All three branches and the fusion head now have
+   seeds 17, 29 and 43; each seed's head is fitted on its own cross-fitted fold
+   models. What that shows:
 
    | System | In-domain spread | DFDC spread |
    | --- | ---: | ---: |
    | visual branch (F21) | 0.0005 | 0.0733 |
-   | fused system (F27) | 0.0001 | **0.1057** |
+   | fused system (F27) | 0.0000 | **0.1078** |
    | sync branch (F26) | 0.0567 | not scored |
 
    The fused DFDC headline of 0.7500 is the **best of three**; the mean is
-   0.6919. The spread is twelve times the fusion-against-visual difference it is
-   used to discuss, and it is larger for the fused system than for the visual
-   branch alone, so combining branches compounded the noise rather than
-   averaging it. Every paired comparison in this project is unaffected, because
-   those hold the seed fixed.
-
-   What remains is the head's own three seeds, which needs the folds cross-fitted
-   per seed: three folds by three branches by two more seeds, eighteen runs that
-   are not on disk.
+   0.6873. Combining branches compounded the noise rather than averaging it.
+   The paired fusion-against-visual comparison now has all three seeds (F19).
+   It never favours fusion on DFDC, and at seeds 29 and 43 fusion is measurably
+   worse. Most other Design A rows still quote seed 17 alone; rerunning them per
+   seed is the remaining seed work.
 
 2. **Three seeds per challenger, before any new challenger.** VIS-01 and AUD-01
    are both run and both undecided, and neither is undecided because the

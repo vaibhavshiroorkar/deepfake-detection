@@ -25,11 +25,12 @@ from a search is not absence from a literature. Treat every one of these as
 is already published. Our version may still be a useful replication or a
 sharper measurement, and where that is the case it says so.
 
-**One limit applies to everything below.** Of 29 registry rows, 1 is `accepted`,
-27 are `provisional (1 seed)` and 1 is `pending`. The protocol asks for three
-training seeds and only the visual branch has them. F21 measures what that
-costs, and the answer is that seed alone moves the cross-corpus number by 0.0733,
-which is wider than several effects reported here. Nothing in this file should
+**One limit applies to everything below.** Of 41 registry rows, 6 are
+`accepted`, 35 are `provisional (1 seed)` and none is `pending`. The protocol
+asks for three training seeds. Design A's branches and fusion head have them,
+and most other rows quote one. F21 and F27 measure what that costs: seed alone
+moves the cross-corpus number by 0.0733 for the visual branch and 0.1078 for the
+fused system, which is wider than several effects reported here. Nothing in this file should
 be presented as settled until the seeds are done.
 
 ## 1. A detector that is accurate and provably not using the cue it is named for
@@ -168,12 +169,12 @@ nine times its cross-corpus fusion difference. And the seed every result in this
 repository reports, seed 17, is the **best of the three**, against a mean of
 0.7151.
 
-The fused system is worse, not better. Scoring all three seeds through the same
-head gives DFDC 0.7500, 0.6814 and 0.6442, a spread of **0.1057** against 0.0001
-in-domain, and again the reported seed is the best of the three. Combining three
-branches whose seeds all move did not average the noise away; it compounded it.
-That spread is twelve times the fusion-against-visual difference the project
-uses it to discuss.
+The fused system is worse, not better. With each seed's own cross-fitted fold
+models and head, DFDC reads 0.7500, 0.6698 and 0.6422, a spread of **0.1078**
+against 0.0000 in-domain, and again the reported seed is the best of the three.
+Combining three branches whose seeds all move did not average the noise away; it
+compounded it. That spread is thirteen times the seed-17 fusion-against-visual
+difference the project uses it to discuss.
 
 **Prior work exists** on seed sensitivity in deep learning generally. **Not
 found** for deepfake cross-corpus transfer specifically, and rarely reported at

@@ -4,18 +4,15 @@ F21 asked this of the visual branch alone and found 0.0733 on DFDC, wider than
 most effects this project reports. This asks it of the fused system, which is
 the number the project actually headlines.
 
-**What varies and what does not.** Only the three final branch checkpoints. The
-fusion head is the one fitted on the seed-17 out-of-fold store and is reused
-unchanged, because the fold models exist at seed 17 only: cross-fitting three
-folds by three branches for two more seeds is eighteen more training runs, and
-none of them are on disk.
+Two tables. The first varies only the three final branch checkpoints and
+scores every seed through the head fitted on the seed-17 out-of-fold store, so
+it measures seed variance in the branches through a fixed head.
 
-So the first table measures seed variance in the branches, propagated through a
-fixed head. Once `run_crossfit_seeds.ps1` has cross-fitted the folds per seed,
-each seed also has its own head, `fusion-logistic-seed<N>.joblib`, fitted on its
-own out-of-fold store. The second table scores each seed through that head, which
-is the full three-seed replication the protocol asks for. Seed 17's own head is
-the original `fusion-logistic.joblib`, so its row is the same in both tables.
+The second is the full three-seed replication the protocol asks for.
+`run_crossfit_seeds.ps1` cross-fits the folds per seed, and each seed gets its
+own head, `fusion-logistic-seed<N>.joblib`, fitted on its own out-of-fold store.
+Seed 17's own head is the original `fusion-logistic.joblib`, so its row is the
+same in both tables.
 
 The head is refitted on nothing here, so no seed's test partition ever
 influences the weights that score it.
@@ -195,10 +192,9 @@ def main(argv: list[str] | None = None) -> int:
     payload = {
         "scope": (
             "Only the final branch checkpoints vary. The fusion head is the one "
-            "fitted on the seed-17 out-of-fold store and is reused unchanged, "
-            "because the fold models exist at seed 17 only. This is seed "
-            "variance in the branches through a fixed head, not the full "
-            "three-seed replication the protocol asks for."
+            "fitted on the seed-17 out-of-fold store and is reused unchanged. "
+            "This is seed variance in the branches through a fixed head; the "
+            "own-head tables are the full three-seed replication."
         ),
         "bootstrap_samples": arguments.bootstrap_samples,
         "bootstrap_unit": "source_identity",
