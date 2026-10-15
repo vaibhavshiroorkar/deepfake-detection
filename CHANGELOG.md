@@ -12,6 +12,12 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- `ddf train fusion` takes `--drop-incomplete`. It fits the scalar head on the
+  clips every stream could read, and writes `dropped_incomplete` to the
+  metadata. Sixteen clips from one source have no readable sync stream. The
+  seed-17 head dropped them from a hand-filtered copy of its store
+  (`oof.parquet`, 7621 samples). The per-seed heads now drop them through this
+  flag and land on the same 7621. Without it the seed-29 fit refused its store.
 - Cut the feature export's peak commit charge from 6.1 to 5.0 GB.
   `load_checkpoint` now memory-maps the file when no optimizer is restored, so
   the AdamW state that makes up most of a checkpoint is never read. Training

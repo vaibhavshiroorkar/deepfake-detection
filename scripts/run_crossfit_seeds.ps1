@@ -165,7 +165,7 @@ try {
                 --feature-store $store `
                 --output "$run/checkpoints/fusion-logistic-seed$seed.joblib" `
                 --metadata "$run/checkpoints/fusion-logistic-seed$seed.json" `
-                --model logistic --branches visual audio sync 2>&1 |
+                --model logistic --branches visual audio sync --drop-incomplete 2>&1 |
                 Tee-Object -FilePath "$logs/train-fusion-seed$seed.log"
             Write-Stage "train-fusion-seed$seed exit=$LASTEXITCODE"
         }

@@ -203,7 +203,7 @@ def store_with_role(tmp_path, role: str):
     return path
 
 
-def train_fusion_cli(tmp_path, store_path):
+def train_fusion_cli(tmp_path, store_path, *extra):
     from deepfake_detection.cli import main
 
     return main(
@@ -216,6 +216,7 @@ def train_fusion_cli(tmp_path, store_path):
             str(tmp_path / "fusion.joblib"),
             "--metadata",
             str(tmp_path / "fusion.json"),
+            *extra,
         ]
     )
 
@@ -251,6 +252,33 @@ def test_mixed_roles_are_refused(tmp_path) -> None:
 
     with pytest.raises(ValueError, match="mix out-of-fold and holdout"):
         train_fusion_cli(tmp_path, mixed)
+
+
+def test_drop_incomplete_fits_on_the_clips_every_stream_could_read(tmp_path) -> None:
+    """A clip whose sync stream cannot be read stops a strict fit. The flag
+    drops it instead and says how many it dropped, so the sample count in the
+    metadata still accounts for every exported clip."""
+    import json
+
+    from deepfake_detection.fusion.store import FeatureStore
+
+    store = tmp_path / "gap.parquet"
+    rows = list(FeatureStore(store_with_role(tmp_path, "oof")).read())
+    FeatureStore(store).write(
+        [
+            dataclasses.replace(row, available=False)
+            if row.clip_id == "clip-0" and row.branch == "sync"
+            else row
+            for row in rows
+        ]
+    )
+    with pytest.raises(ValueError, match="clip-0 is missing branches: sync"):
+        train_fusion_cli(tmp_path, store)
+
+    assert train_fusion_cli(tmp_path, store, "--drop-incomplete") == 0
+    metadata = json.loads((tmp_path / "fusion.json").read_text())
+    assert metadata["samples"] == 7
+    assert metadata["dropped_incomplete"] == 1
 
 
 def test_pattern_masks_route_each_modality_to_its_streams() -> None:

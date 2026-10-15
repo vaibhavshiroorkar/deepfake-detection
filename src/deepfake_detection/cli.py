@@ -1014,10 +1014,19 @@ def _train_fusion(arguments: argparse.Namespace) -> int:
     # Deep fusion tolerates a clip that one stream cannot read, zero-filling it
     # with a presence flag, so it does not need every stream on every row. The
     # scalar path has no such input, and strict assembly is what keeps a missing
-    # branch from silently becoming a zero logit there.
+    # branch from silently becoming a zero logit there. --drop-incomplete fits
+    # the scalar head on the clips every stream could read, and the metadata
+    # records how many it left out.
+    drop_incomplete = arguments.drop_incomplete and arguments.model != "deep"
     rows = FeatureStore(arguments.feature_store).assemble(
-        required_branches=branches, strict=arguments.model != "deep"
+        required_branches=branches,
+        strict=arguments.model != "deep" and not drop_incomplete,
     )
+    dropped_incomplete = 0
+    if drop_incomplete:
+        complete = tuple(row for row in rows if row.available)
+        dropped_incomplete = len(rows) - len(complete)
+        rows = complete
     # Two ways to get features a stream never trained on. `oof` cross-fits the
     # branches so every clip is scored by a checkpoint that did not see it, and
     # `holdout` scores the validation partition with a stream trained only on
@@ -1075,6 +1084,7 @@ def _train_fusion(arguments: argparse.Namespace) -> int:
         arguments.metadata,
         {
             "samples": len(samples),
+            "dropped_incomplete": dropped_incomplete,
             "branches": list(branches),
             "model": arguments.model,
             "feature_store": str(arguments.feature_store),
@@ -2695,6 +2705,14 @@ def build_parser() -> argparse.ArgumentParser:
             "efficientnet",
         ),
         default=("visual", "audio", "sync"),
+    )
+    train_fusion.add_argument(
+        "--drop-incomplete",
+        action="store_true",
+        help=(
+            "Fit the scalar head on the clips every stream could read instead "
+            "of refusing the store. The metadata records how many were dropped."
+        ),
     )
     # Deep fusion only. Ignored by the scalar path, which fits in closed form.
     train_fusion.add_argument("--epochs", type=int, default=200)
