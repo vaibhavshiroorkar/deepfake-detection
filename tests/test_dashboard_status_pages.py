@@ -19,7 +19,6 @@ def _page_body(page: AppTest) -> str:
     (
         ("audio_branch.py", ("prototype", "at chance cross-corpus", "no checkpoint")),
         ("sync_branch.py", ("prototype", "below chance", "no checkpoint")),
-        ("fusion.py", ("locked", "software fixture")),
     ),
 )
 def test_status_pages_name_their_evidence_limits(

@@ -41,10 +41,9 @@ carries an `if __name__ == "__main__":` block so it can be tested the same way.
 
 `app.py` registers every page with `st.navigation(..., position="hidden")` and
 then draws the sidebar itself with `st.page_link`. Streamlit's built-in
-navigation has no disabled entry, and Fusion and Explainability have to appear
-in their pipeline positions, dimmed and unclickable, rather than vanish. Their
-routes stay registered, so a direct visit lands on a body saying what will land
-there and what unlocks it.
+navigation has no disabled entry, and a locked stage has to appear in its
+pipeline position, dimmed and unclickable, rather than vanish. No page is locked
+now; the hand-drawn sidebar stays so a future stage can be dimmed the same way.
 
 Order, top to bottom:
 
@@ -55,13 +54,13 @@ Order, top to bottom:
 | Preprocessing | Every preprocessing step as a toggle, applied cumulatively |
 | Streams | Hub: configure all three visual streams and see what fusion reads |
 | Visual | One backbone, one clip, stage by stage |
-| Lip-Sync | Audio against mouth motion. Stage 4, not built |
-| Emotion | Vocal affect against facial expression. Stage 5, not built |
-| Audio branch | Prototype. Trained on a fixture, not evaluated |
-| Sync branch | Prototype. Trained on a fixture, not evaluated |
+| Lip-Sync | Audio against mouth motion, the trained stream on one clip |
+| Emotion | Vocal affect against facial expression, the trained stream on one clip |
+| Audio branch | Teaching page. States the trained branch's results; loads no checkpoint |
+| Sync branch | Teaching page. States the trained branch's results; loads no checkpoint |
 | Experiments | The frozen validation record, and every MLflow run beside it |
-| Fusion | Locked until Stage 6 |
-| Explainability | Locked until Stage 10 |
+| Fusion | The trained head, its ablation, and both verdicts |
+| Explainability | Per-method breakdowns, and the two views not built |
 | Documentation | Long-form reference, plus links to the repository records |
 
 `st.Page` and `st.switch_page` paths resolve against `app.py`'s own directory,
@@ -139,7 +138,7 @@ way to resolve a selected row, because an upload's path is already absolute.
 ## Testing
 
 `tests/test_dashboard_app.py` runs the shell and asserts the sidebar order and
-the locked entries. `tests/test_dashboard_lib.py` covers selection, dataset
+that no entry is locked. `tests/test_dashboard_lib.py` covers selection, dataset
 discovery and checkpoint loading without a running app.
 `tests/test_dashboard_mlflow_runs.py` covers the tracking reader. The page smoke
 tests run with an empty `data/`, which is the state a fresh checkout is in.

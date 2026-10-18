@@ -205,9 +205,9 @@ gate runs the one frozen baseline that has provenance behind it.
 
 Sidebar order: Overview, Evidence gate, Preprocessing, Streams (with Visual,
 Lip-Sync, Emotion, Audio branch and Sync branch under it), Experiments, Fusion,
-Explainability, and Documentation. Fusion and Explainability are dimmed and
-unclickable; each says what will land there and what unlocks it. Audio and sync
-are prototypes with incomplete training.
+Explainability, and Documentation. Fusion reads the trained head and reports
+its in-domain and DFDC verdicts side by side. The Audio and Sync branch pages are
+teaching pages: they state the trained branches' results but load no checkpoint.
 
 Start it from the repository root:
 

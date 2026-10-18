@@ -93,10 +93,12 @@ from another, and no weighted average of five scores can express it.
 | Preprocessing | Built. Shared functions in `deepfake_detection/preprocessing/ops/`, called by both the batch pipeline and this dashboard. |
 | Manifests and splits | Built. Source-disjoint, verified by `ddf split build`, which reports every source and identity overlap. |
 | Visual stream module | Built. EfficientNet-B0 and DINOv3 both wired. |
-| Visual baseline training | Built and run. One frozen EfficientNet-B0 checkpoint, tracked in MLflow. |
-| Audio and sync branches | Prototypes. Trained on a fixture, not evaluated. |
-| Lip-sync and emotion streams | Designed. Stages 4 and 5. |
-| Fusion, evaluation, explainability | Designed. Stages 6, 7 and 10. |
+| Visual baseline training | Built and run. EfficientNet-B0 at seeds 17, 29 and 43. The gate serves the earlier frozen baseline, `visual-initial.pt`. |
+| Audio and sync branches | Trained at three seeds and evaluated. Audio is at chance on DFDC; sync is below chance everywhere. |
+| Lip-sync and emotion streams | Trained at seed 17 and evaluated. Only emotion separates from chance cross-corpus. |
+| Fusion | Trained at three seeds. Beats the visual branch in-domain at every seed, never on DFDC. |
+| Evaluation | Run. Every reported number resolves to a row in `docs/research/result-traceability.md`. |
+| Explainability | Per-method breakdowns only. Grad-CAM and embedding shift are not built. |
 """)
     st.caption(
         "The frozen visual baseline reached ROC AUC 0.9992 on 400 source-disjoint "
@@ -120,7 +122,9 @@ own clip, and states what its answer is allowed to mean.
 
 **Experiments** puts the recorded runs side by side, read straight out of the local MLflow store.
 
-**Fusion** and **Explainability** are locked. Each says what will land there and what unlocks it.
+**Fusion** reads the trained head and its ablation, and states the in-domain and DFDC verdicts
+side by side. **Explainability** breaks the results down by manipulation method and names the two
+views that are not built.
 
 **Documentation** covers how every step works, what each model does, and how fusion, evaluation and
 the splits are designed, and links the repository records underneath it all.

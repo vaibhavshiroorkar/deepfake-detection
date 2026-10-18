@@ -12,6 +12,13 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- The dashboard's Overview page, `docs/dashboard.md` and the README no longer
+  call Fusion and Explainability locked, or the audio and sync branches
+  untrained prototypes. Removed `dashboard/sections/fusion.py`, which no page
+  used and which still called the fusion head a software fixture.
+- F26 splits the sync branch's score by fake category. No category sits above
+  chance at any seed, including cloned voice over untouched video, so the
+  failure is the branch and not the clip-level label.
 - The cross-fit per seed is done. Seeds 29 and 43 each have three fold models
   per branch, their own out-of-fold store and their own fusion head. With each
   seed's own head, fused DFDC reads 0.7500, 0.6698, 0.6422: mean 0.6873, spread

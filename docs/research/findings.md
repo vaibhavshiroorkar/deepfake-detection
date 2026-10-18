@@ -978,6 +978,23 @@ the branch is being marked wrong for a correct judgement. These numbers are a
 floor, not a measurement of alignment detection, and F19 is the standing warning
 about comparing a number like this against a differently labelled one.
 
+Splitting the fakes by category removes most of that caveat. Each row scores one
+category against the 75 genuine clips, from the same predictions files, resampled
+by source:
+
+| Fakes | Clips | Seed 17 | Seed 29 | Seed 43 |
+| --- | ---: | ---: | ---: | ---: |
+| B, cloned voice over real video | 75 | 0.4075 | 0.4778 | 0.5232 |
+| C, faceswap or fsgan, real audio | 341 | 0.4865 | 0.4706 | 0.5264 |
+| C, wav2lip, real audio | 373 | 0.4794 | 0.4969 | 0.4850 |
+| D, fake video and fake audio | 784 | 0.3970 | 0.4302 | 0.4795 |
+
+No category's interval sits above 0.5 at any seed. Category B is the clearest
+test: the video is untouched and the voice is cloned, so the mouth cannot follow
+the new audio unless the words happen to match. The branch does not find it. A
+relabelling that marked re-synchronised fakes as aligned could not rescue a
+branch that misses every category, so the failure is the branch, not the label.
+
 What the result does establish is that the scalar fusion actually reads from
 this branch carries no usable signal at any seed, which is consistent with the
 branch ablation, where sync contributed nothing to any combination, and with F1,

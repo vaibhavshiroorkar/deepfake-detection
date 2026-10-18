@@ -16,7 +16,6 @@ SECTION_FUNCTIONS = (
     ("experiments", "render_experiments"),
     ("audio_branch", "render_audio_branch"),
     ("sync_branch", "render_sync_branch"),
-    ("fusion", "render_fusion"),
     ("documentation", "render_documentation"),
 )
 
