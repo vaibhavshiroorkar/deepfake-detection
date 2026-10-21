@@ -43,6 +43,15 @@ dashboard = [
 tracking = [
     "mlflow==3.15.1",
 ]
+# The user-facing web app. FastAPI and uvicorn already arrived through mlflow;
+# declaring them here means the app does not depend on that accident.
+web = [
+    "fastapi==0.141.1",
+    "jinja2==3.1.6",
+    "pillow==12.2.0",
+    "python-multipart==0.0.32",
+    "uvicorn==0.52.4",
+]
 cpu = [
     "torch==2.12.1",
     "torchvision==0.27.1",
@@ -62,6 +71,7 @@ dev = [
 [project.scripts]
 ddf = "deepfake_detection.cli:main"
 ddf-docs = "deepfake_detection.documentation.__main__:main"
+ddf-web = "deepfake_detection.webapp.__main__:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/deepfake_detection"]

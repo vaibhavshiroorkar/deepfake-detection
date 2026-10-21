@@ -20,6 +20,7 @@ The answer to the first question is no on our data: fusion does not beat the vis
 - [Model card](docs/model-card.md): what the system is, what it measures, and why it should not be deployed.
 - [Threat model](docs/threat-model.md): supported threats, failure modes, and claim limits.
 - [Dashboard](docs/dashboard.md): the two halves of the dashboard and how state crosses pages.
+- [Web app](#web-app): the user-facing upload page, its admin settings, and the PDF report.
 - [Obstacles](docs/obstacles.md): constraints and traps to read before touching an area.
 - [Changelog](CHANGELOG.md): material software and protocol changes.
 
@@ -240,6 +241,40 @@ reports the error and does not fabricate a metric or prediction.
 The teaching pages need no checkpoint and no data. They report their empty state
 and still explain the stage. The Experiments page reads the local MLflow store
 directly and puts every recorded run in one table.
+
+## Web app
+
+The web app is for people who want a verdict, not the pipeline. Upload a clip,
+pick a model, and get a probability. The app also shows what the chosen
+threshold did on test footage with known answers. Its other tabs hold the math,
+every measured result, the comparison with prior work, and the failures.
+
+```powershell
+uv sync --extra cu130 --extra ml --extra media --extra web --group dev
+uv run python scripts/score_visual_ensemble.py
+uv run ddf-web --preload
+```
+
+Open `http://127.0.0.1:8000`. The server binds to the local host.
+
+- **Default model:** the visual ensemble. It averages the logits of the six
+  final visual checkpoints in `runs\program-20260906\checkpoints`, EfficientNet-B0
+  and ConvNeXt-Tiny at seeds 17, 29 and 43. It reads DFDC ROC-AUC 0.7739
+  against 0.7151 for the average single seed. That gain is DFDC only: on
+  Celeb-DF it is level with the seed-17 model, and on MNW at 0.5 it catches
+  fewer fakes. The other choices are the seed-17 visual model and the
+  five-stream fusion head `runs\design-b-20260910\checkpoints\gate-fusion.pt`,
+  scored by `scripts/score_gate_fusion.py`.
+- **Unfamiliar footage:** the DINOv3 density check in
+  `runs\probe-20260914\authenticity-density.npz` holds back the verdict on
+  footage unlike the training data. Users can turn this off for one check.
+- **Admin page:** set `DDF_ADMIN_TOKEN` before starting the server, then open
+  `/admin`. It chooses which models users see, the default and locked
+  threshold, the familiarity check and the upload limit. It writes
+  `configs\webapp.yaml`. Without the variable the admin routes are off.
+- **PDF report:** `uv run python scripts/build_report.py` writes
+  `dist\final-report.pdf` through headless Edge or Chrome. The app serves it at
+  `/report.pdf`.
 
 ## Repository rules
 

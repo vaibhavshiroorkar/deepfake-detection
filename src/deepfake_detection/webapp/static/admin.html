@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deepfake Check Admin</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@600;700&display=swap">
+<link rel="stylesheet" href="/static/app.css">
+<style>
+  .form { display: grid; gap: 18px; max-width: 640px; }
+  .field { display: grid; gap: 6px; }
+  .field > span { font-weight: 600; }
+  .field small { color: var(--ink-2); }
+  .field input[type="number"], .field input[type="password"], .field select {
+    font: inherit; padding: 9px 10px; border-radius: var(--radius-control);
+    border: 1px solid var(--line-strong); background: var(--sheet); color: var(--ink); max-width: 320px;
+  }
+  .checks { display: grid; gap: 6px; }
+  .saved { color: var(--real); font-weight: 600; }
+</style>
+</head>
+<body>
+<header class="bar"><div class="bar-inner"><div class="brand">Deepfake Check admin</div><a href="/" style="margin-left:auto">Back to the app</a></div></header>
+<main>
+  <div class="page-head">
+    <h1>Settings for the user app</h1>
+    <p>Choose which models users see, the default threshold, and how unfamiliar footage is handled. Changes apply to the next check, with no restart.</p>
+  </div>
+  <div class="sheet" id="login">
+    <form class="form" id="login-form">
+      <label class="field"><span>Admin token</span><input type="password" id="token" autocomplete="current-password" required><small>The value of DDF_ADMIN_TOKEN on the server.</small></label>
+      <button class="go" type="submit" style="max-width:240px">Open settings</button>
+      <p class="error" id="login-error" hidden></p>
+    </form>
+  </div>
+  <div class="sheet" id="editor" hidden>
+    <form class="form" id="settings-form">
+      <div class="field"><span>Models users can choose</span><div class="checks" id="enabled"></div></div>
+      <label class="field"><span>Default model</span><select id="default_model"></select></label>
+      <label class="field"><span>Default threshold</span><input type="number" id="default_threshold" min="0.001" max="0.999" step="0.001"><small>Probability at or above this is called manipulated.</small></label>
+      <label class="toggle"><input type="checkbox" id="lock_threshold"><span><strong>Lock the threshold</strong>Users see the scale but cannot move it.</span></label>
+      <label class="toggle"><input type="checkbox" id="withhold_unfamiliar"><span><strong>Hold back verdicts on unfamiliar footage by default</strong>Uses the DINOv3 familiarity check.</span></label>
+      <label class="toggle"><input type="checkbox" id="allow_unfamiliar_override"><span><strong>Let users turn that off for one check</strong></span></label>
+      <label class="toggle"><input type="checkbox" id="show_research_tabs"><span><strong>Show the research tabs</strong>How it works, Results, Against prior work, Failures and limits, Report.</span></label>
+      <label class="field"><span>Upload limit (MB)</span><input type="number" id="max_upload_mb" min="1" max="2048" step="1"></label>
+      <div><button class="go" type="submit" style="max-width:240px">Save settings</button> <span class="saved" id="saved" hidden>Saved</span></div>
+      <p class="error" id="save-error" hidden></p>
+      <div class="field"><span>Loaded engines</span><small id="engines"></small></div>
+    </form>
+  </div>
+</main>
+<script>
+"use strict";
+const $ = (s) => document.querySelector(s);
+let token = "";
+let models = [];
+
+async function call(method, body) {
+  const response = await fetch("/api/admin/settings", {
+    method,
+    headers: { "X-Admin-Token": token, "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.detail || `The server answered ${response.status}`);
+  return data;
+}
+
+function fill(data) {
+  const s = data.settings;
+  models = data.models || models;
+  $("#enabled").innerHTML = models.map((m) => `<label class="toggle"><input type="checkbox" value="${m.id}" ${s.enabled_models.includes(m.id) ? "checked" : ""}><span><strong>${m.label}</strong></span></label>`).join("");
+  $("#default_model").innerHTML = models.map((m) => `<option value="${m.id}" ${m.id === s.default_model ? "selected" : ""}>${m.label}</option>`).join("");
+  $("#default_threshold").value = s.default_threshold;
+  for (const key of ["lock_threshold", "withhold_unfamiliar", "allow_unfamiliar_override", "show_research_tabs"]) $(`#${key}`).checked = s[key];
+  $("#max_upload_mb").value = s.max_upload_mb;
+  const engines = Object.entries(data.engines || {});
+  $("#engines").textContent = engines.length ? engines.map(([k, v]) => `${k}: ${v}`).join("; ") : "None yet. Each loads on its first check.";
+}
+
+$("#login-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  token = $("#token").value;
+  try {
+    fill(await call("GET"));
+    $("#login").hidden = true;
+    $("#editor").hidden = false;
+  } catch (error) {
+    $("#login-error").hidden = false;
+    $("#login-error").textContent = error.message;
+  }
+});
+
+$("#settings-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  $("#saved").hidden = true;
+  $("#save-error").hidden = true;
+  const body = {
+    enabled_models: [...document.querySelectorAll("#enabled input:checked")].map((i) => i.value),
+    default_model: $("#default_model").value,
+    default_threshold: Number($("#default_threshold").value),
+    lock_threshold: $("#lock_threshold").checked,
+    withhold_unfamiliar: $("#withhold_unfamiliar").checked,
+    allow_unfamiliar_override: $("#allow_unfamiliar_override").checked,
+    show_research_tabs: $("#show_research_tabs").checked,
+    max_upload_mb: Number($("#max_upload_mb").value),
+  };
+  try {
+    const saved = await call("PUT", body);
+    fill({ ...saved, models });
+    $("#saved").hidden = false;
+  } catch (error) {
+    $("#save-error").hidden = false;
+    $("#save-error").textContent = error.message;
+  }
+});
+</script>
+</body>
+</html>

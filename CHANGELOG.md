@@ -12,6 +12,27 @@ Experiment metrics belong in the experiment tracker, not this file.
 
 ## Unreleased
 
+- Added a user-facing web app, `ddf-web` (FastAPI, `deepfake_detection.webapp`).
+  It offers upload and test clips, three models, a movable threshold with
+  measured rates, and the familiarity check. Its tabs cover the math, every
+  result, prior work and failures. A token-guarded `/admin` page writes
+  `configs/webapp.yaml`. `scripts/build_report.py` prints the same content to a
+  PDF.
+- Added the six-checkpoint visual ensemble (`inference/ensemble.py`,
+  `scripts/score_visual_ensemble.py`). DFDC ROC-AUC is 0.7739 [0.740, 0.806],
+  which is +0.0469 [+0.0286, +0.0666] over the seed mean and +0.0127
+  [-0.0048, +0.0315] over seed 17. Live scores match the saved predictions to
+  about 1e-4. The gain does not transfer: Celeb-DF reads 0.6677 against 0.6682
+  for seed 17, and at 0.5 it catches 8 of 84 MNW fakes against 24. All six
+  checkpoints now have Celeb-DF and MNW reports.
+- Scored the served fusion head, `gate-fusion.pt`, on its stored embeddings
+  (`scripts/score_gate_fusion.py`): FakeAVCeleb 0.9987, DFDC 0.5488
+  [0.507, 0.592]. The app previously quoted the deep-fusion ablation for it.
+- `FFmpegMediaDecoder.probe` reads sound files. It raised on any file without a
+  video stream, so audio uploads never reached `prepare_audio` outside tests.
+  The video entry points now refuse a sound file by name.
+- Fixed `VisualPredictionEngine.predict`, which raised `AttributeError` on every
+  upload: its record lacked the `sync_start_sec` field the preprocessor reads.
 - The dashboard's Overview page, `docs/dashboard.md` and the README no longer
   call Fusion and Explainability locked, or the audio and sync branches
   untrained prototypes. Removed `dashboard/sections/fusion.py`, which no page

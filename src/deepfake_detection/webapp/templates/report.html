@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Deepfake Generalization Report</title>
+<link rel="stylesheet" href="{{ katex_css }}">
+<style>
+  @page { size: A4; margin: 16mm 15mm 18mm; }
+  body { font-family: "Barlow", "Bahnschrift", "Segoe UI", system-ui, sans-serif; color: #16212b; font-size: 10.5pt; line-height: 1.45; margin: 0; font-variant-numeric: tabular-nums; background: #fff; }
+  main { max-width: 820px; margin: 0 auto; padding: 24px; }
+  h1 { font-size: 24pt; margin: 0 0 4px; line-height: 1.1; }
+  h2 { font-size: 15pt; margin: 26px 0 8px; padding-top: 6px; border-top: 2px solid #16212b; break-after: avoid; }
+  h3 { font-size: 11.5pt; margin: 16px 0 4px; break-after: avoid; }
+  p { margin: 0 0 8px; }
+  .meta { color: #4a5866; margin-bottom: 16px; }
+  .abstract { background: #f4f6f8; border-left: 4px solid #2f5bd3; padding: 12px 14px; margin: 12px 0 8px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 9pt; break-inside: auto; }
+  th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid #d3dae1; vertical-align: top; }
+  th { color: #4a5866; font-weight: 600; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  tr { break-inside: avoid; }
+  tr.group td { background: #f4f6f8; font-weight: 600; }
+  tr.served td { font-weight: 600; }
+  .figures { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; break-inside: avoid; }
+  .figure { width: 100%; height: auto; display: block; }
+  .figure.wide { max-width: 560px; }
+  .legend { font-size: 8.5pt; color: #4a5866; display: flex; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 4px; }
+  .legend i { display: inline-block; width: 12px; height: 3px; vertical-align: middle; margin-right: 4px; }
+  .eq { break-inside: avoid; margin: 6px 0 10px; }
+  .eq .note { color: #4a5866; font-size: 9.5pt; }
+  .katex-display { margin: 4px 0; }
+  .src { color: #6b7885; font-size: 8.5pt; }
+  .item { break-inside: avoid; margin-bottom: 8px; }
+  .item b { display: block; }
+  .met { color: #157a6d; font-weight: 600; }
+  .partial { color: #9a6512; font-weight: 600; }
+  .miss { color: #c8323f; font-weight: 600; }
+  ul { padding-left: 1.1em; margin: 4px 0 8px; }
+  li { margin-bottom: 4px; }
+  code { font-size: 9pt; }
+  .caption { color: #4a5866; font-size: 9pt; }
+</style>
+</head>
+<body>
+<main>
+<h1>Does audio-visual fusion make deepfake detection generalize?</h1>
+<div class="meta">Final project report, built {{ today }} from the evaluation files under <code>runs/</code>.</div>
+
+<div class="abstract">
+  <p><b>Question.</b> Do detectors that combine face, voice and lip-sync evidence hold up better on footage from other sources than a face-only detector?</p>
+  <p><b>Answer: no.</b> Trained on FakeAVCeleb, every model is near perfect on unseen speakers from the same corpus (ROC-AUC 0.998 to 0.9994). On DFDC, footage they never saw, fusion never beat its own visual branch (-0.0085, -0.0215 and -0.0417 at three seeds). The five-stream fusion this app serves reads 0.5488.</p>
+  <p><b>Best model.</b> An equal-weight average of six face models (two backbones, three seeds each) reaches {{ "%.4f"|format(r.ensemble.roc_auc) }} [{{ "%.3f"|format(r.ensemble.ci[0]) }}, {{ "%.3f"|format(r.ensemble.ci[1]) }}] on DFDC and 0.9994 in-domain. That is +0.047 over the average single seed, a gain clear of zero. Against the luckiest seed it is +0.013, not clear of zero. The gain does not transfer: on Celeb-DF it reads {{ "%.4f"|format(r.ensemble.celebdf.roc_auc) }}, level with the seed-17 model, and on MNW at 0.5 it catches {{ r.ensemble.mnw.ensemble }} of {{ r.ensemble.mnw.fakes }} fakes against {{ r.ensemble.mnw.best_single }}. One member, ConvNeXt seed 43, diverged in training (F29); leaving it out lowers DFDC to 0.7666. The ensemble ships as the web app's default for its DFDC ranking, with those limits stated.</p>
+  <p><b>What the project adds.</b> Mostly the checks: an attention metric that showed the cross-modal streams ignore lip-sync; a benchmark confound found before training; seed variance larger than any effect reported; and corruption that destroys the decision while ROC-AUC barely moves.</p>
+</div>
+
+<h2>1. Results</h2>
+<p>FakeAVCeleb test holds speakers the models never trained on, from the same corpus. DFDC, Celeb-DF and DF26 come from elsewhere. ROC-AUC is reported with a 95% bootstrap interval that resamples speaker identities.</p>
+<div class="figures">
+  <div><h3>ROC, FakeAVCeleb test</h3>{{ roc_favc }}</div>
+  <div><h3>ROC, DFDC (unseen footage)</h3>{{ roc_dfdc }}</div>
+</div>
+<h3>The seed changes the cross-dataset answer</h3>
+{{ seeds }}
+<p class="caption">Same recipe, three training seeds. The seed every earlier result quoted, 17, is the best draw in each row. The ensemble removes the choice.</p>
+
+<h3>Every measured model</h3>
+<table>
+  <thead><tr><th>Model</th><th>Tested on</th><th class="num">ROC-AUC</th><th class="num">95% CI</th><th class="num">EER</th><th class="num">Bal. acc.</th><th class="num">ECE</th></tr></thead>
+  <tbody>
+  {% set ns = namespace(group=None) %}
+  {% for row in r.table %}
+    {% if row.group != ns.group %}<tr class="group"><td colspan="7">{{ row.group }}</td></tr>{% set ns.group = row.group %}{% endif %}
+    <tr class="{{ 'served' if row.group == 'Served in this app' else '' }}">
+      <td>{{ row.model }}</td><td>{{ row.dataset }}</td>
+      <td class="num">{{ "%.4f"|format(row.roc_auc) }}</td>
+      <td class="num">{% if row.ci and row.ci[0] is not none %}{{ "%.3f"|format(row.ci[0]) }} to {{ "%.3f"|format(row.ci[1]) }}{% endif %}</td>
+      <td class="num">{% if row.eer is not none %}{{ "%.3f"|format(row.eer) }}{% endif %}</td>
+      <td class="num">{% if row.balanced_accuracy is not none %}{{ "%.3f"|format(row.balanced_accuracy) }}{% endif %}</td>
+      <td class="num">{% if row.ece is not none %}{{ "%.3f"|format(row.ece) }}{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<p class="caption">EER is the equal error rate. Balanced accuracy uses the fixed 0.5 threshold. ECE is expected calibration error over ten bins. The audio branch is scored on the audio label and the visual branches on the video label; the fusion rows use the clip label. In the web app's Results tab, hovering a row shows the file under <code>runs/</code> it was read from.</p>
+
+<h2>2. Method and math</h2>
+<p>Each clip is decoded into 16 frames. MTCNN finds the face, a tracker keeps one identity, and crops are resized to 224 pixels. The audio is resampled to 16 kHz with leading silence removed. Design A trains three branches (visual, audio, sync) and fuses them with a logistic head fitted on out-of-fold scores. Design B trains five streams, two of them audio-to-mouth cross-attention, and fuses their 256-dimensional embeddings.</p>
+{% for block in r.math %}
+<h3>{{ block.title }}</h3>
+<div class="src">{{ block.source }}</div>
+{% for item in block["items"] %}
+<div class="eq"><div class="tex" data-tex="{{ item.tex }}"></div><div class="note">{{ item.note }}</div></div>
+{% endfor %}
+{% endfor %}
+
+<h2>3. Against prior work</h2>
+<table>
+  <thead><tr><th>Target from the literature</th><th>This project</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for t in r.targets %}
+    <tr><td>{{ t.target }}</td><td>{{ t.ours }}</td>
+      <td class="{{ 'met' if t.status == 'met' else ('miss' if t.status == 'not met' else 'partial') }}">{{ t.status }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% for p in r.prior_work %}
+<div class="item"><b>{{ p.title }}</b>{{ p.comparison }} {{ p.difference }} <span class="src">{{ p.source }}</span></div>
+{% endfor %}
+<h3>What this project adds</h3>
+<ul>{% for c in r.contributions %}<li>{{ c }}</li>{% endfor %}</ul>
+<p class="caption">Each "not found in prior work" claim comes from one targeted literature search and needs a citation check before it is relied on.</p>
+
+<h2>4. Failures</h2>
+{% for g in r.failures %}
+<h3>{{ g.group }}</h3>
+{% for f in g["items"] %}
+<div class="item"><b>{{ f.title }}</b>{{ f.detail }} <span class="src">{{ f.source }}</span></div>
+{% endfor %}
+{% endfor %}
+
+<h2>5. Limits</h2>
+<ul>{% for l in r.limits %}<li>{{ l }}</li>{% endfor %}</ul>
+
+<h2>6. Reproducing this report</h2>
+<ul>
+  <li><code>uv sync --extra cu130 --extra ml --extra media --extra web --extra dashboard --group dev</code></li>
+  <li><code>uv run python scripts/score_visual_ensemble.py</code> writes the ensemble metrics from the saved predictions.</li>
+  <li><code>uv run ddf-web</code> starts the app at http://127.0.0.1:8000.</li>
+  <li><code>uv run python scripts/build_report.py</code> rebuilds this PDF.</li>
+  <li>F-numbers refer to <code>docs/research/findings.md</code>.</li>
+</ul>
+</main>
+<script src="{{ katex_js }}"></script>
+<script>
+  document.querySelectorAll(".tex").forEach(function (node) {
+    try { katex.render(node.dataset.tex, node, { displayMode: true, throwOnError: false }); }
+    catch (error) { node.textContent = node.dataset.tex; }
+  });
+</script>
+</body>
+</html>

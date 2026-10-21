@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deepfake Check</title>
+<meta name="description" content="Upload a video and get a deepfake verdict with the measured limits of that verdict.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232f5bd3'/%3E%3Cpath d='M8 20h16M11 14h10M14 8h4' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@600;700&display=swap">
+<link rel="stylesheet" href="/static/vendor/katex/katex.min.css">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="bar">
+  <div class="bar-inner">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--cobalt)"/><path d="M8 20h16M11 14h10M14 8h4" stroke="var(--sheet)" stroke-width="3" stroke-linecap="round"/></svg>
+      Deepfake Check
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" data-tab="check" aria-selected="true">Check a video</button>
+      <button class="tab research" role="tab" data-tab="how">How it works</button>
+      <button class="tab research" role="tab" data-tab="results">Results</button>
+      <button class="tab research" role="tab" data-tab="prior">Against prior work</button>
+      <button class="tab research" role="tab" data-tab="failures">Failures and limits</button>
+      <button class="tab research" role="tab" data-tab="report">Report</button>
+    </nav>
+    <button class="icon-button" id="theme" type="button" aria-label="Switch colour theme" title="Switch colour theme">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="main">
+  <section id="tab-check" role="tabpanel">
+    <div class="page-head">
+      <h1>Is this video a deepfake?</h1>
+      <p>Upload a clip of someone speaking to camera. The models look at the face across 16 frames and give a probability that it was manipulated, along with how well that probability has held up on footage with known answers.</p>
+    </div>
+    <div class="check">
+      <div class="stack">
+        <div class="sheet">
+          <label class="drop" id="drop">
+            <input type="file" id="file" accept="video/*,.mp4,.mov,.mkv,.webm,.avi,.m4v,image/*,audio/*">
+            <strong>Drop a video here, or choose a file</strong>
+            <small id="drop-hint">MP4, MOV, MKV, WebM or AVI</small>
+          </label>
+          <div class="preview" id="preview">
+            <video id="preview-video" controls muted playsinline></video>
+            <div class="preview-meta"><span id="preview-name"></span><button class="preset" type="button" id="clear">Clear</button></div>
+          </div>
+        </div>
+
+        <div class="sheet">
+          <div class="label-row"><span class="label">Model</span></div>
+          <div class="models" id="models" role="radiogroup" aria-label="Model"></div>
+          <div style="margin-top:16px">
+            <label class="toggle" id="unfamiliar-toggle">
+              <input type="checkbox" id="withhold" checked>
+              <span><strong>Hold back the verdict on unfamiliar footage</strong>A separate check measures how far the clip is from the genuine footage the models know. On footage far from it, the models call most genuine videos fake.</span>
+            </label>
+          </div>
+        </div>
+
+        <button class="go" id="go" type="button" disabled>Check video</button>
+
+        <div class="sheet" id="samples-sheet" hidden>
+          <div class="label-row"><span class="label">No clip to hand? Try a test clip</span><small>The models never trained on these</small></div>
+          <div class="samples" id="samples"></div>
+        </div>
+      </div>
+
+      <div class="sheet" id="result" aria-live="polite">
+        <div class="result-empty">
+          <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5v5l4-2.5z"/></svg>
+          <strong>No video checked yet</strong>
+          <span>Choose a file or a test clip, then select Check video.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-how" role="tabpanel" hidden>
+    <div class="page-head">
+      <h1>How it works</h1>
+      <p>Every model reads the same prepared clip. The face models see 16 aligned face crops; the audio and lip-sync streams also hear the voice. The equations below are the ones the code trains and evaluates.</p>
+    </div>
+    <div class="sheet" style="margin-bottom:24px">
+      <svg class="pipeline" viewBox="0 0 960 250" role="img" aria-labelledby="pipe-title">
+        <title id="pipe-title">Pipeline: the clip is split into face crops and audio, scored by several models, then combined into one probability with a separate familiarity check.</title>
+        <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink-3)"/></marker></defs>
+        <g font-family="inherit" font-size="13" fill="var(--ink)">
+          <rect x="10" y="95" width="110" height="60" rx="10" fill="var(--sheet-2)" stroke="var(--line-strong)"/>
+          <text x="65" y="122" text-anchor="middle" font-weight="600">Video clip</text>
+          <text x="65" y="140" text-anchor="middle" fill="var(--ink-2)">upload</text>
+
+          <rect x="170" y="40" width="160" height="60" rx="10" fill="var(--sheet-2)" stroke="var(--line-strong)"/>
+          <text x="250" y="66" text-anchor="middle" font-weight="600">16 face crops</text>
+          <text x="250" y="84" text-anchor="middle" fill="var(--ink-2)">MTCNN, tracked, 224 px</text>
+          <rect x="170" y="150" width="160" height="60" rx="10" fill="var(--sheet-2)" stroke="var(--line-strong)"/>
+          <text x="250" y="176" text-anchor="middle" font-weight="600">Audio + mouth</text>
+          <text x="250" y="194" text-anchor="middle" fill="var(--ink-2)">16 kHz, mouth crops</text>
+
+          <rect x="380" y="20" width="200" height="100" rx="10" fill="var(--cobalt-soft)" stroke="var(--cobalt)"/>
+          <text x="480" y="48" text-anchor="middle" font-weight="600">Six face models</text>
+          <text x="480" y="68" text-anchor="middle" fill="var(--ink-2)">EfficientNet-B0 x3 seeds</text>
+          <text x="480" y="86" text-anchor="middle" fill="var(--ink-2)">ConvNeXt-Tiny x3 seeds</text>
+          <text x="480" y="104" text-anchor="middle" fill="var(--ink-2)">CNN per frame, GRU over time</text>
+          <rect x="380" y="140" width="200" height="90" rx="10" fill="var(--sheet-2)" stroke="var(--line-strong)"/>
+          <text x="480" y="166" text-anchor="middle" font-weight="600">Five streams</text>
+          <text x="480" y="186" text-anchor="middle" fill="var(--ink-2)">2 visual, voice, lip-sync,</text>
+          <text x="480" y="204" text-anchor="middle" fill="var(--ink-2)">emotion (cross-attention)</text>
+
+          <rect x="630" y="40" width="150" height="60" rx="10" fill="var(--cobalt-soft)" stroke="var(--cobalt)"/>
+          <text x="705" y="66" text-anchor="middle" font-weight="600">Average logits</text>
+          <text x="705" y="84" text-anchor="middle" fill="var(--ink-2)">ensemble, no fitting</text>
+          <rect x="630" y="155" width="150" height="60" rx="10" fill="var(--sheet-2)" stroke="var(--line-strong)"/>
+          <text x="705" y="181" text-anchor="middle" font-weight="600">Fusion head</text>
+          <text x="705" y="199" text-anchor="middle" fill="var(--ink-2)">learned on 256-d embeddings</text>
+
+          <rect x="830" y="95" width="120" height="60" rx="10" fill="var(--sheet)" stroke="var(--ink)"/>
+          <text x="890" y="122" text-anchor="middle" font-weight="600">Probability</text>
+          <text x="890" y="140" text-anchor="middle" fill="var(--ink-2)">vs threshold</text>
+          <text x="890" y="190" text-anchor="middle" fill="var(--ink-2)" font-size="12">DINOv3 familiarity</text>
+          <text x="890" y="206" text-anchor="middle" fill="var(--ink-2)" font-size="12">check runs alongside</text>
+        </g>
+        <g stroke="var(--ink-3)" stroke-width="1.5" fill="none" marker-end="url(#arrow)">
+          <path d="M120 115 C145 115 145 70 168 70"/>
+          <path d="M120 135 C145 135 145 180 168 180"/>
+          <path d="M330 70 L378 70"/>
+          <path d="M330 180 L378 180"/>
+          <path d="M330 80 C355 80 355 165 378 165"/>
+          <path d="M580 70 L628 70"/>
+          <path d="M580 185 L628 185"/>
+          <path d="M780 70 C805 70 805 115 828 115"/>
+          <path d="M780 185 C805 185 805 135 828 135"/>
+        </g>
+      </svg>
+    </div>
+    <div id="math"></div>
+  </section>
+
+  <section id="tab-results" role="tabpanel" hidden>
+    <div class="page-head">
+      <h1>Results</h1>
+      <p>FakeAVCeleb is the dataset the models trained on, tested on speakers they never saw. DFDC, Celeb-DF and DF26 are footage from elsewhere. The gap between the two is the main result.</p>
+    </div>
+    <div class="grid-2" style="margin-bottom:24px">
+      <div class="sheet"><h3>ROC on FakeAVCeleb test</h3><div class="chart" id="roc-favc"></div></div>
+      <div class="sheet"><h3>ROC on DFDC (unseen footage)</h3><div class="chart" id="roc-dfdc"></div></div>
+    </div>
+    <div class="grid-2" style="margin-bottom:24px">
+      <div class="sheet"><h3>The seed changes the answer</h3><p class="quiet">DFDC ROC-AUC for the same recipe trained three times. The reported seed was the best draw. Averaging all six removes that choice.</p><div class="chart" id="seeds"></div></div>
+      <div class="sheet" id="ensemble-note"></div>
+    </div>
+    <div class="sheet">
+      <div class="label-row"><h3>Every measured model</h3><small>Dot is ROC-AUC, whisker the 95% identity bootstrap, dashed line is chance</small></div>
+      <div class="filters" id="dataset-filters"></div>
+      <div class="table-wrap"><table class="metrics" id="metric-table"></table></div>
+    </div>
+  </section>
+
+  <section id="tab-prior" role="tabpanel" hidden>
+    <div class="page-head">
+      <h1>Against prior work</h1>
+      <p>The project set four targets from published results. Two were met, one was met on the number but not for the reason claimed, and one was not met.</p>
+    </div>
+    <div class="sheet" style="margin-bottom:24px">
+      <div class="table-wrap"><table class="metrics targets" id="targets"></table></div>
+    </div>
+    <h2 style="margin-bottom:14px">Where the numbers meet the literature</h2>
+    <div class="cards" id="prior" style="margin-bottom:28px"></div>
+    <div class="sheet"><h2 style="margin-bottom:12px">What this project adds</h2><ul class="plain" id="contributions"></ul></div>
+  </section>
+
+  <section id="tab-failures" role="tabpanel" hidden>
+    <div class="page-head">
+      <h1>Failures and limits</h1>
+      <p>What did not work, what looked like it worked and did not, and the claims that were withdrawn. F-numbers point to docs/research/findings.md.</p>
+    </div>
+    <div class="sheet" style="margin-bottom:28px"><h2 style="margin-bottom:12px">Read every verdict with these in mind</h2><ul class="plain" id="limits"></ul></div>
+    <div id="failures"></div>
+  </section>
+
+  <section id="tab-report" role="tabpanel" hidden>
+    <div class="page-head">
+      <h1>Report</h1>
+      <p>The same results, math, comparison and failures as one printable document.</p>
+    </div>
+    <div class="sheet">
+      <p>The PDF is built from the evaluation files by <code>scripts/build_report.py</code>. The web version updates whenever a new evaluation is written.</p>
+      <div class="report-actions">
+        <a class="button-link primary" href="/report.pdf">Download the PDF</a>
+        <a class="button-link" href="/report" target="_blank" rel="noopener">Open the web version</a>
+      </div>
+    </div>
+  </section>
+</main>
+<footer id="footer">Research prototype. Not a deployable detector: read the Failures and limits tab before trusting a verdict.</footer>
+
+<script src="/static/vendor/katex/katex.min.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>
