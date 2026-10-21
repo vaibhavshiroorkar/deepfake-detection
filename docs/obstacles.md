@@ -617,29 +617,31 @@ half the picture. Freezing also costs transfer, and the cost is larger than it
 looks.
 
 Measured on 1,400 training clips, one variable at a time, each arm scored on the
-full 2,410-clip DFDC set:
+full 2,410-clip DFDC set. These are the recorded numbers (`B-batchnorm-trade`,
+F2). An earlier version of this table came from a scratch run that was never
+written under `runs/`, and it showed a DFDC effect of 0.148 that the recorded
+run does not reproduce:
 
-| Arm | Validation | DFDC |
-| --- | --- | --- |
-| frozen BatchNorm, 10 epochs | 0.9197 | 0.5005 |
-| live BatchNorm, 10 epochs | 0.5267 | 0.6482 |
-| frozen BatchNorm, 3 epochs | 0.8932 | 0.5057 |
+| Arm | Epochs | Validation | DFDC |
+| --- | ---: | ---: | ---: |
+| frozen BatchNorm | 10 | 0.9072 | 0.5508 |
+| live BatchNorm | 10 | 0.5500 | 0.5686 |
+| frozen BatchNorm | 3 | 0.8728 | 0.5466 |
 
-Cutting the epoch budget moved DFDC by 0.005. Unfreezing BatchNorm moved it by
-0.148, and cost 0.39 of in-domain AUC to do it. The epoch count is not the
-lever; BatchNorm is.
+Unfreezing BatchNorm moves DFDC by +0.0177 and costs 0.3572 of validation AUC.
+Cutting the epoch budget moves DFDC by 0.0042. Neither lever buys much transfer,
+and the in-domain cost of live BatchNorm is large.
 
 The likely mechanism is that live BatchNorm trains against batch statistics and
 evaluates against running ones, and that mismatch keeps the model from fitting
 the training corpus tightly. A model that never memorised FakeAVCeleb's
-artifacts has weaker features that survive a change of corpus better. Note this
-is not free: at 0.5267 validation the live-BatchNorm model is close to useless
+artifacts has weaker features, which may survive a change of corpus slightly
+better. At 0.5500 validation the live-BatchNorm model is close to useless
 in-domain.
 
-The practical reading is that this stream has an in-domain setting and a
-transfer setting and they are not the same setting. Pick one deliberately and
-say which was used. Do not report a frozen-BatchNorm in-domain number beside a
-cross-corpus number from a different configuration.
+The practical reading: do not unfreeze BatchNorm hoping for transfer. Report
+which setting a number came from, and do not put a frozen-BatchNorm in-domain
+number beside a cross-corpus number from a different configuration.
 
 Caveat on scale: these arms train on 1,400 clips, so the absolute values sit
 below a full-scale run. The comparison between arms is what was measured.

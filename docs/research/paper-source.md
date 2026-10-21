@@ -483,8 +483,8 @@ so. Every corpus here manipulates a real recording: a face region swapped, a
 mouth re-rendered. The traces are blending seams, boundary warping and flicker
 along the seam. Video from a generative model has no real source and no seam,
 and the per-generator table in section 5.7 shows what that costs: 0 of 10 on
-`vasa_1`, 0 of 4 on `raskai`, 1 of 6 on `diff2lip`, against 7 of 8 on the
-unnamed in-the-wild clips.
+`vasa_1`, 0 of 4 on `raskai`, 1 of 6 on `diff2lip`, against 6 of 7 on the
+unnamed in-the-wild clips judged likely manipulated.
 
 One measured result makes it worse than a blind spot. Motion correlates
 negatively with the fake score (section 5.8), so the model treats smoothness as

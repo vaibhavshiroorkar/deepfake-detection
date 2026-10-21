@@ -71,7 +71,7 @@ cheap check run before training rather than after:
 | Calibration cross-corpus | expected calibration error 0.0022 in-domain against 0.6366 on DFDC |
 | Seed spread, fused system on DFDC | 0.1078, from 0.6422 to 0.7500; in-domain 0.0000 |
 | Sync branch, first measured number | below chance at all three seeds: 0.4364, 0.4570, 0.4931 |
-| VIS-01, ConvNeXt against EfficientNet | undecided: -0.0340 [-0.0761, +0.0066] on DFDC, smaller than the seed spread |
+| VIS-01, ConvNeXt against EfficientNet | decided for EfficientNet on stability: ConvNeXt is worse on DFDC at every seed, separated only at seed 43, where it diverged and shipped never fine-tuned (F29) |
 | AUD-01, WavLM against Wav2Vec2 | undecided: both read 1.0000 in-domain, no cross-corpus partition exists |
 | Corruption, JPEG 75 | ROC-AUC falls 0.0054 while false alarms go from 0 to 76 of 150 |
 | Corruption, audio noise at 20 dB | ROC-AUC falls 0.0227 while 857 of 859 fakes go missed |

@@ -102,8 +102,8 @@ RESULTS: tuple[Result, ...] = (
         predictions=PROGRAM / "evaluation" / "visual-mnw-predictions.csv",
         mlflow=(("program-20260906", "visual-mnw-evaluation"),),
         decision=(
-            "Detection is 25 of 85 and not uniform across generators: 0 of 10 on "
-            "vasa_1 against 7 of 8 in the wild"
+            "Detection is 24 of 84 fakes and not uniform across generators: 0 of "
+            "10 on vasa_1 against 6 of 7 likely-manipulated wild clips"
         ),
         seeds=1,
         notes="Fake-only, so no ranking metric exists. Detection rate only.",

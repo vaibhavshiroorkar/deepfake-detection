@@ -70,7 +70,7 @@ Cross-corpus, which is the number that matters:
 | --- | --- | --- |
 | DFDC | 0.6873 mean, 0.6422 to 0.7500 | Three seeds, each with its own head. Fusion never beats its own visual branch, and is measurably worse at two of three seeds |
 | Celeb-DF-v2 | 0.6682 | 141 of 155 genuine videos called manipulated |
-| MNW (locked, external) | detection 25 of 85 | 0 of 10 on `vasa_1`, 7 of 8 in the wild |
+| MNW (locked, external) | detection 24 of 84 fakes | 0 of 10 on `vasa_1`; 6 of 7 likely-manipulated wild clips, and the one likely-authentic clip also called fake |
 
 The in-domain figure is not evidence of generalization. A strong in-domain
 number has four times in this project turned out to be a shortcut rather than
@@ -177,5 +177,7 @@ anything.
   nothing (F25).
 - The two cross-modal streams never measured correspondence. Diagonal attention
   mass sat at chance in every epoch of three runs while accuracy rose (F1).
-- `VIS-01` and the audio challengers are unmeasured, so no branch architecture
-  here was selected against an alternative.
+- The branch architectures were barely contested. `VIS-01` kept EfficientNet-B0
+  over ConvNeXt-Tiny on stability, not accuracy: ConvNeXt diverged at one seed
+  of three (F29). `AUD-01` is undecided, because Wav2Vec2 and WavLM both read
+  1.0000 in-domain and no cross-corpus audio partition exists (F28).
