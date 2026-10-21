@@ -14,17 +14,28 @@ from .preprocessor import MediaInfo
 class FFmpegMediaDecoder:
     def probe(self, path: Path) -> MediaInfo:
         with av.open(str(path)) as container:
-            if not container.streams.video:
-                raise ValueError(f"Media has no video stream: {path}")
-            video = container.streams.video[0]
-            if video.duration is not None and video.time_base is not None:
-                duration = float(video.duration * video.time_base)
+            audio_present = bool(container.streams.audio)
+            video_present = bool(container.streams.video)
+            # A sound file has no video stream and is still valid input for
+            # `prepare_audio`. The video entry points check `video_present`.
+            if not video_present and not audio_present:
+                raise ValueError(f"Media has no video or audio stream: {path}")
+            stream = (
+                container.streams.video[0]
+                if video_present
+                else container.streams.audio[0]
+            )
+            if stream.duration is not None and stream.time_base is not None:
+                duration = float(stream.duration * stream.time_base)
             elif container.duration is not None:
                 duration = float(container.duration / av.time_base)
             else:
                 raise ValueError(f"Media duration is unavailable: {path}")
-            video_fps = float(video.average_rate) if video.average_rate else 0.0
-            audio_present = bool(container.streams.audio)
+            video_fps = (
+                float(stream.average_rate)
+                if video_present and stream.average_rate
+                else 0.0
+            )
             audio_duration = 0.0
             if audio_present:
                 audio = container.streams.audio[0]
@@ -37,6 +48,7 @@ class FFmpegMediaDecoder:
             video_fps=video_fps,
             audio_duration_sec=audio_duration,
             audio_present=audio_present,
+            video_present=video_present,
         )
 
     def read_frames(

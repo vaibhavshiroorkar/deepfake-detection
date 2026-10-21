@@ -22,6 +22,9 @@ class MediaInfo:
     video_fps: float
     audio_duration_sec: float
     audio_present: bool
+    # False for a sound file. Defaults to True so decoders written before
+    # audio-only input existed still describe a video.
+    video_present: bool = True
 
 
 class MediaDecoder(Protocol):
@@ -227,6 +230,8 @@ class Preprocessor:
 
     def prepare_visual(self, record: ClipRecord, media_path: Path) -> PreparedClip:
         info = self.decoder.probe(media_path)
+        if not info.video_present:
+            raise ValueError(f"Media has no video stream: {media_path}")
         if info.duration_sec <= 0:
             raise ValueError("Video duration must be positive")
         content_start = (
@@ -405,6 +410,8 @@ class Preprocessor:
 
     def prepare(self, record: ClipRecord, media_path: Path) -> PreparedClip:
         info = self.decoder.probe(media_path)
+        if not info.video_present:
+            raise ValueError(f"Media has no video stream: {media_path}")
         if info.duration_sec <= 0:
             raise ValueError("Video duration must be positive")
         content_start = (

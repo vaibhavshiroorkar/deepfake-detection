@@ -17,6 +17,10 @@ class _InferenceRecord:
     clip_id: str
     dataset: str = "inference"
     leading_silence_sec: float = 0.0
+    # `Preprocessor.prepare_visual` reads this for the cache fingerprint. An
+    # upload has no manifest row to supply it, so it starts at zero as a
+    # manifest row without the column does.
+    sync_start_sec: float = 0.0
 
 
 @dataclass(frozen=True, slots=True)
