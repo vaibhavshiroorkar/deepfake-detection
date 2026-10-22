@@ -37,9 +37,9 @@ mean over time, Linear, LayerNorm               -> embedding [B, 256]
 The direction is the claim: the sound is what we have, and we ask how well the
 mouth accounts for it.
 
-`dashboard/lib/cross_modal.py` is the written specification, and
-`tests/test_cross_attention.py` asserts the trainable module reproduces its
-numpy result to 1e-5, so the two cannot drift apart.
+`tests/test_cross_attention.py` holds a numpy version of both formulas and
+asserts the trainable module reproduces it to 1e-5, so the two cannot drift
+apart.
 
 ### The residual, not the attended vector
 
@@ -149,11 +149,22 @@ its two views are both exactly 2.0 seconds from the same start.
 
 ## Encoder choices, and why they are not the specified ones
 
-`stream_spec.py` names AV-HuBERT and Whisper. Neither is used yet, deliberately.
+`stream_spec.py` names AV-HuBERT and Whisper for lip-sync, and HSEmotion for
+the face side of emotion. The first streams trained here used an ImageNet
+EfficientNet-B0 and Wav2Vec2 instead. AV-HuBERT and HSEmotion are now an option:
+`ddf train stream --encoder avhubert` and `--encoder hsemotion`.
 
 **AV-HuBERT** needs fairseq, which pins PyTorch to 1.08, 1.13 or 2.0. This
 environment runs torch 2.12.1+cu130 and installing fairseq would take the
-working CUDA stack down with it.
+working CUDA stack down with it. `streams/avhubert.py` restates the Base model
+in plain torch, checked against the official code by
+`scripts/check_encoder_ports.py`. The lip-sync stream reads it frozen, once on
+the lips alone and once on the audio alone: pretraining with modality dropout
+put both in one feature space, so the cross-attention compares like with like.
+
+**HSEmotion** is the same EfficientNet-B0 architecture, fine-tuned on
+AffectNet expressions (`streams/hsemotion.py`). Swapping it in changes the
+emotion stream's starting weights and nothing else.
 
 **Whisper's encoder does not accept a waveform.** It takes `[B, 80, 3000]`
 log-mel and rejects anything else outright:
@@ -167,8 +178,7 @@ but found 32000.
 mean 28 seconds of padding and 100 useful tokens out of 1500.
 
 Wav2Vec2 takes a raw waveform of any length and is already used by
-`branches/audio.py`. The contribution is the mechanism, not the encoder, and
-swapping one in later is a clean ablation rather than a rewrite.
+`branches/audio.py`, so it stays the default audio encoder.
 
 ## Training
 

@@ -380,7 +380,7 @@ background only and cannot select the project detector.
 
 1. [`ClipRecord`](../../src/deepfake_detection/data/manifest.py) supplies clip
    ID, dataset, media path, cue labels, and leading-silence metadata.
-2. [`_cache_build()`](../../src/deepfake_detection/cli.py) creates the default
+2. [`_cache_build()`](../../src/deepfake_detection/cli/data.py) creates the default
    `ViewConfig`, decoder, MTCNN detector, preprocessor, and cache store.
 3. [`FFmpegMediaDecoder`](../../src/deepfake_detection/views/media.py) probes
    streams and decodes requested frames and audio.

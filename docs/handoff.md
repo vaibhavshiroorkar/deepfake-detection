@@ -9,9 +9,9 @@ three cue-specific branches on FakeAVCeleb with source-grouped cross-fitting and
 a calibrated late-fusion head. Design B replaces them with configurable streams
 and a feature-level head. Both score through one evaluation path, every headline
 number carries an identity-clustered interval, and every number resolves to a
-row in [result traceability](research/result-traceability.md). Thirty-four
-findings are recorded in [findings](research/findings.md), including the eight
-claims this project made and later withdrew.
+row in [result traceability](research/result-traceability.md). The findings are
+recorded in [findings](research/findings.md), including the claims this project
+made and later withdrew.
 
 **Track two, open-world generated media**, is newer and is where the work is
 pointed now. The system detects manipulation of a real recording; media
@@ -53,36 +53,30 @@ cheap check run before training rather than after:
 
 ### What is measured and settled
 
-| Result | Number |
+Every settled number lives in [findings](research/findings.md), so it is stated
+once. By topic:
+
+| Topic | Findings |
 | --- | --- |
-| DF26 leave-one-generator-out, container-controlled | Perception Encoder macro 0.7527, spread 0.1954 |
-| Encoder comparison, paired by source video | PE beats DINOv3 by +0.0741 [+0.0121, +0.1317], CLIP by +0.0668 [+0.0049, +0.1289]; PE against CLIP not separated |
-| Frame-rate confound found by that control | Wan 2.6 fell 0.094, HunyuanVideo 0.045, others unchanged |
-| Design A in-domain fusion | 0.9990 |
-| Design A cross-corpus fusion on DFDC | seed 17 reads 0.7500; across three seeds, each with its own cross-fitted head, 0.6422 to 0.7500, mean 0.6873. Never above its visual branch; below it, separated, at seeds 29 and 43 |
-| Fusion against the strongest single branch, one task | in-domain +0.0159, +0.0170, +0.0184 across seeds 17, 29, 43, all separated; DFDC -0.0085 [-0.0196, +0.0027], -0.0215 [-0.0371, -0.0052], -0.0417 [-0.0698, -0.0129] |
-| Fusion head, logistic against the small MLP | indistinguishable in-domain, MLP loses 0.1508 [0.0995, 0.2052] on DFDC |
-| Calibration and quality features | no ranking gain either way; calibration earns its place on ECE alone |
-| Unweighted mean against the fitted head, DFDC | not separated on AUC, and ECE 0.0554 against 0.6366 |
-| Head-only method holdout, rtvc | AUC falls 0.0437 while 73 of 75 clips go missed at the frozen threshold |
-| Design B streams cross-corpus | four of five have intervals containing 0.5; only emotion separates, 0.5951 [0.5558, 0.6351] |
-| Capture conditions versus manipulation type | an unseen manipulation family costs 0.12 macro, five of six above 0.70 and FaceSwap at chance; an unseen corpus reads 0.49 |
-| Full-frame probe on face manipulation | at chance, macro 0.5387, every interval containing 0.5 |
-| Calibration cross-corpus | expected calibration error 0.0022 in-domain against 0.6366 on DFDC |
-| Seed spread, fused system on DFDC | 0.1078, from 0.6422 to 0.7500; in-domain 0.0000 |
-| Sync branch, first measured number | below chance at all three seeds: 0.4364, 0.4570, 0.4931 |
-| VIS-01, ConvNeXt against EfficientNet | decided for EfficientNet on stability: ConvNeXt is worse on DFDC at every seed, separated only at seed 43, where it diverged and shipped never fine-tuned (F29) |
-| AUD-01, WavLM against Wav2Vec2 | undecided: both read 1.0000 in-domain, no cross-corpus partition exists |
-| Corruption, JPEG 75 | ROC-AUC falls 0.0054 while false alarms go from 0 to 76 of 150 |
-| Corruption, audio noise at 20 dB | ROC-AUC falls 0.0227 while 857 of 859 fakes go missed |
-| Silence shortcut | absent: a half-second shift changes nothing |
-| Confidence cross-corpus | more confident when wrong, 0.8742 against 0.8299 on DFDC |
-| Fusion against its own visual branch, DFDC | repairs 314, breaks 5, both wrong on 1,585 of 2,351 |
-| BatchNorm with epochs held fixed | +0.0177 on DFDC, not the +0.1276 of the uncontrolled comparison |
+| Unseen generators on DF26, encoder comparison, frame-rate control | F15, F33 |
+| Fusion against the best single branch, in-domain and DFDC | F19, F23, F27 |
+| Fusion head choice, calibration, quality features | F8, F18 |
+| Seed spread | F21, F27, F29 |
+| Capture conditions against manipulation type | F10, F12, F34 |
+| Region of interest: full frame against face crop | F13 |
+| False alarms on genuine footage, and the familiarity gate | F16, F17 |
+| Corruption and the operating point | F24, F25 |
+| Codec shortcut in FakeAVCeleb, and training against it | F35, F37 |
+| The served visual ensemble | F36 |
+| Confidence and abstention cross-corpus | F9, F22 |
+| Branch challengers (ConvNeXt, WavLM) | F28, F29 |
+| Sync branch and the cross-modal streams | F1, F1a, F26, F32 |
 
 ### What is running or blocked
 
-Nothing is running. Blocked on other people: DeepSpeak v2 awaits author review,
+The AV-HuBERT lip-sync and HSEmotion emotion streams are training into
+`runs/encoders-20261022` (`scripts/train_encoder_streams.sh`). Blocked on
+other people: DeepSpeak v2 awaits author review,
 AV-Deepfake1M needs a signed EULA, Deepfake-Eval-2024 was refused.
 
 ### The audiovisual gap, which is the open opportunity
@@ -218,52 +212,6 @@ split hash
 These figures apply only to FakeAVCeleb development validation. They do not
 measure Celeb-DF-v2, FaceForensics++, MNW, or cross-dataset performance.
 
-## Recorded chronology
-
-On 2026-09-02, the initial model supervisor logged a cache-build failure with
-exit code 2. It restarted later that day, used the completed initial-model
-cache, reported 1,595 usable training rows and 400 validation rows, then
-recorded completion at 18:50:21 +05:30. The cache audit records one failed
-clip, 12 unstable-face-track blockers, four audio-video-duration blockers,
-and two low-face-coverage blockers across the cache attempt.
-
-The SQLite MLflow record has three named experiments: `smoke-fixture-fusion`,
-`prototype-gpu-20260902`, and `initial-baseline-20260902`. The initial baseline
-has the finished training run and the finished fixed-threshold evaluation run
-listed above. The historical training runtime artifact records an NVIDIA
-GeForce RTX 5070 Ti, 16,302 MiB GPU memory, and CUDA package versions for
-torch and torchvision. This is evidence from the recorded training run. It
-does not describe the current Python environment.
-
-The prototype experiment has two failed runs. Run
-`52da7def729f415fbb43eddbad77a1b1` saved a `FileNotFoundError` for a cache
-path that repeated `runs\prototype-20260902`. Run
-`a8aaf6cc31144b36997dd7c3e30e607a` saved a CUDA deterministic-algorithm error
-for `upsample_linear1d_backward_out_cuda`. Commit
-`268957796d366a81b5ab897dd1a4f523f1dc4b11` changed sync token resizing to
-deterministic nearest timestamp selection. The SQLite record also shows the
-later sync prototype run `73915f8d22fc4b3eb31bf303f307cbc4` as finished. The
-evidence does not record a separate narrative cause for either failure beyond
-the saved exception messages.
-
-Prototype visual, audio, sync, and fusion runs are marked `prototype_only` in
-MLflow. The fusion run `7b799a76d4a74305b02742ded2033118` has dataset tag
-`software_fixture`. It is not a trained research fusion model.
-
-On 2026-09-06 the `program-v1` run trained all three branches at full scale,
-exported out-of-fold features, fitted fusion and scored it on both partitions.
-Three failures inside it are worth carrying forward, and all three are recorded
-in [docs/obstacles.md](obstacles.md): a hardcoded preprocessing hash copied from
-an earlier `code_version` rejected every clip; DataLoader workers died on the
-77 MB visual batches until a retry-with-zero-workers fallback caught it; and
-`ddf train fusion` exited 1 because out-of-fold features were exported from the
-visual-usable manifest while strict assembly needs a clip usable by all three
-branches. Twenty-one runs predating MLflow logging were backfilled into the
-tracking store.
-
-On 2026-09-08 the pipeline state above was committed to main as `5611653` and
-tagged `pipeline-v1`, so Design B work can be reverted to a measured baseline.
-
 ## Current execution environment
 
 The primary checkout currently detects an NVIDIA GeForce RTX 5070 Ti through
@@ -289,50 +237,12 @@ Do not install both the `cpu` and `cu130` extras together. `pyproject.toml`
 declares them as a conflicting pair, and installing `cpu` gives a Torch build
 where `torch.cuda.is_available()` is `False` on a working GPU.
 
-## Dashboard flow
+## Dashboard and web app
 
-```powershell
-uv run streamlit run src\deepfake_detection\dashboard\app.py --server.address 127.0.0.1
-```
-
-Open `http://127.0.0.1:8501`. Sidebar order: Overview, Evidence gate,
-Preprocessing, Streams (with Visual, Lip-Sync, Emotion, Audio branch and Sync
-branch indented under it), Experiments, Fusion, Explainability, Documentation.
-Fusion and Explainability are dimmed and unclickable.
-
-The dashboard reads the ignored `runs` artifacts of the active checkout, so
-launch it from a checkout where they are present.
-
-The Evidence gate is the only page that produces a verdict. Video input accepts
-one local video, image or sound file and says which streams it can drive before
-anything runs. Preprocessing builds the visual view after the user starts it.
-Prediction loads the multimodal engine only after the server's own preprocessing
-hash matches the one the fusion head was fitted under; when it falls back to the
-frozen visual engine, that engine still checks its checkpoint hash, run ID, split
-hash, commit, seed and preprocessing hash against the dashboard defaults. Derived state is keyed by the upload's SHA-256, so a new upload
-invalidates preprocessing and the prediction rather than leaving a stale result
-on screen.
-
-Experiments reads the local history and metrics JSON, cross-checks shared
-provenance, requires the FakeAVCeleb development-validation scope, and labels
-every result with that scope. Below that it reads the local MLflow store
-directly and puts every recorded run in one comparison table.
-
-The teaching pages need no checkpoint and no data. Preprocessing shows every
-step as a toggle applied cumulatively, ending in the exact tensor a model would
-receive. The Streams pages build EfficientNet-B0 or DINOv3 from one
-`StreamConfig` and show what each backbone stage responded to. They load
-whatever checkpoint you pick, from `checkpoints/<stream>/` or from an MLflow
-run, and report exactly which tensors did and did not fit.
-
-Audio and sync are teaching pages. Both branches are trained at three seeds,
-and the pages state what that measured: audio at chance cross-corpus, sync below
-chance at every seed. They load no checkpoint and calculate no probability. Fusion is locked: its current artifact
-is a software fixture, so the page does not load it or return a probability.
-
-The dashboard reports missing local evidence as an error. It does not query a
-remote service, load a substitute artifact, or create a metric when the local
-record is absent. It never trains a model and never writes into `data/`.
+The web app (`ddf-web`, see the README) is the only path that issues a verdict.
+The dashboard is a teaching tool; [dashboard.md](dashboard.md) describes its
+pages. Both read the ignored `runs` artifacts of the active checkout, so launch
+them from a checkout where those are present.
 
 ## Local MLflow
 
@@ -437,6 +347,17 @@ and the four commercial generators were all produced through one platform and
 may simply be more similar to each other. That is untested.
 
 ### Next, in order
+
+0. **Finish the encoder comparison, then re-measure DF26.** Score the AV-HuBERT
+   and HSEmotion streams beside the earlier ones (`scripts/score_streams.py
+   --run-dir runs/encoders-20261022`), compare five-stream fusion with old and
+   new encoders (`scripts/run_deep_ablation.py --streams ... --sizes 1 5`), and
+   score lip-sync with no training (`scripts/avhubert_sync_score.py`). Then
+   re-extract the DF26 Perception Encoder and CLIP features with the corrected
+   normalisation (F33) and run the frozen face-crop probe
+   (`scripts/face_crop_probe.py`), the face-crop cell F13 left empty. Before
+   another seed of the F37 recipes, find the loader-worker memory growth
+   (obstacles).
 
 1. **Report seeds, not a seed.** All three branches and the fusion head now have
    seeds 17, 29 and 43; each seed's head is fitted on its own cross-fitted fold

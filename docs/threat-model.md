@@ -71,7 +71,7 @@ now explicit, and a row marked `required` is a commitment, not a safeguard.
 | Class imbalance | Accuracy hides failure on real media | PR-AUC, balanced metrics, and natural test frequencies | **partial**: PR-AUC and balanced accuracy reported; no natural-frequency evaluation exists |
 | Validation overfit | Repeated choices consume the validation set | Predeclared comparisons and limited search budgets | **partial**: comparisons are predeclared in the experiment matrix; no search budget is enforced or counted |
 | Calibration shift | A probability looks more certain than it is | Brier score, calibration error, and external reporting | **in place**, and it fired: ECE 0.0022 in-domain against 0.6366 on DFDC |
-| Unsafe model loading | A joblib file executes local code | Load only artifacts created by this project | **convention only**: `joblib.load` is called in `cli.py` and `inference/loading.py` with no provenance check on the file |
+| Unsafe model loading | A joblib file executes local code | Load only artifacts created by this project | **convention only**: `joblib.load` is called in `cli/fusion.py` and `inference/loading.py` with no provenance check on the file |
 | Demographic harm | Error rates differ across groups | Subgroup intervals, coverage reports, and restrained claims | **in place but uninformative**: F20 finds no gap at a ceiling where none could appear, and neither cross-corpus set carries demographic annotation |
 
 Three rows have **no implementation at all** behind part of their control and are

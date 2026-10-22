@@ -43,21 +43,14 @@ Exit gate: one command reproduces a tracked smoke run from a clean environment.
 - [x] Extend detections with five facial landmarks.
 - [x] Add YuNet behind the detector interface.
 - [x] Add versioned landmark-aligned crops while keeping box crops as default.
-- [x] Add deterministic training-only review sampling and annotation tooling.
-- [ ] Create the reviewed detector benchmark sample.
-- [x] Add frozen detector, tracker, crop, and benchmark evaluation tooling.
-- [ ] Compare MTCNN and YuNet using the frozen selection rules.
 - [x] Add and test constant-velocity association against greedy IoU.
-- [ ] Freeze the detector, tracker, and alignment configuration.
+- Dropped: the human-reviewed MTCNN against YuNet benchmark. Nobody was going
+  to review the 625 frames it needed, so the review tooling was removed and
+  MTCNN with greedy IoU and box crops is frozen as the view pipeline.
 
-Exit gate: the selected view pipeline meets the quality rules in
-[model-selection.md](docs/model-selection.md). Its configuration hash is frozen.
-
-The software gate is complete. The evidence gate still needs a frozen sample
-with at least 625 human-reviewed frames from 125 training clips. After
-calibration sources are removed, at least 500 frames from 100 clips must remain.
-It also needs a second review of at least 10 percent, paired detector runs, and
-acceptance of the measured choice.
+Exit gate: closed by decision rather than by measurement. The view pipeline is
+the default configuration, and its preprocessing hash is recorded with every
+checkpoint.
 
 ## Phase 3: Strong branch baselines
 

@@ -300,7 +300,7 @@ before fusion.
    calibrate branch logits, append quality features, fit fusion, and score.
 5. [`FusionArtifact`](../../src/deepfake_detection/fusion/late.py) binds the
    fitted model to split and preprocessing hashes.
-6. [`_train_fusion()`](../../src/deepfake_detection/cli.py) requires assembled
+6. [`_train_fusion()`](../../src/deepfake_detection/cli/fusion.py) requires assembled
    rows to have `partition_role = "oof"` and saves the artifact.
 7. [`PredictionEngine.predict()`](../../src/deepfake_detection/inference/predictor.py)
    computes current branch logits, abstains on blockers, or applies fusion and

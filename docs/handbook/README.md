@@ -1,6 +1,6 @@
 # Learning handbook
 
-Start with the learning path, then read the live chapters in order.
+Start with the learning path, then read the chapters in order.
 
 - [00: Learning path](00-learning-path.md)
 - [01: Problem and research question](01-problem-and-research-question.md)
@@ -13,11 +13,3 @@ Start with the learning path, then read the live chapters in order.
 - [08: Audio-video synchronization branch](08-sync-branch.md)
 - [09: Fusion, calibration, and abstention](09-fusion-and-calibration.md)
 - [10: Cross-modal streams](10-crossmodal-streams.md)
-
-The rest of the planned reading order is:
-
-`10-training-system.md`
-`11-evaluation-and-statistics.md`
-`12-inference-and-dashboard.md`
-`13-reproducing-the-project.md`
-`14-viva-preparation.md`

@@ -33,64 +33,13 @@ test partitions measure generalization after selection. They do not select it.
 These candidates are a controlled project scope. They are not a claim that no
 other model could perform better.
 
-## Detector benchmark
+## Detector choice
 
-Build the detector review set from the identity-strict subset of the verified
-frozen training split. Every source and target identity in a sampled clip must
-belong to training. Bind both the frozen split hash and identity-strict subset
-hash to every sample row and audit. Sample at least 625 frames from at least 125
-clips so the comparison retains at least 500 frames from 100 clips after
-calibration sources are removed. Stratify across real and fake clips,
-manipulation families, compression, pose, lighting, and multi-person scenes.
-Use supplied demographic fields for coverage checks when available.
-
-Draw a box for every visible face. Mark at most one suitable speaking target.
-Add five landmarks to that target. Record frames where no suitable target
-exists. Review a shared subset twice to estimate annotation disagreement.
-Unmatched detections are false detections. Detections matched to other visible
-faces are not false positives.
-
-Assign reviewed source identities once to a 20 percent threshold-calibration
-subset and an 80 percent comparison subset. The two subsets must remain source
-disjoint. Collect every candidate at a low threshold. On calibration sources,
-choose the highest-recall threshold with no more than 0.10 false detections per
-frame. Break ties by fewer false detections, then by the higher threshold. Do
-not retune on comparison sources.
-
-Measure:
-
-- Target-face recall at an intersection over union of at least 0.5.
-- False detections per frame.
-- Five-point landmark error normalized by inter-eye distance.
-- Identity switches per 1,000 tracked frames.
-- Stable-track coverage and resulting abstention rate.
-- Mouth-region jitter after compensating for face motion.
-- Median and 95th percentile processing time under matched CPU settings.
-
-Reject a detector if its target-face recall is more than one percentage point
-below the best candidate. Among that recall pool, reject landmark NME more than
-0.01 above the best or target-track errors more than one per 1,000 tracked
-frames above the best. Select the fastest remaining CPU candidate. Use
-no downstream tie-break until a strict training-only evidence artifact is
-defined. An exact speed tie remains undecided. Bootstrap all comparison metrics
-by source identity with 1,000 fixed resamples.
-
-Research comparison requires exactly one MTCNN report and one YuNet report. A
-candidate with no tracked frames from either association is ineligible. The
-benchmark reports bind the frozen split, reviewed sample, annotation audit,
-calibrated threshold, raw candidate hash, model hash, source run ID, clean
-runtime, pinned `uv.lock` hash, and frozen rule revision. MTCNN hashes its loaded
-state. YuNet verifies the local asset bytes against the expected hash. The
-decision binds the exact input report byte hashes, source run IDs, and common
-evidence hashes. Each report is read once into an immutable byte buffer. The
-same buffer is parsed and hashed before research selection. The comparison API
-does not accept caller-supplied report digests. Software fixture reports carry
-`software_fixture_only`. The comparison code refuses to turn that scope into a
-real detector choice.
-
-The adapters, review tooling, evaluator, and comparison command are complete.
-No human-reviewed sample or measured MTCNN versus YuNet result exists yet.
-MTCNN, greedy IoU, and box-relative crops remain the defaults.
+MTCNN, greedy IoU tracking, and box-relative crops are the frozen defaults.
+The planned MTCNN against YuNet comparison needed 625 human-reviewed frames.
+That review was dropped, and the benchmark tooling was removed with it. YuNet
+and landmark crops stay available as explicit configurations in
+`configs/detectors/`, but no measured result selects them.
 
 Published speed figures are background evidence only. Different hardware,
 resolutions, and thresholds make them unsuitable for project selection.

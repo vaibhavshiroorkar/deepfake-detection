@@ -3,15 +3,14 @@
 ## Start here
 
 - [Project overview](../README.md)
-- [Research design](research-design.md)
-- [Data card](data-card.md)
-- [Project handoff](handoff.md)
-- [Obstacles](obstacles.md)
-- [Documentation command reference](reference/cli.md)
+- [Project handoff](handoff.md): what is measured, what is next.
+- [Findings](research/findings.md): every claim the measurements support, by
+  F-number. Other documents cite these numbers rather than restate them.
+- [Obstacles](obstacles.md): traps to read before touching an area.
 
 ## Learning handbook
 
-Start with the [handbook index](handbook/README.md). Live chapters are:
+Start with the [handbook index](handbook/README.md):
 
 - [Learning path](handbook/00-learning-path.md)
 - [Problem and research question](handbook/01-problem-and-research-question.md)
@@ -23,23 +22,13 @@ Start with the [handbook index](handbook/README.md). Live chapters are:
 - [Audio spoof branch](handbook/07-audio-branch.md)
 - [Audio-video synchronization branch](handbook/08-sync-branch.md)
 - [Fusion, calibration, and abstention](handbook/09-fusion-and-calibration.md)
-
-Future chapters are:
-
-`handbook/10-training-system.md`
-`handbook/11-evaluation-and-statistics.md`
-`handbook/12-inference-and-dashboard.md`
-`handbook/13-reproducing-the-project.md`
-`handbook/14-viva-preparation.md`
+- [Cross-modal streams](handbook/10-crossmodal-streams.md)
 
 ## Technical reference
 
 - [CLI reference](reference/cli.md)
 - [Dashboard](dashboard.md)
-
-Planned references: `reference/architecture.md`, `reference/configuration.md`,
-`reference/artifact-contracts.md`, `reference/testing.md`, and
-`reference/hardware-and-compute.md`.
+- [Architecture for generated media](research/architecture.md)
 
 ## Research evidence
 
@@ -48,42 +37,23 @@ Planned references: `reference/architecture.md`, `reference/configuration.md`,
 - [Experiment matrix](research/experiment-matrix.md)
 - [Result traceability](research/result-traceability.md)
 - [Findings](research/findings.md)
-
-Planned evidence files: `research/questions-and-hypotheses.md`,
-`research/metrics-and-statistics.md`, `research/error-analysis.md`, and
-`research/paper-outline.md`.
+- [Predictions](research/predictions.md)
+- [Corpora](research/datasets.md)
+- [Contributions](research/contributions.md)
+- [Paper draft](research/paper.md) and the
+  [generated tables it is written from](research/paper-source.md)
 
 ## Decisions and project controls
 
+- [Data card](data-card.md)
+- [Model card](model-card.md)
 - [Reproducibility](reproducibility.md)
 - [Threat model](threat-model.md)
 - [Roadmap](../ROADMAP.md)
 - [Changelog](../CHANGELOG.md)
 - [ADR-001: Local MLflow tracking](decisions/ADR-001-local-mlflow.md)
 
-Planned decisions: `decisions/ADR-002-source-disjoint-splits.md`,
-`decisions/ADR-003-calibrated-late-fusion.md`,
-`decisions/ADR-004-quality-aware-abstention.md`, and
-`decisions/ADR-005-detector-bakeoff.md`.
-
-## Documentation ownership
-
-| Package | Handbook owner | Reference owner |
-|---|---|---|
-| `data` | `04-data-and-leakage.md` | `artifact-contracts.md` |
-| `views` | `05-preprocessing-pipeline.md` | `architecture.md` |
-| `preprocessing` | `05-preprocessing-pipeline.md` | `dashboard.md` |
-| `streams` | `06-visual-branch.md` | `dashboard.md` |
-| `branches` | `06-visual-branch.md` through `08-sync-branch.md` | `architecture.md` |
-| `training` | `10-training-system.md` | `configuration.md` |
-| `fusion` | `09-fusion-and-calibration.md` | `artifact-contracts.md` |
-| `evaluation` | `11-evaluation-and-statistics.md` | `testing.md` |
-| `inference` | `12-inference-and-dashboard.md` | `architecture.md` |
-| `dashboard` | `12-inference-and-dashboard.md` | `dashboard.md` |
-| `documentation` | `00-learning-path.md` | `testing.md` |
-
 ## Update rules
 
-Update this index when a document becomes available. Keep links limited to
-existing files. Update the CLI reference generated block whenever the parser
-changes, then run `uv run ddf-docs`.
+Keep links limited to existing files. Update the CLI reference generated block
+whenever the parser changes, then run `uv run ddf-docs`.

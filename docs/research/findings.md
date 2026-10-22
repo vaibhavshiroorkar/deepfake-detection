@@ -14,13 +14,13 @@ limit and says so once here rather than in every line.
 
 ## Accepted findings
 
-One, and it is the finding about the seeds themselves. `A-visual-seeds` is the
-only row in the registry at three seeds, because the visual branch was the only
-branch `run_program.ps1` trained three times. See F21.
-
-Every other row is still `provisional (1 seed)`, and F21 is the measurement of
-what that costs: 0.0733 of ROC-AUC on DFDC, which is wider than most of the
-effects the other findings report.
+The registry marks a row `accepted` when every hash resolves and it has the
+three seeds the protocol asks for. Six rows qualify: `A-branch-ablation` (F19),
+`A-fusion-seed-spread` (F27), `A-research-design-audit` (F31), `A-sync-seeds`
+(F26), `A-visual-convnext` (F29) and `A-visual-seeds` (F21). Every other row is
+`provisional (1 seed)`, and F21 is the measurement of what that costs: 0.0733 of
+ROC-AUC on DFDC, which is wider than most of the effects the other findings
+report.
 
 ## Provisional findings
 
@@ -629,7 +629,7 @@ it intercepts 38.8 percent of unfamiliar genuine clips on the served split and
 abstaining on 16.0 percent of familiar clips rather than 8.7. Every one of the
 twenty splits favours DINOv3. The gate keeps DINOv3. Detecting an unseen
 generator and recognising unfamiliar capture are different tasks, and the
-encoder that suits one does not suit the other (`A-gate-encoder`).
+encoder that suits one does not suit the other (`A-gate-encoder`). That comparison fed PE ImageNet-normalised pixels, the same defect F33 records, so it is not yet a fair test of PE.
 
 Two things this cost to get right, both my own errors caught by a check rather
 than by reasoning.
@@ -1281,6 +1281,14 @@ frozen encoders, one probe, one split: the frame-rate-controlled DF26 corpus
 under leave-one-generator-out. The differences are paired and resampled by
 source video, because every arm scores the same real clips.
 
+**Measured with the wrong input statistics.** Every encoder here was fed pixels
+normalised with ImageNet statistics. That is right for DINOv3 and wrong for the
+other two: Perception Encoder was trained with mean and std 0.5, CLIP with the
+OpenAI values, so PE saw inputs scaled about 2.2 times off. The extractor now
+applies each encoder's own statistics and records them in the feature file. The
+numbers below are what the mis-normalised encoders scored, and stand until the
+features are re-extracted.
+
 | Encoder | Macro ROC-AUC | Against DINOv3 |
 | --- | ---: | --- |
 | Perception Encoder, PE-Core-B/16 | **0.7527** | +0.0741 [+0.0121, +0.1317] |
@@ -1367,6 +1375,118 @@ the reason.
 One seed per arm. F21 measured 0.0733 of seed spread for this architecture
 cross-corpus. That is larger than two of the six drops, though this test is
 closer to in-domain, where the seed spread was not measured.
+
+### F35. The served visual models read the video codec, not only the face
+
+Result: `A-codec-shortcut`. FakeAVCeleb does not encode its categories the same
+way: genuine video is H.264 at about 150 kbps, and every face-swap plus wav2lip
+fake is MPEG-4 Part 2 at about 330 kbps. Seventy-five test clips per row,
+re-encoded with ffmpeg and scored by the six-checkpoint ensemble at 0.5:
+
+| Clips | Codec | Called fake |
+| --- | --- | ---: |
+| genuine | original H.264 | 0.0 percent |
+| genuine | re-encoded H.264, the control | 0.0 percent |
+| genuine | re-encoded **MPEG-4** | **93.3 percent** |
+| face swap plus wav2lip | original MPEG-4 | 100.0 percent |
+| face swap plus wav2lip | re-encoded **H.264** | **30.7 percent** |
+| face swap, H.264 | re-encoded MPEG-4 | 100.0 percent |
+
+The control decides the reading. Re-encoding a genuine clip with its own codec
+changes its pixels and moves nothing. Changing only the codec moves the verdict
+in both directions. So for the largest fake category the model learned the
+encoder, and it is not the face.
+
+Face swaps without wav2lip survive the change: they are H.264 like the genuine
+clips, so the model had to learn something about the face to separate them, and
+re-encoding them as MPEG-4 leaves detection at 100 percent.
+
+This is the fifth shortcut of the kind the handoff lists, and the first found in
+a shipped model rather than before training. The documentation had recorded the
+codec split since the dataset was first probed, and judged it harmless because
+OpenCV and PyAV decode both codecs to arrays. That reasoning was wrong: decoding
+recovers the pixels the encoder wrote, compression artefacts included.
+
+It bears on F16. Celeb-DF, DFDC and MNW are not MPEG-4, so the codec cue cannot
+explain their false alarms directly, but a model that spent capacity on the
+encoder learned less about faces. The visual recipes in
+`scripts/run_visual_recipes.py` train against it: random compression on both
+classes, and checkpoint selection on validation clips with the codecs swapped.
+F37 measures them.
+
+One split and one ensemble; the six members agree, from 71 to 95 percent of
+genuine clips called fake once re-encoded as MPEG-4.
+
+### F36. Averaging six visual checkpoints removes the seed choice, and only on DFDC does it help
+
+Result: `A-visual-ensemble`. The six final visual checkpoints, EfficientNet-B0
+and ConvNeXt-Tiny at seeds 17, 29 and 43, averaged in logit space with equal
+weights and nothing fitted. This is the web app's default model.
+
+| Partition | Ensemble | Best member | Seed mean |
+| --- | ---: | ---: | ---: |
+| FakeAVCeleb test | 0.9994 | 0.9993 | |
+| DFDC | 0.7739 [0.7401, 0.8064] | 0.7611 | +0.0469 [+0.0286, +0.0666] over it |
+| Celeb-DF | 0.6677 | 0.6698 | |
+
+On DFDC the ensemble beats the mean of the three EfficientNet seeds, separated,
+and is level with the best one, +0.0127 [-0.0048, +0.0315]. On Celeb-DF it is
+level with every member. At 0.5 on MNW it catches 8 of 84 fakes against seed
+17's 24, because the ConvNeXt members score those fakes low.
+
+The leave-one-out column in the report is the warning that comes with it.
+Dropping one member moves DFDC anywhere from 0.7343 to 0.7888. Dropping the
+diverged ConvNeXt seed 43 (F29) lowers it to 0.7666 and Celeb-DF to 0.6553, so
+it stays. Dropping EfficientNet seed 29 would raise DFDC to 0.7888, and doing so
+would be choosing members on a test set. The membership was fixed as "all six"
+before that column existed, and the report records that the grouping was chosen
+after comparing three groupings on DFDC.
+
+### F37. Training the codec shortcut away costs DFDC more than it buys, and no recipe beats the shipped one
+
+Result: `A-visual-recipes`. Four EfficientNet-B0 recipes at seed 17, each
+changing one thing against the one before (`scripts/run_visual_recipes.py`):
+
+- `plain`: the shipped recipe, now selected on validation ROC-AUC.
+- `compress`: adds random JPEG, H.264 and MPEG-4 round trips on both classes,
+  and selects the checkpoint on validation clips with the codecs swapped (F35).
+- `blend`: adds self-blended fakes made from genuine clips.
+- `blend-ffpp`: adds the FaceForensics++ training split, so 645 more genuine
+  source videos.
+
+ROC-AUC with identity-clustered intervals:
+
+| Partition | plain | compress | blend | blend-ffpp |
+| --- | ---: | ---: | ---: | ---: |
+| FakeAVCeleb test | 0.9988 | 0.9959 | 0.9978 | 0.9904 |
+| DFDC | **0.7611** [0.7199, 0.7981] | 0.5720 [0.5195, 0.6233] | 0.6496 [0.6128, 0.6877] | 0.6756 [0.6357, 0.7184] |
+| Celeb-DF | 0.6682 [0.6134, 0.7251] | 0.6525 [0.6028, 0.7057] | 0.6762 [0.6195, 0.7372] | 0.6509 [0.5929, 0.7163] |
+| FaceForensics++ test | 0.7235 | 0.6960 | 0.7210 | 0.9103, trained on it |
+
+Every change lowered DFDC, compression most: 0.1891 below plain, with the
+intervals apart. Self-blending won back 0.0776 of that and adding
+FaceForensics++ another 0.0260, and the best of them still sits 0.0855 below
+plain. Celeb-DF does not separate any of the four. The FaceForensics++ gain is
+in-domain once its training split is in, so it says nothing about transfer.
+
+So the codec cue of F35 is not only a shortcut. On DFDC it carries signal, and
+removing it, or diluting it with blended fakes, removes more than it adds.
+
+`plain` reproduced the shipped seed-17 model exactly: the same validation loss
+at every epoch, the same best epoch, and the same DFDC and Celeb-DF scores to
+every printed digit. Selecting on ROC-AUC picked the epoch that selecting on
+loss had, and training is deterministic.
+
+At a threshold that flags 5 percent of genuine FakeAVCeleb validation clips,
+none of the four is usable off-domain, and the failures run in opposite
+directions. Plain's cut-off lands at 0.008, which flags every genuine Celeb-DF
+clip and 31 percent of genuine DFDC clips. Compress keeps false alarms at 1 to
+10 percent and catches 5 percent of DFDC fakes.
+
+The web app keeps the six-checkpoint ensemble (F36), whose DFDC 0.7739 is above
+every recipe here. One seed per recipe. The data-loader workers grew to about
+9 GB each under the round-trip augmentation (see obstacles), which a further
+seed run must fix first.
 
 ## Superseded findings
 

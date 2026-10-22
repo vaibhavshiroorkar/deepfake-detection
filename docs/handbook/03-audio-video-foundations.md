@@ -70,9 +70,9 @@ objective's stated convention. A wider audio context allows a shifted slice
 without padding. Padding would reveal the offset class through artificial
 zeros.
 
-For evaluation, `eval_overlap = 0.5`. A four-second window therefore advances
-by `4 * (1 - 0.5) = 2` seconds. `sliding_window_starts()` also appends the last
-complete interval when the stride does not land on it.
+`eval_overlap = 0.5` is part of the hashed view configuration, so changing it
+changes the preprocessing hash. No shipped evaluation path slides windows over
+a clip: each clip is scored once on its sampled view.
 
 ## Codecs and shortcuts
 

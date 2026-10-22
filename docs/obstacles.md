@@ -58,7 +58,7 @@ the environment rather than the gate.
 
 ### A wrapper script that waits for another job can fail silently
 
-`scripts/train_ffpp.sh` chained cache-merge, manifest filtering and training
+A one-off shell script (since deleted) chained cache-merge, manifest filtering and training
 behind a loop that waited for the cache build to exit. It printed its first two
 stages, ran the merge correctly, and then stopped without printing the next line
 or any error, under `set -e`, with the log complete at 122 bytes.
@@ -185,6 +185,15 @@ clips; two rows on the same window with conflicting labels still quarantine.
 Group on the path alone and both halves of every pair disappear silently into
 `quarantined_paths`.
 
+### FakeAVCeleb's codecs follow its labels
+
+Genuine FakeAVCeleb video is H.264; every face-swap plus wav2lip fake is MPEG-4
+Part 2, and cloned voices are MP3 where genuine audio is AAC. Decoding does not
+remove this: the decoded pixels carry each encoder's artefacts, and the served
+visual models learned them (F35). Any model trained on this corpus needs
+compression applied to both classes (`train visual --augment-compression`) or
+its in-domain number measures the encoder as well as the face.
+
 ### Celeb-DF-v2 and MNW have no audio at all
 
 The 638 `missing_audio` blockers in the full cache audit are 518 Celeb-DF clips
@@ -254,9 +263,44 @@ today.
 
 AV-HuBERT's released implementation needs fairseq, which pins PyTorch to 1.08,
 1.13 or 2.0. This environment runs torch 2.12.1+cu130. Installing fairseq takes
-the working CUDA stack with it, so AV-HuBERT needs either a separate environment
-that pre-extracts features offline or a community port. Do not pip install it
-into the project venv to "see if it works".
+the working CUDA stack with it. Do not pip install it into the project venv to
+"see if it works".
+
+`streams/avhubert.py` restates AV-HuBERT Base in plain torch instead. The
+released checkpoint pickles fairseq's `Dictionary`, which a stub class stands in
+for, and otherwise holds a plain state dict. `scripts/check_encoder_ports.py`
+holds the port to the official code: it matched to 2e-6 on lips-only,
+audio-only and joint passes.
+
+The official side ran in WSL on CPU, with Python 3.9, torch 2.0.1 and fairseq
+0.12.2 on `PYTHONPATH` from a source checkout
+(`scripts/setup_encoder_reference.sh` builds it). Building fairseq failed three
+ways: no C++ compiler without sudo, and zig's compiler rejected a linker flag
+and then failed its own cache check. Nothing the reference calls needs the
+compiled extensions. The current av_hubert code also rejects its own checkpoint
+(`input_modality` is no longer a task field, and fairseq 0.12 reads
+`required_seq_len_multiple` and others the model config predates), so the
+check prunes the task config and adds those fields at their single-layer
+defaults.
+
+### HSEmotion's release is a pickle of an older timm
+
+`enet_b0_8_best_afew.pt` is a whole pickled `EfficientNet` saved under timm
+0.9. It loads under timm 1.0 but fails at forward time on a block attribute 1.0
+added (`conv_s2d`). Its weights fit timm 1.0's `tf_efficientnet_b0` once the
+classifier key loses its `Sequential` index. `streams/hsemotion.py` opens the
+pickle with `weights_only=True` and an allowlist of the classes it names, so no
+arbitrary code runs, and rebuilds the model. The logits matched timm 0.9's to
+2e-6.
+
+### A tight mouth crop is worse than the whole lower face for AV-HuBERT
+
+AV-HuBERT was pretrained on 88-pixel mouth crops, and the cached sync view is
+the lower face from the eyes to the chin. Cutting a tighter mouth square out of
+it looks like the faithful choice and is not. On 128 genuine training clips,
+lips-only and audio-only features agreed better aligned than with the audio
+shifted by half a second on 98% of clips with the whole view, against 66% to
+95% for nine tighter crops.
 
 ### Pooling a cross-attention output erases the attention
 
@@ -361,6 +405,25 @@ Celeb-DF-v2 and MNW have no audio track, so the audio and sync branches produce
 unavailable rows and `FeatureStore.assemble` finds no clip with full branch
 coverage. Cross-corpus fusion evidence needs a corpus that carries both
 modalities; here that is DFDC alone.
+
+### The reused audio branch sees short clips rescaled at export
+
+The cache normalises each clip's audio over its real samples and pads with
+zeros. `fusion/stream_export.py` normalises the whole padded buffer again, which
+leaves a full-length clip unchanged and scales up the content of a clip shorter
+than the 4 second window. The Design B cross-modal streams were trained through
+the same renormalisation, so they are consistent. The Design A audio branch,
+reused as the `audio` stream, was trained on the cached view as it is. The
+served fusion head was fitted on features exported this way, so changing the
+exporter alone would make serving disagree with the head: fixing it means
+re-exporting the features and refitting the head together.
+
+### Windows DataLoader workers re-import the main module
+
+Worker processes start by importing `__main__`. `cli/__main__.py` calls `main()`
+under `if __name__ == "__main__"`, and must keep that guard: without it every
+worker of `python -m deepfake_detection.cli train visual` started a training run
+of its own inside the real one.
 
 ## Streamlit
 
@@ -688,3 +751,37 @@ without measuring it.
 
 Note the in-domain partition shows nothing either way: at 0.9978 the interval is
 against the ceiling and both choices give a width near 0.004.
+
+## Round-trip augmentation grows each loader worker to about 9 GB
+
+`train visual --augment-compression` runs every training clip through PyAV
+encoders in memory (`training/augment.py`). Under the `compress`, `blend` and
+`blend-ffpp` recipes (F37) each of the two DataLoader workers held about 8.7 GB
+of private memory, against well under 1 GB for the cached views a batch
+actually needs. With the main process at 15 GB committed, free RAM fell to
+1.3 GB on a 32 GB machine at the switch between recipes. The runs finished, so
+the growth levels off, but the cause is not found. Each encoder context is
+opened and closed per call, so the likely suspects are libav's frame pools or
+allocator fragmentation in a long-lived worker.
+
+Find it before training another seed with these flags. Until then, run with
+`--workers 1`, or start the job in its own terminal: a background job inside an
+agent session can be stopped by the session when memory runs short, which ended
+the first attempt at this run with nothing saved, because the trainer writes
+its checkpoint only at the end.
+
+## Lip-sync attention stays uniform with a frozen AV-HuBERT too
+
+A lip-sync stream reading frozen AV-HuBERT (`ddf train stream --encoder
+avhubert`) reaches 0.9416 validation ROC-AUC after two epochs, against 0.7593
+for the Wav2Vec2 stream, and its diagonal attention mass stays at the uniform
+value, 0.0592, for every epoch. Untrained, its attention weights span 0.0197 to
+0.0203 against a uniform 0.02. AV-HuBERT's final-layer tokens change little
+over time relative to their mean, so randomly projected queries and keys score
+every frame alike, and the classifier learns from the audio minus the averaged
+video instead. F1 records the same for the earlier streams.
+
+The accuracy is real and the stream is still not reading synchrony.
+`scripts/avhubert_sync_score.py` measures the direct form instead, with no
+training: the cosine similarity between lips-only and audio-only AV-HuBERT
+features, frame by frame.

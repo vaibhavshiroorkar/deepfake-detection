@@ -1,10 +1,11 @@
 # Dashboard
 
-The dashboard is two things sharing one shell. The teaching pages walk a clip
-through the pipeline a stage at a time with models you configure. The Evidence
-gate runs the one frozen baseline that has provenance behind it. Both are in the
-same sidebar so the difference between "what a stage does" and "what this
-project can currently claim" is visible rather than implied.
+The dashboard is a teaching tool. Its pages walk a clip through the pipeline a
+stage at a time with models you configure, and report what each stage measured.
+Verdicts for users come from the web app (`ddf-web`), which serves the trained
+models with their provenance checks. The dashboard used to carry its own verdict
+path, the Evidence gate, over an older frozen baseline; it was removed so there
+is one place that issues a verdict.
 
 Nothing in the dashboard trains a model or writes into `data/`.
 
@@ -16,9 +17,8 @@ uv run streamlit run src\deepfake_detection\dashboard\app.py --server.address 12
 
 Open `http://127.0.0.1:8501`. The server binds to the local host.
 
-The gate's preprocessing and prediction steps need CUDA-enabled PyTorch and the
-ignored `runs\initial-20260902` artifacts. The teaching pages run without either,
-and report their empty state instead of raising. See `docs/obstacles.md` for the
+The pages run without checkpoints or data, and report their empty state instead
+of raising. Pages that run a model need CUDA-enabled PyTorch. See `docs/obstacles.md` for the
 environment install, which must not mix the `cpu` and `cu130` extras.
 
 ## Layout
@@ -26,12 +26,14 @@ environment install, which must not mix the `cpu` and `cu130` extras.
 ```
 src/deepfake_detection/dashboard/
   app.py         shell: page registration, sidebar, the shared stylesheet
-  paths.py       PROJECT_ROOT, DATA_DIR, CHECKPOINT_DIR, RUNS_DIR, MLFLOW_DB
   pages/         one file per sidebar entry, each runs top to bottom
-  sections/      reusable render_x(embedded=...) bodies the gate composes
+  sections/      render_x(embedded=...) bodies that some pages wrap
   lib/           page-independent logic: selection, decoding, checkpoints, MLflow
-  configuration.py, evidence.py, runtime.py, state.py, view_model.py, workflow.py
+  configuration.py, evidence.py   the validation record the Experiments page reads
 ```
+
+The roots every page resolves against (`PROJECT_ROOT`, `DATA_DIR`, `RUNS_DIR`,
+`MLFLOW_DB`) live in `deepfake_detection/paths.py`, shared with the web app.
 
 `pages/` holds scripts, `sections/` holds functions. A page can be handed
 straight to `streamlit.testing.v1.AppTest`; a section is called from a page, and
@@ -40,17 +42,14 @@ carries an `if __name__ == "__main__":` block so it can be tested the same way.
 ## Navigation
 
 `app.py` registers every page with `st.navigation(..., position="hidden")` and
-then draws the sidebar itself with `st.page_link`. Streamlit's built-in
-navigation has no disabled entry, and a locked stage has to appear in its
-pipeline position, dimmed and unclickable, rather than vanish. No page is locked
-now; the hand-drawn sidebar stays so a future stage can be dimmed the same way.
+then draws the sidebar itself with `st.page_link`, because the Streams hub has
+to be a page and an indented section header at once.
 
 Order, top to bottom:
 
 | Page | What it does |
 |---|---|
 | Overview | The problem, the architecture diagram, what is built |
-| Evidence gate | The four-step workflow over the frozen baseline |
 | Preprocessing | Every preprocessing step as a toggle, applied cumulatively |
 | Streams | Hub: configure all three visual streams and see what fusion reads |
 | Visual | One backbone, one clip, stage by stage |
@@ -65,27 +64,6 @@ Order, top to bottom:
 
 `st.Page` and `st.switch_page` paths resolve against `app.py`'s own directory,
 so every registration is written as `pages/<name>.py`.
-
-## The Evidence gate
-
-`pages/gate.py` composes four sections in one page: video input, preprocessing,
-visual model, prediction. Each is an expander showing its own
-waiting/ready/complete state from `workflow.py`, so the order is visible without
-navigating.
-
-Derived state is keyed by the upload's SHA-256 in `state.py`, stored as
-`(clip_sha256, value)` tuples. A new upload therefore invalidates preprocessing
-and the prediction rather than leaving a stale result on screen.
-
-The gate is the only part of the dashboard bound to the frozen provenance in
-`configuration.py`. It loads the visual engine only after the checkpoint hash,
-run id, split hash, commit, seed and preprocessing hash all match. A mismatch is
-reported; nothing is substituted. `evidence.py` applies the same rule to the
-saved validation record.
-
-The sidebar shows those provenance values under "Frozen baseline", with a note
-that they bind the gate only. The teaching pages build their own models and load
-whatever checkpoint you pick.
 
 ## The teaching path
 
@@ -137,15 +115,14 @@ way to resolve a selected row, because an upload's path is already absolute.
 
 ## Testing
 
-`tests/test_dashboard_app.py` runs the shell and asserts the sidebar order and
-that no entry is locked. `tests/test_dashboard_lib.py` covers selection, dataset
+`tests/test_dashboard_app.py` runs the shell and asserts the sidebar order. `tests/test_dashboard_lib.py` covers selection, dataset
 discovery and checkpoint loading without a running app.
 `tests/test_dashboard_mlflow_runs.py` covers the tracking reader. The page smoke
 tests run with an empty `data/`, which is the state a fresh checkout is in.
 
 ## Fusion and Explainability
 
-Both pages were locked and are not any more. Fusion reads the trained model in
+Fusion reads the trained model in
 `runs/program-20260906`: the classifier and its provenance hashes, ROC-AUC on
 the held-out in-domain partition and on DFDC, and the ablation over every branch
 subset. The ablation leads, because objective 3 asks whether combining beats the

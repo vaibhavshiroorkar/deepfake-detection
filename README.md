@@ -200,15 +200,15 @@ Only load fusion files created by this project. Joblib files can execute code du
 
 ## Dashboard
 
-The dashboard is two things sharing one shell. The teaching pages walk a clip
-through the pipeline a stage at a time with models you configure. The Evidence
-gate runs the one frozen baseline that has provenance behind it.
+The dashboard is a teaching tool. Its pages walk a clip through the pipeline a
+stage at a time with models you configure, and report what each stage measured.
+It issues no verdict; the [web app](#web-app) does.
 
-Sidebar order: Overview, Evidence gate, Preprocessing, Streams (with Visual,
-Lip-Sync, Emotion, Audio branch and Sync branch under it), Experiments, Fusion,
-Explainability, and Documentation. Fusion reads the trained head and reports
-its in-domain and DFDC verdicts side by side. The Audio and Sync branch pages are
-teaching pages: they state the trained branches' results but load no checkpoint.
+Sidebar order: Overview, Preprocessing, Streams (with Visual, Lip-Sync and
+Emotion under it), Fusion, Audio branch, Sync branch, Experiments,
+Explainability, and Documentation. Fusion reads the trained head and reports its
+in-domain and DFDC verdicts side by side. The Audio and Sync branch pages state
+the trained branches' results but load no checkpoint.
 
 Start it from the repository root:
 
@@ -218,29 +218,8 @@ uv run streamlit run src\deepfake_detection\dashboard\app.py --server.address 12
 
 Open `http://127.0.0.1:8501`. The server binds to the local host.
 [docs/dashboard.md](docs/dashboard.md) covers the layout and the state rules.
-
-The Evidence gate's preprocessing and prediction steps need CUDA-enabled PyTorch
-and the ignored `runs\initial-20260902` artifacts. On a compatible NVIDIA
-system, install the full environment with:
-
-```powershell
-uv sync --extra cu130 --extra ml --extra media --extra dashboard --extra tracking --group dev
-```
-
-Do not install the `cpu` and `cu130` extras together.
-
-The visual path uses `runs\initial-20260902\visual-initial.pt`, preprocessing
-version `2689577`, and threshold `0.5`. It verifies the checkpoint hash and
-training provenance before loading the model. Its only reported result is
-FakeAVCeleb development validation. It does not establish cross-dataset
-generalization, and the dashboard does not issue a fusion probability.
-
-If a required local artifact is absent or its provenance differs, the dashboard
-reports the error and does not fabricate a metric or prediction.
-
-The teaching pages need no checkpoint and no data. They report their empty state
-and still explain the stage. The Experiments page reads the local MLflow store
-directly and puts every recorded run in one table.
+The pages need no checkpoint and no data, and report their empty state when a
+local artifact is absent rather than inventing a result.
 
 ## Web app
 
