@@ -11,8 +11,8 @@ D-032 fixes the form of the MVP: frozen pretrained features with a linear head. 
 | Task | Train | Val (threshold, temperature, early stopping) | Dev slice for ranking (`dev_x`) | Input to the encoder |
 |---|---|---|---|---|
 | T-V: face video frames | FF++ c23 official train | FF++ official val | Celeb-DF v2, 15 of 59 identity groups (D-035) | The D-034 crops: 16 frames per video, YuNet, enlarged 1.3, 224 by 224, JPEG 95 |
-| T-I: generated images | ProGAN validation set, 14 of 20 classes | the other 6 classes | 2 of the 8 CNN synthesis generators (D-035) | Whole images (no face detection), resized by the encoder's own rule |
-| T-A: speech audio | ASVspoof 2019 LA train | ASVspoof 2019 LA dev | In-the-Wild, 12 of 58 speakers (D-035) | First 4 seconds (64,600 samples at 16 kHz), shorter clips repeat-padded; the Whisper encoder gets its fixed 30 second window with the 4 seconds first and only the frames of those 4 seconds pooled |
+| T-I: generated images | ProGAN validation set, 14 of 20 classes | the other 6 classes | 2 of the 7 CNN synthesis generator units (D-035, Amendment 1) | Whole images (no face detection), resized by the encoder's own rule |
+| T-A: speech audio | ASVspoof 2019 LA train | ASVspoof 2019 LA dev | In-the-Wild, 12 of 54 speakers (D-035) | First 4 seconds (64,600 samples at 16 kHz), shorter clips repeat-padded; the Whisper encoder gets its fixed 30 second window with the 4 seconds first and only the frames of those 4 seconds pooled |
 
 The final test sets (`test_in`, `test_x`) are not touched. Every split comes from the split files of D-012 and D-035; the leakage check must pass before extraction.
 
