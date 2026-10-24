@@ -66,15 +66,15 @@ def test_dedup_cli_writes_new_split_and_exclusions(tmp_path, capsys):
     args = ["--manifest", str(md), str(mt), "--split", str(sd), str(st), "--name", "demo",
             "--data-root", str(root), "--out-dir", str(out)]
     assert dedup.main(args) == 0
-    summary = json.loads((out / "demo-exclusions.json").read_text())
+    summary = json.loads((out / "demo.exclusions.json").read_text())
     assert summary["excluded_total"] == 2 and summary["excluded_by_dataset"] == {"tx": 2}
     assert list(summary["new_split_ids"]) == [st.stem]  # only the file that lost rows is rewritten
     new_csv = out / f"{summary['new_split_ids'][st.stem]}.csv"
     assert len(splits.read_split(new_csv)) == 2
     side = json.loads(new_csv.with_suffix(".json").read_text())
     assert side["parameters"]["dedup_of"] == st.stem and side["parameters"]["dropped"] == 2
-    lines = (out / "demo-exclusions.csv").read_text().splitlines()
-    assert len(lines) == 3 and lines[0].startswith("sample_id,dataset,group_id,sha256")
+    lines = (out / "demo.exclusions.csv").read_text().splitlines()
+    assert len(lines) == 3 and lines[0].startswith("sample_id,split,dataset,group_id,sha256")
     # the leakage check with hashing passes on the new split files and fails on the old ones
     assert check_main(["--manifest", str(md), str(mt), "--split", str(sd), str(new_csv), "--hash-files",
                        "--data-root", str(root)]) == 0
@@ -106,9 +106,9 @@ def test_real_image_sets_pass_hash_check_after_dedup():
     """Runs when the image sets and the dedup output exist; skipped with a message otherwise."""
     names = ["forensynths_progan_val", "forensynths_progan_test", "forensynths_cnn_subset", "diffusion_test"]
     mans = [REAL_ROOT / "_manifests" / f"{n}.manifest.csv" for n in names]
-    ex = REAL_ROOT / "_splits" / "images-exclusions.json"
+    ex = REAL_ROOT / "_splits" / "images.exclusions.json"
     if not all(m.exists() for m in mans) or not ex.exists():
-        pytest.skip("real dedup output (data/_splits/images-exclusions.json) not produced yet")
+        pytest.skip("real dedup output (data/_splits/images.exclusions.json) not produced yet")
     summary = json.loads(ex.read_text())
     chosen = []
     for key in ("progan_val", "progan_test", "cnn_subset", "diffusion_test"):

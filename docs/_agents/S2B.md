@@ -100,3 +100,17 @@ Measured counts (manifests rebuilt with `build_manifests`, splits with `splits`,
 - Leakage with `--hash-files`: images (progan_val, progan_test, cnn_subset, diffusion_test; 77,208 files) PASS; Celeb-DF + In-the-Wild + DFD (41,739 files) PASS, warnings only (10 and 7 duplicate hashes inside one split). Not hashed: ASVspoof, FF++.
 
 Questions: (a) the YouTube-real choice above; (b) the dev_x extension of D-026; (c) k for In-the-Wild is 12 of 54, DATA_LOG.md still says 58 speakers.
+
+## 8. D-035 Amendment 1: merged draw units for the CNN subset (2026-10-24)
+
+Implemented generically: `splits.merge_units_by_real_content(records, unit, data_root, cache)` joins draw units (here generator folders) whose REAL files share a SHA-256 into one unit named by the sorted member names joined with '+' (no names hard-coded; shared fake content alone does not merge); `assign_dev_slice(..., unit_map=...)` and the CLI flags `--dev-merge-real-content` and `--data-root`. The unit list, the merge flag and the drawn units are recorded in the split sidecar. Command: `splits --manifest forensynths_cnn_subset.manifest.csv --name cnn_subset --mode dev_slice --dev-k 2 --dev-unit generator --dev-merge-real-content`, then `dedup` over progan_val, progan_test, cnn_subset, diffusion_test (name images). The CNN manifest was rebuilt (56,003 rows, unchanged).
+
+- Units (7): biggan, cyclegan, deepfake, gaugan, stargan, stylegan+stylegan2, whichfaceisreal. The only merge found is stylegan with stylegan2.
+- Drawn (default_rng(20261024).permutation over the sorted unit names, k=2): stargan and whichfaceisreal.
+- New split file: `cnn_subset-4e973bc4da0f` (data/_splits; the de-duplicated file, 54,803 rows; the pre-dedup file and the earlier a1dd48b1a8bc file were deleted). Exclusions: `images.exclusions.csv/json`: 1,200 samples dropped, 800 distinct hashes, all from test_x (stylegan/cat 400, stylegan2/cat 400, stylegan2/horse 400, equal to ProGAN val or test reals); none from dev_x (stargan and whichfaceisreal have no ProGAN overlap).
+- Counts after de-duplication (real / fake):
+  - dev_x (5,998): stargan 1,999 / 1,999; whichfaceisreal 1,000 / 1,000.
+  - test_x (48,805): biggan 2,000 / 2,000; cyclegan 1,321 / 1,321; deepfake 2,707 / 2,698; gaugan 5,000 / 5,000; stylegan 5,591 / 5,991; stylegan2 7,188 / 7,988.
+- Imbalance check after de-duplication: the worst real share is stylegan2 with 7,188 reals against 7,988 fakes (ratio 0.90), then stylegan 5,591 against 5,991 (0.93); no generator is missing a class. Per class group the worst are the three de-duplicated folders (stylegan/cat, stylegan2/cat, stylegan2/horse) at 1,597 real against 1,997 fake (0.80); stylegan2 car, church and the other groups are balanced. The earlier problem (stylegan2 car and cat without reals) is gone.
+- Leakage with `--hash-files` on the image sets (80,803 files hashed): PASS, rc 0; warnings: 1,200 excluded rows without a split, 3,604 duplicate hashes inside one split (stylegan vs stylegan2 reals and a few in cyclegan and whichfaceisreal, all in test_x).
+- Tests: three new tests for the merged unit in test_data_devx.py (generic merge, the merged unit moving together and the draw following the permutation of the unit names, CLI sidecar). `pytest tests/data -q -rs`: 67 passed, 0 skipped.

@@ -11,6 +11,10 @@ Failures (the CLI exits 1 on any of them):
   6. IDENTITY_OVERLAP     two families listed in POSSIBLE_SHARED_FAMILIES are used one in train/val and one in
                           test_x, and they share an identity (idNNNNN). If no identity can be read from the
                           rows, only a warning is given (the check could not be made).
+dev_x (D-035) is a normal split name here: a group in both dev_x and test_x fails (GROUP_OVERLAP and the more
+specific GROUP_OVERLAP_DEV_X_TEST_X), equal content in dev_x and test_x fails like train/test_x content (the
+de-duplication in dedup.py drops the test_x copy), and the family rule is unchanged (dev_x plus test_x of one
+family is allowed; only train and val count against test_x).
 Warnings: manifest rows with no split (ignored by the checks), same-split duplicate content.
 
 Exit codes of the CLI: 0 clean, 1 leakage found, 2 input error.
@@ -116,6 +120,9 @@ def check(
     if bad_groups:
         first = sorted(bad_groups.items())[:3]
         rep.errors.append(f"GROUP_OVERLAP: {len(bad_groups)} group(s) in more than one split, first: {first}")
+        dx = sorted(g for g, s in bad_groups.items() if {"dev_x", "test_x"} <= set(s))
+        if dx:
+            rep.errors.append(f"GROUP_OVERLAP_DEV_X_TEST_X: {len(dx)} group(s) in both dev_x and test_x (D-035), first: {dx[:3]}")
     rep.info.append(f"{len(group_splits)} groups checked")
 
     # 2. family leak

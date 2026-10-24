@@ -1,6 +1,7 @@
 """Deterministic, group-aware splits (PROTOCOL section 1; D-012).
 
-Split names: ``train``, ``val``, ``test_in``, ``test_x``.
+Split names: ``train``, ``val``, ``test_in``, ``test_x``, ``dev_x`` (D-035: a development slice of a cross-dataset source,
+not a final split).
 
 Modes
 -----
@@ -12,6 +13,12 @@ group      Seeded split of whole groups into the parts given by ``fractions`` (f
            class composition so both classes are spread over the parts, the part with the largest remaining
            sample deficit (per class) takes each group, and a repair step moves whole groups so that each
            non-empty part holds both classes whenever the data allows it.
+dev_slice  D-035: sort the unit names, draw numpy default_rng(20261024).permutation(n_units), the first k units go to
+           ``dev_x`` (every sample of a drawn unit), all other units stay ``test_x``. The unit is the group
+           (``--dev-unit group``) or, for the CNN subset, the generator folder (``--dev-unit generator``: the
+           second part of the group id, so every class group of a generator moves together). With
+           ``--dev-identity-only`` only groups with identity_known true are eligible (Celeb-DF: the 59 identity
+           groups; the 300 YouTube-real videos have no identity and stay test_x).
 fixed      All rows get one named split (for example ``test_x`` for a dataset never used in training, or
            ``test_in`` for the ProGAN test set).
 auto       ``official`` when every row has an official split, ``group`` when none has, error when mixed.
@@ -35,11 +42,12 @@ import random
 import sys
 from collections import Counter
 from pathlib import Path
-from typing import Sequence
+from typing import Mapping, Sequence
 
 from .manifest import Record, default_data_root, read_manifest
 
-SPLIT_NAMES = ("train", "val", "test_in", "test_x")
+SPLIT_NAMES = ("train", "val", "test_in", "test_x", "dev_x")
+DEV_SLICE_SEED = 20261024  # D-035
 OFFICIAL_MAP = {"train": "train", "val": "val", "dev": "val", "test": "test_in", "eval": "test_in"}
 
 
@@ -136,8 +144,83 @@ def assign_groups(records: Sequence[Record], fractions: dict[str, float], seed: 
     return {r.sample_id: where[r.group_id] for r in records}
 
 
+def unit_of(r: Record, unit: str) -> str:
+    if unit == "group":
+        return r.group_id
+    if unit == "generator":  # group ids look like <dataset>:<generator>[:<class>]
+        return r.group_id.split(":")[1]
+    raise SplitError(f"unknown dev slice unit {unit!r}")
+
+
+def draw_dev_units(units: Sequence[str], k: int, seed: int = DEV_SLICE_SEED) -> list[str]:
+    """D-035 rule: sort the names, permute with numpy default_rng(seed), take the first k."""
+    import numpy as np
+
+    names = sorted(set(units))
+    if not 0 < k < len(names):
+        raise SplitError(f"k must satisfy 0 < k < {len(names)} units, got {k}")
+    perm = np.random.default_rng(seed).permutation(len(names))
+    return [names[i] for i in perm[:k]]
+
+
+def merge_units_by_real_content(records: Sequence[Record], unit: str, data_root: Path,
+                                cache: "HashCache | None" = None) -> dict[str, str]:
+    """D-035 Amendment 1: units whose REAL (label 0) files share a content hash form one unit.
+
+    Returns {base unit name: merged unit name}; a merged name is the sorted member names joined by '+'.
+    Units with no shared real content map to themselves. Nothing is hard-coded about names."""
+    from .builders.ffpp import UnionFind
+    from .hashing import HashCache
+
+    cache = cache or HashCache(None)
+    uf = UnionFind()
+    first_unit_of_hash: dict[str, str] = {}
+    for r in sorted(records, key=lambda x: x.sample_id):
+        u = unit_of(r, unit)
+        uf.add(u)
+        if r.label != 0:
+            continue
+        h = cache.sha256(data_root / r.path, r.path)
+        if h in first_unit_of_hash:
+            uf.union(first_unit_of_hash[h], u)
+        else:
+            first_unit_of_hash[h] = u
+    members: dict[str, list[str]] = {}
+    for u in list(uf.parent):
+        members.setdefault(uf.find(u), []).append(u)
+    out: dict[str, str] = {}
+    for mem in members.values():
+        name = "+".join(sorted(mem))
+        for u in mem:
+            out[u] = name
+    return out
+
+
+def assign_dev_slice(records: Sequence[Record], k: int, unit: str = "group", seed: int = DEV_SLICE_SEED,
+                     identity_only: bool = False,
+                     unit_map: Mapping[str, str] | None = None) -> tuple[dict[str, str], list[str]]:
+    """Units are drawn from all records, or (identity_only) only from records with identity_known true;
+    records outside the eligible set (for example Celeb-DF YouTube-real videos, which carry no identity)
+    always stay test_x. ``unit_map`` renames units before the draw (see merge_units_by_real_content)."""
+    def u_of(r: Record) -> str:
+        u = unit_of(r, unit)
+        return unit_map.get(u, u) if unit_map else u
+
+    eligible = [r for r in records if r.identity_known or not identity_only]
+    drawn = set(draw_dev_units([u_of(r) for r in eligible], k, seed))
+    ok = {r.sample_id for r in eligible}
+    asg = {r.sample_id: ("dev_x" if r.sample_id in ok and u_of(r) in drawn else "test_x") for r in records}
+    return asg, sorted(drawn)
+
+
 def assign(records: Sequence[Record], mode: str = "auto", seed: int = 0,
-           fractions: dict[str, float] | None = None, fixed: str | None = None) -> dict[str, str]:
+           fractions: dict[str, float] | None = None, fixed: str | None = None,
+           dev_k: int | None = None, dev_unit: str = "group", dev_identity_only: bool = False,
+           dev_unit_map: Mapping[str, str] | None = None) -> dict[str, str]:
+    if mode == "dev_slice":
+        if dev_k is None:
+            raise SplitError("mode dev_slice needs --dev-k")
+        return assign_dev_slice(records, dev_k, dev_unit, identity_only=dev_identity_only, unit_map=dev_unit_map)[0]
     if mode == "fixed":
         if fixed is None:
             raise SplitError("mode fixed needs --fixed <split>")
@@ -237,20 +320,44 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--manifest", required=True, type=Path)
     ap.add_argument("--name", required=True, help="prefix of the split id")
-    ap.add_argument("--mode", default="auto", choices=["auto", "official", "group", "fixed"])
+    ap.add_argument("--mode", default="auto", choices=["auto", "official", "group", "fixed", "dev_slice"])
     ap.add_argument("--seed", type=int, default=20261024)
     ap.add_argument("--fractions", type=_parse_fractions, default=None, help="e.g. train=0.8,val=0.2")
     ap.add_argument("--fixed", default=None, choices=SPLIT_NAMES, help="for mode fixed")
+    ap.add_argument("--dev-k", type=int, default=None, help="mode dev_slice: number of units drawn into dev_x")
+    ap.add_argument("--dev-identity-only", action="store_true", help="draw only among groups with identity_known true; others stay test_x")
+    ap.add_argument("--dev-unit", default="group", choices=["group", "generator"])
+    ap.add_argument("--dev-merge-real-content", action="store_true",
+                    help="D-035 Amendment 1: units whose real files share content hashes are one draw unit")
+    ap.add_argument("--data-root", type=Path, default=None)
     ap.add_argument("--out-dir", type=Path, default=None, help="default: <data>/_splits")
     args = ap.parse_args(argv)
     out_dir = args.out_dir or (default_data_root() / "_splits")
+    unit_map = None
     try:
         recs = read_manifest(args.manifest)
-        asg = assign(recs, args.mode, args.seed, args.fractions, args.fixed)
-    except (SplitError, ValueError) as e:
+        if args.dev_merge_real_content:
+            from .hashing import HashCache
+
+            root = (args.data_root or default_data_root()).resolve()
+            cache = HashCache(root / "_manifests" / "content_hash_cache.json")
+            unit_map = merge_units_by_real_content(recs, args.dev_unit, root, cache)
+            cache.save()
+        asg = assign(recs, args.mode, args.seed, args.fractions, args.fixed, args.dev_k, args.dev_unit,
+                     args.dev_identity_only, unit_map)
+    except (SplitError, ValueError, OSError) as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 2
     params = {"mode": args.mode, "seed": args.seed, "fractions": args.fractions, "fixed": args.fixed}
+    if args.mode == "dev_slice":
+        _, drawn = assign_dev_slice(recs, args.dev_k, args.dev_unit, identity_only=args.dev_identity_only,
+                                    unit_map=unit_map)
+        all_units = {(unit_map or {}).get(unit_of(r, args.dev_unit), unit_of(r, args.dev_unit)) for r in recs
+                     if r.identity_known or not args.dev_identity_only}
+        params.update({"dev_k": args.dev_k, "dev_unit": args.dev_unit, "dev_seed": DEV_SLICE_SEED,
+                       "dev_identity_only": args.dev_identity_only,
+                       "dev_merge_real_content": args.dev_merge_real_content,
+                       "units_total": len(all_units), "units": sorted(all_units), "dev_units": drawn})
     sid, p = write_split(recs, asg, out_dir, args.name, params, [args.manifest])
     c = Counter(asg.values())
     print(f"split_id {sid}: {dict(c)} -> {p}")

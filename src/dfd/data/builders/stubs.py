@@ -2,7 +2,7 @@
 
 Each stub raises ``LayoutNotVerified`` with the exact assumption. The name-parsing rules that the
 documentation does give are implemented as pure functions (and unit-tested on synthetic strings), so the
-builder can be finished quickly once the files can be inspected. Nothing here has been run on real files.
+builder can be finished quickly once the files can be inspected. Nothing here has been run on real files. (dfd and in_the_wild have real builders now: dfd.py, in_the_wild.py.)
 """
 
 from __future__ import annotations
@@ -25,43 +25,8 @@ def extract_voxceleb_ids(text: str) -> list[str]:
     return seen
 
 
-_DFD_ORIG_RE = re.compile(r"^(?P<actor>\d{2})__(?P<scene>[^_].*?)\.mp4$")
-_DFD_MANIP_RE = re.compile(r"^(?P<target>\d{2})_(?P<source>\d{2})__(?P<seq>.+?)__(?P<exp>[A-Za-z0-9]+)\.mp4$")
+from .dfd import parse_dfd_name  # noqa: F401  (kept here for older imports)
 
-
-def parse_dfd_name(filename: str) -> dict:
-    """DFD names (DATA_LOG.md): original ``<actor>__<scene>.mp4``; manipulated
-    ``<target actor>_<source actor>__<sequence>__<experiment id>.mp4``.
-
-    Returns dict(label, target, source, scene_or_sequence, experiment). Raises ValueError. The numeric
-    two-digit actor format is an assumption taken from the documented pattern, not seen on disk.
-    """
-    m = _DFD_MANIP_RE.match(filename)
-    if m:
-        return {"label": 1, "target": m["target"], "source": m["source"], "scene_or_sequence": m["seq"],
-                "experiment": m["exp"]}
-    m = _DFD_ORIG_RE.match(filename)
-    if m:
-        return {"label": 0, "target": m["actor"], "source": None, "scene_or_sequence": m["scene"],
-                "experiment": None}
-    raise ValueError(f"not a DFD file name: {filename}")
-
-
-def build_dfd(data_root: Path) -> tuple[list[Record], dict]:
-    raise LayoutNotVerified(
-        "dfd: layout not yet verified. Assumption (DATA_LOG.md): data/dfd/original_sequences/actors/c23/videos/"
-        "<actor>__<scene>.mp4 (363 files) and data/dfd/manipulated_sequences/DeepFakeDetection/c23/videos/"
-        "<target>_<source>__<sequence>__<experiment id>.mp4 (3,068 files); family 'dfd'; group = the "
-        "target actor (identity_known true, 28 actors), source actor kept in notes; test_x only."
-    )
-
-
-def build_in_the_wild(data_root: Path) -> tuple[list[Record], dict]:
-    raise LayoutNotVerified(
-        "in_the_wild: layout not yet verified. Assumption: data/in_the_wild/release_in_the_wild/*.wav plus "
-        "meta.csv with columns file, speaker, label (bona-fide / spoof) as in the dataset card; group = "
-        "speaker (58 speakers, identity_known true), family 'in_the_wild', test_x only. Not yet downloaded."
-    )
 
 
 def build_lavdf(data_root: Path) -> tuple[list[Record], dict]:

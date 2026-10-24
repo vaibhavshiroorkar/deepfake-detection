@@ -14,7 +14,7 @@ import json
 import sys
 from pathlib import Path
 
-from .builders import LayoutNotVerified, asvspoof2019_la, celebdf, ffpp, forensynths, stubs
+from .builders import LayoutNotVerified, asvspoof2019_la, celebdf, dfd, ffpp, forensynths, in_the_wild, stubs
 from .manifest import default_data_root, write_manifest
 
 BUILDERS = {
@@ -25,10 +25,10 @@ BUILDERS = {
     "forensynths_cnn_subset": forensynths.build_cnn_subset,
     "diffusion_test": forensynths.build_diffusion_test,
     "celebdf_v2": celebdf.build,
+    "dfd": dfd.build,
+    "in_the_wild": in_the_wild.build,
     # stubs: layout not yet verified
     "celebdf_pp": celebdf.build_pp,
-    "dfd": stubs.build_dfd,
-    "in_the_wild": stubs.build_in_the_wild,
     "lavdf": stubs.build_lavdf,
     "fakeavceleb": stubs.build_fakeavceleb,
     "wilddeepfake": stubs.build_wilddeepfake,
