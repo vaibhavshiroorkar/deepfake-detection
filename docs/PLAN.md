@@ -13,8 +13,8 @@ This plan lists the stages of the project, the question each stage must answer, 
 | 2 | Metrics, splits, seeds, threshold policy, fixed before any model exists | Evaluation protocol and acceptance test | done: docs/PROTOCOL.md; acceptance A1 to A8 pass (V-001 and V-002) |
 | 3 | The simplest end-to-end MVP | Baseline v0 with results | not started; the MVP form is decided (D-032: frozen pretrained features with a linear head) |
 | 4 | Other models in the same harness, so the final choice has evidence | Comparison table with accuracy, cost, ease of fine-tuning | not started |
-| 5 | Iterations 1 to 7 or more, each from a written hypothesis | One experiment note per iteration | not started |
-| 6 | Whether and where remote heart-rate (rPPG) evidence enters | Feasibility test, then a decision | not started |
+| 5 | Iterations 1 to 8 after the MVP, each from a written hypothesis and the diagnostic battery | One experiment note per iteration; ladder in docs/ITERATIONS.md (Proposed, D-041) | not started |
+| 6 | Whether and where remote heart-rate (rPPG) evidence enters | Feasibility test, then a decision; it is iteration I-7 with its thresholds written in docs/ITERATIONS.md | not started; the sanity check S-1 is planned in parallel with I-1 to I-3 |
 | 7 | Paper (IEEE, LaTeX), technical report, presentation | Documents assembled from the logs | scaffolds built and committed (D-014); no results |
 
 ## Deadline and constraints

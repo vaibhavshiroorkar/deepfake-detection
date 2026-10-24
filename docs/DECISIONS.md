@@ -580,3 +580,24 @@ Still open:
 - Rejected and why: automatic deletion after the checks (loses the cheap way to repair a bad extraction).
 - Consequences / what could prove this wrong: about 25.6 GB of disk stays in use for five days; if D: fills up through other work, the 100 GB rule triggers a deletion only at the job's end, so free space must be watched by hand afterwards.
 
+### D-040: Definition of a working MVP (iteration I-0)
+- Date: 2026-10-24
+- Status: Proposed
+- Question: What exactly counts as "the MVP works", so that the claim can be checked.
+- Options considered: a notebook that prints a score; a trained model with metrics only; the full chain from file to web page (this proposal).
+- Criteria: it must exercise the whole path a user sees (D-027, D-028, D-031, D-032) and obey the frozen protocol (D-024, D-035).
+- Evidence: none yet; the pieces exist separately (loaders, harness, crops, sweep code).
+- Decision and reason (proposed): the MVP works when all of the following hold. (1) A file goes in (image, video or audio) through the local web page. (2) The encoder of each task is the winner of the I-0 sweep under the D-036 rule (T-V, T-I, T-A), frozen, with a linear head trained on the training split. (3) The score is calibrated by temperature scaling fitted on validation (D-024) and the checkpoint metadata of D-028 is checked at load (a `preprocess_id` mismatch is refused). (4) Metrics are on the in-dataset validation split and on dev_x, 3 seeds, mean, standard deviation and bootstrap interval, in the ledger; no test split is touched. (5) The web page shows a real result with `inference_source` set to real and the warnings of D-034 (NO_FACE_DETECTED, MULTIPLE_FACES). (6) A video's visual and audio scores are shown separately; no fused score is claimed until O-009 is decided (the implementer's addition). (7) The tests pass and the run is committed with its experiment entry. It makes no accuracy claim beyond the intervals.
+- Rejected and why: a score printed in a notebook (does not test the path); metrics without the web page (the deliverable is software).
+- Consequences / what could prove this wrong: if the sweep winners tie, the cheapest is used (D-036) and the MVP may be a weak model; that is acceptable for an MVP and is what the later iterations measure. The time estimate is in STATUS.md; it can slip with unmeasured encoder speed, E-002 and E-003 extraction, head training time, the web page not yet built against a real checkpoint, GPU contention with the LAV-DF job, and winners that need a different preprocessing size.
+
+### D-041: Iteration ladder I-0 to I-8 (docs/ITERATIONS.md)
+- Date: 2026-10-24
+- Status: Proposed
+- Question: Which iterations follow the MVP, in what order, and how each lever is chosen.
+- Options considered: a fixed list of levers decided now; levers chosen after each diagnosis within fixed families, with rPPG second-last and freeze last (this proposal).
+- Criteria: each iteration must start from a measured diagnosis (CLAUDE.md rules 1 and 2); at least 7 iterations after the MVP (D-016); the freeze is 2026-10-29.
+- Evidence: the diagnostic battery (EXPERIMENTS.md) and the derivations (MATH_NOTES.md sections 10 to 17); no results yet.
+- Decision and reason (proposed): eight iterations after the MVP: I-1 to I-6 take their lever from the families fine-tuning depth, frame aggregation, loss and class weighting, augmentation and regularisation, combining encoders, late fusion and calibration, chosen after the diagnosis of the previous one; I-7 is the rPPG experiment (O-010) with thresholds written in ITERATIONS.md and a signal-sanity check S-1 started earlier; I-8 is integration and freeze with no new experiments. If I-1 is chosen by the diagnosis as shift and not bias, D-036 item 3 (fine-tuning comparison) is replaced by a new decision before the run.
+- Rejected and why: a fixed list now (pre-judges the diagnosis).
+- Consequences / what could prove this wrong: six diagnosis-chosen slots in two days is tight; slots that cannot finish by 2026-10-29 are reported as not done, not cut silently. I-1 as specified in D-036 (three encoders, three learning rates, three seeds) may not fit the GPU time.

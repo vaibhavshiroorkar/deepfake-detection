@@ -60,7 +60,8 @@ def fetch_hf(cid: str) -> dict:
 def fetch_xception() -> dict:
     XCEPTION_PATH.parent.mkdir(parents=True, exist_ok=True)
     if not XCEPTION_PATH.is_file() or XCEPTION_PATH.stat().st_size != XCEPTION_BYTES:
-        urllib.request.urlretrieve(XCEPTION_URL, XCEPTION_PATH)
+        import subprocess  # curl resumes a partial file; urlretrieve did not survive a connection abort
+        subprocess.run(["curl", "-L", "--retry", "20", "--retry-delay", "5", "-C", "-", "-o", str(XCEPTION_PATH), XCEPTION_URL], check=True)
     local = sha256(XCEPTION_PATH)
     return dict(id="IMG-04", repo=XCEPTION_URL, revision="release v0.1-cadene", file=XCEPTION_PATH.name, dir=str(XCEPTION_PATH.parent),
                 bytes=XCEPTION_PATH.stat().st_size, expected_bytes=XCEPTION_BYTES, sha256_expected="NR (no published hash)",
