@@ -1,8 +1,14 @@
 # STATUS
 
-Last updated: 2026-10-24 (end of Session 0)
+Last updated: 2026-10-24 (Session 1 in progress)
 
-NEXT STEP: Log in to GitHub on this machine (`gh auth login`), create or confirm the remote repository, run the push and `setup` tag commands in the Blockers section, then settle Stage 0 and Stage 1 decisions (O-001 to O-004) with the user using the STAGE-0 HANDOFF block before any code is written.
+NEXT STEP: Resume Session 1 at Step 3 by reading docs/_agents/ (A.md, B.md, C1.md, C2.md, C3.md, one file per stream, none yet merged), spot-check each against its primary sources (title pages for papers, official pages for datasets), merge verified material into docs/RESEARCH.md, docs/DATA_LOG.md and docs/FILES.md, and then show the user the dataset access plan for approval before any download starts.
+
+## Session 1 progress (in progress, updated mid-session)
+
+- Done and committed locally: CLAUDE.md added; D-001 to D-010 reasons filled and D-009 revised (deadline 2026-10-30); D-011 to D-019 logged; PARTIAL status added and all 18 opened papers re-marked; day-by-day schedule in PLAN.md; download throughput measured (4.09 MB/s); docs/MATH_NOTES.md written (background, candidate metrics, not adopted).
+- Five subagent streams were started (A templates, B datasets, C1/C2/C3 literature). C1 and C2 have reported; their files are in docs/_agents/ and are NOT yet merged or fully verified (title pages and a sample of numbers of C1 were checked). A, B and C3 had not reported when this note was written.
+- Nothing has been pushed: no `origin` remote and `gh` is not logged in on this machine.
 
 ## Where the project stands
 
