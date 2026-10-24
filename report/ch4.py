@@ -1,10 +1,12 @@
 """Chapter 4: implementation and experimentation. Only logged measurements appear as numbers; results that are not final are [pending]."""
+import ch4_results as R
+
 
 
 def build(B):
     B.h1("Implementation and Experimentation")
     B.box("This chapter presents the implementation and the experimental design: the environment, the data and their licences, the shared preprocessing, the evaluation harness, "
-          "the encoder comparison, the working version, the iteration ladder, the web application and the test protocol. Results that are not final are marked as pending.")
+          "the encoder comparison, the working version, the iteration ladder, the web application and the test protocol. Results of the development slice are exploratory, and results that do not exist yet are marked as pending.")
     environment(B)
     datasets(B)
     preprocessing(B)
@@ -16,8 +18,9 @@ def build(B):
     staircase(B)
     B.h2("Summary and Outline of the Next Chapter")
     B.p("This chapter described what was built and how it is tested. The data, the group-disjoint splits, the shared preprocessing, the evaluation harness with its acceptance test, the "
-        "design of the encoder comparison, the working version, the iteration ladder, the web application and the staircase test protocol exist and are documented; the measured results of "
-        "the encoder comparison and of the iterations are marked as pending until their runs are frozen. Chapter 5 states the conclusions that the present evidence supports and the further work.")
+        "design of the encoder comparison, the working version, the iteration ladder, the web application and the staircase test protocol exist and are documented; the encoder comparison and the first "
+        "working checkpoint have exploratory results on the development slice, and the sealed-test, confirmatory and later-iteration results are marked as pending until their runs "
+        "are frozen. Chapter 5 states the conclusions that the present evidence supports and the further work.")
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -111,7 +114,8 @@ def datasets(B):
         "videos; 5,078 videos were extracted. Two exclusions keep any source video or identity of the development slice from being counted twice. First, 2,079 samples were excluded from the "
         "sealed test set because their target identity (1,477 samples) or only their celebrity source identity (602 samples) is one of the 15 development identities. Second, 150 real "
         "videos of Celeb-DF++ whose content is byte-identical to Celeb-DF v2 videos were dropped, and Celeb-DF v2 keeps them under its own group identifier, so that each source video has "
-        "one group.")
+        "one group. The exclusion by celebrity source identity, and not by target identity alone, is required and not optional: in a face swap named by target and source identity the face "
+        "that is visible is the source identity, so a rule on the target alone would leave faces of the development identities in the sealed test set.")
     B.p("The result is that Celeb-DF++ alone has 2,849 fake videos and no real video in its sealed test set, in 44 identity groups. Its AUC is therefore computed together with the "
         "Celeb-DF v2 real videos, which are the same real sources, and the pooled family test set holds 744 real and 6,906 fake videos. Real videos are 10.8 percent of that pool. The "
         "consequence for the statistics is that the bootstrap resamples identities, so the fakes of Celeb-DF++ add generator coverage but almost no new independent groups: intervals on a "
@@ -204,7 +208,7 @@ def sweep(B):
     B.p("The shortlist was chosen by criteria stated first: the licence is verified from the weights’ own repository, the weights download and load offline, full inference fits in "
         "12 GB, the feature tensor is stated exactly, and the families differ. DINOv3 was excluded on purpose, because its access gate is manual and its licence carries a duty to acknowledge it "
         "in publications. <ref fig:shortlist> and <ref tab:weights> give the shortlist.")
-    B.figure("shortlist", "fig08_shortlist.png", "Shortlist of the encoder comparison. Entries marked pending are filled from the extraction records when they are final.", 15.5,
+    B.figure("shortlist", "fig08_shortlist.png", "Shortlist of the encoder comparison, with parameters and feature sizes read from the extraction records.", 15.5,
              "Table of the shortlisted image and speech encoders with family, parameters, feature size and weights licence")
     B.table("weights", "Weights of the shortlisted encoders and their licence labels.",
             ["Candidate", "Checkpoint", "Source", "Label"],
@@ -244,14 +248,7 @@ def sweep(B):
         "a lower bound above 0.65 as the success line. For speech the hypothesis is that wav2vec 2.0 or WavLM beats both the Whisper encoder and the from-scratch reference, "
         "with a lower bound above 0.60 as the success line. These are hypotheses and they have a direction that is uncertain by design: the literature also shows that face-forgery "
         "detectors learn identity cues <c identity> and that frozen features have been tested for generated images <c ojha> and not for face forgery.")
-    B.p("<ref tab:sweep> holds the outcome of the comparison. The ranking is exploratory, a verdict on the development slice with sign, size and interval, and it is re-run when "
-        "the extraction of all tasks is complete, so every cell is marked until the run is frozen.")
-    B.table("sweep", "Outcome of the encoder comparison per task, on the development slice (exploratory).",
-            ["Task", "Leader", "Tie set", "Winner by the cheapest rule", "Lower bound of the best candidate"],
-            [["Face video frames", "<pend E-001>", "<pend E-001>", "<pend E-001>", "<pend E-001>"],
-             ["Generated images", "<pend E-002>", "<pend E-002>", "<pend E-002>", "<pend E-002>"],
-             ["Speech audio", "<pend E-003>", "<pend E-003>", "<pend E-003>", "<pend E-003>"]],
-            [3.4, 2.6, 3.4, 3.8, 3.2], ["left", "center", "center", "center", "center"], size=10)
+    R.sweep_results(B)
 
 
 def working(B):
@@ -281,7 +278,7 @@ def working(B):
         "fake examples; the results split by compression level, face size and number of faces; the 20 worst errors, 10 false alarms and 10 misses, reviewed by eye and classified in "
         "writing; and the standard deviation over the three seeds next to the bootstrap half-width, which separates training noise from sampling noise. The diagnosis vocabulary is bias, "
         "variance, shift, calibration, aggregation and missing signal.")
-    B.p("The AUC of the working version on the validation split and on the development slice, for the video, image and audio tasks, is <pend E-001>, <pend E-002> and <pend E-003> until the heads of the winning encoders are fitted and frozen.")
+    R.working_results(B)
 
 
 def ladder(B):
@@ -368,6 +365,7 @@ def webapp(B):
                   "The local web page against the development stand-in: (a) result for an image, (b) result for a video. The banner is part of the design and the scores shown are not measurements.", 8.0,
                   ["Screenshot of the web page with the result for an image and a purple mock banner", "Screenshot of the web page with the result for a video and a purple mock banner"],
                   tag="screenshots against the stand-in")
+    R.screens(B)
     B.p("Tests with synthetic media cover the response contract, the stand-in and its banner, the real adapter stub, the web routes and, in a real browser, the page itself against the stand-in.")
 
 
@@ -386,3 +384,4 @@ def staircase(B):
         "likely; the sealed Celeb-DF family tests have about 44 independent identity groups; the threshold is chosen on validation data from the training distribution, which may be too easy, "
         "so it can transfer badly across data sets, and that would appear as a gap between the in-dataset and the cross-dataset balanced accuracy and be reported; and temperature scaling "
         "does not repair a shift between data sets.")
+    R.status_table(B)

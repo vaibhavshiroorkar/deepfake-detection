@@ -10,10 +10,12 @@ def conclusions(B):
         "harness exists, with a development slice for ranking, sealed test sets behind a guard and a ledger, bootstrap intervals over groups and seeds, paired and non-inferiority "
         "comparisons, and an acceptance test that the harness passes. The data sets were obtained, verified and split, with their licences recorded, and the Celeb-DF family test set was "
         "corrected so that no source video is counted twice. A shared preprocessing package, a measured choice of face detector, a checkpoint format that refuses a mismatch, an "
-        "inference library and a local web page exist. The comparison of eleven pretrained encoders and the iteration ladder were designed with hypotheses, success criteria and failure "
-        "criteria written before any run.")
-    B.p("What the project does not yet have is a final measured performance. The ranking of the encoders, the metrics of the working version and the verdicts of the iterations are "
-        "marked as pending in this report because their runs are not frozen, and the report makes no claim about detection accuracy, calibration or comparability with a published detector. "
+        "inference library and a local web page exist. Eleven pretrained encoders were compared on the development slice under one rule, hypotheses, success criteria and failure "
+        "criteria having been written before any run, and the first working checkpoint was built from the three winners and tested end to end.")
+    B.p("The results so far are exploratory, on the development slice. Frozen DINOv2 small separates face-video clips of unseen identities with an AUC of 0.6933 [0.6639, 0.7314], "
+        "the OpenAI CLIP separates generated images at 0.9935 on two generator units, and frozen speech encoders did not transfer reliably to In-the-Wild (the best lower bound, 0.5338, is "
+        "below the line fixed in advance, so that comparison is inconclusive). What the project does not yet have is a confirmed performance: the sealed-test, confirmatory and later-iteration "
+        "results are marked as pending in this report because their runs are not frozen, and the report makes no claim about detection accuracy on sealed data or comparability with a published detector. "
         "Where numbers of other papers are quoted, they are quoted with their own protocol and as context.")
     B.p("The important points are the following.")
     B.bullets([
@@ -21,17 +23,18 @@ def conclusions(B):
         "The splits are group-disjoint, the group being the source video together with the person identity; the leakage check passes on 80,803 image files and on 41,739 files of Celeb-DF, In-the-Wild and DFD, and the Celeb-DF family test set of 744 real and 6,906 fake videos has about 44 independent identity groups, so its intervals are wide.",
         "The evaluation harness passes its acceptance checks, including a bootstrap coverage of 192 of 200 simulated data sets against a requirement of 90 percent.",
         "Eleven pretrained encoders, seven for images and four for speech, plus two small networks trained from scratch as references, are compared under one rule that prefers the cheaper candidate when the paired interval includes zero.",
-        "The working version is defined by seven checkable conditions, and its code path, checkpoint format and web page exist; a visible banner keeps a development stand-in from being mistaken for a result.",
+        "The working version is defined by seven checkable conditions and meets them: its checkpoint scores a file through the local web page with the source marked real, the parity between stored features and the raw-file path is within 0.0019, and a visible banner keeps a development stand-in from being mistaken for a result.",
         "The pulse experiment has its thresholds written before any run, and it reports a negative outcome as an outcome.",
         "Two limitations are stated with the design: small development slices, and weights of two encoders that are research-only.",
     ])
     B.h2("Further Work", trace="ITERATIONS; DECISIONS D-038, D-042, D-045; DOC_FACTS section 13")
     B.p("The remaining work follows the plan of the iteration ladder and the notes of the decisions.")
     B.bullets([
-        "Freeze the encoder comparison for the three tasks and fit the heads of the winners, which completes the working version and its diagnostic battery.",
+        "Choose the lever of the first iteration from the diagnostic battery of the working version, whose candidate diagnoses are bias for the face task and shift for the audio task.",
         "Run iterations I-1 to I-7, each with its lever chosen from the diagnostic battery of the preceding iteration, and report an iteration that is not finished as not run.",
         "Evaluate every frozen iteration once on the sealed test sets and run the two confirmatory comparisons, which needs the published baseline to be named and re-run, and the margin $\\delta$ to be fixed from its seed spread.",
         "Fine-tune the generated-image and the speech tasks if time remains, and consider a low-rank adapter variant of the two CLIP ViT-L/14 models, which do not fit the card for full fine-tuning.",
+        "Treat the audio treatment as an open question: recording-condition cues that reverse between ASVspoof and In-the-Wild, and short repeat-padded clips, are the candidates.",
         "Decide the combining rule for the visual and audio scores of a video once both unimodal heads are calibrated on LAV-DF.",
         "Add DINOv3 as an iteration if its access gate is accepted, add FakeAVCeleb and WildDeepfake as further tests when obtained, and add UBFC-rPPG only if the pulse experiment needs ground truth.",
         "Treat the JPEG quality of the stored crops as a candidate preprocessing iteration, and revisit the identity exclusion of Celeb-DF++ with a narrower rule (target identity only) if that is preferred.",

@@ -303,8 +303,8 @@ def fig08():
         else:
             params, dim = "[pending]", "[pending]"
         rows.append((("Images, video frames" if cid.startswith("IMG") else "Speech audio"), name, fam, params, dim, LICENCE[cid]))
-    rows.append(("Images, video frames", "Small CNN from scratch", "reference, excluded from selection", "[pending]", "n/a", "own code"))
-    rows.append(("Speech audio", "Small log-mel CNN from scratch", "reference, excluded from selection", "[pending]", "n/a", "own code"))
+    rows.append(("Images, video frames", "Small CNN from scratch", "reference, excluded from selection", "0.39 M (389,633)", "n/a", "own code"))
+    rows.append(("Speech audio", "Small log-mel CNN from scratch", "reference, excluded from selection", "0.39 M (389,057)", "n/a", "own code"))
     n = len(rows)
     fig, ax = canvas(7.0, 0.5 + 0.24 * (n + 1), tag=False)
     H = 0.5 + 0.24 * (n + 1)

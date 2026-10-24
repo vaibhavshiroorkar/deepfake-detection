@@ -283,6 +283,21 @@ def add_table(slide, x, y, widths, header, rows, size=C.SZ_TABLE, bold_first_col
     return gt, total
 
 
+
+def fit_size(widths, header, rows, sizes=(14, 13, 12), bold_first_col=False):
+    """Largest size from sizes at which no cell wraps (so that compact tables stay one line per row)."""
+    for sz in sizes:
+        ok = True
+        for ri, row in enumerate([header] + rows):
+            for ci, val in enumerate(row):
+                b = ri == 0 or (bold_first_col and ci == 0)
+                if C.text_width_pt(val, sz, b) * 12700 > widths[ci] - 2 * CELL_MX - 20000:
+                    ok = False
+        if ok:
+            return sz
+    return sizes[-1]
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # diagram helpers (names start with dg_ or arrow_ so that the checker can treat them as diagram parts)
 # ---------------------------------------------------------------------------------------------------------------------
@@ -418,7 +433,7 @@ for e in list(bp):
 etree.SubElement(bp, qn("a:noAutofit"))
 for k_ in ("lIns", "rIns", "tIns", "bIns"):
     bp.set(k_, "0")
-for i, (txt, sz, it) in enumerate([("A Hypothesis-Driven Study Under a Source-Disjoint Protocol", 20, True),
+for i, (txt, sz, it) in enumerate([("A Hypothesis-Driven Study Under a Group-Disjoint Protocol", 20, True),
                                    ("Department of Electronics and Computer Engineering", 18, False)]):
     p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
     p.alignment = PP_ALIGN.CENTER
@@ -453,7 +468,7 @@ s.notes_slide.notes_text_frame.text = (
     "State the shape of the talk: the problem, the literature, the protocol and method, the data and the encoder shortlist, the rule for the working version, the iteration ladder, the rPPG test, the web demo, the timeline to 30 October and the limitations. "
     "Say at once that no final result exists yet: every number that is still missing is shown as [pending] on the slide and is filled only from a logged experiment. "
     "Evidence pointers: docs/IDENTITY.md for the identity fields, docs/DOC_FACTS.md for the wording, docs/PLAN.md for the schedule. "
-    "The title and subtitle are the working title of the paper; the wording Group-Disjoint instead of Source-Disjoint in the subtitle is a proposal only, for the authors and the guide to decide.")
+    "The title and the subtitle (Group-Disjoint Protocol) are the decided title of the project and are the same in the paper and the report.")
 
 # =====================================================================================================================
 # SLIDE 2: problem and scope
@@ -649,7 +664,8 @@ s = new_slide("Encoder shortlist",
     "A small network from scratch is reported for each task as a reference and is excluded from selection. "
     "DINOv3 was excluded on purpose because its weights sit behind a manual access gate. "
     "The weights of OpenAI CLIP and of WavLM have conditional licences; they are accepted as research-only and stated as a limitation. "
-    "Evidence: docs/O007_SWEEP.md section 3.1, docs/DATA_LOG.md encoder weights section; the cost record fills the [pending] cells.")
+    "Parameter counts are read from the weight files and the model comparison tables (T-V, T-I, T-A of E-001 to E-003): Whisper small encoder 88,154,112, HuBERT base 94,371,712, the from-scratch references 389,633 (images) and 389,057 (speech). "
+    "Evidence: docs/O007_SWEEP.md section 3.1, docs/DATA_LOG.md encoder weights section, data/_results/*/model_comparison.md.")
 cw = [span_w(2), span_w(3), span_w(3), span_w(2)]
 cw.append(W - sum(cw))
 rows = [
@@ -661,45 +677,85 @@ rows = [
     ["", "SigLIP base", "sigmoid image-text", "92.9 M", "Apache-2.0"],
     ["Speech audio", "wav2vec 2.0 base", "self-supervised", "94.4 M", "Apache-2.0"],
     ["", "WavLM base plus", "self-supervised", "94.4 M", "research use (accepted)"],
-    ["", "Whisper small encoder", "weakly supervised ASR", "[pending]", "Apache-2.0 / MIT"],
-    ["", "HuBERT base", "self-supervised", "[pending]", "Apache-2.0"],
-    ["Both", "Small network from scratch", "reference, excluded from selection", "[pending]", "own code"],
+    ["", "Whisper small encoder", "weakly supervised ASR", "88.2 M", "Apache-2.0 / MIT"],
+    ["", "HuBERT base", "self-supervised", "94.4 M", "Apache-2.0"],
+    ["Both", "Small network from scratch", "reference, excluded from selection", "0.39 M", "own code"],
 ]
 gt, th = add_table(s, L, TOP, cw, ["Task", "Encoder", "Family", "Parameters", "Weights licence"], rows, size="auto", bold_first_col=True, max_h=H - 480000, fill=H - 480000)
 add_text(s, L, TOP + th + 90000, W, 330000, [("cap", "Parameters are read from the weight files. DINOv3 is excluded on purpose (manual access gate).")], "short_note")
 
 # =====================================================================================================================
-# SLIDE 9: I-0 rule
+# SLIDE 9a: sweep results
+# =====================================================================================================================
+s = new_slide("Encoder sweep on the development slice",
+    "The sweep ranked every shortlisted encoder per task on the development slice with the rule fixed beforehand; all values are exploratory (D-041) and are the final results of experiments E-001 (face frames), E-002 (images) and E-003 (speech), recorded in D-049 and in data/_results/T-V, T-I and T-A. "
+    "Face frames: five of seven candidates form the tie set against the leader, so the cheapest of them, DINOv2 small, wins (0.943 s per 1,000 inputs end to end, 22.1 M parameters); EfficientNet-B4 is outside the tie set by the bootstrap (difference -0.099 [-0.172, -0.023]) but the permutation p-value is 0.110, and the winner would not change. "
+    "Images: the tie set has one member, CLIP ViT-L/14 (OpenAI), but the development slice has only two generator units, so its interval is not a population interval; per-generator AUC is in the backup (M-004). "
+    "Speech: the tie set has three members and HuBERT base wins on cost, yet the mechanical verdict is inconclusive (best lower bound 0.534, at or below 0.55), the from-scratch reference is below chance (0.246) and the development ECE rose after temperature scaling for every audio encoder. "
+    "Evidence: docs/EXPERIMENTS.md E-001 to E-003, docs/DECISIONS.md D-036 and D-049, docs/DOC_FACTS.md section 14.")
+add_text(s, L, TOP, W, 300000, [("cap", "Exploratory, development slice. AUC on the development slice: mean of three head seeds with the 95 percent group-bootstrap interval. Tie = tied with the leader.")], "sweep_cap")
+HDR = lambda t: [t, "Dev AUC [95% CI]", "Tie"]  # noqa: E731
+tv = [["CLIP-L OpenAI", "0.7464 [0.6721, 0.8306]", "yes"], ["SigLIP base", "0.7396 [0.7031, 0.7832]", "yes"], ["CLIP-L LAION", "0.7331 [0.6764, 0.7966]", "yes"],
+      ["DINOv2 small", "0.6933 [0.6639, 0.7314]", "yes"], ["DINOv2 base", "0.6745 [0.6323, 0.7239]", "yes"], ["EfficientNet-B4", "0.6471 [0.5967, 0.6987]", "no"],
+      ["Xception", "0.6162 [0.5744, 0.6633]", "no"]]
+ti = [["CLIP-L OpenAI", "0.9935 [0.9803, 0.9982]", "yes"], ["CLIP-L LAION", "0.9563 [0.7760, 0.9975]", "no"], ["DINOv2 base", "0.9023 [0.8496, 0.9316]", "no"],
+      ["SigLIP base", "0.8657 [0.7591, 0.9166]", "no"], ["DINOv2 small", "0.8340 [0.7401, 0.8823]", "no"], ["EfficientNet-B4", "0.6688 [0.6238, 0.7137]", "no"],
+      ["Xception", "0.6380 [0.4912, 0.7115]", "no"]]
+ta = [["Whisper small", "0.6380 [0.5338, 0.7700]", "yes"], ["WavLM base plus", "0.6334 [0.5291, 0.7714]", "yes"], ["HuBERT base", "0.6100 [0.5434, 0.7256]", "yes"],
+      ["wav2vec 2.0 base", "0.4975 [0.3451, 0.7092]", "no"]]
+w4 = span_w(4)
+cws = [int(w4 * 0.36), int(w4 * 0.52)]
+cws.append(w4 - sum(cws))
+ty0 = TOP + 330000
+szs = fit_size(cws, HDR("Face frames"), tv, bold_first_col=False)
+for k_, (nm, rows_) in enumerate([("Face frames", tv), ("Images", ti), ("Speech", ta)]):
+    add_table(s, col_x(4 * k_), ty0, cws, HDR(nm), rows_, size=szs, max_h=2600000)
+add_text(s, L, ty0 + 2350000, W, BOT - (ty0 + 2350000), [
+    ("bs", "Cheapest in the tie set wins: face frames DINOv2 small (tie set of five), images CLIP ViT-L/14 OpenAI (tie set of one), speech HuBERT base (tie set of three).", 16),
+    ("bs", "Face frames: EfficientNet-B4 is outside the tie set by the bootstrap, but its permutation p is 0.110; the winner is the same either way.", 16),
+    ("bs", "Images: the development slice has 2 generator units, so the interval is not interpretable as a population interval.", 16),
+    ("bs", "Speech: verdict inconclusive; the from-scratch reference scores 0.246, below chance; development ECE rose after temperature scaling.", 16),
+], "sweep_text")
+
+# =====================================================================================================================
+# SLIDE 9b: I-0 rule and results
 # =====================================================================================================================
 s = new_slide("I-0: the working-version rule",
     "I-0 is the working version and not an improvement: a frozen encoder, a linear head and temperature scaling, chosen by a rule fixed before any feature existed (D-032, D-036, D-040). "
-    "The rule ranks the candidates of each task by their mean AUC on the development slice, builds the tie set of every candidate whose paired 95 percent group-bootstrap interval against the leader includes zero, and lets the cheapest candidate in the tie set win; cost is the end-to-end extraction time per 1,000 inputs, then the parameter count. "
-    "This prefers the cheaper candidate whenever the evidence does not separate them, which is the project's comparison rule; a permutation test over groups is a sensitivity check and the from-scratch network is reported but excluded. "
-    "The working version counts as finished only when the whole chain runs: a file goes in through the web page, the winning encoders score it, the score is calibrated, metrics with intervals exist on validation and development data, and the page shows a real result. "
-    "Evidence: docs/O007_SWEEP.md sections 1 to 8, docs/DECISIONS.md D-036 and D-040, experiments E-001 (face frames), E-002 (images), E-003 (speech); the ranking is still being re-run, so the results are [pending].")
-xl, wl = col_x(0), span_w(7)
-xr2, wr = col_x(7), span_w(5)
-add_text(s, xl, TOP, wl, 4800000, [
+    "The rule ranks the candidates of each task by their mean development-slice AUC, builds the tie set of every candidate whose paired 95 percent group-bootstrap interval against the leader includes zero, and lets the cheapest candidate of the tie set win; the from-scratch network is reported but excluded. "
+    "The table is experiment E-004: the heads of the three winners (face frames DINOv2 small, images CLIP ViT-L/14 OpenAI, speech HuBERT base), mean of three head seeds with the 95 percent group-bootstrap interval, exploratory, development slice; the development values reproduce E-001 to E-003. "
+    "Train, validation and development AUC are 0.837, 0.799 and 0.693 for face frames, 1.000, 1.000 and 0.994 for images, and 1.000, 0.994 and 0.610 for speech; the shipped head is seed 0 (D-050). "
+    "The working version is finished when the chain runs from a file through the web page to a calibrated score with metrics and intervals (D-040); the page check and the parity check (maximum difference 0.0019) passed, details in the backup. "
+    "Evidence: docs/EXPERIMENTS.md E-004, docs/DECISIONS.md D-036, D-040, D-049, D-050.")
+add_text(s, col_x(0), TOP, span_w(7), 2680000, [
     ("h", "Rule for choosing the encoder"),
-    ("n", "1.  Extract features once per candidate with the frozen encoder."),
-    ("n", "2.  Fit a linear head, three seeds."),
-    ("n", "3.  Rank by mean development-slice AUC with a paired 95 percent group bootstrap."),
-    ("n", "4.  Tie set: every candidate whose interval against the leader includes zero."),
-    ("n", "5.  Cheapest wins: lowest extraction time per 1,000 inputs, then fewer parameters."),
-    ("p", "The from-scratch reference is reported and excluded from the choice."),
+    ("n", "1.  Extract features once per candidate with the frozen encoder.", 16),
+    ("n", "2.  Fit a linear head, three seeds.", 16),
+    ("n", "3.  Rank by mean development-slice AUC, paired 95 percent group bootstrap.", 16),
+    ("n", "4.  Tie set: every candidate whose interval against the leader includes zero.", 16),
+    ("n", "5.  Cheapest wins: lowest extraction time per 1,000 inputs, then fewer parameters.", 16),
 ], "rule")
-add_card(s, xr2, TOP, wr, 2900000, [
+add_card(s, col_x(7), TOP, span_w(5), 2680000, [
     ("h", "The working version is finished when"),
-    ("bs", "a file goes in through the local web page;", 17),
-    ("bs", "the winning encoders score it, calibrated, with the threshold fixed on validation data;", 17),
-    ("bs", "metrics with intervals exist on validation and development data, three seeds;", 17),
-    ("bs", "the page shows a real result, with its warnings.", 17),
+    ("bs", "a file goes in through the local web page;", 16),
+    ("bs", "the winning encoders score it, calibrated, threshold fixed on validation data;", 16),
+    ("bs", "metrics with intervals exist on validation and development data;", 16),
+    ("bs", "the page shows a real result, with its warnings.", 16),
 ], name="card_done")
-gt, th = add_table(s, xr2, TOP + 3050000, [span_w(2), span_w(2), wr - 2 * span_w(2)], ["Task", "Winner", "Dev AUC [95% CI]"], [
-    ["Face frames", "[pending]", "[pending]"],
-    ["Images", "[pending]", "[pending]"],
-    ["Speech", "[pending]", "[pending]"],
-], size=14, bold_first_col=True, max_h=1750000)
+cwr = [span_w(2), span_w(3), span_w(2) + span_w(1) // 2]
+rest = W - sum(cwr)
+cwr = [cwr[0], cwr[1], cwr[2], (rest) // 3 * 1, 0]
+cwr = [span_w(2), span_w(3)]
+cwr += [(W - sum(cwr)) // 3] * 3
+cwr[-1] = W - sum(cwr[:-1])
+rows_r = [["Face frames", "DINOv2 small", "0.8367 [0.8267, 0.8475]", "0.7985 [0.7731, 0.8269]", "0.6933 [0.6639, 0.7314]"],
+          ["Images", "CLIP ViT-L/14 OpenAI", "1.0000 [1.0000, 1.0000]", "1.0000 [1.0000, 1.0000]", "0.9935 [0.9803, 0.9982]"],
+          ["Speech", "HuBERT base", "0.9997 [0.9996, 0.9999]", "0.9942 [0.9910, 0.9967]", "0.6100 [0.5434, 0.7256]"]]
+hdr_r = ["Task", "Encoder (winner)", "Train AUC", "Validation AUC", "Dev AUC"]
+szr = fit_size(cwr, hdr_r, rows_r, sizes=(14, 13, 12), bold_first_col=True)
+gt, th = add_table(s, L, TOP + 2800000, cwr, hdr_r, rows_r, size=szr, bold_first_col=True, max_h=1700000)
+add_text(s, L, TOP + 2800000 + th + 50000, W, BOT - (TOP + 2800000 + th + 50000), [
+    ("cap", "Exploratory, development slice. Mean of three head seeds with the 95 percent group-bootstrap interval. The from-scratch reference is excluded from the choice. The development interval of the images rests on 2 generator units; speech is inconclusive.")], "rcap")
 
 # =====================================================================================================================
 # SLIDE 10: ladder
@@ -727,6 +783,30 @@ add_card(s, L, TOP + 1350000, W, 3450000, [
     ("bs", "Battery after every iteration: per-dataset and per-generator AUC with intervals; train versus validation and validation versus development gaps; calibration (ECE, Brier); score histograms; splits by compression, face size and number of faces; the 20 worst errors; seed variance.", 18),
     ("bs", "Frozen iterations so far: none. Each gets its own slide once it is frozen.", 18),
 ], name="card_ladder")
+
+# =====================================================================================================================
+# SLIDE 10b: I-0 diagnosis
+# =====================================================================================================================
+s = new_slide("I-0 diagnosis",
+    "The diagnostic battery was run on the working version (experiment E-004, data/_results/I-0/battery.md); every number is exploratory and from the development slice or validation data, and no lever is chosen on this slide. "
+    "Face frames: the frozen DINOv2 small feature separates even the training data only moderately (train AUC 0.837, train minus validation +0.038), the gap from validation to the development slice is +0.105, and temperature scaling fitted on validation does not transfer (ECE 0.205 to 0.222); aggregation is not indicated because the clip mean is above frame level by about 0.03 and the maximum and top-3 mean are not better. "
+    "Images: train and validation AUC are 1.000, the development AUC is 0.994 on two generator units (0.999 and 0.983), calibration improves (ECE 0.046 to 0.005), and the errors are border artefacts in some real images and photorealistic StyleGAN faces; with two units a shift to other generators cannot be measured. "
+    "Speech: the validation to development gap is +0.384 at an in-domain AUC of 0.994, real In-the-Wild speech scores as fake, the trivial recording features reverse sign between the corpora (M-004), calibration worsens (ECE 0.329 to 0.405) and errors concentrate in short repeat-padded clips with saturated scores. "
+    "Evidence: docs/EXPERIMENTS.md E-004 (diagnostic battery items 1 to 8) and M-004; the choice of the first lever is a later decision.")
+dgw = [span_w(2), span_w(5)]
+dgw.append(W - sum(dgw))
+dg_rows = [
+    ["Face frames", "Train 0.837, validation 0.799, development 0.693 (gap +0.105). Weakest manipulations on validation: NeuralTextures 0.697, FaceSwap 0.778. Development ECE 0.205 before and 0.222 after temperature scaling.",
+     "Bias first: the frozen feature separates even the training data only moderately. Then shift, and calibration under shift. Aggregation is not indicated."],
+    ["Images", "Train and validation 1.000, development 0.994 on 2 generator units (0.999 and 0.983). ECE 0.046 before and 0.005 after. Errors: border artefacts in real images, photorealistic StyleGAN faces.",
+     "No bias or variance visible. Shift to other generators cannot be measured with 2 units. Calibration is good."],
+    ["Speech", "Validation 0.994, development 0.610 (gap +0.384). Real In-the-Wild speech scores as fake. ECE 0.329 before and 0.405 after. Errors are short repeat-padded clips with saturated scores.",
+     "Shift is dominant. Missing signal or a shortcut (window or padding effect) is a candidate. Calibration worsens under shift."],
+]
+dgs = 16
+gt, th = add_table(s, L, TOP, dgw, ["Task", "Observations (battery)", "Candidate diagnoses"], dg_rows, size=dgs, bold_first_col=True, max_h=3900000, fill=3900000)
+add_text(s, L, TOP + th + 100000, W, BOT - (TOP + th + 100000), [
+    ("cap", "Exploratory, development slice. Diagnoses only: no lever is chosen here. The sealed tests are not touched.")], "diag_note")
 
 # =====================================================================================================================
 # SLIDE 11: rPPG
@@ -774,31 +854,42 @@ add_card(s, col_x(7), ty, span_w(5), BOT - ty, [
 # =====================================================================================================================
 # SLIDE 12: web demo
 # =====================================================================================================================
-s = new_slide("Web demo (development stand-in)",
+s = new_slide("Web demo (real checkpoint)",
     "The software is a local web page served by Flask on 127.0.0.1 only, with a 512 MB upload limit; uploaded files are deleted after every request (D-043). "
     "It calls an inference library with a fixed response structure: a score per modality, a status, warnings, errors, a model block and a fixed sentence that says what the score means (D-027). "
-    "The three screenshots were taken against the development stand-in, which always reports its source as mock; the page then shows the MOCK banner, so the numbers in the screenshots are not measurements. "
-    "The real adapter refuses to run without a checkpoint whose metadata and preprocessing identifier match (D-044). "
-    "For a video the visual and the audio score are shown separately and the verdict is undetermined, because no combining rule is claimed. Evidence: src/dfd/web, src/dfd/infer, docs/DOC_FACTS.md section 10; screenshots in assets/screens.")
-ph = 2650000
-crops = [0.12, 0.20, 0.20]          # share of the page cut off at the bottom (the details block)
-asp = [1.531, 0.835, 0.813]
-wds = [int(ph * a_ / (1 - c)) for a_, c in zip(asp, crops)]
-g2 = (W - sum(wds)) // 2
-xs = [L, L + wds[0] + g2, L + wds[0] + wds[1] + 2 * g2]
-caps = ["(a) start page", "(b) image result", "(c) video result"]
-for xx, fn, wd, cr, alt in zip(xs, ["web_start.png", "web_image.png", "web_video.png"], wds, crops,
-                               ["Start page of the local web page", "Image result page", "Video result page"]):
-    pic = add_pic(s, os.path.join(SCR, fn), xx, TOP, alt=alt + " (development stand-in, MOCK banner)")
-    pic.crop_bottom = cr
-    pic.left, pic.top, pic.width, pic.height = Emu(xx), Emu(TOP), Emu(wd), Emu(ph)
-for xx, wd, cp in zip(xs, wds, caps):
-    add_text(s, xx, TOP + ph + 40000, wd, 280000, [("cap", cp)], "pic_caption")
-ty = TOP + ph + 400000
-add_text(s, L, ty, W, BOT - ty, [
-    ("bs", "Screenshots taken against the development stand-in: the MOCK banner is part of the design and the numbers are not measurements.", 17),
-    ("bs", "Local Flask page on 127.0.0.1, uploads up to 512 MB, files deleted after each request; it shows a probability per modality, warnings and a fixed sentence on what the score means.", 17),
-    ("bs", "With a real checkpoint the page shows real scores: [pending].", 17),
+    "The three screenshots were taken with the real adapter and the I-0 checkpoint, so there is no MOCK banner: an image, a video with its audio and an audio file, each a training item, so they show that the path works and say nothing about accuracy (E-004, assets/screens/real_image.png, real_video.png, real_audio.png). "
+    "For the video the visual and the audio score are shown separately and the verdict is undetermined, because no combining rule is claimed; the audio score carries the warning that its calibration is exploratory (D-050). "
+    "Earlier screenshots against the development stand-in remain in the report as a labelled figure; the real adapter refuses to run without a checkpoint whose metadata and preprocessing identifier match (D-044).")
+SH = 3050000
+spec = [("real_image.png", "(a) image", 0.16, 0.16, 0.08, 0.07), ("real_video.png", "(b) video with audio", 0.16, 0.16, 0.08, 0.07),
+        ("real_audio.png", "(c) audio file", 0.16, 0.16, 0.08, 0.07)]
+from PIL import Image as _Im
+pw = []
+for fn, cap, cl, cr_, ct, cb in spec:
+    iw, ih = _Im.open(os.path.join(SCR, fn)).size
+    pw.append(int(SH * (iw * (1 - cl - cr_)) / (ih * (1 - ct - cb))))
+gp = 70000
+xs = [L]
+for w_ in pw[:-1]:
+    xs.append(xs[-1] + w_ + gp)
+for (fn, cap, cl, cr_, ct, cb), xx, w_ in zip(spec, xs, pw):
+    pic = add_pic(s, os.path.join(SCR, fn), xx, TOP, alt="Web page with the real checkpoint, no MOCK banner: " + cap)
+    pic.crop_left, pic.crop_right, pic.crop_top, pic.crop_bottom = cl, cr_, ct, cb
+    pic.left, pic.top, pic.width, pic.height = Emu(xx), Emu(TOP), Emu(w_), Emu(SH)
+    add_text(s, xx, TOP + SH + 40000, w_, 280000, [("cap", cap)], "pic_caption")
+right_x = col_x(8)
+assert xs[-1] + pw[-1] < right_x - 100000, (xs[-1] + pw[-1], right_x)
+add_card(s, right_x, TOP, span_w(4), 4800000, [
+    ("h", "Real checkpoint"),
+    ("bs", "Real adapter with the I-0 checkpoint: no MOCK banner.", 16),
+    ("bs", "The three files are training items: the path works, accuracy is not claimed.", 16),
+    ("bs", "A video shows a visual and an audio score and the verdict Undetermined, as no combining rule is claimed.", 16),
+    ("bs", "The audio score carries an exploratory-calibration warning.", 16),
+], name="card_web")
+ty = TOP + SH + 400000
+add_text(s, L, ty, xs[-1] + pw[-1] - L, BOT - ty, [
+    ("bs", "Local Flask page on 127.0.0.1; uploads up to 512 MB; files deleted after each request.", 16),
+    ("bs", "Sealed-test accuracy of the page: [pending].", 16),
 ], "web_text")
 
 # =====================================================================================================================
@@ -867,7 +958,7 @@ add_text(s, col_x(0), TOP, span_w(6), 4800000, [
     ("b", "Two confirmatory claims, declared before any final run.", 20),
 ], "concl_left")
 gt, th = add_table(s, col_x(6), TOP, [span_w(4), span_w(2)], ["Claim", "Outcome"], [
-    ["Working version, development AUC", "[pending]"],
+    ["Working version, development AUC (exploratory)", "0.693; 0.994; 0.610"],
     ["Final system versus working version (paired, sealed tests)", "[pending]"],
     ["Final system versus re-run baseline (non-inferiority)", "[pending]"],
     ["rPPG: adopt or not", "[pending]"],
@@ -936,10 +1027,10 @@ add_text(s, L, TOP, W, 4800000, [
     ("b", "**Statistics and decision rules:** metrics, bootstrap, seed policy, non-inferiority, tie rule"),
     ("b", "**Staircase and confirmatory claims:** one sealed evaluation per frozen iteration"),
     ("b", "**Preprocessing:** frames, face crops, audio window"),
-    ("b", "**Cost record and fine-tuning budget:** cost axes, fit rule for fine-tuning"),
-    ("b", "**Data licences and terms:** what may and may not be shown"),
-    ("b", "**Celeb-DF++ test balance:** de-duplication and the pooled family test"),
-    ("b", "**Environment (measured):** hardware and software"),
+    ("b", "**Sweep tables and cost record:** full tables per task, cost and fine-tuning fit"),
+    ("b", "**I-0 diagnostic battery:** metrics, subsets, score distributions, worst errors"),
+    ("b", "**Parity check, page check and audio diagnosis**"),
+    ("b", "**Data licences and terms;** **Celeb-DF++ test balance;** **Environment (measured)**"),
 ], "backup_contents")
 
 s = new_slide("Statistics and decision rules",
@@ -1005,25 +1096,168 @@ add_text(s, L, TOP + th + 140000, W, 1100000, [
     ("s", "A face-detector comparison on 300 FaceForensics++ validation frames and 300 Celeb-DF development frames found a face in every frame for all three detectors tried.")], "prep_note")
 
 # cost record
-s = new_slide("Cost record and fine-tuning budget",
-    "Accuracy is never reported alone: every candidate gets a cost record of parameters, FLOPs, peak memory and model-only and end-to-end time per 1,000 inputs, generated from the extraction records (D-036, O007_SWEEP section 7). "
-    "The cost values are [pending] here because the clean measurement is still being re-run; parameters are read from the weight headers. "
-    "The fine-tuning budget of the video task follows measured step times (M-003, which was partly overlapped with other jobs and is superseded by a clean re-run): three encoders at three learning rates with one seed each under a per-run time cap, then two further seeds for the winner only. "
-    "An encoder enters fine-tuning only if its peak memory at batch 32 is at most 10 GiB and one budget takes at most 10 minutes, which excludes the two CLIP ViT-L/14 models on the 12 GB card (D-042). "
-    "Evidence: docs/DECISIONS.md D-042, docs/EXPERIMENTS.md M-003 and the model comparison tables.")
-gt, th = add_table(s, L, TOP, [span_w(4), span_w(2), span_w(2), W - span_w(4) - 2 * span_w(2)], ["Candidate (images)", "Parameters", "Peak memory", "End-to-end time per 1,000 inputs"], [
-    ["EfficientNet-B4", "17.5 M", "[pending]", "[pending]"],
-    ["Xception", "20.8 M", "[pending]", "[pending]"],
-    ["DINOv2 small", "22.1 M", "[pending]", "[pending]"],
-    ["DINOv2 base", "86.6 M", "[pending]", "[pending]"],
-    ["CLIP ViT-L/14 (OpenAI, LAION)", "304.0 M", "[pending]", "[pending]"],
-], size="auto", bold_first_col=True, max_h=2600000, fill=2600000)
-add_text(s, L, TOP + th + 120000, W, BOT - (TOP + th + 120000), [
-    ("b", "Fine-tuning of the video task: three encoders, three learning rates, one seed each, a per-run time cap; two further seeds for the winner only.", 18),
-    ("b", "An encoder enters if its peak memory at batch 32 is at most 10 GiB and one budget takes at most 10 minutes; the two CLIP ViT-L/14 models do not fit the 12 GB card.", 18),
+s = new_slide("Sweep tables, face frames",
+    "Full table of experiment E-001: frozen image encoders on face video frames, trained on FaceForensics++ c23, validation FaceForensics++ validation, development slice Celeb-DF v2 (1,728 clips, 15 identity groups), exploratory (D-041, D-049). "
+    "AUC values are the mean of three head seeds; the interval is the 95 percent group bootstrap with 2,000 resamples; the gap is validation minus development AUC; the tie column is the paired interval against the leader (CLIP ViT-L/14 OpenAI). "
+    "Cost is one end-to-end extraction run per candidate and the peak memory of that extraction (data/_results/T-V/model_comparison.md); the cost rule picks DINOv2 small, 0.943 s per 1,000 inputs against 1.732 s for EfficientNet-B4. "
+    "The from-scratch reference is reported and excluded; FLOPs and model-only time were not measured. "
+    "Evidence: docs/EXPERIMENTS.md E-001, data/_results/T-V/rank.md and model_comparison.md.")
+hv = ["Encoder", "Val AUC", "Dev AUC [95% CI]", "Gap", "Tie", "s per 1,000", "Peak GiB"]
+rv = [["CLIP ViT-L/14 OpenAI", "0.9046", "0.7464 [0.6721, 0.8306]", "+0.158", "yes", "4.5", "2.85"],
+      ["SigLIP base", "0.8767", "0.7396 [0.7031, 0.7832]", "+0.137", "yes", "1.4", "1.30"],
+      ["CLIP ViT-L/14 LAION", "0.8635", "0.7331 [0.6764, 0.7966]", "+0.130", "yes", "4.0", "2.72"],
+      ["DINOv2 small", "0.7985", "0.6933 [0.6639, 0.7314]", "+0.105", "yes", "0.9", "0.38"],
+      ["DINOv2 base", "0.8170", "0.6745 [0.6323, 0.7239]", "+0.143", "yes", "1.7", "0.95"],
+      ["EfficientNet-B4", "0.7478", "0.6471 [0.5967, 0.6987]", "+0.101", "no", "1.7", "1.31"],
+      ["Xception", "0.7184", "0.6162 [0.5744, 0.6633]", "+0.102", "no", "3.3", "1.96"],
+      ["From scratch (excluded)", "n/a", "0.5166 [0.5033, 0.5324]", "n/a", "n/a", "n/a", "n/a"]]
+cwv = [span_w(3), span_w(1), span_w(3), span_w(1), span_w(1) // 1, span_w(1), 0]
+cwv = [span_w(3), span_w(1), span_w(3), span_w(1)]
+cwv += [(W - sum(cwv)) // 3] * 3
+cwv[-1] = W - sum(cwv[:-1])
+gt, th = add_table(s, L, TOP, cwv, hv, rv, size=fit_size(cwv, hv, rv, sizes=(16, 15, 14, 13, 12), bold_first_col=True), bold_first_col=True, max_h=3600000, fill=3600000)
+add_text(s, L, TOP + th + 100000, W, BOT - (TOP + th + 100000), [
+    ("cap", "Exploratory, development slice. Gap = validation minus development AUC. Time and peak memory are one end-to-end extraction run; FLOPs and model-only time: [pending].")], "sweep_v_note")
+
+s = new_slide("Sweep tables, images and speech",
+    "Full tables of experiments E-002 (generated images) and E-003 (speech), exploratory, development slice (D-041, D-049). "
+    "Images: trained on 14 ProGAN classes, validation on the other 6, development slice two CNN-synthesis generator units (5,998 images, 2 groups), so the intervals are not population intervals; per generator, CLIP ViT-L/14 OpenAI scores 0.9988 on StarGAN and 0.9830 on whichfaceisreal, the LAION model 0.9978 and 0.7790 (M-004 c). "
+    "Speech: trained on ASVspoof 2019 LA train, validation LA dev, development slice In-the-Wild (6,991 clips, 12 speakers); validation AUC is 0.99 to 1.00 for every encoder but the development AUC is 0.50 to 0.64, the verdict is inconclusive, the from-scratch reference is 0.2458 [0.0706, 0.4404] and the label mapping was checked (M-004 a). "
+    "Time is one end-to-end extraction run per 1,000 inputs and the peak memory of the extraction. "
+    "Evidence: docs/EXPERIMENTS.md E-002, E-003, M-004; data/_results/T-I and T-A (rank.md, model_comparison.md).")
+ri = [["CLIP ViT-L/14 OpenAI", "1.0000", "0.9935 [0.9803, 0.9982]", "+0.007", "yes", "4.9", "2.85"],
+      ["CLIP ViT-L/14 LAION", "1.0000", "0.9563 [0.7760, 0.9975]", "+0.044", "no", "4.5", "2.72"],
+      ["DINOv2 base", "0.9899", "0.9023 [0.8496, 0.9316]", "+0.088", "no", "2.0", "0.95"],
+      ["SigLIP base", "0.9975", "0.8657 [0.7591, 0.9166]", "+0.132", "no", "1.8", "1.30"],
+      ["DINOv2 small", "0.9685", "0.8340 [0.7401, 0.8823]", "+0.135", "no", "1.2", "0.38"],
+      ["EfficientNet-B4", "0.8990", "0.6688 [0.6238, 0.7137]", "+0.230", "no", "2.5", "1.31"],
+      ["Xception", "0.8140", "0.6380 [0.4912, 0.7115]", "+0.176", "no", "2.2", "1.96"],
+      ["From scratch (excluded)", "n/a", "0.5500 [0.5080, 0.5735]", "n/a", "n/a", "n/a", "n/a"]]
+ra = [["Whisper small encoder", "0.9995", "0.6380 [0.5338, 0.7700]", "+0.362", "yes", "11.5", "1.62"],
+      ["WavLM base plus", "0.9924", "0.6334 [0.5291, 0.7714]", "+0.359", "yes", "2.5", "2.38"],
+      ["HuBERT base", "0.9942", "0.6100 [0.5434, 0.7256]", "+0.384", "yes", "2.0", "2.40"],
+      ["wav2vec 2.0 base", "0.9965", "0.4975 [0.3451, 0.7092]", "+0.499", "no", "2.0", "2.34"],
+      ["From scratch (excluded)", "n/a", "0.2458 [0.0706, 0.4404]", "n/a", "n/a", "n/a", "n/a"]]
+hi = ["Images", "Val AUC", "Dev AUC [95% CI]", "Gap", "Tie", "s per 1,000", "Peak GiB"]
+ha = ["Speech", "Val AUC", "Dev AUC [95% CI]", "Gap", "Tie", "s per 1,000", "Peak GiB"]
+szi = fit_size(cwv, hi, ri, sizes=(13, 12), bold_first_col=True)
+gt, th1 = add_table(s, L, TOP, cwv, hi, ri, size=szi, bold_first_col=True, max_h=2900000)
+gt, th2 = add_table(s, L, TOP + th1 + 110000, cwv, ha, ra, size=szi, bold_first_col=True, max_h=1900000)
+assert TOP + th1 + 110000 + th2 <= BOT, (th1, th2)
+
+s = new_slide("Cost record and fine-tuning fit",
+    "Accuracy is never reported alone: every candidate has a cost record generated from the extraction records and the clean step-time run (D-036, D-042; data/_results/T-V/model_comparison.md). "
+    "The fine-tuning budget of the video task is one pass over 57,600 training frames at batch 32 with a per-run time cap; an encoder enters only if its peak memory at batch 32 is at most 10 GiB and one budget takes at most 10 minutes (D-042). "
+    "By the clean step-time run this admits DINOv2 small, SigLIP base, DINOv2 base, EfficientNet-B4 and Xception, and excludes the two CLIP ViT-L/14 models (12.2 and 13.8 GiB, 300 and 457 minutes per budget on the 12 GB card); the first three of the ranking that fit are the I-1 candidates, DINOv2 small, SigLIP base and DINOv2 base (D-049). "
+    "FLOPs and the model-only time were not measured and are shown as [pending]. "
+    "Evidence: docs/DECISIONS.md D-042, D-049; docs/EXPERIMENTS.md M-003 (superseded by the clean run) and the model comparison tables.")
+hc = ["Candidate (face frames)", "Parameters", "Extraction GiB", "Tune GiB (b32)", "Min per budget", "Fits", "I-1"]
+rc = [["DINOv2 small", "22.1 M", "0.38", "2.0", "1.4", "yes", "yes"],
+      ["SigLIP base", "92.9 M", "1.30", "4.0", "3.4", "yes", "yes"],
+      ["DINOv2 base", "86.6 M", "0.95", "4.5", "4.0", "yes", "yes"],
+      ["CLIP ViT-L/14 LAION", "304.0 M", "2.72", "12.2", "300.0", "no", "no"],
+      ["CLIP ViT-L/14 OpenAI", "304.0 M", "2.85", "13.8", "457.1", "no", "no"],
+      ["EfficientNet-B4", "17.5 M", "1.31", "7.3", "4.2", "yes", "no"],
+      ["Xception", "20.8 M", "1.96", "4.3", "3.3", "yes", "no"]]
+cwc = [span_w(3), span_w(2), span_w(2), span_w(2), span_w(1)]
+cwc += [(W - sum(cwc)) // 2] * 2
+cwc[-1] = W - sum(cwc[:-1])
+gt, th = add_table(s, L, TOP, cwc, hc, rc, size=fit_size(cwc, hc, rc, sizes=(15, 14, 13, 12), bold_first_col=True), bold_first_col=True, max_h=3300000, fill=3300000)
+add_text(s, L, TOP + th + 100000, W, BOT - (TOP + th + 100000), [
+    ("bs", "Fits: peak memory at batch 32 at most 10 GiB and one budget at most 10 minutes. I-1 candidates: the first three of the ranking that fit.", 16),
+    ("bs", "FLOPs and model-only time per 1,000 inputs: [pending].", 16),
 ], "cost_text")
 
-# licences
+# ---- I-0 battery (1): metrics
+s = new_slide("I-0 battery: metrics",
+    "Items 2, 3, 4 and 8 of the diagnostic battery for the working version (experiment E-004, data/_results/I-0/battery.md); exploratory, development slice (D-041). "
+    "The train minus validation gap is small for all three tasks (0.038, 0.000, 0.006), so there is no sign of variance; the validation minus development gap separates the tasks: 0.105 for face frames, 0.007 for images and 0.384 for speech. "
+    "Temperature scaling fitted on validation lowered the validation ECE for images and speech, but on the development slice it did not help face frames or speech (0.205 to 0.222 and 0.329 to 0.405) and helped images (0.046 to 0.005); all three temperatures are below 1, so validation scores are sharpened and development scores are then over-confident. "
+    "The seed standard deviation on the development slice (0.0107, 0.0006, 0.0026) is a third or less of the bootstrap half-width (0.0338, 0.0089, 0.0911): the sampling of identities and speakers, not training noise, limits the intervals. "
+    "Evidence: docs/EXPERIMENTS.md E-004 and the diagnostic battery definition; D-050 for the shipped seed 0 head.")
+hb = ["Task", "Train minus val", "Val minus dev", "ECE val (before / after)", "ECE dev (before / after)", "Brier dev (before / after)"]
+rb = [["Face frames", "+0.038", "+0.105", "0.0325 / 0.0321", "0.2048 / 0.2217", "0.2963 / 0.3050"],
+      ["Images", "0.000", "+0.007", "0.0050 / 0.0012", "0.0462 / 0.0050", "0.0334 / 0.0299"],
+      ["Speech", "+0.006", "+0.384", "0.0883 / 0.0078", "0.3293 / 0.4052", "0.3699 / 0.4247"]]
+cwb = [span_w(2), span_w(2), span_w(2)]
+cwb += [(W - sum(cwb)) // 3] * 3
+cwb[-1] = W - sum(cwb[:-1])
+gt, th1 = add_table(s, L, TOP, cwb, hb, rb, size=fit_size(cwb, hb, rb, sizes=(15, 14, 13, 12), bold_first_col=True), bold_first_col=True, max_h=1800000, fill=1500000)
+hb2 = ["Task", "Temperature", "Threshold", "Dev EER", "Balanced acc. val / dev", "Seed sd (dev)", "Bootstrap half-width"]
+rb2 = [["Face frames", "0.907", "0.4774", "0.3582", "0.750 / 0.617", "0.0107", "0.0338"],
+       ["Images", "0.636", "0.2073", "0.0401", "0.998 / 0.955", "0.0006", "0.0089"],
+       ["Speech", "0.486", "0.1451", "0.4183", "0.971 / 0.529", "0.0026", "0.0911"]]
+cwb2 = [span_w(2), span_w(1) + 300000, span_w(1) + 300000, span_w(1) + 300000, span_w(2)]
+cwb2 += [(W - sum(cwb2)) // 2] * 2
+cwb2[-1] = W - sum(cwb2[:-1])
+gt, th2 = add_table(s, L, TOP + th1 + 150000, cwb2, hb2, rb2, size=fit_size(cwb2, hb2, rb2, sizes=(15, 14, 13, 12), bold_first_col=True), bold_first_col=True, max_h=1800000, fill=1500000)
+add_text(s, L, TOP + th1 + th2 + 250000, W, BOT - (TOP + th1 + th2 + 250000), [
+    ("cap", "Exploratory, development slice. Mean of three head seeds; the threshold is stored in calibrated space and fixed on validation data. Sealed tests: [pending].")], "batt_note")
+
+# ---- I-0 battery (2): subsets
+s = new_slide("I-0 battery: subsets and errors",
+    "Items 1, 5, 6 and 7 of the diagnostic battery for the working version (experiment E-004, M-004; data/_results/I-0/battery.md); exploratory, development slice, intervals are 95 percent group bootstrap where stated. "
+    "Face frames: validation AUC by manipulation is 0.884 (Deepfakes), 0.834 (Face2Face), 0.778 (FaceSwap) and 0.697 (NeuralTextures); the development slice has one fake label; the clip mean (0.685) is above frame level (0.656) and the median, top-3 mean and maximum are not better; face size shows no trend and no split by compression was possible because FaceForensics++ c23 is one level and the compression of Celeb-DF is not recorded. "
+    "Images: all six validation classes are 1.000; per generator CLIP ViT-L/14 OpenAI scores 0.999 on StarGAN and 0.983 on whichfaceisreal. "
+    "Speech: validation attacks A01 to A05 score 0.996 to 0.997 and A06 0.984; the development AUC per speaker has minimum 0.503, median 0.692 and maximum 0.990, with the pooled value 0.610. "
+    "Worst errors (10 false alarms and 10 misses per task) were classified by eye from local contact sheets, which are not published because of the dataset licences. Evidence: docs/EXPERIMENTS.md E-004 items 1 to 7.")
+hs = ["Task", "AUC by method, generator or speaker", "Splits and aggregation", "Worst errors (20 per task)"]
+rs = [["Face frames", "Validation: Deepfakes 0.884, Face2Face 0.834, FaceSwap 0.778, NeuralTextures 0.697. Development: one fake label, 0.693.",
+       "One face 0.692, two or more 0.762 [0.667, 0.939]; face-height thirds 0.689, 0.696, 0.697. Frame 0.656, clip mean 0.685, median 0.688, top-3 0.663, max 0.662.",
+       "False alarms: sharp near-frontal faces, no visible defect. Misses: 6 of 10 from one identity group, 3 from another."],
+      ["Images", "Validation: six classes 1.000. Development: StarGAN 0.999, whichfaceisreal 0.983.",
+       "The file extension does not separate the classes in any split.",
+       "False alarms: real images with stretched border pixels. Misses: 9 of 10 are photorealistic whichfaceisreal fakes."],
+      ["Speech", "Validation attacks A01 to A05 0.996 to 0.997, A06 0.984. Development per speaker: minimum 0.503, median 0.692, maximum 0.990; pooled 0.610.",
+       "No speaker below 0.5.",
+       "Short clips (median 1.9 s and 1.2 s), repeat-padded fraction 0.52 and 0.70, scores saturated at 0 or 1."]]
+cws2 = [span_w(1) + 400000, span_w(4), span_w(3)]
+cws2.append(W - sum(cws2))
+gt, th = add_table(s, L, TOP, cws2, hs, rs, size=14, bold_first_col=True, max_h=4600000)
+assert TOP + th <= BOT, th
+
+# ---- parity and page check
+s = new_slide("Parity check and page check",
+    "The parity check (D-044, experiment E-004) scores seven training items twice: from the stored features and through the real adapter from the raw file, so that any mismatch between training-time and inference-time preprocessing would show. "
+    "The maximum absolute difference of the calibrated score is 0.0019 (face frames 0.0002, images 0.0019, speech 0.0005) against a tolerance of 0.02, so the check passes; the two dependences named in advance, the JPEG round trip and the colour order, agree. "
+    "The page check started the page with the real adapter and the I-0 checkpoint and uploaded one image, one video with audio and one audio file, all training items, in a real browser: each gave a result with the source real, no MOCK banner and no page error, the video showed a visual and an audio score separately with the verdict Undetermined, the audio score carried the exploratory-calibration warning, and the upload folder was empty afterwards. "
+    "These checks show that the path works and say nothing about accuracy. Evidence: docs/EXPERIMENTS.md E-004, data/_results/I-0/parity.json and web_real_check.json, docs/DECISIONS.md D-044 and D-050.")
+hp = ["Task", "Items scored", "Max abs. difference (calibrated score)"]
+rp = [["Face frames", "2 FaceForensics++ videos (one fake, one real)", "0.0002"],
+      ["Images", "2 ProGAN images", "0.0019"],
+      ["Speech", "3 ASVspoof utterances", "0.0005"],
+      ["All", "7 items, tolerance 0.02", "0.0019 (pass)"]]
+cwp = [span_w(2), span_w(6)]
+cwp.append(W - sum(cwp))
+gt, th = add_table(s, L, TOP, cwp, hp, rp, size=fit_size(cwp, hp, rp, sizes=(16, 15, 14), bold_first_col=True), bold_first_col=True, max_h=2300000, fill=2000000)
+add_text(s, L, TOP + th + 120000, W, BOT - (TOP + th + 120000), [
+    ("b", "Page check: an image, a video with audio and an audio file (training items) gave results with the source real, no MOCK banner and no page error; the upload folder was empty afterwards.", 17),
+    ("b", "The checks show that the path works and say nothing about accuracy.", 17),
+], "parity_text")
+
+# ---- audio diagnosis
+s = new_slide("Audio diagnosis (measurement)",
+    "Measurement M-004 (diagnosis, not an experiment) asked why the speech development AUC is so far below validation; it changes no selection (D-049) and reads only training, validation and development data. "
+    "Label check: the In-the-Wild development features agree with the metadata on every label and speaker, and the ASVspoof train and dev features agree with the protocol files (0 mismatches), so no label inversion; the from-scratch reference reaches 0.99996 to 0.99997 on ASVspoof validation and 0.219 to 0.286 on the development slice, so the below-chance value is a property of the data shift. "
+    "Trivial features used as the fake score show that the sign of leading silence and of RMS energy reverses between the training corpus and In-the-Wild; with 12 speakers the intervals of these two include 0.5, so the sign is supported but the size is not established, and only duration and the repeat-padded fraction exclude 0.5. "
+    "Evidence: docs/EXPERIMENTS.md M-004 (a) and (b), scripts/sweep/m004.py, data/_results/M-004/m004.json.")
+ha2 = ["Single feature as fake score", "ASVspoof train", "ASVspoof dev", "In-the-Wild dev"]
+ra2 = [["Leading silence", "0.416 [0.350, 0.488]", "0.375 [0.299, 0.453]", "0.719 [0.425, 0.933]"],
+       ["Clip duration", "0.479 [0.428, 0.531]", "0.467 [0.393, 0.540]", "0.622 [0.532, 0.670]"],
+       ["RMS energy", "0.572 [0.525, 0.618]", "0.594 [0.537, 0.649]", "0.248 [0.073, 0.546]"],
+       ["Repeat-padded fraction", "0.530 [0.478, 0.581]", "0.543 [0.471, 0.614]", "0.394 [0.348, 0.481]"]]
+cwa = [span_w(3)]
+cwa += [(W - sum(cwa)) // 3] * 3
+cwa[-1] = W - sum(cwa[:-1])
+gt, th = add_table(s, L, TOP, cwa, ha2, ra2, size=fit_size(cwa, ha2, ra2, sizes=(16, 15, 14, 13), bold_first_col=True), bold_first_col=True, max_h=2300000, fill=2000000)
+add_text(s, L, TOP + th + 120000, W, BOT - (TOP + th + 120000), [
+    ("bs", "Labels agree with the source files (0 mismatches): no label inversion.", 16),
+    ("bs", "The from-scratch reference scores 0.99997 in the training domain and 0.219 to 0.286 on In-the-Wild: a data shift, not a label bug.", 16),
+    ("bs", "Leading silence and RMS energy reverse sign between the corpora; with 12 speakers their intervals include 0.5.", 16),
+    ("bs", "Exploratory, development slice; 0.5 means no information.", 16),
+], "audio_text")
+
+# licences# licences
 s = new_slide("Data licences and terms",
     "Every dataset and pretrained weight has its licence, source, version and hash recorded in the data log before use; all datasets are research-only. "
     "Celeb-DF, Celeb-DF++ and FakeAVCeleb forbid publishing derived data, so no frame, crop or per-video score of them appears in any document of this project. "
@@ -1044,6 +1278,7 @@ s = new_slide("Celeb-DF++ test balance",
     "2,079 Celeb-DF++ samples whose target or source identity is one of the 15 development identities are excluded from the sealed test set, and 150 real videos that are byte-identical to Celeb-DF v2 videos are counted once, under their Celeb-DF v2 group id. "
     "The result is a Celeb-DF++ sealed test set of 2,849 fake videos and no real video in 44 identity groups; its AUC is therefore computed only together with the Celeb-DF v2 real videos, and the pooled family test holds 744 real and 6,906 fake videos (89 percent fake). "
     "The group bootstrap resamples identities, so the extra fakes add generator coverage but almost no new independent groups: about 44 identity groups govern the intervals, and balanced accuracy and the threshold carry more noise than the AUC. "
+    "The exclusion rule is by target identity or by celebrity source identity (1,477 by target, 602 only by source), and the source part is required: in a face swap named id_T_id_S the visible face is the source identity, so a sample that shows a development face as the source would otherwise leak it. "
     "Evidence: docs/DECISIONS.md D-045, docs/DATA_LOG.md Celeb-DF++ de-duplication update, split celebdf_pp-3f9df077b9eb.")
 steps = [("Celeb-DF++ test videos extracted", "5,078"), ("Excluded: development identities", "2,079"), ("Excluded: duplicate real videos", "150"),
          ("Sealed test, Celeb-DF++ alone", "2,849 fake, 0 real")]
@@ -1058,9 +1293,10 @@ gt, th = add_table(s, L, TOP + 1500000, [span_w(5), span_w(2), span_w(2), W - sp
     ["Celeb-DF v2", "744", "4,057", "about 44 identities, plus YouTube videos"],
     ["Celeb-DF++ (new generators)", "0", "2,849", "44 identity groups"],
     ["Pooled family test", "744", "6,906", "about 44 identity groups on the fake side"],
-], size="auto", bold_first_col=True, max_h=2300000, fill=2300000)
-add_text(s, L, TOP + 1500000 + th + 130000, W, 900000, [
-    ("s", "Real is 10.8 percent of the pool. The 44 identity groups govern the intervals, and balanced accuracy and the threshold carry more noise than the AUC.")], "pp_note")
+], size="auto", bold_first_col=True, max_h=1900000, fill=1900000)
+add_text(s, L, TOP + 1500000 + th + 100000, W, BOT - (TOP + 1500000 + th + 100000), [
+    ("s", "Real is 10.8 percent of the pool. The 44 identity groups govern the intervals, and balanced accuracy and the threshold carry more noise than the AUC."),
+    ("s", "A sample is excluded when its target identity or its celebrity source identity is one of the 15 development identities (1,477 by target, 602 only by source): in a face swap named by two identities the visible face is the source identity.")], "pp_note")
 
 # environment
 s = new_slide("Environment (measured)",
@@ -1078,13 +1314,20 @@ gt, th = add_table(s, L, TOP, [span_w(3), W - span_w(3)], ["Item", "Measured val
 ], size="auto", bold_first_col=True, max_h=H - 500000, fill=H - 900000)
 
 
-MIRROR = {4: "fig02_splits", 5: "fig01_pipeline", 8: "fig08_shortlist", 10: "fig03_ladder", 11: "fig05_rppg", 13: "fig06_timeline", 19: "fig04_staircase"}
-for _i, _sl in enumerate(prs.slides, 1):
-    if _i in MIRROR:
+MIRROR = {"Protocol: group-disjoint splits": "fig02_splits", "Method: file to calibrated score": "fig01_pipeline", "Encoder shortlist": "fig08_shortlist",
+          "Iteration ladder": "fig03_ladder", "rPPG: test the signal first": "fig05_rppg", "Timeline to 30 October": "fig06_timeline",
+          "Staircase and confirmatory claims": "fig04_staircase", "Web demo (real checkpoint)": "fig07_web"}
+for _sl in prs.slides:
+    _t = _sl.shapes.title.text_frame.text if _sl.shapes.title is not None else ""
+    if _t in MIRROR:
         _tf = _sl.notes_slide.notes_text_frame
-        _tf.text = _tf.text + " This slide is drawn natively and mirrors " + MIRROR[_i] + " of the paper and the report, with the same wording, so that the text is large enough to read when projected."
+        if _t.startswith("Web demo"):
+            _tf.text = _tf.text + " The report carries the labelled figure of the page against the development stand-in (fig07_web); this slide shows the real-checkpoint screenshots instead."
+        else:
+            _tf.text = _tf.text + " This slide is drawn natively and mirrors " + MIRROR[_t] + " of the paper and the report, with the same wording, so that the text is large enough to read when projected."
+
 cp = prs.core_properties
-cp.title = 'Multimodal Deepfake Detection for Images, Video and Audio: A Hypothesis-Driven Study Under a Source-Disjoint Protocol'
+cp.title = 'Multimodal Deepfake Detection for Images, Video and Audio: A Hypothesis-Driven Study Under a Group-Disjoint Protocol'
 cp.author = 'Vaibhav Shiroorkar, Shivansh Gupta, Adithya Jithesh'
 cp.last_modified_by = 'Vaibhav Shiroorkar, Shivansh Gupta, Adithya Jithesh'
 cp.subject = 'Final year project presentation'

@@ -53,7 +53,7 @@ GUIDE, GUIDE_DESIG, HOD = "Dr. Tejashree Phatak", "Assistant Professor", "Dr. Ja
 ADDRESS, YEAR, PLACE = "Vidyavihar, Mumbai - 400 077", "2026-2027", "Mumbai-77"
 FOOTER_TEXT = "Department of Electronics and Computer Engineering Semester VII 2026-27 Batch  Page "
 TITLE = "Multimodal Deepfake Detection for Images, Video and Audio"
-SUBTITLE = "A Hypothesis-Driven Study Under a Source-Disjoint Protocol"
+SUBTITLE = "A Hypothesis-Driven Study Under a Group-Disjoint Protocol"
 FONT = "Times New Roman"
 FOOT_AFTER = 548   # twips of space after the footer text: puts the footer rule where the template has it
 
@@ -394,7 +394,7 @@ class Builder:
         self.counters[kind] += 1
         return self.counters[kind]
 
-    def figure(self, label, fname, caption, width_cm, alt, tag=None):
+    def figure(self, label, fname, caption, width_cm, alt, tag=None, trace=None):
         n = self._seq("fig")
         self.new_reg["fig:" + label] = str(n)
         path = fname if os.path.isabs(fname) else os.path.join(FIG, fname)
@@ -412,8 +412,10 @@ class Builder:
             cap += run(" (" + tag + ")", False, True)
         el = self.emit(X(self.para_xml("Caption", cap)))
         self.attach_pending(el, pend)
+        if trace:
+            self.trace(el, trace)
 
-    def figure_pair(self, label, fnames, caption, width_cm, alts, tag=None):
+    def figure_pair(self, label, fnames, caption, width_cm, alts, tag=None, trace=None):
         """Two pictures side by side (a borderless table) under one caption."""
         n = self._seq("fig")
         self.new_reg["fig:" + label] = str(n)
@@ -444,14 +446,18 @@ class Builder:
             cap += run(" (" + tag + ")", False, True)
         el = self.emit(X(self.para_xml("Caption", cap)))
         self.attach_pending(el, pend)
+        if trace:
+            self.trace(el, trace)
 
-    def table(self, label, caption, header, rows, widths_cm, align=None, size=10, keep=True, bold_first=False, font=None):
+    def table(self, label, caption, header, rows, widths_cm, align=None, size=10, keep=True, bold_first=False, font=None, trace=None):
         n = self._seq("tab")
         self.new_reg["tab:" + label] = str(n)
         cap_inner, pend = self.inline(caption)
         cap = run("Table ", True) + field("SEQ Table \\* ARABIC", str(n), True) + run(". ", True) + cap_inner
         el = self.emit(X(self.para_xml("Caption", cap, '<w:keepNext/>')))
         self.attach_pending(el, pend)
+        if trace:
+            self.trace(el, trace)
         self._grid(header, rows, widths_cm, align, size, keep, bold_first, shade=True, borders=True)
         self.emit(X('<w:p><w:pPr><w:spacing w:before="0" w:after="120" w:line="240" w:lineRule="auto"/><w:rPr><w:sz w:val="12"/></w:rPr></w:pPr></w:p>'))
 
@@ -611,7 +617,7 @@ def main():
     second = build(content.build, first.new_reg, first.new_cites)
     assert second.new_reg == first.new_reg, "numbers changed between passes"
     second.add_comments()
-    second.doc.core_properties.title = TITLE
+    second.doc.core_properties.title = TITLE + ": " + SUBTITLE
     second.doc.core_properties.author = ", ".join(s[0] for s in STUDENTS)
     second.doc.core_properties.comments = ""
     second.doc.save(STAGE)

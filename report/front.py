@@ -3,11 +3,11 @@ from build_report import (X, run, field, esc, LOGO, UNIVERSITY, SCHOOL, DEPARTME
                           ADDRESS, YEAR, PLACE, TITLE, SUBTITLE)
 
 
-def cp(B, text, size=12, bold=False, italic=False, before=0, after=0, line=276, keep=False):
+def cp(B, text, size=12, bold=False, italic=False, before=0, after=0, line=276, keep=False, color=None):
     """One centred line of the cover."""
     ppr = '%s<w:spacing w:before="%d" w:after="%d" w:line="%d" w:lineRule="auto"/><w:jc w:val="center"/>' % (
         "<w:keepNext/>" if keep else "", before * 20, after * 20, line)
-    return B.emit(X('<w:p><w:pPr>%s</w:pPr>%s</w:p>' % (ppr, run(text, bold, italic, size))))
+    return B.emit(X('<w:p><w:pPr>%s</w:pPr>%s</w:p>' % (ppr, run(text, bold, italic, size, extra=('<w:color w:val="%s"/>' % color) if color else ""))))
 
 
 def cover(B):
@@ -15,7 +15,7 @@ def cover(B):
     cp(B, UNIVERSITY, 16, True, after=3)
     cp(B, SCHOOL, 14, True, after=3)
     cp(B, DEPARTMENT, 14, True, after=34)
-    cp(B, TITLE, 24, True, after=10, line=300)
+    cp(B, TITLE, 24, True, after=10, line=300, color="622423")
     cp(B, SUBTITLE, 14, False, True, after=34)
     cp(B, "Submitted In Partial Fulfillment of Requirements", 12)
     cp(B, "For the Degree Of", 12, after=14)
@@ -75,7 +75,7 @@ def certificate(B):
     inst_header(B)
     B.front_title("Certificate")
     B.p("This is to certify that the project report entitled <b>“%s”</b> submitted by the following students at the end of Semester VII of LY B. Tech "
-        "is a bona fide record for partial fulfillment of requirements for the degree of <b>Bachelor of Technology %s</b> of %s." % (TITLE, BRANCH, UNIVERSITY))
+        "is a bona fide record for partial fulfillment of requirements for the degree of <b>Bachelor of Technology %s</b> of %s." % (TITLE + ": " + SUBTITLE, BRANCH, UNIVERSITY))
     B.plain_table([[n, "(" + r + ")"] for n, r in STUDENTS], [6.6, 4.0], ["left", "left"], size=12, bold_first=True)
     B.spacer(6)
     signature_table(B, [
@@ -125,8 +125,9 @@ def abstract(B):
         "intervals and several seeds, candidates are compared in a paired way, and a result is called comparable with a published detector only if it is non-inferior to a re-run "
         "of that detector on the same protocol.")
     B.p("The report describes the mathematical background, the evaluation harness and its acceptance test, the datasets and their licences, the shared preprocessing, the design of "
-        "the encoder comparison, the working version, the iteration ladder, the local web application and the test protocol. Measured results of the encoder comparison and of the "
-        "iterations are marked as pending until their runs are frozen.")
+        "the encoder comparison, the working version, the iteration ladder, the local web application and the test protocol. The encoder comparison and the first working checkpoint have "
+        "exploratory results on the development slice, which are reported with their intervals; the sealed-test, confirmatory and later-iteration results are marked as pending until "
+        "their runs are frozen.")
     B.p("<b>Keywords:</b> deepfake detection, multimodal, group-disjoint evaluation, frozen encoders, calibration, group bootstrap, non-inferiority, remote photoplethysmography.")
 
 
