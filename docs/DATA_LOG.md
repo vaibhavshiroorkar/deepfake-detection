@@ -4,11 +4,11 @@ Last updated: 2026-10-24 (Session 1)
 
 Every dataset used in the project gets one row here before any file is downloaded into the project, and its row is completed when the download finishes. Licence and access terms are copied from the dataset's own page or agreement, not from a paper's description. Data files are stored on D: outside git (see .gitignore).
 
-Policy: D-020 (2026-10-24) allows datasets that need a request form or approval; the user requests and downloads those manually. D-013 (open datasets only) is superseded. Split policy: D-012 (group by source video and person identity; the headline result is on data never used in training). The data selection itself is D-021, status Proposed: it awaits the user's approval. Nothing is downloaded before that approval.
+Policy: D-020 (2026-10-24) allows datasets that need a request form or approval; the user requests and downloads those manually. D-013 (open datasets only) is superseded. Split policy: D-012 (group by source video and person identity; the headline result is on data never used in training). The data selection is D-021, approved by the user on 2026-10-24 as proposed.
 
 ## Status
 
-No dataset has been downloaded. The earlier Tier 1 and Tier 2 download list, built under D-013 from availability, was withdrawn by the user on 2026-10-24 and is replaced by the requirements-driven plan below.
+No dataset had been downloaded when this plan was approved; downloads are logged in the last table of this file. The earlier Tier 1 and Tier 2 download list, built under D-013 from availability, was withdrawn by the user on 2026-10-24 and is replaced by the requirements-driven plan below.
 
 ### What was re-checked by the main agent (primary sources, 2026-10-24)
 
@@ -19,7 +19,7 @@ No dataset has been downloaded. The earlier Tier 1 and Tier 2 download list, bui
 
 Everything else is stream B's report (URLs and quoted lines in docs/_agents/B.md, section 2) and has not been re-opened. Not read by anyone: the FaceForensics Terms of Use PDF, the DFDC terms (the dfdc.ai host had an expired certificate), the VoxCeleb2 agreement that LAV-DF requires, the LAV-DF metadata schema, and the Celeb-DF++ request form (the Tencent form is not readable by the tools used).
 
-## Requirements-driven data plan (this is D-021, Proposed)
+## Requirements-driven data plan (D-021, approved by the user 2026-10-24)
 
 ### Requirements the data must serve
 

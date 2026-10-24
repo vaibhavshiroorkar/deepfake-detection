@@ -313,7 +313,7 @@ The implementer could not verify any turnaround time other than the FaceForensic
 
 ### D-021: Data selection (requirements-driven)
 - Date: 2026-10-24
-- Status: Proposed
+- Status: Decided (user). Proposed by the implementer earlier on 2026-10-24 and approved as proposed by the user the same day.
 - Question: Which datasets are downloaded, in which order, and in which subsets, given the requirements of the project, the D-012 split policy and the bandwidth and disk budget (part of O-003).
 - Options considered: (A) An availability-driven list built under D-013 (Tier 1 and Tier 2; withdrawn by the user). (B) A requirements-driven list in which every dataset must serve a numbered requirement, using gated datasets requested by the user (this proposal). (C) Open datasets only, accepting a weak video protocol.
 - Criteria (stated before the choice): (1) a dataset is kept only if it serves a numbered requirement below; "easy to get" is not a reason; (2) one shared training dataset per modality path, so candidate models are compared fairly (CLAUDE.md rule 4); (3) cross-dataset test sets are never used in training and are grouped by source and identity (D-012); (4) the data needed for the MVP and the first iterations arrives first; (5) total download time and disk use fit the measured bandwidth (4.09 MB/s) and the 404 GB free on D:; (6) the dataset's terms permit our use; (7) nothing is downloaded "just in case".
@@ -325,7 +325,7 @@ The implementer could not verify any turnaround time other than the FaceForensic
   - REQ-e. Image data of two kinds only (D-018): face-manipulated images (frames from face-swap or lip-sync video count, as in the user's definition) and fully generated images.
   - REQ-f. Data adequate for the rPPG feasibility test (video quality and compression, subject identity; D-006, O-010).
 - Evidence: DATA_LOG.md (facts and what was re-checked), R-017 (the usual protocol trains on FF++ c23 and tests on Celeb-DF, DFD, DFDC and others, which makes our numbers comparable under D-005), R-053 (Celeb-DF++ structure), R-024 and R-014 (modality-specific labels), R-011 (a frozen-feature linear probe works from small training sets; the ablation numbers have not been extracted), R-064 and R-059 (compression matters for rPPG). Counts and sizes of the ForenSynths archives were read from the archives' own central directories by range requests on 2026-10-24.
-- Decision and reason: not yet taken; this entry is a proposal awaiting the user's approval. The proposal is the keep, drop or defer table in DATA_LOG.md ("Requirements-driven data plan"), summarised here:
+- Decision and reason: the user approved the proposal as proposed on 2026-10-24. The decision is the keep, drop or defer table in DATA_LOG.md ("Requirements-driven data plan"), summarised here:
   - KEEP for REQ-a: FF++ c23 (originals plus Deepfakes, Face2Face, FaceSwap, NeuralTextures), ASVspoof 2019 LA for audio, the ProGAN validation set (8,000 images) as the small generated-image training set; LAV-DF for audio-visual training.
   - KEEP for REQ-b to REQ-f as tests: Celeb-DF v2, DFD c23 (originals and manipulated), a test-list subset of Celeb-DF++, WildDeepfake test shards, FakeAVCeleb, In-the-Wild, the ProGAN test set, the diffusion test set and an 8-generator subset of the CNN synthesis test set.
   - DEFER: DFDC, FF++ c40, DeepfakeTIMIT with VidTIMIT (fallback only), UBFC-rPPG.
@@ -336,7 +336,7 @@ The implementer could not verify any turnaround time other than the FaceForensic
 
 ## Open decisions
 
-Settled by Session 1 decisions: O-001 (D-011). O-004 is settled as an outline by D-012 (script and details pending). O-002 is partly answered by D-018 and D-019 (what the modalities are); how each input type is handled remains open. O-003 is constrained by D-020 (access policy) and addressed by the proposal D-021, which awaits approval. None of the questions below is otherwise answered. For each one, the options are those the implementer would compare, the criteria are stated before any result exists, and the evidence column says what must be collected. Paper IDs refer to RESEARCH.md. Pointers to papers show where options come from; they are not choices.
+Settled by Session 1 decisions: O-001 (D-011). O-004 is settled as an outline by D-012 (script and details pending). O-002 is partly answered by D-018 and D-019 (what the modalities are); how each input type is handled remains open. O-003 is constrained by D-020 (access policy) and settled by D-021 (approved 2026-10-24). None of the questions below is otherwise answered. For each one, the options are those the implementer would compare, the criteria are stated before any result exists, and the evidence column says what must be collected. Paper IDs refer to RESEARCH.md. Pointers to papers show where options come from; they are not choices.
 
 | ID | Question | Options to compare | Criteria (stated before results) | Evidence needed |
 |---|---|---|---|---|
