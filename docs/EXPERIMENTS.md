@@ -186,39 +186,103 @@ One table per task (T-V face video, T-I generated images, T-A speech audio); one
 One block per task, written by src/dfd/sweep/report.py after each ranking run.
 
 <!-- AUTO TABLE T-V begin -->
-#### T-V (frozen image encoders on face video frames), generated 2026-10-25 00:37 from run 221e12e
+#### T-V (frozen image encoders on face video frames), generated 2026-10-25 02:20 from run e998f04
 
 Weights and cost (one end-to-end run each; FLOPs and the model-only cost are not measured yet):
 
 | Candidate | Checkpoint and revision | Weights source | Licence and label | SHA-256 (local, verified) | Parameters | Feature size | Input size | FLOPs | Peak VRAM, extraction (GiB) | Extraction s per 1,000 inputs, end-to-end | Model-only s per 1,000 |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| IMG-07 | facebook/dinov2-small @ ed25f3a31f01 | facebook/dinov2-small | Apache-2.0; commercial allowed by tag | ae1e99fcefd534ed... | 22,056,576 | 384 | 224 | NR (not measured) | 1.23 | 1.5 | NR (section 7 cost record not run) |
-| IMG-17 | google/siglip-base-patch16-224 @ 7fd15f0689c7 | google/siglip-base-patch16-224 | Apache-2.0 tag; commercial allowed by tag | 2c63cb7d1f2e95ba... | 92,884,224 | 768 | 224 | NR (not measured) | 2.45 | 1.5 | NR (section 7 cost record not run) |
-| IMG-08 | facebook/dinov2-base @ f9e44c814b77 | facebook/dinov2-base | Apache-2.0; commercial allowed by tag | d73036b56966966d... | 86,580,480 | 768 | 224 | NR (not measured) | 2.36 | 2.1 | NR (section 7 cost record not run) |
-| IMG-15 | laion/CLIP-ViT-L-14-laion2B-s32B-b82K @ 162703219714 | laion/CLIP-ViT-L-14-laion2B-s32B-b82K | MIT tag; card says research use | 0fce40ac684817a1... | 303,966,208 | 768 | 224 | NR (not measured) | 4.52 | 4.1 | NR (section 7 cost record not run) |
-| IMG-13 | openai/clip-vit-large-patch14 @ 32bd64288804 | openai/clip-vit-large-patch14 | NR in its repo; research-only (accepted, D-038) | a2bf730a0c7debf1... | 303,966,208 | 768 | 224 | NR (not measured) | 5.02 | 4.6 | NR (section 7 cost record not run) |
-| IMG-01 | timm/efficientnet_b4.ra2_in1k @ 442c00e15609 | timm/efficientnet_b4.ra2_in1k | Apache-2.0 tag; ImageNet-trained, treated as research-only | 8030f9c929ed71a0... | 17,548,616 | 1792 | 320 | NR (not measured) | 5.08 | 2.4 | NR (section 7 cost record not run) |
-| IMG-04 | https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-cadene/xception-43020ad28.pth @ release v0.1 | https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-cadene/xception-43020ad28.pth | apache-2.0 declared by timm; upstream Keras licence NR; research-only | 43020ad2812c333d... | 20,806,952 | 2048 | 299 | NR (not measured) | 10.52 | 3.7 | NR (section 7 cost record not run) |
+| IMG-07 | facebook/dinov2-small @ ed25f3a31f01 | facebook/dinov2-small | Apache-2.0; commercial allowed by tag | ae1e99fcefd534ed... | 22,056,576 | 384 | 224 | NR (not measured) | 0.38 | 0.9 | NR (section 7 cost record not run) |
+| IMG-17 | google/siglip-base-patch16-224 @ 7fd15f0689c7 | google/siglip-base-patch16-224 | Apache-2.0 tag; commercial allowed by tag | 2c63cb7d1f2e95ba... | 92,884,224 | 768 | 224 | NR (not measured) | 1.3 | 1.4 | NR (section 7 cost record not run) |
+| IMG-08 | facebook/dinov2-base @ f9e44c814b77 | facebook/dinov2-base | Apache-2.0; commercial allowed by tag | d73036b56966966d... | 86,580,480 | 768 | 224 | NR (not measured) | 0.95 | 1.7 | NR (section 7 cost record not run) |
+| IMG-15 | laion/CLIP-ViT-L-14-laion2B-s32B-b82K @ 162703219714 | laion/CLIP-ViT-L-14-laion2B-s32B-b82K | MIT tag; card says research use | 0fce40ac684817a1... | 303,966,208 | 768 | 224 | NR (not measured) | 2.72 | 4.0 | NR (section 7 cost record not run) |
+| IMG-13 | openai/clip-vit-large-patch14 @ 32bd64288804 | openai/clip-vit-large-patch14 | NR in its repo; research-only (accepted, D-038) | a2bf730a0c7debf1... | 303,966,208 | 768 | 224 | NR (not measured) | 2.85 | 4.5 | NR (section 7 cost record not run) |
+| IMG-01 | timm/efficientnet_b4.ra2_in1k @ 442c00e15609 | timm/efficientnet_b4.ra2_in1k | Apache-2.0 tag; ImageNet-trained, treated as research-only | 8030f9c929ed71a0... | 17,548,616 | 1792 | 320 | NR (not measured) | 1.31 | 1.7 | NR (section 7 cost record not run) |
+| IMG-04 | https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-cadene/xception-43020ad28.pth @ release v0.1 | https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-cadene/xception-43020ad28.pth | apache-2.0 declared by timm; upstream Keras licence NR; research-only | 43020ad2812c333d... | 20,806,952 | 2048 | 299 | NR (not measured) | 1.96 | 3.3 | NR (section 7 cost record not run) |
 
 Results (exploratory, dev_x; step-time file tags are in the fit column):
 
 | Candidate | Validation AUC | dev_x AUC [95%] | Gap | Rank (I-1 order) | Tied with leader | Entered I-1 candidates | I-1 fit (D-042, video only) |
 |---|---|---|---|---|---|---|---|
-| IMG-07 | 0.7985 | 0.6933 [0.6639, 0.7314] | +0.1052 | 1 | yes | yes | not measured |
-| IMG-17 | 0.8767 | 0.7396 [0.7031, 0.7832] | +0.1371 | 2 | yes | yes | not measured |
-| IMG-08 | 0.8170 | 0.6745 [0.6323, 0.7239] | +0.1425 | 3 | yes | yes | not measured |
-| IMG-15 | 0.8635 | 0.7331 [0.6764, 0.7966] | +0.1304 | 4 | yes | no | not measured |
-| IMG-13 | 0.9046 | 0.7464 [0.6721, 0.8306] | +0.1582 | 5 | yes | no | not measured |
-| IMG-01 | 0.7478 | 0.6471 [0.5967, 0.6987] | +0.1007 | 6 | no | no | not measured |
-| IMG-04 | 0.7184 | 0.6162 [0.5744, 0.6633] | +0.1022 | 7 | no | no | not measured |
+| IMG-07 | 0.7985 | 0.6933 [0.6639, 0.7314] | +0.1052 | 1 | yes | yes | fits (2.0 GiB at batch 32, 1.4 min per budget; step-time run 'alone') |
+| IMG-17 | 0.8767 | 0.7396 [0.7031, 0.7832] | +0.1371 | 2 | yes | yes | fits (3.99 GiB at batch 32, 3.4 min per budget; step-time run 'alone') |
+| IMG-08 | 0.8170 | 0.6745 [0.6323, 0.7239] | +0.1425 | 3 | yes | yes | fits (4.49 GiB at batch 32, 4.0 min per budget; step-time run 'alone') |
+| IMG-15 | 0.8635 | 0.7331 [0.6764, 0.7966] | +0.1304 | 4 | yes | no | does not fit (12.23 GiB at batch 32, 300.0 min per budget; step-time run 'alone') |
+| IMG-13 | 0.9046 | 0.7464 [0.6721, 0.8306] | +0.1582 | 5 | yes | no | does not fit (13.75 GiB at batch 32, 457.1 min per budget; step-time run 'alone') |
+| IMG-01 | 0.7478 | 0.6471 [0.5967, 0.6987] | +0.1007 | 6 | no | no | fits (7.28 GiB at batch 32, 4.2 min per budget; step-time run 'alone') |
+| IMG-04 | 0.7184 | 0.6162 [0.5744, 0.6633] | +0.1022 | 7 | no | no | fits (4.29 GiB at batch 32, 3.3 min per budget; step-time run 'alone') |
 
 Considered and not in the sweep:
 - IMG-05: Xception41 (aligned variant): replaced by the original Xception IMG-04 (D-038)
 - IMG-09: DINOv2 large: reserve, fine-tuning estimate tight on 12 GB (O007_SWEEP 3.1)
 - IMG-10..12,19: DINOv3: manual access gate and acknowledgement duty, excluded on purpose (D-038)
 - IMG-14: OpenAI CLIP timm re-upload: fallback only, not needed because IMG-13 was accepted (D-038)
-- From-scratch reference (IMG-20): not run (excluded from selection in any case).
+- From-scratch reference (IMG-20): reported, excluded from the selection. dev_x AUC 0.5166 [0.5033, 0.5324] over 3 seeds; protocol difference: end to end, no pretrained weights, 10 epochs, AdamW 1e-3, no augmentation, last-epoch weights; excluded from the selection.
 <!-- AUTO TABLE T-V end -->
+
+<!-- AUTO TABLE T-I begin -->
+#### T-I (frozen image encoders on generated images), generated 2026-10-25 02:31 from run 214076b
+
+Weights and cost (one end-to-end run each; FLOPs and the model-only cost are not measured yet):
+
+| Candidate | Checkpoint and revision | Weights source | Licence and label | SHA-256 (local, verified) | Parameters | Feature size | Input size | FLOPs | Peak VRAM, extraction (GiB) | Extraction s per 1,000 inputs, end-to-end | Model-only s per 1,000 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| IMG-13 | openai/clip-vit-large-patch14 @ 32bd64288804 | openai/clip-vit-large-patch14 | NR in its repo; research-only (accepted, D-038) | a2bf730a0c7debf1... | 303,966,208 | 768 | 224 | NR (not measured) | 2.85 | 4.9 | NR (section 7 cost record not run) |
+| IMG-15 | laion/CLIP-ViT-L-14-laion2B-s32B-b82K @ 162703219714 | laion/CLIP-ViT-L-14-laion2B-s32B-b82K | MIT tag; card says research use | 0fce40ac684817a1... | 303,966,208 | 768 | 224 | NR (not measured) | 2.72 | 4.5 | NR (section 7 cost record not run) |
+| IMG-08 | facebook/dinov2-base @ f9e44c814b77 | facebook/dinov2-base | Apache-2.0; commercial allowed by tag | d73036b56966966d... | 86,580,480 | 768 | 224 | NR (not measured) | 0.95 | 2.0 | NR (section 7 cost record not run) |
+| IMG-17 | google/siglip-base-patch16-224 @ 7fd15f0689c7 | google/siglip-base-patch16-224 | Apache-2.0 tag; commercial allowed by tag | 2c63cb7d1f2e95ba... | 92,884,224 | 768 | 224 | NR (not measured) | 1.3 | 1.8 | NR (section 7 cost record not run) |
+| IMG-07 | facebook/dinov2-small @ ed25f3a31f01 | facebook/dinov2-small | Apache-2.0; commercial allowed by tag | ae1e99fcefd534ed... | 22,056,576 | 384 | 224 | NR (not measured) | 0.38 | 1.2 | NR (section 7 cost record not run) |
+| IMG-01 | timm/efficientnet_b4.ra2_in1k @ 442c00e15609 | timm/efficientnet_b4.ra2_in1k | Apache-2.0 tag; ImageNet-trained, treated as research-only | 8030f9c929ed71a0... | 17,548,616 | 1792 | 320 | NR (not measured) | 1.31 | 2.5 | NR (section 7 cost record not run) |
+| IMG-04 | https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-cadene/xception-43020ad28.pth @ release v0.1 | https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-cadene/xception-43020ad28.pth | apache-2.0 declared by timm; upstream Keras licence NR; research-only | 43020ad2812c333d... | 20,806,952 | 2048 | 299 | NR (not measured) | 1.96 | 2.2 | NR (section 7 cost record not run) |
+
+Results (exploratory, dev_x; step-time file tags are in the fit column):
+
+| Candidate | Validation AUC | dev_x AUC [95%] | Gap | Rank (I-1 order) | Tied with leader | Entered I-1 candidates | I-1 fit (D-042, video only) |
+|---|---|---|---|---|---|---|---|
+| IMG-13 | 1.0000 | 0.9935 [0.9803, 0.9982] | +0.0065 | 1 | yes | yes | n/a |
+| IMG-15 | 1.0000 | 0.9563 [0.7760, 0.9975] | +0.0437 | 2 | no | yes | n/a |
+| IMG-08 | 0.9899 | 0.9023 [0.8496, 0.9316] | +0.0876 | 3 | no | yes | n/a |
+| IMG-17 | 0.9975 | 0.8657 [0.7591, 0.9166] | +0.1318 | 4 | no | no | n/a |
+| IMG-07 | 0.9685 | 0.8340 [0.7401, 0.8823] | +0.1345 | 5 | no | no | n/a |
+| IMG-01 | 0.8990 | 0.6688 [0.6238, 0.7137] | +0.2302 | 6 | no | no | n/a |
+| IMG-04 | 0.8140 | 0.6380 [0.4912, 0.7115] | +0.1759 | 7 | no | no | n/a |
+
+Considered and not in the sweep:
+- IMG-05: Xception41 (aligned variant): replaced by the original Xception IMG-04 (D-038)
+- IMG-09: DINOv2 large: reserve, fine-tuning estimate tight on 12 GB (O007_SWEEP 3.1)
+- IMG-10..12,19: DINOv3: manual access gate and acknowledgement duty, excluded on purpose (D-038)
+- IMG-14: OpenAI CLIP timm re-upload: fallback only, not needed because IMG-13 was accepted (D-038)
+- From-scratch reference (IMG-20): reported, excluded from the selection. dev_x AUC 0.5500 [0.5080, 0.5735] over 3 seeds; protocol difference: end to end, no pretrained weights, 10 epochs, AdamW 1e-3, no augmentation, last-epoch weights; excluded from the selection.
+<!-- AUTO TABLE T-I end -->
+
+<!-- AUTO TABLE T-A begin -->
+#### T-A (frozen speech encoders on speech deepfakes), generated 2026-10-25 02:49 from run 214076b
+
+Weights and cost (one end-to-end run each; FLOPs and the model-only cost are not measured yet):
+
+| Candidate | Checkpoint and revision | Weights source | Licence and label | SHA-256 (local, verified) | Parameters | Feature size | Input size | FLOPs | Peak VRAM, extraction (GiB) | Extraction s per 1,000 inputs, end-to-end | Model-only s per 1,000 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| AU-8 | facebook/hubert-base-ls960 @ dba3bb02fda4 | facebook/hubert-base-ls960 | Apache-2.0 tag; commercial allowed by tag | 062249fffb353eab... | 94,371,712 | 1536 | 64600 | NR (not measured) | 2.4 | 2.0 | NR (section 7 cost record not run) |
+| AU-4 | microsoft/wavlm-base-plus @ 4c66d4806a42 | microsoft/wavlm-base-plus | no tag, CC BY-SA 3.0 upstream; research-only (accepted, D-038) | 3bb273a6ace99408... | 94,381,936 | 1536 | 64600 | NR (not measured) | 2.38 | 2.5 | NR (section 7 cost record not run) |
+| AU-6 | openai/whisper-small @ 973afd24965f | openai/whisper-small | Apache-2.0 tag, MIT upstream | 1d7734884874f1a1... | 88,154,112 | 1536 | 64600 | NR (not measured) | 1.62 | 11.5 | NR (section 7 cost record not run) |
+| AU-1 | facebook/wav2vec2-base @ 0b5b8e868dd8 | facebook/wav2vec2-base | Apache-2.0 tag; commercial allowed by tag | 3249fe98bfc62fcb... | 94,371,712 | 1536 | 64600 | NR (not measured) | 2.34 | 2.0 | NR (section 7 cost record not run) |
+
+Results (exploratory, dev_x; step-time file tags are in the fit column):
+
+| Candidate | Validation AUC | dev_x AUC [95%] | Gap | Rank (I-1 order) | Tied with leader | Entered I-1 candidates | I-1 fit (D-042, video only) |
+|---|---|---|---|---|---|---|---|
+| AU-8 | 0.9942 | 0.6100 [0.5434, 0.7256] | +0.3842 | 1 | yes | yes | n/a |
+| AU-4 | 0.9924 | 0.6334 [0.5291, 0.7714] | +0.3590 | 2 | yes | yes | n/a |
+| AU-6 | 0.9995 | 0.6380 [0.5338, 0.7700] | +0.3615 | 3 | yes | yes | n/a |
+| AU-1 | 0.9965 | 0.4975 [0.3451, 0.7092] | +0.4990 | 4 | no | no | n/a |
+
+Considered and not in the sweep:
+- IMG-05: Xception41 (aligned variant): replaced by the original Xception IMG-04 (D-038)
+- IMG-09: DINOv2 large: reserve, fine-tuning estimate tight on 12 GB (O007_SWEEP 3.1)
+- IMG-10..12,19: DINOv3: manual access gate and acknowledgement duty, excluded on purpose (D-038)
+- IMG-14: OpenAI CLIP timm re-upload: fallback only, not needed because IMG-13 was accepted (D-038)
+- From-scratch reference (AU-REF): reported, excluded from the selection. dev_x AUC 0.2458 [0.0706, 0.4404] over 3 seeds; protocol difference: end to end, no pretrained weights, 10 epochs, AdamW 1e-3, no augmentation, last-epoch weights; excluded from the selection.
+<!-- AUTO TABLE T-A end -->
 
 ## Experiment log
 
@@ -226,7 +290,7 @@ No experiment has been run yet. Planned entries follow; their hypotheses were wr
 
 ## E-001: frozen image encoders on face video frames, ranked on dev_x   (Iteration I-0)
 - Status: RUN on 2026-10-25 (automatic ranking, dfd.sweep.rank). The hypothesis and criteria below were written on 2026-10-24 before any feature extraction and are not edited after the run. Protocol: docs/O007_SWEEP.md.
-- Date / Environment / Git commit / Seed(s): 2026-10-25 / ENV-DESKTOP-GPU / 221e12e / head seeds 0, 1, 2.
+- Date / Environment / Git commit / Seed(s): 2026-10-25 / ENV-DESKTOP-GPU / e998f04 / head seeds 0, 1, 2. (The header first read 221e12e, the commit before the run; corrected 2026-10-25 to the commit named in the generated block, D-049.)
 - Hypothesis (written BEFORE the run): Among the frozen encoders of the shortlist, at least one self-supervised or vision-language encoder (the DINOv2 or CLIP-style families) reaches a higher dev_x clip AUC on Celeb-DF v2 identities not used in training than the best supervised ImageNet CNN (EfficientNet, Xception), when all are trained on FF++ c23 frames with the same linear head. Basis: R-011 (a frozen CLIP feature space generalised across generators better than trained networks, protocol: trained on ProGAN, tested on other generators), R-017 (strong supervised detectors lose about 0.17 mean AUC from within-domain to cross-domain), R-018 (some supervised features transfer worse). Counter-evidence: R-044 (face detectors learn identity cues) and the absence of any frozen-feature result for face forgery in the papers read, so the direction is uncertain. Every candidate is also expected to score lower on dev_x than on the in-dataset validation split (a generalisation gap).
 - Success criterion (written BEFORE the run): (a) the paired 95 percent bootstrap interval of dev_x AUC (best non-CNN candidate minus best supervised CNN) lies above zero; and (b) the best candidate's lower interval bound on dev_x AUC is above 0.60.
 - Failure criterion (written BEFORE the run): (f1) the interval of the difference in (a) includes zero or lies below zero: the hypothesis is not supported, and the selection rule of O007_SWEEP.md section 8 decides (the cheaper candidate wins ties); (f2) the best candidate's lower bound on dev_x AUC is 0.55 or below: frozen features are judged inadequate for this task and the sweep is declared inconclusive.
@@ -238,7 +302,7 @@ No experiment has been run yet. Planned entries follow; their hypotheses were wr
 
 <!-- AUTO E-001 begin -->
 ### E-001 ranking (T-V): frozen image encoders on face video frames
-Run 2026-10-25 00:37, commit 221e12e, seeds [0, 1, 2], 2000 bootstrap resamples (base seed 20261024), head: linear, class-balanced BCE, AdamW lr 0.001, weight decay 0.0001, batch 1024, at most 200 epochs, patience 10. Train ffpp_train, validation ffpp_val, dev_x celebdf_dev_x: 1728 clips (146 real, 1582 fake) in 15 groups, 0 excluded without a score.
+Run 2026-10-25 02:20, commit e998f04, seeds [0, 1, 2], 2000 bootstrap resamples (base seed 20261024), head: linear, class-balanced BCE, AdamW lr 0.001, weight decay 0.0001, batch 1024, at most 200 epochs, patience 10. Train ffpp_train, validation ffpp_val, dev_x celebdf_dev_x: 1728 clips (146 real, 1582 fake) in 15 groups, 0 excluded without a score.
 
 | Rank (I-1 order) | Candidate | dev_x AUC (mean of seeds) | 95% interval | seed sd | validation AUC | gap | diff vs leader [95%] | permutation p | tied with leader |
 |---|---|---|---|---|---|---|---|---|---|
@@ -251,9 +315,9 @@ Run 2026-10-25 00:37, commit 221e12e, seeds [0, 1, 2], 2000 bootstrap resamples 
 | 7 | IMG-04 | 0.6162 | [0.5744, 0.6633] | 0.0066 | 0.7184 | +0.1022 | -0.130 [-0.191, -0.071] | 0.007 | no |
 
 Leader (highest mean dev_x AUC): IMG-13. Tie set (paired interval against the leader includes zero), cheapest first: IMG-07, IMG-17, IMG-08, IMG-15, IMG-13. Winner under the D-036 rule (cheapest in the tie set): IMG-07 (the cost rule decided).
-Cost used for the rule: end-to-end extraction time per 1,000 inputs, then parameters, from extraction sidecar (end-to-end, one run).
+Cost used for the rule: end-to-end extraction time per 1,000 inputs, then parameters, from cost_record.json (section 7: end-to-end, median of 3 repeats).
 Order for I-1 (tie set first, then the rest by AUC; ordering decided autonomously, D-042 fit rule applied later): IMG-07, IMG-17, IMG-08, IMG-15, IMG-13, IMG-01, IMG-04.
-From-scratch reference: not run (excluded from selection in any case).
+From-scratch reference: reported, excluded from the selection. dev_x AUC 0.5166 [0.5033, 0.5324], seed sd 0.0045; difference to the leader -0.2298 [-0.3068, -0.1637]; protocol: end to end, no pretrained weights, 10 epochs, AdamW 1e-3, no augmentation, last-epoch weights; excluded from the selection.
 
 | Candidate | dev_x EER | balanced accuracy at the validation threshold | ECE before / after temperature | Brier before / after | mean temperature |
 |---|---|---|---|---|---|
@@ -271,26 +335,89 @@ Mechanical verdict on the pre-declared criteria: SUPPORTED. This is an explorato
 <!-- AUTO E-001 end -->
 
 ## E-002: frozen image encoders on generated images, ranked on dev_x   (Iteration I-0)
-- Status: PLANNED. Written 2026-10-24 before any extraction. Protocol: docs/O007_SWEEP.md.
-- Date / Environment / Git commit / Seed(s): to be filled at the run / ENV-DESKTOP-GPU / to be filled / head seeds 0, 1, 2.
+- Status: RUN on 2026-10-25 (automatic ranking, dfd.sweep.rank). Written 2026-10-24 before any extraction. Protocol: docs/O007_SWEEP.md.
+- Date / Environment / Git commit / Seed(s): 2026-10-25 / ENV-DESKTOP-GPU / 214076b / head seeds 0, 1, 2.
 - Hypothesis (written BEFORE the run): A CLIP-style frozen encoder reaches a higher dev_x AUC on the two held-out CNN-synthesis generators than every supervised ImageNet CNN, when all are trained on the ProGAN validation images (14 classes). Basis: R-011 (trained on ProGAN, a frozen CLIP-feature linear probe reached 99.31 mean AP on GAN-family test sets and 95.00 on unseen diffusion and autoregressive ones, against 94.19 and 75.51 for the best trained network; its training set was far larger than ours).
 - Success criterion (written BEFORE the run): the paired 95 percent interval of dev_x AUC (best CLIP-style candidate minus best supervised CNN) lies above zero, and the best candidate's lower bound on dev_x AUC is above 0.65.
 - Failure criterion (written BEFORE the run): the interval includes zero or lies below zero (not supported; the cost rule decides), or the best candidate's lower bound is 0.55 or below (inconclusive).
 - Data and split IDs: ProGAN validation set split by class (14 train, 6 val) and the CNN-synthesis dev_x generator units (2 of 7, D-035 Amendment 1); IDs to be filled at the run.
-- Command and config: to be filled at the run.
-- Result (numbers, with seeds and intervals): none yet.
-- Was the hypothesis supported? Why or why not: none yet.
+- Command and config: `PYTHONPATH=src .venv/Scripts/python.exe -m dfd.sweep.rank --task T-I`; config in data/_results/T-I/rank.json.
+- Result (numbers, with seeds and intervals): see the generated block below (data/_results/T-I/rank.md).
+- Was the hypothesis supported? Why or why not: mechanical verdict on the pre-declared criteria: SUPPORTED (details in the generated block; exploratory dev_x result, D-041).
 - Decision triggered (D-NNN) / next step: the selection decision for T-I and the I-1 candidates.
 
+<!-- AUTO E-002 begin -->
+### E-002 ranking (T-I): frozen image encoders on generated images
+Run 2026-10-25 02:31, commit 214076b, seeds [0, 1, 2], 2000 bootstrap resamples (base seed 20261024), head: linear, class-balanced BCE, AdamW lr 0.001, weight decay 0.0001, batch 1024, at most 200 epochs, patience 10. Train progan_train, validation progan_val, dev_x cnn_dev_x: 5998 clips (2999 real, 2999 fake) in 2 groups, 0 excluded without a score.
+
+| Rank (I-1 order) | Candidate | dev_x AUC (mean of seeds) | 95% interval | seed sd | validation AUC | gap | diff vs leader [95%] | permutation p | tied with leader |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | IMG-13 | 0.9935 | [0.9803, 0.9982] | 0.0006 | 1.0000 | +0.0065 | leader | n/a | yes |
+| 2 | IMG-15 | 0.9563 | [0.7760, 0.9975] | 0.0018 | 1.0000 | +0.0437 | -0.037 [-0.204, -0.001] | n/a (fewer than 6 groups: the permutation test cannot reach 0.05) | no |
+| 3 | IMG-08 | 0.9023 | [0.8496, 0.9316] | 0.0039 | 0.9899 | +0.0876 | -0.091 [-0.131, -0.067] | n/a (fewer than 6 groups: the permutation test cannot reach 0.05) | no |
+| 4 | IMG-17 | 0.8657 | [0.7591, 0.9166] | 0.0034 | 0.9975 | +0.1318 | -0.128 [-0.221, -0.082] | n/a (fewer than 6 groups: the permutation test cannot reach 0.05) | no |
+| 5 | IMG-07 | 0.8340 | [0.7401, 0.8823] | 0.0021 | 0.9685 | +0.1345 | -0.159 [-0.240, -0.116] | n/a (fewer than 6 groups: the permutation test cannot reach 0.05) | no |
+| 6 | IMG-01 | 0.6688 | [0.6238, 0.7137] | 0.0018 | 0.8990 | +0.2302 | -0.325 [-0.357, -0.285] | n/a (fewer than 6 groups: the permutation test cannot reach 0.05) | no |
+| 7 | IMG-04 | 0.6380 | [0.4912, 0.7115] | 0.0019 | 0.8140 | +0.1759 | -0.355 [-0.489, -0.287] | n/a (fewer than 6 groups: the permutation test cannot reach 0.05) | no |
+
+Leader (highest mean dev_x AUC): IMG-13. Tie set (paired interval against the leader includes zero), cheapest first: IMG-13. Winner under the D-036 rule (cheapest in the tie set): IMG-13 (no tie).
+Cost used for the rule: end-to-end extraction time per 1,000 inputs, then parameters, from cost_record.json (section 7: end-to-end, median of 3 repeats).
+Order for I-1 (tie set first, then the rest by AUC; ordering decided autonomously, D-042 fit rule applied later): IMG-13, IMG-15, IMG-08, IMG-17, IMG-07, IMG-01, IMG-04.
+From-scratch reference: reported, excluded from the selection. dev_x AUC 0.5500 [0.5080, 0.5735], seed sd 0.0544; difference to the leader -0.4435 [-0.4723, -0.4247]; protocol: end to end, no pretrained weights, 10 epochs, AdamW 1e-3, no augmentation, last-epoch weights; excluded from the selection.
+
+| Candidate | dev_x EER | balanced accuracy at the validation threshold | ECE before / after temperature | Brier before / after | mean temperature |
+|---|---|---|---|---|---|
+| IMG-13 | 0.0401 | 0.9551 | 0.0462 / 0.0050 | 0.0334 / 0.0299 | 0.582 |
+| IMG-15 | 0.1196 | 0.8683 | 0.0222 / 0.0998 | 0.1074 / 0.1242 | 0.375 |
+| IMG-08 | 0.1803 | 0.7962 | 0.1914 / 0.1534 | 0.2272 / 0.2103 | 1.374 |
+| IMG-17 | 0.2147 | 0.6893 | 0.2084 / 0.2345 | 0.2463 / 0.2620 | 0.766 |
+| IMG-07 | 0.2446 | 0.7336 | 0.2074 / 0.1771 | 0.2592 / 0.2450 | 1.240 |
+| IMG-01 | 0.3716 | 0.5920 | 0.2880 / 0.2463 | 0.3284 / 0.3043 | 1.337 |
+| IMG-04 | 0.4069 | 0.5794 | 0.2868 / 0.1728 | 0.3362 / 0.2785 | 2.120 |
+
+Pre-declared criteria, evaluated by script: best candidate IMG-13, lower bound 0.9803 (criterion (b): above 0.65: met; inconclusive line: not crossed).
+Family comparison, best IMG-13 minus best IMG-01: +0.3247 [+0.2845, +0.3565], interval above zero (met).
+Mechanical verdict on the pre-declared criteria: SUPPORTED. This is an exploratory dev_x result (D-041); the sensitivity column is a check, not a second rule.
+<!-- AUTO E-002 end -->
+
 ## E-003: frozen speech encoders on speech deepfakes, ranked on dev_x   (Iteration I-0)
-- Status: PLANNED. Written 2026-10-24 before any extraction. Protocol: docs/O007_SWEEP.md.
-- Date / Environment / Git commit / Seed(s): to be filled at the run / ENV-DESKTOP-GPU / to be filled / head seeds 0, 1, 2.
+- Status: RUN on 2026-10-25 (automatic ranking, dfd.sweep.rank). Written 2026-10-24 before any extraction. Protocol: docs/O007_SWEEP.md.
+- Date / Environment / Git commit / Seed(s): 2026-10-25 / ENV-DESKTOP-GPU / 214076b / head seeds 0, 1, 2.
 - Hypothesis (written BEFORE the run): A self-supervised speech encoder (wav2vec 2.0 or WavLM) reaches a higher dev_x AUC on In-the-Wild speakers not used in training than both the Whisper encoder and the small from-scratch reference, when trained on ASVspoof 2019 LA. Basis: R-029 (a wav2vec 2.0 front end lowered EER from 11.47 to 6.15 percent, best seed, train ASVspoof 2019 LA and test ASVspoof 2021 LA) and R-033 (models trained on ASVspoof 2019 reach EERs far above their in-corpus values on In-the-Wild, about 33.9 percent for RawNet2).
 - Success criterion (written BEFORE the run): the paired 95 percent intervals of dev_x AUC (best self-supervised candidate minus the Whisper candidate, and minus the from-scratch reference) both lie above zero, and the best candidate's lower bound on dev_x AUC is above 0.60.
 - Failure criterion (written BEFORE the run): either interval includes zero or lies below zero (not supported; the cost rule decides), or the best candidate's lower bound is 0.55 or below (inconclusive).
 - Data and split IDs: ASVspoof 2019 LA train and dev (val) and the In-the-Wild dev_x slice (12 of 54 speakers, D-035); IDs to be filled at the run.
-- Command and config: to be filled at the run.
-- Result (numbers, with seeds and intervals): none yet.
-- Was the hypothesis supported? Why or why not: none yet.
+- Command and config: `PYTHONPATH=src .venv/Scripts/python.exe -m dfd.sweep.rank --task T-A`; config in data/_results/T-A/rank.json.
+- Result (numbers, with seeds and intervals): see the generated block below (data/_results/T-A/rank.md).
+- Was the hypothesis supported? Why or why not: mechanical verdict on the pre-declared criteria: INCONCLUSIVE (best lower bound at or below 0.55) (details in the generated block; exploratory dev_x result, D-041).
 - Decision triggered (D-NNN) / next step: the selection decision for T-A and the I-1 candidates.
+
+<!-- AUTO E-003 begin -->
+### E-003 ranking (T-A): frozen speech encoders on speech deepfakes
+Run 2026-10-25 02:49, commit 214076b, seeds [0, 1, 2], 2000 bootstrap resamples (base seed 20261024), head: linear, class-balanced BCE, AdamW lr 0.001, weight decay 0.0001, batch 1024, at most 200 epochs, patience 10. Train asvspoof_train, validation asvspoof_dev, dev_x itw_dev_x: 6991 clips (3804 real, 3187 fake) in 12 groups, 0 excluded without a score.
+
+| Rank (I-1 order) | Candidate | dev_x AUC (mean of seeds) | 95% interval | seed sd | validation AUC | gap | diff vs leader [95%] | permutation p | tied with leader |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | AU-8 | 0.6100 | [0.5434, 0.7256] | 0.0026 | 0.9942 | +0.3842 | -0.028 [-0.107, +0.039] | 0.599 | yes |
+| 2 | AU-4 | 0.6334 | [0.5291, 0.7714] | 0.0031 | 0.9924 | +0.3590 | -0.005 [-0.044, +0.040] | 0.894 | yes |
+| 3 | AU-6 | 0.6380 | [0.5338, 0.7700] | 0.0089 | 0.9995 | +0.3615 | leader | n/a | yes |
+| 4 | AU-1 | 0.4975 | [0.3451, 0.7092] | 0.0212 | 0.9965 | +0.4990 | -0.140 [-0.238, -0.050] | 0.170 | no |
+
+Leader (highest mean dev_x AUC): AU-6. Tie set (paired interval against the leader includes zero), cheapest first: AU-8, AU-4, AU-6. Winner under the D-036 rule (cheapest in the tie set): AU-8 (the cost rule decided).
+Cost used for the rule: end-to-end extraction time per 1,000 inputs, then parameters, from cost_record.json (section 7: end-to-end, median of 3 repeats).
+Order for I-1 (tie set first, then the rest by AUC; ordering decided autonomously, D-042 fit rule applied later): AU-8, AU-4, AU-6, AU-1.
+From-scratch reference: reported, excluded from the selection. dev_x AUC 0.2458 [0.0706, 0.4404], seed sd 0.0355; difference to the leader -0.3922 [-0.6527, -0.1434]; protocol: end to end, no pretrained weights, 10 epochs, AdamW 1e-3, no augmentation, last-epoch weights; excluded from the selection.
+
+| Candidate | dev_x EER | balanced accuracy at the validation threshold | ECE before / after temperature | Brier before / after | mean temperature |
+|---|---|---|---|---|---|
+| AU-8 | 0.4183 | 0.5289 | 0.3293 / 0.4052 | 0.3699 / 0.4247 | 0.485 |
+| AU-4 | 0.3930 | 0.5256 | 0.3700 / 0.4420 | 0.3893 / 0.4494 | 0.490 |
+| AU-6 | 0.4006 | 0.5787 | 0.1819 / 0.2875 | 0.2796 / 0.3292 | 0.454 |
+| AU-1 | 0.5020 | 0.5208 | 0.3482 / 0.4165 | 0.3993 / 0.4418 | 0.541 |
+
+Pre-declared criteria, evaluated by script: best candidate AU-6, lower bound 0.5338 (criterion (b): above 0.6: not met; inconclusive line: crossed).
+Family comparison, best AU-4 minus best AU-6: -0.0046 [-0.0437, +0.0399], interval includes zero or is below (not met).
+Comparison with the from-scratch reference: {"estimate": 0.38759700153236, "low": 0.15308106499361954, "high": 0.6533440810769281, "se": 0.14355747696297294, "seed_sd": null, "n_nan": 0, "met": true}
+Mechanical verdict on the pre-declared criteria: INCONCLUSIVE (best lower bound at or below 0.55). This is an exploratory dev_x result (D-041); the sensitivity column is a check, not a second rule.
+<!-- AUTO E-003 end -->
 
