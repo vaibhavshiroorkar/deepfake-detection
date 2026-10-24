@@ -4,7 +4,7 @@ __pycache__/
 .ipynb_checkpoints/
 
 # data, checkpoints and papers are never committed (size, licences)
-data/
+/data/
 checkpoints/
 runs/
 papers_pdf/
