@@ -68,5 +68,15 @@ def expected_files(task: Task) -> list[Path]:
     return out
 
 
+def cost_record_ready(task: Task) -> bool:
+    """The section 7 cost record of every candidate of the task exists (the tie rule of D-036 uses it)."""
+    import json
+    f = RESULTS / "cost_record.json"
+    if not f.is_file():
+        return False
+    rec = json.loads(f.read_text()).get(task.id, {})
+    return all(c in rec for c in task.candidates)
+
+
 def is_ready(task: Task) -> bool:
-    return all(p.is_file() for p in expected_files(task))
+    return all(p.is_file() for p in expected_files(task)) and cost_record_ready(task)

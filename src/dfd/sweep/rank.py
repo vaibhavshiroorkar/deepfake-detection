@@ -58,9 +58,10 @@ def cost_of(cand: str, task: Task) -> dict:
     """End-to-end extraction cost per 1,000 inputs and the parameter count, from the extraction sidecars (one run each)."""
     rec = RESULTS / "cost_record.json"
     if rec.is_file():
-        r = json.loads(rec.read_text()).get(cand)
+        r = json.loads(rec.read_text()).get(task.id, {}).get(cand)
         if r:
-            return dict(s_per_1000=r["end_to_end_s_per_1000"], params=r["params"], source="cost_record.json", peak_vram_gb=r.get("peak_vram_gb"))
+            return dict(s_per_1000=r["end_to_end_s_per_1000"], params=r["params"], dim=r.get("dim"), input_size=r.get("input_size"),
+                        peak_vram_gb=r.get("peak_vram_gb"), source="cost_record.json (section 7: end-to-end, median of 3 repeats)")
     secs = n = 0
     params = dim = size = vram = None
     for ds in (task.train, task.val, task.devx):
