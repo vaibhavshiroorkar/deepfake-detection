@@ -369,6 +369,17 @@ The implementer could not verify any turnaround time other than the FaceForensic
 - Rejected and why: EER and balanced accuracy as the headline (depend on a threshold or are less common for video); fixed 0.5 as the threshold policy (honest only for calibrated, balanced scores); report-only calibration and Platt scaling (not chosen by the user); 5 seeds or 10000 resamples (do not fit the schedule).
 - Consequences / what could prove this wrong: A validation set from the training distribution may be too easy, so the chosen threshold may transfer badly across datasets; this will show as a gap between in-dataset and cross-dataset balanced accuracy and is reported, not hidden. Temperature scaling does not fix a shift between datasets.
 
+### D-025: Definition of "comparable with published detectors" (follows from D-005)
+- Date: 2026-10-24
+- Status: Proposed
+- Question: What "comparable with published detectors" (D-005) means in a checkable way.
+- Options considered: Quote paper numbers beside ours; re-run a published detector family under our protocol and compare with a paired interval; match a published number within a tolerance.
+- Criteria: The comparison must obey the comparison rules (same data, split, budget and metric; at least 3 seeds; paired bootstrap), and in-dataset and cross-dataset numbers are never mixed (RESEARCH.md rule).
+- Evidence: R-017 (the common FF++ to other-datasets protocol); the protocol differences between papers recorded in RESEARCH.md notes 1 and 12.
+- Decision and reason: Proposed in REQUIREMENTS.md section 8: re-run a published detector family under our protocol with the same data, split, budget and metric, report both with intervals, and call ours comparable when the interval of the paired difference contains zero or favours the baseline by less than a margin stated before the run. Quoted paper numbers are context only, with their own protocol named.
+- Rejected and why: Quoting paper numbers beside ours (different protocols), and matching a published number (not reproducible under our splits).
+- Consequences / what could prove this wrong: The margin has to be stated before the run, which Stage 2 or the first comparison must do. If the chosen baseline cannot be trained within the time budget, "comparable" would have to be weakened and said so.
+
 ## Open decisions
 
 Settled by Session 1 decisions: O-001 (D-011); O-005 (D-024). O-004 is settled as an outline by D-012 (script and details pending). O-002 is partly answered by D-018 and D-019 (what the modalities are); how each input type is handled remains open. O-003 is constrained by D-020 (access policy) and settled by D-021 (approved 2026-10-24). None of the questions below is otherwise answered. For each one, the options are those the implementer would compare, the criteria are stated before any result exists, and the evidence column says what must be collected. Paper IDs refer to RESEARCH.md. Pointers to papers show where options come from; they are not choices.
