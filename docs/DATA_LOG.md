@@ -249,6 +249,10 @@ Written for the earlier plan and kept as the evidence base. Status values: `OPEN
 | ultraface_rfb320.onnx (1,270,727 bytes) | https://github.com/Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB/raw/master/models/onnx/version-RFB-320.onnx | 34cd7e60aeff28744c657de7a3dc64e872d506741de66987f3426f2b79f88017 | not verified | Benchmark comparison only; not used by the project |
 | det_500m.onnx (2,524,817 bytes, from buffalo_sc.zip) | https://github.com/deepinsight/insightface/releases/download/v0.7/buffalo_sc.zip | 5e4447f50245bbd7966bd6c0fa52938c61474a04ec7def48753668a9d8b4ea3a | InsightFace models: non-commercial research purposes only (InsightFace README, read 2026-10-24) | Benchmark comparison only; not used by the project |
 
+## Finding: which downloaded video datasets carry audio
+
+Measured 2026-10-24 with ffprobe (stream S2-C and a check by the main agent): 0 of 20 sampled FF++ c23 videos and 0 of 250 sampled Celeb-DF v2 videos have an audio stream (the FF++ dataset README says the source videos were downloaded without audio). DFD, Celeb-DF++ and the others have not been probed. Consequence: audio inside video can be trained and tested only with LAV-DF or FakeAVCeleb (D-021 requirement REQ-c); see PLAN.md risks 6 and 7 for the claim if neither is available.
+
 ## Downloaded datasets
 
 One row per finished download, generated from data/_manifests/downloads.jsonl. The role is the planned role (D-021); the final role is assigned when the split policy is applied to the dataset (D-012). FF++ and DFD rows are added when their downloads and checks finish.

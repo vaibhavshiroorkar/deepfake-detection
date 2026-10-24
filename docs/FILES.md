@@ -19,6 +19,7 @@ One row per file or folder. Status is `exists`, `planned` or `missing`. A `plann
 | docs/DATA_LOG.md | Requirements-driven data plan (D-021), keep, drop or defer table, bandwidth budget, manual-download sheets, stream B fact tables, downloaded-datasets table | Provenance, licence and role of each dataset | exists |
 | docs/RESEARCH.md | Search protocol, literature matrix R-001 to R-067, NR table, notes that bear on decisions, further reading | Evidence base for decisions and for the paper | exists |
 | docs/VIVA_PREP.md | Question bank linked to decisions and experiments, answers pending, standard definitions | Preparation for the viva | exists |
+| docs/O007_SWEEP.md | The pre-declared protocol, selection rule and fine-tuning plan of the encoder comparison (iteration I-0 and I-1), awaiting the user's approval of the shortlist | Design of the measured comparison for O-007 (D-036, Proposed) | exists |
 | docs/WORKSTREAMS.md | Parallel plan for three roles: project in plain English with decided/proposed/open tags, progress audit, data versus work, six workstreams, dependency map, action plan, workflow | Lets three people work without waiting on downloads (D-030, Proposed) | exists |
 | docs/REQUIREMENTS.md | Stage 0 problem statement, requirements, success criteria | Stage 0 output | exists |
 | docs/PROTOCOL.md | Stage 2 evaluation protocol and acceptance test A1 to A8 | Stage 2 output; spec for src/dfd/eval | exists |

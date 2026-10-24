@@ -137,4 +137,41 @@ The probe script was kept outside the repository (scratch directory) because Ses
 
 ## Experiment log
 
-No experiments have been run yet.
+No experiment has been run yet. Planned entries follow; their hypotheses were written before any run.
+
+## E-001: frozen image encoders on face video frames, ranked on dev_x   (Iteration I-0)
+- Status: PLANNED. The hypothesis and criteria below were written on 2026-10-24 before any feature extraction and are not edited after the run. Protocol: docs/O007_SWEEP.md.
+- Date / Environment / Git commit / Seed(s): to be filled at the run / ENV-DESKTOP-GPU / to be filled / head seeds 0, 1, 2.
+- Hypothesis (written BEFORE the run): Among the frozen encoders of the shortlist, at least one self-supervised or vision-language encoder (the DINOv2 or CLIP-style families) reaches a higher dev_x clip AUC on Celeb-DF v2 identities not used in training than the best supervised ImageNet CNN (EfficientNet, Xception), when all are trained on FF++ c23 frames with the same linear head. Basis: R-011 (a frozen CLIP feature space generalised across generators better than trained networks, protocol: trained on ProGAN, tested on other generators), R-017 (strong supervised detectors lose about 0.17 mean AUC from within-domain to cross-domain), R-018 (some supervised features transfer worse). Counter-evidence: R-044 (face detectors learn identity cues) and the absence of any frozen-feature result for face forgery in the papers read, so the direction is uncertain. Every candidate is also expected to score lower on dev_x than on the in-dataset validation split (a generalisation gap).
+- Success criterion (written BEFORE the run): (a) the paired 95 percent bootstrap interval of dev_x AUC (best non-CNN candidate minus best supervised CNN) lies above zero; and (b) the best candidate's lower interval bound on dev_x AUC is above 0.60.
+- Failure criterion (written BEFORE the run): (f1) the interval of the difference in (a) includes zero or lies below zero: the hypothesis is not supported, and the selection rule of O007_SWEEP.md section 8 decides (the cheaper candidate wins ties); (f2) the best candidate's lower bound on dev_x AUC is 0.55 or below: frozen features are judged inadequate for this task and the sweep is declared inconclusive.
+- Data and split IDs: FF++ c23 official split (train, val) and the Celeb-DF v2 dev_x slice (15 of 59 identity groups, D-035); IDs to be filled from data/_splits at the run.
+- Command and config: to be filled at the run.
+- Result (numbers, with seeds and intervals): none yet.
+- Was the hypothesis supported? Why or why not: none yet.
+- Decision triggered (D-NNN) / next step: the selection decision for T-V and the I-1 candidates.
+
+## E-002: frozen image encoders on generated images, ranked on dev_x   (Iteration I-0)
+- Status: PLANNED. Written 2026-10-24 before any extraction. Protocol: docs/O007_SWEEP.md.
+- Date / Environment / Git commit / Seed(s): to be filled at the run / ENV-DESKTOP-GPU / to be filled / head seeds 0, 1, 2.
+- Hypothesis (written BEFORE the run): A CLIP-style frozen encoder reaches a higher dev_x AUC on the two held-out CNN-synthesis generators than every supervised ImageNet CNN, when all are trained on the ProGAN validation images (14 classes). Basis: R-011 (trained on ProGAN, a frozen CLIP-feature linear probe reached 99.31 mean AP on GAN-family test sets and 95.00 on unseen diffusion and autoregressive ones, against 94.19 and 75.51 for the best trained network; its training set was far larger than ours).
+- Success criterion (written BEFORE the run): the paired 95 percent interval of dev_x AUC (best CLIP-style candidate minus best supervised CNN) lies above zero, and the best candidate's lower bound on dev_x AUC is above 0.65.
+- Failure criterion (written BEFORE the run): the interval includes zero or lies below zero (not supported; the cost rule decides), or the best candidate's lower bound is 0.55 or below (inconclusive).
+- Data and split IDs: ProGAN validation set split by class (14 train, 6 val) and the CNN-synthesis dev_x generators (2 of 8, D-035); IDs to be filled at the run.
+- Command and config: to be filled at the run.
+- Result (numbers, with seeds and intervals): none yet.
+- Was the hypothesis supported? Why or why not: none yet.
+- Decision triggered (D-NNN) / next step: the selection decision for T-I and the I-1 candidates.
+
+## E-003: frozen speech encoders on speech deepfakes, ranked on dev_x   (Iteration I-0)
+- Status: PLANNED. Written 2026-10-24 before any extraction. Protocol: docs/O007_SWEEP.md.
+- Date / Environment / Git commit / Seed(s): to be filled at the run / ENV-DESKTOP-GPU / to be filled / head seeds 0, 1, 2.
+- Hypothesis (written BEFORE the run): A self-supervised speech encoder (wav2vec 2.0 or WavLM) reaches a higher dev_x AUC on In-the-Wild speakers not used in training than both the Whisper encoder and the small from-scratch reference, when trained on ASVspoof 2019 LA. Basis: R-029 (a wav2vec 2.0 front end lowered EER from 11.47 to 6.15 percent, best seed, train ASVspoof 2019 LA and test ASVspoof 2021 LA) and R-033 (models trained on ASVspoof 2019 reach EERs far above their in-corpus values on In-the-Wild, about 33.9 percent for RawNet2).
+- Success criterion (written BEFORE the run): the paired 95 percent intervals of dev_x AUC (best self-supervised candidate minus the Whisper candidate, and minus the from-scratch reference) both lie above zero, and the best candidate's lower bound on dev_x AUC is above 0.60.
+- Failure criterion (written BEFORE the run): either interval includes zero or lies below zero (not supported; the cost rule decides), or the best candidate's lower bound is 0.55 or below (inconclusive).
+- Data and split IDs: ASVspoof 2019 LA train and dev (val) and the In-the-Wild dev_x slice (12 of 58 speakers, D-035); IDs to be filled at the run.
+- Command and config: to be filled at the run.
+- Result (numbers, with seeds and intervals): none yet.
+- Was the hypothesis supported? Why or why not: none yet.
+- Decision triggered (D-NNN) / next step: the selection decision for T-A and the I-1 candidates.
+
