@@ -102,7 +102,9 @@ def comparison_tables(res: dict) -> str:
                 fit = f"{'fits' if ok else 'does not fit'} ({vram} GiB at batch 32, {57600 / fps / 60:.1f} min per budget; step-time run '{tag}')" if not m.get("oom") else "OOM at batch 32"
         Bt.append(f"| {c} | {p['val_auc_mean']:.4f} | {d['estimate']:.4f} [{d['low']:.4f}, {d['high']:.4f}] | {p['gap']:+.4f} | {rank} | {'yes' if c in res['tie_set'] else 'no'} | {'yes' if rank <= 3 else 'no'} | {fit} |")
     dropped = "\n".join(f"- {k}: {v}" for k, v in DROPPED.items())
-    ref = f"- From-scratch reference ({'IMG-20' if res['task'] != 'T-A' else 'AU-REF'}): {res['reference']}."
+    rr = res.get("reference_result")
+    ref = f"- From-scratch reference ({'IMG-20' if res['task'] != 'T-A' else 'AU-REF'}): {res['reference']}." + ("" if not rr else
+        f" dev_x AUC {rr['dev_auc']['estimate']:.4f} [{rr['dev_auc']['low']:.4f}, {rr['dev_auc']['high']:.4f}] over {rr['seeds']} seeds; protocol difference: {rr['protocol']}.")
     return (f"#### {res['task']} ({task.title}), generated {res['date']} from run {res['commit']}\n\nWeights and cost (one end-to-end run each; FLOPs and the model-only cost are not measured yet):\n\n"
             + "\n".join(A) + "\n\nResults (exploratory, dev_x; step-time file tags are in the fit column):\n\n" + "\n".join(Bt)
             + "\n\nConsidered and not in the sweep:\n" + dropped + "\n" + ref + "\n")

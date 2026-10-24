@@ -79,4 +79,5 @@ def cost_record_ready(task: Task) -> bool:
 
 
 def is_ready(task: Task) -> bool:
-    return all(p.is_file() for p in expected_files(task)) and cost_record_ready(task)
+    ref = RESULTS / task.id / "reference_scores.npz"      # the from-scratch reference (reported, never selected) is part of the table
+    return all(p.is_file() for p in expected_files(task)) and cost_record_ready(task) and ref.is_file()

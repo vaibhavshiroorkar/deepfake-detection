@@ -120,3 +120,19 @@ def test_task_readiness_follows_the_feature_files(setup):
     assert all(p.is_file() for c in task.candidates for p in [tasks.feature_path(c, task, task.train)])
     t3 = Task("T-X", "E-009", "x", ("A",), "tr", "va", "dx", True, ("A",), ("A",))
     assert not tasks.is_ready(t3)
+
+
+def test_reference_is_reported_but_never_selected(setup):
+    task, tmp = setup
+    out = tmp / "out" / "T-V"
+    out.mkdir(parents=True)
+    # a reference with a better dev AUC than every candidate must not change the selection
+    ds = np.load(tmp / "features" / "A" / "T-V" / "dx.npz")
+    y = ds["label"]
+    perfect = np.tile((y * 0.8 + 0.1).astype(float), (3, 1))
+    np.savez(out / "reference_scores.npz", sample_id=ds["sample_id"], scores=perfect)
+    res = rank.run_task(task, n_boot=200, out_dir=tmp / "out")
+    assert res["reference"].startswith("reported") and res["reference_result"]["dev_auc"]["estimate"] > 0.99
+    assert res["winner"] == "B" and "reference" not in res["i1_order"]
+    assert "From-scratch reference" in (out / "rank.md").read_text()
+    assert res["reference_result"]["diff_vs_leader"]["estimate"] > 0

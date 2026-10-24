@@ -198,8 +198,16 @@ def run_task(task: Task, seeds=SEEDS, n_boot=B.N_BOOT, out_dir: Path | None = No
     if ref_file.is_file():
         z = np.load(ref_file, allow_pickle=False)
         order = {s: i for i, s in enumerate(z["sample_id"])}
-        reference = np.asarray(z["scores"])[:, [order[s] for s in sid_dev[ok_dev]]]
+        reference = np.asarray(z["scores"], float)[:, [order[s] for s in sid_dev[ok_dev]]]
+        n_ref_nan = int(np.isnan(reference).sum())
+        reference = np.nan_to_num(reference, nan=0.5)       # a clip the reference could not score gets the neutral score; counted
     sel = select(cands, sc, y, g, costs, n_boot)
+    ref_result = None
+    if reference is not None:
+        rb = B.cluster_bootstrap(y, reference, g, "auc", n_boot=n_boot)
+        rd, _, _ = B.paired_bootstrap(y, reference, sc[sel["leader"]], g, "auc", n_boot=n_boot)
+        ref_result = dict(dev_auc=rb.as_dict(), diff_vs_leader=rd.as_dict(), n_scores_set_neutral=n_ref_nan, seeds=int(reference.shape[0]),
+                          protocol="end to end, no pretrained weights, 10 epochs, AdamW 1e-3, no augmentation, last-epoch weights; excluded from the selection")
     crit = criteria(task, cands, sc, y, g, sel["boot"], n_boot, reference)
     for c in cands:
         b = sel["boot"][c]
@@ -228,7 +236,8 @@ def run_task(task: Task, seeds=SEEDS, n_boot=B.N_BOOT, out_dir: Path | None = No
                data=dict(train=task.train, val=task.val, devx=task.devx, n_dev=int(ok_dev.sum()), n_dev_excluded_no_score=int((~ok_dev).sum()),
                          n_val=int(ok_val.sum()), n_dev_groups=int(np.unique(g).size), dev_real=int((y == 0).sum()), dev_fake=int((y == 1).sum())),
                leader=sel["leader"], tie_set=sel["tie_set"], winner=sel["winner"], i1_order=sel["i1_order"], cost_decided=sel["cost_decided"],
-               criteria=crit, reference="used" if reference is not None else "not run (excluded from selection in any case)",
+               criteria=crit, reference="reported, excluded from the selection" if reference is not None else "not run (excluded from selection in any case)",
+               reference_result=ref_result,
                partial=bool(candidates) and set(cands) != set(task.candidates), candidates=per, seconds=round(time.perf_counter() - t0, 1),
                command=f"PYTHONPATH=src .venv/Scripts/python.exe -m dfd.sweep.rank --task {task.id}")
     (out / "rank.json").write_text(json.dumps(res, indent=1, default=lambda o: o.item() if hasattr(o, "item") else str(o)))
@@ -258,7 +267,10 @@ def render_md(res: dict) -> str:
           "Cost used for the rule: end-to-end extraction time per 1,000 inputs, then parameters, from "
           + res["candidates"][res["winner"]]["cost"]["source"] + ".",
           "Order for I-1 (tie set first, then the rest by AUC; ordering decided autonomously, D-042 fit rule applied later): " + ", ".join(res["i1_order"]) + ".",
-          f"From-scratch reference: {res['reference']}.", "",
+          f"From-scratch reference: {res['reference']}." + ("" if not res.get("reference_result") else
+              " dev_x AUC {estimate:.4f} [{low:.4f}, {high:.4f}], seed sd {seed_sd:.4f}; difference to the leader {d_est:+.4f} [{d_low:+.4f}, {d_high:+.4f}]; protocol: {protocol}.".format(
+                  d_est=res["reference_result"]["diff_vs_leader"]["estimate"], d_low=res["reference_result"]["diff_vs_leader"]["low"],
+                  d_high=res["reference_result"]["diff_vs_leader"]["high"], protocol=res["reference_result"]["protocol"], **res["reference_result"]["dev_auc"])), "",
           "| Candidate | dev_x EER | balanced accuracy at the validation threshold | ECE before / after temperature | Brier before / after | mean temperature |", "|---|---|---|---|---|---|"]
     for c in res["i1_order"]:
         p = res["candidates"][c]
