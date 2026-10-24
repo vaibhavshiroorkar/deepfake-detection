@@ -79,9 +79,16 @@ def bottom(b):
 
 
 def save(fig, name):
+    """Save as 300 dpi PNG and vector PDF, cropped to the drawn content (the canvas is larger than the drawing)."""
+    from matplotlib.transforms import Bbox
     OUT.mkdir(parents=True, exist_ok=True)
-    fig.savefig(OUT / f"{name}.png", dpi=DPI)
-    fig.savefig(OUT / f"{name}.pdf")
+    fig.canvas.draw()
+    r = fig.canvas.get_renderer()
+    ax = fig.axes[0]
+    bb = Bbox.union([a.get_window_extent(r) for a in list(ax.texts) + list(ax.patches)])
+    crop = bb.transformed(fig.dpi_scale_trans.inverted()).padded(0.06)
+    fig.savefig(OUT / f"{name}.png", dpi=DPI, bbox_inches=crop)
+    fig.savefig(OUT / f"{name}.pdf", bbox_inches=crop)
     plt.close(fig)
     print("wrote", name)
 
@@ -89,7 +96,6 @@ def save(fig, name):
 # ------------------------------------------------------------------ 1 pipeline
 def fig01():
     fig, ax = canvas(7.0, 4.1)
-    ax.text(0.1, 3.95, "From a file to a calibrated score", fontsize=10, fontweight="bold", va="top")
     ax.text(0.1, 3.62, "threshold fixed on validation data;  encoders frozen;  scores are probabilities of fake", fontsize=7, color=MUTED)
     W, G, X0, SX = 0.8, 0.17, 0.1, 5.95            # box width, gap, first column, x of the score column
 
@@ -117,28 +123,26 @@ def fig01():
 # ------------------------------------------------------------------ 2 splits
 def fig02():
     fig, ax = canvas(7.0, 3.5)
-    ax.text(0.1, 3.38, "Group-disjoint splits and who may touch them", fontsize=10, fontweight="bold", va="top")
     t = box(ax, 0.1, 0.5, 2.9, 2.35, "", fc=C["in"], round_=0.06)
-    ax.text(1.55, 2.68, "Training dataset  (for example FaceForensics++)", ha="center", fontsize=8, fontweight="bold")
-    box(ax, 0.25, 1.35, 1.25, 0.95, "train", fc=C["model"], fs=9, bold=True)
-    box(ax, 1.6, 1.35, 1.25, 0.95, "validation\nthreshold, temperature,\nearly stopping", fc=C["model"], fs=7)
-    box(ax, 0.25, 0.62, 2.6, 0.55, "test_in  (in-dataset, sealed, reported not headline)", fc=C["warn"], fs=7.2)
+    ax.text(1.55, 2.68, "Training dataset  (for example FaceForensics++)", ha="center", fontsize=9, fontweight="bold")
+    box(ax, 0.25, 1.35, 1.25, 0.95, "train", fc=C["model"], fs=10, bold=True)
+    box(ax, 1.6, 1.35, 1.25, 0.95, "validation\nthreshold, temperature,\nearly stopping", fc=C["model"], fs=8)
+    box(ax, 0.25, 0.62, 2.6, 0.55, "test_in  (in-dataset, sealed, reported not headline)", fc=C["warn"], fs=8)
     x = box(ax, 3.35, 0.5, 3.55, 2.35, "", fc=C["gray"], round_=0.06)
-    ax.text(5.1, 2.68, "Cross-dataset source  (for example Celeb-DF v2)", ha="center", fontsize=8, fontweight="bold")
-    box(ax, 3.5, 1.35, 1.55, 0.95, "dev_x\ndevelopment slice\nranks candidates,\nmay be reused", fc=C["out"], fs=7)
-    box(ax, 5.2, 1.35, 1.55, 0.95, "test_x\nsealed headline test\ntouched once per\nfrozen iteration", fc=C["warn"], fs=7)
-    box(ax, 3.5, 0.62, 3.25, 0.55, "dev_x and test_x share no group, identity or file content", fc="#ffffff", fs=7.2)
+    ax.text(5.1, 2.68, "Cross-dataset source  (for example Celeb-DF v2)", ha="center", fontsize=9, fontweight="bold")
+    box(ax, 3.5, 1.35, 1.55, 0.95, "dev_x\ndevelopment slice\nranks candidates,\nmay be reused", fc=C["out"], fs=8)
+    box(ax, 5.2, 1.35, 1.55, 0.95, "test_x\nsealed headline test\ntouched once per\nfrozen iteration", fc=C["warn"], fs=8)
+    box(ax, 3.5, 0.62, 3.25, 0.55, "dev_x and test_x share no group, identity or file content", fc="#ffffff", fs=8)
     ax.text(0.1, 0.2, "group = source video together with the person identity;  a family (for example Celeb-DF v2 and Celeb-DF++) counts as one source",
-            fontsize=7, color=MUTED)
+            fontsize=8, color=MUTED)
     ax.annotate("", xy=(3.35, 1.8), xytext=(3.0, 1.8), arrowprops=dict(arrowstyle="<->", color=MUTED, lw=0.8))
-    ax.text(3.18, 1.55, "no overlap", fontsize=6.5, color=MUTED, ha="center")
+    ax.text(3.18, 1.95, "no\noverlap", fontsize=7, color=MUTED, ha="center", va="bottom")
     save(fig, "fig02_splits")
 
 
 # ------------------------------------------------------------------ 3 ladder
 def fig03():
     fig, ax = canvas(7.0, 3.6)
-    ax.text(0.1, 3.48, "Iteration ladder: each step starts from a diagnosis", fontsize=10, fontweight="bold", va="top")
     names = [("I-0", "working\nversion", C["model"]), ("I-1", "fine-tuning\ndepth", C["proc"]), ("I-2", "frame\naggregation", C["proc"]), ("I-3", "loss and class\nweighting", C["proc"]),
              ("I-4", "augmentation,\nregularisation", C["proc"]), ("I-5", "combining\nencoders", C["proc"]), ("I-6", "late fusion,\ncalibration", C["proc"]),
              ("I-7", "rPPG\nexperiment", C["out"]), ("I-8", "integration\nand freeze", C["warn"])]
@@ -165,20 +169,19 @@ def fig03():
 # ------------------------------------------------------------------ 4 staircase
 def fig04():
     fig, ax = canvas(7.0, 3.5)
-    ax.text(0.1, 3.38, "Staircase test protocol", fontsize=10, fontweight="bold", va="top")
     labels = ["I-0", "I-1", "I-2", "...", "final"]
     for k, lab in enumerate(labels):
         x0 = 0.35 + k * 1.15
         h = 1.0 + k * 0.26
         box(ax, x0, 0.6, 1.0, h, "", fc=C["proc"] if lab != "final" else C["model"], round_=0.02)
-        ax.text(x0 + 0.5, 0.6 + h - 0.15, lab, ha="center", va="top", fontsize=8.5, fontweight="bold")
+        ax.text(x0 + 0.5, 0.6 + h - 0.15, lab, ha="center", va="top", fontsize=10, fontweight="bold")
         if lab != "...":
-            ax.text(x0 + 0.5, 0.7, "frozen,\nevaluated\nonce", ha="center", va="bottom", fontsize=6.5, color=INK, linespacing=1.15)
-    ax.text(0.35, 2.55, "development slice: exploratory verdicts (sign, size, interval)", fontsize=7.2, color=MUTED)
-    ax.text(0.35, 2.35, "sealed test sets: one evaluation per frozen iteration, written to a ledger", fontsize=7.2, color=MUTED)
+            ax.text(x0 + 0.5, 0.7, "frozen,\nevaluated\nonce", ha="center", va="bottom", fontsize=8, color=INK, linespacing=1.15)
+    ax.text(0.35, 2.55, "development slice: exploratory verdicts (sign, size, interval)", fontsize=8.5, color=MUTED)
+    ax.text(0.35, 2.35, "sealed test sets: one evaluation per frozen iteration, written to a ledger", fontsize=8.5, color=MUTED)
     c1 = box(ax, 6.15, 2.2, 0.75, 0.55, "final vs\nI-0", fc=C["out"], fs=7, bold=True)
     c2 = box(ax, 6.15, 1.45, 0.75, 0.55, "final vs\nbaseline", fc=C["out"], fs=7, bold=True)
-    ax.text(6.52, 2.85, "two pre-declared\nconfirmatory claims", ha="center", fontsize=6.8, color=MUTED, linespacing=1.2)
+    ax.text(6.52, 2.85, "two pre-declared\nconfirmatory claims", ha="center", fontsize=8, color=MUTED, linespacing=1.2)
     arrow(ax, (5.2, 2.05), left(c1), rad=-0.1)
     arrow(ax, (5.2, 1.85), left(c2), rad=0.1)
     save(fig, "fig04_staircase")
@@ -187,7 +190,6 @@ def fig04():
 # ------------------------------------------------------------------ 5 rPPG chain
 def fig05():
     fig, ax = canvas(7.0, 2.9)
-    ax.text(0.1, 2.78, "rPPG processing chain and signal check", fontsize=10, fontweight="bold", va="top")
     steps = ["Contiguous\nframes, native\nrate (about 10 s)", "Face and skin\nregion", "Mean R, G, B\nper frame", "Window\nnormalisation", "Projection\nto one pulse\nsignal",
              "Power spectrum\n0.7 to 3 Hz", "Peak and\nSNR"]
     xs, prev = 0.1, None
@@ -210,7 +212,6 @@ def fig05():
 # ------------------------------------------------------------------ 6 timeline
 def fig06():
     fig, ax = canvas(7.0, 3.3)
-    ax.text(0.1, 3.18, "Timeline to submission, 24 to 30 October 2026", fontsize=10, fontweight="bold", va="top")
     days = ["Sat 24", "Sun 25", "Mon 26", "Tue 27", "Wed 28", "Thu 29", "Fri 30"]
     x0, wd = 1.55, 0.76
     for k, d in enumerate(days):
@@ -307,7 +308,7 @@ def fig08():
     n = len(rows)
     fig, ax = canvas(7.0, 0.5 + 0.24 * (n + 1), tag=False)
     H = 0.5 + 0.24 * (n + 1)
-    ax.text(0.1, H - 0.1, "Encoder shortlist (frozen features, linear head)", fontsize=10, fontweight="bold", va="top")
+    
     cols = [("Task", 0.1), ("Encoder", 1.35), ("Family", 2.85), ("Parameters", 4.25), ("Feature size", 4.95), ("Weights licence", 5.65)]
     y = H - 0.5
     for t, x in cols:
