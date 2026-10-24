@@ -63,3 +63,6 @@ NEXT STEP: Start the I-0 sweep (E-001 to E-003, protocol D-036) by extracting fr
 
 - Department, semester and batch wording on the report and slides (open question 1).
 - Python 3.13 and PyTorch 2.14.1+cu130 are accepted by the user (D-017).
+
+## Background job log
+- 2026-10-24 23:37 VoxCeleb2 terms read and summarised in DATA_LOG.md (no standalone agreement text found; access form NR; raw VoxCeleb2 no longer hosted by its authors).
