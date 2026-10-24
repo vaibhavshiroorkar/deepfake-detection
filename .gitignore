@@ -35,3 +35,9 @@ Document Template/
 
 # supplied by the dataset authors after approval (their code is MIT licensed, the link is per user): not committed
 /download-FaceForensics.py
+
+# archives are never committed (datasets arrive as zip or tar; record hashes in docs/DATA_LOG.md instead)
+*.zip
+*.tar
+*.tar.gz
+*.fdmdownload
