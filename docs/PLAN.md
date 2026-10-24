@@ -30,7 +30,7 @@ This plan lists the stages of the project, the question each stage must answer, 
 
 | Measurement | Why | When | Status |
 |---|---|---|---|
-| Download throughput on this connection | Decides how many gigabytes can arrive per day and therefore the download order | Day 1, during the first approved download | to be measured |
+| Download throughput on this connection | Decides how many gigabytes can arrive per day and therefore the download order | Day 1 | first reading 4.09 MB/s on one connection from one server (EXPERIMENTS.md); to be re-measured during the first approved download |
 | Decode, face crop and audio extraction throughput on a fixed sample of clips | Likely bottleneck; sets the size of every later experiment | Day 2 morning | to be measured |
 | Peak VRAM, seconds per epoch and parameters of each candidate backbone at the batch size used | Cost axes in DECISIONS.md; fits runs inside 11 GiB | Day 3 (MVP) and Day 4 (candidates) | to be measured |
 | Time of one full run (one seed) of the MVP | Sets how many seeds and iterations fit per day | Day 3 | to be measured |

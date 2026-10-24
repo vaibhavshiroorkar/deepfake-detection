@@ -73,6 +73,17 @@ What this tells us and what it does not:
 - The memory here is dominated by activations at full 224 x 224 resolution with batch 256, not by parameters. Activation memory is what will limit batch size for larger backbones within 12 GB, of which about 1 GiB is taken by the desktop.
 - The figures are for one synthetic workload. They say nothing about the speed of any real backbone, and real data loading (video decoding, face cropping) will probably be the bottleneck. This must be measured when the pipeline exists.
 
+### Network download throughput (measured, Session 1)
+
+- Date: 2026-10-24, about 18:00 local time. One HTTP range request of the first 200 MiB (209,715,200 bytes) of the PyTorch cu130 wheel from download-r2.pytorch.org, discarded.
+- Result: 51.3 seconds, 4.09 MB/s (about 33 Mbit/s), a single connection.
+- Caveats: one server, one connection, one moment, and five background research agents were also using the network. Other servers and parallel connections may be faster or slower. At 4 MB/s a full 404 GB would take about 27 hours, so the download order in DATA_LOG.md must put the most important datasets first.
+
+### Environment changes in Session 1
+
+- CPU name: the measured CPU is the AMD Ryzen 9 7900X. The notes in CLAUDE.md section 6 and in the first prompt say 7900K; the measured value stands.
+- LaTeX tool versions (MiKTeX): recorded by the template stream; see below when merged.
+
 ### Reproduction
 
 ```
