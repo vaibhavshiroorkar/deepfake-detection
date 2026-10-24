@@ -223,10 +223,20 @@ def step_asvspoof():
                   d / "LA.zip", expected_size=7640952520, parts=8)
     out = DATA / "asvspoof2019_la"
     extract_zip(d / "LA.zip", out)
-    n = count_ext(out, {".flac"})
-    say(f"flac files found: {n}; documented total 121,461 (train 25,380 + dev 24,844 + eval 71,237)")
-    if n != 25380 + 24844 + 71237:
-        raise RuntimeError("ASVspoof 2019 LA file count differs from the documented count")
+    # The countermeasure (CM) protocol files are the authoritative lists. The folders also hold
+    # speaker-verification enrolment utterances (142 in dev, 696 in eval) that are not in the CM protocols.
+    cm = out / "LA" / "ASVspoof2019_LA_cm_protocols"
+    docs = {"train": ("ASVspoof2019.LA.cm.train.trn.txt", "ASVspoof2019_LA_train", 25380),
+            "dev": ("ASVspoof2019.LA.cm.dev.trl.txt", "ASVspoof2019_LA_dev", 24844),
+            "eval": ("ASVspoof2019.LA.cm.eval.trl.txt", "ASVspoof2019_LA_eval", 71237)}
+    for part, (fname, sub, documented) in docs.items():
+        ids = [l.split()[1] for l in open(cm / fname, encoding="utf-8") if l.strip()]
+        on_disk = {p.stem for p in (out / "LA" / sub / "flac").glob("*.flac")}
+        missing = [i for i in ids if i not in on_disk]
+        say(f"ASVspoof 2019 LA {part}: protocol {len(ids)} (documented {documented}), "
+            f"files on disk {len(on_disk)}, protocol entries without a file {len(missing)}")
+        if len(ids) != documented or missing:
+            raise RuntimeError(f"ASVspoof 2019 LA {part} differs from the documented protocol")
     req = urllib.request.Request(f"{base}/765597d6-633f-418a-96b0-39274a8d56c9/download", headers=UA)
     with urllib.request.urlopen(req, timeout=60) as r:
         (out / "README_edinburgh.txt").write_bytes(r.read())
