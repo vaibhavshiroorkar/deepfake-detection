@@ -18,6 +18,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -92,7 +93,7 @@ def curl_download(url, dest, expected, token=None, attempts=8):
     part.replace(dest)
 
 
-def parallel_download(url, dest, expected, parts=8, attempts=40, token=None):
+def parallel_download(url, dest, expected, parts=8, attempts=200, token=None):
     """Several concurrent range requests for hosts that throttle each connection.
 
     Each part is kept in its own file and resumed after an interruption; the
@@ -125,6 +126,8 @@ def parallel_download(url, dest, expected, parts=8, attempts=40, token=None):
                 cmd += ["-K", "-"]
                 stdin = f'header = "Authorization: Bearer {token}"\n'
             subprocess.run(cmd + [url], input=stdin, text=True)
+            if not (tmp.exists() and tmp.stat().st_size > 0):
+                time.sleep(min(60, 5 + 5 * k))  # back off when the host is unreachable (DNS or network outage)
             if tmp.exists() and tmp.stat().st_size > 0:
                 with open(pf, "ab") as out, open(tmp, "rb") as src:
                     while True:
