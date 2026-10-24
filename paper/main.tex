@@ -1,21 +1,20 @@
 % =============================================================================
-% Multimodal deepfake detection: IEEE conference-format paper, FIRST VERSION.
+% Multimodal deepfake detection: IEEE conference-format paper.
 % Class: IEEEtran, [conference] option (two-column, 10 pt). Overleaf compatible:
-% no absolute paths, only packages shipped with TeX Live / MiKTeX.
-% Build: latexmk -pdf main.tex   (BibTeX with IEEEtran.bst, refs.bib)
+% relative paths only (figures are copied into paper/figures), only packages
+% shipped with TeX Live and MiKTeX.
+% Build: latexmk -pdf main.tex   (BibTeX, IEEEtran.bst, refs.bib)
 %
-% STATE OF THIS FILE (2026-10-24): STRUCTURE ONLY. No experiment has been run.
 % Rules in force (CLAUDE.md):
-%   - No number appears here unless it comes from a logged experiment E-xxx.
-%     Every sentence that will carry a result must keep a marker "% E-xxx".
-%   - Cited numbers from other papers are named with their own protocol and
-%     are never presented as ours.
-%   - Only papers in docs/RESEARCH.md with status READ are cited.
-%   - No "real-time", "state of the art", "better than X" without a
+%   - A number is written only if it is a design value of the protocol, a count
+%     of the data, or a number quoted from a cited paper with its own protocol
+%     named. Every measured result shows the placeholder with the experiment ID in a
+%     LaTeX comment on the same source line.
+%   - Only papers in docs/RESEARCH.md (READ or PARTIAL) and the sources listed
+%     in paper/NEW_REFERENCES.md are cited.
+%   - No "real-time", "state of the art" or "better than X" without a
 %     head-to-head run on the same protocol.
-%   - No em-dashes or en-dashes (do not write double or triple hyphens).
-%   - Model, framework, dataset, metric choices are OPEN (docs/DECISIONS.md,
-%     O-001 to O-011) and appear below only as \tbd{...} placeholders.
+%   - No em-dashes or en-dashes.
 % =============================================================================
 \documentclass[conference]{IEEEtran}
 
@@ -23,341 +22,820 @@
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 \usepackage{graphicx}
-\usepackage{xcolor}
 \usepackage{cite}
 \usepackage[hidelinks]{hyperref}
 
-% Visible placeholder for anything that is not yet decided or measured.
-\newcommand{\tbd}[1]{\textbf{\textcolor{red}{[TBD: #1]}}}
-% Visible placeholder for a number that must come from a logged experiment.
-\newcommand{\fromexp}[1]{\textbf{\textcolor{red}{[to be filled from #1]}}}
+\graphicspath{{figures/}}
+
+\newcommand{\sigmoid}{\sigma}
+\newcommand{\spl}[1]{\texttt{#1}}
+
+\hyphenation{Cele-b-DF Face-Foren-sics wav-LM}
 
 \begin{document}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% PROPOSED TITLES (proposals only, none is final; the authors and guide choose).
-%   Proposal 1: Multimodal Deepfake Detection for Images, Video and Audio:
-%               A Hypothesis-Driven Study Under a Source-Disjoint Protocol
-%   Proposal 2: From a Minimal Baseline to a Measured Detector: Seven
-%               Documented Iterations of Image, Video and Audio Deepfake Detection
-%   Proposal 3: How Far Does It Generalise? A Multi-Seed Study of Multimodal
-%               Deepfake Detection With Paired Comparisons
-% Proposal 1 is used below as a working title.
+% TITLE. The working title is kept (no decision has changed it). Because the
+% protocol groups samples by source video together with person identity, the
+% wording "group-disjoint" is more exact than "source-disjoint". PROPOSAL only,
+% for the authors and the guide to decide:
+%   Multimodal Deepfake Detection for Images, Video and Audio: A
+%   Hypothesis-Driven Study Under a Group-Disjoint Protocol
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\title{Multimodal Deepfake Detection for Images, Video and Audio:\\
-A Hypothesis-Driven Study Under a Source-Disjoint Protocol}
+\title{Multimodal Deepfake Detection for Images, Video and Audio: A Hypothesis-Driven Study Under a Source-Disjoint Protocol}
 
 \author{%
-\IEEEauthorblockN{Vaibhav Shiroorkar, Shivansh Gupta, Adithya Jithesh}
+\IEEEauthorblockN{\begin{tabular}{@{}*{3}{>{\centering\arraybackslash}p{0.3\textwidth}}@{}}
+Vaibhav Shiroorkar & Shivansh Gupta & Adithya Jithesh
+\end{tabular}}
 \IEEEauthorblockA{Department of Electronics and Computer Engineering\\
 K. J. Somaiya School of Engineering, Somaiya Vidyavihar University\\
-Vidyavihar, Mumbai 400 077, India\\
-\tbd{contact e-mail addresses, not supplied}}
-\and
+Vidyavihar, Mumbai - 400 077}
 \IEEEauthorblockN{Dr. Tejashree Phatak (Guide)}
-\IEEEauthorblockA{Assistant Professor\\
-Department of Electronics and Computer Engineering\\
-K. J. Somaiya School of Engineering, Somaiya Vidyavihar University\\
-Vidyavihar, Mumbai 400 077, India}}
+\IEEEauthorblockA{Assistant Professor}}
 
 \maketitle
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{abstract}
-% Abstract skeleton. Each bracket is filled only after the experiment exists.
-Synthetic or manipulated faces, videos and voices can be produced with
-consumer hardware, and published detectors are usually compared under
-different protocols, which makes their reported numbers hard to read side by
-side. This paper describes a detector for images, videos and the audio of
-videos that is built from a minimal baseline through a fixed number of
-iterations, each started from a written hypothesis and a stated failure
-criterion. All candidates are run in one pipeline on a split that keeps
-identities and source recordings apart, with several random seeds and
-interval estimates that resample independent units.
-\tbd{one sentence on the final system, after the model and dataset choices
-O-003, O-006, O-007 are made}.
-Results: \fromexp{E-xxx, final comparison}.
-\tbd{one sentence on what did not work, after the iterations are run}.
-\tbd{one sentence on the limits of the evidence}.
+Face swaps, generated images and cloned voices are now easy to produce, and
+published detectors are usually compared under different protocols, which makes
+their reported numbers hard to read side by side. We describe a detector for
+images, videos and the audio of videos, built as a documented path: a simple
+working version first, then seven experimental iterations, each started from a
+written hypothesis whose success and failure thresholds are fixed before the
+run. The working version uses one frozen pretrained encoder per task, a linear
+head, temperature scaling and a validation-chosen threshold. For a video, the
+visual score and the audio score are shown separately and no fused claim is
+made. The encoder of each task is chosen by a measured sweep: candidates are
+ranked on a development slice with a paired group bootstrap, and the cheapest
+candidate among those not distinguishable from the leader wins. Splits are
+group-disjoint, where a group is the source video together with the person
+identity. Development slices rank and tune; the sealed
+test sets are touched once per frozen iteration by a guarded, logged
+command. ``Comparable with a published detector'' is defined as non-inferiority
+on a paired group-bootstrap interval with a margin fixed beforehand. The
+measured results are pending and are marked as such. The paper states the
+protocol, the hypotheses and the software; the limits of the evidence include
+the small development slices and the roughly 44 independent identity groups of
+the Celeb-DF test family.
 \end{abstract}
 
 \begin{IEEEkeywords}
 deepfake detection, multimodal, generalisation, evaluation protocol,
-calibration
+calibration, frozen encoders, group bootstrap
 \end{IEEEkeywords}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}\label{sec:intro}
 
-Face swaps, talking-face synthesis and cloned voices can now be produced
-with consumer hardware and off-the-shelf software~\cite{dolhansky2020dfdc}. A detector that is to be useful must handle images, video, and
-the audio track of a video, and must say how sure it is. The literature
-supplies many detectors and datasets, but the numbers reported for them are
-measured under different protocols. In one benchmark that trained all
-detectors on one dataset and tested them within and across datasets, a plain
-Xception network reached a mean AUC of 0.9450 on the in-domain tests and
-0.7718 on the cross-domain tests~\cite{yan2023deepfakebench}. % source: R-017, their protocol, not ours
-The gap between in-dataset and cross-dataset results recurs across face
-datasets~\cite{li2020celebdf,li2020facexray,dolhansky2020dfdc}, so a single
-in-dataset number says little about behaviour on new material.
+Face swaps, talking-face synthesis, generated images and cloned voices can now
+be produced with consumer hardware and off-the-shelf
+software~\cite{dolhansky2020dfdc}. A detector that is to be useful has to
+accept an image, a video, or the audio of a video, and it has to say how sure
+it is. The literature supplies many detectors and datasets, but the numbers
+reported for them are measured under different protocols. In one benchmark, in
+which every detector was trained on FaceForensics++ (c23) and scored by
+frame-level AUC, a plain Xception network reached an average AUC of 0.9450 over six within-domain test sets and 0.7718 over eight cross-domain test sets~\cite{yan2023deepfakebench}. % verified in arXiv:2307.01426v2, PDF page 6, Table 3, row "Naive Xception": columns Avg. within domain 0.9450 and Avg. cross domain 0.7718; their protocol (DLIB faces at 256 px, 32 frames per video), not ours. R-017
+The size of that gap shows why a single in-dataset number says little about
+behaviour on new material, and why the headline here is always a dataset that
+was never used in training.
 
 This work treats the path to a result as part of the result. We build the
-simplest end-to-end detector first, then make a fixed number of
-iterations, each with a hypothesis, a success criterion and a failure
-criterion written before the run. Failed iterations are kept in the record.
-The aim is not the best model in the world, but results that can be compared
-with published detectors on a protocol that we define and run ourselves.
+simplest end-to-end detector first, then run a fixed number of iterations,
+each with a hypothesis, a success criterion and a failure criterion written
+before the run. Failed iterations stay in the record. The aim is not the
+best model in the world, but results that can be compared with published
+detectors on a protocol that we define and run ourselves.
 
 \paragraph*{Contributions}
-% To be rewritten to match what the logged experiments actually support.
-The intended contributions are:
 \begin{enumerate}
-  \item a written evaluation protocol with source-disjoint splits, a
-        threshold chosen on validation data only, and at least three seeds
-        per candidate (Section~\ref{sec:exp});
-  \item a minimal baseline and seven documented iterations with their
-        hypotheses and outcomes, including failures
-        (Section~\ref{sec:results}, \fromexp{E-xxx, I-0 to I-7});
-  \item a paired comparison of candidate models in one pipeline, with cost
-        measured next to accuracy (\fromexp{E-xxx, comparison});
-  \item a test of whether remote photoplethysmography (heart-rate) evidence
-        adds anything beyond the interval of the paired difference
-        (\fromexp{E-xxx, rPPG feasibility}).
+  \item A written evaluation protocol: group-disjoint splits, a development
+        slice for ranking that is separate from the sealed test sets, a
+        guarded and logged single evaluation of each frozen iteration (the
+        staircase), and paired group-bootstrap statistics
+        (Section~\ref{sec:protocol}).
+  \item A selection rule for frozen encoders that prefers the cheapest
+        candidate when the evidence does not separate it from the leader, with
+        a cost record next to accuracy (Sections~\ref{sec:method}
+        and~\ref{sec:protocol}).
+  \item A ladder of one working version and seven experimental iterations,
+        each with a written hypothesis, and a definition of ``comparable with
+        a published detector'' as non-inferiority
+        (Section~\ref{sec:iters}).
+  \item A local web page that returns a calibrated probability per modality
+        with the warnings that apply, and that never shows a development
+        stand-in as a measurement (Section~\ref{sec:software}).
 \end{enumerate}
+The measured outcomes are pending (Section~\ref{sec:results}); every
+statement of a result in this paper waits for its logged experiment.
 
 The rest of the paper is organised as follows. Section~\ref{sec:related}
 reviews related work, Section~\ref{sec:method} describes the method,
-Section~\ref{sec:exp} the protocol, Section~\ref{sec:results} the results,
-and Sections~\ref{sec:disc} to~\ref{sec:concl} discuss, limit and conclude.
+Section~\ref{sec:protocol} the protocol, Section~\ref{sec:iters} the iteration
+plan, Section~\ref{sec:software} the software, Section~\ref{sec:results} the
+results, and Sections~\ref{sec:limits} and~\ref{sec:concl} the limits and the
+conclusion.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Related Work}\label{sec:related}
 
-% Written from papers in docs/RESEARCH.md marked READ (or READ in part).
-% Paraphrased. Numbers from other papers are not reproduced unless the
-% protocol is named in the same sentence.
-
 \subsection{Datasets for face forgery}
-FaceForensics++ provides real videos manipulated with four methods at
-several compression levels, together with a fixed split and a hidden-test
-benchmark, and it reports that detectors lose accuracy as compression
-increases~\cite{rossler2019faceforensics}. Celeb-DF was built with an
-improved synthesis pipeline to remove visible artefacts, and the authors
-evaluated existing detectors, run with their released models, on it and on
-earlier sets, finding it the hardest of those compared~\cite{li2020celebdf}.
-The DFDC dataset contributes a large collection of videos from consenting
-actors, with held-out subjects and a test set that includes content from
-outside the dataset; its analysis of the challenge entries reports weak
-performance on the test content that came from outside the dataset~\cite{dolhansky2020dfdc}.
+FaceForensics++ provides real videos manipulated with four methods at several
+compression levels, with a fixed split and a hidden-test benchmark, and it
+reports that detectors lose accuracy as compression
+increases~\cite{rossler2019faceforensics}. Celeb-DF was built with an improved
+synthesis pipeline to remove visible artefacts, and the authors found it the
+hardest of the datasets they compared when existing detectors were run on
+it~\cite{li2020celebdf}; Celeb-DF++ adds 21 newer generation methods to it, among them face-swap,
+reenactment and talking-face generators~\cite{li2025celebdfpp}. The DFDC dataset contributes a large
+collection of videos from consenting actors, with held-out subjects and a test
+set that includes content from outside the dataset; its analysis of the
+challenge entries reports weak performance on that outside
+content~\cite{dolhansky2020dfdc}.
 
 \subsection{Visual detectors and generalisation}
 Face X-ray predicts the blending boundary between a pasted face and its
-background and is trained on self-made blended images, so that no fakes from
-a particular generator are required~\cite{li2020facexray}. DeepfakeBench
-puts many detectors in one codebase with one preprocessing and metric
-pipeline, and finds that plain strong backbones come close to more elaborate
-methods when the training recipe is shared~\cite{yan2023deepfakebench}.
-For still images in general, replacing a trained real-versus-fake network by
-a linear or nearest-neighbour classifier on the frozen features of a
-pretrained vision-language model generalised across generators better than
-the trained baselines in the authors' own tests~\cite{ojha2024universal}.
-Work on transfer learning for image classification relates accuracy on a
-source task to accuracy after transfer, with caveats that depend on the
-regularisers used~\cite{kornblith2019better}; whether this carries over to
-forensic detection is an open question that we test.
+background and is trained on self-made blended images, so that no fakes from a
+particular generator are required~\cite{li2020facexray}. DeepfakeBench puts
+many detectors in one codebase with one preprocessing and metric pipeline, and
+observes that plain backbones come close to more elaborate methods under shared
+settings~\cite{yan2023deepfakebench}. Detectors trained on FaceForensics++ can
+learn the identities in it, which is one reason why splits must keep identities
+apart~\cite{dong2023implicit}. For still images in general, a linear or
+nearest-neighbour classifier on the frozen features of a pretrained
+vision-language model generalised across generators better than trained
+baselines in the authors' own tests~\cite{ojha2024universal}, and a linear
+classifier on CLIP features, trained on few examples from one generator, was
+evaluated on many generators~\cite{cozzolino2024raising}. The protocol of
+training on ProGAN images and testing on other generators comes
+from a study of CNN-generated images~\cite{wang2020cnnspot}. Work on transfer learning for image
+classification relates accuracy on a source task to accuracy after transfer,
+with caveats that depend on the regularisers used~\cite{kornblith2019better};
+whether this carries over to forensic detection is a question we measure.
 
 \subsection{Physiological signals}
-FakeCatcher derives photoplethysmography-like signals from facial regions
-and classifies them, and reports high in-dataset accuracy on the generators
-of its time~\cite{ciftci2020fakecatcher}. A follow-up uses the same kind of
-signal to identify which generator produced a fake~\cite{ciftci2020hearts}.
-DeepFakesON-Phys fine-tunes a heart-rate estimation network as a detector,
-with one model per database and identity-disjoint development and test
-sets~\cite{hernandez2020deepfakeson}. Later work is more cautious. A
-study with its own recordings reports that a heart-rate signal can be
-recovered from high-quality face swaps and can follow the driving
-video~\cite{seibold2025heart}. An independent reproduction of
-DeepFakesON-Phys on talking-face fakes, under an identity-disjoint split,
-reported a much lower AUC than the original paper's in-dataset
-figure~\cite{harraq2026physio}. Pulse signals can also be edited on
-purpose, which makes a pulse-based check open to attack~\cite{lin2023ppg}.
-These results are why we treat remote photoplethysmography as a hypothesis
-to test, not as a component to adopt.
+FakeCatcher derives photoplethysmography-like signals from facial regions and
+classifies them, with high in-dataset accuracy on the generators of its
+time~\cite{ciftci2020fakecatcher}; a follow-up uses the same kind of signal to
+identify which generator produced a fake~\cite{ciftci2020hearts}.
+DeepFakesON-Phys fine-tunes a heart-rate estimation network as a detector, with
+one model per database and identity-disjoint development and test
+sets~\cite{hernandez2020deepfakeson}. Later work is more cautious. A study with
+its own recordings reports that a heart-rate signal can be recovered from
+high-quality face swaps and can follow the driving
+video~\cite{seibold2025heart}. An independent reproduction of DeepFakesON-Phys
+on talking-face fakes, under an identity-disjoint split, reported a much lower
+AUC than the original paper's in-dataset figure~\cite{harraq2026physio}. Pulse
+signals can also be edited on purpose, which makes a pulse-based check open to
+attack~\cite{lin2023ppg}. For the pulse signal itself we use a projection-based
+method~\cite{wang2017pos}. These results are why remote photoplethysmography
+(rPPG) is a hypothesis to test here and not a component to adopt.
 
 \subsection{Audio and audio-visual detection}
 ASVspoof~2019 is the standard public database of synthesised, converted and
 replayed speech, with attacks in the evaluation set that are absent from
-training~\cite{wang2020asvspoof}. AASIST is a compact model on the raw
-waveform that applies graph attention over spectral and temporal nodes, and
-its authors report variation across seeds~\cite{jung2021aasist}.
-FakeAVCeleb provides videos with both visual and cloned-voice manipulations,
-and its baselines show that naive combinations of unimodal detectors can
-perform poorly~\cite{khalid2022fakeavceleb}. A two-stream audio-visual
-network that scores the dissonance between the streams over short chunks can
-also localise manipulated segments~\cite{chugh2021notmade}.
+training~\cite{wang2020asvspoof}. AASIST is a compact model on the raw waveform
+that applies graph attention over spectral and temporal nodes, and its authors
+report variation across seeds~\cite{jung2021aasist}. Replacing the front end of
+such a model by a pretrained wav2vec~2.0 network lowered the equal error rate
+on ASVspoof~2021 in the authors' own experiments~\cite{tak2022wav2vecspoof}.
+Models trained on ASVspoof~2019 were found to degrade strongly on
+the In-the-Wild recordings~\cite{muller2022inthewild}. For videos,
+FakeAVCeleb provides visual and cloned-voice manipulations, and its baselines
+show that naive combinations of unimodal detectors can perform
+poorly~\cite{khalid2022fakeavceleb}; LAV-DF edits words in the transcript and
+regenerates audio and video only for the changed segments, with per-file
+labels for the two modalities and an identity-independent
+split~\cite{cai2022lavdf}; and a two-stream audio-visual network that scores the
+dissonance between the streams can localise manipulated
+segments~\cite{chugh2021notmade}.
 
-\subsection{Calibration}
-Modern neural networks are often poorly calibrated, and temperature scaling,
-a single parameter fitted on validation data, is an effective
-correction on the tasks the authors studied~\cite{guo2017calibration}. We
-use their definitions of expected calibration error and temperature scaling,
-and fit any such correction on validation data only.
+\subsection{Frozen encoders, adapters and calibration}
+Our candidates are generic pretrained encoders: supervised convolutional
+networks~\cite{chollet2017xception,tan2019efficientnet}, self-supervised
+vision transformers~\cite{oquab2024dinov2}, and encoders trained with image and
+text~\cite{radford2021clip,zhai2023siglip}; for speech, self-supervised
+encoders~\cite{baevski2020wav2vec2,hsu2021hubert,chen2022wavlm} and a
+weakly supervised recogniser~\cite{radford2023whisper}. Low-rank
+adapters train a small number of added parameters instead of the whole
+network~\cite{hu2022lora}. Modern neural networks are often poorly
+calibrated, and temperature scaling, a single parameter fitted on validation
+data, is an effective correction on the tasks its authors
+studied~\cite{guo2017calibration}. We use their definitions of expected
+calibration error and temperature scaling, and fit any such correction on
+validation data only.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Method}\label{sec:method}
-% SKELETON. Nothing in this section is decided yet. Each placeholder names
-% the open decision (docs/DECISIONS.md) that fills it.
 
-\subsection{Problem statement}
-Let $x$ denote an input (an image, a video clip, or the audio of a clip) and
-$y\in\{0,1\}$ its label, with $y=1$ for manipulated content. A detector
-outputs a score $s(x)\in[0,1]$. The exact output and the labels used are
-\tbd{O-001, output definition}.
-How image, video and audio inputs are each handled is \tbd{O-002}.
+\subsection{Problem and output}
+Let $x$ denote an image, a video or an audio clip and $y\in\{0,1\}$ its label,
+with $y=1$ for manipulated content. Manipulated means a swapped, re-enacted or
+audio-driven face, a fully generated image (GAN or diffusion), synthesised or
+converted speech, or audio and video manipulated separately. The system returns
+the calibrated probability $p(x)$ that the content is fake and names the
+modality that carries the evidence: an image has a visual score, a standalone
+audio file has an audio score, and a video with an audio track has both,
+shown separately. No combining rule for the two scores of a video is claimed
+until the late-fusion iteration has been evaluated, and there is no temporal
+localisation. Figure~\ref{fig:pipeline} shows the three paths.
 
-\subsection{Data and splits}
-Datasets: \tbd{O-003}. Each dataset's licence, source and hash are recorded
-before use. Every split is stored as a file with an identifier and a hash,
-and no identity, source video or near-duplicate frame appears in more than
-one partition (policy to be fixed in \tbd{O-004}). The test partition is
-used only for a frozen choice.
-
-\subsection{Baseline and candidate models}
-The minimal baseline is \tbd{O-006}. Candidate backbones per modality are
-\tbd{O-007}. The fine-tuning strategy is \tbd{O-008}. A small network
-trained from scratch is included as a reference.
-
-\subsection{Fusion}
-For inputs with more than one modality the fusion scheme is \tbd{O-009}. A
-still image has no audio, so the scheme must handle a missing modality.
-
-\subsection{Calibration and thresholds}
-The threshold is selected on validation data only. The calibration method,
-if any, is \tbd{O-005}. Following~\cite{guo2017calibration}, expected
-calibration error is the weighted average over bins of the absolute gap
-between accuracy and mean confidence; the number of bins is fixed in advance.
-
-\subsection{Cost measurements}
-For every candidate we measure parameters, forward-pass FLOPs for the input
-size actually used, peak GPU memory in a training step, seconds per epoch,
-epochs to a validation target fixed in advance, sensitivity to the learning
-rate, and the number of hyperparameters that had to be tuned.
-
-\subsection{Heart-rate evidence (candidate component)}
-Whether remote photoplethysmography enters the system is decided by a
-feasibility test with success and failure thresholds written before the run
-(\tbd{O-010}).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Experimental Protocol}\label{sec:exp}
-
-\subsection{Setup}
-Hardware: one consumer GPU with 12~GB of memory, as measured on the project
-machine (environment ENV-DESKTOP-GPU; full record in the experiment log).
-Software versions: \fromexp{E-xxx, environment record}.
-
-\subsection{Comparison rules}
-All candidates are compared on the same data, split, compute budget and
-metric, with at least three random seeds. We report the mean, the standard
-deviation over seeds, and a bootstrap confidence interval that resamples
-independent units (identities or source videos), not frames. Candidates are
-compared in a paired way, on the same test units. If the interval of the
-difference includes zero, the simpler or cheaper candidate is preferred.
-The number of resamples and the interval level are \tbd{fixed in Stage 2}.
-
-\subsection{Metrics}
-Metrics are \tbd{O-005}. Each metric is defined mathematically before use.
-Class balance of every test set is stated.
-
-\subsection{Iteration plan}
-Table~\ref{tab:iters} lists the slots. Each hypothesis, success criterion
-and failure criterion is written in the experiment log before its run.
-
-\begin{table}[t]
+\begin{figure*}[!t]
 \centering
-\caption{Iteration slots (structure only; to be filled from the experiment log).}
-\label{tab:iters}
+\includegraphics[width=0.9\textwidth]{fig01_pipeline.pdf}
+\caption{Schematic of the three scoring paths. Encoders are frozen, the head is
+linear, and every score is a calibrated probability that the content is fake.
+The visual and the audio score of a video are shown side by side, not fused.}
+\label{fig:pipeline}
+\end{figure*}
+
+\subsection{Preprocessing}
+One shared package prepares the inputs for training, evaluation and
+inference, and a hash of its configuration is stored in every checkpoint and
+checked at load. For a video it takes 16 uniformly spaced frames and runs the
+YuNet face detector~\cite{wu2023yunet}; the largest face is enlarged by a factor
+of 1.3 and cropped to $224\times224$ pixels, and the crop goes through a JPEG
+round trip at quality 95. Frames without a face are left out of the clip score
+and reported; a clip with no face at all returns a warning. For an image, a
+face crop is used if a face is found, and otherwise the whole image is
+processed by the rule of the encoder itself, so that a whole-image score is
+never read as a face score. For audio, the first 64\,600 samples at 16\,kHz are
+used (shorter clips are repeat-padded); the Whisper encoder receives its fixed
+30-second window with the clip first, and only the frames of the clip are
+pooled.
+
+\subsection{Frozen encoder and linear head}
+For each of three tasks, the face-frame task (T-V), the generated-image task
+(T-I) and the speech task (T-A), the working version fixes one pretrained
+encoder $\phi$ and trains only a linear head. The feature $\phi(x)$ is the
+standard pooled embedding of the encoder: the global-average-pooled map for
+convolutional networks, the class token for DINOv2, the image embedding for the
+CLIP-type encoders, the attention-pooled output for SigLIP, and, for audio, the
+mean and standard deviation over time of the last hidden layer. Features are
+extracted once and stored in half precision. The head computes
+$z=\mathbf{w}^{\top}\tilde{\phi}(x)+b$ on features standardised with the
+training mean and standard deviation, and is trained with a class-balanced
+binary cross-entropy (FaceForensics++ has four fakes per real video, and
+ASVspoof about nine spoofed utterances per bona fide one), AdamW with learning
+rate $10^{-3}$ and weight decay $10^{-4}$, batches of 1\,024, at most 200
+epochs and early stopping on the validation AUC with patience 10. The seed
+changes the initialisation and the batch order, and three seeds are run for
+every candidate. No other hyperparameter is tuned in the working version.
+
+\subsection{Clip score, calibration and threshold}
+For a video with a set $F$ of frames that contain a face, the clip probability
+is the mean of the frame probabilities,
+\begin{equation}
+\bar p(x)=\frac{1}{|F|}\sum_{f\in F}\sigmoid(z_f),
+\end{equation}
+a deliberately simple rule; alternatives are iteration hypotheses, not part of
+the protocol. Temperature scaling then gives the reported probability,
+\begin{equation}
+p(x)=\sigmoid\!\left(\frac{\ell(\bar p(x))}{T}\right),\qquad
+T=\arg\min_{T>0}\ \mathrm{NLL}_{\mathrm{val}},
+\end{equation}
+with $\ell(q)=\ln\frac{q}{1-q}$ on probabilities clipped away from 0 and 1
+and $T$ fitted on the validation split of the training dataset only. The
+decision threshold maximises the balanced accuracy on the same validation
+split, taken from the midpoints between adjacent distinct validation scores
+(the one closest to 0.5 among equal maxima), and is then fixed for every other
+dataset. Accuracy at a fixed threshold of 0.5 is reported only as a reference.
+
+\subsection{Candidate encoders}
+Table~\ref{tab:cands} lists the shortlist, chosen for different families
+(supervised, self-supervised, language-supervised, trained from scratch) from
+candidates whose weights and licences were checked at their source. DINOv3 was
+left out on purpose because its access needs a manual gate and an
+acknowledgement duty. Two ViT-L/14 CLIP models are included, one trained by
+OpenAI and one on LAION-2B, so that the data can be separated from the
+architecture. A small network trained from scratch on the same split, with a
+fixed budget, is reported as a reference for the value of pretraining and is
+excluded from the selection.
+
+\begin{table}[!t]
+\centering
+\caption{Shortlisted frozen encoders per task. Dim. is the feature dimension of the
+stored feature; for audio it is twice the hidden size (mean and standard
+deviation over time).}
+\label{tab:cands}
 \small
-\begin{tabular}{@{}lp{2.2cm}p{1.6cm}p{1.6cm}@{}}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}L{4.4cm} L{2.5cm} r@{}}
 \toprule
-Slot & Hypothesis & Experiment & Outcome \\
+Encoder & Family & Dim. \\
 \midrule
-I-0 (MVP) & \tbd{} & E-xxx & \tbd{} \\
-I-1 & \tbd{} & E-xxx & \tbd{} \\
-I-2 & \tbd{} & E-xxx & \tbd{} \\
-I-3 & \tbd{} & E-xxx & \tbd{} \\
-I-4 & \tbd{} & E-xxx & \tbd{} \\
-I-5 & \tbd{} & E-xxx & \tbd{} \\
-I-6 & \tbd{} & E-xxx & \tbd{} \\
-I-7 & \tbd{} & E-xxx & \tbd{} \\
+\multicolumn{3}{@{}l}{\textit{Images: face frames (T-V) and generated images (T-I)}}\\
+EfficientNet-B4~\cite{tan2019efficientnet} & supervised CNN & 1\,792 \\
+Xception~\cite{chollet2017xception} & supervised CNN & 2\,048 \\
+DINOv2 small~\cite{oquab2024dinov2} & self-supervised & 384 \\
+DINOv2 base~\cite{oquab2024dinov2} & self-supervised & 768 \\
+CLIP ViT-L/14, OpenAI~\cite{radford2021clip} & image-text & 768 \\
+CLIP ViT-L/14, LAION-2B~\cite{radford2021clip} & image-text & 768 \\
+SigLIP base~\cite{zhai2023siglip} & image-text & 768 \\
+Small CNN (scratch) & reference & none \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Speech audio (T-A)}}\\
+wav2vec 2.0 base~\cite{baevski2020wav2vec2} & contrastive SSL & 1\,536 \\
+WavLM base plus~\cite{chen2022wavlm} & masked prediction & 1\,536 \\
+HuBERT base~\cite{hsu2021hubert} & masked prediction & 1\,536 \\
+Whisper small encoder~\cite{radford2023whisper} & weak supervision & 1\,536 \\
+Small log-mel CNN (scratch) & reference & none \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\subsection{Cost record}
+For every candidate the sweep records the number of parameters, the FLOPs of
+one forward pass at the input size used, the peak memory, and the extraction
+time per 1\,000 inputs, both for the model alone and end to end including
+decoding. The end-to-end time is the cost used by the selection rule
+(Section~\ref{sec:stats}).
+
+\subsection{Pulse evidence (candidate component)}
+Whether remote photoplethysmography enters the system is decided by an
+experiment, not assumed. A projection-based pulse method~\cite{wang2017pos}
+turns the mean skin colour of contiguous frames into one pulse signal, and
+the spectral peak in the band 0.7 to 3\,Hz and its signal-to-noise ratio are
+compared with a control built from the same clips with time-shuffled frames
+(Section~\ref{sec:iters}). The 16-frame sampling of the main pipeline cannot
+carry a pulse, so this branch reads contiguous frames at the native frame
+rate.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Experimental Protocol}\label{sec:protocol}
+
+\subsection{Setup}
+All work runs on one machine: Windows~10~Pro, one NVIDIA GeForce RTX~5070
+with 12\,GB of memory (11\,GiB usable), an AMD Ryzen~9 7900X with 12 cores,
+31\,GB of RAM, Python 3.13.15, PyTorch 2.14.1 with CUDA 13.0 wheels and driver
+595.79. Every experiment is planned inside the memory of this card.
+
+\subsection{Data and splits}
+The group is the unit that may sit on one side of a split only: the source
+video together with the person identity where metadata exists, and the source
+video alone otherwise. Everything that shares a source or an identity shares a
+group. A dataset family counts as one source: Celeb-DF v2 and Celeb-DF++ are one
+family, and a family used in training is never a cross-dataset test. The splits
+are:
+\begin{itemize}
+  \item \spl{train}: training data;
+  \item \spl{val}: held out from the training dataset and group-disjoint from
+        it, used for the threshold, the temperature and early stopping;
+  \item \spl{dev\_x}: the development slice, carved out of a cross-dataset
+        source by a seeded draw over groups and removed from the test set of
+        that source; it ranks candidates and tunes hyperparameters, never
+        gives a headline, and may be evaluated repeatedly;
+  \item \spl{test\_in}: the in-dataset test, group-disjoint from \spl{train}
+        and \spl{val}, reported but not the headline;
+  \item \spl{test\_x}: a dataset never used in training, the headline
+        generalisation result.
+\end{itemize}
+\spl{test\_in} and \spl{test\_x} are sealed. Figure~\ref{fig:splits} shows the
+layout and Table~\ref{tab:data} the assignment per task. All datasets are
+research-only. Celeb-DF, Celeb-DF++ and FakeAVCeleb forbid publishing derived
+data, so no frame, crop or per-video score of them appears in any document of
+the project. A script proves that no group is on two sides of a split, including
+a check by content hash that no file appears in two splits.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\columnwidth]{fig02_splits.pdf}
+\caption{Schematic of the group-disjoint splits. The development slice
+(\spl{dev\_x}) and the sealed tests share no group, identity or file content
+with each other or with the training dataset.}
+\label{fig:splits}
+\end{figure*}
+
+\begin{table*}[!t]
+\centering
+\caption{Data per task. A group is the source video with its person identity
+(video), the speaker (audio) or the LSUN class and generator unit (images).}
+\label{tab:data}
+\small
+\begin{tabular}{@{}L{1.9cm} L{3.7cm} L{2.9cm} L{3.0cm} L{4.6cm}@{}}
+\toprule
+Task & \spl{train} & \spl{val} & Development slice & Sealed tests \\
+\midrule
+Face frames, T-V &
+FaceForensics++ c23, official train split (1\,000 originals and 4\,000
+manipulated videos in all; 720 originals in train) &
+FaceForensics++ official validation split &
+Celeb-DF v2: 15 of 59 identity groups &
+\spl{test\_x}: the other Celeb-DF v2 groups, Celeb-DF++ (test videos of 21
+new generators) and DFD; \spl{test\_in}: FaceForensics++ official test split \\
+Generated images, T-I &
+ProGAN validation set (20 LSUN classes, 8\,000 images): 14 classes &
+the other 6 classes &
+2 of the 7 CNN-synthesis generator units &
+\spl{test\_x}: the other units and a diffusion test set; \spl{test\_in}: the
+ProGAN test set \\
+Speech, T-A &
+ASVspoof 2019 LA, train partition &
+ASVspoof 2019 LA, development partition &
+In-the-Wild: 12 of 54 speakers &
+\spl{test\_x}: the other In-the-Wild speakers; \spl{test\_in}: ASVspoof 2019 LA
+evaluation partition \\
+Audio-visual fusion &
+LAV-DF official train (identity-independent split) &
+LAV-DF official validation &
+none &
+LAV-DF official test split \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Celeb-DF++ de-duplication and test balance}
+Celeb-DF++ is one family with Celeb-DF v2, so two rules apply. First, its
+samples whose target identity or celebrity source identity is one of the 15
+development identities are excluded from the sealed test set (2\,079 samples),
+and they are not used as development data either. Second, 150 real videos of
+Celeb-DF++ that are byte-identical to Celeb-DF v2 videos are counted once, under
+the group of Celeb-DF v2. The sealed Celeb-DF++ test set then holds 2\,849 fake
+videos and no real video, in 44 identity groups, so an AUC on it is computed
+against the real videos of Celeb-DF v2. The pooled family test set holds 744
+real and 6\,906 fake videos, which is strongly imbalanced toward fakes, so
+balanced accuracy and the threshold carry more noise than the AUC. Since the
+independent units are about 44 identities, the intervals stay wide whatever the
+number of videos.
+
+\subsection{Sealed tests and the staircase}
+Rankings, hyperparameter choices and iteration verdicts that rest on the
+development slice or on the validation split are exploratory: they report sign,
+size and interval and choose the next step, and they are never presented as
+confirmed performance. Each frozen iteration is evaluated once on the sealed
+test sets, in a staircase of one test result per iteration
+(Figure~\ref{fig:staircase}). A guard in the evaluation code refuses any
+sealed split unless the run is flagged final and carries an iteration tag, and
+a ledger records the date, iteration, dataset, split, run identifiers and score
+file hash of every final evaluation. A second final evaluation of the same
+iteration and dataset is refused unless a reason is given, and a repeat is
+listed as a correction. The confirmatory claims are exactly two, declared before
+any final run, both paired group-bootstrap comparisons on sealed data: the final
+system against the working version, and the final system against a re-run
+published baseline. Every other comparison in the paper is labelled
+exploratory.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\columnwidth]{fig04_staircase.pdf}
+\caption{Schematic of the staircase. Each frozen iteration is evaluated once
+on the sealed test sets and the result is written to the ledger. The two
+confirmatory claims compare the final system with the working version and with
+a re-run published baseline.}
+\label{fig:staircase}
+\end{figure*}
+
+\subsection{Metrics and statistics}\label{sec:stats}
+The headline metric is the ROC-AUC on a dataset never used in training,
+\begin{equation}
+\mathrm{AUC}=P(S_1>S_0)+\tfrac12 P(S_1=S_0),
+\end{equation}
+where $S_1$ and $S_0$ are the scores of a random fake and a random real
+sample. It does not depend on the threshold or on the class balance. Also
+reported are the equal error rate, the balanced accuracy at the
+validation-chosen threshold, the log loss, the Brier score and the expected
+calibration error with 15 equal-width bins (top-label version),
+\begin{equation}
+\mathrm{ECE}=\sum_{b=1}^{15}\frac{n_b}{n}\,\bigl|\mathrm{acc}_b-\mathrm{conf}_b\bigr|,
+\end{equation}
+before and after temperature scaling~\cite{guo2017calibration}. For standalone
+audio on ASVspoof~2019 the equal error rate is also reported, for comparison
+with the literature.
+
+Uncertainty is a 95\,\% percentile interval from 2\,000 bootstrap resamples
+with a fixed base seed. The resampling unit is the group, never the frame or the
+clip: groups are drawn with replacement and all samples of a drawn group are
+kept; a resample with one class only is drawn again. With several seeds, the
+metric is computed per seed for every resample and averaged over the seeds, and
+the standard deviation over seeds of the point estimate is reported next to the
+interval. Comparisons are paired: both candidates are scored on the same
+resampled groups and the interval is that of the difference.
+
+The \emph{tie set} of a ranking is every candidate whose paired 95\,\%
+interval of the AUC difference against the leader includes zero. The cheapest
+candidate in the tie set wins, where cheaper means the lower end-to-end
+extraction time per 1\,000 inputs and, if equal, fewer parameters (``cheapest
+wins''). The from-scratch reference is reported and excluded. A sign-flip
+permutation test over groups is run as a sensitivity check, not as a second
+rule. If the lower interval bound of the best candidate is 0.55 or below, the
+sweep is declared inconclusive for that task.
+
+``Comparable with a published detector'' means non-inferior. With $\Delta$ the
+difference of the AUCs (ours minus the re-run baseline) and $L$ the lower end of
+its paired 95\,\% group-bootstrap interval,
+\begin{equation}
+\text{non-inferior}\iff L>-\delta,
+\end{equation}
+where the margin $\delta$ is stated before the final comparison and chosen from
+the measured seed-to-seed spread of the baseline. An interval that only contains
+zero is reported as not distinguished, and ours is called superior only when
+the whole interval is above zero. The baseline is a published detector family
+re-run on the same data, split, budget and metric; numbers quoted from papers
+are context only, with their own protocol named.
+
+\subsection{Seed policy and fine-tuning budget}
+The head of every candidate in the sweep is trained with three seeds. The
+fine-tuning iteration has a smaller budget that follows from measured step times
+on the 12\,GB card. It covers the face-frame task first; the three best
+encoders that fit are fine-tuned at the learning rates $10^{-5}$,
+$3\times10^{-5}$ and $10^{-4}$, one seed each, with the same 1\,800 optimiser
+steps (one pass over the training frames), AdamW with a cosine schedule and
+5\,\% warm-up, weight decay 0.05, mixed precision and an effective batch of 32.
+Each run has a time cap of 10 minutes of training. An encoder enters only if its
+peak memory at batch 32 is at most 10\,GiB and one budget takes at most 10
+minutes; the two large CLIP models do not fit on this card and stay frozen. Two
+further seeds are run for the best learning rate of the best encoder only. The
+other two tasks keep their frozen heads unless time remains.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Iteration Plan}\label{sec:iters}
+
+The working version (I-0) is followed by seven experimental iterations (I-1 to
+I-7) and a last slot for integration and freeze (I-8) that runs no experiment
+(Figure~\ref{fig:ladder}). The levers of I-1 to I-6 come from six families:
+fine-tuning depth (linear probe, last blocks, low-rank adapters or full
+fine-tuning), frame aggregation (mean, top-$k$ mean or learned pooling), loss
+and class weighting, augmentation matched to test perturbations together with
+regularisation, combining encoders, and late fusion across modalities with
+per-modality calibration. The slot a family takes is chosen after the
+diagnostic battery of the previous iteration, and the primary candidate of a
+slot is a planning guess that is replaced without penalty when the battery
+points elsewhere. The battery is the same after every iteration: AUC per
+dataset and per generator with intervals, the gap between training and
+validation, the gap between validation and the development slice, the
+calibration curve with ECE and Brier score before and after temperature
+scaling, score histograms, splits by compression level, face size and number of
+faces, the 20 worst errors reviewed by eye, and the seed variance.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.82\textwidth]{fig03_ladder.pdf}
+\caption{Schematic of the iteration ladder. I-1 to I-6 take a lever from one
+of the six families after the diagnostic battery of the previous step; I-7 is the
+rPPG experiment and I-8 integrates and freezes.}
+\label{fig:ladder}
+\end{figure*}
+
+Every slot follows one template: observation (numbers from the battery),
+diagnosis (bias, variance, shift, calibration, aggregation or missing signal),
+mathematical hypothesis, change, prediction (sign and rough size), result and
+verdict. The hypothesis, the prediction and the failure line are written before
+the run, in the experiment log, and are not edited afterwards. For I-1 the
+low-rank adapter update is
+\begin{equation}
+W'=W+\tfrac{\alpha}{r}\,BA,\qquad B\in\mathbb{R}^{d\times r},\ A\in\mathbb{R}^{r\times k},
+\end{equation}
+which trains $r(d+k)$ instead of $dk$ parameters~\cite{hu2022lora}. For I-6 the fused label is fake if either
+modality is fake, and the fused log-odds are the sum of the per-modality
+log-odds minus the prior log-odds under conditional independence, compared
+with a logistic regression on the two log-odds. Table~\ref{tab:iters} gives
+the written hypotheses and thresholds of the two slots whose design is fixed
+(I-0 and I-7), and the lever family of the others.
+
+\begin{table*}[!t]
+\centering
+\caption{Iteration slots. Hypotheses and thresholds were written before any run.
+Outcomes are pending.}
+\label{tab:iters}
+\small
+\begin{tabular}{@{}l L{2.6cm} L{10.0cm} l@{}}
+\toprule
+Slot & Lever & Written hypothesis, success threshold and failure line & Outcome \\
+\midrule
+I-0 &
+Frozen encoder per task, linear head, temperature scaling &
+\textbf{T-V.} At least one self-supervised or language-supervised encoder
+reaches a higher development AUC on unseen Celeb-DF v2 identities than the best
+supervised ImageNet CNN. Success: the paired 95\,\% interval of the difference
+lies above zero and the lower bound of the best candidate is above 0.60.
+Failure: the interval includes zero (not supported; the cost rule decides), or
+the lower bound is 0.55 or below (inconclusive).
+\textbf{T-I.} A CLIP-type encoder beats every supervised CNN on the two held-out
+generator units. Success: interval above zero and lower bound above 0.65.
+Failure as for T-V.
+\textbf{T-A.} A self-supervised speech encoder (wav2vec 2.0 or WavLM) beats both
+the Whisper encoder and the from-scratch reference on unseen In-the-Wild
+speakers. Success: both intervals above zero and lower bound above 0.60.
+Failure as for T-V. &
+{[pending]} % E-001 E-002 E-003 (the hypotheses; the outcome waits for the repeated ranking)
+\\
+\addlinespace[3pt]
+I-1 & Fine-tuning depth (video task first) &
+Hypothesis, prediction and failure line are written in the experiment log after
+the diagnostic battery of the previous slot and before the run. &
+{[pending]} % E-000 placeholder, no experiment registered yet (I-1)
+\\
+\addlinespace[3pt]
+I-2 & Frame aggregation &
+As for I-1. &
+{[pending]} % E-000 placeholder, no experiment registered yet (I-2)
+\\
+\addlinespace[3pt]
+I-3 & Loss and class weighting &
+As for I-1. &
+{[pending]} % E-000 placeholder, no experiment registered yet (I-3)
+\\
+\addlinespace[3pt]
+I-4 & Augmentation and regularisation &
+As for I-1. &
+{[pending]} % E-000 placeholder, no experiment registered yet (I-4)
+\\
+\addlinespace[3pt]
+I-5 & Combining encoders &
+As for I-1. &
+{[pending]} % E-000 placeholder, no experiment registered yet (I-5)
+\\
+\addlinespace[3pt]
+I-6 & Late fusion, per-modality calibration &
+As for I-1. The heads are the frozen ones of I-0 to I-5; only the fusion layer is
+fitted, on LAV-DF. &
+{[pending]} % E-000 placeholder, no experiment registered yet (I-6)
+\\
+\addlinespace[3pt]
+I-7 & rPPG experiment &
+\textbf{Signal check S-1} on contiguous frames: it passes if at least 60\,\% of
+real clips have a spectral peak SNR above the 95th percentile of a pooled
+time-shuffled control (at least 10 shuffles per clip) and, if pulse ground truth
+is obtained, the mean absolute heart-rate error is at most 8 bpm. If it fails,
+the slot reports exactly that the pulse is not recoverable from these data, and
+no further experiment is run. \textbf{If it passes:} separation on an
+identity-disjoint split for at least two generator families succeeds if the lower
+bound of the AUC interval is above 0.55 and fails if the interval includes 0.5;
+added value (fused with minus without rPPG, paired group bootstrap, 3 seeds,
+development slice) adopts rPPG only if the whole interval is above zero;
+time-shuffled and identity-mismatched controls must give an interval that
+includes 0.5. &
+{[pending]} % E-000 placeholder, no experiment registered yet (I-7)
+\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The prior expectation for I-7 is that S-1 passes only partially, because most
+videos are compressed and compression attenuates the pulse; this is a hypothesis
+and not a result. Whatever the outcome, the slot is reported, and an iteration
+that is not finished by the end of the planned working week is reported as not
+run and not left out silently.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Software}\label{sec:software}
+
+The software is a local web page served by Flask on the loopback address only,
+with an upload limit of 512\,MB; an uploaded file is deleted after every
+request, also after an aborted upload. The page calls an inference library that
+returns one fixed response structure: a score per modality, a status, warnings,
+errors, a block that describes the model, and a fixed sentence saying what the
+score means, namely a calibrated probability that the content is fake, from a
+model fitted on the training data of the project, valid only for the kinds of
+content in that data, and not proof. The warnings include the case of no face
+found and of several faces (the largest is used). The page shows stage progress
+and the per-modality table, and for a video it shows the visual and the audio
+score separately and states that no combining rule is decided yet
+(Figure~\ref{fig:web}).
+
+A checkpoint is a folder with one metadata file in plain text (encoder
+identifier, revision, feature dimension, head file and its hash, preprocessing
+identifier, temperature, threshold, training data, library versions, split
+identifiers, seed and git commit) and one array file with the head, with no
+serialised code. The real adapter refuses to run without a checkpoint whose
+metadata and preprocessing identifier match what is in use, checks the hash of
+the head and that the encoder weights on disk are the verified ones, and never
+invents a score: a missing audio head gives an audio modality marked
+unavailable with its reason. A development stand-in exists for building the
+page; it always reports its source as mock and the page then shows a visible
+banner, so that a stand-in output is never taken for a measurement. The
+screenshots in Figure~\ref{fig:web} were taken against that stand-in and are
+labelled as such.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.86\textwidth]{fig07_web.pdf}
+\caption{The local web page against the development stand-in: (a) start page,
+(b) an image result, (c) a video result with the visual and audio scores shown
+separately. The banner marks the output as a stand-in, not a measurement.}
+\label{fig:web}
+\end{figure*}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Results}\label{sec:results}
-% EMPTY ON PURPOSE. Every number below must be copied from a logged
-% experiment and carry a marker line "% E-xxx" naming the experiment.
 
-\subsection{Minimal baseline and iterations}
-\fromexp{E-xxx, I-0 to I-7}. % E-xxx
+No measured result is reported in this version of the paper: the sweep
+ranking is exploratory and is being repeated, and the iterations beyond the
+working version have not been run. Every cell below stays marked as pending
+until its experiment is logged, and nothing is filled in by hand.
 
-\subsection{Final comparison}
-\fromexp{E-xxx, final comparison under the common protocol}. % E-xxx
+\subsection{Encoder sweep (working version)}
+Table~\ref{tab:sweep} will give, per task, the development AUC with its
+interval for every candidate, the tie set and the selected encoder.
 
-\begin{table}[t]
+\begin{table}[!t]
 \centering
-\caption{Final comparison on the held-out partition (structure only).
-Protocol: \tbd{split name; in-dataset or cross-dataset}. Cells to be filled from the experiment IDs shown.}
-\label{tab:final}
+\caption{Encoder sweep on the development slice: selected encoder, mean AUC
+over three seeds with its 95\,\% group-bootstrap interval, and the number of
+candidates in the tie set.}
+\label{tab:sweep}
 \small
-\begin{tabular}{@{}lccc@{}}
+\begin{tabular}{@{}L{2.9cm} c c c@{}}
 \toprule
-Candidate & Metric (mean $\pm$ sd) & 95\% interval & Cost \\
+Task & Selected & Dev. AUC & Tie set \\
 \midrule
-\textbf{\textcolor{red}{[TBD]}} (cand.\ A) & E-xxx & E-xxx & E-xxx \\
-\textbf{\textcolor{red}{[TBD]}} (cand.\ B) & E-xxx & E-xxx & E-xxx \\
+Face frames, T-V & [pending] % E-001
+& [pending] % E-001
+& [pending] % E-001
+\\
+Generated images, T-I & [pending] % E-002
+& [pending] % E-002
+& [pending] % E-002
+\\
+Speech, T-A & [pending] % E-003
+& [pending] % E-003
+& [pending] % E-003
+\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Calibration and cross-dataset behaviour}
-\fromexp{E-xxx}. % E-xxx
+\subsection{Staircase and confirmatory comparisons}
+The sealed test result of each frozen iteration and the two confirmatory
+comparisons (final system against the working version, and against a re-run
+published baseline) are given in Table~\ref{tab:final}.
 
-\subsection{Heart-rate feasibility test}
-\fromexp{E-xxx, Stage 6}. % E-xxx
+\begin{table}[!t]
+\centering
+\caption{Sealed-test AUC per frozen iteration (staircase), and the paired
+difference of the two confirmatory comparisons with its 95\,\% group-bootstrap
+interval.}
+\label{tab:final}
+\small
+\begin{tabular}{@{}L{4.3cm} c c@{}}
+\toprule
+Row & AUC [95\,\%] & Verdict \\
+\midrule
+I-0, sealed Celeb-DF family & [pending] % E-000 placeholder, no experiment registered yet
+& [pending] % E-000 placeholder, no experiment registered yet
+\\
+Final system, same set & [pending] % E-000 placeholder, no experiment registered yet
+& [pending] % E-000 placeholder, no experiment registered yet
+\\
+Final minus I-0 & [pending] % E-000 placeholder, no experiment registered yet
+& [pending] % E-000 placeholder, no experiment registered yet
+\\
+Final minus re-run baseline & [pending] % E-000 placeholder, no experiment registered yet
+& [pending] % E-000 placeholder, no experiment registered yet
+\\
+\bottomrule
+\end{tabular}
+\end{table}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Discussion}\label{sec:disc}
-% Written after the results. It must say what each result supports and what
-% it does not, and name the experiment for every claim.
-\tbd{interpretation of E-xxx results; compare differences, not boasts}.
+\subsection{Calibration, per-generator behaviour and pulse check}
+The calibration tables (ECE and Brier score before and after temperature
+scaling), the per-generator AUC and the outcome of the pulse signal check are
+[pending]. % E-000 placeholder, no experiment registered yet
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Limitations}\label{sec:limits}
-Limits that are known before any run:
 \begin{itemize}
-  \item Published numbers come from different protocols, so any comparison
-        with them is made only by re-running a published detector on our
-        protocol, not by quoting its paper.
-  \item A detector trained on one kind of manipulation supports no claim
-        about other kinds (for example fully generated images or cloned
-        voices) without a test on them.
-  \item Labelled audio-visual datasets are fewer and smaller than visual
-        ones, which limits what the audio branch can support.
-  \item Compute is limited to one 12~GB GPU, which bounds model size and
-        clip length.
-  \item \tbd{limits that appear during the experiments, from the experiment log}.
+  \item The development slices are small (15 identity groups, 12 speakers and
+        2 generator units), so the intervals are wide and ties are likely; the
+        cost rule will then decide often.
+  \item The Celeb-DF family test has about 44 independent identity groups and
+        is strongly imbalanced toward fakes, so its intervals stay wide.
+  \item Frozen features may be inadequate for fine face-forgery artefacts; the
+        sweep can show that but not repair it, and fine-tuning is limited to
+        what fits one 12\,GB card.
+  \item All datasets are research-only, and the weights of two encoders (OpenAI
+        CLIP and WavLM) have conditional licences that are accepted here as
+        research-only; this restricts reuse of the checkpoints.
+  \item Numbers in published papers come from other protocols, so a comparison
+        with a published detector is made only by re-running it on this
+        protocol, and quoted numbers are context only.
+  \item The video datasets used for the visual task carry no audio stream in
+        the samples that were probed; audio evidence for videos therefore comes
+        from speech datasets and the fusion step only from LAV-DF, whose fakes
+        come from one speech synthesiser and one lip-sync generator.
+  \item A pulse may not be recoverable from compressed video at all, in which
+        case the rPPG slot reports that and nothing more.
+  \item A detector trained on one kind of manipulation supports no claim about
+        other kinds without a test on them, and no result of the project is
+        claimed beyond what its interval supports.
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusion}\label{sec:concl}
-\tbd{conclusion, after results exist: what was tried, what worked, what did
-not, and what the evidence does not support}.
+This paper fixes a protocol and a plan before the results exist: group-disjoint
+splits, a development slice separate from sealed tests that are touched once per
+frozen iteration, paired group-bootstrap statistics with a cheapest-wins rule,
+a non-inferiority definition of ``comparable'', and a ladder of written
+hypotheses from a frozen-encoder working version to an rPPG experiment. What was
+tried, what worked, what did not and what the evidence does not support is
+[pending] % E-000 placeholder, no experiment registered yet, and will be written only from the logged experiments.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\bibliographystyle{IEEEtran}
+\bibliographystyle{IEEEtran_hyphen}
 \bibliography{refs}
 
 \end{document}

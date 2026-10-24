@@ -59,7 +59,8 @@ def docx_parts(path: Path):
     for n in z.namelist():
         if re.match(r"word/(document|styles|numbering|header\d*|footer\d*|footnotes|endnotes)\.xml", n):
             x = z.read(n).decode("utf8", "ignore")
-            fonts |= set(re.findall(r'w:(?:ascii|hAnsi|cs|eastAsia)="([^"]+)"', x))
+            for tag in re.findall(r"<w:rFonts [^>]*>", x):  # not w:lang, which also has w:eastAsia
+                fonts |= set(re.findall(r'w:(?:ascii|hAnsi|cs|eastAsia)="([^"]+)"', tag))
     theme = z.read("word/theme/theme1.xml").decode("utf8", "ignore") if "word/theme/theme1.xml" in z.namelist() else ""
     doc_xml = z.read("word/document.xml").decode("utf8", "ignore")
     sects = re.findall(r"<w:pgMar [^>]*>", doc_xml)
