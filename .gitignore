@@ -16,3 +16,19 @@ papers_pdf/
 .env
 *.token
 *.key
+
+# LaTeX and preview build outputs (rebuilt from sources)
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.blg
+paper/*.bbl
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
+paper/main.pdf
+report/*_preview.pdf
+slides/*_preview.pdf
+
+# supplied earlier-project documents: not committed until the user confirms (D-001, D-014)
+Document Template/
