@@ -19,7 +19,7 @@ Placeholders: every `[pending]` carries its experiment ID (or, for a cell with n
 | "Comparable with published detectors" as non-inferiority (D-025) | Abstract; IV Protocol E | Ch 3 (paired non-inferiority); Ch 4 Staircase Test Protocol | 6, 18, 19 |
 | Shared preprocessing, checkpoint metadata, mock rules (D-028, D-029, D-044) | III Method (preprocessing); VI Software | Ch 4 Shared Preprocessing; The Web Application | 20 Preprocessing, 12 |
 | Workstreams, subagent method (D-015, D-030) | not in the paper | not in the report body | notes only |
-| Software form, framework (D-031, D-043; O-011, O-013) | VI Software | Ch 4 The Web Application | 12 Web demo (development stand-in) |
+| Software form, framework (D-031, D-043; O-011, O-013) | VI Software | Ch 4 The Web Application | 14 Web demo (real checkpoint of the working version) |
 | MVP: frozen features and linear head (D-032, D-040; O-006) | III Method; V Iteration Plan (I-0, Table) | Ch 4 The Working Version | 9 I-0: the working-version rule |
 | Image input: face crop or whole image (D-033; O-002) | III Method | Ch 4 Shared Preprocessing | 5 Method |
 | Face detector and preprocessing parameters (D-034) | III Method; IV Protocol | Ch 4 Shared Preprocessing | 20 |

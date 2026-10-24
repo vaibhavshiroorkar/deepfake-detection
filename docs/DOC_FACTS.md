@@ -52,7 +52,7 @@ Candidate improvement, not an adopted component. Signal check first on contiguou
 
 ## 10. Software (D-027, D-029, D-031, D-043, D-044)
 
-A local web page (Flask, 127.0.0.1 only, 512 MB upload limit, files deleted after each request) calls an inference library with a fixed response structure (score per modality, status, warnings, errors, model block, a fixed sentence that says what the score means). A development stand-in always reports its source as mock and the page then shows a visible MOCK banner; the real adapter refuses to run without a checkpoint whose metadata and preprocessing identifier match. Screenshots of the page in documents are taken against the stand-in and are labelled as such.
+A local web page (Flask, 127.0.0.1 only, 512 MB upload limit, files deleted after each request) calls an inference library with a fixed response structure (score per modality, status, warnings, errors, model block, a fixed sentence that says what the score means). A development stand-in always reports its source as mock and the page then shows a visible MOCK banner; the real adapter refuses to run without a checkpoint whose metadata and preprocessing identifier match. The screenshots of the page in all three documents are taken against the real checkpoint of the I-0 working version (assets/screens/real_image.png, real_video.png, real_audio.png, no MOCK banner); the stand-in screenshots (web_*.png) may appear only where they are labelled as the development stand-in.
 
 ## 11. Environment (measured, EXPERIMENTS.md)
 

@@ -127,7 +127,12 @@ Venues, years and pages below were checked against the publisher, proceedings or
 | R-017 | NeurIPS 2023 Datasets and Benchmarks Track, pp. 4534-4565 (the task text said ICML; the paper, README and Crossref say NeurIPS) |
 | R-018 | CVPR 2019, pp. 2661-2671 |
 | R-024 | DICTA 2022, pp. 1-10 |
+| R-021 | CVPR 2021, doi 10.1109/cvpr46437.2021.00500 (verified by the report builder, report/NEW_REFERENCES.md) |
+| R-028 | ICASSP 2021, doi 10.1109/icassp39728.2021.9414234 (same source) |
 | R-029 | Odyssey 2022, pp. 112-119 |
+| R-030 | ASVspoof 2021 Workshop, pp. 47-54, doi 10.21437/asvspoof.2021-8 (same source) |
+| R-034 | CVPR 2022, doi 10.1109/cvpr52688.2022.01816 (same source) |
+| R-046 | ECCV 2024 Workshops, LNCS, doi 10.1007/978-3-031-92089-9_6 (same source) |
 | R-033 | Interspeech 2022, pp. 2783-2787; Crossref spells the co-author Diekmann, this file Dieckmann (the publisher record is followed in the paper) |
 | R-044 | CVPR 2023, pp. 3994-4004 |
 | R-045 | CVPR Workshops 2024, pp. 4356-4366 |
