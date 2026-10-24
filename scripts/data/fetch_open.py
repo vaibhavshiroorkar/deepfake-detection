@@ -300,24 +300,39 @@ class RangeFile(io.RawIOBase):
         self.pos = off if whence == 0 else (self.pos + off if whence == 1 else self.size + off)
         return self.pos
 
+    BLOCK = 32 << 20
+
+    def _fetch_block(self, start):
+        end = min(self.size, start + self.BLOCK) - 1
+        for attempt in range(8):
+            try:
+                req = urllib.request.Request(self.url, headers={**UA, "Range": f"bytes={start}-{end}"})
+                with urllib.request.urlopen(req, timeout=180) as r:
+                    data = r.read()
+                if len(data) == end - start + 1:
+                    self.fetched += len(data)
+                    return data
+            except Exception:
+                if attempt == 7:
+                    raise
+        raise RuntimeError("range read failed")
+
     def read(self, n=-1):
+        """Serve reads from a 32 MB read-ahead block so that sequential access costs few requests."""
         if n < 0 or self.pos + n > self.size:
             n = self.size - self.pos
-        if n <= 0:
-            return b""
-        for attempt in range(6):
-            try:
-                req = urllib.request.Request(self.url, headers={
-                    **UA, "Range": f"bytes={self.pos}-{self.pos + n - 1}"})
-                with urllib.request.urlopen(req, timeout=120) as r:
-                    data = r.read()
-                break
-            except Exception:
-                if attempt == 5:
-                    raise
-        self.pos += len(data)
-        self.fetched += len(data)
-        return data
+        out = b""
+        while n > 0:
+            blk = getattr(self, "_blk", None)
+            if blk is None or not (blk[0] <= self.pos < blk[0] + len(blk[1])):
+                self._blk = (self.pos, self._fetch_block(self.pos))
+                blk = self._blk
+            off = self.pos - blk[0]
+            take = blk[1][off:off + n]
+            out += take
+            self.pos += len(take)
+            n -= len(take)
+        return out
 
     def readinto(self, b):
         d = self.read(len(b))
@@ -334,6 +349,7 @@ def step_cnn_subset():
     z = zipfile.ZipFile(rf)
     out = DATA / "forensynths" / "cnn_synth_subset"
     want = [i for i in z.infolist() if not i.is_dir() and i.filename.split("/")[0] in CNN_SUBSET]
+    want.sort(key=lambda i: i.header_offset)
     total = sum(i.file_size for i in want)
     say(f"{len(want)} members, {total / 1e9:.2f} GB uncompressed, from an archive of {rf.size} bytes")
     done = 0
