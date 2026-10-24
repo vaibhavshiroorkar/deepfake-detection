@@ -1,20 +1,230 @@
 # DATA_LOG
 
-Last updated: 2026-10-24 (Session 0)
+Last updated: 2026-10-24 (Session 1)
 
 Every dataset used in the project gets one row here before any file is downloaded into the project, and its row is completed when the download finishes. Licence and access terms are copied from the dataset's own page or agreement, not from a paper's description. Data files are stored on D: outside git (see .gitignore).
 
-## Status at the end of Session 0
+Policy: D-020 (2026-10-24) allows datasets that need a request form or approval; the user requests and downloads those manually. D-013 (open datasets only) is superseded. Split policy: D-012 (group by source video and person identity; the headline result is on data never used in training). The data selection itself is D-021, status Proposed: it awaits the user's approval. Nothing is downloaded before that approval.
 
-No dataset has been downloaded. Which datasets will be used is open decision O-003. The table below is the empty template.
+## Status
 
-| Dataset | Version | Source URL | Licence | Access terms | Size | File hash | Date downloaded | Role (train / val / test) | Notes |
+No dataset has been downloaded. The earlier Tier 1 and Tier 2 download list, built under D-013 from availability, was withdrawn by the user on 2026-10-24 and is replaced by the requirements-driven plan below.
+
+### What was re-checked by the main agent (primary sources, 2026-10-24)
+
+- Hugging Face API: LAV-DF is `gated: auto` (licence tag `cc`); AV-Deepfake1M is `gated: manual`; TalkingHeadBench (`mit`), CNNDetection (`cc-by-nc-sa-4.0`), In-The-Wild (`cc-by-sa-4.0`) and WildDeepfake (`apache-2.0`) are not gated.
+- Official READMEs and the request forms themselves (read, nothing submitted): FaceForensics++ and Celeb-DF and Celeb-DF++ and FakeAVCeleb and WildDeepfake use request forms or agreements (details and the fields each form asks are in D-020 and in the manual-download sheets below).
+- Zenodo API: ASVspoof 5 licence `odc-by`, open, 21 files, 142.34 GB; DeepfakeTIMIT `cc-by-nc-nd-4.0`, open, 226,611,200 bytes.
+- The three ForenSynths archives on Hugging Face were opened by HTTP range requests (their zip central directories only, under 10 MB each): `progan_val.zip` is 830,792,545 bytes and holds 8,000 images (20 classes, 200 real and 200 fake per class); `progan_testset.zip` is 834,177,578 bytes and holds 8,000 images (20 classes, 200 real and 200 fake per class); `CNN_synth_testset.zip` is 20,052,866,587 bytes with 90,459 members and holds the generator folders listed in the subset table.
+
+Everything else is stream B's report (URLs and quoted lines in docs/_agents/B.md, section 2) and has not been re-opened. Not read by anyone: the FaceForensics Terms of Use PDF, the DFDC terms (the dfdc.ai host had an expired certificate), the VoxCeleb2 agreement that LAV-DF requires, the LAV-DF metadata schema, and the Celeb-DF++ request form (the Tencent form is not readable by the tools used).
+
+## Requirements-driven data plan (this is D-021, Proposed)
+
+### Requirements the data must serve
+
+- REQ-a. Training data for the MVP and the candidate-model comparison, one shared dataset per modality path.
+- REQ-b. Cross-dataset test sets for the headline generalisation result, with source and identity grouping (D-012).
+- REQ-c. Audio-visual data with modality-specific labels (D-011 needs a visual score and an audio score).
+- REQ-d. Audio-only data, because audio-only is a separate mode (D-019).
+- REQ-e. Image data of two kinds only (D-018): face-manipulated images (frames from face-swap or lip-sync video count) and fully generated images.
+- REQ-f. Data adequate for the rPPG feasibility test: video quality and compression, subject identity (D-006, O-010).
+
+### Keep, drop or defer, for every dataset considered
+
+KEEP means it is in the download plan. DEFER means not downloaded now; the condition under which it would be is stated. DROP means no requirement needs it.
+
+| Dataset | Decision | Serves | Variant or subset | Size (GB) | One-line reason |
+|---|---|---|---|---|---|
+| FaceForensics++ (V1) | KEEP | REQ-a, REQ-f | c23 videos: 1,000 originals and Deepfakes, Face2Face, FaceSwap, NeuralTextures (1,000 each) | about 10 (README) | Standard training set; trained here and tested elsewhere it matches the DeepfakeBench protocol (R-017), which makes our numbers comparable (D-005). No audio |
+| Google DFD, inside the FF++ download (V2) | KEEP, test only | REQ-b, REQ-f | c23: 363 originals and 3,068 manipulated | 3 + 22 (README) | Cross-dataset test with 28 named actors (identity is in the file name) and controlled recordings, useful for a pulse check. Subset decision after the script is seen |
+| Celeb-DF v2 (V3) | KEEP, test only | REQ-b, REQ-f | 590 real, 300 YouTube real, 5,639 fakes, test list of 518 | not stated; planning figure 14 (estimate, range 10 to 18) | The hardest standard cross-dataset test (R-002, R-017); identity is in the file names |
+| Celeb-DF++ (V4) | KEEP, test only | REQ-b, REQ-f | test-list videos only: 178 real, 200 fakes per face-swap or reenactment method, 300 per talking-face method (5,100 fakes) | not stated; planning figure 10 (assumption) | Contains the Celeb-DF fakes plus 21 newer generators including audio-driven talking-face ones (R-053); per-generator structure for the generalisation claim |
+| FakeAVCeleb (V6) | KEEP, test only | REQ-c | all, with its four real/fake audio and video categories | not stated; planning figure 15 (assumption) | The one dataset with real and fake audio and video combinations for per-modality labels, used as the cross-dataset audio-visual test (R-014) |
+| LAV-DF (V7) | KEEP | REQ-c, REQ-a (fallback for the visual path) | whole tar: train, validation and test | 25.61 | Open, audio and video edited independently, identity-independent official split (91 / 31 / 31 identities). Needs a Hugging Face token |
+| WildDeepfake (V9) | KEEP, test only (the user chose to include it) | REQ-b | test shards only: fake_test and real_test, 806 sequences | 9.93 (6.46 + 3.47) | In-the-wild internet deepfakes with unknown generators; face-sequence images, no audio |
+| DFDC (V5) | DEFER | REQ-b | one or two Kaggle parts only, if ever | about 470 in total (third party) | Access is an AWS account and IAM keys; the sign-up host was unreachable; REQ-b is already served. Revisit only if the core results leave time |
+| FF++ c40 | DEFER | REQ-a (compression iteration) | c40 videos | about 2 (README) | Fetch only when an iteration needs the compression hypothesis |
+| FaceShifter (inside FF++) | DEFER | REQ-b | extra generator | not stated | One more held-out generator; not needed for the MVP |
+| DeepfakeTIMIT and VidTIMIT (V14) | DEFER (fallback) | REQ-b | all | 0.23 + 3.22 | Tiny 2018 set; downloaded only if the gated approvals fail |
+| UBFC-rPPG | DEFER | REQ-f | would only validate pulse extraction | not established (uncompressed video, probably tens of GB) | Needed only if the O-010 design requires pulse ground truth; decide on day 5 with the size known |
+| TalkingHeadBench (V15) | DROP | none | | | Fake only, real class missing; talking-face generators are covered, with real videos, by Celeb-DF++ |
+| KoDF, DeeperForensics-1.0, FFIW10K, UADFV, CelebV-HQ (V8 to V13, V16, V17) | DROP | none | | | Nothing they add is required; they are gated, oversized or without a verified route |
+| AV-Deepfake1M and ++, DeepSpeak, Deepfake-Eval-2024 | DROP | none | | | Manual gates, 404 GB or 1.46 TB, and REQ-c is served by LAV-DF and FakeAVCeleb |
+| ASVspoof 2019 LA (A1) | KEEP | REQ-d, REQ-a | LA.zip only (train, dev, eval) | 7.64 | Standard audio benchmark, speaker-disjoint, comparable with AASIST (R-012, R-013) |
+| In-the-Wild audio (A4) | KEEP, test only | REQ-d, REQ-b | whole zip | 8.16 | Cross-corpus audio test; 58 speakers, 20.7 h real and 17.2 h fake (HF card) |
+| ASVspoof 5 (A3) | DROP | none | | 142.3 | REQ-d is served by ASVspoof 2019 LA plus In-the-Wild; revisit only if time remains |
+| ASVspoof 2021 (A2), WaveFake with LJSpeech (A5, A5b), TIMIT-TTS (A6) | DROP | none | | | Keys host unreachable; fake only or contents unverified; REQ-d is already served |
+| ForenSynths ProGAN validation set (I1) | KEEP | REQ-e, REQ-a | 8,000 images, used as the small generated-image training set | 0.83 | Small, fits the frozen-feature plan; the full 720,000-image training set is not needed |
+| ForenSynths ProGAN test set (I1) | KEEP, test only | REQ-e | 8,000 images | 0.83 | In-distribution test for the generated-image path |
+| Diffusion test set of R-011 (I2) | KEEP, test only | REQ-e | whole file | 0.88 | Unseen diffusion generators, the same sets R-011 reports |
+| ForenSynths 13-generator test archive (I1) | KEEP, 8 generators | REQ-e | biggan, gaugan, stylegan, stylegan2, whichfaceisreal, deepfake, stargan, cyclegan | about 7.85 of 20.05 | Cross-generator tests including StyleGAN faces (whichfaceisreal) and FF++-style Deepfake frames |
+| ForenSynths remaining generators (crn, imle, san, seeingdark) | DROP | none | | 12.2 | Older image-to-image and low-light generators, not relevant to faces |
+| ForenSynths ProGAN training set (I1) | DROP | none | | 74.92 | 8,000 validation images are the planned training set; a larger subset is a later option |
+| OpenForensics (I3) | DROP | none | | 56.36 | Face-manipulated images are covered by frames from the video datasets (D-018 definition) |
+| GenImage, Community Forensics (I4 to I7) | DROP | none | | | The diffusion test set and the CNN synthesis subset already give unseen generators |
+
+### Download order and bandwidth budget
+
+Measured speed: 4.09 MB/s on one connection from one server (EXPERIMENTS.md), which is 14.7 GB per hour. The user's manual downloads share the same connection, so they are in the same budget. Sizes of gated datasets that their pages do not state are planning figures and are marked as estimates or assumptions.
+
+Automatic batch (run by the implementer after approval, in this order; needs no approval from any dataset owner):
+
+| Step | Item | Size (GB) | Hours | Cumulative hours | What it unblocks |
+|---|---|---|---|---|---|
+| 1 | ASVspoof 2019 LA | 7.64 | 0.52 | 0.52 | Audio MVP |
+| 2 | ForenSynths ProGAN validation and test sets, diffusion test set | 2.54 | 0.17 | 0.69 | Generated-image MVP |
+| 3 | LAV-DF (needs the user's Hugging Face token) | 25.61 | 1.74 | 2.43 | Audio-visual MVP and the visual fallback |
+| 4 | In-the-Wild audio | 8.16 | 0.55 | 2.98 | Audio cross-corpus test |
+| 5 | CNN synthesis test archive, 8 generators (range requests on the archive) | about 7.85 | 0.53 | 3.51 | Cross-generator image tests |
+
+Gated datasets (requested and downloaded by the user; listed in the order they are needed). FF++ goes to the front of the queue the moment it arrives, because the visual MVP depends on it:
+
+| Step | Item | Size (GB) | Hours | Cumulative hours |
+|---|---|---|---|---|
+| G1 | FaceForensics++ c23 | about 10 | 0.68 | 4.19 |
+| G2 | Celeb-DF v2 | 14 (estimate) | 0.95 | 5.14 |
+| G3 | DFD c23 | 25 | 1.70 | 6.84 |
+| G4 | FakeAVCeleb | 15 (assumption) | 1.02 | 7.86 |
+| G5 | Celeb-DF++ test-list subset | 10 (assumption) | 0.68 | 8.54 |
+| G6 | WildDeepfake test shards | 9.93 | 0.67 | 9.22 |
+
+Total: about 136 GB and about 9.2 hours at 4.09 MB/s (automatic 51.8 GB, gated 83.9 GB). Disk after extraction, with archives deleted: about 136 GB of data, plus about 30 GB of frames and face crops, about 20 GB of feature caches and about 10 GB of checkpoints and logs, so about 200 GB of the 404 GB free (planning estimates). The audio, image and LAV-DF items can be complete tonight, so the audio MVP, the generated-image MVP and an audio-visual MVP can start on day 2 even if the gated approvals take days.
+
+Fallback: if FF++ has not arrived by 2026-10-26 midday, the visual MVP trains on LAV-DF and the FF++ to Celeb-DF comparison with published tables is dropped until it arrives (recorded in D-021).
+
+### Subsets: what each saves and what it costs scientifically
+
+All subsets keep whole groups, as D-012 requires (a video, its source and its identity stay together).
+
+| Item | Subset used | Saves | Scientific cost |
+|---|---|---|---|
+| FF++ | c23 only, the four manipulations and the originals; no raw, no FaceShifter, no `-d all` | about 490 GB against raw | No lossless data; compression robustness needs c40 later (2 GB); one fewer held-out generator |
+| DFD | all 363 originals and 3,068 manipulated at c23 (25 GB); a subset is possible with `--num_videos` | up to 22 GB | The script takes the first N videos, which may skew the actors; decide after the script is seen |
+| Celeb-DF++ | test-list videos only | most of its estimated 100+ GB | Cannot be used for training or per-generator training experiments, which are not planned |
+| ForenSynths archive | 8 of 13 generators | about 12.2 GB | The 13-generator average of R-011 cannot be reproduced; the four dropped are older and not face related |
+| ProGAN | the 8,000-image validation set as training data, not the 720,000-image training set | about 74 GB | A much smaller training set than R-011, so its table is not reproduced; the protocol is ours (D-005) |
+| WildDeepfake | test shards only | 62.9 GB | No in-the-wild training; not planned |
+| ASVspoof 2019 | LA only | 17.66 GB (PA) | No replay-attack test; replay is outside the stated scope |
+
+### Where files go and how completeness is checked
+
+Layout under the repository folder (data/ is ignored by git): `data/ffpp/`, `data/dfd/`, `data/celebdf_v2/`, `data/celebdf_pp/`, `data/fakeavceleb/`, `data/wilddeepfake/`, `data/lavdf/`, `data/asvspoof2019_la/`, `data/in_the_wild/`, `data/forensynths/` (`progan_val/`, `progan_test/`, `cnn_synth_subset/`), `data/diffusion_test/`, and `data/_manifests/` for the checks below.
+
+Checks, run after each download and logged in the table at the end of this file: (1) count of files against the documented count; (2) every video decodes (`ffprobe` reports a stream and at least one frame) and every audio file has the expected duration; (3) SHA-256 of every file written to `data/_manifests/<dataset>.sha256`, because none of the gated hosts publishes hashes; for Hugging Face files the SHA-256 is compared with the one the Hugging Face API reports for the file; (4) total size within 15 percent of the documented size. Where a documented count does not exist, the count found is recorded as the reference.
+
+## Manual downloads for the user
+
+Which of the gated datasets matter most, best first: FaceForensics++ with DFD (needed for the visual MVP), Celeb-DF v2, FakeAVCeleb, Celeb-DF++, then WildDeepfake. DFDC is deferred. The forms ask for an academic identity: a supervisor's name and email (FF++, FakeAVCeleb) and an academic email address (Celeb-DF, FakeAVCeleb, WildDeepfake). The implementer cannot submit these and has not.
+
+1. FaceForensics++ and DeepFakeDetection (one form covers both)
+   - Form: https://docs.google.com/forms/d/e/1FAIpQLSdRRR3L5zAv6tQ_CKxmK4W96tAab_pfBu2EKAgQbeDVhmXagg/viewform
+   - The form asks for: name; lab, department or affiliation; advisor's name; advisor's email; research purpose; a tick agreeing to the FaceForensics terms of use (non-commercial research and education only).
+   - Wait time: the README expects an answer within about a week. You receive a link to `download-FaceForensics.py`.
+   - Run from the folder where you keep the script, one command each (run `python download-FaceForensics.py -h` first; the README says DFD is "downloaded by default together with the regular dataset", so do not use `-d all`):
+     - `python download-FaceForensics.py <repo>/data/ffpp -d original -c c23 -t videos`
+     - the same with `-d Deepfakes`, `-d Face2Face`, `-d FaceSwap`, `-d NeuralTextures` (all with `-c c23 -t videos`)
+     - `python download-FaceForensics.py <repo>/data/dfd -d DeepFakeDetection_original -c c23 -t videos`
+     - `python download-FaceForensics.py <repo>/data/dfd -d DeepFakeDetection -c c23 -t videos`
+   - Expected result: `data/ffpp/original_sequences/youtube/c23/videos/` with 1,000 files named 000.mp4 to 999.mp4; `data/ffpp/manipulated_sequences/<Method>/c23/videos/` with 1,000 files named `<target>_<source>.mp4` for each of the four methods (5,000 videos, about 10 GB in total); `data/dfd/original_sequences/actors/c23/videos/` with 363 files named `<actor>__<scene>.mp4` (about 3 GB) and `data/dfd/manipulated_sequences/DeepFakeDetection/c23/videos/` with 3,068 files (about 22 GB).
+   - Checks: the counts above; every video decodes; SHA-256 manifest; total size within 15 percent.
+
+2. Celeb-DF v2
+   - Form: https://forms.gle/2jYBby6y1FBU3u6q9 (Google) or https://wj.qq.com/s2/8540155/b5d9/ (Tencent). Questions or problems: deepfakeforensics@gmail.com.
+   - The form asks for: name; affiliation; city; country; purpose; version (choose Celeb-DF v2); a typed signature; an academic email address.
+   - Terms to note: non-commercial only; you must not reproduce, copy or publish any portion of the videos or any derived data (this limits figures in the paper); citation required.
+   - Wait time: not stated.
+   - Put the received folders in `data/celebdf_v2/`. Expected: `Celeb-real/` 590 videos, `YouTube-real/` 300 videos, `Celeb-synthesis/` 5,639 videos, `List_of_testing_videos.txt` with 518 lines (README structure). Size is not stated; record the real size.
+   - Checks: the counts; every video decodes; SHA-256 manifest; the file names carry the identities (`id0_0000.mp4` real, `id0_id16_0000.mp4` fake), which the leakage check uses.
+
+3. Celeb-DF++ (a superset that includes the original Celeb-DF fakes; request it as well as v2 in case one is approved faster)
+   - Form: https://wj.qq.com/s2/23258268/2516/ (preferred by the authors) or https://forms.gle/Jq2fE5Cic6vXuFzp7 (marked not preferred). Contact: liyuezun@ouc.edu.cn. Fields not read by the implementer.
+   - Request: the whole dataset if the package is split by folder, but download only the test-list videos (`List_of_testing_videos.txt`) of every method. Ask the authors, if the form allows, for per-method archives.
+   - Put in `data/celebdf_pp/`. Expected structure: `Celeb-real/`, `YouTube-real/`, `Celeb-synthesis/{FaceSwap,FaceReenact,TalkingFace}/<method>/`, `List_of_testing_videos.txt`. Test list per the README: 178 real; 200 fakes per face-swap or reenactment method (8 and 7 methods) and 300 per talking-face method (7 methods), so 5,100 fakes.
+   - Checks: that every video listed in the test list exists; counts per method; every video decodes; SHA-256 manifest.
+
+4. FakeAVCeleb
+   - Form: https://docs.google.com/forms/u/1/d/e/1FAIpQLSfPDd3oV0auqmmWEgCSaTEQ6CGpFeB-ozQJ35x-B_0Xjd93bw/viewform (repository: https://github.com/DASH-Lab/FakeAVCeleb ; dataset site: https://sites.google.com/view/fakeavcelebdash-lab/).
+   - The form asks for: name; lab or department; advisor's name and email; a Gmail ID or an email associated with a Google account for sharing; a research purpose of at least 100 words; a tick agreeing to the terms; an official academic or organisation email.
+   - Terms to note: non-commercial only; no copying, publication or distribution of any portion of the dataset or of derived data.
+   - Wait time: not stated. You receive a link to a download script.
+   - Request: the whole dataset (all four categories: real video with real audio, fake video with real audio, real video with fake audio, fake video with fake audio).
+   - Put in `data/fakeavceleb/`. Expected: 500 real and 19,500 fake videos, 20,000 in total (README table), plus a metadata CSV; the size is not stated.
+   - Checks: that the metadata row count is 20,000 and every path in it exists; every file has a video and an audio stream; per-category counts recorded; SHA-256 manifest. Its real videos come from VoxCeleb2, as LAV-DF's do, so the identity overlap with LAV-DF is checked.
+
+5. WildDeepfake (test shards only)
+   - Agreement form: https://forms.gle/o8vy9Q8fQ5mQZ4Qk6 (the official README says an agreement form and academic email are needed and that replies are sent only when a request is rejected). Download page named in the same README: https://huggingface.co/datasets/xingjunm/WildDeepfake (not gated).
+   - Fill the form, then download only the `fake_test` (115 files, 6.46 GB) and `real_test` (42 files, 3.47 GB) folders into `data/wilddeepfake/`.
+   - Checks: the file counts above; after extraction 806 face-sequence folders (the paper's test split); SHA-256 against the Hugging Face API values; manifest.
+
+6. Hugging Face token for LAV-DF (the implementer downloads, you provide the token)
+   - Create a free Hugging Face account, open https://huggingface.co/datasets/ControlNet/LAV-DF while logged in and accept the terms (non-commercial research and education only; you also agree to the VoxCeleb2 agreements). Access is granted automatically.
+   - Create a read token and store it as a user environment variable, never in a file: in PowerShell `[Environment]::SetEnvironmentVariable("HF_TOKEN","<your token>","User")`. The implementer reads it at run time from the user environment.
+   - Expected: `LAV-DF.tar` of 25,607,198,720 bytes; 136,304 videos (36,431 real, 99,873 with fake segments), 153 identities; the SHA-256 is compared with the Hugging Face API value.
+
+## Dataset facts from stream B (appendix)
+
+Written for the earlier plan and kept as the evidence base. Status values: `OPEN (usable)`, `EXCLUDED (needs approval)`, `UNCLEAR`. The status `EXCLUDED (needs approval)` was assigned under D-013 and no longer excludes a dataset under D-020; the keep, drop or defer table above is the current decision proposal. Sizes are bytes divided by 10^9. Identity-disjointness is `not established` wherever the official source does not state it.
+
+### 1a. Face video (and audio inside video)
+
+| ID | Dataset and version | Official source URL(s) | Licence / terms (quoted) | Access route (D-013 class) | Size | Modalities | Real / fake counts | Official split, identity-disjoint? | Status |
+|---|---|---|---|---|---|---|---|---|---|
+| V1 | FaceForensics++ (2019; FaceShifter added 15.07.2020) | https://github.com/ondyari/FaceForensics | "The data is released under the FaceForensics Terms of Use, and the code is released under the MIT license." | request form ("fill out this google form and, once accepted, we will send you the link to our download script") | Per dataset README: c23 ~10 GB, c40 ~2 GB, raw/c0 ~500 GB, source YouTube videos 38.5 GB | Video, no audio ("We only downloaded the source video without audio") | 1000 real sequences from 977 YouTube videos, 4000 fake (paper R-001 in RESEARCH.md) | 720 train / 140 val / 140 test videos; identity-disjoint: not established | EXCLUDED (needs approval) |
+| V2 | Google DeepFakeDetection (DFD), distributed inside FF++ | https://github.com/ondyari/FaceForensics ; https://research.google/blog/contributing-data-to-deepfake-detection-research/ | Same FF++ Terms of Use (the dataset "is downloaded by default together with the regular dataset") | request form (FF++ form); Google blog says "You can download the data on the FaceForensics github page" | c23 originals ~3 GB, manipulated c23 ~22 GB, manipulated raw ~1.6 TB | Video | 363 original sequences from 28 paid actors, "over 3000" (3068) manipulated | not established | EXCLUDED (needs approval) |
+| V3 | Celeb-DF v2 (CVPR 2020) and v1 | https://github.com/yuezunli/celeb-deepfakeforensics | "released under the Terms to Use Celeb-DF ... provided 'as it is'" (terms are the Google form) | request form (Google form or Tencent form; "The download link will be sent to you once the form is accepted") | not stated on page | Video (audio not stated) | v2: 590 real celeb videos + 300 YouTube-real, 5639 synthesised; v1: 408 original, 795 fake | v2 has `List_of_testing_videos.txt` with 518 videos; identity-disjoint: not established | EXCLUDED (needs approval) |
+| V4 | Celeb-DF++ (arXiv 2507.18015, 2025) | https://github.com/OUC-VAS/Celeb-DF-PP | "released under the Terms to Use Celeb-DF++ ... provided 'as it is'" | request form ("Once your request is approved, a download link will be provided") | not stated | Video (talking-face scenario is audio-driven; whether audio is in files: not established) | 590 real, 53,196 fake (paper), 22 methods | Test list: 178 real; 200 fake per method (face-swap, reenactment), 300 per method (talking-face); identity-disjoint: not established on the page | EXCLUDED (needs approval) |
+| V5 | DFDC preview (arXiv 1910.08854) and DFDC full (arXiv 2006.07397) | https://ai.meta.com/datasets/dfdc/ ; https://dfdc.ai/ ; Kaggle competition `deepfake-detection-challenge` | Meta page states no licence. Paper (preview): "request access and agree with the terms of service of the DFDC". Actors "entered into an agreement to the use and manipulation of their likenesses" | other: AWS account with IAM user and access keys, sign-up at dfdc.ai (host certificate expired, page unread); Kaggle route needs rules acceptance (secondary source only) | Meta page gives counts not GB. Third-party only: Kaggle train "just over 470 GB". Paper: "Over 25 TB of raw data" (pre-compression) | Video with audio (some clips have audio altered, per R-003) | Preview ~5k videos (Meta page; paper: "around 5000 videos"). Full 124k videos per Meta page; paper: 119,154 train clips (100,000 fake) from 486 subjects | Paper: subject-disjoint train vs public test (214 subjects not in train) | UNCLEAR |
+| V6 | FakeAVCeleb (paper arXiv 2108.05080v4) | https://github.com/DASH-Lab/FakeAVCeleb ; https://sites.google.com/view/fakeavcelebdash-lab/ | "The data can be released under the FakeAVCeleb Request Forms, and the code is released under the MIT license." | request form ("fill out the Google request form and, once accepted, we will send you the link to our download script") | not stated | Video + cloned audio | 500 real, 19,500 fake (R-014) | not established | EXCLUDED (needs approval) |
+| V7 | LAV-DF (DICTA 2022 arXiv 2204.06228; CVIU 2023 arXiv 2305.01979) | https://github.com/ControlNet/LAV-DF ; https://huggingface.co/datasets/ControlNet/LAV-DF | Terms: "The dataset can only be used for non-commercial research and educational purposes." and "You also agree to all agreements of the VoxCeleb2 dataset." Repo: "This project is under the CC BY-NC 4.0 license." HF card tag `license:cc` | accept-terms-then-download: HF `gated: auto` (automatic, no human approval), needs a Hugging Face account; OneDrive and Google Drive links also listed on the GitHub README (not testable without a browser) | `LAV-DF.tar` = 25,607,198,720 bytes (25.6 GB) | Video (224x224 face crops) + audio, both modalities independently edited | 136,304 videos: 36,431 real, 99,873 with fake segments; 153 identities | Official split, stated identity-independent: train 78,703 videos / 91 identities; val 31,501 / 31; test 26,100 / 31 | OPEN (usable) |
+| V8 | AV-Deepfake1M (ACM MM 2024) and AV-Deepfake1M++ | https://github.com/ControlNet/AV-Deepfake1M ; https://huggingface.co/datasets/ControlNet/AV-Deepfake1M | "The dataset is under the EULA. You need to agree and sign the EULA to access the dataset." HF `gated: manual` | signed agreement (EULA with signature lines) and manual HF approval | HF repo 404.3 GB; ++ repo 1,456 GB | Video + audio | 286,721 real, 860,039 fake, 2,068 subjects (paper) | not read | EXCLUDED (needs approval) |
+| V9 | WildDeepfake (ACM MM 2020; arXiv 2101.01456) | https://github.com/OpenTAI/wild-deepfake ; https://huggingface.co/datasets/xingjunm/WildDeepfake | README: "You will need to complete an agreement form to use the dataset." and "Access is granted only after verifying the applicant's academic email address, personal electronic signature". HF card: `license: apache-2.0`, `gated: False` | conflict: policy text says signed agreement; the HF repo downloads without any gate | 72.8 GB across 1,120 `tar.gz` files (fake_train 39.9, real_train 23.0, fake_test 6.5, real_test 3.5) | Face-sequence images only (not videos, no audio): "only face sequences are released, not full videos" | 7,314 face sequences from 707 videos; table row: 3,805 real, 3,509 fake sequences | 6,508 train / 806 test sequences, split "based on the similarities between the face sequences"; identity-disjoint: not established, actors "Unknown" | UNCLEAR |
+| V10 | DeeperForensics-1.0 (arXiv 2001.03024) | https://github.com/EndlessSora/DeeperForensics-1.0 | "bounded by the Terms of Use: DeeperForensics-1.0 Dataset" (PDF) | request form ("fill out this form ... download link will be sent to you once your request is approved") | not read | Video | 60,000 videos, 17.6 M frames (README abstract) | splits 703:96:201 videos | EXCLUDED (needs approval) |
+| V11 | KoDF (ICCV 2021; arXiv 2103.10094) | https://deepbrainai-research.github.io/kodf/ | not read | request form ("Please fill out this form to download KoDF. If your request has been approved, we will send you the download link"). Since Sept 2025 faces cropped to 1.3x, CRF 23, perturbed samples removed | not read | Video (audio-driven generators included) | 62,166 real, 175,776 fake, 403 subjects (paper) | not read | EXCLUDED (needs approval) |
+| V12 | FFIW10K (CVPR 2021) | https://github.com/tfzhou/FFIW | "fill out the Terms to Use form ... download link will be sent to you once your request is approved" | request form | not read | Video | 10,000 fake + 10,000 real | not read | EXCLUDED (needs approval) |
+| V13 | DeepSpeak v1, v1.1, v2, agentic; Deepfake-Eval-2024 | HF: `faridlab/deepspeak_*`, `nuriachandra/Deepfake-Eval-2024` | HF licence tags `other` / `cc-by-sa-4.0` | HF `gated: manual` (checked by HF API only; model cards not opened) | not read | Video / multi-modal | not read | not read | EXCLUDED (needs approval) |
+| V14 | DeepfakeTIMIT (Idiap, 2018) | https://www.idiap.ch/dataset/deepfaketimit ; https://zenodo.org/records/4068245 | Zenodo licence `CC BY-NC-ND 4.0`, access `open`. Must cite Korshunov and Marcel, and VidTIMIT | direct download (Zenodo) | `DeepfakeTIMIT.tar.gz` = 226,611,200 bytes (0.23 GB) | Video; original audio kept ("no manipulation was done to the audio channel") | Fake only: record says "320 videos corresponding to each version, resulting in 620 total" (2 x 320 = 640; page is internally inconsistent); 32 subjects, 16 similar pairs | no official split stated; real counterpart is VidTIMIT (separate record) | OPEN (usable) |
+| V14b | VidTIMIT (real counterpart of V14) | https://zenodo.org/records/158963 | Zenodo `CC BY-NC-ND 4.0`, access `open` | direct download (Zenodo) | 3.22 GB (43 zip files plus a PDF) | Video + audio | 43 people, short sentences (real only) | NR | OPEN (usable) |
+| V15 | TalkingHeadBench (WACV 2026; arXiv 2505.24866) | https://huggingface.co/datasets/luchaoqi/TalkingHeadBench ; https://anaxqx.github.io/talkingheadbench.github.io | HF card: `license: mit`, `gated: False`. Videos are built from FFHQ portraits and CelebV-HQ driving signals, whose own terms are not covered by that tag (licence of derived data: not established) | direct download (HF, no gate, no login needed for ungated repo) | 17.32 GB (8,130 files); video about 5.8 GB, audio about 11.5 GB | Video + audio (extracted wav) | FAKE ONLY in the repo: 2,994 fake videos (train 1,773 / val 300 / test 845 / extra eval 76 from Hallo3, MAGI-1). Real videos are NOT included: they must be taken from CelebV-HQ and FF++ originals (only 704 FF++ audio clips are supplied) | README: "Training and testing sets come from disjoint identity pools"; "Testing uses entirely unseen identities"; paper: "no overlap in identities between the training and test sets" | OPEN (usable, fake only) |
+| V16 | CelebV-HQ (needed as the real-video source for V15) | https://github.com/CelebV-HQ/CelebV-HQ | "available for non-commercial research purposes only" | other: a script `download_and_process.py` pulls clips from YouTube with youtube_dl; availability of each clip is not guaranteed | not stated | Video + audio | 35,666 clips, 15,653 identities | not read | UNCLEAR |
+| V17 | UADFV (Yang, Li, Lyu, ICASSP 2019) | arXiv 1811.00661 only | NR | I found no official download page | NR | Video | 49 real, 49 fake (paper via search summary, not opened) | NR | UNCLEAR |
+
+### 1b. Speech audio (standalone mode, also audio inside video)
+
+| ID | Dataset and version | Official source URL(s) | Licence / terms (quoted) | Access route | Size | Real / fake counts | Official split, speaker-disjoint? | Status |
+|---|---|---|---|---|---|---|---|---|
+| A1 | ASVspoof 2019 (LA and PA) | https://datashare.ed.ac.uk/handle/10283/3336 (DOI 10.7488/ds/2555) | README: "You are free to use this database under Open Data Commons Attribution License (ODC-By)." | direct download (no login seen; HTTP 206 range works, so resumable) | LA.zip 7,640,952,520 bytes (7.64 GB); PA.zip 17,662,711,934 bytes (17.66 GB); "Date Available 2019-06-04" | LA (paper R-013): train 2,580 bona fide / 22,800 spoofed; dev 2,548 / 22,296; eval 7,355 / 63,882 | Train/dev/eval, "The three partitions are disjoint in terms of speakers": 20 / 10 / 48 speakers; known attacks A01 to A06 in train and dev, eval has 13 attacks A07 to A19 | OPEN (usable) |
+| A2 | ASVspoof 2021 LA, DF, PA (evaluation sets only; training uses the 2019 train/dev) | https://zenodo.org/records/4837263 (LA), https://zenodo.org/records/4835108 (DF), https://zenodo.org/records/4834716 (PA) | LA `ODC-By v1.0`; DF Zenodo licence id `odc-odbl`; PA `ODC-By`; access `open` for all | direct download (Zenodo, range works). Labels (keys) are not in the Zenodo record: "Evaluation keys ... can be downloaded from https://www.asvspoof.org/index2021.html", which returned HTTP 503 ("We are updating our website") on 2026-10-24 | LA eval 7,763,666,128 bytes (7.76 GB); DF eval 4 parts = 34.53 GB; PA eval 7 parts = about 45.5 GB | Counts: not established with confidence (Table I of arXiv 2210.02437 lost its layout in text extraction) | LA/PA eval reuse the 2019 eval speakers; DF adds 26 speakers from VCC 2018 and 2020 | UNCLEAR (data open, labels host unreachable at access time) |
+| A3 | ASVspoof 5 (arXiv 2502.08857v4), Zenodo v0.1, 2024-12-18 | https://zenodo.org/records/14498691 | Zenodo licence `ODC-By v1.0`; README: "free to use this database under ... (ODC-By)"; README also says "The bona fide data is distributed under CC BY 4.0" | direct download (Zenodo, 21 files) | Total 142.34 GB: train 5 tars = 37.5 GB; dev 3 tars = 20.1 GB; eval 10 tars = 84.8 GB; protocols 20.7 MB | Train 18,797 bona fide / 163,560 spoofed; dev 31,334 / 109,616; eval 138,688 / 542,086 (paper Table plus README line counts 182,357 / 140,950 / 680,774) | Paper: "seven speaker-disjoint partitions"; train 8 attacks, dev 8, eval 16 (incl. adversarial); about 2,000 speakers from MLS English (LibriVox); 16 kHz FLAC | OPEN (usable) |
+| A4 | In-the-Wild (Muller et al., arXiv 2203.16263v5) | https://huggingface.co/datasets/mueller91/In-The-Wild ; https://deepfake-demo.aisec.fraunhofer.de/in_the_wild | HF card `license: cc-by-sa-4.0`. A search-result summary of the Fraunhofer page says "Apache License 2.0" (I could not open that page: its TLS certificate is issued to `deepfake-total.com`). CONFLICT, unresolved | direct download (HF, `gated: False`, one file, range works) | `release_in_the_wild.zip` 8,161,489,023 bytes (8.16 GB) | 37.9 h total: 17.2 h fake, 20.7 h real (paper also states 20.8 h bona fide); 58 speakers; clip count not stated (HF size category 10K to 100K) | Evaluation data, no official split; 219 source files for fakes | OPEN (usable) |
+| A5 | WaveFake v1.2.0 (arXiv 2111.02813) | https://zenodo.org/records/5642694 | Zenodo `CC BY-SA 4.0`, access `open`. Paper: LJSpeech "in the public domain"; JSUT "licensed by CC-BY-SA 4.0" | direct download (Zenodo, range works) | `generated_audio.zip` 28,918,626,084 bytes (28.9 GB) | FAKE ONLY: Zenodo says 104,885 generated clips (about 175 h); paper v1 says 117,985 clips (about 196 h): discrepancy, Zenodo is the current record. "we do not redistribute the reference data" | No official split. One female English speaker (LJSpeech), one female Japanese speaker (JSUT), 6 vocoder architectures plus a full TTS pipeline | OPEN (usable, fake only) |
+| A5b | LJSpeech 1.1 (real reference for A5) | https://keithito.com/LJ-Speech-Dataset/ | "License Public Domain" | direct download | 2.6 GB | 13,100 clips, 1 speaker, about 24 h | NR | OPEN (usable) |
+| A6 | TIMIT-TTS (Zenodo) | https://zenodo.org/records/6560159 | Zenodo `CC BY 4.0`, access `open` | direct download | 7.19 GB | Content beyond title and description opening not read | NR | OPEN (listing only; contents not verified) |
+
+### 1c. Images (face-manipulated and fully generated)
+
+| ID | Dataset and version | Official source URL(s) | Licence / terms (quoted) | Access route | Size | Real / fake counts | Official split | Status |
+|---|---|---|---|---|---|---|---|---|
+| I1 | ForenSynths / CNNDetection, ProGAN training set (Wang et al., CVPR 2020) = the training set of arXiv 2302.10174 | https://github.com/PeterWang512/CNNDetection ; https://huggingface.co/datasets/sywang/CNNDetection | HF card `license: cc-by-nc-sa-4.0`; repo file says "Attribution-NonCommercial-ShareAlike 4.0 International". Real images are LSUN; LSUN's own terms: not established | direct download (HF, `gated: False`; the repo's own `download_trainset.sh` uses `wget` on HF URLs; range works) | `progan_train.7z.001` to `.007` = 74,924,002,876 bytes (74.9 GB) (7z, contains `progan_train.zip`); `progan_val.zip` 0.83 GB; `CNN_synth_testset.zip` 20.05 GB; `progan_testset.zip` 0.83 GB | Ojha et al.: "720k images (360k in each class)" across 20 LSUN categories; val: held-out ProGAN real/fake; test: 13 CNN synthesis algorithms (12 from paper plus whichfaceisreal) | train / val / test sets | OPEN (usable) |
+| I2 | Diffusion test sets of arXiv 2302.10174 (LDM variants, Glide variants, Guided, DALL-E-mini; real = LAION) | https://github.com/Yuheng-Li/UniversalFakeDetect (README "Data") | Repo code is MIT (GitHub API); licence of the images: not established | direct download (public Google Drive file `diffusion_datasets.zip`, Google shows "(875M)" and a virus-scan confirmation page, so `gdown` or the confirm URL is needed) | 875 MB | README: "we are only releasing 1k images for each domain; i.e., 1k images fake images and 1k real images for each domain" (paper used 10k per domain) | test only | OPEN (usable) |
+| I3 | OpenForensics v1.0.0 (ICCV 2021; arXiv 2107.14480), face forgery in multi-face scenes | https://zenodo.org/records/5528418 | Zenodo `CC BY 4.0`, access `open` | direct download (Zenodo, 18 files, range works) | 56.36 GB | Faces: 160,67x real (table digit lost in extraction) and 173,660 forged; 115,325 images, 334,136 faces | Train 44,122 images; val 7,308; test-dev 18,895; test-challenge 45,000; identity-disjoint: not established; images from Google Open Images; GAN-based face swapping (method name not recorded), 2021 | OPEN (usable) |
+| I4 | GenImage (NeurIPS 2023 D&B; arXiv 2306.08571) | https://github.com/GenImage-Dataset/GenImage | License file: "provided to You under the terms of the Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International Public License ... with the additional terms included herein", "used only for non-commercial purposes" | direct download from a Google Drive folder (README news 20240315) or Baidu Yunpan (code `ztf1`). Links not opened by me | not established | 2,681,167 images: 1,331,167 real (ImageNet), 1,350,000 fake; generators Midjourney V5, SD 1.4, SD 1.5, ADM, GLIDE, Wukong, VQDM, BigGAN | Per generator train/test: 1,300 train and 50 test per class; real: 1,281,167 train / 50,000 test | OPEN (usable, size NR, links untested) |
+| I5 | Community Forensics (CVPR 2025; arXiv 2411.04125) full | https://huggingface.co/datasets/OwensLab/CommunityForensics | `license: cc-by-4.0` | direct download (HF, `gated: False`, parquet shards, streaming possible) | 1.082 TB: systematic 780.2 GB, manual 257.5 GB, commercial 16.6 GB, publicEval 27.7 GB. README warns "may use up to 2.2TB" | 2.7 M generated images from 4,803 generators; real images are NOT included except lists | train/test field per image | OPEN but not feasible whole (see plan) |
+| I6 | Community Forensics-Small | https://huggingface.co/datasets/OwensLab/CommunityForensics-Small | `license: cc-by-nc-sa-4.0` | direct download (HF) | 259.7 GB in 188 parquet shards (about 1 to 4 GB each); README: "Downloading may use up to ~600GB" via `datasets` | 278K fake + 278K real (FFHQ, VISION, COCO, Landscapes HQ) | `train` only | OPEN (usable by shard subset) |
+| I7 | Community Forensics-Eval (CompEval) | https://huggingface.co/datasets/OwensLab/CommunityForensics-Eval | `license: cc-by-nc-sa-4.0` | direct download (HF) | 206.2 GB in 413 shards | 51,836 images, 21 generative models paired with RAISE, COCO, FFHQ, LAION | evaluation | OPEN (usable by shard subset) |
+
+## Downloaded datasets
+
+Filled when a download finishes. Empty at the time of writing.
+
+| Dataset | Version | Source URL | Licence | Access terms | Size | File hash (SHA-256) | Date downloaded | Role (train / val / test) | Notes |
 |---|---|---|---|---|---|---|---|---|---|
 | none yet | | | | | | | | | |
 
 ## Rules for entries
 
 1. File hash: SHA-256 of each archive as downloaded, plus the hash of any manifest, so that the same bytes can be verified later.
-2. Role: assigned only after the split policy (O-004) is decided. A dataset can be training data in one experiment and held-out test data in another only if the experiment record says so and no leakage check fails.
+2. Role: assigned only after the split policy is applied to the dataset's metadata (D-012). A dataset can be training data in one experiment and held-out test data in another only if the experiment record says so and the leakage check passes.
 3. Notes: record anything affecting use, for example known duplicate identities, missing audio, or access conditions such as a request form.
-4. Datasets mentioned in papers read in Session 0 for which access terms have not been checked: see RESEARCH.md, entries R-001, R-002, R-003, R-013 and R-014. One of them, FakeAVCeleb (R-014), is obtained through a request form according to its paper; the others have not been checked. All access terms must be confirmed at the source before use.
+4. Derived data (face crops, frames) of a dataset whose terms forbid derivatives or publication (Celeb-DF and FakeAVCeleb forbid publishing any derived data; DeepfakeTIMIT and VidTIMIT are CC BY-NC-ND 4.0) needs the terms read before anything is shared or shown in the paper; for private experiments the data stays in the project folder only.
+5. Pretrained weights get the same treatment: licence, source URL, version and hash are recorded here before use (CLAUDE.md rule 7).
