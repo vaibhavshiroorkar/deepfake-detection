@@ -1,0 +1,293 @@
+% =====================================================================
+% college-style.tex : the K. J. Somaiya School of Engineering look, layered on IEEEtran.
+% Loaded by main.tex ONLY when \collegestyletrue. With \collegestylefalse none of this runs and
+% main.tex produces the plain IEEEtran conference paper. The layout follows the college-branded
+% reference paper of another project (layout and style only; no text of that project is used).
+%
+% What this file changes (and nothing else):
+%   1. Colours: maroon #B7202F and dark brown #312016, sampled from the college reference report.
+%   2. A thin maroon border (1.2 pt, 1 cm inside the page edge) on every page, cover included.
+%   3. A footer (maroon rule, bold department/semester/batch text, bold "Page n") on every page
+%      except the cover, drawn at fixed positions independent of the IEEEtran margins.
+%   4. Paper title and level-1 headings in maroon, level-2 and level-3 headings in dark brown
+%      (the IEEEtran heading definitions are copied unchanged except for the colour).
+%   5. Front matter in single-column Times 12 pt with the reference margins: cover, certificate,
+%      declaration, acknowledgements, contents, list of figures, list of tables, abbreviations,
+%      roman page numbers from the certificate. The IEEEtran two-column body restarts at page 1.
+% Only packages shipped with TeX Live are used: eso-pic, xcolor, geometry, graphicx, array.
+% =====================================================================
+\makeatletter
+\usepackage{eso-pic}
+\usepackage{xcolor}
+\usepackage{array}
+% geometry in "pass" mode does not touch the IEEEtran layout; it is used only to give the front
+% matter the reference margins and to restore the IEEEtran layout for the paper.
+\usepackage[pass]{geometry}
+
+% ---------------------------------------------------------------- colours
+\definecolor{collegemaroon}{HTML}{B7202F}
+\definecolor{collegebrown}{HTML}{312016}
+
+% ---------------------------------------------------------------- fonts
+\newcommand{\collegefont}{\fontfamily{ptm}\selectfont}
+\newcommand{\collegefrontbody}{\collegefont\fontsize{12}{14.5}\selectfont}
+\newcommand{\collegesize}[1]{%  sizes used in the reference (pt)
+  \ifcase#1\or\fontsize{12}{14.5}\or\fontsize{14.4}{17.5}\or\fontsize{17.28}{21}\or\fontsize{24.88}{30}\fi\selectfont}
+
+% ---------------------------------------------------------------- footer text
+\newcommand{\collegefootertext}{Department of Electronics and Computer Engineering\hspace{2em}Semester VII\hspace{2em}2026-27 Batch}
+
+% ---------------------------------------------------------------- border and footer (every page)
+\newif\ifcollegefooter
+\collegefooterfalse          % off for the cover; switched on after the cover is shipped out
+\newcommand{\cs@pt}[1]{\strip@pt\dimexpr#1\relax}
+\AddToShipoutPictureBG{%
+  \begingroup
+  \setlength{\unitlength}{1pt}%
+  \color{collegemaroon}%
+  % border: four 1.2 pt rules, 1 cm inside each page edge
+  \put(\cs@pt{1cm},\cs@pt{1cm}){\rule{\dimexpr\paperwidth-2cm\relax}{1.2pt}}%
+  \put(\cs@pt{1cm},\cs@pt{\paperheight-1cm-1.2pt}){\rule{\dimexpr\paperwidth-2cm\relax}{1.2pt}}%
+  \put(\cs@pt{1cm},\cs@pt{1cm}){\rule{1.2pt}{\dimexpr\paperheight-2cm\relax}}%
+  \put(\cs@pt{\paperwidth-1cm-1.2pt},\cs@pt{1cm}){\rule{1.2pt}{\dimexpr\paperheight-2cm\relax}}%
+  % footer: 1 pt maroon rule 1.93 cm above the bottom edge, text baseline 1.5 cm, spanning
+  % 2.54 cm from the left to 2 cm from the right edge (the reference text width)
+  \ifcollegefooter
+    \put(\cs@pt{2.54cm},\cs@pt{1.93cm}){\rule{\dimexpr\paperwidth-4.54cm\relax}{1pt}}%
+    \put(\cs@pt{2.54cm},\cs@pt{1.5cm}){\makebox[\dimexpr\paperwidth-4.54cm\relax][l]{%
+      \color{black}\normalfont\collegefont\fontsize{10}{12}\selectfont\bfseries\upshape
+      \collegefootertext\hfill Page \thepage}}%
+  \fi
+  \endgroup}
+
+% ---------------------------------------------------------------- heading colours (IEEEtran definitions, colour added)
+\def\section{\@startsection{section}{1}{\z@}{1.5ex plus 1.5ex minus 0.5ex}%
+{0.7ex plus 1ex minus 0ex}{\normalfont\normalsize\centering\scshape\color{collegemaroon}}}
+\def\subsection{\@startsection{subsection}{2}{\z@}{1.5ex plus 1.5ex minus 0.5ex}%
+{0.7ex plus .5ex minus 0ex}{\normalfont\normalsize\itshape\color{collegebrown}}}
+\def\subsubsection{\@startsection{subsubsection}{3}{\parindent}{0ex plus 0.1ex minus 0.1ex}%
+{0ex}{\normalfont\normalsize\itshape\color{collegebrown}}}
+\renewcommand{\collegetitlecolour}[1]{\textcolor{collegemaroon}{#1}}
+
+% ---------------------------------------------------------------- table of contents
+\setcounter{tocdepth}{2}
+\renewcommand\contentsname{Contents}
+% Top-level entries bold without dot leaders, like the reference; subsections keep dotted lines.
+\newcommand*\l@frontmatter[2]{\addpenalty{\@secpenalty}\addvspace{0.35em}%
+  \begingroup\parindent\z@\rightskip\@pnumwidth\parfillskip-\@pnumwidth
+  \leavevmode\bfseries #1\nobreak\hfil\nobreak\hb@xt@\@pnumwidth{\hss #2}\par\endgroup}
+\renewcommand*\l@section[2]{\addpenalty{\@secpenalty}\addvspace{0.6em}%
+  \begingroup\parindent\z@\rightskip\@pnumwidth\parfillskip-\@pnumwidth
+  \leavevmode\bfseries\@tempdima 2.75em #1\nobreak\hfil\nobreak
+  \hb@xt@\@pnumwidth{\hss #2}\par\endgroup}
+\renewcommand\tableofcontents{\collegefrontheading{\contentsname}\@starttoc{toc}}
+\renewcommand\listoffigures{\collegefrontheading{\listfigurename}\@starttoc{lof}}
+\renewcommand\listoftables{\collegefrontheading{\listtablename}\@starttoc{lot}}
+% Roomier number column and wider page-number column for the long entries.
+\renewcommand*\l@subsection{\@dottedtocline{2}{1.5em}{3.2em}}
+\renewcommand*\l@figure{\@dottedtocline{1}{0em}{2.8em}}
+\let\l@table\l@figure
+\renewcommand*\@pnumwidth{2.2em}
+
+% ---------------------------------------------------------------- front-matter building blocks
+\newcommand{\collegefrontheading}[1]{%   left-aligned maroon heading (Acknowledgements, Contents, lists)
+  \vspace*{0.6cm}\noindent{\collegefont\collegesize{4}\bfseries\color{collegemaroon}#1\par}\vspace{26pt}}
+\newcommand{\collegecentredheading}[1]{% centred maroon heading (Certificate, Declaration)
+  \begin{center}\collegefont\collegesize{4}\bfseries\color{collegemaroon}#1\end{center}\vspace{18pt}}
+% Reference margins for the front matter only: left 2.54 cm, right 2 cm, no header.
+\newcommand{\collegefrontgeometry}{\newgeometry{left=2.54cm,right=2cm,top=1.9cm,bottom=3cm,nohead}}
+\newcommand{\collegeinstitutionheader}{%
+  \begin{center}\collegefont\bfseries
+  {\collegesize{3}\color{collegebrown}Somaiya Vidyavihar University\par}\vspace{14pt}
+  {\collegesize{3}K. J. Somaiya School of Engineering\par}
+  \end{center}\vspace{26pt}}
+\newcommand{\collegesignline}{\rule{5.2cm}{0.4pt}}
+\newcommand{\collegefrontpage}[1]{% start a front-matter page and list it in the contents (roman number)
+  \clearpage\addcontentsline{toc}{frontmatter}{#1}}
+
+% ---------------------------------------------------------------- the people (identity fields)
+\newcommand{\collegestudents}{%
+  Vaibhav Shiroorkar/16014024805/Shivansh Gupta/16014023052/Adithya Jithesh/16014024803}
+\newcommand{\collegestudentrow}[3]{#1 & #2 & #3}
+
+% ---------------------------------------------------------------- cover (border, no footer)
+\newcommand{\collegecover}{%
+  \thispagestyle{empty}
+  \begingroup\centering\collegefont
+  \IfFileExists{figures/somaiya_vidyavihar_logo.jpg}%
+    {\includegraphics[width=7.4cm]{figures/somaiya_vidyavihar_logo.jpg}\par}%
+    {\textbf{Somaiya Vidyavihar University}\par}
+  \vspace{0.6cm}
+  {\collegesize{3}\bfseries\color{collegebrown}Somaiya Vidyavihar University\par}
+  \vspace{0.25cm}
+  {\collegesize{2}\bfseries K. J. Somaiya School of Engineering\par}
+  \vspace{0.15cm}
+  {\collegesize{2}\bfseries Department of Electronics and Computer Engineering\par}
+  \vspace{0.8cm}
+  {\collegesize{4}\bfseries\color{collegemaroon}\papertitle\par}
+  \vspace{0.25cm}
+  {\collegesize{2}\itshape\papersubtitle\par}
+  \vspace{0.8cm}
+  {\collegesize{1}Submitted In Partial Fulfillment of Requirements\par For the Degree Of\par}
+  \vspace{0.3cm}
+  {\collegesize{3}\bfseries Bachelor of Technology\par}
+  \vspace{0.1cm}
+  {\collegesize{2}\bfseries (Electronics and Computer Engineering)\par}
+  \vspace{0.6cm}
+  {\collegesize{1}By\par}
+  \vspace{0.2cm}
+  {\collegesize{1}%
+  \begin{tabular}{@{}l@{\hspace{2.2cm}}l@{}}
+    \textbf{\collegesize{2}Vaibhav Shiroorkar} & Roll No: 16014024805\\[3pt]
+    \textbf{\collegesize{2}Shivansh Gupta} & Roll No: 16014023052\\[3pt]
+    \textbf{\collegesize{2}Adithya Jithesh} & Roll No: 16014024803\\
+  \end{tabular}\par}
+  \vspace{0.6cm}
+  {\collegesize{1}Guide\par}
+  \vspace{0.2cm}
+  {\collegesize{3}\bfseries Dr. Tejashree Phatak\par}
+  {\collegesize{1}Assistant Professor\par}
+  \vfill
+  {\collegesize{2}\bfseries Somaiya Vidyavihar University\par}
+  {\collegesize{1}Vidyavihar, Mumbai - 400 077\par}
+  \vspace{0.2cm}
+  {\collegesize{2}\bfseries 2026-2027\par}
+  \endgroup}
+
+% ---------------------------------------------------------------- certificate
+\newcommand{\collegecertificate}{%
+  \collegefrontpage{Certificate}
+  \begingroup\collegefrontbody
+  \collegeinstitutionheader
+  \collegecentredheading{Certificate}
+  \noindent This is to certify that the project report entitled ``\textbf{\papertitle: \papersubtitle}''
+  submitted by the following students at the end of Semester VII of LY B.\ Tech is a bona fide record for
+  partial fulfillment of requirements for the degree of \textbf{Bachelor of Technology (Electronics and
+  Computer Engineering)} of Somaiya Vidyavihar University.\par
+  \vspace{0.6cm}
+  \noindent\begin{tabular}{@{}p{6.6cm}@{}l@{}}
+    \textbf{Vaibhav Shiroorkar} & (16014024805)\\[3pt]
+    \textbf{Shivansh Gupta} & (16014023052)\\[3pt]
+    \textbf{Adithya Jithesh} & (16014024803)\\
+  \end{tabular}\par
+  \vspace{1.6cm}
+  \noindent\begin{tabular}{@{}p{0.5\linewidth}@{}p{0.48\linewidth}@{}}
+    \collegesignline & \collegesignline\\[2pt]
+    \textbf{Guide} & \textbf{Head of the Department}\\[2pt]
+    Dr.\ Tejashree Phatak & Dr.\ Jagannath Nirmal\\[1.5cm]
+    \collegesignline & \collegesignline\\[2pt]
+    \textbf{Examiner} & \textbf{Director}\\
+  \end{tabular}\par
+  \vspace{1.2cm}
+  \noindent\textbf{Date:}\par\medskip
+  \noindent\textbf{Place:} Mumbai-77\par
+  \endgroup}
+
+% ---------------------------------------------------------------- declaration (framed signature cells, three students)
+\newcommand{\collegesigncell}[2]{%
+  \begin{minipage}[t]{0.3\linewidth}\raggedright\vspace{4pt}
+  \textbf{Signature of the Student}\par\vspace{1.0cm}
+  \rule{\dimexpr\linewidth-0.4cm\relax}{0.4pt}\par\vspace{2pt}
+  \textbf{#1}\par
+  \textbf{Roll No.} #2\par\vspace{4pt}
+  \end{minipage}}
+\newcommand{\collegedeclaration}{%
+  \collegefrontpage{Declaration}
+  \begingroup\collegefrontbody
+  \collegeinstitutionheader
+  \collegecentredheading{Declaration}
+  \noindent We declare that this written report submission represents the work done based on our and/or others'
+  ideas with adequately cited and referenced the original source. We also declare that we have adhered to all
+  principles of intellectual property, academic honesty and integrity as we have not misinterpreted or fabricated
+  or falsified any idea/data/fact/source/original work/matter in our submission.\par
+  \medskip
+  \noindent We understand that any violation of the above will be cause for disciplinary action by the college and
+  may evoke the penal action from the sources which have not been properly cited or from whom proper permission is
+  not sought.\par
+  \vspace{1cm}
+  \noindent\fbox{\collegesigncell{Vaibhav Shiroorkar}{16014024805}}\hfill
+  \fbox{\collegesigncell{Shivansh Gupta}{16014023052}}\hfill
+  \fbox{\collegesigncell{Adithya Jithesh}{16014024803}}\par
+  \vspace{0.8cm}
+  \noindent\textbf{Date:}\par\medskip
+  \noindent\textbf{Place:} Mumbai-77\par
+  \endgroup}
+
+% ---------------------------------------------------------------- acknowledgements
+\newcommand{\collegeacknowledgements}{%
+  \collegefrontpage{Acknowledgements}
+  \begingroup\collegefrontbody
+  \collegefrontheading{Acknowledgements}
+  \noindent We would like to express our sincere gratitude to our project guide, Dr.\ Tejashree Phatak, Assistant
+  Professor, Department of Electronics and Computer Engineering, K.\ J.\ Somaiya School of Engineering, for her
+  guidance, advice and encouragement throughout this project.\par
+  \medskip
+  \noindent We thank Dr.\ Jagannath Nirmal, Head of the Department of Electronics and Computer Engineering, for
+  the facilities that made the work possible, and the faculty and staff of the Department of Electronics and
+  Computer Engineering and of K.\ J.\ Somaiya School of Engineering, Somaiya Vidyavihar University, for their
+  support.\par
+  \medskip
+  \noindent We acknowledge the authors of the datasets used in this work, FaceForensics++, Celeb-DF, Celeb-DF++,
+  DeepFakeDetection, ASVspoof 2019, In-the-Wild, LAV-DF and the ForenSynths generated-image sets, who made them
+  available for research, and the developers of the open-source software on which the project is built, among
+  them PyTorch, timm, Hugging Face Transformers, OpenCV and Flask.\par
+  \medskip
+  \noindent Finally we thank our families and friends for their patience and support.\par
+  \endgroup}
+
+% ---------------------------------------------------------------- abbreviations (two-column Term / Expansion)
+\newcommand{\collegeabbreviations}{%
+  \collegefrontpage{Abbreviations}
+  \begingroup\collegefrontbody
+  \collegefrontheading{Abbreviations}
+  \noindent\begin{tabular}{@{}>{\raggedright\arraybackslash}p{2.6cm}%
+                          >{\raggedright\arraybackslash}p{\dimexpr\linewidth-2.6cm-2\tabcolsep\relax}@{}}
+  \textbf{Term} & \textbf{Expansion}\\[4pt]
+  ASR & Automatic Speech Recognition\\
+  AUC & Area Under the ROC Curve\\
+  bpm & beats per minute\\
+  CLIP & Contrastive Language-Image Pre-training\\
+  CNN & Convolutional Neural Network\\
+  DFD & DeepFakeDetection (dataset)\\
+  DFDC & DeepFake Detection Challenge\\
+  ECE & Expected Calibration Error\\
+  EER & Equal Error Rate\\
+  FLOPs & Floating-Point Operations\\
+  GAN & Generative Adversarial Network\\
+  GPU & Graphics Processing Unit\\
+  JPEG & Joint Photographic Experts Group\\
+  LA & Logical Access (ASVspoof 2019)\\
+  NLL & Negative Log-Likelihood\\
+  ROC & Receiver Operating Characteristic\\
+  rPPG & remote Photoplethysmography\\
+  SNR & Signal-to-Noise Ratio\\
+  SSL & Self-Supervised Learning\\
+  T-A, T-I, T-V & speech task, generated-image task, face-frame task\\
+  ViT & Vision Transformer\\
+  \end{tabular}\par
+  \bigskip
+  \noindent Dataset and model names (for example FaceForensics++, Celeb-DF, LAV-DF, DINOv2, WavLM) are proper
+  names and are not expanded.\par
+  \endgroup}
+
+% ---------------------------------------------------------------- the whole front matter, in order
+\newcommand{\collegefrontmatter}{%
+  \collegefrontgeometry
+  \onecolumn
+  \pagestyle{empty}%
+  \collegecover                      % unnumbered; border, no footer
+  \clearpage                        % the cover is shipped out before the footer is switched on
+  \global\collegefootertrue
+  \pagenumbering{roman}%             % i, ii, ... from the certificate
+  \collegecertificate
+  \collegedeclaration
+  \collegeacknowledgements
+  \clearpage{\collegefrontbody\tableofcontents}%
+  \collegefrontpage{\listfigurename}{\collegefrontbody\listoffigures}%
+  \collegefrontpage{\listtablename}{\collegefrontbody\listoftables}%
+  \collegeabbreviations
+}
+\newcommand{\collegestartpaper}{%   IEEEtran layout back; arabic page numbers from the first page of the paper
+  \clearpage\restoregeometry\pagenumbering{arabic}\setcounter{page}{1}\pagestyle{empty}}
+
+\makeatother
