@@ -21,6 +21,7 @@ torch = { index = "pytorch-cu130" }
 
 [dependency-groups]
 dev = [
+    "matplotlib>=3.10",
     "playwright>=1.64.1",
     "pytest>=9.1.1",
     "scikit-learn>=1.9.1",

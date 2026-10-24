@@ -153,7 +153,7 @@ def analyse_file(path: str | Path, filename: str, adapter: Adapter, progress: Op
     required_missing = any((not m.available) and not (k == "audio" and media.media_type == "video" and not media.has_audio)
                            for k, m in res.per_modality.items())
     if media.media_type == "video":
-        fused = {"score": None, "decision": "undetermined", "reason": "no combining rule for visual and audio scores is decided yet (O-009); see per_modality"}
+        fused = {"score": None, "decision": "undetermined", "reason": "no combining rule for visual and audio scores is decided yet; see per_modality"}
     else:
         m = next(iter(res.per_modality.values()))
         if m.available and m.score is not None:
