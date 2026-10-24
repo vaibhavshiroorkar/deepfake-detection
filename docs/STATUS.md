@@ -1,10 +1,13 @@
 # STATUS
 
-Last updated: 2026-10-24 (Session 1, late evening)
+Last updated: 2026-10-24 (Session 1, night)
 
-NEXT STEP: Ask the user to accept the LAV-DF terms on https://huggingface.co/datasets/ControlNet/LAV-DF while logged in as gr8SHivANsh (the server answers 403 until then), then rerun the `lavdf` step of scripts/data/fetch_open.py with HF_TOKEN set in the process environment only; in parallel verify and commit the S2-C preparation tooling, log the face detector, write the I-0 hypothesis (frozen pretrained features with a linear head, D-032) and build the loaders per docs/WORKSTREAMS.md.
+NEXT STEP: Start the I-0 sweep (E-001 to E-003, protocol D-036) by extracting frozen-encoder features for the E-001 candidates on the FF++ train and val crops and the Celeb-DF dev_x crops in a background job, using the loaders in src/dfd/data/loaders.py; in parallel the user approves the decisions listed in the 2026-10-24 night entry below, accepts the LAV-DF terms on https://huggingface.co/datasets/ControlNet/LAV-DF (HF account gr8SHivANsh), and pastes the DFDC Kaggle rules text.
 
 ## Where the project stands
+
+- Done on 2026-10-24 (night), after the usage limit: loaders for face clips, images and audio with a final-only split guard, 9 tests (52bcae7); the pre-declared encoder sweep protocol, E-001 to E-003 hypotheses, D-036 proposed and the audio-visual risk and fallback claim (764519a); the D-034 face-detector comparison M-002 on FF++ val and Celeb-DF dev_x frames (b2245a1); the audio encoder candidate verification, no choice made (docs/_agents/O7AUD.md, 93d80b7). The O-007 message of the user (sweep design, D-034 check, audio finding) was therefore handled before the limit; nothing needs resending.
+- Real-data loader check on FF++ val (throughput against the prep speed): started, result not yet recorded here.
 
 - Session 1 decisions are logged: D-011 and D-012 confirmed; D-013 (open datasets only) superseded by D-020 (gated datasets allowed, user downloads them); D-014 to D-016; D-017 (Python 3.13 and PyTorch 2.14.1+cu130); D-018 (images: face-manipulated and fully generated); D-019 (audio-only is a separate mode); D-021 (requirements-driven data selection, approved by the user). D-009 now has the deadline 2026-10-30. Reasons stated by the user are filled in for D-001 to D-010.
 - Literature: 67 papers in docs/RESEARCH.md (R-001 to R-067), 19 READ and 48 PARTIAL, plus an NR table. R-001 to R-018 were all re-marked PARTIAL.
@@ -18,6 +21,8 @@ NEXT STEP: Ask the user to accept the LAV-DF terms on https://huggingface.co/dat
 1. GitHub: resolved. Logged in, remote set, main pushed (see above).
 2. LAV-DF (25.6 GB): the user supplied a read token (account gr8SHivANsh), which was used only as an environment variable of the download process and written to no file. The server answers 403: the account is not on LAV-DF's authorized list, so the terms still have to be accepted on the dataset page. The token appeared in the chat and should be revoked at https://huggingface.co/settings/tokens when the download is done; a new one can be made then.
 3. Gated datasets: approvals for FF++ and Celeb-DF arrived on 2026-10-24. By D-022 the user downloads them on Monday 2026-10-26 on a fast connection and carries them over on an exFAT or NTFS drive (checklist in docs/DATA_LOG.md). The fallback for the video MVP is LAV-DF if FF++ has not passed the completeness checks by Monday 18:00 (decided autonomously, needs the user's review).
+4. DFDC on Kaggle: the facts in the DFDC row of docs/DATA_LOG.md are user-supplied (a paste of the Kaggle Data page on 2026-10-24) and are not verified against the official page, which the tools could not read. The rules text and licence have not been read, so DFDC may not be used. DFDC stays DEFER and is off the critical path.
+
 
 ## Open questions for the user
 
