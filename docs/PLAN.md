@@ -1,6 +1,6 @@
 # PLAN
 
-Last updated: 2026-10-24 (Session 1)
+Last updated: 2026-10-25 (Session 2: MVP done ahead of plan, I-1 started Sunday)
 
 This plan lists the stages of the project, the question each stage must answer, the day-by-day schedule to the submission date and where each output is recorded. A stage is marked done only when its output exists in the repository and the decisions it needed are logged in DECISIONS.md.
 
@@ -11,8 +11,8 @@ This plan lists the stages of the project, the question each stage must answer, 
 | 0 | What exactly is being detected, from which inputs, and what counts as success | Problem statement, requirements | done: docs/REQUIREMENTS.md written 2026-10-24; the definition of comparable (D-025) is Proposed |
 | 1 | Which data, which labels, how are train and test kept apart | Data plan, leakage rules | done for the datasets on the machine (manifests, splits, leakage check with content de-duplication, D-021 and D-026); builders for In-the-Wild, DFD and LAV-DF still to write |
 | 2 | Metrics, splits, seeds, threshold policy, fixed before any model exists | Evaluation protocol and acceptance test | done: docs/PROTOCOL.md; acceptance A1 to A8 pass (V-001 and V-002) |
-| 3 | The simplest end-to-end MVP | Baseline v0 with results | not started; the MVP form is decided (D-032: frozen pretrained features with a linear head) |
-| 4 | Other models in the same harness, so the final choice has evidence | Comparison table with accuracy, cost, ease of fine-tuning | not started |
+| 3 | The simplest end-to-end MVP | Baseline v0 with results | done on Sun 2026-10-25, ahead of the Mon 2026-10-26 plan: I-0 working version, checkpoint I-0-mvp, parity PASS, page checked on the real checkpoint, E-004, tag iter-0-mvp |
+| 4 | Other models in the same harness, so the final choice has evidence | Comparison table with accuracy, cost, ease of fine-tuning | sweep E-001 to E-003 final (D-049); ease of fine-tuning measured in E-005 for the video task |
 | 5 | Seven experimental iterations I-1 to I-7 after the MVP, each from a written hypothesis and the diagnostic battery; I-8 is integration and freeze | One experiment note per iteration; ladder in docs/ITERATIONS.md (Decided, D-041) | not started |
 | 6 | Whether and where remote heart-rate (rPPG) evidence enters | Feasibility test, then a decision; it is iteration I-7 with its thresholds written in docs/ITERATIONS.md (frozen by D-041) | not started; the sanity check S-1 is planned in parallel with I-1 to I-3 |
 | 7 | Paper (IEEE, LaTeX), technical report, presentation | Documents assembled from the logs | scaffolds built and committed (D-014); no results |
@@ -57,7 +57,7 @@ Each slot receives its hypothesis, success criterion and failure criterion befor
 
 | Slot | Role | Hypothesis | Experiment ID | Outcome |
 |---|---|---|---|---|
-| I-0 | MVP (D-040) | E-001 to E-003 | E-001, E-002, E-003 | none yet |
+| I-0 | MVP (D-040), done 2026-10-25 | E-001 to E-004 | E-001, E-002, E-003, E-004 | see EXPERIMENTS.md (exploratory, D-041) |
 | I-1 | Fine-tuning depth on T-V (budget D-042), chosen by the I-0 diagnosis (D-051, started Sun 2026-10-25, ahead of the Tue 27 Oct plan) | E-005 | E-005 (running) | none yet |
 | I-2 | Candidate lever: frame-to-video aggregation | to be written before the run | none yet | none yet |
 | I-3 | Candidate lever: loss and class weighting | to be written before the run | none yet | none yet |
