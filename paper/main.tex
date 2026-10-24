@@ -1,0 +1,363 @@
+% =============================================================================
+% Multimodal deepfake detection: IEEE conference-format paper, FIRST VERSION.
+% Class: IEEEtran, [conference] option (two-column, 10 pt). Overleaf compatible:
+% no absolute paths, only packages shipped with TeX Live / MiKTeX.
+% Build: latexmk -pdf main.tex   (BibTeX with IEEEtran.bst, refs.bib)
+%
+% STATE OF THIS FILE (2026-10-24): STRUCTURE ONLY. No experiment has been run.
+% Rules in force (CLAUDE.md):
+%   - No number appears here unless it comes from a logged experiment E-xxx.
+%     Every sentence that will carry a result must keep a marker "% E-xxx".
+%   - Cited numbers from other papers are named with their own protocol and
+%     are never presented as ours.
+%   - Only papers in docs/RESEARCH.md with status READ are cited.
+%   - No "real-time", "state of the art", "better than X" without a
+%     head-to-head run on the same protocol.
+%   - No em-dashes or en-dashes (do not write double or triple hyphens).
+%   - Model, framework, dataset, metric choices are OPEN (docs/DECISIONS.md,
+%     O-001 to O-011) and appear below only as \tbd{...} placeholders.
+% =============================================================================
+\documentclass[conference]{IEEEtran}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{cite}
+\usepackage[hidelinks]{hyperref}
+
+% Visible placeholder for anything that is not yet decided or measured.
+\newcommand{\tbd}[1]{\textbf{\textcolor{red}{[TBD: #1]}}}
+% Visible placeholder for a number that must come from a logged experiment.
+\newcommand{\fromexp}[1]{\textbf{\textcolor{red}{[to be filled from #1]}}}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% PROPOSED TITLES (proposals only, none is final; the authors and guide choose).
+%   Proposal 1: Multimodal Deepfake Detection for Images, Video and Audio:
+%               A Hypothesis-Driven Study Under a Source-Disjoint Protocol
+%   Proposal 2: From a Minimal Baseline to a Measured Detector: Seven
+%               Documented Iterations of Image, Video and Audio Deepfake Detection
+%   Proposal 3: How Far Does It Generalise? A Multi-Seed Study of Multimodal
+%               Deepfake Detection With Paired Comparisons
+% Proposal 1 is used below as a working title.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{Multimodal Deepfake Detection for Images, Video and Audio:\\
+A Hypothesis-Driven Study Under a Source-Disjoint Protocol}
+
+\author{%
+\IEEEauthorblockN{Vaibhav Shiroorkar, Shivansh Gupta, Adithya Jithesh}
+\IEEEauthorblockA{Department of Electronics and Computer Engineering\\
+K. J. Somaiya School of Engineering, Somaiya Vidyavihar University\\
+Vidyavihar, Mumbai 400 077, India\\
+\tbd{contact e-mail addresses, not supplied}}
+\and
+\IEEEauthorblockN{Dr. Tejashree Phatak (Guide)}
+\IEEEauthorblockA{Assistant Professor\\
+Department of Electronics and Computer Engineering\\
+K. J. Somaiya School of Engineering, Somaiya Vidyavihar University\\
+Vidyavihar, Mumbai 400 077, India}}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{abstract}
+% Abstract skeleton. Each bracket is filled only after the experiment exists.
+Synthetic or manipulated faces, videos and voices can be produced with
+consumer hardware, and published detectors are usually compared under
+different protocols, which makes their reported numbers hard to read side by
+side. This paper describes a detector for images, videos and the audio of
+videos that is built from a minimal baseline through a fixed number of
+iterations, each started from a written hypothesis and a stated failure
+criterion. All candidates are run in one pipeline on a split that keeps
+identities and source recordings apart, with several random seeds and
+interval estimates that resample independent units.
+\tbd{one sentence on the final system, after the model and dataset choices
+O-003, O-006, O-007 are made}.
+Results: \fromexp{E-xxx, final comparison}.
+\tbd{one sentence on what did not work, after the iterations are run}.
+\tbd{one sentence on the limits of the evidence}.
+\end{abstract}
+
+\begin{IEEEkeywords}
+deepfake detection, multimodal, generalisation, evaluation protocol,
+calibration
+\end{IEEEkeywords}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}\label{sec:intro}
+
+Face swaps, talking-face synthesis and cloned voices can now be produced
+with consumer hardware and off-the-shelf software~\cite{dolhansky2020dfdc}. A detector that is to be useful must handle images, video, and
+the audio track of a video, and must say how sure it is. The literature
+supplies many detectors and datasets, but the numbers reported for them are
+measured under different protocols. In one benchmark that trained all
+detectors on one dataset and tested them within and across datasets, a plain
+Xception network reached a mean AUC of 0.9450 on the in-domain tests and
+0.7718 on the cross-domain tests~\cite{yan2023deepfakebench}. % source: R-017, their protocol, not ours
+The gap between in-dataset and cross-dataset results recurs across face
+datasets~\cite{li2020celebdf,li2020facexray,dolhansky2020dfdc}, so a single
+in-dataset number says little about behaviour on new material.
+
+This work treats the path to a result as part of the result. We build the
+simplest end-to-end detector first, then make a fixed number of
+iterations, each with a hypothesis, a success criterion and a failure
+criterion written before the run. Failed iterations are kept in the record.
+The aim is not the best model in the world, but results that can be compared
+with published detectors on a protocol that we define and run ourselves.
+
+\paragraph*{Contributions}
+% To be rewritten to match what the logged experiments actually support.
+The intended contributions are:
+\begin{enumerate}
+  \item a written evaluation protocol with source-disjoint splits, a
+        threshold chosen on validation data only, and at least three seeds
+        per candidate (Section~\ref{sec:exp});
+  \item a minimal baseline and seven documented iterations with their
+        hypotheses and outcomes, including failures
+        (Section~\ref{sec:results}, \fromexp{E-xxx, I-0 to I-7});
+  \item a paired comparison of candidate models in one pipeline, with cost
+        measured next to accuracy (\fromexp{E-xxx, comparison});
+  \item a test of whether remote photoplethysmography (heart-rate) evidence
+        adds anything beyond the interval of the paired difference
+        (\fromexp{E-xxx, rPPG feasibility}).
+\end{enumerate}
+
+The rest of the paper is organised as follows. Section~\ref{sec:related}
+reviews related work, Section~\ref{sec:method} describes the method,
+Section~\ref{sec:exp} the protocol, Section~\ref{sec:results} the results,
+and Sections~\ref{sec:disc} to~\ref{sec:concl} discuss, limit and conclude.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Related Work}\label{sec:related}
+
+% Written from papers in docs/RESEARCH.md marked READ (or READ in part).
+% Paraphrased. Numbers from other papers are not reproduced unless the
+% protocol is named in the same sentence.
+
+\subsection{Datasets for face forgery}
+FaceForensics++ provides real videos manipulated with four methods at
+several compression levels, together with a fixed split and a hidden-test
+benchmark, and it reports that detectors lose accuracy as compression
+increases~\cite{rossler2019faceforensics}. Celeb-DF was built with an
+improved synthesis pipeline to remove visible artefacts, and the authors
+evaluated existing detectors, run with their released models, on it and on
+earlier sets, finding it the hardest of those compared~\cite{li2020celebdf}.
+The DFDC dataset contributes a large collection of videos from consenting
+actors, with held-out subjects and a test set that includes content from
+outside the dataset; its analysis of the challenge entries reports weak
+performance on the test content that came from outside the dataset~\cite{dolhansky2020dfdc}.
+
+\subsection{Visual detectors and generalisation}
+Face X-ray predicts the blending boundary between a pasted face and its
+background and is trained on self-made blended images, so that no fakes from
+a particular generator are required~\cite{li2020facexray}. DeepfakeBench
+puts many detectors in one codebase with one preprocessing and metric
+pipeline, and finds that plain strong backbones come close to more elaborate
+methods when the training recipe is shared~\cite{yan2023deepfakebench}.
+For still images in general, replacing a trained real-versus-fake network by
+a linear or nearest-neighbour classifier on the frozen features of a
+pretrained vision-language model generalised across generators better than
+the trained baselines in the authors' own tests~\cite{ojha2024universal}.
+Work on transfer learning for image classification relates accuracy on a
+source task to accuracy after transfer, with caveats that depend on the
+regularisers used~\cite{kornblith2019better}; whether this carries over to
+forensic detection is an open question that we test.
+
+\subsection{Physiological signals}
+FakeCatcher derives photoplethysmography-like signals from facial regions
+and classifies them, and reports high in-dataset accuracy on the generators
+of its time~\cite{ciftci2020fakecatcher}. A follow-up uses the same kind of
+signal to identify which generator produced a fake~\cite{ciftci2020hearts}.
+DeepFakesON-Phys fine-tunes a heart-rate estimation network as a detector,
+with one model per database and identity-disjoint development and test
+sets~\cite{hernandez2020deepfakeson}. Later work is more cautious. A
+study with its own recordings reports that a heart-rate signal can be
+recovered from high-quality face swaps and can follow the driving
+video~\cite{seibold2025heart}. An independent reproduction of
+DeepFakesON-Phys on talking-face fakes, under an identity-disjoint split,
+reported a much lower AUC than the original paper's in-dataset
+figure~\cite{harraq2026physio}. Pulse signals can also be edited on
+purpose, which makes a pulse-based check open to attack~\cite{lin2023ppg}.
+These results are why we treat remote photoplethysmography as a hypothesis
+to test, not as a component to adopt.
+
+\subsection{Audio and audio-visual detection}
+ASVspoof~2019 is the standard public database of synthesised, converted and
+replayed speech, with attacks in the evaluation set that are absent from
+training~\cite{wang2020asvspoof}. AASIST is a compact model on the raw
+waveform that applies graph attention over spectral and temporal nodes, and
+its authors report variation across seeds~\cite{jung2021aasist}.
+FakeAVCeleb provides videos with both visual and cloned-voice manipulations,
+and its baselines show that naive combinations of unimodal detectors can
+perform poorly~\cite{khalid2022fakeavceleb}. A two-stream audio-visual
+network that scores the dissonance between the streams over short chunks can
+also localise manipulated segments~\cite{chugh2021notmade}.
+
+\subsection{Calibration}
+Modern neural networks are often poorly calibrated, and temperature scaling,
+a single parameter fitted on validation data, is an effective
+correction on the tasks the authors studied~\cite{guo2017calibration}. We
+use their definitions of expected calibration error and temperature scaling,
+and fit any such correction on validation data only.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Method}\label{sec:method}
+% SKELETON. Nothing in this section is decided yet. Each placeholder names
+% the open decision (docs/DECISIONS.md) that fills it.
+
+\subsection{Problem statement}
+Let $x$ denote an input (an image, a video clip, or the audio of a clip) and
+$y\in\{0,1\}$ its label, with $y=1$ for manipulated content. A detector
+outputs a score $s(x)\in[0,1]$. The exact output and the labels used are
+\tbd{O-001, output definition}.
+How image, video and audio inputs are each handled is \tbd{O-002}.
+
+\subsection{Data and splits}
+Datasets: \tbd{O-003}. Each dataset's licence, source and hash are recorded
+before use. Every split is stored as a file with an identifier and a hash,
+and no identity, source video or near-duplicate frame appears in more than
+one partition (policy to be fixed in \tbd{O-004}). The test partition is
+used only for a frozen choice.
+
+\subsection{Baseline and candidate models}
+The minimal baseline is \tbd{O-006}. Candidate backbones per modality are
+\tbd{O-007}. The fine-tuning strategy is \tbd{O-008}. A small network
+trained from scratch is included as a reference.
+
+\subsection{Fusion}
+For inputs with more than one modality the fusion scheme is \tbd{O-009}. A
+still image has no audio, so the scheme must handle a missing modality.
+
+\subsection{Calibration and thresholds}
+The threshold is selected on validation data only. The calibration method,
+if any, is \tbd{O-005}. Following~\cite{guo2017calibration}, expected
+calibration error is the weighted average over bins of the absolute gap
+between accuracy and mean confidence; the number of bins is fixed in advance.
+
+\subsection{Cost measurements}
+For every candidate we measure parameters, forward-pass FLOPs for the input
+size actually used, peak GPU memory in a training step, seconds per epoch,
+epochs to a validation target fixed in advance, sensitivity to the learning
+rate, and the number of hyperparameters that had to be tuned.
+
+\subsection{Heart-rate evidence (candidate component)}
+Whether remote photoplethysmography enters the system is decided by a
+feasibility test with success and failure thresholds written before the run
+(\tbd{O-010}).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Experimental Protocol}\label{sec:exp}
+
+\subsection{Setup}
+Hardware: one consumer GPU with 12~GB of memory, as measured on the project
+machine (environment ENV-DESKTOP-GPU; full record in the experiment log).
+Software versions: \fromexp{E-xxx, environment record}.
+
+\subsection{Comparison rules}
+All candidates are compared on the same data, split, compute budget and
+metric, with at least three random seeds. We report the mean, the standard
+deviation over seeds, and a bootstrap confidence interval that resamples
+independent units (identities or source videos), not frames. Candidates are
+compared in a paired way, on the same test units. If the interval of the
+difference includes zero, the simpler or cheaper candidate is preferred.
+The number of resamples and the interval level are \tbd{fixed in Stage 2}.
+
+\subsection{Metrics}
+Metrics are \tbd{O-005}. Each metric is defined mathematically before use.
+Class balance of every test set is stated.
+
+\subsection{Iteration plan}
+Table~\ref{tab:iters} lists the slots. Each hypothesis, success criterion
+and failure criterion is written in the experiment log before its run.
+
+\begin{table}[t]
+\centering
+\caption{Iteration slots (structure only; to be filled from the experiment log).}
+\label{tab:iters}
+\small
+\begin{tabular}{@{}lp{2.2cm}p{1.6cm}p{1.6cm}@{}}
+\toprule
+Slot & Hypothesis & Experiment & Outcome \\
+\midrule
+I-0 (MVP) & \tbd{} & E-xxx & \tbd{} \\
+I-1 & \tbd{} & E-xxx & \tbd{} \\
+I-2 & \tbd{} & E-xxx & \tbd{} \\
+I-3 & \tbd{} & E-xxx & \tbd{} \\
+I-4 & \tbd{} & E-xxx & \tbd{} \\
+I-5 & \tbd{} & E-xxx & \tbd{} \\
+I-6 & \tbd{} & E-xxx & \tbd{} \\
+I-7 & \tbd{} & E-xxx & \tbd{} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Results}\label{sec:results}
+% EMPTY ON PURPOSE. Every number below must be copied from a logged
+% experiment and carry a marker line "% E-xxx" naming the experiment.
+
+\subsection{Minimal baseline and iterations}
+\fromexp{E-xxx, I-0 to I-7}. % E-xxx
+
+\subsection{Final comparison}
+\fromexp{E-xxx, final comparison under the common protocol}. % E-xxx
+
+\begin{table}[t]
+\centering
+\caption{Final comparison on the held-out partition (structure only).
+Protocol: \tbd{split name; in-dataset or cross-dataset}. Cells to be filled from the experiment IDs shown.}
+\label{tab:final}
+\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Candidate & Metric (mean $\pm$ sd) & 95\% interval & Cost \\
+\midrule
+\textbf{\textcolor{red}{[TBD]}} (cand.\ A) & E-xxx & E-xxx & E-xxx \\
+\textbf{\textcolor{red}{[TBD]}} (cand.\ B) & E-xxx & E-xxx & E-xxx \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Calibration and cross-dataset behaviour}
+\fromexp{E-xxx}. % E-xxx
+
+\subsection{Heart-rate feasibility test}
+\fromexp{E-xxx, Stage 6}. % E-xxx
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Discussion}\label{sec:disc}
+% Written after the results. It must say what each result supports and what
+% it does not, and name the experiment for every claim.
+\tbd{interpretation of E-xxx results; compare differences, not boasts}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Limitations}\label{sec:limits}
+Limits that are known before any run:
+\begin{itemize}
+  \item Published numbers come from different protocols, so any comparison
+        with them is made only by re-running a published detector on our
+        protocol, not by quoting its paper.
+  \item A detector trained on one kind of manipulation supports no claim
+        about other kinds (for example fully generated images or cloned
+        voices) without a test on them.
+  \item Labelled audio-visual datasets are fewer and smaller than visual
+        ones, which limits what the audio branch can support.
+  \item Compute is limited to one 12~GB GPU, which bounds model size and
+        clip length.
+  \item \tbd{limits that appear during the experiments, from the experiment log}.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conclusion}\label{sec:concl}
+\tbd{conclusion, after results exist: what was tried, what worked, what did
+not, and what the evidence does not support}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
+
+\end{document}
