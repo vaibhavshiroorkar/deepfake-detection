@@ -664,25 +664,27 @@ s = new_slide("Encoder shortlist",
     "A small network from scratch is reported for each task as a reference and is excluded from selection. "
     "DINOv3 was excluded on purpose because its weights sit behind a manual access gate. "
     "The weights of OpenAI CLIP and of WavLM have conditional licences; they are accepted as research-only and stated as a limitation. "
-    "Parameter counts are read from the weight files and the model comparison tables (T-V, T-I, T-A of E-001 to E-003): Whisper small encoder 88,154,112, HuBERT base 94,371,712, the from-scratch references 389,633 (images) and 389,057 (speech). "
+    "Cost values come from the section 7 cost record of 2026-10-25 (data/_results/cost_record.json): inference in fp16 at batch 64 (speech batch 32) on the RTX 5070, FLOPs per forward pass, end-to-end time per 1,000 inputs on real files (face frames for images, 224 px except EfficientNet-B4 320 and Xception 299, speech 4 s clips). Parameter counts are read from the weight files and the model comparison tables (E-001 to E-003): Whisper small encoder 88,154,112, HuBERT base 94,371,712, the from-scratch references 389,633 (images) and 389,057 (speech). "
     "Evidence: docs/O007_SWEEP.md section 3.1, docs/DATA_LOG.md encoder weights section, data/_results/*/model_comparison.md.")
-cw = [span_w(2), span_w(3), span_w(3), span_w(2)]
+cw = [span_w(1) + 450000, span_w(3) - 200000, span_w(2) + 150000, span_w(1), span_w(1) + 50000, span_w(1)]
 cw.append(W - sum(cw))
+hdr_s = ["Task", "Encoder", "Family", "Params", "GFLOPs", "s per 1,000", "Weights licence"]
 rows = [
-    ["Images, video frames", "EfficientNet-B4", "supervised CNN", "17.5 M", "research use (ImageNet)"],
-    ["", "Xception", "supervised CNN", "20.8 M", "research use (ImageNet)"],
-    ["", "DINOv2 small, base", "self-supervised ViT", "22.1 M, 86.6 M", "Apache-2.0"],
-    ["", "CLIP ViT-L/14 (OpenAI)", "image-text contrastive", "304.0 M", "research use (accepted)"],
-    ["", "CLIP ViT-L/14 (LAION)", "image-text contrastive", "304.0 M", "MIT tag, research use"],
-    ["", "SigLIP base", "sigmoid image-text", "92.9 M", "Apache-2.0"],
-    ["Speech audio", "wav2vec 2.0 base", "self-supervised", "94.4 M", "Apache-2.0"],
-    ["", "WavLM base plus", "self-supervised", "94.4 M", "research use (accepted)"],
-    ["", "Whisper small encoder", "weakly supervised ASR", "88.2 M", "Apache-2.0 / MIT"],
-    ["", "HuBERT base", "self-supervised", "94.4 M", "Apache-2.0"],
-    ["Both", "Small network from scratch", "reference, excluded from selection", "0.39 M", "own code"],
+    ["Images, video frames", "EfficientNet-B4", "supervised CNN", "17.5 M", "6.1", "1.73", "research use (ImageNet)"],
+    ["", "Xception", "supervised CNN", "20.8 M", "16.7", "3.32", "research use (ImageNet)"],
+    ["", "DINOv2 small", "self-supervised ViT", "22.1 M", "12.2", "0.94", "Apache-2.0"],
+    ["", "DINOv2 base", "self-supervised ViT", "86.6 M", "46.3", "1.67", "Apache-2.0"],
+    ["", "CLIP ViT-L/14 (OpenAI)", "image-text contrastive", "304.0 M", "162.0", "4.45", "research use (accepted)"],
+    ["", "CLIP ViT-L/14 (LAION)", "image-text contrastive", "304.0 M", "162.0", "4.03", "MIT tag, research use"],
+    ["", "SigLIP base", "sigmoid image-text", "92.9 M", "35.4", "1.44", "Apache-2.0"],
+    ["Speech audio", "wav2vec 2.0 base", "self-supervised", "94.4 M", "57.5", "2.04", "Apache-2.0"],
+    ["", "WavLM base plus", "self-supervised", "94.4 M", "57.5", "2.53", "research use (accepted)"],
+    ["", "Whisper small encoder", "weakly supervised ASR", "88.2 M", "344.3", "11.53", "Apache-2.0 / MIT"],
+    ["", "HuBERT base", "self-supervised", "94.4 M", "57.5", "2.04", "Apache-2.0"],
+    ["Both", "Small network from scratch", "reference, excluded", "0.39 M", "n/a", "n/a", "own code"],
 ]
-gt, th = add_table(s, L, TOP, cw, ["Task", "Encoder", "Family", "Parameters", "Weights licence"], rows, size="auto", bold_first_col=True, max_h=H - 480000, fill=H - 480000)
-add_text(s, L, TOP + th + 90000, W, 330000, [("cap", "Parameters are read from the weight files. DINOv3 is excluded on purpose (manual access gate).")], "short_note")
+gt, th = add_table(s, L, TOP, cw, hdr_s, rows, size="auto", bold_first_col=True, max_h=H - 800000, fill=H - 800000)
+add_text(s, L, TOP + th + 90000, W, 620000, [("cap", "Parameters from the weight files; GFLOPs per forward pass; s per 1,000 inputs end to end (face frames for images). Inference, fp16, batch 64 (speech 32), RTX 5070. DINOv3 is excluded on purpose (manual access gate).")], "short_note")
 
 # =====================================================================================================================
 # SLIDE 9a: sweep results
@@ -1100,7 +1102,7 @@ s = new_slide("Sweep tables, face frames",
     "Full table of experiment E-001: frozen image encoders on face video frames, trained on FaceForensics++ c23, validation FaceForensics++ validation, development slice Celeb-DF v2 (1,728 clips, 15 identity groups), exploratory (D-041, D-049). "
     "AUC values are the mean of three head seeds; the interval is the 95 percent group bootstrap with 2,000 resamples; the gap is validation minus development AUC; the tie column is the paired interval against the leader (CLIP ViT-L/14 OpenAI). "
     "Cost is one end-to-end extraction run per candidate and the peak memory of that extraction (data/_results/T-V/model_comparison.md); the cost rule picks DINOv2 small, 0.943 s per 1,000 inputs against 1.732 s for EfficientNet-B4. "
-    "The from-scratch reference is reported and excluded; FLOPs and model-only time were not measured. "
+    "The from-scratch reference is reported and excluded; FLOPs and model-only time are in data/_results/cost_record.json. "
     "Evidence: docs/EXPERIMENTS.md E-001, data/_results/T-V/rank.md and model_comparison.md.")
 hv = ["Encoder", "Val AUC", "Dev AUC [95% CI]", "Gap", "Tie", "s per 1,000", "Peak GiB"]
 rv = [["CLIP ViT-L/14 OpenAI", "0.9046", "0.7464 [0.6721, 0.8306]", "+0.158", "yes", "4.5", "2.85"],
@@ -1117,7 +1119,7 @@ cwv += [(W - sum(cwv)) // 3] * 3
 cwv[-1] = W - sum(cwv[:-1])
 gt, th = add_table(s, L, TOP, cwv, hv, rv, size=fit_size(cwv, hv, rv, sizes=(16, 15, 14, 13, 12), bold_first_col=True), bold_first_col=True, max_h=3600000, fill=3600000)
 add_text(s, L, TOP + th + 100000, W, BOT - (TOP + th + 100000), [
-    ("cap", "Exploratory, development slice. Gap = validation minus development AUC. Time and peak memory are one end-to-end extraction run; FLOPs and model-only time: [pending].")], "sweep_v_note")
+    ("cap", "Exploratory, development slice. Gap = validation minus development AUC. Time and peak memory are one end-to-end extraction run; FLOPs and model-only time are on the cost slide.")], "sweep_v_note")
 
 s = new_slide("Sweep tables, images and speech",
     "Full tables of experiments E-002 (generated images) and E-003 (speech), exploratory, development slice (D-041, D-049). "
@@ -1149,23 +1151,24 @@ s = new_slide("Cost record and fine-tuning fit",
     "Accuracy is never reported alone: every candidate has a cost record generated from the extraction records and the clean step-time run (D-036, D-042; data/_results/T-V/model_comparison.md). "
     "The fine-tuning budget of the video task is one pass over 57,600 training frames at batch 32 with a per-run time cap; an encoder enters only if its peak memory at batch 32 is at most 10 GiB and one budget takes at most 10 minutes (D-042). "
     "By the clean step-time run this admits DINOv2 small, SigLIP base, DINOv2 base, EfficientNet-B4 and Xception, and excludes the two CLIP ViT-L/14 models (12.2 and 13.8 GiB, 300 and 457 minutes per budget on the 12 GB card); the first three of the ranking that fit are the I-1 candidates, DINOv2 small, SigLIP base and DINOv2 base (D-049). "
-    "FLOPs and the model-only time were not measured and are shown as [pending]. "
+    "FLOPs and model-only time come from the section 7 cost record of 2026-10-25 (data/_results/cost_record.json): inference in fp16 at batch 64 (speech batch 32) on the RTX 5070, FLOPs per forward pass, times per 1,000 inputs. "
     "Evidence: docs/DECISIONS.md D-042, D-049; docs/EXPERIMENTS.md M-003 (superseded by the clean run) and the model comparison tables.")
-hc = ["Candidate (face frames)", "Parameters", "Extraction GiB", "Tune GiB (b32)", "Min per budget", "Fits", "I-1"]
-rc = [["DINOv2 small", "22.1 M", "0.38", "2.0", "1.4", "yes", "yes"],
-      ["SigLIP base", "92.9 M", "1.30", "4.0", "3.4", "yes", "yes"],
-      ["DINOv2 base", "86.6 M", "0.95", "4.5", "4.0", "yes", "yes"],
-      ["CLIP ViT-L/14 LAION", "304.0 M", "2.72", "12.2", "300.0", "no", "no"],
-      ["CLIP ViT-L/14 OpenAI", "304.0 M", "2.85", "13.8", "457.1", "no", "no"],
-      ["EfficientNet-B4", "17.5 M", "1.31", "7.3", "4.2", "yes", "no"],
-      ["Xception", "20.8 M", "1.96", "4.3", "3.3", "yes", "no"]]
-cwc = [span_w(3), span_w(2), span_w(2), span_w(2), span_w(1)]
-cwc += [(W - sum(cwc)) // 2] * 2
-cwc[-1] = W - sum(cwc[:-1])
-gt, th = add_table(s, L, TOP, cwc, hc, rc, size=fit_size(cwc, hc, rc, sizes=(15, 14, 13, 12), bold_first_col=True), bold_first_col=True, max_h=3300000, fill=3300000)
+hc = ["Candidate", "Params", "GFLOPs", "Model s", "End-to-end", "Extr. GiB", "Tune GiB", "Min", "Fits", "I-1"]
+rc = [["DINOv2 small", "22.1 M", "12.2", "0.39", "0.94", "0.38", "2.0", "1.4", "yes", "yes"],
+      ["SigLIP base", "92.9 M", "35.4", "0.94", "1.44", "1.30", "4.0", "3.4", "yes", "yes"],
+      ["DINOv2 base", "86.6 M", "46.3", "1.19", "1.67", "0.95", "4.5", "4.0", "yes", "yes"],
+      ["CLIP ViT-L/14 LAION", "304.0 M", "162.0", "3.61", "4.03", "2.72", "12.2", "300.0", "no", "no"],
+      ["CLIP ViT-L/14 OpenAI", "304.0 M", "162.0", "4.04", "4.45", "2.85", "13.8", "457.1", "no", "no"],
+      ["EfficientNet-B4", "17.5 M", "6.1", "1.24", "1.73", "1.31", "7.3", "4.2", "yes", "no"],
+      ["Xception", "20.8 M", "16.7", "0.99", "3.32", "1.96", "4.3", "3.3", "yes", "no"],
+      ["HuBERT base (speech)", "94.4 M", "57.5", "1.90", "2.04", "2.40", "n/a", "n/a", "n/a", "n/a"],
+      ["Whisper small enc. (speech)", "88.2 M", "344.3", "11.14", "11.53", "1.62", "n/a", "n/a", "n/a", "n/a"]]
+cwc = [span_w(3) - 150000, span_w(1), span_w(1) + 50000, span_w(1) - 100000, span_w(1) + 250000, span_w(1) - 100000, span_w(1) - 100000, span_w(1) - 250000, span_w(1) - 300000]
+cwc.append(W - sum(cwc))
+gt, th = add_table(s, L, TOP, cwc, hc, rc, size=fit_size(cwc, hc, rc, sizes=(14, 13, 12), bold_first_col=True), bold_first_col=True, max_h=3500000, fill=3000000)
 add_text(s, L, TOP + th + 100000, W, BOT - (TOP + th + 100000), [
-    ("bs", "Fits: peak memory at batch 32 at most 10 GiB and one budget at most 10 minutes. I-1 candidates: the first three of the ranking that fit.", 16),
-    ("bs", "FLOPs and model-only time per 1,000 inputs: [pending].", 16),
+    ("bs", "Inference in fp16 at batch 64 (speech 32) on the RTX 5070; GFLOPs per forward pass; Model s and End-to-end s are seconds per 1,000 inputs, end to end on real files (face frames).", 16),
+    ("bs", "Extr. GiB: peak memory of extraction. Tune GiB and Min: fine-tuning peak at batch 32 and minutes per budget. Fits: at most 10 GiB and 10 minutes. I-1: first three of the ranking that fit.", 16),
 ], "cost_text")
 
 # ---- I-0 battery (1): metrics
