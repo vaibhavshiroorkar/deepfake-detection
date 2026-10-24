@@ -9,7 +9,7 @@ NEXT STEP: Check the automatic downloads (docs/DATA_LOG.md "Downloaded datasets"
 - Session 1 decisions are logged: D-011 and D-012 confirmed; D-013 (open datasets only) superseded by D-020 (gated datasets allowed, user downloads them); D-014 to D-016; D-017 (Python 3.13 and PyTorch 2.14.1+cu130); D-018 (images: face-manipulated and fully generated); D-019 (audio-only is a separate mode); D-021 (requirements-driven data selection, approved by the user). D-009 now has the deadline 2026-10-30. Reasons stated by the user are filled in for D-001 to D-010.
 - Literature: 67 papers in docs/RESEARCH.md (R-001 to R-067), 19 READ and 48 PARTIAL, plus an NR table. R-001 to R-018 were all re-marked PARTIAL.
 - Deliverable scaffolds exist and are committed: paper (compiles, 4 pages), report (26 pages, built from the supplied Word template), 19-slide deck (supplied master, logos, colours, bars). They contain no results.
-- Data: the open batch is downloading (see the Downloaded datasets table). Gated datasets (FF++, DFD, Celeb-DF v2, Celeb-DF++, FakeAVCeleb, WildDeepfake test shards) are requested and downloaded by the user (sheets in docs/DATA_LOG.md). LAV-DF waits for the user's Hugging Face token.
+- Data: the open batch is downloading on this machine (see the Downloaded datasets table). The gated datasets (FF++, DFD, Celeb-DF v2, Celeb-DF++ narrowed to the 21 new generators, FakeAVCeleb, WildDeepfake test shards) arrive by drive on Monday 2026-10-26 (D-022; checklist in docs/DATA_LOG.md). LAV-DF waits for the user's Hugging Face token.
 - No model, training or detection code exists and no experiment has been run.
 - Nothing is pushed: no `origin` remote and `gh` is not logged in on this machine.
 
@@ -17,7 +17,7 @@ NEXT STEP: Check the automatic downloads (docs/DATA_LOG.md "Downloaded datasets"
 
 1. GitHub: `gh auth status` still reports no login and there is no `origin`. The user must run `gh auth login`, then name the repository and its visibility (private recommended, because the report and slides carry names and roll numbers). Then: `gh repo create <name> --private --source=. --remote=origin`, `git push -u origin main`, `git push origin --tags`.
 2. Hugging Face token for LAV-DF (25.6 GB): the user creates a free account, accepts the terms on https://huggingface.co/datasets/ControlNet/LAV-DF, and stores a read token as a user environment variable (command in docs/DATA_LOG.md). Until then the `lavdf` step is skipped.
-3. Gated dataset requests: only the user can submit them (forms in docs/DATA_LOG.md). FF++ is the one the visual MVP depends on; the fallback date is 2026-10-26 midday (D-021).
+3. Gated datasets: approvals for FF++ and Celeb-DF arrived on 2026-10-24. By D-022 the user downloads them on Monday 2026-10-26 on a fast connection and carries them over on an exFAT or NTFS drive (checklist in docs/DATA_LOG.md). The fallback for the video MVP is LAV-DF if FF++ has not passed the completeness checks by Monday 18:00 (decided autonomously, needs the user's review).
 
 ## Open questions for the user
 

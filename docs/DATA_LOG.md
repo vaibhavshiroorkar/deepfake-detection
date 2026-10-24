@@ -166,6 +166,30 @@ Which of the gated datasets matter most, best first: FaceForensics++ with DFD (n
    - Create a read token and store it as a user environment variable, never in a file: in PowerShell `[Environment]::SetEnvironmentVariable("HF_TOKEN","<your token>","User")`. The implementer reads it at run time from the user environment.
    - Expected: `LAV-DF.tar` of 25,607,198,720 bytes; 136,304 videos (36,431 real, 99,873 with fake segments), 153 identities; the SHA-256 is compared with the Hugging Face API value.
 
+## Monday transfer checklist (D-022)
+
+For the user: download on Monday 2026-10-26 on the fast connection, copy to a drive formatted exFAT or NTFS (not FAT32), and bring it to this machine. Keep the folder names exactly as below so that copying the drive's `data` folder into the repository folder gives the right layout. Space needed: about 85 GB for the gated datasets and about 26 GB more if LAV-DF is also fetched there (see item 7); a drive of 128 GB or more, ideally an SSD, because a slow pen drive may write at only 30 to 100 MB/s.
+
+Before leaving the fast machine, save the FF++ download script and the Celeb-DF Drive link locally; do not depend on the emails being open. Save `download-FaceForensics.py` as a file.
+
+| # | Dataset | How to fetch on the fast machine | Folder on the drive | Expected content |
+|---|---|---|---|---|
+| 1 | FaceForensics++ c23 | The five `download-FaceForensics.py` commands in item 1 of the manual-download sheets above, each with `--server EU2` (the only available server) and with the output path `<drive>\data\ffpp` | `data\ffpp\` | 1,000 originals and 1,000 videos for each of Deepfakes, Face2Face, FaceSwap, NeuralTextures (5,000 videos, about 10 GB) |
+| 2 | Celeb-DF v2 | The Google Drive link for v2 on the terms page (not v1, not Baidu) | `data\celebdf_v2\` | `Celeb-real` 590, `YouTube-real` 300, `Celeb-synthesis` 5,639 videos, `List_of_testing_videos.txt` with 518 lines |
+| 3 | Google DFD (from the FF++ script) | The two DFD commands of item 1 with `--server EU2` | `data\dfd\` | 363 originals (about 3 GB) and 3,068 manipulated videos (about 22 GB) |
+| 4 | FakeAVCeleb | The download script link from the approval email | `data\fakeavceleb\` | 500 real and 19,500 fake videos (20,000) and a metadata CSV; size not stated |
+| 5 | Celeb-DF++ (test-list videos of the 21 new generators only) | The link from the approval email; if it is a Google Drive folder use `gdown --folder` rather than the browser's zip download (the earlier browser zip was truncated) | `data\celebdf_pp\` | `List_of_testing_videos.txt` and the listed videos of the 7 face-swap (without the Celeb-DF folder), 7 reenactment and 7 talking-face generators |
+| 6 | WildDeepfake (test shards only) | Hugging Face repo `xingjunm/WildDeepfake`: files in the folders `fake_test` and `real_test` only (115 + 42 files, 9.93 GB), after submitting the agreement form | `data\wilddeepfake\` | 157 tar.gz files |
+| 7 | LAV-DF (optional here) | Either fetch it on the fast machine from https://huggingface.co/datasets/ControlNet/LAV-DF after accepting the terms there, or set the token on this machine as described in item 6 of the manual-download sheets and let this machine fetch it | `data\lavdf\` | `LAV-DF.tar`, 25,607,198,720 bytes |
+
+Do NOT fetch what this machine is already downloading: ASVspoof 2019 LA, In-the-Wild, the ForenSynths ProGAN validation and test sets, the diffusion test set, and the CNN synthesis subset.
+
+On the fast machine, after each dataset finishes, write a list of file names and sizes so that this machine can compare it after the copy. In PowerShell, for the folder `data\ffpp` (repeat for each dataset):
+
+`$r = (Resolve-Path "data\ffpp").Path; Get-ChildItem $r -Recurse -File | ForEach-Object { "{0}`t{1}" -f $_.FullName.Substring($r.Length), $_.Length } | Set-Content "data\_manifests_src_ffpp.tsv"`
+
+Put the resulting `.tsv` files on the drive as well. On arrival this machine copies `data\*` into the repository's `data\`, compares each list with what arrived (names and sizes), decodes every video with `ffprobe`, records SHA-256 of every file, and fills the "Downloaded datasets" table below.
+
 ## Dataset facts from stream B (appendix)
 
 Written for the earlier plan and kept as the evidence base. Status values: `OPEN (usable)`, `EXCLUDED (needs approval)`, `UNCLEAR`. The status `EXCLUDED (needs approval)` was assigned under D-013 and no longer excludes a dataset under D-020; the keep, drop or defer table above is the current decision proposal. Sizes are bytes divided by 10^9. Identity-disjointness is `not established` wherever the official source does not state it.
