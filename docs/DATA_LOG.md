@@ -308,3 +308,11 @@ Sources: https://www.robots.ox.ac.uk/~vgg/data/voxceleb/vox2.html , https://www.
 4. Identification of individuals: not addressed (NR). We keep to speaker and video IDs and make no attempt to identify people beyond them; this is our own rule, not a quoted one.
 5. Access: the vox2 page states that URLs, timestamps, audio, video and identifying metadata of VoxCeleb2 are "no longer available from this website", so LAV-DF (derived from VoxCeleb2, hosted by its authors) is the only copy we use; its own terms (non-commercial research and education only) are the binding ones for us.
 
+## LAV-DF download and verification (job finished 2026-10-25 00:15)
+
+- Source: https://huggingface.co/datasets/ControlNet/LAV-DF at revision c9158b3b9ad7f05eca712da18b8722d79d7f4d8e; file LAV-DF.tar, 25,607,198,720 bytes. SHA-256 computed locally: 2abc0646cf1469f0bebec60a792fec8b6d670cd9e6133105139110c4316b20a4; Hugging Face LFS value: 2abc0646cf1469f0bebec60a792fec8b6d670cd9e6133105139110c4316b20a4; match: True.
+- Extracted to data/lavdf/ with the Python tarfile "data" filter: 136,307 files in the archive, 136,307 files on disk; by suffix {'.md': 1, '.json': 2, '.mp4': 136304}.
+- Splits from the shipped metadata (README gives no counts; the 91 / 31 / 31 identities of D-021 are from the paper and are compared here): {"metadata_files": ["LAV-DF/metadata.json", "LAV-DF/metadata.min.json"], "keys": ["audio_channels", "audio_frames", "duration", "fake_periods", "file", "modify_audio", "modify_video", "n_fakes", "original", "split", "timestamps", "transcript", "video_frames"], "videos_per_split": {"test": 26100, "train": 78703, "dev": 31501}, "identities_per_split": "NR (no idNNNNN token in the metadata)"}.
+- ffprobe on every .mp4 (first audio stream): 136,304 videos, 136,304 with an audio stream, 0 without, 0 unreadable. Examples of problems: none.
+- Tar deleted: False. Rule D-039 (Decided (user), 2026-10-24): the tar is kept until the freeze on 2026-10-29 and deleted earlier only if free space on D: is below 100 GB; free space at the end of the job: 261 GB. Delete it by hand at the freeze (data/_incoming/lavdf/LAV-DF.tar).
+- Terms: CC BY-NC 4.0 and the LAV-DF terms logged above (non-commercial research; VoxCeleb2 agreement applies).

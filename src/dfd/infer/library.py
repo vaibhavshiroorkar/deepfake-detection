@@ -147,7 +147,8 @@ def analyse_file(path: str | Path, filename: str, adapter: Adapter, progress: Op
 
     t = time.perf_counter()
     tick("fuse")
-    per = {k: {"available": m.available, "score": m.score, "n_units": m.n_units, **({"reason": m.reason} if m.reason else {})}
+    per = {k: {"available": m.available, "score": m.score, "n_units": m.n_units, **({"reason": m.reason} if m.reason else {}),
+                **({"path": m.path} if m.path else {})}
            for k, m in res.per_modality.items()}
     required_missing = any((not m.available) and not (k == "audio" and media.media_type == "video" and not media.has_audio)
                            for k, m in res.per_modality.items())

@@ -31,6 +31,7 @@ class ModalityScore:
     score: Optional[float] = None          # calibrated probability of fake, None when unavailable
     n_units: Optional[int] = None          # frames or audio windows actually used
     reason: Optional[str] = None           # why the modality is unavailable
+    path: Optional[str] = None             # which preprocessing path scored it (image: face_crop or whole_image, D-033)
 
 
 @dataclass

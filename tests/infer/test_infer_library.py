@@ -86,14 +86,11 @@ def test_real_adapter_fails_loudly_without_a_checkpoint(tmp_path):
         make_adapter("other")
 
 
-def test_real_adapter_stub_never_returns_a_score(media, tmp_path):
+def test_real_adapter_refuses_an_invalid_checkpoint(tmp_path):
+    from dfd.infer.checkpoint import CheckpointError
     (tmp_path / "metadata.json").write_text("{}")
-    a = RealAdapter(tmp_path)
-    r = run(media, "img.png", a)
-    assert validate_response(r) == []
-    assert r["status"]["state"] == "failed" and r["result"] is None
-    assert r["errors"][0]["code"] == "ADAPTER_FAILED" and "not implemented" in r["errors"][0]["message"]
-    assert r["inference_source"] == "real"
+    with pytest.raises(CheckpointError, match="lacks"):
+        RealAdapter(tmp_path)
 
 
 class FakeRealAdapter:

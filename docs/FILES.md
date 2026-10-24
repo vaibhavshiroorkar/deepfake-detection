@@ -24,6 +24,9 @@ One row per file or folder. Status is `exists`, `planned` or `missing`. A `plann
 | src/dfd/sweep/ | Frozen encoders (`encoders.py`), E-001 feature extraction (`extract_video.py`) and fine-tuning step-time measurement (`step_time.py`) | Sweep I-0 and the I-1 budget |
 | scripts/sweep/, scripts/data/lavdf_job.py | Encoder weight fetch with hash check, the gated E-001 queue, the LAV-DF verify job | Reproducible sweep and data steps |
 | tests/infer/, tests/web/, tests/conftest.py | Contract, mock, real-stub, web route and banner tests with synthetic media | Evidence that the response and the MOCK rule hold |
+| src/dfd/sweep/ (heads, rank, report, tasks) | Head training, the D-036 ranking by script, the EXPERIMENTS.md and comparison-table writers, task definitions | Sweep ranking without choices by hand |
+| src/dfd/infer/checkpoint.py, src/dfd/prep/config.py | Checkpoint folder format with the D-028 checks (D-044) and the preprocessing ids | Real adapter, MVP checkpoint |
+| scripts/sweep/chain_rank.py | Runs rank and report when a task's features are complete | Automatic sweep results |
 | docs/ITERATIONS.md | The proposed iteration ladder I-0 to I-8 with trigger, alternative, equation, prediction and failure line per slot, the rPPG thresholds and the freeze (D-041) | The plan the experiments and the paper follow |
 | docs/O007_SWEEP.md | The pre-declared protocol, selection rule and fine-tuning plan of the encoder comparison (iteration I-0 and I-1), awaiting the user's approval of the shortlist | Design of the measured comparison for O-007 (D-036, Proposed) | exists |
 | docs/WORKSTREAMS.md | Parallel plan for three roles: project in plain English with decided/proposed/open tags, progress audit, data versus work, six workstreams, dependency map, action plan, workflow | Lets three people work without waiting on downloads (D-030, Proposed) | exists |

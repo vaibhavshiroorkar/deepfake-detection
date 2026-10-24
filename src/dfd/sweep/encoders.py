@@ -48,7 +48,8 @@ class Encoder:
             x = F.interpolate(x, size=(self.size, self.size), mode="bilinear", align_corners=False, antialias=x.shape[-1] > self.size)
         m = torch.tensor(self.mean, device=x.device).view(1, 3, 1, 1)
         s = torch.tensor(self.std, device=x.device).view(1, 3, 1, 1)
-        with torch.autocast("cuda", dtype=torch.float16):
+        dev = x.device.type
+        with torch.autocast(dev, dtype=torch.float16, enabled=(dev == "cuda")):
             return self.fn((x - m) / s).float()
 
 

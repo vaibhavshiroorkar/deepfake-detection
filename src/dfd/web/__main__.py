@@ -13,10 +13,10 @@ def main(argv=None) -> int:
     ap.add_argument("--port", type=int, default=8000)
     a = ap.parse_args(argv)
     from dfd.infer.factory import make_adapter
-    from dfd.infer.real_adapter import NoCheckpointError
+    from dfd.infer.checkpoint import CheckpointError, NoCheckpointError
     try:
         adapter = make_adapter(a.adapter, a.checkpoint)
-    except NoCheckpointError as e:
+    except (NoCheckpointError, CheckpointError) as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 2
     from dfd.web.app import create_app
