@@ -391,6 +391,61 @@ The implementer could not verify any turnaround time other than the FaceForensic
 - Rejected and why: Accepting the overlap (breaks D-012). Dropping whole generator folders or the cat class from training (removes more data than necessary). A random image split of ProGAN (images of one class are not independent sources).
 - Consequences / what could prove this wrong: If the assumption that the first Celeb-DF identity is the target is wrong, the bootstrap groups are still valid clusters but differently composed. The stylegan and stylegan2 cat test sets and the stylegan2 horse test set lose 400 real images each (about 20 percent of their reals), which slightly changes their class balance. ASVspoof, FF++ and Celeb-DF have not been content-hashed.
 
+### D-027: Prediction response structure shared by inference and interface
+- Date: 2026-10-24
+- Status: Proposed
+- Question: What exactly the inference code returns and the interface shows, so that the two can be built in parallel.
+- Options considered: A flat result (one score and a label); a structured response with per-modality scores, status, warnings and errors (this proposal).
+- Criteria: It must carry what D-011 requires (a score per modality present and a fused score); it must say what the score means; it must make a development stand-in impossible to mistake for a real result.
+- Evidence: D-011, D-024 (calibrated probability, validation threshold), PROTOCOL.md (score files), CLAUDE.md rule 8 (claims discipline).
+- Decision and reason (proposed): one structured response, schema version 1, with these fields.
+  - `schema_version`: "1".
+  - `request_id`: unique identifier of the request.
+  - `input`: `filename`, `media_type` (image, video or audio), `mime_type`, `size_bytes`, `sha256`, `duration_s` (null for images), `frames_used` (null for audio).
+  - `inference_source`: `real` or `mock`. Always present.
+  - `model`: `checkpoint_id`, `config_hash`, `preprocess_id`, `git_commit`, `iteration`, `protocol` (the PROTOCOL.md version), `calibration` (method, temperature, the split it was fitted on), `threshold` and how it was chosen. Null when `inference_source` is `mock`.
+  - `result.fused`: `score` in [0, 1] and `decision` (fake, real or undetermined). For an image the fused score is the visual score; for an audio file it is the audio score; for a video it follows the combining rule of O-009 (D-011).
+  - `result.per_modality`: one entry per modality present (visual, audio, image), each with `available` (true or false, with a reason such as "video has no audio track"), `score`, `n_units` (frames or audio windows used).
+  - `score_meaning`: the fixed text "Calibrated probability that this content is fake, from a model fitted on the training data of this project; valid only for the kinds of content in that data; it is not proof."
+  - `status`: `state` (ok, partial or failed), `processing_time_ms`, and a list of `stages` with their times (validate, decode, detect, score, calibrate, fuse).
+  - `warnings`: a list of `code`, `message` and optional `modality` (for example NO_FACE_DETECTED, SHORT_AUDIO, LOW_RESOLUTION, MULTIPLE_FACES).
+  - `errors`: a list of `code` and `message` (for example UNSUPPORTED_MEDIA_TYPE, UNREADABLE_FILE); when present `state` is failed and `result` is null.
+- Rejected and why: a flat score and label (cannot represent a missing modality or a warning).
+- Consequences / what could prove this wrong: the combining rule for video is not known until O-009 is settled, so `result.fused` for video is provisional; the decision rule (threshold) depends on the model and the calibration; the structure may need a version bump if localisation is ever added (excluded by D-011 in version 1).
+
+### D-028: Shared preprocessing, configuration and checkpoint metadata
+- Date: 2026-10-24
+- Status: Proposed
+- Question: How training, evaluation and inference avoid duplicate code and silent mismatches.
+- Options considered: Each stage with its own preprocessing; one shared preprocessing package and one metadata file (this proposal).
+- Criteria: The same function must prepare an input in training, evaluation and inference; a mismatch must be detected, not assumed away.
+- Evidence: src/dfd/prep exists as one package; PROTOCOL.md already separates score files from models.
+- Decision and reason (proposed): (1) one preprocessing package (`dfd.prep`) is imported by the loaders, the evaluation preparation and the inference library; no other copy. (2) One configuration holds the preprocessing parameters (frame count, crop factor, crop size, audio sampling rate and window) and its hash is the `preprocess_id`. (3) Every checkpoint is written with a metadata file holding the configuration, `preprocess_id`, git commit, manifest and split IDs, seed, library versions, the calibration temperature and the validation threshold. (4) Inference refuses a checkpoint whose `preprocess_id` differs from the one in use. (5) Evaluation reads score files only and never imports a model. The file format of the configuration and metadata is open (O-012).
+- Rejected and why: separate copies per stage (a silent mismatch changes results without warning).
+- Consequences / what could prove this wrong: a fixed frame count at inference may differ from what a model trained best on; if so the iteration records it as a parameter change with a new `preprocess_id`.
+
+### D-029: Rules for any mock or development adapter
+- Date: 2026-10-24
+- Status: Proposed
+- Question: How to build the interface before a real model exists without any risk of a fake result being reported.
+- Options considered: No stand-in (the interface waits); a clearly labelled stand-in under strict rules (this proposal).
+- Criteria: A stand-in may unblock the interface work but must never be mistaken for a measurement (CLAUDE.md rules 1 and 8).
+- Evidence: CLAUDE.md rule 1 (nothing unmeasured is a result).
+- Decision and reason (proposed): (1) a mock adapter lives in its own module whose name contains `mock`; (2) it always sets `inference_source` to `mock` and leaves `model` empty; (3) every interface shows a visible MOCK banner whenever `inference_source` is not `real`, and a test checks this; (4) the evaluation harness refuses any run whose metadata says mock; (5) the paper, report and slide builds fail if a number cites a run whose source is mock; (6) its scores are deterministic from the file hash so tests are repeatable, and carry no meaning.
+- Rejected and why: waiting for real models (blocks two streams for days).
+- Consequences / what could prove this wrong: a banner can be removed by mistake, so the test in (3) is part of the acceptance criteria of the interface stream.
+
+### D-030: Workstreams, ownership and integration
+- Date: 2026-10-24
+- Status: Proposed
+- Question: How three people work in parallel without blocking one another or breaking shared files.
+- Options considered: One person at a time; six streams grouped into three roles with owned folders and an integrator (this proposal; details in WORKSTREAMS.md).
+- Criteria: No stream starts on an undecided choice; every stream has an interface and acceptance criteria; shared files change through one integrator.
+- Evidence: WORKSTREAMS.md sections 4 to 8.
+- Decision and reason (proposed): the streams are S1 data pipeline and loaders, S2 modelling and training, S3 evaluation and tracking, S4 inference library, S5 user interface and S6 writing and integration, grouped as Role 1 (S1 and S3), Role 2 (S2) and Role 3 (S4, S5 and the integration of S6). Each stream writes only inside its own folders; the main agent integrates and runs all tests before each commit.
+- Rejected and why: a single shared folder with free edits (merge conflicts and unnoticed breakage).
+- Consequences / what could prove this wrong: Role 3 carries the integration load near the deadline; the grouping may need rebalancing once the real workload is visible.
+
 ## Open decisions
 
 Settled by Session 1 decisions: O-001 (D-011); O-005 (D-024). O-004 is settled as an outline by D-012 (script and details pending). O-002 is partly answered by D-018 and D-019 (what the modalities are); how each input type is handled remains open. O-003 is constrained by D-020 (access policy) and settled by D-021 (approved 2026-10-24). None of the questions below is otherwise answered. For each one, the options are those the implementer would compare, the criteria are stated before any result exists, and the evidence column says what must be collected. Paper IDs refer to RESEARCH.md. Pointers to papers show where options come from; they are not choices.
@@ -407,6 +462,8 @@ Settled by Session 1 decisions: O-001 (D-011); O-005 (D-024). O-004 is settled a
 | O-009 | Fusion strategy (how the fused score of D-011 is formed) | Late fusion of per-modality scores (average or logistic regression); feature-level fusion; cross-modal consistency model (R-015); joint training (R-020, to be read). | Must handle inputs with a missing modality (a still image has no audio, D-011); must be at least as good as the best single modality on the validation data; must be explainable. | Per-modality baselines first. Prior evidence: simple ensembles of unimodal detectors did poorly on FakeAVCeleb in the dataset paper (R-014), which is a reason to test fusion carefully. |
 | O-010 | rPPG feasibility test design | (a) Signal sanity: can heart rate be recovered from our data at all, given that most deepfake datasets have no pulse ground truth (R-008). (b) Separation: do rPPG features separate real from fake under an identity-disjoint split, for several generator families (R-009, R-007). (c) Added value: does adding rPPG evidence raise the fused detector's held-out metric beyond the bootstrap interval. (d) Negative controls: time-shuffled or mismatched signals. | The success and failure thresholds are written before the run. rPPG is adopted only if (c) shows a gain larger than the interval of the paired difference. | Stage 6 experiments. Literature: R-005 to R-010 and Stream C3. A dataset subset with enough frames, resolution and lighting stability for rPPG; skin-tone coverage (R-009 notes that rPPG is sensitive to skin tone and lighting). |
 | O-011 | Software form | Command line; local web app; both. | Time cost; need to demonstrate to examiners; ease of reproducing results; input handling for image, video and audio files. | Requirements from Stage 0. |
+| O-012 | Format of the shared configuration and checkpoint metadata (D-028), and whether experiment tracking uses plain files or a tracking library | Plain JSON files under version control; YAML; a tracking library | Must be hashable, human readable and need no extra service; no duplicate source of truth | A small trial in the loader work |
+| O-013 | How the interface calls the inference library | In-process Python call; command line returning JSON; a local web service | Same response structure in every case (D-027); lowest integration risk before 30 October | O-011 settled first |
 
 ## Contradictions and unclear points
 

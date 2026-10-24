@@ -19,6 +19,9 @@ One row per file or folder. Status is `exists`, `planned` or `missing`. A `plann
 | docs/DATA_LOG.md | Requirements-driven data plan (D-021), keep, drop or defer table, bandwidth budget, manual-download sheets, stream B fact tables, downloaded-datasets table | Provenance, licence and role of each dataset | exists |
 | docs/RESEARCH.md | Search protocol, literature matrix R-001 to R-067, NR table, notes that bear on decisions, further reading | Evidence base for decisions and for the paper | exists |
 | docs/VIVA_PREP.md | Question bank linked to decisions and experiments, answers pending, standard definitions | Preparation for the viva | exists |
+| docs/WORKSTREAMS.md | Parallel plan for three roles: project in plain English with decided/proposed/open tags, progress audit, data versus work, six workstreams, dependency map, action plan, workflow | Lets three people work without waiting on downloads (D-030, Proposed) | exists |
+| docs/REQUIREMENTS.md | Stage 0 problem statement, requirements, success criteria | Stage 0 output | exists |
+| docs/PROTOCOL.md | Stage 2 evaluation protocol and acceptance test A1 to A8 | Stage 2 output; spec for src/dfd/eval | exists |
 | docs/MATH_NOTES.md | Background definitions and formulas of candidate metrics (not adopted) | Reference for the metric decision O-005 and the viva | exists |
 | docs/STATUS.md | Next step, blockers, open questions, mistakes and corrections | Entry point for every new session | exists |
 | docs/_agents/ | Raw reports of the Session 1 subagent streams (A.md templates, B.md datasets, C1.md, C2.md, C3.md literature) and MERGE_MAP.md mapping stream IDs to R-IDs | Audit trail for what was merged into the living documents (D-015) | exists |
