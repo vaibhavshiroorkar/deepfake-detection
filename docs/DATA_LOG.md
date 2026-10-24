@@ -274,3 +274,27 @@ One row per finished download, generated from data/_manifests/downloads.jsonl. T
 3. Notes: record anything affecting use, for example known duplicate identities, missing audio, or access conditions such as a request form.
 4. Derived data (face crops, frames) of a dataset whose terms forbid derivatives or publication (Celeb-DF and FakeAVCeleb forbid publishing any derived data; DeepfakeTIMIT and VidTIMIT are CC BY-NC-ND 4.0) needs the terms read before anything is shared or shown in the paper; for private experiments the data stays in the project folder only.
 5. Pretrained weights get the same treatment: licence, source URL, version and hash are recorded here before use (CLAUDE.md rule 7).
+
+## Encoder weights of the O-007 sweep (logged 2026-10-24 before any download; shortlist approved in D-038)
+
+Hashes below are the Hugging Face (LFS) values read on 2026-10-24 from docs/_agents/O7IMG.md and O7AUD.md. After download, scripts/sweep/fetch_encoders.py recomputes SHA-256 locally, compares it and writes data/_logs/encoder_weights.json; the comparison result is appended under "Download verification" below. Licence text and training-data licences are in docs/O007_SWEEP.md section 3.1. Research-only labels: IMG-13 (no licence stated in its repo, card says research use) and AU-4 (no tag, CC BY-SA 3.0 upstream) are accepted as research-only by D-038; the ImageNet-trained IMG-01 and IMG-04 are also treated as research-only. IMG-04 (original Xception) has no Hugging Face hash: its SHA-256 is NR until downloaded. HF_HUB_CACHE is D:\cache\hf\hub for every download.
+
+| Candidate | File | Bytes | SHA-256 (HF) | Repository revision | Source URL |
+|---|---|---|---|---|---|
+| IMG-01 | `model.safetensors` | 77,933,206 | 8030f9c929ed71a06728db4b61323960e573b463e68f310bd1bfb31ed62cbf91 | 442c00e15609ff467772913d230768706a406aca | https://huggingface.co/timm/efficientnet_b4.ra2_in1k |
+| IMG-04 (replaces IMG-05, user instruction 2026-10-24) | `xception-43020ad28.pth` | 91,675,053 | NR until downloaded (GitHub release asset; the file name prefix is a label, not a hash) | not a Hub repo; timm `legacy_xception.tf_in1k`, release tag v0.1-cadene | https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-cadene/xception-43020ad28.pth |
+| IMG-07 | `model.safetensors` | 88,249,960 | ae1e99fcefd534ed978cdeb8326f08030c96e28b7a81ffcbc98a857c84d14be1 | ed25f3a31f01632728cabb09d1542f84ab7b0056 | https://huggingface.co/facebook/dinov2-small |
+| IMG-08 | `model.safetensors` | 346,345,912 | d73036b56966966d07975d696bde331762f37297e2f095de8cea0040c3aa0841 | f9e44c814b77203eaa57a6bdbbd535f21ede1415 | https://huggingface.co/facebook/dinov2-base |
+| IMG-13 (conditional) | `model.safetensors` | 1,710,540,580 | a2bf730a0c7debf160f7a6b50b3aaf3703e7e88ac73de7a314903141db026dcb | 32bd64288804d66eefd0ccbe215aa642df71cc41 | https://huggingface.co/openai/clip-vit-large-patch14 |
+| IMG-15 | `model.safetensors` | 1,710,540,580 | 0fce40ac684817a17ab8aa6014f0a933f602effa13a41c2618b6716667974e09 | 1627032197142fbe2a7cfec626f4ced3ae60d07a | https://huggingface.co/laion/CLIP-ViT-L-14-laion2B-s32B-b82K |
+| IMG-17 | `model.safetensors` | 812,672,320 | 2c63cb7d1f2e95ba501893cbb8faeb4ea9a3af295498d35097126228659c2af8 | 7fd15f0689c79d79e38b1c2e2e2370a7bf2761ed | https://huggingface.co/google/siglip-base-patch16-224 |
+| AU-1 | `pytorch_model.bin` | 380,267,417 | 3249fe98bfc62fcbc26067f724716a6ec49d12c4728a2af1df659013905dff21 | 0b5b8e868dd84f03fd87d01f9c4ff0f080fecfe8 | https://huggingface.co/facebook/wav2vec2-base |
+| AU-4 (conditional) | `pytorch_model.bin` | 377,617,425 | 3bb273a6ace99408b50cfc81afdbb7ef2de02da2eab0234e18db608ce692fe51 | 4c66d4806a428f2e922ccfa1a962776e232d487b | https://huggingface.co/microsoft/wavlm-base-plus |
+| AU-6 | `model.safetensors` | 966,995,080 | 1d7734884874f1a1513ed9aa760a4f8e97aaa02fd6d93a3a85d27b2ae9ca596b | 973afd24965f72e36ca33b3055d56a652f456b4d | https://huggingface.co/openai/whisper-small |
+| AU-8 | `pytorch_model.bin` | 377,569,754 | 062249fffb353eab67547a2fbc129f7c31a2f459faf641b19e8fb007cc5c48ad | dba3bb02fda4248b6e082697eee756de8fe8aa8a | https://huggingface.co/facebook/hubert-base-ls960 |
+
+Deliberate exclusion: DINOv3 (IMG-10 to IMG-12, IMG-19) is not used. Its Hugging Face gate is manual and its licence carries a publication-acknowledgement duty (LICENSE.md SHA-256 25d122eb8f5b880fd23c736fb6ea8018ee45c12237e00b8a86d14c653904999e). It can be added later as an iteration if the user accepts the access form (D-038).
+
+## LAV-DF access and terms (checked 2026-10-24)
+
+The user's Hugging Face login (account gr8SHivANsh) now reads the dataset repo `ControlNet/LAV-DF` (revision c9158b3b9ad7f05eca712da18b8722d79d7f4d8e): files LAV-DF.tar (25,607,198,720 B), README.md, TERMS_AND_CONDITIONS.md, CITATION.cff, .gitattributes. Metadata of the tar answers; the tar itself is NOT downloaded yet (the user wants to approve first). README licence line: CC BY-NC 4.0 ("license: cc" tag). TERMS_AND_CONDITIONS.md (SHA-256 ef4b5f546146cb5637992b30c03d351cc42ff06e1e2e1b26dddf50fe0b45b5ba), read in full: non-commercial research and educational use only; the dataset is generated from VoxCeleb2 and the user also agrees to all VoxCeleb2 agreements; no warranties; the user takes responsibility for the use. The VoxCeleb2 agreement itself is still not read. Local copies of the two text files: data/_incoming/lavdf_docs/.
