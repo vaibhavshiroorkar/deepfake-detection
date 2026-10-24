@@ -1,8 +1,8 @@
 # STATUS
 
-Last updated: 2026-10-25 (Session 2, I-0 MVP built)
+Last updated: 2026-10-25 (Session 2, I-0 MVP built, I-1 running)
 
-NEXT STEP: The orchestrator chooses the I-1 lever from the I-0 battery (EXPERIMENTS.md E-004, candidate diagnoses per task); until then do not start I-1. In parallel (the document agents hit the account session limit on 2026-10-25 and were resumed at 03:30; the limit message said it resets 06:40 IST): apply the college branding, the Group-Disjoint title and the final sweep and I-0 numbers to the report and the slides, finish the paper branding, then run scripts/check_docs.py, report/layout_check.py and slides/check_slides.py.
+NEXT STEP: I-1 (E-005, D-051) is running in the background (scripts/i1/run_i1.py, log data/_logs/i1_run.log, resumable: rerun the same command and finished runs are skipped; it ends by writing data/_results/I-1/DONE). When DONE exists: run `PYTHONPATH=src .venv/Scripts/python.exe scripts/i1/analyse_i1.py --write` (verdict by the written criteria C1 to C3 goes into E-005), read the battery block, write the lever decision for I-2 as a new D-entry (candidates: T-A audio preprocessing H-A1 of D-051 item 5, a T-V shift lever, combining encoders), rebuild docs/NUMBERS.json (`python scripts/build_numbers.py`) and run `python scripts/check_docs.py`. In parallel: the S-1 rPPG check (CPU only; worker output in src/dfd/rppg, scripts/rppg, data/_results/S-1; E-006 must be written before the full run) and the independent verification report of the three documents (defect list to fix, then rerun the checkers).
 
 ## Where the project stands
 

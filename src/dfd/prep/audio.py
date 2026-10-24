@@ -20,6 +20,25 @@ DEFAULT_SR = 16000
 WINDOW_SAMPLES = 64_600     # the first 4 seconds (the AASIST window), the audio input of every speech encoder of the sweep
 
 
+SILENCE_THRESHOLD = 0.005   # absolute value below this (of full scale 1.0) counts as silence; the threshold already used by measurement M-004
+
+
+def trim_and_peak_normalise(wav: np.ndarray, threshold: float = SILENCE_THRESHOLD) -> np.ndarray:
+    """Drop the leading and trailing samples whose absolute value is at most `threshold`, then divide by the peak (peak becomes 1.0).
+
+    The preprocessing variant of hypothesis H-A1 (D-051 item 5, E-007): it removes two recording-condition cues that measurement M-004
+    found to reverse in sign between ASVspoof 2019 and In-the-Wild (leading silence, signal level). A clip that is silent throughout
+    (nothing above the threshold) is returned unchanged, so that no score is made from an empty array. float32.
+    """
+    if wav.size == 0:
+        return wav.astype(np.float32)
+    idx = np.nonzero(np.abs(wav) > threshold)[0]
+    if idx.size == 0:
+        return wav.astype(np.float32)
+    seg = wav[idx[0]: idx[-1] + 1]
+    return (seg / np.abs(seg).max()).astype(np.float32)
+
+
 def window_first_repeat(wav: np.ndarray, n: int = WINDOW_SAMPLES) -> np.ndarray:
     """First n samples; a shorter clip is tiled until it fills the window; an empty clip becomes silence. float32."""
     if wav.size == 0:

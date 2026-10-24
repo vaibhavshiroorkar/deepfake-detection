@@ -35,14 +35,21 @@ JOBS = [
 OUT = Path("data/_features")
 
 
-def window_of(wav: np.ndarray) -> np.ndarray:
-    """First WINDOW samples, repeat-padded (the shared rule of dfd.prep.audio, used by inference too, D-028)."""
+CACHE_TRIMNORM = Path("data/_cache/audio_trimnorm_64600")
+VARIANTS = ("first", "trim_norm")   # "first": E-003 (the first 4 s, repeat-padded); "trim_norm": H-A1 of D-051, E-007 (trim silence and peak-normalise first)
+
+
+def window_of(wav: np.ndarray, variant: str = "first") -> np.ndarray:
+    """First WINDOW samples, repeat-padded (the shared rule of dfd.prep.audio, used by inference too, D-028); the variant "trim_norm"
+    trims leading and trailing silence and peak-normalises the clip before the window is cut (E-007)."""
+    if variant == "trim_norm":
+        wav = A.trim_and_peak_normalise(wav)
     return A.window_first_repeat(wav, WINDOW)
 
 
 class AudioSet(Dataset):
-    def __init__(self, records, root="data", cache: Path | None = CACHE):
-        self.records, self.root, self.cache = records, Path(root), cache
+    def __init__(self, records, root="data", cache: Path | None = CACHE, variant: str = "first"):
+        self.records, self.root, self.cache, self.variant = records, Path(root), cache, variant
 
     def __len__(self):
         return len(self.records)
@@ -55,7 +62,7 @@ class AudioSet(Dataset):
             if f.is_file():
                 return torch.from_numpy(np.load(f).astype(np.float32) / 32767.0), i
         p = self.root / r.path
-        wav = window_of(A.extract_audio(p) if r.modality == "video" else A.load_audio(p))
+        wav = window_of(A.extract_audio(p) if r.modality == "video" else A.load_audio(p), self.variant)
         if f is not None:
             f.parent.mkdir(parents=True, exist_ok=True)
             np.save(f, np.clip(np.round(wav * 32767.0), -32768, 32767).astype(np.int16))
@@ -63,13 +70,13 @@ class AudioSet(Dataset):
         return torch.from_numpy(wav), i
 
 
-def run_job(enc, name, manifest, split_csv, split, workers, batch, out_root=OUT, cache=CACHE):
+def run_job(enc, name, manifest, split_csv, split, workers, batch, out_root=OUT, cache=CACHE, variant="first"):
     out = out_root / enc.cid / "T-A" / f"{name}.npz"
     if out.is_file() and out.with_suffix(".json").is_file():
         print("skip", out, flush=True)
         return
     recs = L.select_records(manifest, split_csv, split, modality="audio")
-    dl = DataLoader(AudioSet(recs, cache=cache), batch_size=batch, num_workers=workers, shuffle=False)
+    dl = DataLoader(AudioSet(recs, cache=cache, variant=variant), batch_size=batch, num_workers=workers, shuffle=False)
     feats = np.zeros((len(recs), 2 * enc.dim), np.float16)
     torch.cuda.reset_peak_memory_stats()
     t0 = time.perf_counter()
@@ -82,7 +89,7 @@ def run_job(enc, name, manifest, split_csv, split, workers, batch, out_root=OUT,
     meta = dict(cand=enc.cid, encoder=enc.name, revision=enc.revision, dim=2 * enc.dim, params=enc.n_params, input_size=WINDOW, dataset=name,
                 split=split, n_items=len(recs), seconds=round(dt, 1), items_per_s=round(len(recs) / dt, 1),
                 peak_vram_gb=round(torch.cuda.max_memory_allocated() / 2**30, 2), torch=torch.__version__, gpu=torch.cuda.get_device_name(0),
-                preprocessing="first 64,600 samples at 16 kHz, repeat-padded; own feature extractor; mean and std over time of the last hidden layer"
+                preprocessing=("first 64,600 samples at 16 kHz, repeat-padded" if variant == "first" else "silence trimmed (0.005 of full scale), peak-normalised, then the first 64,600 samples at 16 kHz, repeat-padded") + "; own feature extractor; mean and std over time of the last hidden layer"
                               + ("; Whisper: 30 s input, 202 frames pooled" if enc.kind == "whisper" else ""),
                 note="end-to-end incl. decoding (first encoder run fills the sample cache, later runs read it), one run, not the section 7 cost record")
     out.with_suffix(".json").write_text(json.dumps(meta, indent=1))
@@ -97,10 +104,12 @@ def main(argv=None) -> int:
     ap.add_argument("--limit-jobs", type=int, default=None)
     ap.add_argument("--out-root", default=str(OUT), help="use another folder for a test run")
     ap.add_argument("--no-cache", action="store_true")
+    ap.add_argument("--variant", choices=VARIANTS, default="first")
     a = ap.parse_args(argv)
     enc = encoders.load_audio(a.cand)
+    cache = CACHE if a.variant == "first" else CACHE_TRIMNORM
     for job in JOBS[:a.limit_jobs]:
-        run_job(enc, *job, a.workers, a.batch, Path(a.out_root), None if a.no_cache else CACHE)
+        run_job(enc, *job, a.workers, a.batch, Path(a.out_root), None if a.no_cache else cache, a.variant)
     return 0
 
 
