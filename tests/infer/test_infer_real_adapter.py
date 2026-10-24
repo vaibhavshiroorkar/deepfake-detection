@@ -55,8 +55,16 @@ def make_ckpt(folder, tasks=("T-V", "T-I"), temperature=1.0, mutate=None):
     return folder
 
 
+def fake_audio_encoder(cid):
+    """Three summary statistics of the waveform as a 3-dimensional feature (a test double, not a model)."""
+    def enc(wave):
+        w = np.asarray(wave, np.float32)
+        return np.stack([np.abs(w).mean(1), w.std(1), np.abs(w).max(1)], axis=1) * 10
+    return enc
+
+
 def adapter(folder, det=OneFace):
-    return RealAdapter(folder, encoder_factory=fake_encoder, detector_factory=det)
+    return RealAdapter(folder, encoder_factory=fake_encoder, detector_factory=det, audio_encoder_factory=fake_audio_encoder)
 
 
 def run(media, name, a):
@@ -93,12 +101,12 @@ def test_temperature_flattens_the_probability(media, tmp_path):
 
 
 def test_video_visual_score_and_separate_audio(media, tmp_path):
-    r = run(media, "clip_audio.mp4", adapter(make_ckpt(tmp_path / "ck")))
+    r = run(media, "clip_audio.mp4", adapter(make_ckpt(tmp_path / "ck", tasks=("T-V", "T-A"))))
     per = r["result"]["per_modality"]
     assert validate_response(r) == [] and per["visual"]["available"] and per["visual"]["n_units"] == 10
-    assert per["audio"]["available"] is False and "not implemented" in per["audio"]["reason"]
-    assert r["result"]["fused"]["decision"] == "undetermined" and r["status"]["state"] == "partial"
-    assert set(r["model"]["tasks"]) == {"T-V"}
+    assert per["audio"]["available"] and 0 < per["audio"]["score"] < 1 and per["audio"]["n_units"] == 1
+    assert r["result"]["fused"]["decision"] == "undetermined" and r["status"]["state"] == "ok"      # separate scores, no fused claim (O-009)
+    assert set(r["model"]["tasks"]) == {"T-V", "T-A"}
 
 
 def test_video_warnings_for_several_faces_and_for_no_face(media, tmp_path):
@@ -111,10 +119,23 @@ def test_video_warnings_for_several_faces_and_for_no_face(media, tmp_path):
     assert validate_response(r) == [] and v["available"] is False and v["score"] is None and r["status"]["state"] == "partial"
 
 
-def test_audio_is_reported_unavailable_not_faked(media, tmp_path):
-    r = run(media, "speech.wav", adapter(make_ckpt(tmp_path / "ck")))
+def test_audio_file_is_scored_with_the_audio_head(media, tmp_path):
+    a = adapter(make_ckpt(tmp_path / "ck", tasks=("T-V", "T-I", "T-A")))
+    r = run(media, "speech.wav", a)
     m = r["result"]["per_modality"]["audio"]
-    assert validate_response(r) == [] and m["available"] is False and m["score"] is None
+    assert validate_response(r) == [] and m["available"] and 0 < m["score"] < 1
+    assert r["result"]["fused"]["score"] == m["score"] and r["result"]["fused"]["decision"] in ("fake", "real")
+    assert r["model"]["calibration"]["method"] == "temperature" and r["model"]["preprocess_id"] == P.audio_preprocess_id()
+    assert run(media, "speech.wav", a)["result"] == r["result"]                          # deterministic
+    short = run(media, "short.wav", a)                                                    # 0.5 s, repeat-padded to the window
+    assert validate_response(short) == [] and short["result"]["per_modality"]["audio"]["available"]
+    assert "SHORT_AUDIO" in [w["code"] for w in short["warnings"]]
+
+
+def test_audio_without_an_audio_model_is_unavailable_not_faked(media, tmp_path):
+    r = run(media, "speech.wav", adapter(make_ckpt(tmp_path / "ck")))                    # checkpoint has T-V and T-I only
+    m = r["result"]["per_modality"]["audio"]
+    assert validate_response(r) == [] and m["available"] is False and m["score"] is None and "no audio model" in m["reason"]
     assert r["result"]["fused"]["score"] is None and r["result"]["fused"]["decision"] == "undetermined"
 
 
@@ -181,3 +202,27 @@ def test_video_preprocess_id_equals_the_id_of_a_crop_folder(tmp_path):
     ident = P.video_config(p)
     (folder / "params.json").write_text(json.dumps(ident, sort_keys=True), encoding="utf-8")   # what dfd.prep.pipeline writes
     assert loaders.preprocess_id(folder) == P.video_preprocess_id(p)
+
+
+class OwnRuleEncoder:
+    """An encoder double with its own image rule: `processor` (PIL -> normalised tensor) and `encode_pixels`, as in dfd.sweep.encoders."""
+    seen = []
+
+    def processor(self, pil):
+        import torch
+        OwnRuleEncoder.seen.append(pil.size)               # the full-resolution image reaches the processor, not a pre-resized copy
+        return torch.from_numpy(np.asarray(pil, np.float32).transpose(2, 0, 1) / 255.0)
+
+    def encode_pixels(self, px):
+        return px.mean(dim=(2, 3))
+
+    def __call__(self, batch):
+        return batch.float().mean(dim=(2, 3)) / 255.0
+
+
+def test_whole_image_path_applies_the_encoders_own_rule_to_the_full_image(media, tmp_path):
+    OwnRuleEncoder.seen.clear()
+    a = RealAdapter(make_ckpt(tmp_path / "ck"), encoder_factory=lambda cid: OwnRuleEncoder(), detector_factory=NoFace)
+    r = run(media, "img.png", a)
+    assert validate_response(r) == [] and r["result"]["per_modality"]["image"]["path"] == "whole_image"
+    assert OwnRuleEncoder.seen == [(128, 96)]

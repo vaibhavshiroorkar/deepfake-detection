@@ -9,7 +9,8 @@ Paths (the same preprocessing as training, from dfd.prep):
          left out; head on each frame, mean of the frame probabilities (D-024), temperature scaling.
   image  face found: the face crop goes through the video (T-V) head; no face: the whole image goes through the T-I head (D-033);
          the path used is reported in the field `path`.
-  audio  not implemented in this build (no audio encoder loader yet): the modality is reported unavailable with that reason.
+  audio  the first 64,600 samples at 16 kHz (repeat-padded, dfd.prep.audio), the speech encoder's own extractor, mean and standard
+         deviation over time of the last hidden layer, the T-A head, temperature scaling. A video's audio track is scored the same way.
 """
 from __future__ import annotations
 
@@ -23,6 +24,7 @@ import numpy as np
 from dfd.infer.adapters import AdapterResult, Media, ModalityScore
 from dfd.infer.checkpoint import (CheckpointError, NoCheckpointError, PreprocessMismatchError, config_hash_of,  # noqa: F401
                                   load_checkpoint)
+from dfd.prep import audio as A
 from dfd.prep import config as P
 from dfd.prep import face as F
 from dfd.prep import video as V
@@ -41,15 +43,18 @@ class RealAdapter:
     inference_source = INFERENCE_SOURCE
 
     def __init__(self, checkpoint_dir: str | Path | None = None, device: Optional[str] = None,
-                 encoder_factory: Optional[Callable] = None, detector_factory: Optional[Callable] = None):
+                 encoder_factory: Optional[Callable] = None, detector_factory: Optional[Callable] = None,
+                 audio_encoder_factory: Optional[Callable] = None):
         self.meta, self.heads = load_checkpoint(checkpoint_dir)
         self.checkpoint_dir = Path(checkpoint_dir)
         self.device = device
         self._encoder_factory = encoder_factory
+        self._audio_encoder_factory = audio_encoder_factory
+        self._audio_enc: dict = {}
         self._detector_factory = detector_factory
         self._encoders: dict = {}
         self._detector = None
-        if encoder_factory is None:
+        if encoder_factory is None and audio_encoder_factory is None:
             self._check_weights()
 
     # ---- construction helpers
@@ -77,6 +82,25 @@ class RealAdapter:
                 self._encoders[cid] = encoders.load(cid, self._device())
         return self._encoders[cid]
 
+    def _score_audio(self, media: Media) -> ModalityScore:
+        """Calibrated probability of fake from the first 4 seconds of audio (file or the audio track of a video)."""
+        if "T-A" not in self.heads:
+            return ModalityScore(False, None, None, "this checkpoint has no audio model")
+        wav = A.extract_audio(media.path) if media.media_type == "video" else A.load_audio(media.path)
+        if wav.size == 0:
+            return ModalityScore(False, None, None, "no decodable audio")
+        cid = self.meta["tasks"]["T-A"]["encoder"]["cid"]
+        if cid not in self._audio_enc:
+            if self._audio_encoder_factory is not None:
+                self._audio_enc[cid] = self._audio_encoder_factory(cid)
+            else:
+                from dfd.sweep import encoders
+                self._audio_enc[cid] = encoders.load_audio(cid, self._device())
+        out = self._audio_enc[cid](A.window_first_repeat(wav)[None, :])
+        feat = out.detach().cpu().numpy() if hasattr(out, "detach") else np.asarray(out)
+        p = float(self.heads["T-A"].prob_rows(feat)[0])
+        return ModalityScore(True, round(_calibrate(p, float(self.meta["tasks"]["T-A"]["calibration"]["temperature"])), 6), 1)
+
     def _det(self):
         if self._detector is None:
             cfg = self.meta["tasks"]["T-V"]["preprocess_config"] if "T-V" in self.meta["tasks"] else {"detector": "yunet"}
@@ -97,6 +121,23 @@ class RealAdapter:
             out = enc(batch)
             feats.append(out.detach().cpu().numpy() if hasattr(out, "detach") else np.asarray(out))
         p = float(self.heads[task].prob_rows(np.concatenate(feats)).mean())
+        return _calibrate(p, float(self.meta["tasks"][task]["calibration"]["temperature"]))
+
+    def _score_whole_image(self, task: str, bgr: np.ndarray) -> float:
+        """Whole image by the encoder's own model-card rule, as in the extraction (E-002); a double without a processor gets a plain resize."""
+        import torch
+        from PIL import Image
+        enc = self._encoder(task)
+        rgb = np.ascontiguousarray(bgr[:, :, ::-1])
+        proc = getattr(enc, "processor", None)
+        if proc is None:
+            size = int(self.meta["tasks"][task]["preprocess_config"]["fallback_size"])
+            return self._score_rgb(task, [np.ascontiguousarray(cv2.resize(bgr, (size, size), interpolation=cv2.INTER_AREA)[:, :, ::-1])])
+        px = proc(Image.fromarray(rgb))[None]
+        if self._encoder_factory is None:
+            px = px.to(self._device())
+        out = enc.encode_pixels(px)
+        p = float(self.heads[task].prob_rows(out.detach().cpu().numpy()).mean())
         return _calibrate(p, float(self.meta["tasks"][task]["calibration"]["temperature"]))
 
     @staticmethod
@@ -144,7 +185,15 @@ class RealAdapter:
                     per["visual"] = ModalityScore(True, round(self._score_rgb("T-V", crops), 6), len(crops))
                     stage["score"] = time.perf_counter() - t
                     used.append("T-V")
-            per["audio"] = ModalityScore(False, None, None, "audio scoring is not implemented in this build" if media.has_audio else "video has no audio track")
+            if media.has_audio:
+                tick("score")
+                t = time.perf_counter()
+                per["audio"] = self._score_audio(media)
+                stage["score"] += time.perf_counter() - t
+                if per["audio"].available:
+                    used.append("T-A")
+            else:
+                per["audio"] = ModalityScore(False, None, None, "video has no audio track")
         elif media.media_type == "image":
             img = cv2.imdecode(np.fromfile(str(media.path), dtype=np.uint8), cv2.IMREAD_COLOR)
             faces = self._det().detect(img) if "T-V" in self.heads else []
@@ -160,16 +209,20 @@ class RealAdapter:
                 used.append("T-V")
                 threshold = float(self.meta["tasks"]["T-V"]["threshold"]["value"])
             elif "T-I" in self.heads:
-                size = int(self.meta["tasks"]["T-I"]["preprocess_config"]["size"])
-                rgb = np.ascontiguousarray(cv2.resize(img, (size, size), interpolation=cv2.INTER_AREA)[:, :, ::-1])
-                per["image"] = ModalityScore(True, round(self._score_rgb("T-I", [rgb]), 6), 1, None, "whole_image")
+                per["image"] = ModalityScore(True, round(self._score_whole_image("T-I", img), 6), 1, None, "whole_image")
                 used.append("T-I")
                 threshold = float(self.meta["tasks"]["T-I"]["threshold"]["value"])
             else:
                 per["image"] = ModalityScore(False, None, None, "no face found and this checkpoint has no whole-image model")
             stage["score"] = time.perf_counter() - t
         else:
-            per["audio"] = ModalityScore(False, None, None, "audio scoring is not implemented in this build")
+            tick("score")
+            t = time.perf_counter()
+            per["audio"] = self._score_audio(media)
+            stage["score"] = time.perf_counter() - t
+            if per["audio"].available:
+                used.append("T-A")
+                threshold = float(self.meta["tasks"]["T-A"]["threshold"]["value"])
         tick("calibrate")  # temperature scaling is applied inside the scoring call above; its time is part of "score"
         return AdapterResult(per, warnings, self._model_block(used), threshold, {k: v * 1000 for k, v in stage.items()})
 

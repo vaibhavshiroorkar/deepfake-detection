@@ -17,6 +17,16 @@ from pathlib import Path
 import numpy as np
 
 DEFAULT_SR = 16000
+WINDOW_SAMPLES = 64_600     # the first 4 seconds (the AASIST window), the audio input of every speech encoder of the sweep
+
+
+def window_first_repeat(wav: np.ndarray, n: int = WINDOW_SAMPLES) -> np.ndarray:
+    """First n samples; a shorter clip is tiled until it fills the window; an empty clip becomes silence. float32."""
+    if wav.size == 0:
+        return np.zeros(n, np.float32)
+    if wav.size < n:
+        wav = np.tile(wav, -(-n // wav.size))
+    return wav[:n].astype(np.float32)
 
 
 def has_audio_stream(path: str | Path) -> bool:

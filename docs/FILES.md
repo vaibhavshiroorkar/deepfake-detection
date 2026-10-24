@@ -27,6 +27,10 @@ One row per file or folder. Status is `exists`, `planned` or `missing`. A `plann
 | src/dfd/sweep/ (heads, rank, report, tasks) | Head training, the D-036 ranking by script, the EXPERIMENTS.md and comparison-table writers, task definitions | Sweep ranking without choices by hand |
 | src/dfd/infer/checkpoint.py, src/dfd/prep/config.py | Checkpoint folder format with the D-028 checks (D-044) and the preprocessing ids | Real adapter, MVP checkpoint |
 | scripts/sweep/chain_rank.py | Runs rank and report when a task's features are complete | Automatic sweep results |
+| src/dfd/sweep/ (extract_images, extract_audio, cost_record, train_reference) | E-002 and E-003 extraction, the section 7 cost record and the from-scratch references | Sweep inputs and reference rows |
+| src/dfd/data/identity_exclusion.py, data/celebdf_pp/ (not in git) | Celeb-DF++ identity exclusion against the Celeb-DF v2 dev_x slice; the extracted test videos | Celeb-DF++ test_x |
+| scripts/data/ingest_celebdfpp.py, scripts/sweep/run_e002_e003.py, run_references.py | Celeb-DF++ ingest; the E-002/E-003 and reference queues | Reproducible data and sweep steps |
+| tests/web/test_web_browser.py | Real-browser (Chromium) tests of the web page against the mock adapter | Evidence the page works |
 | docs/ITERATIONS.md | The proposed iteration ladder I-0 to I-8 with trigger, alternative, equation, prediction and failure line per slot, the rPPG thresholds and the freeze (D-041) | The plan the experiments and the paper follow |
 | docs/O007_SWEEP.md | The pre-declared protocol, selection rule and fine-tuning plan of the encoder comparison (iteration I-0 and I-1), awaiting the user's approval of the shortlist | Design of the measured comparison for O-007 (D-036, Proposed) | exists |
 | docs/WORKSTREAMS.md | Parallel plan for three roles: project in plain English with decided/proposed/open tags, progress audit, data versus work, six workstreams, dependency map, action plan, workflow | Lets three people work without waiting on downloads (D-030, Proposed) | exists |

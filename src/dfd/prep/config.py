@@ -23,11 +23,13 @@ def video_config(params: Params | None = None) -> dict:
 
 
 def image_config(size: int = 224) -> dict:
-    return {"mode": "whole_image", "size": size, "interpolation": "area"}
+    """Whole-image path (T-I): the encoder's own model-card rule (resize, crop, normalisation) applied to the full-resolution image;
+    `size` is the fallback square used only by an encoder without its own processor."""
+    return {"mode": "whole_image", "rule": "encoder model-card processor", "fallback_size": size}
 
 
-def audio_config(sr: int = 16000, seconds: float = 4.0) -> dict:
-    return {"sr": sr, "seconds": seconds, "channels": "mono", "crop": "centre", "pad": "zeros"}
+def audio_config(sr: int = 16000, window_samples: int = 64_600) -> dict:
+    return {"sr": sr, "window_samples": window_samples, "channels": "mono", "crop": "first", "pad": "repeat"}
 
 
 def video_preprocess_id(params: Params | None = None) -> str:
@@ -38,8 +40,8 @@ def image_preprocess_id(size: int = 224) -> str:
     return config_hash(image_config(size))
 
 
-def audio_preprocess_id(sr: int = 16000, seconds: float = 4.0) -> str:
-    return config_hash(audio_config(sr, seconds))
+def audio_preprocess_id(sr: int = 16000, window_samples: int = 64_600) -> str:
+    return config_hash(audio_config(sr, window_samples))
 
 
 IN_USE = {"T-V": video_preprocess_id, "T-I": image_preprocess_id, "T-A": audio_preprocess_id}

@@ -36,12 +36,8 @@ OUT = Path("data/_features")
 
 
 def window_of(wav: np.ndarray) -> np.ndarray:
-    """First WINDOW samples; a shorter clip is tiled until it fills the window; an empty clip becomes silence."""
-    if wav.size == 0:
-        return np.zeros(WINDOW, np.float32)
-    if wav.size < WINDOW:
-        wav = np.tile(wav, -(-WINDOW // wav.size))
-    return wav[:WINDOW].astype(np.float32)
+    """First WINDOW samples, repeat-padded (the shared rule of dfd.prep.audio, used by inference too, D-028)."""
+    return A.window_first_repeat(wav, WINDOW)
 
 
 class AudioSet(Dataset):
