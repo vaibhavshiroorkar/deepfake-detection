@@ -59,6 +59,9 @@ One row per file or folder. Status is `exists`, `planned` or `missing`. A `plann
 | slides/build_slides.py, slides/slide_common.py, slides/check_slides.py | Build script, grid and type scale, slide checker (bounds, overlaps, grid, font size, notes) | Reproduces and checks the deck |
 | scripts/make_figures.py, assets/figures/, assets/screens/ | Programmatic figures (pipeline, splits, ladder, staircase, rPPG, timeline, web, shortlist) at 300 dpi PNG and vector PDF, and the web page screenshots | The same figure files in the paper and the report |
 | scripts/check_docs.py | Per-document checks: IDs, reviewer phrases, dashes, identity fields, bibliography, placeholders, fonts, margins, layout comparison, slide checks | Run before every commit of a document |
+| scripts/mvp/ (train_mvp.py, parity_check.py, web_real_check.py, battery.py, face_stats.py), scripts/sweep/m004.py | MVP heads and checkpoint writer, D-044 parity check, real-checkpoint Chromium check of the page, I-0 diagnostic battery, face statistics, M-004 diagnosis | The working version I-0 and its evidence (E-004, M-004) |
+| checkpoints/I-0-mvp/ (not in git) | metadata.json and one head file per task of the I-0 working version | Loaded by the real adapter (D-044) |
+| data/_results/I-0/, data/_results/M-004/ (not in git) | metrics, scores, battery tables and figures, parity and page-check records | Source of the E-004 and M-004 entries |
 | assets/branding/ | The college and trust logos and two campus pictures, extracted unchanged from the supplied deck | Identity elements the user asked to be reused (D-014) | exists |
 | Document Template/ | The supplied Word report template and the PowerPoint and PDF of an earlier project, used only for look and identity; not committed | Source of the templates (D-014); its body content is not reused (D-001) | exists (untracked, ignored) |
 | Git tags per frozen iteration | `setup` exists locally; none for iterations | Required by D-008 | planned |
