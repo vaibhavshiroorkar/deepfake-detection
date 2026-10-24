@@ -20,7 +20,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Sequence
 
-from .manifest import Record, read_manifest
+from .hashing import HashCache
+from .manifest import Record, default_data_root, read_manifest
 from .splits import read_split, write_split
 
 CELEB_ID = re.compile(r"^id\d{1,3}$")
@@ -61,6 +62,26 @@ def exclude(records: Sequence[Record], dev_ids: set[str]) -> tuple[dict[str, str
     return asg, rows
 
 
+def drop_duplicates(records: Sequence[Record], assignment: dict[str, str], ref_records: Sequence[Record], ref_assignment: dict[str, str],
+                    data_root: Path, cache: HashCache | None = None) -> list[dict]:
+    """Samples whose file content (SHA-256) equals a dev_x or test_x sample of the reference dataset: one source video is counted
+    once in the family, so the copy of the dataset that is not the reference is dropped (the reference keeps its group id)."""
+    cache = cache or HashCache(None)
+    ref_hash: dict[str, str] = {}
+    for r in ref_records:
+        if ref_assignment.get(r.sample_id) in ("dev_x", "test_x"):
+            ref_hash.setdefault(cache.sha256(data_root / r.path, r.path), r.sample_id)
+    rows = []
+    for r in records:
+        if r.sample_id in assignment:
+            h = cache.sha256(data_root / r.path, r.path)
+            if h in ref_hash:
+                rows.append({"sample_id": r.sample_id, "split": "test_x", "dataset": r.dataset, "group_id": r.group_id, "method": r.method,
+                             "label": r.label, "matched_target": "", "matched_source": "", "sha256": h, "matches": ref_hash[h],
+                             "reason": "same file content as a sample of the reference dataset: one source video is counted once in the family"})
+    return rows
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--manifest", required=True, type=Path)
@@ -68,23 +89,32 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--reference-split", required=True, type=Path)
     ap.add_argument("--name", required=True)
     ap.add_argument("--out-dir", type=Path, default=Path("data/_splits"))
+    ap.add_argument("--data-root", type=Path, default=None)
     a = ap.parse_args(argv)
     recs = read_manifest(a.manifest)
     dev = dev_identities(read_manifest(a.reference_manifest), read_split(a.reference_split))
     if not dev:
         print("the reference split has no dev_x identities", file=sys.stderr)
         return 2
+    ref_recs, ref_asg = read_manifest(a.reference_manifest), read_split(a.reference_split)
     asg, rows = exclude(recs, dev)
+    n_identity = len(rows)
+    dups = drop_duplicates(recs, asg, ref_recs, ref_asg, a.data_root or default_data_root(), HashCache((a.data_root or default_data_root()) / "_manifests" / "content_hash_cache.json"))
+    for d in dups:
+        asg.pop(d["sample_id"], None)
+    rows += dups
     kept = [r for r in recs if r.sample_id in asg]
     by = Counter((x["method"], x["label"]) for x in rows)
     params = {"mode": "fixed test_x with identity exclusion", "dev_identities": sorted(dev), "reference_split": a.reference_split.stem,
-              "excluded": len(rows), "excluded_by_target": sum(1 for x in rows if x["matched_target"]),
+              "excluded": len(rows), "excluded_by_identity": n_identity, "excluded_duplicate_content": len(dups),
+              "excluded_by_target": sum(1 for x in rows if x["matched_target"]),
               "excluded_only_by_source": sum(1 for x in rows if not x["matched_target"] and x["matched_source"]),
               "exclusions_file": f"{a.name}.exclusions.csv"}
     split_id, csv_path = write_split(kept, asg, a.out_dir, a.name, params, [a.manifest])
     ex_csv = a.out_dir / f"{a.name}.exclusions.csv"
     with open(ex_csv, "w", encoding="utf-8", newline="") as fh:
-        w = csv.DictWriter(fh, ["sample_id", "split", "dataset", "group_id", "method", "label", "matched_target", "matched_source", "reason"])
+        w = csv.DictWriter(fh, ["sample_id", "split", "dataset", "group_id", "method", "label", "matched_target", "matched_source", "sha256", "matches", "reason"],
+                           restval="")
         w.writeheader()
         w.writerows(rows)
     summary = {"split_id": split_id, "rows_in_manifest": len(recs), "kept_test_x": len(kept), **params,

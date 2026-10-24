@@ -72,14 +72,37 @@ def test_dev_identities_come_from_the_reference_dev_x_only():
 def test_cli_writes_split_and_exclusions(tmp_path, capsys):
     from dfd.data.splits import read_split
     recs = [_rec("celebdf_pp:a", "celebdf_pp:id3", "ids=id3|id28"), _rec("celebdf_pp:c", "celebdf_pp:id7", "ids=id7|id9")]
+    recs = [Record(**{**r.__dict__, "path": f"celebdf_pp/{r.sample_id.split(':')[1]}.mp4"}) for r in recs]
     ref = [Record(sample_id="celebdf_v2:r", dataset="celebdf_v2", family="celebdf", path="celebdf_v2/r.mp4", modality="video", label=1, method="m",
                   group_id="celebdf_v2:id3", group_basis="identity", identity_known=True, official_split="", notes="ids=id3|id1")]
+    for r, body in zip(recs + ref, (b"1", b"2", b"3")):
+        f = tmp_path / "data" / r.path
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_bytes(body)
     write_manifest(tmp_path / "pp.csv", recs)
     write_manifest(tmp_path / "v2.csv", ref)
     (tmp_path / "v2split.csv").write_text("sample_id,split\ncelebdf_v2:r,dev_x\n")
     assert IE.main(["--manifest", str(tmp_path / "pp.csv"), "--reference-manifest", str(tmp_path / "v2.csv"), "--reference-split",
-                    str(tmp_path / "v2split.csv"), "--name", "pp", "--out-dir", str(tmp_path / "out")]) == 0
+                    str(tmp_path / "v2split.csv"), "--name", "pp", "--out-dir", str(tmp_path / "out"), "--data-root", str(tmp_path / "data")]) == 0
     out = tmp_path / "out"
     split_csv = next(out.glob("pp-*.csv"))
     assert read_split(split_csv) == {"celebdf_pp:c": "test_x"}
     assert "celebdf_pp:a" in (out / "pp.exclusions.csv").read_text()
+
+
+def test_duplicate_content_of_the_reference_is_dropped_once(tmp_path):
+    from dfd.data.hashing import HashCache
+    root = tmp_path / "data"
+    (root / "celebdf_pp").mkdir(parents=True)
+    (root / "celebdf_v2").mkdir()
+    (root / "celebdf_v2" / "r.mp4").write_bytes(b"same content")
+    (root / "celebdf_pp" / "a.mp4").write_bytes(b"same content")      # byte-identical real video
+    (root / "celebdf_pp" / "b.mp4").write_bytes(b"different")
+    pp = [_rec("celebdf_pp:a", "celebdf_pp:id9", "ids=id9", label=0, method="real"), _rec("celebdf_pp:b", "celebdf_pp:id8", "ids=id8|id7")]
+    pp[0] = Record(**{**pp[0].__dict__, "path": "celebdf_pp/a.mp4"})
+    pp[1] = Record(**{**pp[1].__dict__, "path": "celebdf_pp/b.mp4"})
+    ref = [Record(sample_id="celebdf_v2:r", dataset="celebdf_v2", family="celebdf", path="celebdf_v2/r.mp4", modality="video", label=0, method="real",
+                  group_id="celebdf_v2:id9", group_basis="identity", identity_known=True, official_split="", notes="ids=id9")]
+    rows = IE.drop_duplicates(pp, {"celebdf_pp:a": "test_x", "celebdf_pp:b": "test_x"}, ref, {"celebdf_v2:r": "test_x"}, root, HashCache(None))
+    assert [r["sample_id"] for r in rows] == ["celebdf_pp:a"] and rows[0]["matches"] == "celebdf_v2:r"
+    assert IE.drop_duplicates(pp, {"celebdf_pp:a": "test_x"}, ref, {"celebdf_v2:r": "train"}, root, HashCache(None)) == []   # only dev_x and test_x of the reference count
