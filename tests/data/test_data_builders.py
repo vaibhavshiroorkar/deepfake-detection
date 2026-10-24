@@ -190,7 +190,7 @@ def test_celebdf_name_parsing_errors():
 
 
 def test_stubs_raise_and_parsers_work(tmp_path):
-    for fn in (celebdf.build_pp, stubs.build_lavdf, stubs.build_fakeavceleb, stubs.build_wilddeepfake):
+    for fn in (stubs.build_lavdf, stubs.build_fakeavceleb, stubs.build_wilddeepfake):
         with pytest.raises(LayoutNotVerified, match="layout not yet verified"):
             fn(tmp_path)
     assert stubs.extract_voxceleb_ids("RealVideo/id00012/xyz_id00012_id00345.mp4") == ["id00012", "id00345"]

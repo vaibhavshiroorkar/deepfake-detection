@@ -1,4 +1,4 @@
-"""Celeb-DF v2 builder (real) and Celeb-DF++ builder (stub).
+"""Celeb-DF v2 builder and Celeb-DF++ builder.
 
 Celeb-DF v2 layout (DATA_LOG.md and the archive listing seen by the main agent):
   data/celebdf_v2/Celeb-real/id<N>_<k>.mp4              590 videos, real, celebrity id<N>        e.g. id0_0000.mp4
@@ -21,7 +21,7 @@ Rules.
     official_split ``test``; others get an empty value.
   * Celeb-DF v2 and Celeb-DF++ are ONE source family (``celebdf``), D-012 and DATA_LOG.md.
 
-Celeb-DF++ (``celebdf_pp``) is a stub: layout not yet verified.
+Celeb-DF++ (``celebdf_pp``): see build_pp (layout verified on the archive on 2026-10-25).
 """
 
 from __future__ import annotations
@@ -129,11 +129,85 @@ def build(data_root: Path) -> tuple[list[Record], dict]:
     return records, report
 
 
+KEY_PP = "celebdf_pp"
+EXPECTED_PP_REAL = {"Celeb-real": 108, "YouTube-real": 70}  # the listed real videos of the official test list
+NEW_FOLDERS = {  # type -> {method: listed videos}: the 21 NEW generators; the Celeb-DF-v2 folder is not used (D-021)
+    "FaceReenact": {m: 200 for m in ("DaGAN", "FSRT", "HyperReenact", "LIA", "LivePortrait", "MCNET", "TPSMM")},
+    "FaceSwap": {m: 200 for m in ("BlendFace", "GHOST", "HifiFace", "InSwapper", "MobileFaceSwap", "SimSwap", "UniFace")},
+    "TalkingFace": {m: 300 for m in ("AniTalker", "EDTalk", "EchoMimic", "FLOAT", "IP_LAP", "Real3DPortrait", "SadTalker")},
+}
+EXPECTED_PP_TEST_LIST_LINES = 5418
+_TALK_RE = re.compile(r"^(id\d+)_(\d+)_test_(id\d+)_(.+)\.mp4$")
+
+
+def parse_pp_fake_name(ftype: str, filename: str) -> dict:
+    """Celeb-DF++ fake names. FaceSwap and FaceReenact: id<T>_id<S>_<k>.mp4 (target, face source). TalkingFace:
+    id<T>_<k>_test_id<V>_<video>.mp4 (target celebrity, VoxCeleb speaker and video of the driving audio)."""
+    if ftype in ("FaceSwap", "FaceReenact"):
+        m = _FAKE_RE.match(filename)
+        if not m:
+            raise ValueError(f"{ftype} name not id<T>_id<S>_<k>.mp4: {filename}")
+        return {"target": m.group(1), "source": m.group(2)}
+    m = _TALK_RE.match(filename)
+    if not m:
+        raise ValueError(f"TalkingFace name not id<T>_<k>_test_id<V>_<video>.mp4: {filename}")
+    return {"target": m.group(1), "source": m.group(3)}
+
+
 def build_pp(data_root: Path) -> tuple[list[Record], dict]:
-    raise LayoutNotVerified(
-        "celebdf_pp: layout not yet verified. Assumption (DATA_LOG.md, not seen on disk): "
-        "data/celebdf_pp/List_of_testing_videos.txt and data/celebdf_pp/Celeb-synthesis/"
-        "{FaceSwap,FaceReenact,TalkingFace}/<method>/<id>_<id>_<k>.mp4 with the same naming as Celeb-DF v2; "
-        "only the 21 new generators are used; family 'celebdf' (one family with celebdf_v2); method = the "
-        "<method> folder; group = target identity from the name; official_split from the test list."
-    )
+    """Celeb-DF++ test-list videos: data/celebdf_pp/{Celeb-real,YouTube-real,Celeb-synthesis/<type>/<method>}/, one family
+    (``celebdf``) with Celeb-DF v2 (D-012). Group = the target identity of the name (as in Celeb-DF v2, D-026); both identities
+    are written to ``notes`` as ``ids=T|S`` so that identity checks can use them. Method = the generator folder. Every row is
+    in the official test list, so official_split is ``test``."""
+    base = data_root / "celebdf_pp"
+    tl = base / "List_of_testing_videos.txt"
+    test_lines = tl.read_text(encoding="utf-8").splitlines() if tl.exists() else []
+    test_set = parse_test_list("\n".join(test_lines))
+    records: list[Record] = []
+    found: dict[str, int] = {}
+    bad: list[str] = []
+
+    def add(p: Path, rel_in: str, label: int, method: str, group: str, basis: str, known: bool, notes: str):
+        records.append(Record(sample_id=f"{KEY_PP}:{rel_in}", dataset=KEY_PP, family=FAMILY, path=rel_posix(p, data_root), modality="video",
+                              label=label, method=method, group_id=group, group_basis=basis, identity_known=known,
+                              official_split="test" if rel_in in test_set else "", notes=notes))
+
+    for folder in EXPECTED_PP_REAL:
+        d, n = base / folder, 0
+        if d.is_dir():
+            for p in sorted(d.iterdir()):
+                try:
+                    info = parse_celeb_name(folder, p.name)
+                except ValueError:
+                    bad.append(rel_posix(p, data_root))
+                    continue
+                n += 1
+                rel_in = f"{folder}/{p.name}"
+                if info["target"] is not None:
+                    add(p, rel_in, 0, "real", f"{KEY_PP}:{info['target']}", "identity", True, f"ids={info['target']}")
+                else:
+                    add(p, rel_in, 0, "real", f"{KEY_PP}:youtube:{p.stem}", "source_video", False, "")
+        found[folder] = n
+    for ftype, methods in NEW_FOLDERS.items():
+        for method in methods:
+            d, n = base / "Celeb-synthesis" / ftype / method, 0
+            if d.is_dir():
+                for p in sorted(d.iterdir()):
+                    try:
+                        info = parse_pp_fake_name(ftype, p.name)
+                    except ValueError:
+                        bad.append(rel_posix(p, data_root))
+                        continue
+                    n += 1
+                    add(p, f"Celeb-synthesis/{ftype}/{method}/{p.name}", 1, method, f"{KEY_PP}:{info['target']}", "identity", True,
+                        f"ids={info['target']}|{info['source']}")
+            found[f"{ftype}/{method}"] = n
+    expected = dict(EXPECTED_PP_REAL)
+    expected.update({f"{t}/{m}": c for t, ms in NEW_FOLDERS.items() for m, c in ms.items()})
+    listed_new = {t for t in test_set if t.startswith(("Celeb-real/", "YouTube-real/")) or (t.startswith("Celeb-synthesis/") and "/Celeb-DF-v2/" not in t)}
+    listed_missing = sorted(t for t in listed_new if not (base / t).is_file())
+    report = {"dataset": KEY_PP, "found": found, "expected": expected, "rows": len(records), "test_list_lines": len(test_lines),
+              "test_list_lines_expected": EXPECTED_PP_TEST_LIST_LINES, "test_list_entries_missing_on_disk": len(listed_missing),
+              "unparsed_or_ignored_files": bad, "not_extracted_by_design": "340 listed fakes of the folder Celeb-DF-v2 (already in Celeb-DF v2)",
+              "complete": found == expected and len(test_lines) == EXPECTED_PP_TEST_LIST_LINES and not listed_missing and not bad}
+    return records, report
