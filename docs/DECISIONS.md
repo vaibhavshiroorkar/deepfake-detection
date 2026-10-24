@@ -371,12 +371,12 @@ The implementer could not verify any turnaround time other than the FaceForensic
 
 ### D-025: Definition of "comparable with published detectors" (follows from D-005)
 - Date: 2026-10-24
-- Status: Proposed
+- Status: Decided (user), approved 2026-10-24 after the review, amended by the user (replaces the version proposed in REQUIREMENTS.md section 8)
 - Question: What "comparable with published detectors" (D-005) means in a checkable way.
 - Options considered: Quote paper numbers beside ours; re-run a published detector family under our protocol and compare with a paired interval; match a published number within a tolerance.
 - Criteria: The comparison must obey the comparison rules (same data, split, budget and metric; at least 3 seeds; paired bootstrap), and in-dataset and cross-dataset numbers are never mixed (RESEARCH.md rule).
 - Evidence: R-017 (the common FF++ to other-datasets protocol); the protocol differences between papers recorded in RESEARCH.md notes 1 and 12.
-- Decision and reason: Proposed in REQUIREMENTS.md section 8: re-run a published detector family under our protocol with the same data, split, budget and metric, report both with intervals, and call ours comparable when the interval of the paired difference contains zero or favours the baseline by less than a margin stated before the run. Quoted paper numbers are context only, with their own protocol named.
+- Decision and reason (user's amendment): "Comparable" means non-inferior. Ours is comparable to the re-run baseline when the lower end of the paired 95 percent bootstrap interval of (ours minus the baseline), resampled over source or identity groups, is above minus delta. Delta is stated before the final comparison and is chosen from the measured seed-to-seed spread of the baseline. An interval that only contains zero is reported as "not distinguished", never as comparable. Ours is superior when the whole interval is above zero. The baseline is a published detector family re-run under our protocol with the same data, split, budget and metric; quoted paper numbers are context only, with their own protocol named.
 - Rejected and why: Quoting paper numbers beside ours (different protocols), and matching a published number (not reproducible under our splits).
 - Consequences / what could prove this wrong: Delta has to be stated before the final comparison and derived from measured baseline seed spread (at least 3 seeds), so the baseline must be run before delta exists. If the chosen baseline cannot be trained within the time budget, "comparable" would have to be weakened and said so.
 
