@@ -1,6 +1,6 @@
 # VIVA_PREP
 
-Last updated: 2026-10-24 (Session 0)
+Last updated: 2026-10-24 (Session 1) (Session 0)
 
 A bank of questions an examiner may ask, grouped by theme. Each question is linked to the decision (D or O), experiment (E) or paper (R) that will answer it. Answers marked "pending evidence" stay that way until the evidence exists; nothing here is a prepared claim. Section 8 holds standard mathematical definitions, which do not depend on experiments, with the source used.
 
@@ -29,7 +29,12 @@ A bank of questions an examiner may ask, grouped by theme. Each question is link
 |---|---|---|---|
 | 3.1 | Why this split? | O-004 | pending evidence |
 | 3.2 | How do you know there is no leakage? | O-004, the leakage check script (not yet written), DATA_LOG.md | pending evidence |
-| 3.3 | Why these datasets and what are their licences and biases? | O-003, DATA_LOG.md, R-002, R-014 | pending evidence |
+| 3.3 | Why these datasets and what are their licences and biases? | D-021, D-020, DATA_LOG.md, R-002, R-014 | Selection rule is on record: a dataset is kept only if it serves a numbered requirement (D-021). Licence terms are in DATA_LOG.md. Bias analysis is pending evidence |
+| 3.6 | Why FaceForensics++ as the shared training set? | D-021, R-017 | The usual protocol in the literature trains on FF++ c23 and tests on other datasets (R-017), so our numbers can be set beside published ones (D-005). Whether it worked here is pending evidence |
+| 3.7 | Why did you drop datasets such as OpenForensics, ASVspoof 5, GenImage or DFDC? | D-021 keep, drop or defer table | Each was dropped or deferred because no numbered requirement needed it, or because of size or an unverified access route; the one-line reasons are in DATA_LOG.md |
+| 3.8 | Two of your audio-visual datasets take real videos from VoxCeleb2. Could identities appear in both training and test? | D-012, D-021, the leakage-check script (not yet written) | pending evidence: the identity overlap between LAV-DF and FakeAVCeleb is to be checked before any dataset-disjoint claim |
+| 3.9 | Your generated-image training set is only 8,000 images. Is that enough and is it comparable with the literature? | D-021 consequences, R-011 | It is far smaller than the 720,000 images of R-011, so that paper's table is not reproduced; adequacy is pending evidence (a training-size comparison would answer it) |
+| 3.10 | Can you show example frames in the paper? | D-020, DATA_LOG.md rule 4 | Celeb-DF and FakeAVCeleb forbid publishing derived data; what may be shown is to be settled before drafting figures |
 | 3.4 | Why is the test set only used once? | DECISIONS.md rule on frozen choices | The rule is stated in DECISIONS.md; its application is pending evidence |
 | 3.5 | What is the difference between in-dataset and cross-dataset results and why does it matter? | RESEARCH.md notes, R-017 | Available: in R-017 the mean AUC of strong detectors is above 0.93 within FF++ and about 0.77 to 0.79 across datasets. Our own numbers are pending evidence |
 
