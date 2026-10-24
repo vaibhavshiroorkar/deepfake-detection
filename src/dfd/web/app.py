@@ -34,6 +34,9 @@ def create_app(adapter: Adapter, upload_dir: str | Path | None = None, max_bytes
     app.config["MAX_CONTENT_LENGTH"] = max_bytes
     upload_dir = Path(upload_dir) if upload_dir else Path(tempfile.gettempdir()) / "dfd_uploads"
     upload_dir.mkdir(parents=True, exist_ok=True)
+    for stale in upload_dir.iterdir():  # leftovers of an earlier crash; the folder is private to this page
+        if stale.is_file():
+            stale.unlink(missing_ok=True)
     jobs: dict[str, dict] = {}
     lock = threading.Lock()
     pool = ThreadPoolExecutor(max_workers=1)  # one scoring at a time; the GPU is shared with nothing else here
@@ -54,7 +57,11 @@ def create_app(adapter: Adapter, upload_dir: str | Path | None = None, max_bytes
         name = os.path.basename(f.filename.replace("\\", "/"))
         fd, tmp = tempfile.mkstemp(dir=upload_dir, suffix=Path(name).suffix.lower())
         os.close(fd)
-        f.save(tmp)
+        try:
+            f.save(tmp)
+        except BaseException:  # an aborted upload must not leave a file behind
+            Path(tmp).unlink(missing_ok=True)
+            raise
         return (Path(tmp), name), None
 
     @app.errorhandler(413)

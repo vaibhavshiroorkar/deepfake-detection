@@ -615,7 +615,7 @@ Still open:
 
 ### D-043: The framework that serves the local web page (settles O-013)
 - Date: 2026-10-25
-- Status: Decided autonomously - needs user review
+- Status: Decided (user), approved 2026-10-25 after three confirmations: the server binds to 127.0.0.1 only (src/dfd/web/__main__.py, no option to change it, tested); uploads are limited to 512 MB (MAX_CONTENT_LENGTH, 413 answer in the D-027 form, tested); uploaded files are deleted after every request, also after an aborted upload, and leftovers are removed at start (tested)
 - Question: Which Python framework serves the local web page of D-031 and calls the inference library.
 - Options considered: (1) Flask 3.1; (2) FastAPI with uvicorn and python-multipart; (3) the standard library `http.server` with hand-written multipart parsing; (4) Streamlit or Gradio; (5) Bottle; (6) an in-process page without a server (rejected by D-031, which needs a browser).
 - Criteria (written before the choice): (a) installs on Python 3.13 with the project's package manager and no compiled build; (b) runs as one process with no extra service (no database, no message broker, no separate front-end build); (c) handles file upload of up to several hundred megabytes without extra code that we must test ourselves; (d) the page is plain HTML, CSS and a little JavaScript that the user can restyle without a build step; (e) few packages, so that the environment stays small; (f) the response of D-027 is returned unchanged as JSON.

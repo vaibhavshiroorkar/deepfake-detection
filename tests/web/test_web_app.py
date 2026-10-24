@@ -124,3 +124,37 @@ def test_static_files_are_served(client):
     for f in ("app.js", "style.css"):
         assert c.get(f"/static/{f}").status_code == 200
     assert re.search(r"--mock", c.get("/static/style.css").get_data(as_text=True))
+
+
+def test_server_binds_to_localhost_only(monkeypatch):
+    seen = {}
+
+    def fake_run(self, host=None, port=None, **kw):
+        seen.update(host=host, port=port, **kw)
+
+    monkeypatch.setattr("flask.Flask.run", fake_run)
+    assert web_main.main(["--adapter", "mock", "--port", "8123"]) == 0
+    assert seen["host"] == "127.0.0.1" and seen["port"] == 8123 and seen.get("debug") is False
+    assert not hasattr(web_main, "HOST_ALL")
+    assert "--host" not in (Path(web_main.__file__).read_text(encoding="utf-8"))  # no option to expose it
+
+
+def test_an_aborted_upload_leaves_no_file(client, media, monkeypatch):
+    c, up = client
+
+    def boom(self, dst, buffer_size=16384):
+        Path(dst).write_bytes(b"partial")
+        raise OSError("client went away")
+
+    monkeypatch.setattr("werkzeug.datastructures.FileStorage.save", boom)
+    r = post(c, media / "img.png", "img.png")
+    assert r.status_code == 500
+    assert list(up.iterdir()) == []
+
+
+def test_stale_uploads_are_removed_at_startup(tmp_path):
+    up = tmp_path / "up"
+    up.mkdir()
+    (up / "left_over.png").write_bytes(b"x")
+    create_app(MockAdapter(), upload_dir=up)
+    assert list(up.iterdir()) == []
