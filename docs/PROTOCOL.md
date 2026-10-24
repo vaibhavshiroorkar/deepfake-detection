@@ -58,6 +58,10 @@ Headline: ROC-AUC with a bootstrap interval. Secondary: EER, balanced accuracy a
 - Any evaluation that reads a `test_in` or `test_x` row is refused unless the run is flagged `--final` and carries `--iteration <tag>`.
 - A ledger `ledger/final_ledger.jsonl` (tracked in git) records every final evaluation: date, iteration, dataset, split, run IDs and the score-file hash. A second final evaluation of the same iteration and dataset is refused unless `--repeat "<reason>"` is given; the reason is stored in the ledger and the repeat is listed under "Mistakes and corrections" in STATUS.md.
 
+### Paired comparison on final splits (Decided autonomously - needs user review, 2026-10-24)
+
+The `--compare` command of the harness compares two runs with the paired bootstrap. On `dev_x`, `val` and `train` it needs no flag. On `test_in` or `test_x` it needs `--final --iteration <tag>` and it refuses unless a regular final evaluation of that iteration and dataset is already in the ledger; it re-analyses logged scores, never gives a first look at a final split, and writes no ledger entry.
+
 ## 8. Acceptance test (the Stage 2 gate)
 
 Stage 2 is done when all of the following pass; the results are logged in EXPERIMENTS.md.

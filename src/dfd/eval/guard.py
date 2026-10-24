@@ -40,6 +40,27 @@ def final_blocks(table: ScoreTable) -> list[tuple[str, str]]:
     return sorted({(str(d), str(s)) for d, s in zip(table.dataset[m], table.split[m])})
 
 
+def check_compare_guard(table: ScoreTable, *, final: bool, iteration: str | None,
+                        ledger_path=DEFAULT_LEDGER) -> None:
+    """Guard for a paired comparison that reads the rows in `table` (one side).
+
+    No final rows: nothing to check (dev_x, val, train are free). Final rows: the
+    same flag and tag rules as check_guard, and in addition every (iteration,
+    dataset) must already be in the ledger. A comparison is a re-analysis of
+    scores that a regular final evaluation has already logged; it never makes a
+    first look at a final split and writes no ledger entry.
+    """
+    blocks = final_blocks(table)
+    if not blocks:
+        return
+    check_guard(table, final=final, iteration=iteration, repeat="compare", ledger_path=ledger_path)
+    seen = {(e["iteration"], e["dataset"]) for e in read_ledger(ledger_path)}
+    missing = [d for d, _ in blocks if (iteration, d) not in seen]
+    if missing:
+        raise GuardError(f"refused: iteration {iteration!r} has no final evaluation in the ledger "
+                         f"for {sorted(set(missing))}; run the regular final evaluation first")
+
+
 def check_guard(table: ScoreTable, *, final: bool = False, iteration: str | None = None,
                 repeat: str | None = None, ledger_path=DEFAULT_LEDGER,
                 today: _dt.date | None = None) -> GuardDecision:

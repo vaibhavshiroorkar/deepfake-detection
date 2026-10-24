@@ -6,7 +6,7 @@ Extra columns are ignored.
 
 Checks: required columns present; no empty text field; seed is an integer;
 modality in {visual, audio, image, fused}; split in {train, val, test_in,
-test_x}; label 0 or 1; score finite and in [0, 1]; logit finite when given.
+test_x, dev_x}; label 0 or 1; score finite and in [0, 1]; logit finite when given.
 Each run_id has one iteration and one seed. Rows that repeat
 (run_id, modality, dataset, split, sample_id) are frame rows: they are
 aggregated to one clip row with score = mean of the per-frame scores
@@ -29,8 +29,9 @@ from .calibration import logit as _logit, sigmoid
 REQUIRED = ("run_id", "iteration", "seed", "modality", "dataset", "split",
             "sample_id", "group_id", "label", "score")
 MODALITIES = ("visual", "audio", "image", "fused")
-SPLITS = ("train", "val", "test_in", "test_x")
-FINAL_SPLITS = ("test_in", "test_x")
+SPLITS = ("train", "val", "test_in", "test_x", "dev_x")
+FINAL_SPLITS = ("test_in", "test_x")  # guarded and logged
+DEV_SPLITS = ("dev_x",)  # development slices (D-035): not final, may be evaluated repeatedly
 TEXT = ("run_id", "iteration", "modality", "dataset", "split", "sample_id", "group_id")
 
 

@@ -178,8 +178,19 @@ def paired_bootstrap(y, scores_a, scores_b, groups, metric="auc", *, n_boot=N_BO
     (replicate-wise difference of the seed-averaged values), a and b are the
     results of the two candidates. `diff.seed_sd` is None.
     """
-    ev = {"a": _per_seed(y, scores_a, metric, kw), "b": _per_seed(y, scores_b, metric, kw)}
-    res, _ = bootstrap_many(y, groups, ev, n_boot=n_boot, level=level, seed=seed)
+    return paired_from_evaluators(
+        y, groups, _per_seed(y, scores_a, metric, kw), _per_seed(y, scores_b, metric, kw),
+        n_boot=n_boot, level=level, seed=seed)
+
+
+def paired_from_evaluators(y, groups, evals_a, evals_b, *, n_boot=N_BOOT, level=LEVEL,
+                           seed=BASE_SEED, require_both_classes=True):
+    """Paired bootstrap from lists of weight-evaluators (one per seed on each side).
+
+    Returns (diff, a, b) as in paired_bootstrap. Both sides see the same resamples.
+    """
+    res, _ = bootstrap_many(y, groups, {"a": evals_a, "b": evals_b}, n_boot=n_boot, level=level,
+                            seed=seed, require_both_classes=require_both_classes)
     a, b = res["a"], res["b"]
     diff = summarise(a.estimate - b.estimate, a.replicates - b.replicates, level)
     return diff, a, b
