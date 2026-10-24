@@ -241,6 +241,14 @@ Written for the earlier plan and kept as the evidence base. Status values: `OPEN
 | I6 | Community Forensics-Small | https://huggingface.co/datasets/OwensLab/CommunityForensics-Small | `license: cc-by-nc-sa-4.0` | direct download (HF) | 259.7 GB in 188 parquet shards (about 1 to 4 GB each); README: "Downloading may use up to ~600GB" via `datasets` | 278K fake + 278K real (FFHQ, VISION, COCO, Landscapes HQ) | `train` only | OPEN (usable by shard subset) |
 | I7 | Community Forensics-Eval (CompEval) | https://huggingface.co/datasets/OwensLab/CommunityForensics-Eval | `license: cc-by-nc-sa-4.0` | direct download (HF) | 206.2 GB in 413 shards | 51,836 images, 21 generative models paired with RAISE, COCO, FFHQ, LAION | evaluation | OPEN (usable by shard subset) |
 
+## Model and tool files (CLAUDE.md rule 7)
+
+| File | Source URL | SHA-256 | Licence | Use |
+|---|---|---|---|---|
+| yunet_2023mar.onnx (232,589 bytes) | https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx | 8f2383e4dd3cfbb4553ea8718107fc0423210dc964f9f4280604804ed2552fa4 | MIT (LICENSE of the opencv_zoo face_detection_yunet folder, read 2026-10-24; the repository itself is Apache-2.0) | Face detector of the preparation pipeline (D-034); kept in data/_prep_bench/models/, not in git |
+| ultraface_rfb320.onnx (1,270,727 bytes) | https://github.com/Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB/raw/master/models/onnx/version-RFB-320.onnx | 34cd7e60aeff28744c657de7a3dc64e872d506741de66987f3426f2b79f88017 | not verified | Benchmark comparison only; not used by the project |
+| det_500m.onnx (2,524,817 bytes, from buffalo_sc.zip) | https://github.com/deepinsight/insightface/releases/download/v0.7/buffalo_sc.zip | 5e4447f50245bbd7966bd6c0fa52938c61474a04ec7def48753668a9d8b4ea3a | InsightFace models: non-commercial research purposes only (InsightFace README, read 2026-10-24) | Benchmark comparison only; not used by the project |
+
 ## Downloaded datasets
 
 One row per finished download, generated from data/_manifests/downloads.jsonl. The role is the planned role (D-021); the final role is assigned when the split policy is applied to the dataset (D-012). FF++ and DFD rows are added when their downloads and checks finish.

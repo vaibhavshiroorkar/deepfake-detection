@@ -4,15 +4,17 @@
         --manifest data/_manifests/<file>.csv --out data/_crops/<name> --workers 8
 
 Manifest: a CSV with at least the columns `sample_id` and `path` (the data
-manifest of src/dfd/data/manifest.py has sample_id, path, label, group_id; the
-extra columns are ignored here). Relative paths are resolved against --root
-(default: current directory).
+manifests of src/dfd/data/manifest.py have more columns, which are ignored; rows whose
+`modality` is not video are skipped). Relative paths are resolved against --root
+(default `data`, because the data manifests store paths relative to data/ with forward slashes).
+The folder of a sample is its sample_id with every character outside [A-Za-z0-9._-]
+replaced by `_` (for example ffpp:Deepfakes:123_456 -> ffpp_Deepfakes_123_456).
 
 Output under --out:
     params.json                     the settings of this run (a different setting needs a new --out)
-    <sample_id>/<frame_index>.jpg   one crop per sampled frame with a detected face
-    <sample_id>/index.csv           per-video index rows
-    <sample_id>/_done.json          written last: marks the video finished (resume skips it)
+    <folder>/<frame_index>.jpg      one crop per sampled frame with a detected face
+    <folder>/index.csv              per-video index rows
+    <folder>/_done.json             written last: marks the video finished (resume skips it)
     index.csv                       all finished videos: sample_id, frame_index, source_frame_index,
                                     detected, box, crop_path, score, n_faces, crop_box, note
     videos.csv                      one row per manifest video: status, counts, seconds per stage
@@ -32,6 +34,7 @@ import argparse
 import csv
 import json
 import os
+import re
 import time
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import asdict, dataclass
@@ -78,10 +81,17 @@ def _get_detector(p: Params):
     return _DET
 
 
-def _safe_id(sample_id: str) -> str:
-    if not sample_id or any(c in sample_id for c in "/\\:") or sample_id in (".", ".."):
+def folder_name(sample_id: str) -> str:
+    """Folder name of a sample: every character outside [A-Za-z0-9._-] becomes '_'.
+
+    Manifest ids such as ``ffpp:Deepfakes:123_456`` contain ':' which Windows does not allow in names.
+    The index keeps the true sample_id; crop_path holds the folder. Two ids that map to the same folder
+    are rejected when the manifest is read.
+    """
+    f = re.sub(r"[^A-Za-z0-9._-]", "_", sample_id)
+    if not f.strip("."):
         raise ValueError(f"sample_id is not usable as a folder name: {sample_id!r}")
-    return sample_id
+    return f
 
 
 def _write_atomic(path: Path, text: str) -> None:
@@ -106,7 +116,8 @@ def process_video(sample_id: str, path: str, out_dir: str, p: Params, params_has
     res = dict(sample_id=sample_id, path=path, status="ok", message="", n_requested=0, n_decoded=0,
                n_detected=0, width=0, height=0, container_frames=0,
                decode_s=0.0, detect_s=0.0, crop_write_s=0.0, total_s=0.0)
-    vdir = Path(out_dir) / sample_id
+    folder = folder_name(sample_id)
+    vdir = Path(out_dir) / folder
     try:
         if not V.is_stable(path, p.min_age_s):
             res.update(status="skipped_unstable", message="missing, .part or modified recently")
@@ -141,7 +152,7 @@ def process_video(sample_id: str, path: str, out_dir: str, p: Params, params_has
                        detected=0, box="", crop_path="", score="", n_faces=len(faces),
                        crop_box="", note="")
             if crop is not None:
-                rel = f"{sample_id}/{k}.jpg"
+                rel = f"{folder}/{k}.jpg"
                 if not cv2.imwrite(str(Path(out_dir) / rel), crop, [cv2.IMWRITE_JPEG_QUALITY, p.quality]):
                     raise OSError(f"cannot write {rel}")
                 row.update(detected=1, box=f"{f.x:.1f},{f.y:.1f},{f.w:.1f},{f.h:.1f}", crop_path=rel,
@@ -178,18 +189,29 @@ def _csv_text(columns: list[str], rows: list[dict]) -> str:
     return s.getvalue()
 
 
-def read_manifest(manifest: str | Path, root: str | Path = ".") -> list[tuple[str, str]]:
+def read_manifest(manifest: str | Path, root: str | Path = "data") -> list[tuple[str, str]]:
+    """(sample_id, path) for every video row.
+
+    Relative paths are resolved against `root` (the data manifests store paths relative to data/).
+    If the manifest has a `modality` column, rows that are not `video` are ignored.
+    """
     root = Path(root)
-    out, seen = [], set()
+    out, seen, folders = [], set(), {}
     with open(manifest, newline="", encoding="utf-8-sig") as fh:
         rd = csv.DictReader(fh)
         if not rd.fieldnames or "sample_id" not in rd.fieldnames or "path" not in rd.fieldnames:
             raise SystemExit("manifest needs the columns sample_id and path")
         for r in rd:
-            sid = _safe_id(r["sample_id"])
+            if r.get("modality", "video") != "video":
+                continue
+            sid = r["sample_id"]
             if sid in seen:
                 raise SystemExit(f"duplicate sample_id in manifest: {sid}")
             seen.add(sid)
+            fo = folder_name(sid)
+            if fo in folders:
+                raise SystemExit(f"sample_ids {folders[fo]!r} and {sid!r} map to the same folder {fo!r}")
+            folders[fo] = sid
             pth = Path(r["path"])
             out.append((sid, str(pth if pth.is_absolute() else root / pth)))
     return out
@@ -225,13 +247,12 @@ class _CpuMeter:
         return round(sum(self.samples) / len(self.samples), 1) if self.samples else None
 
 
-def run(manifest, out, workers=4, params: Params = Params(), root=".", limit=None, quiet=False) -> dict:
+def run(manifest, out, workers=4, params: Params = Params(), root="data", limit=None, quiet=False) -> dict:
     items = read_manifest(manifest, root)
     if limit:
         items = items[:limit]
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
-    pj = json.dumps(asdict(params), sort_keys=True)
     # min_age_s is a run-time filter, not an output setting: leave it out of the identity of the output
     ident = {k: v for k, v in asdict(params).items() if k not in ("min_age_s", "model_dir")}
     params_hash = json.dumps(ident, sort_keys=True)
@@ -242,7 +263,7 @@ def run(manifest, out, workers=4, params: Params = Params(), root=".", limit=Non
             raise SystemExit(f"{pf} has different settings {old}; use a new --out for new settings")
     else:
         pf.write_text(params_hash, encoding="utf-8")
-    todo = [(s, p) for s, p in items if not _is_done(out / s, params_hash)]
+    todo = [(s, p) for s, p in items if not _is_done(out / folder_name(s), params_hash)]
     n_skipped_done = len(items) - len(todo)
     if not quiet:
         print(f"manifest videos {len(items)}, already finished {n_skipped_done}, to do {len(todo)}, workers {workers}", flush=True)
@@ -272,14 +293,14 @@ def run(manifest, out, workers=4, params: Params = Params(), root=".", limit=Non
     for sid, pth in items:
         if sid in results:
             vrows.append(results[sid])
-        elif _is_done(out / sid, params_hash):
-            d = json.loads((out / sid / "_done.json").read_text(encoding="utf-8"))
+        elif _is_done(out / folder_name(sid), params_hash):
+            d = json.loads((out / folder_name(sid) / "_done.json").read_text(encoding="utf-8"))
             vrows.append(dict(sample_id=sid, path=pth, status="ok_previous_run", message="", **{
                 k: d.get(k, "") for k in VIDEO_COLUMNS if k in d}))
         else:
             continue
         if vrows[-1]["status"] in ("ok", "ok_previous_run"):
-            with open(out / sid / "index.csv", newline="", encoding="utf-8") as fh:
+            with open(out / folder_name(sid) / "index.csv", newline="", encoding="utf-8") as fh:
                 irows.extend(csv.DictReader(fh))
     _write_atomic(out / "videos.csv", _csv_text(VIDEO_COLUMNS, vrows))
     _write_atomic(out / "index.csv", _csv_text(INDEX_COLUMNS, irows))
@@ -311,7 +332,7 @@ def main(argv=None) -> int:
     ap.add_argument("--manifest", required=True)
     ap.add_argument("--out", required=True)
     ap.add_argument("--workers", type=int, default=4, help="0 = run in this process")
-    ap.add_argument("--root", default=".", help="base for relative paths in the manifest")
+    ap.add_argument("--root", default="data", help="base folder of the relative paths in the manifest (data manifests are relative to data/)")
     ap.add_argument("--limit", type=int, default=None, help="first K manifest rows only")
     d = Params()
     ap.add_argument("--detector", default=d.detector, choices=F.DETECTORS)

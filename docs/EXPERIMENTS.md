@@ -119,6 +119,22 @@ The probe script was kept outside the repository (scratch directory) because Ses
 - Not covered here: A6 and A7 (stream S2-B, manifests and leakage check).
 - Status: A1 to A5 and A8 pass. The real ledger `ledger/final_ledger.jsonl` has not been written; tests use temporary ledgers.
 
+### V-002: Stage 1 and Stage 2 gate checks A6 and A7 (PROTOCOL.md section 8)
+- Date: 2026-10-24. Code: `src/dfd/data/`, tests `tests/data/` (stream S2-B, reviewed by the main agent). Command: `.venv/Scripts/python.exe -m pytest tests/data -q -rs`. Main agent's own run after FF++ completed: 49 passed, 0 skipped.
+- A7 counts measured on the real files (S2-B, with the commands in docs/_agents/S2B.md): ASVspoof 2019 LA manifest 121,461 rows (25,380 train, 24,844 dev, 71,237 eval; 20, 20 and 67 speakers, none in two partitions); ProGAN validation and test 8,000 images each (4,000 real, 4,000 fake, 20 classes); FF++ c23 5,000 rows (1,000 originals and 1,000 each of the four methods); Celeb-DF v2 6,529 videos (590, 300, 5,639) with 59 identity groups; CNN subset 56,003 and diffusion test 10,000 images.
+- A6: the leakage check exits non-zero on a manufactured overlap and zero on clean splits (tests). On the real image sets with content hashing it first failed (800 hashes shared across splits, then 1,200 samples including stylegan2 horse); after the exclusion rule of D-026 it passes on 80,803 files. ASVspoof, FF++ and Celeb-DF were not content-hashed.
+- Status: A6 and A7 pass. Together with V-001 the Stage 2 gate A1 to A8 passes.
+
+### M-001: data-preparation speed on FF++ c23 (measurement, not an experiment)
+- Date: 2026-10-24. Environment: ENV-DESKTOP-GPU, CPU only, Python 3.13, OpenCV 5.0.0.93 (headless). Produced by stream S2-C with the commands in docs/_agents/S2C.md; the main agent re-ran only the tests (26 passed) and checked that none of 15 sampled FF++ and Celeb-DF videos has an audio stream.
+- Caveat on every number: downloads and extraction were running, with 13 to 17 percent of the CPU busy before each run; the 200-video sample is about 220 MB, so reads were warm; cold-disk reads were not measured.
+- Decode of 16 frames per video, one thread, 67 videos: OpenCV sequential 0.74 s per video, ffmpeg pipe 0.74 s, OpenCV seek 2.88 s; pixel-identical frames.
+- Detectors on 7,488 sampled FF++ frames (see D-034): YuNet 12 ms per frame, UltraFace 5 ms, SCRFD 30 ms; all found a face in 100 percent.
+- Pipeline throughput (200 videos, 16 frames, 224 px, JPEG 95, YuNet): 1.25, 4.13, 5.91, 6.35 and 6.22 videos per second with 1, 4, 8, 16 and 24 workers; growth stops after 8 workers and the cause was not found. Projection for the 5,000 FF++ c23 videos: about 13 minutes at 16 workers; crops 222,786 bytes per video, about 1.1 GB for 5,000 videos.
+- Audio: ASVspoof 2019 LA FLAC loads at 4.76 ms per file (200 random files); about 582 s single-threaded for all 122,299 files. No FF++ (0 of 20) and no Celeb-DF v2 (0 of 250) video has an audio stream, so the audio branch of video needs LAV-DF or FakeAVCeleb.
+- LAV-DF speed is a projection from 40 re-encoded FF++ videos (315 videos per second at 16 workers), not a measurement.
+- Full FF++ crop run started 2026-10-24 at about 21:55 (log data/_logs/crops_ffpp_c23.log); its measured rate in the first minute was about 6 videos per second, consistent with the benchmark.
+
 ## Experiment log
 
 No experiments have been run yet.

@@ -78,7 +78,7 @@ def cmd_sample(a) -> None:
         if len(picked) < n_for[g]:
             print(f"warning: only {len(picked)} complete files for {g}", file=sys.stderr)
         for p in sorted(picked):
-            rows.append(dict(sample_id=f"{g}_{p.stem}", path=str(p).replace("\\", "/"),
+            rows.append(dict(sample_id=f"{g}_{p.stem}", path=p.relative_to("data").as_posix(),
                              label=0 if g == "real" else 1, method=g))
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
     with open(a.out, "w", newline="", encoding="utf-8") as fh:
@@ -90,8 +90,13 @@ def cmd_sample(a) -> None:
 
 
 def _read(manifest):
+    """Manifest rows; relative paths are relative to data/ (as in the data manifests) and returned resolved."""
     with open(manifest, newline="", encoding="utf-8") as fh:
-        return list(csv.DictReader(fh))
+        rows = list(csv.DictReader(fh))
+    for r in rows:
+        if not Path(r["path"]).is_absolute():
+            r["path"] = str(Path("data") / r["path"])
+    return rows
 
 
 # ------------------------------------------------------------------ decode
@@ -125,7 +130,7 @@ def cmd_decode(a) -> None:
         V.probe(r["path"])
     probe_s = (time.perf_counter() - t0) / len(rows)
     BENCH.mkdir(parents=True, exist_ok=True)
-    f = BENCH / f"decode_threads{a.threads}.csv"
+    f = BENCH / f"decode_threads{a.threads}{a.tag}.csv"
     with open(f, "w", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=list(out[0]), lineterminator="\n")
         w.writeheader()
@@ -245,6 +250,52 @@ def summarise_detect(recs, specs) -> None:
             t = [r["seconds"] * 1000 for r in by[s] if r["h"] == hh]
             line += f"{s}={st.mean(t):.2f}  "
         print(line)
+
+
+# ------------------------------------------------------------------ decode throughput with a pool
+def _decode_one(args):
+    path, n, backend = args
+    cv2.setNumThreads(1)
+    t0 = time.perf_counter()
+    fr = V.read_frames(path, n=n, backend=backend, threads=1)
+    return len(fr), time.perf_counter() - t0
+
+
+def cmd_decodepool(a) -> None:
+    from concurrent.futures import ProcessPoolExecutor
+    rows = _read(a.manifest)
+    paths = [r["path"] for r in rows] * a.repeat
+    print(f"system CPU load before run: {_load_avg()}%; videos {len(paths)} ({len(rows)} files x {a.repeat}); workers {a.workers}")
+    with ProcessPoolExecutor(a.workers) as pool:
+        list(pool.map(_decode_one, [(p, a.n, a.backend) for p in paths[: a.workers * 2]]))  # warm-up
+        t0 = time.perf_counter()
+        res = list(pool.map(_decode_one, [(p, a.n, a.backend) for p in paths], chunksize=1))
+        wall = time.perf_counter() - t0
+    nf = sum(r[0] for r in res)
+    print(f"decode only, {a.backend}: {len(paths) / wall:.2f} videos/s, {nf / wall:.1f} frames/s, "
+          f"{wall / len(paths):.4f} s/video wall, mean in-worker {st.mean(r[1] for r in res):.3f} s/video")
+
+
+# ------------------------------------------------------------------ jpeg size and fidelity
+def cmd_jpeg(a) -> None:
+    cv2.setNumThreads(1)
+    det = F.make_detector("yunet", a.model_dir)
+    rows = _read(a.manifest)[:: a.every]
+    crops = []
+    for r in rows:
+        for _, fr in V.read_frames(r["path"], n=a.n, backend="cv_seq"):
+            c, f, _ = F.crop_largest_face(fr, det.detect(fr), F.DEFAULT_ENLARGE, a.size)
+            if c is not None:
+                crops.append(c)
+    print(f"crops: {len(crops)} from {len(rows)} videos, size {a.size}x{a.size}")
+    print("quality  mean_bytes/crop  mean_PSNR_dB_vs_uncompressed_crop")
+    for q in a.qualities:
+        sz, ps = [], []
+        for c in crops:
+            ok, buf = cv2.imencode(".jpg", c, [cv2.IMWRITE_JPEG_QUALITY, q])
+            sz.append(len(buf))
+            ps.append(cv2.PSNR(c, cv2.imdecode(buf, 1)))
+        print(f"{q:7d}  {st.mean(sz):15.0f}  {st.mean(ps):10.2f}")
 
 
 # ------------------------------------------------------------------ stress
@@ -379,6 +430,7 @@ def main(argv=None) -> int:
     d.add_argument("--every", type=int, default=3)
     d.add_argument("--n", type=int, default=V.DEFAULT_N_FRAMES)
     d.add_argument("--threads", type=int, default=1)
+    d.add_argument("--tag", default="", help="suffix of the raw output file")
     d.add_argument("--backends", nargs="+", default=list(V.BACKENDS))
     d.set_defaults(fn=cmd_decode)
     t = sub.add_parser("detect")
@@ -389,6 +441,21 @@ def main(argv=None) -> int:
     t.add_argument("--model-dir", default=str(F.DEFAULT_MODEL_DIR))
     t.add_argument("--detectors", nargs="+", default=list(F.DETECTORS) + ["yunet_full"])
     t.set_defaults(fn=cmd_detect)
+    q = sub.add_parser("decodepool")
+    q.add_argument("--manifest", default=str(BENCH / "sample_c23.csv"))
+    q.add_argument("--workers", type=int, default=16)
+    q.add_argument("--repeat", type=int, default=1)
+    q.add_argument("--n", type=int, default=V.DEFAULT_N_FRAMES)
+    q.add_argument("--backend", default="cv_seq", choices=V.BACKENDS)
+    q.set_defaults(fn=cmd_decodepool)
+    j = sub.add_parser("jpeg")
+    j.add_argument("--manifest", default=str(BENCH / "sample_c23.csv"))
+    j.add_argument("--every", type=int, default=10)
+    j.add_argument("--n", type=int, default=V.DEFAULT_N_FRAMES)
+    j.add_argument("--size", type=int, default=F.DEFAULT_CROP_SIZE)
+    j.add_argument("--model-dir", default=str(F.DEFAULT_MODEL_DIR))
+    j.add_argument("--qualities", type=int, nargs="+", default=[100, 95, 90, 85, 75])
+    j.set_defaults(fn=cmd_jpeg)
     x = sub.add_parser("stress")
     x.add_argument("--manifest", default=str(BENCH / "sample_c23.csv"))
     x.add_argument("--model-dir", default=str(F.DEFAULT_MODEL_DIR))

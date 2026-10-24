@@ -41,6 +41,8 @@ def extract_audio(video: str | Path, sr: int = DEFAULT_SR, threads: int = 1,
            "-vn", "-sn", "-map", "0:a:0?", "-ac", "1", "-ar", str(sr), "-f", "f32le", "pipe:1"]
     r = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if r.returncode != 0:
+        if b"does not contain any stream" in r.stderr:  # no audio track: empty, not an error
+            return np.zeros(0, np.float32)
         raise RuntimeError(f"ffmpeg failed on {video}: {r.stderr.decode(errors='replace')[:300]}")
     return np.frombuffer(r.stdout, np.float32).copy()
 

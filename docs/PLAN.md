@@ -8,14 +8,14 @@ This plan lists the stages of the project, the question each stage must answer, 
 
 | Stage | Question | Output | Status |
 |---|---|---|---|
-| 0 | What exactly is being detected, from which inputs, and what counts as success | Problem statement, requirements | in progress (D-002, D-011, D-018, D-019 decided; problem statement and requirements not yet written) |
-| 1 | Which data, which labels, how are train and test kept apart | Data plan, leakage rules | in progress (D-012 and D-020 decided; the requirements-driven data selection D-021 is Proposed and awaits approval; no dataset downloaded yet) |
-| 2 | Metrics, splits, seeds, threshold policy, fixed before any model exists | Evaluation protocol and acceptance test | not started |
-| 3 | The simplest end-to-end MVP | Baseline v0 with results | not started |
+| 0 | What exactly is being detected, from which inputs, and what counts as success | Problem statement, requirements | done: docs/REQUIREMENTS.md written 2026-10-24; the definition of comparable (D-025) is Proposed |
+| 1 | Which data, which labels, how are train and test kept apart | Data plan, leakage rules | done for the datasets on the machine (manifests, splits, leakage check with content de-duplication, D-021 and D-026); builders for In-the-Wild, DFD and LAV-DF still to write |
+| 2 | Metrics, splits, seeds, threshold policy, fixed before any model exists | Evaluation protocol and acceptance test | done: docs/PROTOCOL.md; acceptance A1 to A8 pass (V-001 and V-002) |
+| 3 | The simplest end-to-end MVP | Baseline v0 with results | not started; the MVP form is decided (D-032: frozen pretrained features with a linear head) |
 | 4 | Other models in the same harness, so the final choice has evidence | Comparison table with accuracy, cost, ease of fine-tuning | not started |
 | 5 | Iterations 1 to 7 or more, each from a written hypothesis | One experiment note per iteration | not started |
 | 6 | Whether and where remote heart-rate (rPPG) evidence enters | Feasibility test, then a decision | not started |
-| 7 | Paper (IEEE, LaTeX), technical report, presentation | Documents assembled from the logs | scaffolds being built (D-014); no results |
+| 7 | Paper (IEEE, LaTeX), technical report, presentation | Documents assembled from the logs | scaffolds built and committed (D-014); no results |
 
 ## Deadline and constraints
 
