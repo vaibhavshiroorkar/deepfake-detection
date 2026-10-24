@@ -3,9 +3,10 @@
     PYTHONPATH=src .venv/Scripts/python.exe scripts/data/lavdf_job.py
 
 Stages are recorded in data/_logs/lavdf_state.json, so a rerun resumes at the first unfinished stage. The token is read
-by huggingface_hub from its default path and is never printed or written. The tar is deleted only when its SHA-256
-equals the Hugging Face LFS value, extraction produced exactly the archive's file count and ffprobe found no
-unreadable video; anything else keeps the tar and says why in the STATUS line and in DATA_LOG.md.
+by huggingface_hub from its default path and is never printed or written. The tar is KEPT until the freeze on
+2026-10-29 (D-039). It is deleted earlier only if free space on D: is below 100 GB at the end of the job, and then only
+when its SHA-256 equals the Hugging Face LFS value, extraction produced exactly the archive's file count and ffprobe
+found no unreadable video (otherwise it is the only good copy and is kept; the STATUS line says so).
 """
 from __future__ import annotations
 
@@ -159,7 +160,9 @@ def main() -> int:
     ex, fp = s["extract"], s["ffprobe"]
     ok = s["sha_match"] and ex["archive_files"] == ex["extracted_files"] and fp.get("error", 0) == 0
     deleted = False
-    if ok and TAR.is_file():
+    free_gb = __import__("shutil").disk_usage(OUT.resolve().anchor).free / 1e9
+    low_space = free_gb < 100
+    if low_space and ok and TAR.is_file():
         TAR.unlink()
         deleted = True
     block = f"""
@@ -170,13 +173,13 @@ def main() -> int:
 - Extracted to data/lavdf/ with the Python tarfile "data" filter: {ex['archive_files']:,} files in the archive, {ex['extracted_files']:,} files on disk; by suffix {ex['by_suffix']}.
 - Splits from the shipped metadata (README gives no counts; the 91 / 31 / 31 identities of D-021 are from the paper and are compared here): {json.dumps(s['splits'])}.
 - ffprobe on every .mp4 (first audio stream): {fp['videos']:,} videos, {fp.get('audio', 0):,} with an audio stream, {fp.get('no_audio', 0):,} without, {fp.get('error', 0):,} unreadable. Examples of problems: {fp['examples'] or 'none'}.
-- Tar deleted: {deleted}. {'' if deleted else 'It was kept because at least one check failed (hash, file count or unreadable videos); decided autonomously - needs user review.'}
+- Tar deleted: {deleted}. Rule D-039 (Decided (user), 2026-10-24): the tar is kept until the freeze on 2026-10-29 and deleted earlier only if free space on D: is below 100 GB; free space at the end of the job: {free_gb:,.0f} GB. {'It was deleted because space was low and all checks passed.' if deleted else ('Space was low but a check failed, so the tar was kept as the only good copy.' if low_space else 'Delete it by hand at the freeze (data/_incoming/lavdf/LAV-DF.tar).')}
 - Terms: CC BY-NC 4.0 and the LAV-DF terms logged above (non-commercial research; VoxCeleb2 agreement applies).
 """
     p = Path("docs/DATA_LOG.md")
     p.write_text(p.read_text(encoding="utf-8").rstrip("\n") + block, encoding="utf-8", newline="")
     status_line(f"LAV-DF job finished: hash match {s['sha_match']}, {ex['extracted_files']:,} files extracted (archive {ex['archive_files']:,}), "
-                f"{fp.get('audio', 0):,} of {fp['videos']:,} videos have audio, {fp.get('error', 0)} unreadable, tar deleted {deleted}; details in DATA_LOG.md.")
+                f"{fp.get('audio', 0):,} of {fp['videos']:,} videos have audio, {fp.get('error', 0)} unreadable, tar deleted {deleted} (kept until the 2026-10-29 freeze unless D: falls below 100 GB, free now {free_gb:,.0f} GB); details in DATA_LOG.md.")
     return 0 if ok else 1
 
 
