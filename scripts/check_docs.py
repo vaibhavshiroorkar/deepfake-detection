@@ -9,7 +9,10 @@ the Word document body without comments or field codes, slide shapes without not
 """
 from __future__ import annotations
 
+import collections
+import hashlib
 import importlib.util
+import json
 import re
 import subprocess
 import sys
@@ -17,7 +20,12 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+import numbers_lib as NL  # noqa: E402
+
 PAPER, REPORT, SLIDES = ROOT / "paper", ROOT / "report", ROOT / "slides"
+NUMBERS = ROOT / "docs" / "NUMBERS.json"
+NUMBER_STATS: dict = {}     # document -> (matched, unmatched list, ids used), filled by number_checks and printed with --numbers
 
 ID_RE = re.compile(r"\b(?:D|O|E|R)-\d{3}\b|ENV-DESKTOP-GPU")
 REVIEWER = ["venue not verified", "title page read", "No sentence is written here", "Insert Table of Figures", "TO BE FILLED", "TBD", "LY Project",
@@ -31,7 +39,6 @@ IDENT = {  # exact strings that must appear (report and slides carry roll number
     "department": ["Electronics and Computer Engineering"],
 }
 WRONG_DEPT = ["Electronics and Telecommunication", "Engineering Electronics"]
-RESULT_NUMBER = re.compile(r"\b0\.\d{3,4}\b")
 
 
 def pdf_text(pdf: Path) -> str:
@@ -84,6 +91,45 @@ def visible_checks(rows, doc, text):
     row(rows, doc, "placeholders [pending] (informational)", True, f"{text.count('[pending]')}")
 
 
+def tex_plain(src: str) -> str:
+    t = tex_visible(src)
+    t = re.sub(r"\\(?:cite[a-z]*|ref|label|eqref|includegraphics)(?:\[[^\]]*\])?\{[^}]*\}", " ", t)
+    t = t.replace("\\%", "%").replace("$", " ").replace("~", " ")
+    t = re.sub(r"(?<=\d)\\,(?=\d{3})", ",", t)
+    t = re.sub(r"\\[,;: ]", " ", t)
+    return re.sub(r"\\[a-zA-Z]+\*?", " ", t)
+
+
+def load_numbers():
+    if not NUMBERS.is_file():
+        return None, "docs/NUMBERS.json missing (python scripts/build_numbers.py)"
+    d = json.loads(NUMBERS.read_text(encoding="utf-8"))
+    stale = [p for p, h in d["header"]["source_sha256"].items()
+             if h != (hashlib.sha256((ROOT / p).read_bytes()).hexdigest()[:16] if (ROOT / p).is_file() else "missing")]
+    return d, ("stale: " + ", ".join(stale) if stale else None)
+
+
+def number_checks(rows, doc, text):
+    """Every result-like number of the visible text (AUC, EER, ECE, Brier, counts, percent, seconds, bpm, memory) must be a row of docs/NUMBERS.json."""
+    d, problem = load_numbers()
+    if d is None or problem:
+        return row(rows, doc, "number provenance (docs/NUMBERS.json)", False, problem + "; run python scripts/build_numbers.py")
+    idx = NL.Index(d["rows"])
+    nums = NL.doc_numbers(text)
+    bad, used, matched = [], collections.Counter(), 0
+    for cls, form, val, dec in nums:
+        ids = idx.match(val, dec, cls)
+        if ids:
+            matched += 1
+            for i in sorted(ids)[:1]:
+                used[i.split(":")[0]] += 1
+        else:
+            bad.append(form)
+    NUMBER_STATS[doc] = (len(nums), matched, bad, used)
+    row(rows, doc, "result-like numbers are in docs/NUMBERS.json", not bad,
+        f"{matched} of {len(nums)} matched" + (f"; not found: {', '.join(dict.fromkeys(bad))[:150]}" if bad else ""))
+
+
 def identity_checks(rows, doc, text, need_rolls):
     miss = [s for k in (["names", "guide", "department"] + (["rolls"] if need_rolls else [])) for s in IDENT[k] if s not in text]
     row(rows, doc, "identity fields present as in IDENTITY.md", not miss, ", ".join(miss) or "all present")
@@ -111,9 +157,7 @@ def check_paper(rows):
     nocomment = [l for l in pend if not re.search(r"%\s*E-\d{3}", l)]
     row(rows, "paper", "[pending] lines with an E-xxx comment", not nocomment, f"{len(pend) - len(nocomment)} of {len(pend)}")
     # logged numbers are allowed (the sweep and I-0 results exist); every source line with a result-like number must carry an experiment comment
-    bare = [l.strip()[:60] for l in src.splitlines() if RESULT_NUMBER.search(re.sub(r"(?<!\\)%.*$", "", l)) and "cite" not in l
-            and not re.search(r"%\s*(?:E|M|DeepfakeBench)", l) and "figure" not in l.lower()]
-    row(rows, "paper", "result-like numbers (0.xxxx) are logged ones (informational count)", len(bare) <= 60, f"{len(bare)} source lines hold a logged number (sweep, I-0 or cited DeepfakeBench) without a line comment; provenance is the experiment tables E-001 to E-004 (review by hand; limit 60)")
+    number_checks(rows, "paper", tex_plain(src))
     row(rows, "paper", "class", "IEEEtran" in src, "documentclass IEEEtran")
     log = (PAPER / "main.log").read_text(encoding="utf-8", errors="ignore") if (PAPER / "main.log").is_file() else ""
     row(rows, "paper", "undefined references or citations", "undefined" not in log.lower(), f"{log.lower().count('undefined')} warnings")
@@ -145,8 +189,7 @@ def check_report(rows):
     pend = text.count("[pending]")
     ncom = len([c for c in re.findall(r"E-\d{3}", comments)])
     row(rows, "report", "[pending] placeholders with E-xxx comments", pend == 0 or ncom >= pend * 0.8, f"{pend} placeholders, {ncom} E-xxx in comments")
-    nums = RESULT_NUMBER.findall(text)
-    row(rows, "report", "result-like numbers (0.xxxx) are logged ones (informational count)", len(nums) <= 700 and ncom >= 20, f"{len(nums)} in the text, {ncom} experiment IDs in Word comments; provenance is E-001 to E-004 (review by hand)")
+    number_checks(rows, "report", text)
     bib_cited = set(re.findall(r"\[(\d+)\]", text))
     row(rows, "report", "citation numbers appear", bool(bib_cited), f"{len(bib_cited)} distinct [n]")
     row(rows, "report", "PDF preview exists", bool(ptxt), f"{len(ptxt.split(chr(12)))} pages" if ptxt else "missing")
@@ -185,6 +228,7 @@ def check_slides(rows):
     identity_checks(rows, "slides", text, need_rolls=True)
     row(rows, "slides", "speaker notes on every slide", not notes_missing, f"missing on {notes_missing[:8]}" if notes_missing else "all present")
     row(rows, "slides", "'RESULT' badges", "RESULT" not in text, "")
+    number_checks(rows, "slides", text)
     sc = SLIDES / "check_slides.py"
     if sc.is_file():
         try:
