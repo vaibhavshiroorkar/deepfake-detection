@@ -75,7 +75,7 @@ What this tells us and what it does not:
 
 ### Network download throughput (measured, Session 1)
 
-- Date: 2026-10-24, about 18:00 local time. One HTTP range request of the first 200 MiB (209,715,200 bytes) of the PyTorch cu130 wheel from download-r2.pytorch.org, discarded.
+- Date: 2026-10-24, between about 16:55 and 17:10 local time (reconstructed from file timestamps; an earlier version of this line said about 18:00, which was a wrong guess and is corrected here). One HTTP range request of the first 200 MiB (209,715,200 bytes) of the PyTorch cu130 wheel from download-r2.pytorch.org, discarded.
 - Result: 51.3 seconds, 4.09 MB/s (about 33 Mbit/s), a single connection.
 - Caveats: one server, one connection, one moment, and five background research agents were also using the network. Other servers and parallel connections may be faster or slower. At 4 MB/s a full 404 GB would take about 27 hours, so the download order in DATA_LOG.md must put the most important datasets first.
 
