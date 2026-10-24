@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Deepfake detector</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ v }}">
 </head>
 <body data-source="{{ source }}">
 {% if source != 'real' %}
@@ -14,15 +14,20 @@
   <h1>Deepfake detector</h1>
   <p class="lead">Upload an image, a video or an audio file. The page returns a calibrated probability that the content is fake, with the warnings that apply. Everything runs on this computer.</p>
 
+  <div id="nojs" class="diag">The page script has not started, so choosing a file will do nothing. Open this address in a normal browser window (Chrome, Edge or Firefox) and reload with Ctrl+F5. Status of the server: <a href="/api/health">/api/health</a>.</div>
+  <div id="diag" class="diag" hidden></div>
+
   <section class="card" id="upload-card">
-    <label class="drop" id="drop" for="file">
-      <input type="file" id="file" accept=".png,.jpg,.jpeg,.bmp,.webp,.mp4,.mov,.avi,.mkv,.webm,.wav,.flac,.mp3,.m4a,.ogg">
-      <span id="drop-text">Choose a file or drop it here</span>
-      <span class="hint">Image: png, jpg, bmp, webp. Video: mp4, mov, avi, mkv, webm. Audio: wav, flac, mp3, m4a, ogg. Up to {{ max_mb }} MB.</span>
-    </label>
-    <div class="row">
+    <div class="drop" id="drop" tabindex="0">
+      <div id="drop-text" class="drop-text">Drop a file here</div>
+      <div class="drop-or">or</div>
+      <button type="button" id="choose" class="secondary">Choose file</button>
+      <input type="file" id="file" class="visually-hidden" aria-label="Choose a file to analyse" accept=".png,.jpg,.jpeg,.bmp,.webp,.mp4,.mov,.avi,.mkv,.webm,.wav,.flac,.mp3,.m4a,.ogg">
+      <div class="hint">Image: png, jpg, bmp, webp. Video: mp4, mov, avi, mkv, webm. Audio: wav, flac, mp3, m4a, ogg. Up to {{ max_mb }} MB.</div>
+    </div>
+    <div class="actions">
       <button id="go" type="button" disabled>Analyse</button>
-      <span id="file-info" class="muted"></span>
+      <span id="file-info" class="muted">Choose a file to enable Analyse.</span>
     </div>
     <div id="progress" hidden>
       <div class="bar"><div class="fill" id="upload-fill"></div></div>
@@ -48,6 +53,6 @@
     </details>
   </section>
 </main>
-<script src="{{ url_for('static', filename='app.js') }}"></script>
+<script src="{{ url_for('static', filename='app.js') }}?v={{ v }}"></script>
 </body>
 </html>

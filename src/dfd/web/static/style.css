@@ -16,15 +16,20 @@ h3 { margin: 16px 0 6px; font-size: .95rem; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin: 16px 0; }
 .banner { padding: 10px 16px; text-align: center; font-weight: 600; }
 .banner.mock { background: var(--mock); color: #fff; }
-.drop { display: flex; flex-direction: column; gap: 4px; align-items: center; text-align: center; padding: 28px 12px;
-        border: 2px dashed var(--line); border-radius: 10px; cursor: pointer; }
-.drop.over { border-color: var(--accent); }
-.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
-.drop:focus-within { outline: 2px solid var(--accent); }
-.hint { font-size: .85rem; }
-.row { display: flex; gap: 12px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
-button { background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 10px 20px; font: inherit; cursor: pointer; }
-button:disabled { opacity: .45; cursor: not-allowed; }
+.drop { display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center; width: 100%; padding: 28px 12px;
+        border: 2px dashed var(--line); border-radius: 10px; }
+.drop.over { border-color: var(--accent); background: var(--bg); }
+.drop:focus-visible { outline: 2px solid var(--accent); }
+.drop-text { font-weight: 600; }
+.drop-or { color: var(--muted); font-size: .85rem; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); border: 0; }
+.hint { font-size: .85rem; color: var(--muted); }
+.actions { display: flex; gap: 12px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
+button { background: var(--accent); color: #fff; border: 1px solid var(--accent); border-radius: 8px; padding: 10px 20px; font: inherit; cursor: pointer; }
+button.secondary { background: transparent; color: var(--accent); }
+button:disabled { background: var(--line); border-color: var(--line); color: var(--muted); cursor: not-allowed; }
+.diag { margin: 12px 0; padding: 10px 14px; border: 1px solid var(--fake); border-radius: 8px; color: var(--fake); }
+.diag[hidden] { display: none; }
 .bar { height: 8px; background: var(--line); border-radius: 4px; overflow: hidden; margin-top: 14px; }
 .fill { height: 100%; width: 0; background: var(--accent); transition: width .15s; }
 .stages { display: flex; gap: 8px; list-style: none; padding: 0; margin: 10px 0 0; flex-wrap: wrap; }

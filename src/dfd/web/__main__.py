@@ -22,6 +22,8 @@ def main(argv=None) -> int:
     from dfd.web.app import create_app
     if adapter.inference_source != "real":
         print("WARNING: running with the MOCK adapter; every result is a stand-in and is shown under a MOCK banner.", file=sys.stderr)
+    print(f"Open http://127.0.0.1:{a.port}/ in a normal browser window (Chrome, Edge or Firefox). "
+          "Use the address 127.0.0.1, not localhost, and not an embedded preview pane.", file=sys.stderr)
     create_app(adapter).run(host="127.0.0.1", port=a.port, threaded=True, debug=False)
     return 0
 

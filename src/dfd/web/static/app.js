@@ -2,20 +2,29 @@
 // All text from the server is inserted with textContent, never innerHTML (file names are user controlled).
 const STAGES = ["validate", "decode", "detect", "score", "calibrate", "fuse"];
 const $ = (id) => document.getElementById(id);
+$("nojs").hidden = true;  // the script is running: hide the "script has not started" notice
+function diag(message) { const d = $("diag"); d.hidden = false; d.textContent = message; }
+window.addEventListener("error", (e) => diag("Script error: " + e.message));
+window.addEventListener("unhandledrejection", (e) => diag("Script error: " + (e.reason && e.reason.message ? e.reason.message : e.reason)));
+if (!getComputedStyle(document.body).getPropertyValue("--bg")) diag("The stylesheet did not load; the page layout will look wrong. Reload with Ctrl+F5 and check /api/health.");
 const fileInput = $("file"), goBtn = $("go");
 let chosen = null;
 
 function setFile(f) {
   chosen = f || null;
   goBtn.disabled = !chosen;
-  $("file-info").textContent = chosen ? chosen.name + " (" + (chosen.size / 1048576).toFixed(1) + " MB)" : "";
-  $("drop-text").textContent = chosen ? "Selected: " + chosen.name : "Choose a file or drop it here";
+  $("file-info").textContent = chosen ? chosen.name + " (" + (chosen.size / 1048576).toFixed(1) + " MB)" : "Choose a file to enable Analyse.";
+  $("drop-text").textContent = chosen ? "Selected: " + chosen.name : "Drop a file here";
 }
+$("choose").addEventListener("click", () => fileInput.click());
 fileInput.addEventListener("change", () => setFile(fileInput.files[0]));
 const drop = $("drop");
-["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
-["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
-drop.addEventListener("drop", (e) => { if (e.dataTransfer.files[0]) { setFile(e.dataTransfer.files[0]); } });
+drop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); } });
+// A file dropped outside the zone must not make the browser open it and leave the page.
+["dragover", "drop"].forEach((ev) => window.addEventListener(ev, (e) => e.preventDefault()));
+["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, () => drop.classList.add("over")));
+["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, () => drop.classList.remove("over")));
+drop.addEventListener("drop", (e) => { if (e.dataTransfer && e.dataTransfer.files[0]) { setFile(e.dataTransfer.files[0]); } });
 
 function renderStages(done, active) {
   const ol = $("stage-list");

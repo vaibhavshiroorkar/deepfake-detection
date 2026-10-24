@@ -64,13 +64,32 @@ def create_app(adapter: Adapter, upload_dir: str | Path | None = None, max_bytes
             raise
         return (Path(tmp), name), None
 
+    static_dir = Path(app.static_folder)
+
+    def static_version() -> str:
+        """Changes whenever a static file changes, so a browser never keeps an old script or stylesheet (cache busting)."""
+        import hashlib
+        h = hashlib.sha256()
+        for f in sorted(static_dir.glob("*")):
+            h.update(f.read_bytes())
+        return h.hexdigest()[:10]
+
+    @app.after_request
+    def no_store(resp):
+        resp.headers["Cache-Control"] = "no-store"  # a local one-user page: never serve a stale copy
+        return resp
+
+    @app.get("/api/health")
+    def health():
+        return jsonify({"ok": True, "adapter": source(), "static_version": static_version()})
+
     @app.errorhandler(413)
     def too_large(_e):
         return reject("FILE_TOO_LARGE", f"the file is larger than the limit of {max_bytes // (1024 * 1024)} MB")
 
     @app.get("/")
     def index():
-        return render_template("index.html", source=source(), max_mb=max_bytes // (1024 * 1024))
+        return render_template("index.html", source=source(), max_mb=max_bytes // (1024 * 1024), v=static_version())
 
     @app.post("/api/analyse")
     def analyse():
