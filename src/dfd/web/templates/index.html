@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deepfake detector</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body data-source="{{ source }}">
+{% if source != 'real' %}
+<div class="banner mock" id="mock-banner" role="alert">MOCK: this page is using a development stand-in. Results are not measurements and mean nothing.</div>
+{% endif %}
+<main>
+  <h1>Deepfake detector</h1>
+  <p class="lead">Upload an image, a video or an audio file. The page returns a calibrated probability that the content is fake, with the warnings that apply. Everything runs on this computer.</p>
+
+  <section class="card" id="upload-card">
+    <label class="drop" id="drop" for="file">
+      <input type="file" id="file" accept=".png,.jpg,.jpeg,.bmp,.webp,.mp4,.mov,.avi,.mkv,.webm,.wav,.flac,.mp3,.m4a,.ogg">
+      <span id="drop-text">Choose a file or drop it here</span>
+      <span class="hint">Image: png, jpg, bmp, webp. Video: mp4, mov, avi, mkv, webm. Audio: wav, flac, mp3, m4a, ogg. Up to {{ max_mb }} MB.</span>
+    </label>
+    <div class="row">
+      <button id="go" type="button" disabled>Analyse</button>
+      <span id="file-info" class="muted"></span>
+    </div>
+    <div id="progress" hidden>
+      <div class="bar"><div class="fill" id="upload-fill"></div></div>
+      <ol id="stage-list" class="stages"></ol>
+    </div>
+  </section>
+
+  <section id="result" hidden>
+    <div class="banner mock" id="result-mock-banner" role="alert" hidden>MOCK result: a development stand-in, not a measurement.</div>
+    <div class="card verdict" id="verdict">
+      <div class="verdict-label" id="verdict-label"></div>
+      <div class="verdict-score" id="verdict-score"></div>
+      <div class="muted" id="verdict-note"></div>
+    </div>
+    <div class="card" id="errors-card" hidden><h2>Errors</h2><ul id="errors"></ul></div>
+    <div class="card" id="warnings-card" hidden><h2>Warnings</h2><ul id="warnings"></ul></div>
+    <div class="card" id="modalities-card" hidden><h2>Per modality</h2><table id="modalities"><thead><tr><th>Modality</th><th>Score</th><th>Units used</th><th>Note</th></tr></thead><tbody></tbody></table></div>
+    <div class="card"><h2>What the score means</h2><p id="meaning"></p></div>
+    <details class="card"><summary>Details</summary>
+      <table id="details"><tbody></tbody></table>
+      <h3>Stages</h3><table id="stage-times"><tbody></tbody></table>
+      <h3>Raw response</h3><pre id="raw"></pre>
+    </details>
+  </section>
+</main>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
