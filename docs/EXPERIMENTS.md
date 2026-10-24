@@ -135,6 +135,16 @@ The probe script was kept outside the repository (scratch directory) because Ses
 - LAV-DF speed is a projection from 40 re-encoded FF++ videos (315 videos per second at 16 workers), not a measurement.
 - Full FF++ crop run started 2026-10-24 at about 21:55 (log data/_logs/crops_ffpp_c23.log); its measured rate in the first minute was about 6 videos per second, consistent with the benchmark.
 
+### M-002: face detector comparison on FF++ val and Celeb-DF dev_x frames (measurement, not an experiment)
+- Date: 2026-10-24. Stream S2-C (docs/_agents/S2C.md, Addendum 2; code src/dfd/prep/detcmp.py); the main agent re-ran tests/prep (26 passed) and checked the licence lines against the InsightFace README. CPU only, machine busy (14 to 20 percent CPU before each run); frames only, no labels or scores used.
+- Frames, seed 20261024, lists saved: 300 frames from 300 distinct FF++ official-val videos (all 140 real val videos and 40 per manipulation method) and 300 frames from 300 distinct Celeb-DF v2 dev_x videos (all 146 real and 154 fake).
+- Face found in 300 of 300 frames for YuNet, UltraFace and SCRFD on both sets; the detectors never disagreed on whether a face exists (0 of 300 for every pair).
+- Speed, ms per frame (FF++ / Celeb-DF): UltraFace 4.8 / 4.8, YuNet 12.1 / 12.4, SCRFD 29.7 / 30.9.
+- Box agreement of the largest box between detectors: mean IoU 0.887 to 0.923; 100 percent of frames with IoU at least 0.5; no frame where one box is under half the area of another; median box area ratio 0.97 to 1.05; median centre shift about 2 percent of the box side. The 8 lowest-agreement frames per set (lowest pairwise IoU 0.70 to 0.81) show the same face in every tile.
+- Licences (read from the repositories' own files): YuNet MIT; UltraFace MIT; SCRFD weights non-commercial research only (InsightFace: "ALL models are available for non-commercial research purposes only").
+- What this does not show: these frames contain none of the hard cases (rotated, tiny, face-free images) where the earlier stress test separated the detectors, and the effect of a few percent of box shift on any model's accuracy was not measured. JPEG quality 95 for the stored crops is a candidate preprocessing iteration and was not changed.
+- Reading for D-034: no geometric reason to re-crop; D-034 stays Decided autonomously until the user confirms it.
+
 ## Experiment log
 
 No experiment has been run yet. Planned entries follow; their hypotheses were written before any run.

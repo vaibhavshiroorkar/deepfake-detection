@@ -204,3 +204,79 @@ Other facts that bear on choices:
 3. Frames with no detection: record only (as now), or fall back to the previous detection or a centre crop? Not needed on the 200-video sample.
 4. Which face to take when several are present (largest now)?
 5. Please log the three model files (sources and hashes above) in DATA_LOG.md and verify their licences before any is used in the paper.
+
+---
+
+# Addendum 2 (2026-10-24, evening): YuNet against UltraFace and SCRFD, licences and a 300 + 300 frame comparison
+
+D-034 (YuNet, 640 px, defaults) is unchanged; no pipeline default was touched and nothing was re-cropped. New code: `src/dfd/prep/detcmp.py`. Raw output under `data/_prep_bench/` (git-ignored).
+
+Caveat for every number here: downloads and extraction were still running; Windows reported 14 to 20 percent CPU busy before each run (the "system CPU load before run" line in the result files). Speed is single thread, in process, on exactly the listed frames, mean of 3 timings per frame, the three detectors interleaved per frame.
+
+## A. Licences (read from the repositories' own files on 2026-10-24; copies in `data/_prep_bench/licences/`)
+
+The only network use was downloading these small text files (LICENSE and README files) from raw.githubusercontent.com.
+
+| Detector | What I read | Result |
+|---|---|---|
+| YuNet 2023mar | opencv_zoo `models/face_detection_yunet/README.md`, section License: "All files in this directory are licensed under MIT License" (this folder holds the ONNX file); its `LICENSE` begins "MIT License, Copyright (c) 2020 Shiqi Yu". The repository root `LICENSE` of opencv_zoo is Apache 2.0; the folder licence is the more specific one. The README says the model source is ShiqiYu/libfacedetection.train (that repository's licence and the licence of its training data, WIDER Face, not read: NR) | MIT, commercial use permitted. Re-check confirmed |
+| UltraFace RFB-320 | Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB `LICENSE`: "MIT License, Copyright (c) 2019 linzai", no clause about the weights; the README has no licence statement and says the models are trained on WIDER Face with the cleaned labels of RetinaFace (licence of those training data: NR, not read) | MIT, commercial use permitted for the repository files including the ONNX; any restriction inherited from the training data is NR |
+| SCRFD 500M (`det_500m.onnx` in `buffalo_sc.zip`) | InsightFace `README.md`, License section: "The training data containing the annotation (and the models trained with these data) are available for non-commercial research purposes only." and "Both manual-downloading models from our github repo and auto-downloading models with our python-library follow the above license policy(which is for non-commercial research purposes only)."; `model_zoo/README.md`: "ALL models are available for non-commercial research purposes only."; `python-package/README.md`: "The library code is released under the MIT License ... The pretrained models provided with this library are for non-commercial research only" | Research-only (non-commercial) for the weights; MIT only for the library code. I did not find a licence line specific to the `buffalo_sc` pack, so the general lines above apply |
+
+Nothing marked NR was guessed. A research-only detector used only for cropping would still have to be declared as such in the paper if it were chosen.
+
+## B. Frame lists (seeded, repeatable)
+
+Seed 20261024 (the seed value of the split files). Frames only: labels and method names were used only to balance the draw, never in any result.
+
+- FF++: `data/_splits/ffpp-037e2976fade.csv`, rows with `split == val` (700 videos: 140 real, 140 per method). Draw: all 140 real videos (the split has fewer than 150) plus 40 videos of each of Deepfakes, Face2Face, FaceSwap, NeuralTextures, 300 distinct videos, one uniformly random frame each. List: `data/_prep_bench/detcmp_frames_ffpp.csv`. All files were complete (0 skipped).
+- Celeb-DF v2: `data/_splits/celebdf_v2-82a3a70594e9.csv`, rows with `split == dev_x` (1,728 videos, 15 identity groups, 146 real and 1,582 fake; this is the file the coordinator confirmed as final). The earlier `celebdf_v2-b2069a4a29aa.csv` has only test_x and was not used. Draw: all 146 real videos plus 154 fake videos (the manifest has one fake method label, `celebdf_synthesis`), 300 distinct videos, one random frame each. List: `data/_prep_bench/detcmp_frames_celebdf.csv`. 0 skipped.
+
+Commands:
+
+```
+PYTHONPATH=src .venv/Scripts/python.exe -m dfd.prep.detcmp frames --manifest data/_manifests/ffpp.manifest.csv --split-file data/_splits/ffpp-037e2976fade.csv --split val --n 300 --out data/_prep_bench/detcmp_frames_ffpp.csv
+PYTHONPATH=src .venv/Scripts/python.exe -m dfd.prep.detcmp frames --manifest data/_manifests/celebdf_v2.manifest.csv --split-file data/_splits/celebdf_v2-82a3a70594e9.csv --split dev_x --n 300 --out data/_prep_bench/detcmp_frames_celebdf.csv
+PYTHONPATH=src .venv/Scripts/python.exe -m dfd.prep.detcmp run --frames data/_prep_bench/detcmp_frames_ffpp.csv --tag ffpp
+PYTHONPATH=src .venv/Scripts/python.exe -m dfd.prep.detcmp run --frames data/_prep_bench/detcmp_frames_celebdf.csv --tag celebdf
+```
+
+Outputs: `detcmp_ffpp_result.txt`, `detcmp_celebdf_result.txt` (full printed results), `detcmp_raw_<tag>.csv` (largest box and time per frame and detector), `detcmp_disagree_<tag>.jpg` (images). Detector settings are the defaults of `face.py` (YuNet input resized to at most 640 px, score threshold 0.6; UltraFace 320x240, 0.7; SCRFD 640x640, 0.5).
+
+## C. Results (300 frames per dataset)
+
+Per detector:
+
+| Detector | Dataset | frames with at least one face | ms per frame (mean, median, p90) | frames with more than one box |
+|---|---|---|---|---|
+| YuNet | FF++ val | 300 of 300 (100.0%) | 12.1, 12.3, 13.8 | 38 (12.7%) |
+| UltraFace | FF++ val | 300 of 300 (100.0%) | 4.8, 4.7, 5.2 | 24 (8.0%) |
+| SCRFD | FF++ val | 300 of 300 (100.0%) | 29.7, 29.5, 31.6 | 30 (10.0%) |
+| YuNet | Celeb-DF dev_x | 300 of 300 (100.0%) | 12.4, 12.1, 14.5 | 6 (2.0%) |
+| UltraFace | Celeb-DF dev_x | 300 of 300 (100.0%) | 4.8, 4.7, 5.2 | 4 (1.3%) |
+| SCRFD | Celeb-DF dev_x | 300 of 300 (100.0%) | 30.9, 30.8, 32.2 | 6 (2.0%) |
+
+Pairwise on the largest box of each detector. Every frame had a box from every detector, so "both detected" is 300 for every pair, the disagreement on whether a face exists is 0 of 300 for every pair and dataset, and no frame had no box from any detector. "A < half of B" is the share of frames where the largest box of A has less than half the area of the largest box of B.
+
+| Pair (A vs B) | Dataset | mean IoU | IoU at least 0.5 | disagree on existence | A < half of B | B < half of A | median area B / A | median centre shift (fraction of A box side) |
+|---|---|---|---|---|---|---|---|---|
+| YuNet vs UltraFace | FF++ val | 0.897 | 300 of 300 | 0 | 0 | 0 | 0.974 | 0.022 |
+| YuNet vs SCRFD | FF++ val | 0.923 | 300 of 300 | 0 | 0 | 0 | 1.018 | 0.017 |
+| UltraFace vs SCRFD | FF++ val | 0.908 | 300 of 300 | 0 | 0 | 0 | 1.048 | 0.019 |
+| YuNet vs UltraFace | Celeb-DF dev_x | 0.887 | 300 of 300 | 0 | 0 | 0 | 0.993 | 0.025 |
+| YuNet vs SCRFD | Celeb-DF dev_x | 0.921 | 300 of 300 | 0 | 0 | 0 | 1.030 | 0.017 |
+| UltraFace vs SCRFD | Celeb-DF dev_x | 0.902 | 300 of 300 | 0 | 0 | 0 | 1.035 | 0.020 |
+
+Area ratio spread (p10 to p90) across pairs and datasets: 0.89 to 1.13; centre shift p90 at most 0.043 of the box side.
+
+Images: there were no frames with an existence disagreement or an IoU below 0.5 in either set, so there are no true disagreement frames. `detcmp_disagree_ffpp.jpg` and `detcmp_disagree_celebdf.jpg` show instead the 8 frames per dataset with the lowest agreement (lowest pairwise IoU 0.75 to 0.81 on FF++, 0.70 to 0.79 on Celeb-DF). Green box YuNet, blue UltraFace, red SCRFD, thick line the largest box of each detector. What I see: all three detectors box the same face in all 16 tiles; the boxes differ only in extent by a few percent, most visibly in vertical extent (the UltraFace and SCRFD boxes sit a little higher or lower than YuNet's, taking in more or less forehead or chin). In the two-person tile (a two-anchor studio in FF++) all three took the same, larger face as the largest. Quick look, not a measurement.
+
+## D. Plain statement for the main agent
+
+On these 600 frames the three detectors are not distinguishable by what they find: every frame had a face for all three, they never disagreed on existence, and the largest boxes overlap with a mean IoU of 0.89 to 0.92 (every frame at least 0.5), with median box area within 5 percent and centres within about 2 percent of the box side. A 1.3 times enlarged square around these boxes would differ between detectors by a small shift and scale of a few percent. The measured difference that is large is speed (UltraFace 4.8 ms, YuNet 12 ms, SCRFD 30 ms per frame), which matters little for the pipeline because decoding is about three quarters of the time per video (section 3.3 above). The earlier stress test (section 3.2 above) is where the detectors differed (rotated, tiny and face-free images); these frames contain no such cases, so this comparison cannot show a difference there, and with 300 frames per dataset a 100 percent rate only says the true miss rate on such frames is probably below about 1 percent (rule of three).
+
+The licence is the clearest difference: YuNet and UltraFace are MIT; the SCRFD weights are research-only. I did not measure whether a few percent of box shift changes the accuracy of any model, so I cannot say it does not matter downstream. On this evidence I see no geometric reason to re-crop or to change D-034; if the user is to be asked anything, it is only whether to keep YuNet, which is the lowest-risk option on licence and has no measured disadvantage here.
+
+## E. Note on JPEG quality
+
+JPEG quality 95 for the stored crops (13,740 bytes per crop, PSNR 45.5 dB against the uncompressed crop, section 3.6 above) is a candidate preprocessing iteration for later (for example quality 100 or lossless storage against 95 or 90); it is not changed here.
