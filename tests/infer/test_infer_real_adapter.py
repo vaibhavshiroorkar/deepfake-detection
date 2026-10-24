@@ -132,6 +132,16 @@ def test_audio_file_is_scored_with_the_audio_head(media, tmp_path):
     assert "SHORT_AUDIO" in [w["code"] for w in short["warnings"]]
 
 
+def test_audio_scores_carry_the_exploratory_calibration_warning(media, tmp_path):
+    a = adapter(make_ckpt(tmp_path / "ck", tasks=("T-V", "T-I", "T-A")))
+    for name in ("speech.wav", "clip_audio.mp4"):                                         # an audio file and the audio track of a video
+        r = run(media, name, a)
+        w = [x for x in r["warnings"] if x["code"] == "AUDIO_CALIBRATION_EXPLORATORY"]
+        assert validate_response(r) == [] and len(w) == 1 and w[0]["modality"] == "audio"
+    img = run(media, "img.png", a)                                                        # no audio score, no such warning
+    assert "AUDIO_CALIBRATION_EXPLORATORY" not in [x["code"] for x in img["warnings"]]
+
+
 def test_audio_without_an_audio_model_is_unavailable_not_faked(media, tmp_path):
     r = run(media, "speech.wav", adapter(make_ckpt(tmp_path / "ck")))                    # checkpoint has T-V and T-I only
     m = r["result"]["per_modality"]["audio"]

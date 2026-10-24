@@ -17,7 +17,7 @@ DECISIONS = ("fake", "real", "undetermined")
 SOURCES = ("real", "mock")
 MODEL_KEYS = ("checkpoint_id", "config_hash", "preprocess_id", "git_commit", "iteration", "protocol", "calibration", "threshold")
 ERROR_CODES = ("NO_FILE", "EMPTY_FILE", "FILE_TOO_LARGE", "UNSUPPORTED_MEDIA_TYPE", "UNREADABLE_FILE", "ADAPTER_FAILED")
-WARNING_CODES = ("NO_FACE_DETECTED", "MULTIPLE_FACES", "SHORT_AUDIO", "LOW_RESOLUTION")
+WARNING_CODES = ("NO_FACE_DETECTED", "MULTIPLE_FACES", "SHORT_AUDIO", "LOW_RESOLUTION", "AUDIO_CALIBRATION_EXPLORATORY")
 
 
 def _is_num(x) -> bool:

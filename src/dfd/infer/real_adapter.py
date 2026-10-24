@@ -33,6 +33,12 @@ INFERENCE_SOURCE = "real"
 EPS = 1e-6
 
 
+AUDIO_CALIBRATION_WARNING = {
+    "code": "AUDIO_CALIBRATION_EXPLORATORY", "modality": "audio",
+    "message": "the audio score has an exploratory calibration: on the development slice the calibration error of every audio encoder tried rose "
+               "after temperature scaling, so read it as a ranking score and not as a reliable probability."}
+
+
 def _calibrate(p: float, temperature: float) -> float:
     p = min(max(p, EPS), 1 - EPS)
     z = np.log(p / (1 - p)) / temperature
@@ -192,6 +198,7 @@ class RealAdapter:
                 stage["score"] += time.perf_counter() - t
                 if per["audio"].available:
                     used.append("T-A")
+                    warnings.append(dict(AUDIO_CALIBRATION_WARNING))
             else:
                 per["audio"] = ModalityScore(False, None, None, "video has no audio track")
         elif media.media_type == "image":
@@ -223,6 +230,7 @@ class RealAdapter:
             if per["audio"].available:
                 used.append("T-A")
                 threshold = float(self.meta["tasks"]["T-A"]["threshold"]["value"])
+                warnings.append(dict(AUDIO_CALIBRATION_WARNING))
         tick("calibrate")  # temperature scaling is applied inside the scoring call above; its time is part of "score"
         return AdapterResult(per, warnings, self._model_block(used), threshold, {k: v * 1000 for k, v in stage.items()})
 
