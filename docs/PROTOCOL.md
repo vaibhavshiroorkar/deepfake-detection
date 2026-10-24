@@ -81,3 +81,9 @@ Stage 2 is done when all of the following pass; the results are logged in EXPERI
 ## 9. Not decided here
 
 Model, backbone, fine-tuning, fusion, loss, frame sampling rate and face detector (the last is chosen by measurement in the data-preparation work, with the choice logged).
+
+## Addendum 2026-10-24 (D-041): exploratory and confirmatory evidence
+
+- Rankings, hyperparameter choices and iteration verdicts made on dev_x and the in-dataset validation split are exploratory: they report sign, size and interval, and they are used to choose the next step. They are never presented as confirmed performance.
+- At the freeze (2026-10-29) each frozen iteration is evaluated once on the sealed test splits under `--final` (a staircase of test scores, one per iteration, each touched once and logged in the ledger).
+- The confirmatory claims are exactly two, declared here before any final run, both as paired group-bootstrap comparisons on the sealed data under the comparison rules: (1) the final system versus I-0; (2) the final system versus the re-run published baseline of D-025 (non-inferiority as defined there). Every other comparison in the paper is labelled exploratory.

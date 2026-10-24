@@ -39,6 +39,10 @@ class Encoder:
 
     @torch.no_grad()
     def __call__(self, x_uint8: torch.Tensor) -> torch.Tensor:
+        return self.train_features(x_uint8)
+
+    def train_features(self, x_uint8: torch.Tensor) -> torch.Tensor:
+        """Same preprocessing and feature as __call__ but with gradients (fine-tuning and step-time measurement)."""
         x = x_uint8.float().div_(255.0)
         if x.shape[-1] != self.size:
             x = F.interpolate(x, size=(self.size, self.size), mode="bilinear", align_corners=False, antialias=x.shape[-1] > self.size)
@@ -56,7 +60,14 @@ def _record(cid: str) -> dict:
     return r
 
 
-def load(cid: str, device: str = "cuda") -> Encoder:
+def load(cid: str, device: str = "cuda", timing_only: bool = False) -> Encoder:
+    """timing_only=True builds a timm model with random weights (no verified file needed); never use it for features."""
+    if timing_only and cid in TIMM:
+        import timm
+        m = timm.create_model(TIMM[cid], pretrained=False, num_classes=0).to(device).eval()
+        cfg = timm.data.resolve_data_config({}, model=m)
+        return Encoder(cid, TIMM[cid], m, cfg["input_size"][-1], tuple(cfg["mean"]), tuple(cfg["std"]), m, m.num_features,
+                       sum(p.numel() for p in m.parameters()), "random-init (timing only)")
     rec = _record(cid)
     wfile = Path(rec["dir"]) / rec["file"]
     if cid in TIMM:

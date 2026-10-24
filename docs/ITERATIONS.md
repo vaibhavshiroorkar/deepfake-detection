@@ -1,6 +1,6 @@
 # ITERATIONS
 
-Status: PROPOSED (D-041), written 2026-10-24 before any model score exists. Nothing in this file is a result, and no outcome is pre-written: the "prediction" lines are hypotheses with a sign and a rough size, and each one is judged against its failure line after the run. Levers of I-1 to I-6 are candidates; the lever actually used in a slot is chosen after the diagnostic battery (EXPERIMENTS.md section "Diagnostic battery") of the previous iteration and logged as its own decision before the run. I-7 (rPPG) and I-8 (integration and freeze) are fixed.
+Status: DECIDED (user), 2026-10-24 (D-040, D-041), with the user's six changes applied, written 2026-10-24 before any model score exists. Nothing in this file is a result, and no outcome is pre-written: the "prediction" lines are hypotheses with a sign and a rough size, and each one is judged against its failure line after the run. Levers of I-1 to I-6 are candidates; the lever actually used in a slot is chosen after the diagnostic battery (EXPERIMENTS.md section "Diagnostic battery") of the previous iteration and logged as its own decision before the run. There are seven experimental iterations after the MVP, I-1 to I-7 (I-7 is rPPG), plus I-8, integration and freeze, which runs no experiments. I-7 and I-8 are fixed.
 
 Derivations for every slot are in MATH_NOTES.md sections 10 to 17. Notation: $\ell$ is a logit, $p=\sigma(\ell)$, $y\in\{0,1\}$ with 1 = fake.
 
@@ -8,17 +8,21 @@ Derivations for every slot are in MATH_NOTES.md sections 10 to 17. Notation: $\e
 
 Observation (numbers from the battery) -> Diagnosis (bias, variance, shift, calibration, aggregation, missing signal) -> Mathematical hypothesis -> Change -> Prediction (sign and size) -> Result -> Verdict (supported or not). Comparisons follow CLAUDE.md rule 4: same data, split, budget and metric, 3 seeds, paired group bootstrap, cheaper candidate wins when intervals overlap. Tuning uses train and validation (and the dev_x slice for ranking only, D-035); the test splits are touched once, at the freeze (I-8).
 
-## Schedule (from WORKSTREAMS.md section D; the freeze is Thu 2026-10-29)
+## Evidence status: exploratory and confirmatory (D-041, PROTOCOL.md addendum)
+
+Every verdict below that rests on dev_x or on validation is exploratory: it reports sign, size and interval and chooses the next step. At the freeze each frozen iteration is evaluated once on the sealed test sets (a staircase of one test score per iteration). The confirmatory claims are two pre-declared paired comparisons on sealed data: the final system versus I-0, and the final system versus the re-run baseline of D-025. Nothing else is called confirmed.
+
+## Schedule (one schedule with PLAN.md; the freeze is Thu 2026-10-29)
 
 | Iteration | Target day | Needs |
 |---|---|---|
-| I-0 MVP | Mon 26 Oct | E-001 to E-003 features, heads, web page on a real checkpoint |
-| I-1 to I-3 | Tue 27 Oct | I-0 diagnostics, GPU time |
-| I-4 to I-6 | Wed 28 Oct | LAV-DF extracted (for I-6), diagnostics of I-3 |
-| I-7 rPPG | Wed 28 to Thu 29 Oct (sanity check S-1 earlier, in parallel) | contiguous-frame extraction, see I-7 |
-| I-8 | Thu 29 Oct | all earlier work frozen |
+| I-0 MVP | Mon 26 Oct (provisional 18:00, STATUS.md) | E-001 to E-003 features, heads, web page on a real checkpoint |
+| I-1 (video task first), I-2, I-3 | Tue 27 Oct | I-0 diagnostics, measured step times (D-042), GPU time |
+| I-4, I-5, I-6 | Wed 28 Oct | LAV-DF extracted (for I-6), diagnostics of the previous slot |
+| I-7 rPPG | Wed 28 Oct decision on dev_x; S-1 runs earlier on CPU, in parallel with I-1 to I-3 | contiguous-frame extraction, see I-7 |
+| I-8 integration and freeze | Thu 29 Oct (no experiments; the one-time test evaluations and the two confirmatory comparisons) | all earlier work frozen |
 
-Known conflict, surfaced here: D-036 item 3 already fixes I-1 as a fine-tuning comparison of the top three encoders per task at three learning rates. The ladder keeps that as the default for I-1 only if the I-0 diagnosis says bias; otherwise a new decision replaces D-036 item 3 before the run.
+D-036 item 3 (fine-tune the top three encoders per task at three learning rates) is replaced by D-042, which sets the I-1 budget from measured step times: the video task first, extra seeds only for its winner, a per-run time cap, and the encoders that do not fit are named there.
 
 ## I-0 MVP (not an improvement; the baseline everything is compared with)
 
@@ -32,7 +36,7 @@ For each slot: the primary candidate lever, the diagnostic that triggers it, the
 
 | Field | Content |
 |---|---|
-| Lever | Linear probe -> train the last $k$ blocks, or low-rank adapters, or full fine-tuning, for the top three encoders (D-036 item 3), three learning rates, one budget |
+| Lever | Linear probe -> train the last $k$ blocks, or low-rank adapters, or full fine-tuning. Budget and scope: D-042 (video task first: 3 encoders x 3 learning rates x 1 seed under a per-run time cap, then extra seeds for the winner only; T-I and T-A stay frozen in I-1 unless time remains) |
 | Triggered when | Bias: training AUC and validation AUC are both low or close (gap below 0.02 and AUC under about 0.90), so frozen features lack the signal (E-001 criterion f2 territory) |
 | Instead if | Variance or shift (validation AUC high, dev_x much lower): do not add capacity; go to the augmentation and regularisation slot (I-4 lever) first. If calibration alone is bad: calibration slot |
 | Equation | $W' = W + \tfrac{\alpha}{r} B A$, $B\in\mathbb{R}^{d\times r}$, $A\in\mathbb{R}^{r\times k}$; trainable parameters $r(d+k)$ instead of $dk$ (MATH_NOTES 11) |
@@ -93,6 +97,8 @@ For each slot: the primary candidate lever, the diagnostic that triggers it, the
 | Equation | under conditional independence, $\ell_{\text{fused}}=\ell_a+\ell_v-\ln\tfrac{\pi}{1-\pi}$; logistic regression $\sigma(w_0+w_a\ell_a+w_v\ell_v)$ (MATH_NOTES 16) |
 | Predicted effect | Fused AUC at or above the better unimodal AUC; gain of 0 to +0.05 when the modalities carry independent evidence; the learned weights fall below 1 when they are dependent |
 | Failure | The fused lower interval bound is below the better single modality's, or the gain is within the interval |
+| Data that trains the heads | The unimodal heads are the ones frozen in I-0 to I-5: visual head trained on FF++ train, audio head on ASVspoof 2019 LA train, each with temperature scaling fitted on its own validation set. Only the fusion layer (the sum of log-odds has no parameter; the logistic regression has 3) is fitted, on LAV-DF train; its choice is made on LAV-DF validation; the identities of the three LAV-DF splits are disjoint. Because the heads come from other domains, per-modality temperature is also refitted on LAV-DF validation and reported both ways. Decided autonomously - needs user review for the choice of FF++ and ASVspoof heads (the alternative is heads retrained on LAV-DF) |
+| Fused label | Fake if either modality is fake (video manipulated or audio manipulated), real only if both are real. The per-modality labels (visual-fake, audio-fake) from the LAV-DF metadata are reported too, one AUC per modality label. The metadata field names are to be verified after extraction (NR now) |
 
 ## I-7 rPPG under O-010 (fixed slot)
 
@@ -100,11 +106,11 @@ Success and failure thresholds are written here, before any run, and frozen by t
 
 | Field | Content |
 |---|---|
-| Parallel signal-sanity check S-1 (starts early, CPU only, during I-1 to I-3) | Contiguous-frame extraction (about 10 s, native frame rate; the 16-frame sampling of D-034 cannot carry a pulse). On real clips of the datasets we hold, compute the spectral peak in 0.7 to 3 Hz and its SNR. Negative control: the same clips with time-shuffled frames |
+| Parallel signal-sanity check S-1 (starts early, CPU only, during I-1 to I-3) | Contiguous-frame extraction (about 10 s, native frame rate; the 16-frame sampling of D-034 cannot carry a pulse). On real clips of the datasets we hold, compute the spectral peak in 0.7 to 3 Hz and its SNR. Negative control: the same clips with time-shuffled frames; the control is pooled across clips, with several independent shuffles per clip (at least 10), and the 95th percentile is taken over the pooled shuffled SNR values, written here before any run |
 | S-1 passes when | At least 60 percent of real clips have a peak SNR above the 95th percentile of the shuffled control, and, if a dataset with pulse ground truth is obtained (UBFC-rPPG, currently DEFER in D-021), the mean absolute error of heart rate is at most 8 bpm. If neither holds, the pulse is not recoverable from our data |
 | If S-1 fails | I-7 reports exactly that: "rPPG signal not recoverable from these data (numbers)", with the negative control, and no separation or fusion experiment is run. This is an honest result of the slot |
 | (b) Separation, only if S-1 passes | rPPG-feature AUC on an identity-disjoint split, for at least two generator families; success if the lower bound of the interval is above 0.55; failure if the interval includes 0.5 |
-| (c) Added value | Fused model with rPPG minus fused model without it, paired group bootstrap, 3 seeds. Adopted only if the whole interval is above zero (O-010). Failure: interval includes zero or is below |
+| (c) Added value | Fused model with rPPG minus fused model without it, paired group bootstrap, 3 seeds, computed on dev_x. The adopt or do-not-adopt decision is made on dev_x (never on test) and adopts rPPG only if the whole interval is above zero (O-010). Test sets are touched only at the freeze. Failure: interval includes zero or is below |
 | (d) Negative controls | Time-shuffled and identity-mismatched signals must give AUC whose interval includes 0.5; if not, the "separation" is an artefact |
 | Prediction | Sign uncertain by design. Most of our videos are compressed, which attenuates the pulse; the prior expectation is that S-1 passes only partially. This is a hypothesis, not a result |
 

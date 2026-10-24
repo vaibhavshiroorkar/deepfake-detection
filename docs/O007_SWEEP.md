@@ -100,6 +100,8 @@ Per task, rank the candidates by the mean `dev_x` AUC. The leader is the highest
 
 ## 9. Fine-tuning evidence, iteration I-1 (planned)
 
+SUPERSEDED in scope and budget by D-042 (2026-10-25): video task first, one seed per learning rate, extra seeds for the winner only, 1,800 steps per run, per-run time cap, and encoders that do not fit are excluded. The text below is kept as the original plan; where it differs, D-042 holds.
+
 The top three candidates of each task from section 8 are fine-tuned under one shared budget, to support or reject any later claim of which is easiest to fine-tune.
 - Budget: the same number of optimiser steps for every candidate of a task, the same data, the same augmentation (none to begin with), the same effective batch of 32 (with gradient accumulation if the real batch is smaller), AdamW with a cosine schedule and 5 percent warm-up, weight decay 0.05, mixed precision, full fine-tuning (gradient checkpointing where needed). The step count is set from the time per step measured in the sweep so that each task fits about 90 minutes, and is written into EXPERIMENTS.md before the run.
 - Learning rates: three, 1e-5, 3e-5 and 1e-4, the same grid for all candidates; one run per rate for the sensitivity measure, then 3 seeds at the best rate (15 runs per task).

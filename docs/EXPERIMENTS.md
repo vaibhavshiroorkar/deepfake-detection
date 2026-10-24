@@ -146,6 +146,24 @@ The probe script was kept outside the repository (scratch directory) because Ses
 - What this does not show: these frames contain none of the hard cases (rotated, tiny, face-free images) where the earlier stress test separated the detectors, and the effect of a few percent of box shift on any model's accuracy was not measured. JPEG quality 95 for the stored crops is a candidate preprocessing iteration and was not changed.
 - Reading for D-034: no geometric reason to re-crop; D-034 stays Decided autonomously until the user confirms it.
 
+### M-003: fine-tuning step time and peak VRAM of the image encoders (measurement, not an experiment)
+- Date / Environment / Git commit: 2026-10-24 night to 2026-10-25 00:02 / ENV-DESKTOP-GPU (RTX 5070, 12 GB, torch 2.14.1+cu130) / src/dfd/sweep/step_time.py at the commit that follows this entry.
+- What: one training step = forward, backward and AdamW update of the whole encoder plus a linear head, fp16 autocast with gradient scaling, random uint8 224 px frames, median of 10 timed steps after 3 warm-up steps. Weights as in the sweep (the Xception row used random weights, which does not change the cost).
+- Caveat that limits these numbers: the run was PARTLY OVERLAPPED. The E-001 queue and the LAV-DF job started on the same GPU and disk at 00:01 while the later rows (IMG-13, IMG-15) were being measured, so those step times may be too long; the rows for IMG-01, IMG-04, IMG-07 and IMG-08 were measured before the start but this was not recorded, so they are also unconfirmed. The run was stopped after 11 of 14 rows. A clean rerun with the GPU free is chained (scripts/sweep/after_e001_steptime.sh, output data/_logs/step_time_alone.json) and supersedes this table. Raw lines: data/_logs/step_time_partial_overlapped.jsonl.
+- Result (single run, no interval):
+
+| Candidate | Batch | Step (ms) | Frames per second | Peak VRAM (GiB) | Trainable parameters |
+|---|---|---|---|---|---|
+| IMG-07 DINOv2-S | 16 / 32 | 28.4 / 45.8 | 563 / 700 | 1.19 / 2.00 | 22.1 M |
+| IMG-08 DINOv2-B | 16 / 32 | 72.2 / 133.8 | 222 / 239 | 2.87 / 4.49 | 86.6 M |
+| IMG-04 Xception | 16 / 32 | 56.1 / 110.7 | 285 / 289 | 2.36 / 4.29 | 20.8 M |
+| IMG-01 EfficientNet-B4 | 16 / 32 | 71.8 / 140.8 | 223 / 227 | 3.82 / 7.28 | 17.5 M |
+| IMG-13 CLIP ViT-L/14 (OpenAI) | 16 / 32 | 246.3 / 19,078 | 65 / 1.7 | 9.13 / 13.75 | 304.0 M |
+| IMG-15 CLIP ViT-L/14 (LAION) | 16 | 274.5 | 58 | 8.38 | 304.0 M |
+| IMG-15 at batch 32, IMG-17 SigLIP base | | not measured | | | |
+
+- Reading: a peak above the 12 GB card (13.75 GiB at batch 32 for IMG-13) means the allocation spilled into shared system memory and the step took 19 s; it is a failure to fit, not a speed. These numbers are inputs to D-042 and are not a result about detection.
+
 ## Diagnostic battery (defined once, run after every iteration)
 
 Every iteration, I-0 included, runs the same battery before its verdict; the next iteration's lever is chosen from it (ITERATIONS.md). Each item is a table or figure under data/_results/<run>/ and is listed in the iteration's experiment entry. All AUC values carry the 95 percent group-bootstrap interval of the protocol; seeds 0, 1, 2.
