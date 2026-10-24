@@ -1,6 +1,6 @@
 # FILES
 
-Last updated: 2026-10-24 (Session 1)
+Last updated: 2026-10-25 (Session 2)
 
 One row per file or folder. Status is `exists`, `planned` or `missing`. A `planned` row appears only when a decision in DECISIONS.md covers it. This file is updated whenever files change.
 
@@ -47,11 +47,18 @@ One row per file or folder. Status is `exists`, `planned` or `missing`. A `plann
 | src/dfd/prep/ and tests/prep/ | Video decoding, face detection and cropping (YuNet), audio extraction, resumable pipeline, benchmark tool; 26 tests | Shared preprocessing of D-028; speed in M-001 | exists |
 | ledger/ | The final-evaluation ledger (empty until the first final evaluation) | Enforces one final test per iteration (PROTOCOL section 7) | exists |
 | data/ | Downloaded datasets, incoming archives, logs (`data/_logs/`) and manifests (`data/_manifests/`); not committed | Data for the experiments (D-021) | exists (growing) |
-| paper/main.tex, paper/refs.bib | IEEEtran conference-style paper skeleton with Related Work from the matrix, placeholders marked "to be filled from E-xxx", and a bibliography of 18 verified entries | The research paper (D-003, D-014) | exists |
-| report/DeepFake_Detection_Technical_Report_draft.docx | Technical report built from the supplied Word template: cover with logo, certificate, declaration, abstract, contents, chapters 1 to 5 with placeholders, references | The technical report (D-003, D-014) | exists |
-| report/build_report.py, report/template_base_converted_from_doc.docx | Script that builds the report and the converted template base it uses | Reproduces the report | exists |
-| slides/DeepFake_Detection_Presentation_draft.pptx | 19-slide deck built on the supplied deck's master, logos, colours and bars; all old content removed; speaker notes; result slides tagged "RESULT: TO BE FILLED" | The presentation (D-003, D-014) | exists |
-| slides/build_slides.py | Script that builds the deck | Reproduces the deck | exists |
+| docs/IDENTITY.md | Every identity field of the documents with file and page of its source, conflicts and how they were settled, omitted fields | One source of truth for names, roll numbers, guide, department; compared by scripts/check_docs.py |
+| docs/DOC_FACTS.md | Binding digest of decided facts and wording for the three documents | Keeps paper, report and slides in one voice |
+| docs/DOC_SYNC.md | Map from each decided item (decision or open question) to its section in the paper, the report and the slides | Lets a reviewer find where a decision is written up |
+| paper/main.tex, paper/refs.bib, paper/IEEEtran_hyphen.bst, paper/figures/, paper/NEW_REFERENCES.md | IEEEtran conference paper (10 pages), 37 verified references, bibliography style copy without en-dashes, figure PDFs, the list of sources verified for RESEARCH.md | The research paper (D-003, D-014) |
+| report/DeepFake_Detection_Technical_Report.docx | Technical report built from the converted Word template: cover, certificate, declaration, acknowledgement, abstract, contents, lists, nomenclature, Chapters 1 to 5, references, appendices (62 pages) | The technical report (D-003, D-014) |
+| report/build_report.py, report/front.py, ch1_2.py, ch3.py, ch4.py, ch5.py, content.py, refs.py, omml_lite.py, word_tools.ps1, template_base_converted_from_doc.docx | Build script, content modules, a LaTeX-to-Word-equation converter, Word automation, the template converted by Word | Reproduces the report |
+| report/layout_check.py | Renders template and report pages at the same DPI and compares border, chapter title and box, text edges, footer rule (tolerance 2 mm) | Acceptance test of the report layout |
+| report/NEW_REFERENCES.md, slides/NEW_REFERENCES.md, paper/NEW_REFERENCES.md | Sources verified by each builder and venue corrections | Merged into docs/RESEARCH.md |
+| slides/DeepFake_Detection_Presentation.pptx | 24-slide deck (16 main, 8 backup) on the reference deck's master, notes on every slide | The presentation (D-003, D-014) |
+| slides/build_slides.py, slides/slide_common.py, slides/check_slides.py | Build script, grid and type scale, slide checker (bounds, overlaps, grid, font size, notes) | Reproduces and checks the deck |
+| scripts/make_figures.py, assets/figures/, assets/screens/ | Programmatic figures (pipeline, splits, ladder, staircase, rPPG, timeline, web, shortlist) at 300 dpi PNG and vector PDF, and the web page screenshots | The same figure files in the paper and the report |
+| scripts/check_docs.py | Per-document checks: IDs, reviewer phrases, dashes, identity fields, bibliography, placeholders, fonts, margins, layout comparison, slide checks | Run before every commit of a document |
 | assets/branding/ | The college and trust logos and two campus pictures, extracted unchanged from the supplied deck | Identity elements the user asked to be reused (D-014) | exists |
 | Document Template/ | The supplied Word report template and the PowerPoint and PDF of an earlier project, used only for look and identity; not committed | Source of the templates (D-014); its body content is not reused (D-001) | exists (untracked, ignored) |
 | Git tags per frozen iteration | `setup` exists locally; none for iterations | Required by D-008 | planned |
