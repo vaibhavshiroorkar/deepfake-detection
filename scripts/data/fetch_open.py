@@ -280,7 +280,7 @@ def step_itw():
     a = INCOMING / "in_the_wild" / "release_in_the_wild.zip"
     fetch_archive("in_the_wild_zip",
                   "https://huggingface.co/datasets/mueller91/In-The-Wild/resolve/main/release_in_the_wild.zip",
-                  a, expected_size=8161489023, hf=("mueller91/In-The-Wild", "release_in_the_wild.zip"))
+                  a, expected_size=8161489023, hf=("mueller91/In-The-Wild", "release_in_the_wild.zip"), parts=8)
     out = DATA / "in_the_wild"
     extract_zip(a, out)
     n = count_ext(out, {".wav", ".flac", ".mp3"})
