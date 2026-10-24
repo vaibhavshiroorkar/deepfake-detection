@@ -4,6 +4,10 @@ Parallel plan for three people, written 2026-10-24 (evening) from the repository
 
 Note on decision numbers: in this repository D-017 is the Python and PyTorch environment and D-018 is the image scope; the access policy is D-020 and the data selection is D-021. All four are respected below.
 
+## Update, later on 2026-10-24
+
+After this plan was presented the user decided: D-027 to D-030 approved as proposed; D-031 the software is a local web page only (O-011 settled, so the command-line stream S4 narrows to the inference library behind a small local web service, framework still open as O-013); D-032 the MVP starts from frozen pretrained features with a linear head (the extractor itself is the first item of O-007); D-033 a still image goes through a face crop when a face is found and the whole image otherwise (O-002, image path). The repository was pushed to the private GitHub repository. In-the-Wild finished downloading at 21:16. LAV-DF is still blocked: the Hugging Face account has not yet accepted the dataset's terms (HTTP 403). The audit and the dependency map below are otherwise unchanged.
+
 ## 1. The project in plain English
 
 We are building a program that takes an image, a video or an audio clip and says how likely it is to be fake, and says which kind of evidence (picture or sound) the verdict rests on. It is a student project, so the point is also the path: a simple first version, then at least 7 improvements, each started from a written hypothesis, each ending in a measured result, and a fair test that never uses people or videos seen in training.

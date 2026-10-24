@@ -1,8 +1,8 @@
 # STATUS
 
-Last updated: 2026-10-24 (Session 1, downloads running)
+Last updated: 2026-10-24 (Session 1, late evening)
 
-NEXT STEP: Check the automatic downloads (docs/DATA_LOG.md "Downloaded datasets", data/_logs/*.log and data/_manifests/downloads.jsonl), re-run any unfinished step with `.venv/Scripts/python.exe scripts/data/fetch_open.py <step>` (steps asvspoof, itw, diffusion, cnn_subset, lavdf; lavdf needs the user's HF_TOKEN), then start Stage 1 on day 2 of docs/PLAN.md: manifests, grouping keys and the leakage-check script that proves zero overlap (D-012).
+NEXT STEP: Ask the user to accept the LAV-DF terms on https://huggingface.co/datasets/ControlNet/LAV-DF while logged in as gr8SHivANsh (the server answers 403 until then), then rerun the `lavdf` step of scripts/data/fetch_open.py with HF_TOKEN set in the process environment only; in parallel verify and commit the S2-C preparation tooling, log the face detector, write the I-0 hypothesis (frozen pretrained features with a linear head, D-032) and build the loaders per docs/WORKSTREAMS.md.
 
 ## Where the project stands
 
@@ -11,12 +11,12 @@ NEXT STEP: Check the automatic downloads (docs/DATA_LOG.md "Downloaded datasets"
 - Deliverable scaffolds exist and are committed: paper (compiles, 4 pages), report (26 pages, built from the supplied Word template), 19-slide deck (supplied master, logos, colours, bars). They contain no results.
 - Data: the open batch is downloading on this machine (see the Downloaded datasets table). The gated datasets (FF++, DFD, Celeb-DF v2, Celeb-DF++ narrowed to the 21 new generators, FakeAVCeleb, WildDeepfake test shards) arrive by drive on Monday 2026-10-26 (D-022; checklist in docs/DATA_LOG.md). LAV-DF waits for the user's Hugging Face token.
 - No model, training or detection code exists and no experiment has been run.
-- Nothing is pushed: no `origin` remote and `gh` is not logged in on this machine.
+- GitHub: `gh` is logged in and `main` plus the `setup` tag were pushed to the private repository https://github.com/Shivansh-gupta-2005/deepfake-detection on 2026-10-24 (local and remote both at 3b4e14d at the time). Later commits are pushed at the end of each work block.
 
 ## Blockers
 
-1. GitHub: `gh auth status` still reports no login and there is no `origin`. The user must run `gh auth login`, then name the repository and its visibility (private recommended, because the report and slides carry names and roll numbers). Then: `gh repo create <name> --private --source=. --remote=origin`, `git push -u origin main`, `git push origin --tags`.
-2. Hugging Face token for LAV-DF (25.6 GB): the user creates a free account, accepts the terms on https://huggingface.co/datasets/ControlNet/LAV-DF, and stores a read token as a user environment variable (command in docs/DATA_LOG.md). Until then the `lavdf` step is skipped.
+1. GitHub: resolved. Logged in, remote set, main pushed (see above).
+2. LAV-DF (25.6 GB): the user supplied a read token (account gr8SHivANsh), which was used only as an environment variable of the download process and written to no file. The server answers 403: the account is not on LAV-DF's authorized list, so the terms still have to be accepted on the dataset page. The token appeared in the chat and should be revoked at https://huggingface.co/settings/tokens when the download is done; a new one can be made then.
 3. Gated datasets: approvals for FF++ and Celeb-DF arrived on 2026-10-24. By D-022 the user downloads them on Monday 2026-10-26 on a fast connection and carries them over on an exFAT or NTFS drive (checklist in docs/DATA_LOG.md). The fallback for the video MVP is LAV-DF if FF++ has not passed the completeness checks by Monday 18:00 (decided autonomously, needs the user's review).
 
 ## Open questions for the user
