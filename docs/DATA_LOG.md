@@ -121,6 +121,7 @@ Which of the gated datasets matter most, best first: FaceForensics++ with DFD (n
    - Form: https://docs.google.com/forms/d/e/1FAIpQLSdRRR3L5zAv6tQ_CKxmK4W96tAab_pfBu2EKAgQbeDVhmXagg/viewform
    - The form asks for: name; lab, department or affiliation; advisor's name; advisor's email; research purpose; a tick agreeing to the FaceForensics terms of use (non-commercial research and education only).
    - Wait time: the README expects an answer within about a week. You receive a link to `download-FaceForensics.py`.
+   - Update 2026-10-24: the user received the approval email the same day. It says the only available server is EU2, so every command below needs `--server EU2`, and that the script also includes the Deep Fake Detection Dataset. The script needs the `tqdm` package; run it with `uv run --with tqdm python download-FaceForensics.py ...` so the project environment is not touched.
    - Run from the folder where you keep the script, one command each (run `python download-FaceForensics.py -h` first; the README says DFD is "downloaded by default together with the regular dataset", so do not use `-d all`):
      - `python download-FaceForensics.py <repo>/data/ffpp -d original -c c23 -t videos`
      - the same with `-d Deepfakes`, `-d Face2Face`, `-d FaceSwap`, `-d NeuralTextures` (all with `-c c23 -t videos`)
@@ -134,6 +135,7 @@ Which of the gated datasets matter most, best first: FaceForensics++ with DFD (n
    - The form asks for: name; affiliation; city; country; purpose; version (choose Celeb-DF v2); a typed signature; an academic email address.
    - Terms to note: non-commercial only; you must not reproduce, copy or publish any portion of the videos or any derived data (this limits figures in the paper); citation required.
    - Wait time: not stated.
+   - Update 2026-10-24: approved the same day (user report). The terms page that follows the form lists Google Drive and Baidu Net Disk links for v1 and v2. Use the Google Drive link for v2 only; v1 is not in D-021 and Baidu needs a Baidu account (fallback only).
    - Put the received folders in `data/celebdf_v2/`. Expected: `Celeb-real/` 590 videos, `YouTube-real/` 300 videos, `Celeb-synthesis/` 5,639 videos, `List_of_testing_videos.txt` with 518 lines (README structure). Size is not stated; record the real size.
    - Checks: the counts; every video decodes; SHA-256 manifest; the file names carry the identities (`id0_0000.mp4` real, `id0_id16_0000.mp4` fake), which the leakage check uses.
 
@@ -142,6 +144,7 @@ Which of the gated datasets matter most, best first: FaceForensics++ with DFD (n
    - Request: the whole dataset if the package is split by folder, but download only the test-list videos (`List_of_testing_videos.txt`) of every method. Ask the authors, if the form allows, for per-method archives.
    - Put in `data/celebdf_pp/`. Expected structure: `Celeb-real/`, `YouTube-real/`, `Celeb-synthesis/{FaceSwap,FaceReenact,TalkingFace}/<method>/`, `List_of_testing_videos.txt`. Test list per the README: 178 real; 200 fakes per face-swap or reenactment method (8 and 7 methods) and 300 per talking-face method (7 methods), so 5,100 fakes.
    - Checks: that every video listed in the test list exists; counts per method; every video decodes; SHA-256 manifest.
+   - Update 2026-10-24: Downloads holds `Celeb-DF++ (1).zip` of 199,323,648 bytes (root folder `Celeb-DF-v3/`) that is not a valid zip (no end-of-archive record, so it is truncated or one part of a split download), and a 565-byte `Celeb-DF++.zip` that is a stub, not data. Nothing from Celeb-DF++ is usable yet; the source of the link is to be confirmed.
 
 4. FakeAVCeleb
    - Form: https://docs.google.com/forms/u/1/d/e/1FAIpQLSfPDd3oV0auqmmWEgCSaTEQ6CGpFeB-ozQJ35x-B_0Xjd93bw/viewform (repository: https://github.com/DASH-Lab/FakeAVCeleb ; dataset site: https://sites.google.com/view/fakeavcelebdash-lab/).
