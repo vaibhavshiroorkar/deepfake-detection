@@ -1,6 +1,6 @@
 # FILES
 
-Last updated: 2026-10-24 (Session 0)
+Last updated: 2026-10-24 (Session 1)
 
 One row per file or folder. Status is `exists` or `planned`. A `planned` row appears only when a decision in DECISIONS.md covers it. This file is updated whenever files change.
 
@@ -18,6 +18,7 @@ One row per file or folder. Status is `exists` or `planned`. A `planned` row app
 | docs/DATA_LOG.md | Dataset table template; no dataset downloaded yet | Provenance, licence and role of each dataset | exists |
 | docs/RESEARCH.md | Search protocol, literature matrix R-001 to R-020, unverified further reading list | Evidence base for decisions and for the paper | exists |
 | docs/VIVA_PREP.md | Question bank linked to decisions and experiments, answers pending | Preparation for the viva | exists |
+| docs/MATH_NOTES.md | Background definitions and formulas: ROC and AUC, EER, precision and recall, balanced accuracy, ECE, Brier score, Platt scaling, bootstrap and paired bootstrap. Labelled candidate metrics, not adopted | Reference for the metric decision O-005 and for the viva; decides nothing | exists |
 | docs/STATUS.md | Next step, blockers, open questions, mistakes and corrections | Entry point for every new session | exists |
 | CLAUDE.md | Not present. The Session 0 prompt calls it binding but it does not exist in the repository | To be provided by the user, or created on the user's instruction | missing |
 | Research paper (IEEE format, LaTeX) | Not yet created; location and layout not decided | Deliverable under D-003 | planned |
