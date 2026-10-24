@@ -156,7 +156,7 @@ def fig03():
         prev = b
         boxes.append(b)
         xs += w + g
-    ax.text(0.1, 3.2, "I-1 to I-6: the lever comes from a family, chosen after the diagnostic battery of the previous step", fontsize=7.2, color=MUTED)
+    ax.text(0.1, 3.2, "I-1 to I-6: the lever comes from a family, chosen after the diagnostic battery of the preceding step", fontsize=8, color=MUTED)
     box(ax, 0.1, 0.3, 6.8, 1.0, "", fc=C["gray"], round_=0.05)
     ax.text(0.2, 1.12, "Diagnostic battery after every iteration", fontsize=8, fontweight="bold", va="center")
     ax.text(0.2, 0.62, "per-dataset and per-generator AUC with intervals  |  train versus validation gap  |  validation versus development gap  |  calibration curve, ECE, Brier\n"
