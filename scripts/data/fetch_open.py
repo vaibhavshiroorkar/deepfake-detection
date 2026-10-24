@@ -92,7 +92,7 @@ def curl_download(url, dest, expected, token=None, attempts=8):
     part.replace(dest)
 
 
-def parallel_download(url, dest, expected, parts=8, attempts=40):
+def parallel_download(url, dest, expected, parts=8, attempts=40, token=None):
     """Several concurrent range requests for hosts that throttle each connection.
 
     Each part is kept in its own file and resumed after an interruption; the
@@ -118,8 +118,13 @@ def parallel_download(url, dest, expected, parts=8, attempts=40):
             tmp = Path(f"{pf}.tmp")
             if tmp.exists():
                 tmp.unlink()
-            subprocess.run(["curl", "-L", "--fail", "-sS", "-A", UA["User-Agent"], "-r",
-                            f"{start + have}-{end}", "--max-time", "900", "-o", str(tmp), url])
+            cmd = ["curl", "-L", "--fail", "-sS", "-A", UA["User-Agent"], "-r",
+                   f"{start + have}-{end}", "--max-time", "900", "-o", str(tmp)]
+            stdin = None
+            if token:  # header goes through stdin config so it never appears in the process list
+                cmd += ["-K", "-"]
+                stdin = f'header = "Authorization: Bearer {token}"\n'
+            subprocess.run(cmd + [url], input=stdin, text=True)
             if tmp.exists() and tmp.stat().st_size > 0:
                 with open(pf, "ab") as out, open(tmp, "rb") as src:
                     while True:
@@ -176,7 +181,7 @@ def fetch_archive(name, url, dest, expected_size=None, hf=None, token=None, part
     if expected_size is None:
         expected_size, url = total_size(url)
     if parts > 1:
-        parallel_download(url, dest, expected_size, parts=parts)
+        parallel_download(url, dest, expected_size, parts=parts, token=token)
     else:
         curl_download(url, dest, expected_size, token=token)
     sha = sha256_file(dest)
@@ -388,7 +393,7 @@ def step_lavdf():
         return
     a = INCOMING / "lavdf" / "LAV-DF.tar"
     fetch_archive("lavdf_tar", "https://huggingface.co/datasets/ControlNet/LAV-DF/resolve/main/LAV-DF.tar",
-                  a, expected_size=25607198720, hf=("ControlNet/LAV-DF", "LAV-DF.tar"), token=tok)
+                  a, expected_size=25607198720, hf=("ControlNet/LAV-DF", "LAV-DF.tar"), token=tok, parts=8)
     say("LAV-DF.tar downloaded and hashed; extraction and counting are done by a separate step "
         "after the metadata schema has been read")
 

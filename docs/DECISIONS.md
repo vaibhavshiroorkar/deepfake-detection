@@ -393,7 +393,7 @@ The implementer could not verify any turnaround time other than the FaceForensic
 
 ### D-027: Prediction response structure shared by inference and interface
 - Date: 2026-10-24
-- Status: Proposed
+- Status: Decided (user). Proposed by the implementer earlier on 2026-10-24 and approved as proposed by the user the same day.
 - Question: What exactly the inference code returns and the interface shows, so that the two can be built in parallel.
 - Options considered: A flat result (one score and a label); a structured response with per-modality scores, status, warnings and errors (this proposal).
 - Criteria: It must carry what D-011 requires (a score per modality present and a fused score); it must say what the score means; it must make a development stand-in impossible to mistake for a real result.
@@ -415,7 +415,7 @@ The implementer could not verify any turnaround time other than the FaceForensic
 
 ### D-028: Shared preprocessing, configuration and checkpoint metadata
 - Date: 2026-10-24
-- Status: Proposed
+- Status: Decided (user). Proposed by the implementer earlier on 2026-10-24 and approved as proposed by the user the same day.
 - Question: How training, evaluation and inference avoid duplicate code and silent mismatches.
 - Options considered: Each stage with its own preprocessing; one shared preprocessing package and one metadata file (this proposal).
 - Criteria: The same function must prepare an input in training, evaluation and inference; a mismatch must be detected, not assumed away.
@@ -426,7 +426,7 @@ The implementer could not verify any turnaround time other than the FaceForensic
 
 ### D-029: Rules for any mock or development adapter
 - Date: 2026-10-24
-- Status: Proposed
+- Status: Decided (user). Proposed by the implementer earlier on 2026-10-24 and approved as proposed by the user the same day.
 - Question: How to build the interface before a real model exists without any risk of a fake result being reported.
 - Options considered: No stand-in (the interface waits); a clearly labelled stand-in under strict rules (this proposal).
 - Criteria: A stand-in may unblock the interface work but must never be mistaken for a measurement (CLAUDE.md rules 1 and 8).
@@ -437,7 +437,7 @@ The implementer could not verify any turnaround time other than the FaceForensic
 
 ### D-030: Workstreams, ownership and integration
 - Date: 2026-10-24
-- Status: Proposed
+- Status: Decided (user). Proposed by the implementer earlier on 2026-10-24 and approved as proposed by the user the same day.
 - Question: How three people work in parallel without blocking one another or breaking shared files.
 - Options considered: One person at a time; six streams grouped into three roles with owned folders and an integrator (this proposal; details in WORKSTREAMS.md).
 - Criteria: No stream starts on an undecided choice; every stream has an interface and acceptance criteria; shared files change through one integrator.
@@ -446,9 +446,42 @@ The implementer could not verify any turnaround time other than the FaceForensic
 - Rejected and why: a single shared folder with free edits (merge conflicts and unnoticed breakage).
 - Consequences / what could prove this wrong: Role 3 carries the integration load near the deadline; the grouping may need rebalancing once the real workload is visible.
 
+### D-031: Software form is a local web page (settles O-011)
+- Date: 2026-10-24
+- Status: Decided (user)
+- Question: What form the user-facing software takes (O-011).
+- Options considered: Command line plus local web page (the implementer's recommendation); local web page only; command line only.
+- Criteria: Demonstration to examiners; time cost before 2026-10-30.
+- Evidence: none yet (a requirement choice).
+- Decision and reason: A local web page only: the user uploads an image, video or audio file in a browser and sees the response of D-027. The user chose this over the recommended combination.
+- Rejected and why: The command line (as the only form, or as a second form): not chosen by the user.
+- Consequences / what could prove this wrong: A browser talks to Python through a small local web service, so O-013 narrows to which service and framework (still open; no framework is chosen here). Evaluation and experiments still run from scripts and the evaluation command, which is not a user interface. The interface must show the MOCK banner of D-029 whenever `inference_source` is not `real`.
+
+### D-032: The MVP starts from frozen pretrained features with a linear head (partly settles O-006)
+- Date: 2026-10-24
+- Status: Decided (user) for the MVP starting point; the choice of backbone and every later model stays Open (O-007, O-008)
+- Question: What the simplest end-to-end first version is for each path (O-006).
+- Options considered: Frozen pretrained features with a linear classifier; a small network from scratch; a fine-tuned pretrained backbone.
+- Criteria: It runs from raw file to score and metric under the Stage 2 protocol; it needs no tuning to produce a first number; it trains in minutes on the measured machine; it is simple to explain (O-006 criteria).
+- Evidence: R-011 (a frozen pretrained feature space with a linear head generalised well across generators for still images; protocol: trained on ProGAN, tested on other generators); R-017 (plain backbones are competitive under a matched recipe). No experiment of ours yet.
+- Decision and reason: The MVP (iteration I-0) for each path uses a frozen pretrained feature extractor and a linear classifier on top. This fixes only the form of the MVP. Which pretrained extractor to use for each modality is not decided and is the first item of O-007; the small network from scratch is still run as a reference in Stage 4 (D-004).
+- Rejected and why: A network from scratch as the MVP (slowest to a usable number) and a fine-tuned backbone as the MVP (needs the most VRAM and tuning on day 3): not chosen.
+- Consequences / what could prove this wrong: A frozen extractor may miss fine artefacts that matter for face video; this becomes the hypothesis of the first iterations (O-008). Pretrained weights need their licence, source and hash in DATA_LOG.md before use (CLAUDE.md rule 7).
+
+### D-033: Image input: face crop for face images, whole image otherwise (settles the image part of O-002)
+- Date: 2026-10-24
+- Status: Decided (user)
+- Question: How a still image is preprocessed (O-002, image path).
+- Options considered: Face crop for face images and the whole image otherwise; always the whole image; always a face crop.
+- Criteria: Must serve both image kinds of D-018: face-manipulated images (frames from face-swap or lip-sync video count) and fully generated images.
+- Evidence: R-001 (face crop with an enlargement factor for face forgery); R-011 (whole-image generated-image detection).
+- Decision and reason: If a face is found, the detector works on the face crop; otherwise on the whole image. The choice made is reported in the response (D-027, a warning or a field) so that nobody reads a whole-image score as a face score.
+- Rejected and why: Always the whole image and always a face crop: each fails one of the two image kinds.
+- Consequences / what could prove this wrong: The two image kinds may need separate models; that is reported as separate test conditions already (D-018). Face detection errors decide which path an image takes; the detector's rate on real data is a Stage 1 measurement. The video and audio paths are not decided by this entry.
+
 ## Open decisions
 
-Settled by Session 1 decisions: O-001 (D-011); O-005 (D-024). O-004 is settled as an outline by D-012 (script and details pending). O-002 is partly answered by D-018 and D-019 (what the modalities are); how each input type is handled remains open. O-003 is constrained by D-020 (access policy) and settled by D-021 (approved 2026-10-24). None of the questions below is otherwise answered. For each one, the options are those the implementer would compare, the criteria are stated before any result exists, and the evidence column says what must be collected. Paper IDs refer to RESEARCH.md. Pointers to papers show where options come from; they are not choices.
+Settled by Session 1 decisions: O-001 (D-011); O-005 (D-024); O-011 (D-031); O-006 for the MVP starting point (D-032); O-002 for the image path (D-033). O-004 is settled as an outline by D-012 (script and details pending). O-002 is partly answered by D-018 and D-019 (what the modalities are); how each input type is handled remains open. O-003 is constrained by D-020 (access policy) and settled by D-021 (approved 2026-10-24). None of the questions below is otherwise answered. For each one, the options are those the implementer would compare, the criteria are stated before any result exists, and the evidence column says what must be collected. Paper IDs refer to RESEARCH.md. Pointers to papers show where options come from; they are not choices.
 
 | ID | Question | Options to compare | Criteria (stated before results) | Evidence needed |
 |---|---|---|---|---|
@@ -463,7 +496,7 @@ Settled by Session 1 decisions: O-001 (D-011); O-005 (D-024). O-004 is settled a
 | O-010 | rPPG feasibility test design | (a) Signal sanity: can heart rate be recovered from our data at all, given that most deepfake datasets have no pulse ground truth (R-008). (b) Separation: do rPPG features separate real from fake under an identity-disjoint split, for several generator families (R-009, R-007). (c) Added value: does adding rPPG evidence raise the fused detector's held-out metric beyond the bootstrap interval. (d) Negative controls: time-shuffled or mismatched signals. | The success and failure thresholds are written before the run. rPPG is adopted only if (c) shows a gain larger than the interval of the paired difference. | Stage 6 experiments. Literature: R-005 to R-010 and Stream C3. A dataset subset with enough frames, resolution and lighting stability for rPPG; skin-tone coverage (R-009 notes that rPPG is sensitive to skin tone and lighting). |
 | O-011 | Software form | Command line; local web app; both. | Time cost; need to demonstrate to examiners; ease of reproducing results; input handling for image, video and audio files. | Requirements from Stage 0. |
 | O-012 | Format of the shared configuration and checkpoint metadata (D-028), and whether experiment tracking uses plain files or a tracking library | Plain JSON files under version control; YAML; a tracking library | Must be hashable, human readable and need no extra service; no duplicate source of truth | A small trial in the loader work |
-| O-013 | How the interface calls the inference library | In-process Python call; command line returning JSON; a local web service | Same response structure in every case (D-027); lowest integration risk before 30 October | O-011 settled first |
+| O-013 | How the web page calls the inference library (D-031 implies a small local web service); which framework serves it | A local web service in Python (framework to be compared); in-process call from a page served by the same program | Same response structure in every case (D-027); lowest integration risk before 30 October | Settled by D-031 as far as the form goes; framework still open |
 
 ## Contradictions and unclear points
 
