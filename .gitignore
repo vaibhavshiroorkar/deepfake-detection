@@ -41,3 +41,6 @@ Document Template/
 *.tar
 *.tar.gz
 *.fdmdownload
+
+# renders of the deliverables for visual inspection (not committed)
+**/_render/
