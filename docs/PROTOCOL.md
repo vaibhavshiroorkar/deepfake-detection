@@ -1,6 +1,6 @@
 # PROTOCOL
 
-Stage 2: the evaluation protocol and its acceptance test. Written 2026-10-24 from D-011, D-012, D-021 and D-024. It is fixed before any model exists. A change after the acceptance test passes is a new decision in DECISIONS.md, never a silent edit. Definitions of the metrics are in MATH_NOTES.md.
+Stage 2: the evaluation protocol and its acceptance test. Written 2026-10-24 (amended the same day by D-035: split `dev_x`, check A9) from D-011, D-012, D-021 and D-024. It is fixed before any model exists. A change after the acceptance test passes is a new decision in DECISIONS.md, never a silent edit. Definitions of the metrics are in MATH_NOTES.md.
 
 ## 1. Units, groups and roles
 
@@ -9,9 +9,10 @@ Stage 2: the evaluation protocol and its acceptance test. Written 2026-10-24 fro
 - Splits (the `split` field):
   - `train`: training data.
   - `val`: held out from the training dataset, group-disjoint from `train`; used for model selection, the threshold and temperature scaling.
+  - `dev_x` (added by D-035): a development slice carved out of a cross-dataset source, group-disjoint from the final `test_x` of the same source. Used to rank candidates and choose hyperparameters; never the headline; not a final split. Chosen by the seeded rule of D-035.
   - `test_in`: in-dataset test, group-disjoint from `train` and `val`. Reported, never the headline.
   - `test_x`: a dataset never used in training. The headline generalisation result.
-- `test_in` and `test_x` are final splits. A dataset family (for example Celeb-DF v2 and Celeb-DF++, or LAV-DF and FakeAVCeleb when identities overlap) counts as one source family: a family used in training is not a `test_x`.
+- `test_in` and `test_x` are final splits; `dev_x` is not (so the `--final` guard does not apply to it, and it may be evaluated repeatedly). A dataset family (for example Celeb-DF v2 and Celeb-DF++, or LAV-DF and FakeAVCeleb when identities overlap) counts as one source family: a family used in training is not a `test_x`.
 
 ## 2. Score file
 
@@ -70,6 +71,7 @@ Stage 2 is done when all of the following pass; the results are logged in EXPERI
 | A5 | The guard refuses a final split without `--final`, refuses a second final evaluation of the same iteration without `--repeat`, and accepts a first one |
 | A6 | The leakage check exits non-zero on a manufactured group overlap and zero on clean splits, including the check across source families |
 | A7 | Manifests build for FF++ c23, ASVspoof 2019 LA and the ProGAN validation and test sets with the documented counts (FF++ 1,000 originals and 4,000 manipulated; ASVspoof 2019 LA 121,461; ProGAN 8,000 and 8,000) |
+| A9 (added with D-035) | `dev_x` is accepted by the score file reader and is not treated as final; the leakage check fails when a group is in both `dev_x` and `test_x` and when content in `dev_x` also appears in `test_x` |
 | A8 | An end-to-end run with a random scorer through the whole pipeline gives AUC about 0.5 with an interval containing 0.5 |
 
 ## 9. Not decided here
