@@ -2,11 +2,12 @@
 
 Last updated: 2026-10-24 (Session 1, night)
 
-NEXT STEP: Start the I-0 sweep (E-001 to E-003, protocol D-036) by extracting frozen-encoder features for the E-001 candidates on the FF++ train and val crops and the Celeb-DF dev_x crops in a background job, using the loaders in src/dfd/data/loaders.py; in parallel the user approves the decisions listed in the 2026-10-24 night entry below, accepts the LAV-DF terms on https://huggingface.co/datasets/ControlNet/LAV-DF (HF account gr8SHivANsh), and pastes the DFDC Kaggle rules text.
+NEXT STEP: Start the I-0 sweep (E-001 to E-003, protocol D-036) by extracting frozen-encoder features for the E-001 candidates on the FF++ train and val crops and the Celeb-DF dev_x crops in a background job, using the loaders in src/dfd/data/loaders.py; in parallel accepts the LAV-DF terms on https://huggingface.co/datasets/ControlNet/LAV-DF (HF account gr8SHivANsh), and pastes the DFDC Kaggle rules text.
 
 ## Where the project stands
 
 - Done on 2026-10-24 (night), after the usage limit: loaders for face clips, images and audio with a final-only split guard, 9 tests (52bcae7); the pre-declared encoder sweep protocol, E-001 to E-003 hypotheses, D-036 proposed and the audio-visual risk and fallback claim (764519a); the D-034 face-detector comparison M-002 on FF++ val and Celeb-DF dev_x frames (b2245a1); the audio encoder candidate verification, no choice made (docs/_agents/O7AUD.md, 93d80b7). The O-007 message of the user (sweep design, D-034 check, audio finding) was therefore handled before the limit; nothing needs resending.
+- User review on 2026-10-24 (night): D-022 (fallback), D-024, D-025 (amended to non-inferiority), D-026, D-034, D-035 (amended, with a sign-flip permutation sensitivity check still to implement in dfd.eval) and D-036 (tie set against the leader, cheapest wins) are Decided (user); D-037 records the housekeeping: CLAUDE.md rule 6 now allows PARTIAL papers for the parts read, `Document Template/` stays ignored, the D-017 to D-020 and D-018 to D-021 mapping is confirmed, GitHub contradiction closed.
 - Real-data loader check on FF++ val (throughput against the prep speed): started, result not yet recorded here.
 
 - Session 1 decisions are logged: D-011 and D-012 confirmed; D-013 (open datasets only) superseded by D-020 (gated datasets allowed, user downloads them); D-014 to D-016; D-017 (Python 3.13 and PyTorch 2.14.1+cu130); D-018 (images: face-manipulated and fully generated); D-019 (audio-only is a separate mode); D-021 (requirements-driven data selection, approved by the user). D-009 now has the deadline 2026-10-30. Reasons stated by the user are filled in for D-001 to D-010.
@@ -28,9 +29,9 @@ NEXT STEP: Start the I-0 sweep (E-001 to E-003, protocol D-036) by extracting fr
 
 1. Template details that conflict across the three supplied files (found by stream A, full list of 12 in docs/_agents/A.md section 6): the department name (pptx "Engineering Electronics & Telecommunication", Word template "Electronics and Telecommunication Engineering", pdf "Electronics and Computer Engineering"; the newest, the pdf's, is used); semester and batch (the Word template says Semester VII and an old batch, the pdf says Semester VIII 2026-27; "Semester VII 2026-27 Batch" is used); student order, the title, the blank Director name, the Acknowledgement position and paper author details (no emails supplied).
 2. The report has 18 references against the template's 10 to 15 and is 26 pages against the template's 30 to 60: trim references, and let the report grow with results?
-3. Does the user accept D-020 and D-021 as the numbers for the access-policy change and the data selection (the user's message used D-017 and D-018, which were already taken)?
-4. CLAUDE.md rule 6 says only `READ` papers may be cited; Session 1 added `PARTIAL` and allowed it for the parts read. Confirm or edit the rule.
-5. Should the folder `Document Template/` (earlier project documents with names and roll numbers) stay out of git? It is currently ignored.
+3. (resolved 2026-10-24, D-037) Does the user accept D-020 and D-021 as the numbers for the access-policy change and the data selection (the user's message used D-017 and D-018, which were already taken)?
+4. (resolved 2026-10-24, D-037) CLAUDE.md rule 6 says only `READ` papers may be cited; Session 1 added `PARTIAL` and allowed it for the parts read. Confirm or edit the rule.
+5. (resolved 2026-10-24, D-037) Should the folder `Document Template/` (earlier project documents with names and roll numbers) stay out of git? It is currently ignored.
 6. The submission needs the PDF form of the deliverables? The previews are ignored by git; say if they should be committed.
 
 ## Mistakes and corrections

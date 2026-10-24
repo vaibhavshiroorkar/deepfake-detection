@@ -75,7 +75,7 @@ Each criterion is checkable from the repository. None states an expected result.
 | S7 | The rPPG feasibility test is run with its thresholds written beforehand and ends in an adopt or do-not-adopt decision (D-006) |
 | S8 | The paper, report and slides contain only numbers that trace to a logged experiment |
 
-### Definition of "comparable with published detectors" (Proposed, D-025)
+### Definition of "comparable with published detectors" (Decided, D-025 as amended 2026-10-24: non-inferiority, see DECISIONS.md)
 
 A published detector family is re-run under our protocol (for example a plain Xception on FF++ c23 tested on other datasets, the usual protocol of R-017) with the same data, split, budget and metric as our system, and both results are reported with intervals. Our result is called comparable to the baseline when the interval of their paired difference contains zero or favours the baseline by less than a margin stated before the run. Numbers quoted from papers are shown only as context with their own protocol named (RESEARCH.md rule), never in the same cell as ours. This definition needs the user's review.
 
