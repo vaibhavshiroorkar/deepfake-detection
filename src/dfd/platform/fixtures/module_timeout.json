@@ -36,6 +36,7 @@
    "limitations": [],
    "model": null,
    "module_id": "generated_video",
+   "observations": [],
    "reason": "no result within 0.05 s",
    "score": null,
    "section": "authenticity",
@@ -57,6 +58,7 @@
    ],
    "model": null,
    "module_id": "speech",
+   "observations": [],
    "reason": null,
    "score": {
     "calibrated": false,

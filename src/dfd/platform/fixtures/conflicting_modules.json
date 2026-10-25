@@ -43,6 +43,7 @@
    ],
    "model": null,
    "module_id": "face_video",
+   "observations": [],
    "reason": null,
    "score": {
     "calibrated": false,
@@ -69,6 +70,7 @@
    ],
    "model": null,
    "module_id": "generated_video",
+   "observations": [],
    "reason": null,
    "score": {
     "calibrated": false,
@@ -95,6 +97,7 @@
    ],
    "model": null,
    "module_id": "speech",
+   "observations": [],
    "reason": null,
    "score": null,
    "section": "authenticity",

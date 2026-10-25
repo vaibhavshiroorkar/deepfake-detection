@@ -39,6 +39,7 @@
    "limitations": [],
    "model": null,
    "module_id": "face_video",
+   "observations": [],
    "reason": "module raised RuntimeError",
    "score": null,
    "section": "authenticity",
@@ -60,6 +61,7 @@
    ],
    "model": null,
    "module_id": "speech",
+   "observations": [],
    "reason": null,
    "score": {
     "calibrated": false,
@@ -86,6 +88,7 @@
    ],
    "model": null,
    "module_id": "c2pa",
+   "observations": [],
    "reason": null,
    "score": null,
    "section": "provenance",

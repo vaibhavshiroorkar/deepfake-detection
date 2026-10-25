@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Analysis Report Dashboard</title>
+<link rel="stylesheet" href="/dashboard.css">
+</head>
+<body>
+<header class="top">
+  <h1>Media analysis report</h1>
+  <div class="picker">
+    <label for="scenario">Scenario</label>
+    <select id="scenario"></select>
+  </div>
+</header>
+<div id="banner" class="banner" role="alert" hidden></div>
+<div id="error" class="error-box" role="alert" hidden></div>
+<main id="report" hidden>
+  <section id="meta" class="panel"></section>
+  <section id="routing" class="panel"></section>
+  <section id="sec-authenticity" class="section"></section>
+  <section id="sec-cross_modal" class="section"></section>
+  <section id="sec-provenance" class="section"></section>
+  <section id="coverage" class="panel"></section>
+  <section id="conflicts" class="panel"></section>
+  <section id="statement" class="panel statement"></section>
+</main>
+<script src="/dashboard.js"></script>
+</body>
+</html>

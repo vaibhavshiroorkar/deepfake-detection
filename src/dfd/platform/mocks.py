@@ -37,6 +37,7 @@ class ScriptedModule:
     timeout_s: float = 5.0
     source: str = "mock"
     sleep_s: float = 0.0
+    observations: Optional[list] = None
 
     def applicability(self, probe: Probe) -> Applicability:
         if self.outcome == "unsupported":
@@ -60,7 +61,7 @@ class ScriptedModule:
         return ModuleResult(
             **base, status="completed", finding=self.outcome if self.outcome != "sleep" else "inconclusive",
             score=None if self.score is None else {"value": self.score, "meaning": _SCORE_MEANING, "calibrated": False, "threshold": None},
-            units_analysed=16, segments=self.segments or [], warnings=self.warnings or [],
+            units_analysed=16, segments=self.segments or [], warnings=self.warnings or [], observations=self.observations or [],
             tested_scope=MOCK_NOTE, limitations=[MOCK_NOTE, "Scenario data for dashboard development only."], timing_ms=1.0)
 
 
@@ -107,6 +108,12 @@ SCENARIOS: dict[str, tuple[dict, Callable[[], list]]] = {
         _m("face_video", "authenticity", "not_applicable", reason="no video stream"),
         _m("c2pa", "provenance", "unsupported", reason="MOCK: this container is not a format the credential reader handles"),
         _m("speech", "authenticity", _NO, score=0.3, needs="audio")]),
+    "provenance_observations": ({}, lambda: [
+        _m("media_metadata", "provenance", "inconclusive", observations=[
+            {"kind": "file_metadata", "code": "CONTAINER", "text": "MOCK: container mov,mp4", "value": None},
+            {"kind": "heuristic", "code": "NO_CREATION_TIME", "text": "MOCK: no creation time tag; says little", "value": None}]),
+        _m("content_credentials", "provenance", "inconclusive", observations=[
+            {"kind": "marker_scan", "code": "C2PA_MARKER_PRESENT", "text": "MOCK: marker bytes found, nothing verified", "value": ["c2pa", "jumb"]}])]),
     "provenance_inconclusive": ({}, lambda: [
         _m("face_video", "authenticity", _NO, score=0.1, needs="video"),
         _m("c2pa", "provenance", "inconclusive")]),

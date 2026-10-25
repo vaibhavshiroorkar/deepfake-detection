@@ -20,6 +20,7 @@ FINDINGS = {
     "provenance": ("credentials_valid", "credentials_invalid", "no_credentials_found", "inconclusive"),
 }
 ERROR_CODES = ("MODULE_EXCEPTION", "MODULE_TIMEOUT", "INVALID_RESULT", "APPLICABILITY_FAILED")
+OBSERVATION_KINDS = ("file_metadata", "heuristic", "marker_scan", "verification")
 MODEL_KEYS = ("name", "version", "weights_sha256", "licence", "evaluation")
 NOT_EVALUATED = "not evaluated"
 STATEMENT = ("This report lists what each module found within its tested scope. A module that found nothing, did not run, "
@@ -45,6 +46,7 @@ class ModuleResult:
     limitations: list = field(default_factory=list)
     warnings: list = field(default_factory=list)   # [{code, message}]
     errors: list = field(default_factory=list)     # [{code, message}]
+    observations: list = field(default_factory=list)   # [{kind, code, text, value}]: metadata, heuristic flags, marker scans, verifications
     timing_ms: float = 0.0
 
     def to_dict(self) -> dict:
@@ -81,7 +83,7 @@ def validate_module_result(m: dict) -> list[str]:
             bad.append(f"{mid}: mock result must not carry a calibrated score")
     elif m["model"] is not None and (not isinstance(m["model"], dict) or any(k not in m["model"] for k in MODEL_KEYS)):
         bad.append(f"{mid}: model block must carry {MODEL_KEYS}")
-    for lst in ("limitations", "warnings", "errors", "segments"):
+    for lst in ("limitations", "warnings", "errors", "segments", "observations"):
         if not isinstance(m[lst], list):
             bad.append(f"{mid}: {lst} must be a list")
             return bad
@@ -91,6 +93,11 @@ def validate_module_result(m: dict) -> list[str]:
     for e in m["errors"]:
         if isinstance(e, dict) and e.get("code") not in ERROR_CODES:
             bad.append(f"{mid}: unknown error code {e.get('code')}")
+    for o in m["observations"]:
+        if not isinstance(o, dict) or o.get("kind") not in OBSERVATION_KINDS or not o.get("code") or not o.get("text"):
+            bad.append(f"{mid}: bad observation {o}")
+        elif o["kind"] == "verification" and m["source"] == "mock":
+            bad.append(f"{mid}: a mock result cannot carry a verification observation")
     if not isinstance(m["timing_ms"], (int, float)) or isinstance(m["timing_ms"], bool) or m["timing_ms"] < 0:
         bad.append(f"{mid}: timing_ms must be a non-negative number")
     if m["status"] != "completed":

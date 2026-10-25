@@ -46,6 +46,7 @@
    ],
    "model": null,
    "module_id": "face_video",
+   "observations": [],
    "reason": null,
    "score": {
     "calibrated": false,
@@ -78,6 +79,7 @@
    ],
    "model": null,
    "module_id": "speech",
+   "observations": [],
    "reason": null,
    "score": {
     "calibrated": false,
@@ -104,6 +106,7 @@
    ],
    "model": null,
    "module_id": "lip_sync",
+   "observations": [],
    "reason": null,
    "score": null,
    "section": "cross_modal",
@@ -125,6 +128,7 @@
    ],
    "model": null,
    "module_id": "c2pa",
+   "observations": [],
    "reason": null,
    "score": null,
    "section": "provenance",

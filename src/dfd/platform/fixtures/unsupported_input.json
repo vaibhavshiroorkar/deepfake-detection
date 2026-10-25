@@ -36,6 +36,7 @@
    "limitations": [],
    "model": null,
    "module_id": "face_video",
+   "observations": [],
    "reason": "no video stream",
    "score": null,
    "section": "authenticity",
@@ -54,6 +55,7 @@
    "limitations": [],
    "model": null,
    "module_id": "c2pa",
+   "observations": [],
    "reason": "MOCK: this container is not a format the credential reader handles",
    "score": null,
    "section": "provenance",
@@ -75,6 +77,7 @@
    ],
    "model": null,
    "module_id": "speech",
+   "observations": [],
    "reason": null,
    "score": {
     "calibrated": false,
