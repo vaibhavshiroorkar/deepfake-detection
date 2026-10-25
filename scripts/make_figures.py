@@ -360,7 +360,7 @@ def save_plain(fig, name):
 
 # (label, estimate, low, high): docs/DOC_FACTS.md section 15 and the logged blocks of E-004, E-005, E-007, E-008, E-009, E-013b (baseline at 3e-4), E-016, E-017
 LAD_V = [("I-0 frozen probe", 0.6933, 0.6639, 0.7314), ("Xception, fine-tuned", 0.8716, 0.8364, 0.9076), ("I-1 SigLIP base, fine-tuned", 0.9096, 0.8776, 0.9388),
-         ("I-1b with augmentation, mixup", 0.9315, 0.9055, 0.9548), ("I-1c mean of three encoders", 0.9192, 0.8948, 0.9457)]
+         ("I-1b with augmentation, mixup", 0.931514, 0.905484, 0.954778), ("I-1c mean of three encoders", 0.919215, 0.894824, 0.945728)]
 LAD_A = [("I-0 frozen probe", 0.6100, 0.5434, 0.7256), ("I-2 trim, normalise", 0.6723, 0.6126, 0.7584), ("I-3 plus augmentation", 0.7455, 0.7052, 0.8121), ("I-4 three encoders", 0.8130, 0.7523, 0.8808)]
 
 

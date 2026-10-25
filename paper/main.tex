@@ -26,9 +26,9 @@
 %\collegestylefalse
 
 \ifcollegestyle
-  \documentclass[conference,a4paper]{IEEEtran}
+  \documentclass[conference,a4paper]{IEEEtran_nodash}
 \else
-  \documentclass[conference]{IEEEtran}
+  \documentclass[conference]{IEEEtran_nodash}
 \fi
 
 \usepackage[T1]{fontenc}
@@ -38,6 +38,8 @@
 \usepackage{array}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 \usepackage{graphicx}
+% project rule: no dashes; the cite package would join ranges with an en dash
+\makeatletter\def\citedash {\hbox{-}}\makeatother
 \usepackage{cite}
 \usepackage[hidelinks,hypertexnames=false,pdftitle={Multimodal Deepfake Detection for Images, Video and Audio: A Hypothesis-Driven Study Under a Group-Disjoint Protocol},pdfauthor={Vaibhav Shiroorkar, Shivansh Gupta, Adithya Jithesh}]{hyperref}
 
@@ -1326,7 +1328,7 @@ the audio score keeps its exploratory calibration warning.
         the visual head; no audio-visual detection is claimed.
   \item The Xception baseline chose the largest learning rate of its grid
         again after one extension step ($3\times10^{-4}$), so a better rate may
-        exist; two runs were repeated after data-loader errors with the same
+        exist; one baseline run (seed 2) was repeated after a data-loader error with the same
         recipe; the margin $\delta$ rests on three seeds and is now set by its
         floor, not by the seed spread.
   \item I-1b and I-1c were run on request with their triggers not met to the

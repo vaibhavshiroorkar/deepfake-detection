@@ -167,7 +167,7 @@ def results(B):
         "does not recover a pulse from these compressed videos, not that no pulse exists; another extractor or uncompressed video could differ.")
 
     B.p("A positive control, run afterwards on the processor, asks whether this extractor would have recovered a pulse that was there. The exact pipeline of the check was run again on the same 432 clips, "
-        "after a known sinusoid of 1.2 Hz had been added to the skin pixels of every frame at eight relative amplitudes of the green channel, with a phase drawn per clip; the channel weights of the injected signature are the implementer's choice, "
+        "after a known sinusoid of 1.2 Hz had been added to the skin pixels of every frame at seven relative amplitudes of the green channel (0.0005 to 0.032, doubling each step; the table starts at 0.001, the 0.0005 row is the same as the control, 0.303), with a phase drawn per clip; the channel weights of the injected signature are the implementer's choice, "
         "and a green-only signature was run as a sensitivity check. With no injection the control reproduces the first check (0.301; the largest difference of the signal-to-noise ratio is 5 millionths of a decibel). "
         "<ref tab:rppgctl> gives the share of clips recovered. With the primary signature, the smallest tested amplitude recovered in at least 60 percent of the clips is 0.008 (377 of 432, 0.873 [0.838, 0.901]; at 0.004 the share is 0.546), "
         "and with green only it is 0.004 (0.789). An amplitude of 0.008 in the green channel is about one grey level at a skin value near 130.")

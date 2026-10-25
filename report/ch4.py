@@ -384,9 +384,9 @@ def staircase(B):
         "which gives a staircase of test scores, one per iteration, each touched once and recorded in the ledger. <ref fig:staircase> shows the protocol.")
     B.figure("staircase", "fig04_staircase.png", "Staircase test protocol. Verdicts on the development slice are exploratory; each frozen iteration is evaluated once on the sealed test sets and the pre-declared comparisons are the confirmatory claims.", 15.2,
              "Rising blocks for iterations I-0, I-1, I-2 and the final system, with arrows to the confirmatory claims", tag="schematic")
-    B.p("The confirmatory claims are two comparisons, declared before any final run, both as paired group bootstrap comparisons on the sealed data under the comparison rules: the final "
+    B.p("The confirmatory claims are three tests, declared before any final run, all as paired group bootstrap comparisons on the sealed data under the comparison rules: the final "
         "system against the working version, and the final system against a re-run published baseline, where the second is the non-inferiority test of Equation <ref eq:noninf>. "
-        "The first comparison is made on two sealed sets, face video on the Celeb-DF family and speech on In-the-Wild, so there are three tests in all; a Bonferroni interval at the 98.33 percent level is printed beside each as a robustness line. The margin "
+        "The first comparison is made on two sealed sets, face video on the Celeb-DF family and speech on In-the-Wild, which with the baseline comparison makes the three tests; a Bonferroni interval at the 98.33 percent level is printed beside each as a robustness line. The margin "
         "$\\delta$ is stated before the comparison and chosen from the measured seed-to-seed spread of the baseline, so the baseline had to be trained before $\\delta$ existed; it was trained "
         "(Xception, three seeds, first at three learning rates and then with one more, 3e-4, that was selected) and $\\delta$ is 0.0100, the floor of the rule; the first pass gave 0.0143. Every other comparison in the report is labelled exploratory.")
     B.p("The standing limitations of this protocol are stated with it. The development slices have 15 identities, 12 speakers and 2 generator units, so intervals are wide and ties are "

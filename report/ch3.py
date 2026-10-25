@@ -141,7 +141,7 @@ def build(B):
     B.p("so the problem is convex and its optimum does not depend on the initialisation; the seeds change only the order of the batches and the point at which early stopping fires. With "
         "class weights $w_1=\\tfrac{n}{2n_1}$ and $w_0=\\tfrac{n}{2n_0}$ the gradient becomes")
     B.equation("classw", r"\nabla_w L_w=\frac{1}{n}\sum_i w_{y_i}\,(p_i-y_i)\,z_i")
-    B.p("which is the gradient of the risk under a balanced prior $\\pi=\\tfrac12$. This matters because the training sets are unbalanced: FaceForensics++ has four fake videos for every real "
+    B.p("which is the gradient of the risk under a balanced prior $\\pi=\\tfrac{1}{2}$. This matters because the training sets are unbalanced: FaceForensics++ has four fake videos for every real "
         "video and ASVspoof 2019 has about nine spoofed utterances per bona fide utterance. The assumption is that the feature distribution of the training set is the one the head is "
         "applied to. The probe does not help when the features do not separate the classes, in which case the optimum is near chance whatever the weights, or when the shift between training "
         "and test data dominates.")
