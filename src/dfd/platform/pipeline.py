@@ -37,14 +37,13 @@ def planned_modules() -> list:
     return [
         PlannedModule("generated_video", "authenticity", "not implemented: no detector for fully generated video exists yet "
                       "(plan in docs/GENERATED_VIDEO_PLAN.md)"),
-        PlannedModule("lip_sync", "cross_modal", "not implemented: audio-video synchronisation module not built yet "
-                      "(decision note in docs/LIPSYNC_DECISION_NOTE.md)"),
     ]
 
 
 def default_modules() -> list:
     from .modules import build_default_modules
-    return build_default_modules() + planned_modules() + build_provenance_modules()
+    from .modules.lip_sync import build_lip_sync_module
+    return build_default_modules() + [build_lip_sync_module()] + planned_modules() + build_provenance_modules()
 
 
 def analyse_file(path: str | Path, filename: Optional[str] = None, modules: Optional[list] = None,

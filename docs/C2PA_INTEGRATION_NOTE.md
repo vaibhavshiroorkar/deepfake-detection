@@ -56,3 +56,18 @@ The Google DeepMind SynthID page describes checking only through Gemini, Search 
 - https://deepmind.google/models/synthid/
 
 Fetches were summarised by a tool, not read raw. Failed: the c2patool repo URL (404).
+
+
+## 6. Implementation findings (appended 2026-10-26)
+
+Install outcome (measured, this machine): `uv pip install --python .venv/Scripts/python.exe c2pa-python` installed c2pa-python 0.38.0 (PyPI release 2026-09-29, licence MIT OR Apache-2.0, repository github.com/contentauth/c2pa-python, homepage contentauthenticity.org, requires Python >=3.10). A `py3-none-win_amd64` wheel exists, so the unverified claim in section 3 about Windows wheel availability is resolved: it works on Windows with Python 3.13.15. The bundled native library reports C2PA SDK version 0.91.0. The package pip was absent from the venv, so uv was used. Packages added (no existing package changed or upgraded): c2pa-python 0.38.0, certifi 2026.10.23, charset-normalizer 3.5.2, cryptography 50.0.2, requests 2.34.2, toml 0.10.2, urllib3 2.8.0. Dependency line for pyproject.toml (not edited by this work): `c2pa-python>=0.38,<0.39`.
+
+Code: `src/dfd/platform/provenance/c2pa_verify.py` (`verify(path)`, uses `c2pa.Reader` with a Context whose Settings turn off remote manifest fetch and OCSP; optional trust anchors from the `trust_anchors_pem` argument or the file named by `DFD_C2PA_TRUST_ANCHORS`) and `ContentCredentialsModule` in `modules.py` (version `2-c2pa`).
+
+Observed library behaviour (measured with the fixtures in `tests/platform_c2pa/fixtures`, see its README for source and licence):
+- Result fields used: `Reader.json()` keys `active_manifest`, `manifests`, `validation_status` (code, explanation), `validation_state`; `Reader.get_validation_state()` returns `Valid`, `Invalid` or `Trusted`.
+- With no trust list, a correctly signed file returns `Valid` with status `signingCredential.untrusted`. This is not the same as trusted. The module maps it to `inconclusive` with a verification observation (integrity checked, signer not established). `credentials_valid` is produced only for state `Trusted`, which needs a configured anchor (tested with the public test certificate as anchor). This mapping is an autonomous decision and needs user review.
+- Changing image bytes after signing gives `Invalid` with `assertion.dataHash.mismatch` -> `credentials_invalid`.
+- No manifest raises `ManifestNotFound`; unsupported types (e.g. .txt) raise `NotSupported`; a damaged manifest in a JPEG raised a generic error ("C2PA provenance not found in XMP"). These map to `no_credentials_found`, `inconclusive` (format unsupported) and `inconclusive` (read error) respectively; none yields a verification observation.
+
+Not verified: no real-world trust list (the official C2PA trust list) is configured or downloaded, so real signer identities are never confirmed; video and audio containers were not tested with signed fixtures (the library lists mp4, mov, wav, mp3 and others as supported, which was read from `Reader.get_supported_mime_types()` but not exercised); timestamps are reported by the library but not interpreted here; cloud or sidecar manifests are not fetched. A valid credential attests to signed claims at signing time only; it does not prove pixels or samples are authentic, and `digitalSourceType` declaring generative AI is shown as a declared origin, not a detection. Absence of credentials proves nothing. DATA_LOG.md entries for the package and fixtures are still to be added by the main agent (rule 7); package hash was not recorded here.

@@ -42,7 +42,6 @@ def test_video_with_audio_is_routed_and_every_module_is_accounted_for(media):
     assert m["face_video"]["status"] == "not_applicable"            # no face is never a finding
     assert m["image_detector"]["status"] == "not_applicable"
     assert m["generated_video"]["status"] == "unsupported" and "not implemented" in m["generated_video"]["reason"]
-    assert m["lip_sync"]["status"] == "unsupported"
     assert m["media_metadata"]["status"] == "completed" and m["content_credentials"]["status"] == "completed"
     assert r["status"]["state"] == "partial"
     assert r["source_summary"] == "real"
@@ -84,3 +83,10 @@ def test_unusable_input_is_refused_before_any_module_runs(media, name, code):
     with pytest.raises(InputError) as e:
         analyse_file(media / name, modules=modules())
     assert e.value.code == code
+
+
+def test_planned_modules_and_default_registry():
+    from dfd.platform.pipeline import default_modules
+    assert [m.module_id for m in planned_modules()] == ["generated_video"]
+    ids = [m.module_id for m in default_modules()]
+    assert ids == ["face_video", "image_detector", "speech", "lip_sync", "generated_video", "media_metadata", "content_credentials"]

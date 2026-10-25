@@ -57,8 +57,8 @@ def test_single_marker_is_not_enough(mp4, tmp_path):
     assert next(m for m in run(p)["modules"] if m["module_id"] == "content_credentials")["finding"] == "no_credentials_found"
 
 
-def test_no_verification_or_valid_finding_without_verifier(mp4):
-    assert M.c2pa_verifier_available() is False       # recorded environment fact; update this test when a verifier is approved
+def test_byte_scan_helper_never_reports_verification_even_with_verifier_installed(mp4):
+    assert M.c2pa_verifier_available() is True        # c2pa-python 0.38.0 installed 2026-10-26; the byte-scan helper itself never verifies
     out = M.inspect_provenance(mp4)
     assert out["verified_credentials"] == [] and not any(o["kind"] == "verification" for o in out["observations"])
 
