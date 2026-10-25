@@ -64,6 +64,10 @@ def parity(t, problems):
             for sid, sc in zip(t.sample_id[m], t.score[m]):
                 if sid in table:
                     worst, n = max(worst, abs(float(table[sid][s]) - float(sc))), n + 1
+        present = bool(((t.modality == mod) & (t.dataset == ds) & (t.split == "val")).any())
+        if not present:
+            print(f"    parity {mod}/{ds}/val: block absent from this file (skipped in a dry run without GPU)")
+            continue
         status = "ok" if n and worst <= TOL else "FAIL"
         print(f"    parity {mod}/{ds}/val against the logged scores: {n} values compared, largest difference {worst:.2e} [{status}]")
         if status == "FAIL":
