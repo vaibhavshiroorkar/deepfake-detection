@@ -237,3 +237,13 @@ def test_browser_negative_finding_wording_and_no_green_check(page_factory):
     assert "No indication within tested scope" in body
     assert "✓" not in body and "✔" not in body and "OK" not in re.findall(r"\bOK\b", body)
     pg.close()
+
+
+def test_browser_shows_observation_kinds_without_calling_markers_verified(page_factory):
+    pg = page_factory()
+    pg.select_option("#scenario", "provenance_observations")
+    pg.wait_for_function("() => document.querySelector('#meta').textContent.includes('provenance_observations')")
+    body = pg.inner_text("body")
+    assert "Heuristic flag (descriptive only)" in body and "Marker scan (not a verification)" in body
+    assert "Verified:" not in body
+    pg.close()
