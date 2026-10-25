@@ -609,7 +609,7 @@ Item 7, the 20 worst errors on dev_x (10 false alarms, 10 misses), seed-mean sco
 Worst errors per group: celebdf_v2:id1 7, celebdf_v2:id12 3, celebdf_v2:id48 2, celebdf_v2:id10 2, celebdf_v2:id16 2, celebdf_v2:id0 1, celebdf_v2:id31 1, celebdf_v2:id41 1, celebdf_v2:id26 1.
 
 <!-- E-005 RESULT end -->
-
+- Run log note (appended 2026-10-25 after the result, CLAUDE.md rule 9): the first attempt of the stage-1 run IMG-08 at learning rate 1e-4 (seed 0) stopped at about step 1,750 on 2026-10-25 04:37 when a data-loader worker died (Windows shared-memory error, `Couldn't open shared event`; cause not established). Its error record is kept in data/_results/I-1_failed_attempts/IMG-08_lr0.0001_s0_attempt1/result.json. The run was repeated once on 2026-10-25 from 13:52 with the identical configuration and seed and finished (validation AUC 0.5583, a collapsed run like the other high-rate runs); the other eight stage-1 runs and the two stage-2 runs had no failure. The result above uses the repeated run. Stage 1 and stage 2 were therefore run in two sessions with the same code.
 
 ## E-007: speech preprocessing that removes leading and trailing silence and peak-normalises each clip (hypothesis H-A1)   (Iteration I-2 candidate, task T-A)
 - Status: PLANNED on 2026-10-25, written before any run of the variant (CLAUDE.md rule 2). Hypothesis and reasons: D-051 item 5 (decided autonomously - needs user review); it is justified by measurement M-004 and not by any tuning on dev_x. It runs after the I-1 runs, when the GPU is idle. The result block is written by script and nothing above it is edited after the first run.
