@@ -1298,7 +1298,7 @@ gt, th = add_table(s, L, TOP + 1500000, [span_w(5), span_w(2), span_w(2), W - sp
     ["Pooled family test", "744", "6,906", "about 44 identity groups on the fake side"],
 ], size="auto", bold_first_col=True, max_h=1900000, fill=1900000)
 add_text(s, L, TOP + 1500000 + th + 100000, W, BOT - (TOP + 1500000 + th + 100000), [
-    ("s", "Real is 10.8 percent of the pool. The 44 identity groups govern the intervals, and balanced accuracy and the threshold carry more noise than the AUC."),
+    ("s", "Real is 9.7 percent of the pool. The 44 identity groups govern the intervals, and balanced accuracy and the threshold carry more noise than the AUC."),
     ("s", "A sample is excluded when its target identity or its celebrity source identity is one of the 15 development identities (1,477 by target, 602 only by source): in a face swap named by two identities the visible face is the source identity.")], "pp_note")
 
 # environment

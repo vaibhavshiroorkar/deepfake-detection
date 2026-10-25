@@ -117,7 +117,7 @@ def datasets(B):
         "one group. The exclusion by celebrity source identity, and not by target identity alone, is required and not optional: in a face swap named by target and source identity the face "
         "that is visible is the source identity, so a rule on the target alone would leave faces of the development identities in the sealed test set.")
     B.p("The result is that Celeb-DF++ alone has 2,849 fake videos and no real video in its sealed test set, in 44 identity groups. Its AUC is therefore computed together with the "
-        "Celeb-DF v2 real videos, which are the same real sources, and the pooled family test set holds 744 real and 6,906 fake videos. Real videos are 10.8 percent of that pool. The "
+        "Celeb-DF v2 real videos, which are the same real sources, and the pooled family test set holds 744 real and 6,906 fake videos. Real videos are 9.7 percent of that pool. The "
         "consequence for the statistics is that the bootstrap resamples identities, so the fakes of Celeb-DF++ add generator coverage but almost no new independent groups: intervals on a "
         "pooled or per-generator AUC are governed by about 44 identity groups, and the estimates per generator, from 200 to 300 clips each, are wide. Balanced accuracy and the "
         "threshold carry more noise than the AUC on such an unbalanced set.")
