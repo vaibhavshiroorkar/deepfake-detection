@@ -66,9 +66,30 @@ def clip_table(split: str, limit: int | None = None):
     return t
 
 
+def augment_frame(img, rng, return_events=False):
+    """E-016 (I-1b, D-063): perturbation augmentation of one 224 px BGR training frame, in this order and independently:
+    Gaussian blur (p 0.3, sigma ~ U[0.1, 2.0]), down-up resize (p 0.5, scale ~ U[0.4, 1.0], INTER_AREA down, INTER_LINEAR up), JPEG (p 0.5, quality ~ U[40, 95])."""
+    import cv2
+    ev = dict(blur=False, resize=False, jpeg=False)
+    if rng.random() < 0.3:
+        img = cv2.GaussianBlur(img, (0, 0), float(rng.uniform(0.1, 2.0)))
+        ev["blur"] = True
+    if rng.random() < 0.5:
+        h, w = img.shape[:2]
+        s = float(rng.uniform(0.4, 1.0))
+        small = cv2.resize(img, (max(8, int(round(w * s))), max(8, int(round(h * s)))), interpolation=cv2.INTER_AREA)
+        img = cv2.resize(small, (w, h), interpolation=cv2.INTER_LINEAR)
+        ev["resize"] = True
+    if rng.random() < 0.5:
+        ok, buf = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, int(rng.uniform(40, 95))])
+        img = cv2.imdecode(buf, cv2.IMREAD_COLOR)
+        ev["jpeg"] = True
+    return (img, ev) if return_events else img
+
+
 class Frames(Dataset):
-    def __init__(self, paths, clip_of, y_clip):
-        self.paths, self.clip_of, self.y = paths, clip_of, y_clip
+    def __init__(self, paths, clip_of, y_clip, aug_seed=None):
+        self.paths, self.clip_of, self.y, self.aug_seed = paths, clip_of, y_clip, aug_seed
 
     def __len__(self):
         return len(self.paths)
@@ -80,6 +101,8 @@ class Frames(Dataset):
             raise RuntimeError(f"unreadable crop {self.paths[i]}")
         if img.shape[:2] != (224, 224):
             img = cv2.resize(img, (224, 224), interpolation=cv2.INTER_AREA)
+        if self.aug_seed is not None:   # training stream of I-1b only; the per-item generator makes the draw reproducible
+            img = augment_frame(img, np.random.default_rng([self.aug_seed, int(i)]))
         x = torch.from_numpy(np.ascontiguousarray(img[:, :, ::-1].transpose(2, 0, 1)))
         return x, float(self.y[self.clip_of[i]]), int(i)
 
@@ -114,8 +137,9 @@ def auc_nan(y, s):
     return float(roc_auc(np.asarray(y)[ok], s[ok])) if len(np.unique(np.asarray(y)[ok])) == 2 else float("nan")
 
 
-def run(cand, lr, seed, out_root, steps=STEPS, workers=10, limit=None, tag=None):
-    name = f"{cand}_lr{lr:g}_s{seed}"
+def run(cand, lr, seed, out_root, steps=STEPS, workers=10, limit=None, tag=None, aug=False, mixup=0.0, variant=None, wdir_root="checkpoints/I-1"):
+    """aug / mixup / variant: the I-1b lever (E-016, D-063); the defaults give the E-005 recipe unchanged."""
+    name = f"{cand}_lr{lr:g}_s{seed}" + (f"_{variant}" if variant else "")
     out = Path(out_root) / name
     if (out / "result.json").is_file():
         print("skip", name, flush=True)
@@ -141,7 +165,7 @@ def run(cand, lr, seed, out_root, steps=STEPS, workers=10, limit=None, tag=None)
     gen = torch.Generator().manual_seed(seed)
     n_perm = steps * BATCH
     order = torch.cat([torch.randperm(n_tr, generator=gen) for _ in range(-(-n_perm // n_tr))])[:n_perm]
-    ds_tr = Frames(tr["paths"], tr["clip_of"], tr["y"])
+    ds_tr = Frames(tr["paths"], tr["clip_of"], tr["y"], aug_seed=seed if aug else None)
     sampler = [int(i) for i in order]
     dl = DataLoader(ds_tr, batch_size=BATCH, sampler=sampler, num_workers=workers, persistent_workers=False, drop_last=True, prefetch_factor=4)
     torch.cuda.reset_peak_memory_stats()
@@ -152,9 +176,18 @@ def run(cand, lr, seed, out_root, steps=STEPS, workers=10, limit=None, tag=None)
         for gp in opt.param_groups:
             gp["lr"] = lr_at(step, steps, lr)
         x, yb = x.cuda(non_blocking=True), yb.cuda(non_blocking=True)
+        if mixup > 0:   # mixup (MATH_NOTES 14): one lambda ~ Beta(a, a) per batch, pixels and labels, class weights on the mixed label
+            rm = np.random.default_rng([seed, 98, step])
+            lam = float(rm.beta(mixup, mixup))
+            pm = torch.from_numpy(rm.permutation(x.shape[0])).cuda()
+            x = lam * x.float() + (1.0 - lam) * x.float()[pm]
+            yb = lam * yb + (1.0 - lam) * yb[pm]
         with torch.autocast("cuda", dtype=torch.float16):
             z = head(enc.train_features(x)).squeeze(1)
-        w = torch.where(yb == 1, torch.tensor(w1, device="cuda"), torch.tensor(w0, device="cuda"))
+        if mixup > 0:
+            w = yb * w1 + (1.0 - yb) * w0
+        else:
+            w = torch.where(yb == 1, torch.tensor(w1, device="cuda"), torch.tensor(w0, device="cuda"))
         loss = (F.binary_cross_entropy_with_logits(z.float(), yb, reduction="none") * w).mean()
         if not torch.isfinite(loss):
             nonfinite += 1
@@ -177,7 +210,7 @@ def run(cand, lr, seed, out_root, steps=STEPS, workers=10, limit=None, tag=None)
     peak = torch.cuda.max_memory_allocated() / 2**30
     res = dict(name=name, cand=cand, lr=lr, seed=seed, steps_done=len(losses), steps=steps, batch=BATCH, status=status, train_seconds=round(train_s, 1),
                peak_vram_gb=round(peak, 2), n_train_frames=n_tr, class_weights=[w0, w1], nonfinite_losses=nonfinite, instability_events=events,
-               loss_curve=curve, trainable_params=sum(p.numel() for p in ps), workers=workers, torch=torch.__version__, smoke=bool(limit or tag),
+               aug=bool(aug), mixup=float(mixup), variant=variant, loss_curve=curve, trainable_params=sum(p.numel() for p in ps), workers=workers, torch=torch.__version__, smoke=bool(limit or tag),
                date=time.strftime("%Y-%m-%d %H:%M"))
     if status != "ok":
         (out / "result.json").write_text(json.dumps(res, indent=1))
@@ -208,7 +241,7 @@ def run(cand, lr, seed, out_root, steps=STEPS, workers=10, limit=None, tag=None)
     np.savez(out / "scores.npz", **save)
     (out / "result.json").write_text(json.dumps(res, indent=1))
     if not (limit or tag):
-        wdir = Path("checkpoints/I-1") / name
+        wdir = Path(wdir_root) / name
         wdir.mkdir(parents=True, exist_ok=True)
         sd = {n: p.detach().cpu() for n, p in enc.model.named_parameters() if p.requires_grad and any(p is q for q in ps)}
         bufs = {n: b.detach().cpu() for n, b in enc.model.named_buffers()}   # BatchNorm running statistics of the CNN baseline (E-013); empty effect for the ViTs
