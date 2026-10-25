@@ -1,0 +1,92 @@
+{
+ "schema": "dfd-eval-compare/1",
+ "created": "2026-10-25",
+ "block": {
+  "modality": "audio",
+  "dataset": "in_the_wild",
+  "split": "test_x",
+  "role": "final, cross-dataset (headline)",
+  "development": false,
+  "n_samples": 24788,
+  "n_groups": 42
+ },
+ "metric": "auc",
+ "protocol": {
+  "n_boot": 2000,
+  "level": 0.95,
+  "seed": 20261024,
+  "rule": "same resampled groups for A and B; difference A - B per resample; several seeds: metric per seed per resample, averaged"
+ },
+ "a": {
+  "run_ids": [
+   "I-4-audio-s0",
+   "I-4-audio-s1",
+   "I-4-audio-s2"
+  ],
+  "seeds": [
+   0,
+   1,
+   2
+  ],
+  "iterations": [
+   "I-4"
+  ],
+  "score_file_sha256": "e0c78a8cd1b1f19a23cb3e82cdffba65979cfb4c368e75527c6eea09c79f383f",
+  "estimate": 0.9148405094099639,
+  "low": 0.8896216088924097,
+  "high": 0.9383391672446185,
+  "se": 0.012384620926321827,
+  "seed_sd": 0.0020702539577584157,
+  "n_nan": 0,
+  "per_seed": [
+   0.916686830635165,
+   0.915232367770475,
+   0.9126023298242518
+  ]
+ },
+ "b": {
+  "run_ids": [
+   "I-0-audio-s0",
+   "I-0-audio-s1",
+   "I-0-audio-s2"
+  ],
+  "seeds": [
+   0,
+   1,
+   2
+  ],
+  "iterations": [
+   "I-0"
+  ],
+  "score_file_sha256": "edc0b554b905e6147668d5d10d109adb34e030967c83ef4e94eafb68a70c0487",
+  "estimate": 0.7515698784106305,
+  "low": 0.6801614925460557,
+  "high": 0.8034914325135166,
+  "se": 0.03125814158678817,
+  "seed_sd": 0.0020111309991574684,
+  "n_nan": 0,
+  "per_seed": [
+   0.7535902902443186,
+   0.7495681585440651,
+   0.7515511864435077
+  ]
+ },
+ "difference": {
+  "estimate": 0.16327063099933337,
+  "low": 0.11771624266903494,
+  "high": 0.22655601147158214,
+  "se": 0.027718928595277186,
+  "seed_sd": null,
+  "n_nan": 0,
+  "contains_zero": false
+ },
+ "robustness": [
+  {
+   "level": 0.9833333333333333,
+   "low": 0.10848367873546183,
+   "high": 0.24813618043095603,
+   "n_replicates": 2000,
+   "contains_zero": false
+  }
+ ]
+}

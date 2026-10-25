@@ -1,0 +1,327 @@
+{
+ "iteration": "I-2",
+ "base_iteration": "I-2",
+ "task": "all",
+ "mode": "final",
+ "limit": null,
+ "date": "2026-10-25 20:53:40",
+ "git_commit": "5f43d48",
+ "seconds": 258,
+ "score_file": "data\\_final\\scores\\I-2.csv",
+ "score_file_sha256": "874acd22d2ca6f03307c1a7c454a28c95c290a82a294476ffccd6d05979b5245",
+ "files_used_sha256": {
+  "checkpoints\\I-1\\IMG-17_lr1e-05_s0\\weights.pt": "e0c2154d5628eb8e5d8e75970ffe3f57f3009b589cc79fa67244a0d7d8250186",
+  "checkpoints\\I-1\\IMG-17_lr1e-05_s1\\weights.pt": "dc655a179fbf7e63a10d464da9a63fc2699bc9a23953c5ccec39827224efb90d",
+  "checkpoints\\I-1\\IMG-17_lr1e-05_s2\\weights.pt": "8d399fd9486ded03bf60a1f04813c1796fb40977c0bdd662051908a72634332e",
+  "data\\_final\\heads\\I-0_T-I_s0.npz": "9976ad09c13fa553b3049dc0f90fa48d02d37011eb9acab418e38acfd4d0e42a",
+  "data\\_final\\heads\\I-0_T-I_s1.npz": "3bd19a8a5fd2ef785b9a1630e77790731ed4068f073cc3b3db3666ef40ea8de2",
+  "data\\_final\\heads\\I-0_T-I_s2.npz": "52a5c109d0194032cbe85d8a9088946eed36bc60b328fe084266d5d4de5ec448",
+  "data\\_final\\heads\\I-2_T-A_s0.npz": "4a6dc5f4b4bd8294ec3204e86e6e3303fb83fa20e75ddf74eeeff11c8258b00f",
+  "data\\_final\\heads\\I-2_T-A_s1.npz": "bb9d991bcd74f27bfdfed07f7cfb6a253753a83e5505593e26dc28331886ae37",
+  "data\\_final\\heads\\I-2_T-A_s2.npz": "260c5f515c3840c190d41e8e9e6a790dbb4ae4b472e15f01d79ee310556f8c43"
+ },
+ "split_files": {
+  "ffpp": [
+   "data/_splits/ffpp-037e2976fade.csv",
+   "037e2976fade063f5d748ad107c687dbdf0ca87c63ab9a32003b6dad8760aa55"
+  ],
+  "celebdf_v2": [
+   "data/_splits/celebdf_v2-82a3a70594e9.csv",
+   "82a3a70594e9ce087d29e5ca523582dd1de87b07929992703a772dfc1011eba7"
+  ],
+  "dfd": [
+   "data/_splits/dfd-f5ff5576814a.csv",
+   "f5ff5576814ad1b4d22d2082987372cd3e82b3da1ab474daf89424eb8b66e829"
+  ],
+  "celebdf_pp": [
+   "data/_splits/celebdf_pp-3f9df077b9eb.csv",
+   "3f9df077b9eb59de040da14da06713ef5ee2a1e52c3a576d3e5037e8de6338ef"
+  ],
+  "forensynths_progan_val": [
+   "data/_splits/progan_val-b42dc9619141.csv",
+   "b42dc9619141f734fde2a0b6295193f4c2bd051e88b3a390aaa8eedd7e3e9367"
+  ],
+  "forensynths_progan_test": [
+   "data/_splits/progan_test-7720c87f1b53.csv",
+   "7720c87f1b53a8755d7ca934dcf516135c3235dec4401f16c8d59822a8326499"
+  ],
+  "forensynths_cnn_subset": [
+   "data/_splits/cnn_subset-4e973bc4da0f.csv",
+   "4e973bc4da0f1d58083e08083ce0a3069c2e0c1e59914e03ff6eac15ef317eed"
+  ],
+  "diffusion_test": [
+   "data/_splits/diffusion_test-67dd057f5042.csv",
+   "67dd057f5042557e268a7434bba9233cbb4a6ff2b2cc8dd4b69c64140bbd873d"
+  ],
+  "asvspoof2019_la": [
+   "data/_splits/asvspoof2019_la-875bf337c379.csv",
+   "875bf337c379aa7e017043712d987e94159a74a85cb343c84a68d970a2d8f662"
+  ],
+  "in_the_wild": [
+   "data/_splits/in_the_wild-5cf2ea54a724.csv",
+   "5cf2ea54a724bae83e8a4ad275bcfa40b0a560264cfec49a9455779374355ee1"
+  ],
+  "lavdf": [
+   "data/_splits/lavdf_subset-e9d12decaf1f.csv",
+   "e9d12decaf1f862ea4a2c4ca83c386f6fefa95a0229c21d29e7fe734182a850b"
+  ]
+ },
+ "counts": {
+  "visual|ffpp|val|s0": {
+   "rows": 700,
+   "listed": 700,
+   "no_score": 0
+  },
+  "visual|ffpp|test_in|s0": {
+   "rows": 700,
+   "listed": 700,
+   "no_score": 0
+  },
+  "visual|celebdf_v2|dev_x|s0": {
+   "rows": 1728,
+   "listed": 1728,
+   "no_score": 0
+  },
+  "visual|celebdf_v2|test_x|s0": {
+   "rows": 4801,
+   "listed": 4801,
+   "no_score": 0
+  },
+  "visual|dfd|test_x|s0": {
+   "rows": 3431,
+   "listed": 3431,
+   "no_score": 0
+  },
+  "visual|celebdf_pp|test_x|s0": {
+   "rows": 2849,
+   "listed": 2849,
+   "no_score": 0
+  },
+  "visual|ffpp|val|s1": {
+   "rows": 700,
+   "listed": 700,
+   "no_score": 0
+  },
+  "visual|ffpp|test_in|s1": {
+   "rows": 700,
+   "listed": 700,
+   "no_score": 0
+  },
+  "visual|celebdf_v2|dev_x|s1": {
+   "rows": 1728,
+   "listed": 1728,
+   "no_score": 0
+  },
+  "visual|celebdf_v2|test_x|s1": {
+   "rows": 4801,
+   "listed": 4801,
+   "no_score": 0
+  },
+  "visual|dfd|test_x|s1": {
+   "rows": 3431,
+   "listed": 3431,
+   "no_score": 0
+  },
+  "visual|celebdf_pp|test_x|s1": {
+   "rows": 2849,
+   "listed": 2849,
+   "no_score": 0
+  },
+  "visual|ffpp|val|s2": {
+   "rows": 700,
+   "listed": 700,
+   "no_score": 0
+  },
+  "visual|ffpp|test_in|s2": {
+   "rows": 700,
+   "listed": 700,
+   "no_score": 0
+  },
+  "visual|celebdf_v2|dev_x|s2": {
+   "rows": 1728,
+   "listed": 1728,
+   "no_score": 0
+  },
+  "visual|celebdf_v2|test_x|s2": {
+   "rows": 4801,
+   "listed": 4801,
+   "no_score": 0
+  },
+  "visual|dfd|test_x|s2": {
+   "rows": 3431,
+   "listed": 3431,
+   "no_score": 0
+  },
+  "visual|celebdf_pp|test_x|s2": {
+   "rows": 2849,
+   "listed": 2849,
+   "no_score": 0
+  },
+  "visual|celebdf_pp_with_v2_real|test_x|s0": {
+   "rows": 3593,
+   "listed": 3593,
+   "no_score": 0
+  },
+  "visual|celebdf_family|test_x|s0": {
+   "rows": 7650,
+   "listed": 7650,
+   "no_score": 0
+  },
+  "visual|celebdf_pp_with_v2_real|test_x|s1": {
+   "rows": 3593,
+   "listed": 3593,
+   "no_score": 0
+  },
+  "visual|celebdf_family|test_x|s1": {
+   "rows": 7650,
+   "listed": 7650,
+   "no_score": 0
+  },
+  "visual|celebdf_pp_with_v2_real|test_x|s2": {
+   "rows": 3593,
+   "listed": 3593,
+   "no_score": 0
+  },
+  "visual|celebdf_family|test_x|s2": {
+   "rows": 7650,
+   "listed": 7650,
+   "no_score": 0
+  },
+  "image|forensynths_progan_val|val|s0": {
+   "rows": 2400,
+   "listed": 2400,
+   "no_score": 0
+  },
+  "image|forensynths_progan_val|val|s1": {
+   "rows": 2400,
+   "listed": 2400,
+   "no_score": 0
+  },
+  "image|forensynths_progan_val|val|s2": {
+   "rows": 2400,
+   "listed": 2400,
+   "no_score": 0
+  },
+  "image|forensynths_progan_test|test_in|s0": {
+   "rows": 8000,
+   "listed": 8000,
+   "no_score": 0
+  },
+  "image|forensynths_progan_test|test_in|s1": {
+   "rows": 8000,
+   "listed": 8000,
+   "no_score": 0
+  },
+  "image|forensynths_progan_test|test_in|s2": {
+   "rows": 8000,
+   "listed": 8000,
+   "no_score": 0
+  },
+  "image|forensynths_cnn_subset|dev_x|s0": {
+   "rows": 5998,
+   "listed": 5998,
+   "no_score": 0
+  },
+  "image|forensynths_cnn_subset|dev_x|s1": {
+   "rows": 5998,
+   "listed": 5998,
+   "no_score": 0
+  },
+  "image|forensynths_cnn_subset|dev_x|s2": {
+   "rows": 5998,
+   "listed": 5998,
+   "no_score": 0
+  },
+  "image|forensynths_cnn_subset|test_x|s0": {
+   "rows": 48805,
+   "listed": 48805,
+   "no_score": 0
+  },
+  "image|forensynths_cnn_subset|test_x|s1": {
+   "rows": 48805,
+   "listed": 48805,
+   "no_score": 0
+  },
+  "image|forensynths_cnn_subset|test_x|s2": {
+   "rows": 48805,
+   "listed": 48805,
+   "no_score": 0
+  },
+  "image|diffusion_test|test_x|s0": {
+   "rows": 10000,
+   "listed": 10000,
+   "no_score": 0
+  },
+  "image|diffusion_test|test_x|s1": {
+   "rows": 10000,
+   "listed": 10000,
+   "no_score": 0
+  },
+  "image|diffusion_test|test_x|s2": {
+   "rows": 10000,
+   "listed": 10000,
+   "no_score": 0
+  },
+  "audio|asvspoof2019_la|val|s0": {
+   "rows": 24844,
+   "listed": 24844,
+   "no_score": 0
+  },
+  "audio|asvspoof2019_la|val|s1": {
+   "rows": 24844,
+   "listed": 24844,
+   "no_score": 0
+  },
+  "audio|asvspoof2019_la|val|s2": {
+   "rows": 24844,
+   "listed": 24844,
+   "no_score": 0
+  },
+  "audio|asvspoof2019_la|test_in|s0": {
+   "rows": 71237,
+   "listed": 71237,
+   "no_score": 0
+  },
+  "audio|asvspoof2019_la|test_in|s1": {
+   "rows": 71237,
+   "listed": 71237,
+   "no_score": 0
+  },
+  "audio|asvspoof2019_la|test_in|s2": {
+   "rows": 71237,
+   "listed": 71237,
+   "no_score": 0
+  },
+  "audio|in_the_wild|dev_x|s0": {
+   "rows": 6991,
+   "listed": 6991,
+   "no_score": 0
+  },
+  "audio|in_the_wild|dev_x|s1": {
+   "rows": 6991,
+   "listed": 6991,
+   "no_score": 0
+  },
+  "audio|in_the_wild|dev_x|s2": {
+   "rows": 6991,
+   "listed": 6991,
+   "no_score": 0
+  },
+  "audio|in_the_wild|test_x|s0": {
+   "rows": 24788,
+   "listed": 24788,
+   "no_score": 0
+  },
+  "audio|in_the_wild|test_x|s1": {
+   "rows": 24788,
+   "listed": 24788,
+   "no_score": 0
+  },
+  "audio|in_the_wild|test_x|s2": {
+   "rows": 24788,
+   "listed": 24788,
+   "no_score": 0
+  }
+ },
+ "notes": []
+}
