@@ -246,7 +246,8 @@ def blocks_for(run: Run, tag: str, task: str):
                 out += run.guarded("T-V frozen IMG-07", lambda: blocks_video_frozen(run))
             elif tag == "BASE":
                 def base():
-                    lr = json.loads(Path("data/_results/baseline/selection.json").read_text())["best_lr"]
+                    sel = Path("data/_results/baseline/selection_b.json")      # E-013b (D-062 a): the grid with 3e-4 added; selection.json is the E-013 record
+                    lr = json.loads((sel if sel.is_file() else Path("data/_results/baseline/selection.json")).read_text())["best_lr"]
                     return blocks_video_ft(run, "IMG-04", lambda s: f"IMG-04_lr{lr:g}_s{s}", lambda s: Path(f"checkpoints/I-1/IMG-04_lr{lr:g}_s{s}/weights.pt"))
                 out += run.guarded("T-V Xception", base)
             else:
