@@ -121,3 +121,11 @@ Done (tests: 404 passed, 1 skipped, full suite, CUDA hidden, 2026-10-26 ~01:55 I
 - Proposals only (nothing run): docs/FAKEAVCELEB_SPLIT_PLAN.md (corrects my earlier "578 targets" figure: the identity graph has 10 components of 50 identities), docs/LIPSYNC_DECISION_NOTE.md, docs/GENERATED_VIDEO_PLAN.md, docs/C2PA_INTEGRATION_NOTE.md.
 
 Decisions waiting for the user: (1) E-015 / FakeAVCeleb option B execution and extraction (D-062 e deadline Wed 2026-10-28 12:00, otherwise "not run"); (2) accept the DF26 licence on its Hugging Face page; (3) approval to install c2pa-python (no Windows wheel was found in a PyPI listing, to be checked), download SyncNet weights and record their unstated licence; (4) merge of the branch.
+
+### Platform sprint, second part (2026-10-26, later; supersedes the "decisions waiting" line above)
+- Merged into main by the user's rule D1 after: full suite 437 passed, 2 skipped (the opt-in parity test and the opt-in live-face test; both were run separately and passed); live face-bearing path run in a real browser on six non-sealed fixtures; protected paths unchanged except the one-line E-015 append to ledger/final_ledger.jsonl.
+- DF26 downloaded and size-verified (DATA_LOG G2, 3,830 files, 3.57 GB). DeepAction downloaded and verified (G1). SyncNet v2 weights downloaded (G4; weights licence not stated). c2pa-python 0.38.0 installed (G3).
+- E-015 (FakeAVCeleb sealed identity half, D-070) was run once on 2026-10-26: all four pre-stated criteria met (visual AUC 0.955, audio AUC 0.926, independence AUCs 0.561 and 0.501), but the frozen thresholds do not transfer (visual sensitivity 0.48, audio specificity 0.64) and the compression and channel confounds cannot be separated; my prior expectations for H1 were wrong. Details and interpretation in docs/EXPERIMENTS.md.
+- E-018 (DeepAction metadata audit): metadata alone separates real from generated perfectly; DeepAction must be re-encoded before any content-based use.
+- Lip-sync module exists with uncalibrated placeholder thresholds; C2PA verification works but no trust list is configured (untrusted signer maps to inconclusive).
+- Still open for the user: review of the autonomous design choices tagged in D-069, D-070 and E-018; whether to fetch a C2PA trust list; the SyncNet weights licence; the deferred timeline reconciliation.
