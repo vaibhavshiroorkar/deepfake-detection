@@ -1392,8 +1392,8 @@ rows_l = [["Visual head, trained on LAV-DF", "0.7491 [0.7280, 0.7697]", "0.5070 
 hdr_l = ["Head", "Own label, all videos", "Own label, produced videos only", "Real originals against audio-only fakes"]
 cw_l = [span_w(3), span_w(3), span_w(3)]
 cw_l.append(W - sum(cw_l))
-sz_l = fit_size(cw_l, hdr_l, rows_l, sizes=(16, 15, 14, 13, 12), bold_first_col=True)
-gt, th = add_table(s, L, TOP, cw_l, hdr_l, rows_l, size=sz_l, bold_first_col=True, max_h=2400000)
+sz_l = 16
+gt, th = add_table(s, L, TOP, cw_l, hdr_l, rows_l, size=sz_l, bold_first_col=True, max_h=2900000)
 add_text(s, L, TOP + th + 80000, W, BOT - (TOP + th + 80000), [
     ("b", "Subset: 500 videos per cell and split, source video as the group; test part sealed.", 18),
     ("b", "Fusion weights: visual 4.930, audio 0.813; sum of log-odds 0.9795; best rule minus better head +0.0023 [+0.0009, +0.0040].", 18),
