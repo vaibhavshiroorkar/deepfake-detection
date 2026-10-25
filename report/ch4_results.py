@@ -178,19 +178,3 @@ def screens(B):
     B.figure("webaudio", "../screens/real_audio.png", "The local web page with the real checkpoint for an audio file, with the warning about the exploratory calibration of audio scores.", 8.5,
              "Screenshot of the web page with the result for an audio file and a warning about the calibration of audio scores", tag="screenshot of the real checkpoint on a training item",
              trace="E-004 page check on the real checkpoint (training item, no accuracy claim)")
-
-
-def status_table(B):
-    pend = lambda x: "<pend %s>" % x
-    N = "E-014 (freeze)"
-    B.p("<ref tab:status> lists the results that do not exist yet. They are all sealed-test results: each cell is filled only from a logged final evaluation, and the sealed test sets are not read before the freeze.")
-    B.table("status", "Results that are still pending (sealed test sets; the sealed run follows the readiness checks).",
-            ["Result", "Where it is measured", "Value"],
-            [["AUC of the working version on its sealed test sets", "sealed in-dataset and cross-dataset tests, once, at the freeze", pend(N)],
-             ["Sealed test AUC of each frozen iteration", "staircase, one evaluation per iteration", pend(N)],
-             ["Final face-video system against the working version", "paired group bootstrap on the sealed Celeb-DF family test", pend(N)],
-             ["Final speech system against the working version", "paired group bootstrap on the sealed In-the-Wild test", pend(N)],
-             ["Final face-video system against the re-run baseline", "non-inferiority interval with the margin 0.0100, on the sealed Celeb-DF family test", pend(N)],
-             ["Robustness line of the three tests", "interval at the 98.33 percent level (Bonferroni over three), from the same resamples", pend(N)],
-             ["LAV-DF sealed test of the unimodal heads and the fusion", "exploratory, once", pend(N)]],
-            [7.2, 6.4, 2.8], ["left", "left", "center"], size=9)

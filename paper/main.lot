@@ -1,9 +1,11 @@
-\contentsline {table}{\numberline {I}{\ignorespaces Shortlisted frozen encoders per task}}{3}{table.22}%
+\contentsline {table}{\numberline {I}{\ignorespaces Shortlisted frozen encoders per task}}{4}{table.22}%
 \contentsline {table}{\numberline {II}{\ignorespaces Data per task}}{6}{table.29}%
 \contentsline {table}{\numberline {III}{\ignorespaces Iteration slots}}{10}{table.40}%
 \contentsline {table}{\numberline {IV}{\ignorespaces Iteration slots, continued}}{11}{table.41}%
 \contentsline {table}{\numberline {V}{\ignorespaces Encoder sweep on the development slice}}{12}{table.46}%
-\contentsline {table}{\numberline {VI}{\ignorespaces Working version (I-0) on the development slice}}{13}{table.48}%
-\contentsline {table}{\numberline {VII}{\ignorespaces Measured iteration results}}{13}{table.50}%
+\contentsline {table}{\numberline {VI}{\ignorespaces Working version (I-0) on the development slice}}{14}{table.48}%
+\contentsline {table}{\numberline {VII}{\ignorespaces Measured iteration results}}{14}{table.50}%
 \contentsline {table}{\numberline {VIII}{\ignorespaces LAV-DF pre-check and in-dataset heads}}{15}{table.54}%
-\contentsline {table}{\numberline {IX}{\ignorespaces Sealed-test AUC per frozen iteration}}{16}{table.58}%
+\contentsline {table}{\numberline {IX}{\ignorespaces Sealed-test AUC and the three confirmatory tests}}{16}{table.58}%
+\contentsline {table}{\numberline {X}{\ignorespaces Exploratory sealed staircase}}{17}{table.59}%
+\contentsline {table}{\numberline {XI}{\ignorespaces Sealed LAV-DF subset}}{17}{table.60}%

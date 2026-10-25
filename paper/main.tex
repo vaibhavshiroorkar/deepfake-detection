@@ -125,7 +125,7 @@ declared rule and also at the 98.33\,\% level. On the sealed In-the-Wild test
 superior by the declared 95\,\% rule; the 98.33\,\% interval
 [$-0.0011$, +0.0355] contains zero, so superiority is not robust to the
 Bonferroni level, while non-inferiority with a margin of 0.0100 holds at both
-levels. Two of the four written predictions for the speech results failed in the
+levels. Two of the five written predictions, both for speech, failed in the
 optimistic direction. The limits of the evidence include one baseline family at
 one input size, 344 groups for video, 42 speakers for speech, a margin set from
 three seeds and a floor, and one sealed run of each frozen iteration.
@@ -680,8 +680,8 @@ and the score correlation of the three encoders was 0.89 to 0.91 against below
 \includegraphics[width=\textwidth]{fig03_ladder.pdf}
 \caption[Iteration ladder]{The measured iteration ladder. Each lever was chosen after the diagnostic
 battery of the previous step; the verdicts are mechanical evaluations of the
-criteria written before the run and are exploratory. The sealed-test evaluation
-of the frozen iterations is not yet run.}
+criteria written before the run and are exploratory. The sealed-test
+evaluation of the frozen iterations is in Table~\ref{tab:final}.}
 \label{fig:ladder}
 \end{figure*}
 
@@ -710,7 +710,8 @@ thresholds and measured outcomes.
 \centering
 \caption[Iteration slots]{Iterations. Hypotheses and thresholds were written before any run; the outcomes
 are exploratory (validation split and development slice) and the verdicts are
-mechanical. The sealed-test evaluation is not yet run.}
+mechanical. The sealed-test evaluation is in Tables~\ref{tab:final}
+and~\ref{tab:stair}.}
 \label{tab:iters}
 \small
 \begin{tabular}{@{}l L{2.4cm} L{7.1cm} L{3.8cm}@{}}
@@ -890,8 +891,8 @@ recorded hash, and a preprocessing configuration the code cannot apply as
 trained is refused. A version-2 checkpoint was checked against the training-time
 scores on 11 validation items (6 FaceForensics++ videos, 3 ASVspoof files and 2
 ProGAN images): the largest difference of the calibrated score is 0.0019 against
-a tolerance of 0.02. The web page itself still runs the working-version
-checkpoint until the freeze, and the unit tests (304) pass on test doubles.
+a tolerance of 0.02. The web page itself has not been switched to the
+checkpoint of the frozen system and still runs the working-version checkpoint, and the unit tests (304) pass on test doubles.
 
 \begin{figure*}[!t]
 \centering
@@ -912,8 +913,10 @@ exploratory: they report sign, size and interval, they rank candidates and
 choose the next step, and they are not confirmed performance. They are the mean
 AUC over three head seeds with the 95\,\% group-bootstrap interval. The verdicts
 are mechanical evaluations of criteria that were written before the run. The
-sealed-test results and the confirmatory comparisons are not yet run (the
-sealed run follows the readiness checks) and are marked pending.
+sealed-test results are in the subsection on the staircase and the confirmatory tests: each frozen
+iteration was read once, over seeds 0 to 2, at clip or image level, with a
+group bootstrap of 2\,000 resamples; only the three confirmatory tests T1 to T3
+are confirmatory, and every other sealed number is exploratory.
 
 \subsection{Encoder sweep (exploratory, development slice)}
 Table~\ref{tab:sweep} gives the ranking of every candidate. On the face-frame
@@ -1246,58 +1249,171 @@ frequency and amplitude is also easier to recover than a real pulse. The verdict
 of the check stands. % M-005
 
 \subsection{Staircase and confirmatory tests}
-The sealed test result of each frozen iteration and the three confirmatory tests
-are to be given in Table~\ref{tab:final}. They are not yet run: the sealed run
-follows the readiness checks, each frozen iteration is then evaluated once, and
-the cells stay pending until then. What is fixed beforehand: the final system is
+The sealed run was made once the system was frozen. Each frozen iteration (the
+working version I-0, the iterations I-1 to I-4, the re-run Xception baseline and
+the LAV-DF heads) was evaluated once on the sealed sets, with three head seeds
+(0 to 2), at clip or image level, and a group bootstrap of 2\,000 resamples; the
+ledger holds 74 entries and no evaluation was repeated. % E-014
+What was fixed beforehand: the final system is
 the configuration after the last supported lever of each task (fine-tuned SigLIP
 base for face frames, the CLIP probe for generated images, and the
 three-encoder average with trim, normalise and augmentation for speech); neither
 I-1b nor I-1c is part of it, and the LAV-DF fusion is not part of the
-confirmatory claims and is evaluated once as exploratory evidence. The first
+confirmatory claims and was evaluated once as exploratory evidence. The first
 test (T1) asks whether the lower bound of the paired difference to the working
 version is above zero on the sealed Celeb-DF family test (video), and the second
 (T2) asks the same on the sealed In-the-Wild test (speech); there is no image
 test, because the image head is the same in both. The third (T3) asks whether the
 final video system is non-inferior to the Xception baseline at $3\times10^{-4}$,
-with $\delta=0.0100$, on the sealed Celeb-DF family test. Each test is decided by
+with $\delta=0.0100$, and superior if the lower bound is above zero, on the
+sealed Celeb-DF family test. Each test is decided by
 its declared 95\,\% rule, and the 98.33\,\% robustness interval is printed next
-to it.
+to it. Table~\ref{tab:final} gives the result.
 
-\begin{table}[!t]
+\begin{table*}[!t]
 \centering
-\caption[Sealed-test AUC per frozen iteration]{Sealed-test AUC per frozen iteration (staircase), and the paired
-difference of the three confirmatory tests (T1 to T3), each with its 95\,\%
-group-bootstrap interval (the declared rule) and the 98.33\,\% robustness
-interval.}
+\caption[Sealed-test AUC and the three confirmatory tests]{Sealed-test AUC of the working version (I-0), the final system and the
+Xception baseline, and the paired differences of the three confirmatory tests
+(T1 to T3). For a test row the 95\,\% column is the declared rule and the
+98.33\,\% column is the robustness interval (Bonferroni over three); AUC rows
+have a 95\,\% group-bootstrap interval only. The Celeb-DF family set mixes the
+test part of Celeb-DF v2 and the Celeb-DF++ fakes against the Celeb-DF v2 real
+videos.}
 \label{tab:final}
 \small
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{@{}L{3.3cm} c c c@{}}
+\begin{tabular}{@{}L{4.1cm} L{2.2cm} L{3.7cm} L{2.6cm} L{3.4cm}@{}}
 \toprule
-Row & 95\,\% & 98.33\,\% & Verdict \\
+Row & Videos or clips / groups & 95\,\% & 98.33\,\% & Verdict \\
 \midrule
-I-0, sealed Celeb-DF family & [pending] % E-014
-& & [pending] % E-014
+I-0, sealed Celeb-DF family & 7\,650 / 344 & 0.6238 [0.6015, 0.6486] & n/a & n/a % E-014
 \\
-Final system, same set & [pending] % E-014
-& & [pending] % E-014
+Final system, same set & 7\,650 / 344 & 0.8218 [0.8020, 0.8393] & n/a & n/a % E-014
 \\
-T1 final minus I-0, Celeb-DF family & [pending] % E-014
-& [pending] % E-014
-& [pending] % E-014
+Xception baseline, same set & 7\,650 / 344 & 0.8042 [0.7841, 0.8223] & n/a & n/a % E-014
 \\
-T2 final minus I-0, In-the-Wild & [pending] % E-014
-& [pending] % E-014
-& [pending] % E-014
+I-0, sealed In-the-Wild & 24\,788 / 42 & 0.7516 [0.6802, 0.8035] & n/a & n/a % E-014
 \\
-T3 final minus baseline, Celeb-DF family & [pending] % E-014
-& [pending] % E-014
-& [pending] % E-014
+Final system, same set & 24\,788 / 42 & 0.9148 [0.8896, 0.9383] & n/a & n/a % E-014
+\\
+\midrule
+T1 final minus I-0, Celeb-DF family & 7\,650 / 344 & +0.1980 [+0.1688, +0.2242] & [+0.1627, +0.2303] & improved; robust % E-014
+\\
+T2 final minus I-0, In-the-Wild & 24\,788 / 42 & +0.1633 [+0.1177, +0.2266] & [+0.1085, +0.2481] & improved; robust % E-014
+\\
+T3 final minus baseline, Celeb-DF family & 7\,650 / 344 & +0.0176 [+0.0025, +0.0327] & [$-0.0011$, +0.0355] & superior at 95\,\%, not robust to the Bonferroni level; non-inferior at both % E-014
 \\
 \bottomrule
 \end{tabular}
+\end{table*}
+
+On the sealed Celeb-DF family test the final video system reaches an AUC of
+0.8218 [0.8020, 0.8393] and the working version 0.6238 [0.6015, 0.6486]; the
+paired difference of T1 is +0.1980 [+0.1688, +0.2242], with a lower bound above
+zero, so the video system is improved by the declared rule, and the 98.33\,\%
+interval [+0.1627, +0.2303] agrees. On the sealed In-the-Wild test the final
+speech system reaches 0.9148 [0.8896, 0.9383] and the working version 0.7516
+[0.6802, 0.8035]; the difference of T2 is +0.1633 [+0.1177, +0.2266], improved,
+with a robustness interval of [+0.1085, +0.2481]. Against the Xception baseline
+at $3\times10^{-4}$ (0.8042 [0.7841, 0.8223]) the difference of T3 is +0.0176
+[+0.0025, +0.0327]: the lower bound is above zero, so the final video system is
+superior by the declared 95\,\% rule. The 98.33\,\% interval is
+[$-0.0011$, +0.0355] and contains zero, so superiority is not robust to the
+Bonferroni level. The lower bound of that interval is above $-\delta$, so the
+system is non-inferior to the baseline at both levels. The wording that the
+evidence supports is therefore: superior at the 95\,\% level, not robust to the
+Bonferroni level, non-inferior at both, and nothing beyond that. The baseline is
+one network family at 224 pixels, so T3 does not speak for other published
+detectors. % E-014
+
+Of the five written predictions, three were inside their ranges: the final video
+system between 0.75 and 0.92, the working version between 0.60 and 0.75, and the
+difference to the baseline between $-0.03$ and +0.05. The two speech
+predictions failed in the optimistic direction: the final speech system was
+predicted between 0.60 and 0.85 and was found at 0.9148, and the working
+version was predicted between 0.50 and 0.70 and was found at 0.7516. The sealed
+video values are below the development values (final system 0.8218 against
+0.9096 on the development slice, baseline 0.8042 against 0.8716), and the sealed
+speech values are above them (0.9148 against 0.8130, working version 0.7516
+against 0.6100); the order of the steps is kept in both. % E-014
+
+\begin{table*}[!t]
+\centering
+\caption[Exploratory sealed staircase]{Exploratory staircase on the sealed sets: AUC per frozen iteration
+(point estimates over three seeds; the intervals of the sealed log are not
+repeated here) and, for video, the Xception baseline. The video model does not
+change after I-1, the image head is the same in all iterations, and the speech
+scores change from I-2 on. Outside T1 to T3 nothing in this table is a
+confirmatory claim.}
+\label{tab:stair}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}l r c c c c c c@{}}
+\toprule
+Task and sealed set & Items / groups & I-0 & I-1 & I-2 & I-3 & I-4 & Xception \\
+\midrule
+Video, Celeb-DF family & 7\,650 / 344 & 0.6238 & 0.8218 & 0.8218 & 0.8218 & 0.8218 & 0.8042 \\
+Video, Celeb-DF v2 test only & 4\,801 / 344 & 0.6322 & 0.8999 & 0.8999 & 0.8999 & 0.8999 & 0.8527 \\
+Video, DFD & 3\,431 / 28 & 0.5927 & 0.8797 & 0.8797 & 0.8797 & 0.8797 & 0.8847 \\
+Video, FF++ test (in-dataset) & 700 / 70 & 0.7946 & 0.9899 & 0.9899 & 0.9899 & 0.9899 & 0.9895 \\
+\midrule
+Speech, In-the-Wild & 24\,788 / 42 & 0.7516 & 0.7516 & 0.8125 & 0.8672 & 0.9148 & n/a \\
+Speech, ASVspoof 2019 test (in-dataset) & 71\,237 / 67 & 0.9684 & 0.9684 & 0.9632 & 0.9541 & 0.9835 & n/a \\
+\midrule
+Images, ProGAN test (in-dataset) & 8\,000 / 20 & 1.0000 & 1.0000 & 1.0000 & 1.0000 & 1.0000 & n/a \\
+Images, CNN-synthesis subset & 48\,805 / 16 & 0.9316 & 0.9316 & 0.9316 & 0.9316 & 0.9316 & n/a \\
+Images, diffusion test & 10\,000 / 10 & 0.9354 & 0.9354 & 0.9354 & 0.9354 & 0.9354 & n/a \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The exploratory staircase (Table~\ref{tab:stair}) shows where the change comes
+from. The video gain appears at I-1 (fine-tuning) and the later iterations did
+not change the video model, so the video columns after I-1 repeat. The pooled
+family set is a mixture: the Celeb-DF v2 test part alone gives 0.8999 for the
+fine-tuned model, and the Celeb-DF++ fakes against the Celeb-DF v2 real videos
+give 0.7105, so the family value of 0.8218 lies between them. The
+in-dataset FaceForensics++ test is near ceiling (0.9899). On DFD the
+fine-tuned model is at 0.8797 and the baseline at 0.8847, a difference that is
+small against the interval of either. For speech the steps follow the order seen on the
+development slice: In-the-Wild rises from 0.7516 at I-0 to 0.8125 (I-2), 0.8672
+(I-3) and 0.9148 (I-4). On the in-dataset ASVspoof test the value falls slightly
+at I-2 and I-3 (0.9632, 0.9541) and is 0.9835 at I-4. The image head is
+unchanged across the iterations, with 1.0000 on the ProGAN test, 0.9316 on the
+CNN-synthesis subset and 0.9354 on the diffusion test. All of this is
+exploratory. % E-014
+
+\begin{table}[!t]
+\centering
+\caption[Sealed LAV-DF subset]{Sealed LAV-DF subset (2\,000 videos, 1\,736 groups; 1\,500 videos
+within the produced ones): AUC of each head against three label schemes: the fused label (fake if
+either modality is fake), the head's own modality label, and the own label within
+the produced videos only (exploratory). Frozen heads are the FaceForensics++ visual head and the speech
+average; the LAV-DF heads are trained on LAV-DF; the last row is a visual head
+trained on the produced videos only.}
+\label{tab:lavdfsealed}
+\footnotesize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{@{}l c c c@{}}
+\toprule
+Head & Fused & Own & Own, produced \\
+\midrule
+Visual, frozen (I-5) & 0.3226 & 0.4044 & 0.4890 \\
+Audio, frozen (I-5) & 0.6462 & 0.6646 & 0.6386 \\
+Visual, LAV-DF (I-6) & 0.9921 & 0.7477 & 0.5032 \\
+Audio, LAV-DF (I-6) & 0.7344 & 0.8491 & 0.8480 \\
+Fused, LAV-DF (I-6) & 0.9945 & n/a & n/a \\
+Visual, produced only (I-6b) & 0.5216 & 0.5243 & 0.5203 \\
+\bottomrule
+\end{tabular}
 \end{table}
+
+On the sealed LAV-DF subset the development pattern repeats (Table~\ref{tab:lavdfsealed}).
+The frozen visual head is below chance against the fused label (0.3226), the
+visual head trained on LAV-DF separates the produced videos from the originals
+(0.9921, fused 0.9945), and it is at chance within the produced videos (0.5032),
+as is the head trained on produced videos only (0.5203). The audio head detects
+the audio manipulation within the produced videos (0.8480). The sealed subset
+therefore gives no audio-visual detection claim. % E-014
 
 \subsection{Calibration and per-generator behaviour}
 Temperature scaling fitted on validation did not improve the calibration on the
@@ -1324,8 +1440,22 @@ the audio score keeps its exploratory calibration warning.
         generator units, so its interval is not interpretable as a population
         interval; on the speech task the sweep verdict is inconclusive and the
         audio score is poorly calibrated under shift.
-  \item The Celeb-DF family test has about 44 independent identity groups and
-        is strongly imbalanced toward fakes, so its intervals stay wide.
+  \item The sealed Celeb-DF family test has 344 groups (44 identity groups and
+        300 real YouTube videos) and is strongly imbalanced toward fakes (744
+        real videos against 6\,906 fake), and it mixes the test part of
+        Celeb-DF v2 with Celeb-DF++ fakes, so its intervals stay wide and its
+        AUC is a mixture of two sources. The sealed speech test has 42 speakers,
+        and its intervals are governed by them.
+  \item What the sealed run does not show: the baseline is one network family at
+        one input size (224 pixels), so T3 says nothing about other detectors;
+        the margin $\delta=0.0100$ rests on three seeds and a floor; I-1b and
+        I-1c have no sealed test; every sealed number is one run of a frozen
+        iteration, repeated only by a logged reason, so run-to-run variation of
+        training is shown by the three head seeds and not by independent
+        retraining of the whole system; two of the five written predictions
+        failed upward for speech, so the speech values are less well predicted
+        than the video values; the superiority of T3 holds at the 95\,\% level
+        only; and every sealed number outside T1 to T3 is exploratory.
   \item Frozen features may be inadequate for fine face-forgery artefacts; the
         sweep can show that but not repair it, and fine-tuning is limited to
         what fits one 12\,GB card.
@@ -1381,8 +1511,19 @@ support is as important: the visual head trained on FaceForensics++ is below
 chance on LAV-DF, the fused LAV-DF result comes from a production-pipeline cue
 of the visual head and not from a visual manipulation signal, and the pulse
 signal check failed, so no audio-visual detection and no pulse evidence is
-claimed. The sealed-test results and the three confirmatory tests are not yet
-run and are [pending]. % E-014
+claimed. On the sealed tests, read once per frozen iteration, the final video
+system is improved over the working version on the Celeb-DF family (AUC 0.8218
+against 0.6238, difference +0.1980 [+0.1688, +0.2242]) and the final speech
+system on In-the-Wild (0.9148 against 0.7516, +0.1633 [+0.1177, +0.2266]), both
+also at the 98.33\,\% level. Against the re-run Xception baseline (0.8042) the
+video system is superior by the declared 95\,\% rule (+0.0176 [+0.0025,
++0.0327]), but the 98.33\,\% interval [$-0.0011$, +0.0355] contains zero, so
+superiority is not robust to the Bonferroni level, and non-inferiority with a
+margin of 0.0100 holds at both. Sealed video values are below the development
+values and sealed speech values above them, and two speech predictions failed
+upward. Everything outside the three tests is exploratory, the web page has not
+been switched to the frozen system, and these results come from one baseline
+family, 344 video groups and 42 speakers. % E-014
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bibliographystyle{IEEEtran_hyphen}

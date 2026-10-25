@@ -6,7 +6,7 @@ Removed: every slide of the reference deck (its project content). Geometry, type
 
 Run from the repository root:   python slides/build_slides.py
 Rules (CLAUDE.md, docs/DOC_FACTS.md): no result is written unless it is logged; numbers that do not exist are the single
-placeholder [pending] (experiment ID in the speaker notes); no IDs (D-, O-, E-, R-) in visible text; no em or en dashes.
+placeholder [pending] (experiment ID in the speaker notes; none is left since the sealed run); no IDs (D-, O-, E-, R-) in visible text; no em or en dashes.
 """
 from __future__ import annotations
 
@@ -466,7 +466,7 @@ s.notes_slide.notes_text_frame.text = (
     "Introduce the project: one system that scores images, videos and the audio inside videos, built from zero and documented as a path from a simple working version to a measured detector. "
     "Introduce the three members in the report order (Vaibhav Shiroorkar, Shivansh Gupta, Adithya Jithesh) and the guide, Dr. Tejashree Phatak, Assistant Professor. "
     "State the shape of the talk: the problem, the literature, the protocol and method, the data and the encoder shortlist, the rule for the working version, the iteration ladder, the rPPG test, the web demo, the timeline to 30 October and the limitations. "
-    "Say at once that no sealed-test result exists yet: the iterations have exploratory results on the development slice, and every sealed-test number that is still missing is shown as [pending] on the slide and is filled only from a logged experiment. "
+    "Say at once that the iterations have exploratory results on the development slice, and that the sealed test sets were read once for each frozen iteration on 25 October 2026: only three declared comparisons are confirmatory, and every other sealed number is exploratory. "
     "Evidence pointers: docs/IDENTITY.md for the identity fields, docs/DOC_FACTS.md for the wording, docs/PLAN.md for the schedule. "
     "The title and the subtitle (Group-Disjoint Protocol) are the decided title of the project and are the same in the paper and the report.")
 
@@ -766,7 +766,7 @@ s = new_slide("Iteration ladder",
     "After the working version come seven experimental iterations, I-1 to I-7, and a last slot for integration and freeze (D-041, ITERATIONS.md). "
     "The lever of each slot was chosen after the diagnostic battery of the preceding step and written, with its hypothesis, success line and failure line, before the run (D-051, D-054 to D-058). "
     "I-1 was full fine-tuning of the face encoder (E-005): development AUC 0.7396 to 0.9096 for the same SigLIP encoder, supported. After the first pass, two more video levers were run at the request of the team (D-062 c, D-065): I-1b, augmentation matched to compression, blur and resize plus mixup (E-016), development AUC 0.9315 and validation 0.9705, a trade-off that does not enter the final system; and I-1c, the mean of the logits of three fine-tuned encoders (E-017), development AUC 0.9192, paired difference to I-1 +0.0096 [-0.0020, +0.0231], which does not enter either. The final system stays as defined in D-061. The Xception baseline in the figure is the one at the selected rate 3e-4 (E-013b, D-066). I-2 to I-4 are speech levers (E-007, E-008, E-009): trimming and normalising the clip, augmenting the training clips, and averaging three encoders; the speech development AUC goes from 0.6100 to 0.6723, 0.7455 and 0.8130, each step supported by its mechanical criteria but each on only 12 speakers. "
-    "I-5 and I-6 are on LAV-DF (E-010 to E-012): the frozen face head is below chance there, so the fusion was not tested; heads trained on LAV-DF give a fused AUC of 0.9935 that a control shows is driven by a production-pipeline cue of the visual head. I-7 is the rPPG check, which failed (E-006). I-8 runs no experiments; it freezes the code and evaluates every frozen iteration once on the sealed tests, which has not been run. "
+    "I-5 and I-6 are on LAV-DF (E-010 to E-012): the frozen face head is below chance there, so the fusion was not tested; heads trained on LAV-DF give a fused AUC of 0.9935 that a control shows is driven by a production-pipeline cue of the visual head. I-7 is the rPPG check, which failed (E-006). I-8 runs no experiments; it freezes the code and evaluates every frozen iteration once on the sealed tests, which was done on 25 October 2026 (E-014, D-067, D-068); its results are on the sealed-test slides. "
     "The figure shows the development-slice results with their 95 percent group-bootstrap intervals; all of them are exploratory (D-041). "
     "Evidence: docs/EXPERIMENTS.md E-004 to E-017 and E-013b, docs/DOC_FACTS.md section 15.")
 labels = [("I-0", "working version", F_GREEN), ("I-1", "fine-tuning", F_GREEN), ("I-1b", "augment, mixup", F_ORANGE), ("I-1c", "mean of three", F_ORANGE), ("I-2", "trim, normalise", F_GREEN),
@@ -786,10 +786,10 @@ add_card(s, col_x(8), TOP + 900000, span_w(4), 3150000, [
     ("bs", "Fine-tuning: +0.1700 over the probe.", 16),
     ("bs", "I-1b: slice up, validation down. I-1c: no gain.", 16),
     ("bs", "Speech: 0.6100 to 0.8130.", 16),
-    ("bs", "Sealed tests: [pending].", 16),
+    ("bs", "Sealed results: see later slides.", 16),
 ], name="card_ladder")
 add_text(s, L, TOP + 900000 + _fh + 40000, W, BOT - (TOP + 900000 + _fh + 40000), [
-    ("cap", "Exploratory, development slice, mean of three seeds, 95 percent group-bootstrap interval. The sealed test sets have not been read.")], "ladder_note")
+    ("cap", "Exploratory, development slice, mean of three seeds, 95 percent group-bootstrap interval. The sealed results are on separate slides.")], "ladder_note")
 
 # =====================================================================================================================
 # SLIDE 10b: I-0 diagnosis
@@ -813,7 +813,7 @@ dg_rows = [
 dgs = 16
 gt, th = add_table(s, L, TOP, dgw, ["Task", "Observations (battery)", "Candidate diagnoses"], dg_rows, size=dgs, bold_first_col=True, max_h=3900000, fill=3900000)
 add_text(s, L, TOP + th + 100000, W, BOT - (TOP + th + 100000), [
-    ("cap", "Exploratory, development slice. Diagnoses only: no lever is chosen here. The sealed tests are not touched.")], "diag_note")
+    ("cap", "Exploratory, development slice. Diagnoses only: no lever is chosen here. No sealed set was read for them.")], "diag_note")
 
 # =====================================================================================================================
 # I-1 and the baseline
@@ -843,7 +843,7 @@ add_card(s, col_x(6), TOP + th + 150000, span_w(6), BOT - (TOP + th + 150000), [
     ("h", "What it supports"),
     ("bs", "Gain over the probe: +0.1132 on validation, +0.1700 on the slice.", 18),
     ("bs", "SigLIP minus Xception on the slice: +0.0380 [+0.0172, +0.0592]. Margin of the non-inferiority test: 0.0100.", 18),
-    ("bs", "Exploratory; 15 identities, one kind of fake. Sealed tests: [pending].", 18),
+    ("bs", "Exploratory; 15 identities, one kind of fake. The sealed result is on a later slide.", 18),
 ], name="card_i1_says")
 
 # =====================================================================================================================
@@ -877,7 +877,7 @@ add_card(s, col_x(6), TOP + th + 150000, span_w(6), BOT - (TOP + th + 150000), [
     ("h", "What it shows"),
     ("bs", "I-1b: slice up, validation down by more than the allowed 0.0079: a trade-off; it does not enter.", 16),
     ("bs", "I-1c: slice interval includes zero; it does not enter.", 16),
-    ("bs", "The final system is unchanged. Exploratory; sealed tests: [pending].", 16),
+    ("bs", "The final system is unchanged. Exploratory; not tested on the sealed sets.", 16),
 ], name="card_i1b_says")
 
 s = new_slide("I-2 to I-4: three levers for speech",
@@ -906,7 +906,7 @@ add_card(s, col_x(6), TOP + th + 150000, span_w(6), BOT - (TOP + th + 150000), [
     ("h", "Limits"),
     ("bs", "12 speakers: wide intervals; the slice is exploratory.", 18),
     ("bs", "Calibration stays poor on the slice: a ranking score.", 18),
-    ("bs", "Three encoder passes per clip. Sealed tests: [pending].", 18),
+    ("bs", "Three encoder passes per clip. The sealed result is on a later slide.", 18),
 ], name="card_sp_limits")
 
 # =====================================================================================================================
@@ -1012,6 +1012,66 @@ add_card(s, col_x(6), TOP + 2450000, span_w(6), BOT - (TOP + 2450000), [
     ("bs", "Anything about forged videos. The check still fails: 0.301 against 0.6.", 16),
 ], name="card_ctrl_not")
 
+# =====================================================================================================================
+# SEALED RESULTS: the three declared tests, then the staircase
+# =====================================================================================================================
+s = new_slide("Sealed tests: three comparisons",
+    "The sealed test sets were read once for each frozen iteration on 25 October 2026, under the final flag, and the ledger holds 74 entries (E-014, D-067, D-068). Values are for seeds 0 to 2 at the level of the clip or the image, with the 95 percent group bootstrap interval of 2,000 resamples. "
+    "Only three comparisons were declared before the run and are confirmatory (D-062 b). Test 1, face video on the sealed Celeb-DF family (7,650 videos, 344 groups): final system 0.8218 [0.8020, 0.8393] against the working version 0.6238 [0.6015, 0.6486], difference +0.1980 [+0.1688, +0.2242], robustness interval at 98.33 percent [+0.1627, +0.2303]: improved, robust. "
+    "Test 2, speech on the sealed In-the-Wild set (24,788 clips, 42 speakers): 0.9148 [0.8896, 0.9383] against 0.7516 [0.6802, 0.8035], difference +0.1633 [+0.1177, +0.2266], robustness interval [+0.1085, +0.2481]: improved, robust. "
+    "Test 3, the final face-video system against the re-run Xception baseline at 3e-4 (0.8042 [0.7841, 0.8223]) on the same set, margin 0.0100: difference +0.0176 [+0.0025, +0.0327], so superior by the declared 95 percent rule; the interval at 98.33 percent, [-0.0011, +0.0355], contains zero, so the superiority is not robust to the Bonferroni level; the lower bound is above -0.0100 at both levels, so the system is non-inferior at both. Use exactly this wording and claim nothing beyond it. "
+    "The predictions written before the run held for video, including the difference to the baseline; the two speech predictions failed upward (final 0.60 to 0.85, found 0.9148; working version 0.50 to 0.70, found 0.7516). The sealed video value is below the development value (0.8218 against 0.9096) and the sealed speech value is above it (0.9148 against 0.8130); the sets differ, and no experiment explains the difference. "
+    "Evidence: docs/EXPERIMENTS.md E-014 result block, data/_results/E-014/sealed_block.md.")
+hdr_t3 = ["Test and sealed set", "Final system", "Working version or baseline", "Difference, 95 percent", "98.33 percent interval", "Verdict"]
+rows_t3 = [
+    ["**Video: improvement**\nCeleb-DF family, 7,650 videos", "0.8218\n[0.8020, 0.8393]", "0.6238\n[0.6015, 0.6486]", "+0.1980\n[+0.1688, +0.2242]", "[+0.1627, +0.2303]", "improved, robust"],
+    ["**Speech: improvement**\nIn-the-Wild, 24,788 clips", "0.9148\n[0.8896, 0.9383]", "0.7516\n[0.6802, 0.8035]", "+0.1633\n[+0.1177, +0.2266]", "[+0.1085, +0.2481]", "improved, robust"],
+    ["**Video: against baseline**\nCeleb-DF family, margin 0.0100", "0.8218\n[0.8020, 0.8393]", "0.8042\n[0.7841, 0.8223]", "+0.0176\n[+0.0025, +0.0327]", "[-0.0011, +0.0355]", "superior at 95 percent; not robust at 98.33 percent; non-inferior at both"],
+]
+cw_t3 = [2450000, 1300000, 1400000, 1550000, 1500000]
+cw_t3.append(W - sum(cw_t3))
+gt, th = add_table(s, L, TOP, cw_t3, hdr_t3, rows_t3, size=13, max_h=2500000)
+cy = TOP + th + 130000
+add_card(s, col_x(0), cy, span_w(6), BOT - cy, [
+    ("h", "What it supports"),
+    ("bs", "Video and speech: the lower bounds are above zero at both levels, so both are improved and robust.", 16),
+    ("bs", "Baseline: superior at the 95 percent level only; non-inferior at both levels.", 16),
+], name="card_sealed_says")
+add_card(s, col_x(6), cy, span_w(6), BOT - cy, [
+    ("h", "What it does not show"),
+    ("bs", "One baseline family at 224 pixels; 344 groups (44 identities); 42 speakers.", 16),
+    ("bs", "Two speech predictions failed upward (0.9148 and 0.7516 found; 0.60 to 0.85 and 0.50 to 0.70 predicted).", 16),
+    ("bs", "Sealed video 0.8218 is below the development 0.9096; speech 0.9148 is above 0.8130.", 16),
+], name="card_sealed_not")
+
+s = new_slide("Sealed staircase (exploratory)",
+    "Each frozen iteration was scored once on every sealed set; apart from the Celeb-DF family row and the In-the-Wild values of iteration 0 and iteration 4, which belong to the three declared tests, every number here is exploratory (E-014). "
+    "Face video: the model does not change after iteration 1, so iterations 1 to 4 give one value per set. On the sealed Celeb-DF family the working version is at 0.6238, the final system at 0.8218 and Xception at 0.8042; on the Celeb-DF v2 test videos alone 0.6322, 0.8999 and 0.8527; on DeepFakeDetection 0.5927, 0.8797 and 0.8847; on the in-dataset FaceForensics++ test 0.7946, 0.9899 and 0.9895. "
+    "The Celeb-DF++ videos have no real videos of their own, so Celeb-DF++ alone has one class and no AUC; the family set mixes the Celeb-DF v2 test videos and the Celeb-DF++ fakes against the v2 reals, and on the Celeb-DF++ fakes with the v2 reals the final system is at 0.7105 and Xception at 0.7351. "
+    "Speech: on In-the-Wild the working version is at 0.7516, iteration 2 at 0.8125, iteration 3 at 0.8672 and iteration 4 at 0.9148; in the training corpus the in-dataset test gives 0.9684, 0.9632, 0.9541 and 0.9835. "
+    "Images are unchanged in every iteration: ProGAN test 1.0000, CNN subset 0.9316, diffusion set 0.9354. No paired test was declared for any of these rows other than the three, so they are descriptive. "
+    "Evidence: docs/EXPERIMENTS.md E-014 result block.")
+hs1 = ["Face video, sealed AUC [95 percent interval]", "Working version", "Iterations 1 to 4", "Xception, 3e-4"]
+rs1 = [["Celeb-DF family (tests 1 and 3)", "0.6238 [0.6015, 0.6486]", "0.8218 [0.8020, 0.8393]", "0.8042 [0.7841, 0.8223]"],
+       ["Celeb-DF v2 test videos alone", "0.6322 [0.6018, 0.6658]", "0.8999 [0.8759, 0.9210]", "0.8527 [0.8237, 0.8777]"],
+       ["DeepFakeDetection", "0.5927 [0.5629, 0.6258]", "0.8797 [0.8566, 0.9041]", "0.8847 [0.8655, 0.9052]"],
+       ["FaceForensics++ test, in-dataset", "0.7946 [0.7667, 0.8243]", "0.9899 [0.9826, 0.9959]", "0.9895 [0.9823, 0.9952]"]]
+cw1 = [3300000, 2400000, 2400000]
+cw1.append(W - sum(cw1))
+gt, th1 = add_table(s, L, TOP, cw1, hs1, rs1, size=14, bold_first_col=True, max_h=1900000)
+hs2 = ["Speech, sealed AUC [95 percent interval]", "Working version", "Iteration 2", "Iteration 3", "Iteration 4"]
+rs2 = [["In-the-Wild (test 2)", "0.7516 [0.6802, 0.8035]", "0.8125 [0.7361, 0.8560]", "0.8672 [0.8320, 0.8989]", "0.9148 [0.8896, 0.9383]"],
+       ["ASVspoof 2019 test", "0.9684 [0.9564, 0.9777]", "0.9632 [0.9535, 0.9717]", "0.9541 [0.9452, 0.9626]", "0.9835 [0.9798, 0.9872]"]]
+cw2 = [2300000, 2100000, 2100000, 2100000]
+cw2.append(W - sum(cw2))
+gt, th2 = add_table(s, L, TOP + th1 + 130000, cw2, hs2, rs2, size=13, bold_first_col=True, max_h=1300000)
+ty2 = TOP + th1 + th2 + 260000
+add_text(s, L, ty2, W, BOT - ty2, [
+    ("bs", "Images are the same in every iteration: ProGAN test 1.0000, CNN subset 0.9316, diffusion set 0.9354.", 16),
+    ("bs", "Xception is not lower on DeepFakeDetection (0.8847 against 0.8797, overlapping intervals); no test was declared for these rows.", 16),
+    ("bs", "Exploratory except the rows marked as tests. Celeb-DF++ has no reals of its own, so it has no AUC alone.", 16),
+], "text_stair")
+
 s = new_slide("Web demo (real checkpoint)",
     "The software is a local web page served by Flask on 127.0.0.1 only, with a 512 MB upload limit; uploaded files are deleted after every request (D-043). "
     "It calls an inference library with a fixed response structure: a score per modality, a status, warnings, errors, a model block and a fixed sentence that says what the score means (D-027). "
@@ -1047,7 +1107,7 @@ add_card(s, right_x, TOP, span_w(4), 4800000, [
 ty = TOP + SH + 400000
 add_text(s, L, ty, xs[-1] + pw[-1] - L, BOT - ty, [
     ("bs", "Local Flask page on 127.0.0.1; uploads up to 512 MB; files deleted after each request.", 16),
-    ("bs", "Sealed-test accuracy of the page: [pending].", 16),
+    ("bs", "The page still runs the working version; it has not been switched to the frozen system.", 16),
 ], "web_text")
 
 # =====================================================================================================================
@@ -1055,7 +1115,7 @@ add_text(s, L, ty, xs[-1] + pw[-1] - L, BOT - ty, [
 # =====================================================================================================================
 s = new_slide("Timeline to 30 October",
     "The schedule runs from Saturday 24 October to the submission on Friday 30 October 2026 (D-009, PLAN.md). "
-    "Saturday was decisions, data and the evaluation harness; Sunday is the encoder sweep and the working-version code path; Monday the working version and its diagnostics; Tuesday I-1 to I-3; Wednesday I-4 to I-7 with the rPPG decision; Thursday integration and freeze with the one-time sealed evaluations; Friday assembly and submission. "
+    "Saturday was decisions, data and the evaluation harness; Sunday is the encoder sweep and the working-version code path; Monday the working version and its diagnostics; Tuesday I-1 to I-3; Wednesday I-4 to I-7 with the rPPG decision; Thursday integration and freeze with the one-time sealed evaluations (brought forward and made on 25 October, see the sealed-test slides); Friday assembly and submission. "
     "Experiments end on Wednesday night, and an iteration that is not finished by then is reported as not run, never as a result. "
     "The scope is not cut: each iteration is complete in itself (hypothesis, run, result, decision), so if work stops after any day the story up to the last finished iteration is still valid. "
     "Evidence: docs/PLAN.md day-by-day schedule and docs/ITERATIONS.md schedule table.")
@@ -1079,56 +1139,60 @@ for i in range(8):     # day grid lines
     gl.name = _name("arrow_grid")
     gl.line.color.rgb = rgb("D9D9D9"); gl.line.width = Pt(0.75)
 add_text(s, L, ry0 + 7 * rh + 150000, W, 700000, [
-    ("s", "An iteration not finished by Wednesday is reported as not run. Status on 25 October: I-1 to I-7 and the extra iterations I-1b and I-1c have a logged run; the sealed run follows the readiness checks. The bars show the original plan.", 16)], "timeline_note")
+    ("s", "An iteration not finished by Wednesday is reported as not run. Status on 25 October: I-1 to I-7 and the extra iterations I-1b and I-1c have a logged run; the sealed run was made on 25 October. The bars show the original plan.", 16)], "timeline_note")
 
 # =====================================================================================================================
 # SLIDE 14: limitations
 # =====================================================================================================================
 s = new_slide("Limitations",
-    "These limits are known before any final run and are stated now. "
-    "The development slices are small (15 identities, 12 speakers, two generator units), so intervals are wide and ties are likely; the Celeb-DF family test has about 44 independent identity groups, so its intervals stay wide whatever the video count (D-045). "
-    "Frozen features may be inadequate for face forgery, and the research-only weights of some encoders restrict reuse. "
-    "Cross-dataset numbers quoted from papers use other protocols and are context only. "
-    "rPPG may not be recoverable from compressed video, and nothing in this project is claimed beyond what its interval supports. Evidence: docs/DOC_FACTS.md section 13, docs/DATA_LOG.md Celeb-DF++ section.")
+    "These limits are stated with the results. "
+    "The development slices are small (15 identities, 12 speakers, two generator units), so intervals are wide and ties are likely. The sealed Celeb-DF family set has 344 groups, of which 300 are single YouTube videos, so its fakes vary over 44 identities, and the sealed In-the-Wild set has 42 speakers (D-045, E-014). "
+    "Only the three declared comparisons are confirmatory; every other sealed number is exploratory and is one run of each frozen iteration with three seeds. "
+    "The baseline is one family, Xception at 224 pixels, so the superiority at the 95 percent level says nothing about other detectors, and it is not robust at the 98.33 percent level. The margin 0.0100 is the floor of its rule and rests on three seeds. "
+    "The two speech predictions failed upward and the sealed video value is below its development value; no experiment explains these differences. "
+    "On LAV-DF the sealed subset repeats the development pattern, and iterations 1b and 1c were not tested on the sealed sets. The web page runs the working version and not the frozen system. "
+    "Frozen features may be inadequate for face forgery, the research-only weights of some encoders restrict reuse, cross-dataset numbers quoted from papers use other protocols and are context only, and rPPG could not be recovered from compressed video. Evidence: docs/DOC_FACTS.md section 13, docs/DATA_LOG.md Celeb-DF++ section, docs/EXPERIMENTS.md E-014.")
 add_text(s, L, TOP + 50000, W, 4750000, [
-    ("b", "Small development slices (15 identities, 12 speakers, two generator units): intervals are wide and ties are likely.", 18),
-    ("b", "The Celeb-DF family test has about 44 independent identity groups; intervals stay wide whatever the video count.", 18),
-    ("b", "Every verdict so far is exploratory (development slice or validation); no sealed test set has been read.", 18),
-    ("b", "On LAV-DF the fused result is driven by a production-pipeline cue of the visual head; no audio-visual detection is claimed.", 18),
-    ("b", "The baseline learning rate, 3e-4, is the highest of its grid; the margin 0.0100 is the floor of its rule and rests on three seeds.", 18),
-    ("b", "I-1b and I-1c were run though their triggers were not met to the letter; the positive control of the pulse check says nothing about a real pulse.", 18),
-    ("b", "Two encoder weights (OpenAI CLIP, WavLM) are conditionally licensed and accepted as research-only.", 18),
-    ("b", "Cross-dataset numbers from papers use other protocols and are context only; the pulse could not be recovered, and the check has no ground truth.", 18),
+    ("b", "Small development slices (15 identities, 12 speakers, two generator units): intervals are wide and ties are likely.", 17),
+    ("b", "The sealed Celeb-DF family set has 344 groups (44 identities, 300 single YouTube videos); the sealed In-the-Wild set has 42 speakers.", 17),
+    ("b", "Only three sealed comparisons are confirmatory; every other sealed number is exploratory, from one run of each frozen iteration.", 17),
+    ("b", "One baseline family, Xception at 224 pixels: superior at 95 percent, not robust at 98.33 percent. The margin 0.0100 is a floor from three seeds.", 17),
+    ("b", "Two speech predictions failed upward and the sealed video value is below its development value; no experiment explains this.", 17),
+    ("b", "On LAV-DF the fused result is driven by a pipeline cue, repeated on the sealed subset; no audio-visual detection is claimed.", 17),
+    ("b", "I-1b and I-1c were not tested on the sealed sets; the web page runs the working version, not the frozen system.", 17),
+    ("b", "Two encoder weights are research-only; the pulse could not be recovered, and the check has no ground truth.", 17),
 ], "limits")
 
 # =====================================================================================================================
 # SLIDE 15: conclusion
 # =====================================================================================================================
 s = new_slide("Conclusion",
-    "This slide states what the exploratory evidence supports and keeps the sealed-test cells as [pending] until the sealed run, which follows the readiness checks and the approval of the team. "
-    "What already stands without any result is the design: a group-disjoint protocol with sealed test sets, a rule that prefers the cheaper candidate when evidence ties, a staircase of one sealed evaluation per frozen iteration, and a working-version definition that requires the whole chain to run. "
-    "The confirmatory tests are three and are declared in advance (D-062 b): the final system against the working version on face video (Celeb-DF family) and on speech (In-the-Wild), and the final system against the re-run published baseline on the Celeb-DF family, the latter judged by non-inferiority with delta 0.0100 fixed beforehand (D-025, D-041, D-066); a 98.33 percent interval (Bonferroni over three) is printed beside each as a robustness line. "
-    "Every other comparison is labelled exploratory. Evidence: docs/PROTOCOL.md addendum, docs/ITERATIONS.md; the cells below are [pending] until the ledger entries of the freeze exist.")
+    "This slide states what the evidence supports. The design stands on its own: a group-disjoint protocol with sealed test sets, a rule that prefers the cheaper candidate when evidence ties, a staircase of one sealed evaluation per frozen iteration, and a working-version definition that requires the whole chain to run. "
+    "The sealed run was made on 25 October 2026 (E-014, D-067, D-068). The three confirmatory tests were declared in advance (D-062 b): the final system against the working version on face video (Celeb-DF family) and on speech (In-the-Wild), and the final system against the re-run published baseline on the Celeb-DF family, the latter judged with delta 0.0100 fixed beforehand (D-025, D-041, D-066); a 98.33 percent interval (Bonferroni over three) is printed beside each as a robustness line. "
+    "Results: video improved by +0.1980 [+0.1688, +0.2242] (robustness interval [+0.1627, +0.2303]); speech improved by +0.1633 [+0.1177, +0.2266] (robustness interval [+0.1085, +0.2481]); against the baseline +0.0176 [+0.0025, +0.0327], superior at 95 percent, the robustness interval [-0.0011, +0.0355] contains zero so it is not robust to the Bonferroni level, and the system is non-inferior at both levels. Say exactly this and nothing beyond it. "
+    "Every other comparison is exploratory. Evidence: docs/PROTOCOL.md addendum, docs/EXPERIMENTS.md E-014 result block.")
 add_text(s, col_x(0), TOP, span_w(6), 4800000, [
-    ("h", "What stands without any result"),
-    ("b", "A group-disjoint protocol with sealed test sets and a ledger.", 18),
-    ("b", "A rule that prefers the cheaper candidate when the evidence ties.", 18),
-    ("b", "One sealed evaluation per frozen iteration (the staircase).", 18),
-    ("b", "Three confirmatory tests, declared before any final run.", 18),
+    ("h", "What the design gives"),
+    ("b", "Group-disjoint protocol, sealed test sets, a ledger.", 16),
+    ("b", "One sealed evaluation per frozen iteration; three tests declared beforehand.", 16),
     ("h", "What the exploratory runs show"),
-    ("b", "Face development AUC 0.7396 to 0.9096 by fine-tuning.", 18),
-    ("b", "Speech 0.6100 to 0.8130 on 12 speakers.", 18),
-    ("b", "LAV-DF fusion driven by a pipeline cue.", 18),
+    ("b", "Face development AUC 0.7396 to 0.9096 by fine-tuning.", 16),
+    ("b", "Speech 0.6100 to 0.8130 on 12 speakers.", 16),
+    ("b", "LAV-DF fusion driven by a pipeline cue.", 16),
+    ("h", "What the sealed run adds"),
+    ("b", "Video and speech improved over the working version, at both levels.", 16),
+    ("b", "Superior to the re-run baseline at 95 percent only.", 16),
 ], "concl_left")
-gt, th = add_table(s, col_x(6), TOP, [span_w(4), span_w(2)], ["Claim", "Outcome"], [
+gt, th = add_table(s, col_x(6), TOP, [span_w(3), span_w(3)], ["Claim", "Outcome"], [
     ["Working version, development AUC (exploratory)", "0.693; 0.994; 0.610"],
-    ["Face video, fine-tuned SigLIP minus Xception, development slice (exploratory)", "+0.0380 [+0.0172, +0.0592]"],
-    ["Two more video levers I-1b and I-1c, development slice (exploratory)", "0.9315 and 0.9192; neither enters"],
-    ["Final system versus working version, video and speech (paired, sealed tests)", "[pending]"],
-    ["Final system versus re-run baseline (non-inferiority, margin 0.0100)", "[pending]"],
+    ["Fine-tuned SigLIP minus Xception, development slice (exploratory)", "+0.0380 [+0.0172, +0.0592]"],
+    ["Two more video levers I-1b and I-1c (exploratory)", "0.9315 and 0.9192; neither enters"],
+    ["Sealed: final against working version, video", "+0.1980 [+0.1688, +0.2242]; improved, robust"],
+    ["Sealed: final against working version, speech", "+0.1633 [+0.1177, +0.2266]; improved, robust"],
+    ["Sealed: final against re-run baseline (margin 0.0100)", "+0.0176 [+0.0025, +0.0327]; superior at 95 percent, not robust at 98.33 percent, non-inferior at both"],
     ["rPPG: adopt or not", "not adopted: signal not recoverable"],
-], size="auto", max_h=3600000, pad=60000)
-add_text(s, col_x(6), TOP + th + 140000, span_w(6), 900000, [("s", "An iteration that is not finished is reported as not run.")], "concl_note")
+], size="auto", max_h=3900000, pad=30000)
+add_text(s, col_x(6), TOP + th + 100000, span_w(6), 600000, [("s", "Only the three sealed rows are confirmatory; every other row is exploratory.", 16)], "concl_note")
 
 # =====================================================================================================================
 # SLIDE 16: references
@@ -1184,13 +1248,13 @@ for sh in s.shapes:
 s = new_slide("Backup slides",
     "The backup slides hold the details behind the main line: the statistics and decision rules, the staircase of sealed evaluations, the preprocessing, the cost record and the fine-tuning budget, the data licences, the Celeb-DF++ de-duplication and test balance, and the measured environment. "
     "Use them to answer why-this-and-not-that questions: each one names the rule, the reason and the evidence file. "
-    "Nothing on these slides is a result unless it is a logged measurement; missing numbers are [pending]. "
+    "Nothing on these slides is a result unless it is a logged measurement. "
     "The order follows the order of the main slides so that a question can be matched to its detail quickly. "
     "Evidence: docs/VIVA_PREP.md lists the likely questions with their answers.")
 add_text(s, L, TOP, W, 4800000, [
     ("h", "Contents"),
     ("b", "**Statistics and decision rules:** metrics, bootstrap, seed policy, non-inferiority, tie rule"),
-    ("b", "**Staircase and confirmatory claims:** one sealed evaluation per frozen iteration; three tests; the margin 0.0100"),
+    ("b", "**Staircase and confirmatory claims:** one sealed evaluation per frozen iteration; three tests; the margin 0.0100; **sealed LAV-DF subset**"),
     ("b", "**Preprocessing:** frames, face crops, audio window"),
     ("b", "**Sweep tables and cost record:** full tables per task, cost and fine-tuning fit"),
     ("b", "**I-0 diagnostic battery:** metrics, subsets, score distributions, worst errors"),
@@ -1222,7 +1286,7 @@ add_text(s, col_x(6), TOP, span_w(6), 4800000, [
 # staircase
 s = new_slide("Staircase and confirmatory claims",
     "Verdicts on the development slice are exploratory: they report sign, size and interval and they choose the next step, never a confirmed performance (D-041). "
-    "At the freeze each frozen iteration is evaluated once on the sealed test sets, which gives one test score per iteration, a staircase, and each evaluation is written to the ledger. "
+    "At the freeze each frozen iteration is evaluated once on the sealed test sets, which gives one test score per iteration, a staircase, and each evaluation is written to the ledger; the ledger holds 74 entries after the run of 25 October 2026 (E-014). "
     "The confirmatory claims were declared before any final run (D-062 b) and are three tests: the final system against the working version on the sealed Celeb-DF family test (face video) and on the sealed In-the-Wild test (speech), and the final system against the re-run published baseline on the sealed Celeb-DF family test, all as paired group-bootstrap comparisons on sealed data. The declared 95 percent rules are unchanged; a 98.33 percent interval (Bonferroni over three, from the same resamples) is printed beside each as a robustness line, and a verdict that it does not support is written not robust to the Bonferroni level. "
     "Every other comparison is labelled exploratory. "
     "The baseline was re-run (Xception, three seeds, E-013, then extended to the rate 3e-4 in E-013b) and the margin is delta = 2 times the larger seed standard deviation, with a floor of 0.01: in the first pass 0.0143 (seed sd 0.0010 on validation, 0.0072 on the development slice), for the selected baseline 0.0003 and 0.0020, so the floor applies and delta is 0.0100 (D-060, D-061, D-066). The final system is the face encoder fine-tuned in I-1, the unchanged image head and the three-encoder speech average; neither I-1b nor I-1c entered, and the LAV-DF fusion is not part of it (D-065). "
@@ -1244,7 +1308,7 @@ dbox(s, cx, base_y - 1900000, cwid, 1000000, "**final versus re-run baseline**" 
 darrow(s, L + 4 * (bwid + gap) + bwid, base_y - 2900000, cx, base_y - 2800000)
 darrow(s, L + 4 * (bwid + gap) + bwid, base_y - 1700000, cx, base_y - 1400000)
 add_text(s, L, base_y + 100000, W, 800000, [
-    ("s", "Development slice: exploratory verdicts. Sealed test sets: one evaluation per frozen iteration, in a ledger; not yet run (the sealed run follows the readiness checks). Three pre-declared tests; non-inferiority margin 0.0100 from the baseline seed spread; 98.33 percent robustness line.")], "stair_note")
+    ("s", "Development slice: exploratory verdicts. Sealed test sets: one evaluation per frozen iteration, in a ledger of 74 entries; the results are on the sealed-test slides. Three pre-declared tests; non-inferiority margin 0.0100 from the baseline seed spread; 98.33 percent robustness line.")], "stair_note")
 
 # preprocessing
 s = new_slide("Preprocessing",
@@ -1360,7 +1424,7 @@ cwb2 += [(W - sum(cwb2)) // 2] * 2
 cwb2[-1] = W - sum(cwb2[:-1])
 gt, th2 = add_table(s, L, TOP + th1 + 150000, cwb2, hb2, rb2, size=fit_size(cwb2, hb2, rb2, sizes=(15, 14, 13, 12), bold_first_col=True), bold_first_col=True, max_h=1800000, fill=1500000)
 add_text(s, L, TOP + th1 + th2 + 250000, W, BOT - (TOP + th1 + th2 + 250000), [
-    ("cap", "Exploratory, development slice. Mean of three head seeds; the threshold is stored in calibrated space and fixed on validation data. Sealed tests: [pending].")], "batt_note")
+    ("cap", "Exploratory, development slice. Mean of three head seeds; the threshold is stored in calibrated space and fixed on validation data.")], "batt_note")
 
 # ---- I-0 battery (2): subsets
 s = new_slide("I-0 battery: subsets and errors",
@@ -1429,7 +1493,7 @@ add_text(s, L, TOP + th + 120000, W, BOT - (TOP + th + 120000), [
 s = new_slide("Fine-tuning grid and checkpoint v2",
     "Stage 1 of the fine-tuning iteration had nine runs, three encoders at three learning rates, one seed each, and the table gives validation and development AUC (E-005). The lowest rate was best for every encoder and five of the six runs at the higher rates lost most of the signal, with no non-finite loss or instability event recorded. The run of DINOv2 base at 1e-4 stopped when a data-loader worker died and was repeated once with the same configuration and seed; the error record is kept. "
     "Selection on validation data alone: leader DINOv2 base 0.9918 [0.9847, 0.9974], SigLIP base in the tie set (difference -0.0025 [-0.0068, +0.0009]), cheapest member SigLIP base (203 against 238 seconds of compute). "
-    "The software status: the version-2 checkpoint format of the frozen system records how each score is made, keeps the hash of every file and checks the preprocessing identifier; 304 unit tests pass; the parity check on the graphics processor passed (11 items, largest difference of the calibrated score 0.0019 against a tolerance of 0.02, data/_results/freeze/parity.json). The web page still runs the checkpoint of the working version until the freeze. "
+    "The software status: the version-2 checkpoint format of the frozen system records how each score is made, keeps the hash of every file and checks the preprocessing identifier; 304 unit tests pass; the parity check on the graphics processor passed (11 items, largest difference of the calibrated score 0.0019 against a tolerance of 0.02, data/_results/freeze/parity.json). The web page still runs the checkpoint of the working version; it has not been switched to the frozen system. "
     "Evidence: docs/EXPERIMENTS.md E-005; docs/_agents/INTEGRATION.md; data/_results/freeze/parity.json.")
 rows_g = [["DINOv2 small", "0.9869 / 0.9031", "0.7056 / 0.6412", "0.5871 / 0.5679"],
           ["SigLIP base", "0.9893 / 0.9210", "0.9814 / 0.8947", "0.5186 / 0.5432"],
@@ -1445,11 +1509,11 @@ add_card(s, L, TOP + th + 520000, W, BOT - (TOP + th + 520000), [
     ("bs", "Per task the checkpoint records how the score is made: linear probe, fine-tuned encoder, or the mean logit of an ensemble of heads.", 16),
     ("bs", "The hash of every file is kept; the preprocessing identifier is checked against the recorded configuration; the audio preprocessing now includes trimming and normalising.", 16),
     ("bs", "304 unit tests pass. Parity check on the graphics processor passed: 11 items, largest difference 0.0019, tolerance 0.02.", 16),
-    ("bs", "The web page still runs the checkpoint of the working version until the freeze.", 16),
+    ("bs", "The web page still runs the checkpoint of the working version; it has not been switched to the frozen system.", 16),
 ], name="card_ckpt")
 
 s = new_slide("LAV-DF control and subset",
-    "The LAV-DF subset has 500 videos per cell (real, video fake only, audio fake only, both fake) in each of the training, validation and test splits, with the source video as the group and a fixed seed; only the training part, used to fit the fusion layer, and the validation part were scored, and the test part is sealed (D-057). The heads of E-011 were trained on 10,000 further videos of the official training split that share no source video with the scored parts. "
+    "The LAV-DF subset has 500 videos per cell (real, video fake only, audio fake only, both fake) in each of the training, validation and test splits, with the source video as the group and a fixed seed; only the training part, used to fit the fusion layer, and the validation part were scored, and the test part was sealed and was scored once at the freeze, see the sealed LAV-DF slide (D-057). The heads of E-011 were trained on 10,000 further videos of the official training split that share no source video with the scored parts. "
     "The table gives the values of E-011 and the post-hoc control, and the produced-only visual head of E-012. The control keeps only the produced videos, which all went through the data set pipeline, and asks each head for its own label: the visual head 0.5070 [0.4771, 0.5361], the speech head 0.8574 [0.8394, 0.8752]. The visual head separates the real originals from audio-only fakes, whose frames are untouched, with 0.9912 [0.9864, 0.9951]. "
     "The produced-only visual head of E-012 reaches 0.5169 [0.4945, 0.5392] within produced videos and 0.5342 over all videos; the difference to the head of E-011 within produced videos is +0.0100 [-0.0159, +0.0372]. The logistic-regression weights fitted for the fusion are 4.930 for the visual head and 0.813 for the speech head, and the sum of the log-odds reaches 0.9795. "
     "Limits: the identities of LAV-DF are not in its metadata, the early-stopping epoch of the speech heads was chosen on the validation part, and the check is post hoc. Evidence: docs/EXPERIMENTS.md E-010 to E-012; docs/DECISIONS.md D-057 to D-059.")
@@ -1463,9 +1527,32 @@ cw_l.append(W - sum(cw_l))
 sz_l = 16
 gt, th = add_table(s, L, TOP, cw_l, hdr_l, rows_l, size=sz_l, bold_first_col=True, max_h=2900000)
 add_text(s, L, TOP + th + 80000, W, BOT - (TOP + th + 80000), [
-    ("b", "Subset: 500 videos per cell and split, source video as the group; test part sealed.", 18),
+    ("b", "Subset: 500 videos per cell and split, source video as the group; the test part was scored once at the freeze.", 18),
     ("b", "Fusion weights: visual 4.930, audio 0.813; sum of log-odds 0.9795; best rule minus better head +0.0023 [+0.0009, +0.0040].", 18),
     ("cap", "Exploratory; the control is post hoc and labelled as such.")], "lavdf_backup")
+
+s = new_slide("Sealed LAV-DF subset (exploratory)",
+    "The sealed subset of LAV-DF has 2,000 videos from 1,736 source groups, and its produced videos number 1,500 from 1,335 groups (E-014). Every row is exploratory. "
+    "The frozen visual head is below chance on the fused label, 0.3226 [0.2953, 0.3490], and the frozen speech average is at 0.6462 [0.6188, 0.6723]. The head trained on LAV-DF reaches 0.9921 [0.9880, 0.9956] on the whole subset, the speech heads 0.7344 [0.7133, 0.7549] and the fusion 0.9945 [0.9917, 0.9969]. "
+    "Within the produced videos, where the pipeline cue is constant, the visual head is at 0.5032 [0.4746, 0.5320] against the video label and the head trained on the produced videos only at 0.5203 [0.4973, 0.5429], while the audio head is at 0.8480 [0.8281, 0.8670] against the audio label. On the whole subset the produced-only recipe gives 0.5216 [0.5007, 0.5428]. "
+    "So the development pattern repeats and the sealed numbers support no claim of audio-visual detection. Evidence: docs/EXPERIMENTS.md E-014 result block, rows I-5 to I-6bp.")
+hl = ["Head", "Videos scored", "Label", "AUC [95 percent interval]"]
+rl = [["Frozen visual head", "2,000", "fake if either is fake", "0.3226 [0.2953, 0.3490]"],
+      ["Frozen speech average", "2,000", "fake if either is fake", "0.6462 [0.6188, 0.6723]"],
+      ["Visual head trained on LAV-DF", "2,000", "fake if either is fake", "0.9921 [0.9880, 0.9956]"],
+      ["Speech heads trained on LAV-DF", "2,000", "fake if either is fake", "0.7344 [0.7133, 0.7549]"],
+      ["Fusion of the two", "2,000", "fake if either is fake", "0.9945 [0.9917, 0.9969]"],
+      ["Visual head, produced videos only recipe", "2,000", "fake if either is fake", "0.5216 [0.5007, 0.5428]"],
+      ["Visual head trained on LAV-DF", "1,500 produced", "video label", "0.5032 [0.4746, 0.5320]"],
+      ["Speech heads trained on LAV-DF", "1,500 produced", "audio label", "0.8480 [0.8281, 0.8670]"],
+      ["Visual head, produced videos only recipe", "1,500 produced", "video label", "0.5203 [0.4973, 0.5429]"]]
+cwl = [span_w(4) + 300000, span_w(2) + 100000, span_w(3)]
+cwl.append(W - sum(cwl))
+gt, thl = add_table(s, L, TOP, cwl, hl, rl, size=14, bold_first_col=True, max_h=3500000)
+add_text(s, L, TOP + thl + 130000, W, BOT - (TOP + thl + 130000), [
+    ("bs", "The development pattern repeats: 0.99 over the whole subset, chance within the produced videos for both visual recipes, 0.8480 for the audio head.", 16),
+    ("bs", "No audio-visual detection claim. Exploratory, sealed subset of 2,000 videos (1,736 source groups).", 16),
+], "text_lavdf_sealed")
 
 s = new_slide("Data licences and terms",
     "Every dataset and pretrained weight has its licence, source, version and hash recorded in the data log before use; all datasets are research-only. "

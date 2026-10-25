@@ -71,7 +71,7 @@ def intro(B):
     B.h2("Organisation of the Report and Outline of the Next Chapter")
     B.p("Chapter 2 surveys the literature and ends with the research gap that the objectives address. Chapter 3 gives the mathematical background: the metrics, the group bootstrap, the "
         "paired and non-inferiority comparisons and the argument behind each lever of the iteration ladder. Chapter 4 describes the implementation and the experimental design, from the "
-        "environment and the data to the web application and the test protocol. Chapter 5 gives the conclusions and the further work. The references and two appendices follow.")
+        "environment and the data to the web application, the test protocol and the sealed-test results. Chapter 5 gives the conclusions and the further work. The references and two appendices follow.")
 
 
 def survey(B):

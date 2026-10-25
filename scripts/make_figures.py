@@ -158,7 +158,7 @@ LADDER = [  # step, lever (task), measured result, mechanical verdict; sources: 
     ("I-5", "frozen heads on LAV-DF, then fusion", "video head 0.384, below chance", "not tested"),
     ("I-6", "heads trained on LAV-DF, fusion", "visual head at chance within produced videos", "see text"),
     ("I-7", "rPPG signal check, positive control", "0.301 of real clips, 0.6 needed; control sensitive", "failed"),
-    ("I-8", "integration and freeze", "sealed tests follow the readiness checks", "pending"),
+    ("I-8", "integration and freeze", "sealed test: T1, T2 improved; T3 superior at 95 percent", "supported"),
 ]
 LAD_COL = {"baseline": C["gray"], "supported": C["model"], "not tested": C["warn"], "see text": C["out"], "failed": C["warn"], "pending": "#ffffff"}
 

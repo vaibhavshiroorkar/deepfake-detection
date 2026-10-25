@@ -1,6 +1,7 @@
-"""Chapter 4: implementation and experimentation. Only logged measurements appear as numbers; results that are not final are [pending]."""
+"""Chapter 4: implementation and experimentation. Only logged measurements appear as numbers; the sealed-test results are in ch4_sealed."""
 import os
 import ch4_results as R
+import ch4_sealed as SE
 HERE_L = __import__("pathlib").Path(os.path.dirname(os.path.abspath(__file__))) / "_labelled"
 import ch4_iter as IT
 
@@ -9,7 +10,7 @@ import ch4_iter as IT
 def build(B):
     B.h1("Implementation and Experimentation")
     B.box("This chapter presents the environment, the data, the shared preprocessing, the evaluation harness, the encoder comparison, the working version, the measured iteration "
-          "ladder, the web application and the test protocol. Development-slice results are exploratory; the sealed-test results are not yet run and are marked as pending.")
+          "ladder, the web application, the test protocol and the sealed-test results. Development-slice results are exploratory; of the sealed-test results only the three declared tests are confirmatory.")
     environment(B)
     datasets(B)
     preprocessing(B)
@@ -20,12 +21,13 @@ def build(B):
     IT.results(B)
     webapp(B)
     staircase(B)
+    sealed(B)
     B.h2("Summary and Outline of the Next Chapter")
     B.p("This chapter described what was built, how it is tested and what the iterations found. The data, the group-disjoint splits, the shared preprocessing, the evaluation harness with its acceptance test, the "
         "design of the encoder comparison, the working version, the iteration ladder, the web application and the staircase test protocol exist and are documented. The encoder comparison, the seven "
-        "iterations, the two further face-video iterations 1b and 1c, the pulse positive control and the re-run baseline have exploratory results on the development slice and on validation data, with their intervals and mechanical verdicts; the sealed-test results and the three "
-        "confirmatory tests are marked as pending, because the sealed run follows the readiness checks and no sealed test set has been read. Chapter 5 states the conclusions that the present evidence "
-        "supports and the further work.")
+        "iterations, the two further face-video iterations 1b and 1c, the pulse positive control and the re-run baseline have exploratory results on the development slice and on validation data, with their intervals and mechanical verdicts. "
+        "The sealed run was made once for each frozen iteration: the final face-video and speech systems are improved over the working version at the 95 percent level and at the 98.33 percent level, and the final face-video system is superior to the re-run baseline "
+        "at the 95 percent level, not at the 98.33 percent level, and non-inferior at both. Chapter 5 states the conclusions that the evidence supports and the further work.")
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -338,7 +340,7 @@ def ladder(B):
     B.h3("Integration and freeze (iteration I-8)")
     B.p("I-8 runs no new experiments. It freezes the code, the preprocessing and the checkpoints, tags every frozen iteration in version control, evaluates each frozen iteration once on the "
         "sealed test sets under the final flag, runs the leakage check on the final splits, fills the paper, the report and the slides only from logged experiments, demonstrates the "
-        "system end to end with the source set to real, and deletes the LAV-DF archive by hand. Anything not frozen before the sealed run is reported as not done. At the time of writing I-8 has not been run: the tools for it (the scoring scripts for the staircase, the checkpoint of the frozen system and its parity check) exist, and no sealed split has been read.")
+        "system end to end with the source set to real, and deletes the LAV-DF archive by hand. Anything not frozen before the sealed run is reported as not done. The sealed run was made on 25 October 2026 and each frozen iteration was evaluated once; its results are in the section on the sealed-test results. The web page has not been switched to the checkpoint of the frozen system.")
 
 
 def webapp(B):
@@ -394,5 +396,9 @@ def staircase(B):
         "so it can transfer badly across data sets, and that would appear as a gap between the in-dataset and the cross-dataset balanced accuracy and be reported; and temperature scaling "
         "does not repair a shift between data sets.")
     IT.final_system(B)
-    R.status_table(B)
+
+
+def sealed(B):
+    B.h2("Sealed-Test Results", trace="E-014; D-067, D-068; ledger of the final evaluations")
+    SE.sealed_results(B)
     IT.limits(B)

@@ -11,7 +11,7 @@ def results(B):
         "Two further iterations on the face-video task, called 1b and 1c, were added the same evening at the request of the project team, after the first pass over the ladder. "
         "The lever of each slot was chosen from the diagnostic battery of the preceding step, so the order in which levers were used differs from the order of the candidate table above. "
         "Every number below is exploratory: it is measured on the validation split or on the development slice, is the mean of three seeds with a 95 percent group bootstrap interval, "
-        "and every verdict is the mechanical evaluation of the criteria that were written before the run. None of the sealed test sets was read. <ref tab:ladderres> summarises the ladder as it was measured.")
+        "and every verdict is the mechanical evaluation of the criteria that were written before the run. None of the sealed test sets was read for these development results; the sealed evaluation follows in a later section. <ref tab:ladderres> summarises the ladder as it was measured.")
     B.table("ladderres", "The iteration ladder as measured (exploratory; validation split and development slice).",
             ["Step", "Lever and task", "Validation AUC", "Development slice AUC", "Mechanical verdict"],
             [["0", "Working version: frozen encoder and linear head (face video, generated images, speech)", "0.7985, 1.0000, 0.9942", "0.6933, 0.9935, 0.6100", "baseline"],
@@ -26,7 +26,7 @@ def results(B):
              ["7", "Pulse signal check", "not applicable", "not applicable", "fails: signal not recoverable from these data"]],
             [0.9, 5.0, 3.9, 3.3, 3.3], ["center", "left", "center", "center", "left"], size=8, keep=False,
             trace="E-004 to E-012, E-006; exploratory")
-    B.figure("ladderres", "fig08_ladder_results.png", "Measured ladder on the development slice: face video (top, with the re-run baseline and the two further iterations 1b and 1c) and speech (bottom), with 95 percent intervals. The sealed test results are not yet available.", 15.5,
+    B.figure("ladderres", "fig08_ladder_results.png", "Measured ladder on the development slice: face video (top, with the re-run baseline and the two further iterations 1b and 1c) and speech (bottom), with 95 percent intervals. Sealed results are in a later section.", 15.5,
              "Two panels of AUC with intervals on the development slice, face video from the working version to fine-tuning, the baseline and the two further iterations, speech from the working version to the three-encoder average",
              tag="exploratory", trace="E-004, E-005, E-007, E-008, E-009, E-013b, E-016, E-017 (exploratory)")
 
@@ -125,7 +125,7 @@ def results(B):
     B.h3("Iterations 5 and 6: LAV-DF, the pre-check and in-domain heads", trace="E-010, E-011, E-012; D-057 to D-059")
     B.p("LAV-DF is the only data set on the machine in which video and audio are manipulated independently and every video has an audio stream. A fixed subset was drawn from its official splits: "
         "500 videos for each of four cells (real, video fake only, audio fake only, both fake) in each of the training, validation and test splits, with the source video as the group, "
-        "so each split has 2,000 videos. Only the training part (used to fit the fusion layer) and the validation part were scored; the test part is sealed. The label for the fused question is fake if either "
+        "so each split has 2,000 videos. Only the training part (used to fit the fusion layer) and the validation part were scored for the development results; the test part was sealed and was scored once at the freeze. The label for the fused question is fake if either "
         "modality is fake, and the label of each modality comes from the metadata.")
     B.p("The first step was the pre-check written in advance: the frozen visual head (trained on FaceForensics++) and the frozen speech average are scored without any fitting, and a head whose lower "
         "bound against its own label is at or below 0.55 is declared near chance. The visual head failed, and failed below chance: its AUC against the video label is 0.3838 [0.3599, 0.4079] and against the "
@@ -215,8 +215,7 @@ def final_system(B):
         "superior if the lower bound is above zero, non-inferior if it is above −0.0100, and, if the interval "
         "contains zero but not −0.0100, worded as not distinguished and non-inferior by the rule. For each of the three, a robustness line is printed beside the declared verdict: the interval at the 98.33 percent level, "
         "which is the Bonferroni correction for three tests, computed from the same bootstrap resamples. It does not replace the declared rule; a verdict that the corrected interval does not support is reported as not robust to the Bonferroni level. "
-        "All other sealed numbers are exploratory. The sealed run follows the readiness checks of the tools and the approval of the project team; "
-        "none of these sealed evaluations has been run, and their cells in <ref tab:status> are marked pending.")
+        "All other sealed numbers are exploratory. The sealed run was made on 25 October 2026, and its results are given in the section on the sealed-test results.")
 
 
 def software(B):
@@ -225,17 +224,25 @@ def software(B):
         "and normalisation, so it has a new identifier, and the checkpoint of the working version still loads and is scored with its own rule. The format and its refusals are covered by 304 unit tests, which pass. "
         "A candidate checkpoint of the frozen system was built, and a parity check on the graphics processor passed: 11 training or validation items (6 FaceForensics++ videos, 3 ASVspoof files and 2 ProGAN images) "
         "were scored from the stored scores and by the real adapter from the raw files, and the largest absolute difference of the calibrated score was 0.0019 against a tolerance of 0.02. "
-        "The local web page still runs the checkpoint of the working version until the freeze.")
+        "The local web page still runs the checkpoint of the working version; it has not been switched to the checkpoint of the frozen system.")
 
 
 def limits(B):
     B.h3("Limits of these results")
     B.bullets([
-        "Every verdict above rests on the validation split or on a development slice and is exploratory. The slices are small: 15 identity groups for face video, two generator units for generated images and 12 speakers for speech, so the intervals are wide and a gain below about +0.09 cannot be shown on the speech slice.",
-        "The development slice of the face task has one kind of fake, so the gain from fine-tuning is not shown to hold on other manipulations before the sealed test.",
+        "Every development verdict above rests on the validation split or on a development slice and is exploratory. The slices are small: 15 identity groups for face video, two generator units for generated images and 12 speakers for speech, so the intervals are wide and a gain below about +0.09 cannot be shown on the speech slice.",
+        "The development slice of the face task has one kind of fake, so the gain from fine-tuning is not shown to hold on other manipulations by the slice alone; the sealed sets add other manipulations.",
         "The baseline learning rate, 3e-4, is the highest of its grid, which was extended by one step and then closed, so a better rate outside the grid cannot be excluded; one run was repeated after a data-loader error, and three seeds give only a rough standard deviation for the margin.",
         "Iterations 1b and 1c were run although their triggers were not met to the letter; iteration 1b is a trade-off (slice up, validation down) in which the perturbations and mixup are not separated, and the transfer to perturbation types that were not trained on could not be tested.",
         "The positive control of the pulse check uses an injected sinusoid of constant frequency, made after decoding and not re-encoded, with channel weights chosen by the implementer, so it measures the sensitivity of the pipeline to that signal and not the presence or the amplitude of a real pulse.",
         "The LAV-DF subset has 2,000 videos per split, the identities of LAV-DF are not in its metadata, and the early-stopping epoch of its audio heads was chosen on its validation part, so the audio values there are slightly optimistic.",
         "The pulse check has no ground-truth pulse, and the image task has two generator units, so its intervals are not population intervals.",
+        "The sealed numbers are one run of each frozen iteration, with three seeds; they show the spread over seeds and over resampled groups, not the spread over repeated freezes.",
+        "The baseline is one family, Xception at 224 pixels, re-run on the same data, so the superiority at the 95 percent level says nothing about other published detectors or other input sizes; and the superiority is not robust to the 98.33 percent level.",
+        "The sealed Celeb-DF family set rests on 344 groups, of which 300 are single YouTube videos, so the identity variation of its fakes is that of 44 identities; the sealed In-the-Wild set has 42 speakers, and its intervals are wide.",
+        "The margin of 0.0100 comes from three seeds of the baseline and a floor, so it is a rough value.",
+        "Iterations 1b and 1c were not tested on the sealed sets, because they are not part of the final system; the sealed staircase, other than the three declared tests, is exploratory.",
+        "The two speech predictions failed upward and the sealed video value is below its development value; these differences between development slices and sealed sets were not explained by an experiment.",
+        "The sealed LAV-DF subset repeats the development pattern and supports no claim of audio-visual detection.",
+        "The web page has not been switched to the checkpoint of the frozen system, so the page shows the working version.",
     ])

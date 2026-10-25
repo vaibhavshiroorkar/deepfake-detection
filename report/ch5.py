@@ -4,7 +4,7 @@
 def conclusions(B):
     B.h1("Conclusions and Further Work")
     B.box("This chapter presents the conclusions that the evidence of the project supports at this stage, with the important points in list form, and the further work that completes "
-          "the work that remains between the present exploratory results and the frozen, sealed-test evaluation.")
+          "the work that remains after the sealed-test evaluation.")
     B.h2("Conclusions", trace="CLAUDE.md rules 1 and 8; DOC_FACTS; STATUS")
     B.p("The project built, from zero and in one repository, the foundations of a multimodal deepfake detector and the protocol under which it is judged. A group-disjoint evaluation "
         "harness exists, with a development slice for ranking, sealed test sets behind a guard and a ledger, bootstrap intervals over groups and seeds, paired and non-inferiority "
@@ -21,9 +21,15 @@ def conclusions(B):
         "reached a fused AUC of 0.9935 that a control shows is driven by a cue that separates original videos from produced ones, not by a visual manipulation signal (0.5070 within the produced videos); "
         "the audio head, at 0.8574 within the produced videos, is the part that detects a manipulation there. The pulse signal was not recoverable from the data (0.301 against the required 0.6); a positive control showed that the same pipeline recovers an injected 1.2 Hz sinusoid of a relative green amplitude of 0.008 in 377 of 432 clips, "
         "which shows its sensitivity to a clean signal of that size and does not show that a real pulse exists in these videos or survives compression.")
-    B.p("What the project does not yet have is a confirmed performance. The sealed-test results and the three confirmatory tests, the final system against the working version on face video and on speech and against the re-run "
-        "baseline with a margin of 0.0100, are marked as pending, because the sealed run follows the readiness checks and no sealed test set has been read. The report makes no claim about detection accuracy on sealed data, "
-        "no claim of audio-visual detection, and no claim that the system is comparable with a published detector beyond the exploratory difference to the re-run baseline given above. "
+    B.p("The sealed run was made on 25 October 2026, once for each frozen iteration, and the three confirmatory tests declared before it give the following. On the sealed Celeb-DF family set (7,650 videos, 344 groups) the final face-video system "
+        "reaches an AUC of 0.8218 [0.8020, 0.8393] against 0.6238 [0.6015, 0.6486] for the working version, a difference of +0.1980 [+0.1688, +0.2242], which is improved under the declared rule and also at the 98.33 percent level "
+        "([+0.1627, +0.2303]). On the sealed In-the-Wild set (24,788 clips, 42 speakers) the final speech system reaches 0.9148 [0.8896, 0.9383] against 0.7516 [0.6802, 0.8035], a difference of +0.1633 [+0.1177, +0.2266], "
+        "improved, and robust at the 98.33 percent level ([+0.1085, +0.2481]). Against the re-run Xception baseline (0.8042 [0.7841, 0.8223]) the final face-video system is higher by +0.0176 [+0.0025, +0.0327]: superior at the "
+        "95 percent level, not robust to the 98.33 percent level, whose interval [−0.0011, +0.0355] contains zero, and non-inferior at both levels. The report claims nothing beyond this wording.")
+    B.p("What these results do not show is stated with them. The comparison with a published detector rests on one baseline family at 224 pixels and one sealed set. The sealed Celeb-DF family has 344 groups, and its fakes vary over 44 identities; "
+        "the sealed In-the-Wild set has 42 speakers. The margin of 0.0100 comes from three seeds and a floor. Iterations 1b and 1c were not tested on the sealed sets. The sealed numbers are one run of each frozen iteration. "
+        "Two predictions for speech failed upward, since the final speech system and the working version reached 0.9148 and 0.7516 against the predicted ranges 0.60 to 0.85 and 0.50 to 0.70, and the sealed video value is below its development value (0.8218 against 0.9096). "
+        "Every sealed number outside the three tests is exploratory. On the sealed LAV-DF subset the development pattern repeats, and the report makes no claim of audio-visual detection. "
         "Where numbers of other papers are quoted, they are quoted with their own protocol and as context.")
     B.p("The important points are the following.")
     B.bullets([
@@ -36,15 +42,17 @@ def conclusions(B):
         "The speech task is the weakest: three levers raised the slice AUC to 0.8130, the slice has only 12 speakers, and the calibration error stays high, so the audio score is a ranking score.",
         "The audio-visual result on LAV-DF is an in-data-set result that a production-pipeline cue of the visual head drives; the visual head has no demonstrated ability to detect a visual manipulation there, and the audio head does. The system therefore shows the two scores side by side with a warning and no fused verdict.",
         "The pulse experiment has its thresholds written before any run, and it reported a negative outcome as an outcome: the pulse signal is not recoverable from these data. A positive control with an injected sinusoid shows that the pipeline is sensitive to a clean signal of relative amplitude 0.008 and leaves open whether a real pulse exists.",
-        "A version-2 checkpoint of the frozen system exists, is covered by 304 unit tests, and passed a parity check on the graphics processor (largest difference 0.0019); the web page still runs the checkpoint of the working version until the freeze.",
-        "Limitations are stated with the results: small development slices, a baseline learning rate that is the highest of its grid, two extra face-video iterations that were run although their triggers were not met to the letter, and weights of two encoders that are research-only.",
+        "A version-2 checkpoint of the frozen system exists, is covered by 304 unit tests, and passed a parity check on the graphics processor (largest difference 0.0019); the web page still runs the checkpoint of the working version and has not been switched to it.",
+        "The sealed run gave two improvements over the working version (face video and speech) at both levels, and a superiority over the re-run Xception baseline that holds at the 95 percent level, is not robust to the 98.33 percent level and is non-inferior at both; every other sealed number is exploratory.",
+        "Limitations are stated with the results: small development slices, one baseline family at 224 pixels, 344 groups and 42 speakers in the sealed sets, a margin from three seeds, a baseline learning rate that is the highest of its grid, two extra face-video iterations that were run although their triggers were not met to the letter, and weights of two encoders that are research-only.",
     ])
     B.h2("Further Work", trace="ITERATIONS; DECISIONS D-038, D-042, D-045; DOC_FACTS section 13")
     B.p("The remaining work follows the plan of the iteration ladder and the notes of the decisions.")
     B.bullets([
-        "Freeze the code, the preprocessing and the checkpoints after the readiness checks and the approval of the project team, tag every frozen iteration, and evaluate each once on the sealed test sets under the final flag.",
-        "Run the three confirmatory tests on the sealed data: the final system against the working version on face video and on speech, and against the re-run Xception baseline with the margin of 0.0100, each with its robustness interval at the 98.33 percent level.",
-        "Report an iteration that cannot be frozen in time as not run, and fill the pending cells only from the ledger of the final evaluations.",
+        "Switch the local web page to the checkpoint of the frozen system and run its page check on it.",
+        "Repeat the comparison with further families of published detectors and at other input sizes, with more seeds for the margin, because the present superiority rests on one baseline family at 224 pixels and is not robust to the 98.33 percent level.",
+        "Test on sealed sets with more independent identities and speakers than the 44 identities and 42 speakers of the present sets, and explain by an experiment why the speech predictions failed upward and the sealed video value is below its development value.",
+        "Evaluate iterations 1b and 1c on a sealed set if they are to enter a later system.",
         "Look for a visual manipulation signal on LAV-DF with a recipe that does not rely on the production pipeline, for example more frames per video or a temporal model, before any audio-visual claim is made.",
         "Extend the baseline grid beyond the learning rate of 3e-4 if the comparison is to be repeated, and fine-tune the generated-image task if time remains.",
         "Separate the perturbations from mixup in the augmentation lever, and test it on a held-out perturbation slice, before any claim of robustness to compression is made.",

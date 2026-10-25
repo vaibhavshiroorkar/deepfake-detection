@@ -125,10 +125,14 @@ def abstract(B):
         "intervals and several seeds, candidates are compared in a paired way, and a result is called comparable with a published detector only if it is non-inferior to a re-run "
         "of that detector on the same protocol.")
     B.p("The report describes the mathematical background, the evaluation harness and its acceptance test, the datasets and their licences, the shared preprocessing, the design of "
-        "the encoder comparison, the working version, the iteration ladder with its measured results, the local web application and the test protocol. All results are exploratory, "
+        "the encoder comparison, the working version, the iteration ladder with its measured results, the local web application, the test protocol and the sealed-test results. The results of the iterations are exploratory, "
         "on validation data and on development slices, and are reported with their intervals: fine-tuning the face encoder raises the development AUC from 0.6933 to 0.9096 (two further levers, augmentation with mixup and an average of three encoders, give 0.9315 and 0.9192 and do not enter the final system), three levers raise the speech AUC "
-        "from 0.6100 to 0.8130, a pulse signal check fails (a positive control shows that the pipeline recovers an injected sinusoid of a relative green amplitude of 0.008 in 87 percent of the clips), and on LAV-DF a control shows that the fused result is driven by a production-pipeline cue of the visual head. The sealed-test results "
-        "and the three confirmatory tests are marked as pending until the sealed run.")
+        "from 0.6100 to 0.8130, a pulse signal check fails (a positive control shows that the pipeline recovers an injected sinusoid of a relative green amplitude of 0.008 in 87 percent of the clips), and on LAV-DF a control shows that the fused result is driven by a production-pipeline cue of the visual head.")
+    B.p("The sealed test sets were read once for each frozen iteration, and three tests were declared before the run. On the sealed Celeb-DF family set the final face-video system reaches an AUC of 0.8218 [0.8020, 0.8393] against 0.6238 [0.6015, 0.6486] "
+        "for the working version (difference +0.1980 [+0.1688, +0.2242]), and on the sealed In-the-Wild set the final speech system reaches 0.9148 [0.8896, 0.9383] against 0.7516 [0.6802, 0.8035] (difference +0.1633 [+0.1177, +0.2266]); "
+        "both are improvements by the declared rule and also at the 98.33 percent level. Against the re-run Xception baseline (0.8042 [0.7841, 0.8223]) the face-video system is superior at the 95 percent level (+0.0176 [+0.0025, +0.0327]), "
+        "not at the 98.33 percent level, where the interval [−0.0011, +0.0355] contains zero, and non-inferior at both. Two predictions for speech failed upward, and every other sealed number is exploratory. "
+        "The comparison rests on one baseline family at 224 pixels, 344 groups and 42 speakers.")
     B.p("<b>Keywords:</b> deepfake detection, multimodal, group-disjoint evaluation, frozen encoders, calibration, group bootstrap, non-inferiority, remote photoplethysmography.")
 
 
