@@ -36,7 +36,7 @@ for videos as the mean of frame probabilities per D-024, image level for images)
 | I-2 | T-A AU-8 on the trim and peak-normalise window; T-V, T-I as I-1 | same | same | E-007 |
 | I-3 | T-A head trained with three augmented copies; rest as I-1 | same | same | E-008 |
 | I-4 | T-A mean logit of AU-8, AU-4, AU-6; rest as I-1 | same | same | E-009 |
-| BASE | T-V Xception (IMG-04) fine-tuned, learning rate from data/_results/baseline/selection.json | visual | T-V datasets only | E-013, D-060 |
+| BASE | T-V Xception (IMG-04) fine-tuned, learning rate from data/_results/baseline/selection_b.json (3e-4, E-013b, D-066; selection.json is the E-013 first pass) | visual | T-V datasets only | E-013b, D-066 |
 | I-5, I-5o, I-5p | LAV-DF subset, frozen heads of E-005 (visual) and E-009 (audio) | visual, audio | lavdf (fused label) / lavdf_videolabel, lavdf_audiolabel / lavdf_produced_videolabel, lavdf_produced_audiolabel; splits val, test_in | E-010 |
 | I-6, I-6o, I-6p | LAV-DF in-domain heads (E-011) and the logistic-regression fusion | visual, audio, fused (fused only in I-6) | same | E-011 |
 | I-6b, I-6bo, I-6bp | LAV-DF visual head trained on produced videos only (E-012) | visual | same | E-012 |
@@ -68,30 +68,34 @@ PYTHONPATH=src .venv/Scripts/python.exe -m dfd.eval.run --scores data/_final/sco
 ... the same for I-1, I-2, I-3, I-4, BASE, I-5, I-5o, I-5p, I-6, I-6o, I-6p, I-6b, I-6bo, I-6bp
 ```
 
-The two confirmatory comparisons (PROTOCOL addendum) use `--compare` on these files after the regular evaluations are in the ledger, for example the final system against I-0 on visual,
-celebdf_family, test_x:
+The three confirmatory tests (PROTOCOL addendum, D-061, D-062 b, D-066) use `--compare --final` on these files after the regular evaluations are in the ledger. Each prints the declared 95 percent interval and a robustness line at 98.33 percent (same replicates). The final system is the iteration tag I-4 (D-061, unchanged by D-065):
 
 ```
-PYTHONPATH=src .venv/Scripts/python.exe -m dfd.eval.run --compare --scores data/_final/scores/I-4.csv --scores-b data/_final/scores/I-0.csv --modality visual --dataset celebdf_family --split test_x --metric auc --final --iteration I-4 --iteration-b I-0
+# T1 video, final system minus I-0
+PYTHONPATH=src .venv/Scripts/python.exe -m dfd.eval.run --compare --scores data/_final/scores/I-4.csv --scores-b data/_final/scores/I-0.csv --modality visual --dataset celebdf_family --split test_x --metric auc --final --iteration I-4 --iteration-b I-0 --out data/_final/eval/compare_T1.json
+# T2 speech, final system minus I-0
+PYTHONPATH=src .venv/Scripts/python.exe -m dfd.eval.run --compare --scores data/_final/scores/I-4.csv --scores-b data/_final/scores/I-0.csv --modality audio --dataset in_the_wild --split test_x --metric auc --final --iteration I-4 --iteration-b I-0 --out data/_final/eval/compare_T2.json
+# T3 video, final system minus the Xception baseline (3e-4), delta 0.0100
+PYTHONPATH=src .venv/Scripts/python.exe -m dfd.eval.run --compare --scores data/_final/scores/I-4.csv --scores-b data/_final/scores/BASE.csv --modality visual --dataset celebdf_family --split test_x --metric auc --final --iteration I-4 --iteration-b BASE --out data/_final/eval/compare_T3.json
 ```
-and against the baseline with `--scores-b data/_final/scores/BASE.csv --iteration-b BASE` (delta of D-025 from the baseline seed spread, rule of D-060).
-Which iteration is "the final system" is a decision for the freeze: T-V comes from I-1 on, T-A from I-4, the audio-visual fusion from I-6 (see open items).
+Which iteration is "the final system": T-V from I-1 on, T-A from I-4 (D-061); the audio-visual fusion of I-6 is exploratory only (D-059). "Improved" and "superior": lower bound above 0; "non-inferior" (T3): lower bound above -0.0100.
 
-## Tested (CPU, 2026-10-25, val and dev_x and LAV-DF train and val only)
+## Readiness test of 2026-10-25 evening (D-062, STEP 2; GPU, `--limit`, no sealed split read)
 
-- prepare_heads.py ran to the end. The I-0 heads reproduce the logged scores in data/_results/I-0/<task>/scores.npz with maximum absolute difference 0.0 (T-V, T-I, T-A, validation and dev_x clip scores); the I-2 and I-3 heads reproduce the AUC estimates of data/_results/I-2/ha1.json and I-3/ha2.json exactly (validation 0.9889 and 0.9869, dev_x 0.6723 and 0.7455).
-- score_final.py --dry-run for I-0 to I-4, I-5, I-6, I-6b wrote valid files that `dfd.eval.scorefile.read_scores` and `dfd.eval.run` (non-final, `--splits val,dev_x`) accept. The I-0 file reproduces the logged validation scores to 2e-7. The LAV-DF files evaluated through `dfd.eval.run` give the E-010 and E-011 numbers (I-6 fused AUC 0.992 with the per-seed fusion against 0.9935 in E-011, which averages the seeds before fusing; I-6o visual 0.748 and audio 0.860; I-6p visual 0.507 and audio 0.857; I-5 visual 0.291 and audio 0.636).
-- check_score_files.py passes on those files; `bash scripts/freeze/run_all.sh --dry-run` ran end to end with the GPU hidden (`CUDA_VISIBLE_DEVICES=-1`), skipping the GPU blocks with a note.
-- The fine-tuned scoring path (`common.load_finetuned`, `ft_scores`, IMG-17 weights of E-005) ran on 300 FF++ val and 300 Celeb-DF dev_x clips per seed and reproduces the stored E-005 validation scores to 4.4e-4 (fp16 inference is not bit-exact; the checker's tolerance is 1e-3). See the incident note below: this ran on the GPU by mistake.
-- The sealed-split guards: `--final` and `--dry-run` are mutually exclusive and one is required; `--limit` is refused with `--final`; `common.select` raises for a sealed split unless final=True and `L.select_records` refuses it a second time.
+Result: every path below ran and passed. Logs data/_logs/freeze_test_branches.log, freeze_run_all_dry.log, freeze_check.log, freeze_evaldry_*.log.
 
-## Untested (written by careful reading only)
+- Extraction branches (scripts/freeze/test_branches.py, 40 items per block, sweep table switched off so the extraction code runs, compared with the stored sweep or training-time features of the same items): video FF++ val and Celeb-DF dev_x (IMG-07) max abs difference 0; image ProGAN val and CNN-subset dev_x (IMG-13) 0; audio first window and trim-and-normalise window, ASVspoof dev and In-the-Wild dev_x (AU-8) at most 0.00195 (fp16, cache decode), minimum cosine 1.0; audio of a video, LAV-DF val (AU-8, tag lavdf) 0.00098. 12 checks, 0 failed. The sealed guard refused all three branches without `final=True`.
+- `K.select(final=True)` on a copy of the FF++ split file in which the val rows were renamed test_in (temporary, deleted): refused without final, returned the records with it. The `--final` path of the real sealed files is the only line not exercised.
+- `bash scripts/freeze/run_all.sh --dry-run` with the real GPU (data/_final_dry wiped first): heads, I-0 to I-4, BASE, I-5, I-6, I-6b all scored; check_score_files.py `--dry` printed "all checks passed". Parity against the logged scores: I-0 2.6e-08, I-1 to I-4 2.05e-04 (fp16), BASE 4.98e-09 (BatchNorm statistics restored: weights.pt of the baseline runs has the key `buffers` with 120 entries, for 3e-4 and 1e-4).
+- I-6 fusion on real GPU scores (200 LAV-DF val clips): fused AUC 0.995 [0.989, 0.999], visual 0.995, audio 0.758 (small subset, not a result; E-011 on the full val is 0.9935).
+- `DRY=1 bash scripts/freeze/run_eval.sh` (the evaluation logic without `--final`, own ledger file): all 15 tags evaluated, exit 0.
+- prepare_crops.py: all four sealed video sets complete (scripts/freeze/check_crops.py): Celeb-DF v2 test_x 4,801 of 4,801 videos, DFD 3,431, Celeb-DF++ 2,849, LAV-DF test_in 2,000; no video without a face frame; 16 of 16 frames in 99.8 percent of the videos or more.
 
-- The extraction branches for the sealed sets: `video_features`, `image_features`, `audio_features` when no sweep feature file exists (all test sets), and the `--final` path as a whole.
-- `prepare_crops.py` was started (Celeb-DF v2 test_x is processed; DFD runs at 1.9 videos per second, about 31 minutes; Celeb-DF++ and LAV-DF test_in follow) and has not been checked for completeness.
-- BASE (the baseline weights did not exist yet) and the buffers path of `load_finetuned`.
-- The LAV-DF test_in path (audio features of the test videos through the encoders, `ft_scores` on test_in) and the I-6 fusion on real GPU scores (the fusion code ran on primed scores of E-010 and E-011).
-- `run_eval.sh` (written, not run: it would read sealed rows).
+## Untested after the readiness test
+
+- The `--final` run on the real sealed files (reading them is the freeze itself): the DFD, Celeb-DF v2 test_x, Celeb-DF++, test_in image and audio extraction at full size, and the evaluation of the sealed score files (first `--final` evaluation of every tag, the ledger writes). Their code paths ran on non-sealed equivalents above.
+- The three `--compare --final` commands (the compare code is unit-tested and now prints the 98.33 percent robustness line, tests/eval/test_eval_devx_compare.py).
+- Wall time at full size (estimates below).
 
 ## Estimated GPU time at the freeze (from the sidecar throughputs; add model loading of a minute or two per encoder)
 
@@ -116,7 +120,7 @@ Which iteration is "the final system" is a decision for the freeze: T-V comes fr
 5. Dataset key naming: the sweep sidecars call Celeb-DF dev_x "celebdf"; the score files use the manifest key `celebdf_v2`.
 6. Celeb-DF++ clips without a finished crop or a face frame are dropped from the score file and listed as MISSING by the checker; nothing in the harness imputes a score.
 7. Ledger: each tag and each dataset in it gets its own ledger entry (so LAV-DF has I-5, I-5o, I-5p, I-6, ...); the derived datasets `celebdf_family` and `celebdf_pp_with_v2_real` are ledger entries too, and they contain rows that also appear in `celebdf_v2` and `celebdf_pp` (a pooled view, not extra data).
-8. If the E-013 baseline learning rate is not the one of the first 1e-5 and the baseline directory is renamed, `score_final.py` reads data/_results/baseline/selection.json at run time and will follow it.
+8. `score_final.py` reads data/_results/baseline/selection_b.json at run time (falls back to selection.json); since D-066 it is 3e-4, delta 0.0100.
 
 ## Incident (report, rule 9)
 
