@@ -14,7 +14,16 @@
     <select id="scenario"></select>
   </div>
 </header>
-<div id="banner" class="banner" role="alert" hidden></div>
+<section id="live-panel" class="panel live-panel" data-live="false" aria-labelledby="live-h">
+  <h2 id="live-h">Analyse a file</h2>
+  <div class="live-row">
+    <input type="file" id="analyse-file" aria-label="File to analyse" disabled>
+    <button type="button" id="analyse-btn" disabled>Analyse</button>
+  </div>
+  <p id="live-unavailable" class="empty">Live analysis is not available on this server</p>
+  <div id="live-status" class="live-status" role="status" aria-live="polite" hidden></div>
+</section>
+<div id="banner"class="banner" role="alert" hidden></div>
 <div id="error" class="error-box" role="alert" hidden></div>
 <main id="report" hidden>
   <section id="meta" class="panel"></section>

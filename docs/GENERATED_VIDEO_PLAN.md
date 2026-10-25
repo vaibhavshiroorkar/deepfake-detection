@@ -55,3 +55,17 @@ Thresholds in the feasibility draft (0.70, 0.60, 0.10) are proposals, not agreed
 - A licence-clean real-video pool is not available; a pool is the binding constraint for training-free methods.
 - Hardware: all candidates fit the 12 GB card with the frozen web server running; decoding, not the GPU, is the bottleneck.
 - Not approved and not done: any training, any scoring, any sealed read.
+
+## 7. Local assets that a first candidate could reuse (checked 2026-10-26, nothing run)
+
+| Asset | Where recorded | Use for this plan |
+|---|---|---|
+| DINOv2-small (IMG-07) and DINOv2-base (IMG-08) weights | docs/DATA_LOG.md lines 286 and 287 (hashes); local copy hash-checked in data/_logs/encoder_weights.json | Frame encoder for a ReStraV-style trajectory feature and for the pooled-frame control |
+| SigLIP-base (IMG-17), CLIP ViT-L/14 (IMG-13) | DATA_LOG lines 288 to 290 | Alternative frame encoders for the control baseline |
+| Frame decoding, encoder wrappers, linear heads, bootstrap and ranking, score-file and ledger machinery | `dfd.prep.video`, `dfd.sweep.encoders`, `dfd.sweep.rank`, `dfd.eval` | Reused as they are |
+| XCLIP (needed by D3) | Not on disk, licence not verified | D3 is blocked until a download and licence check are approved |
+| DINOv3 (needed by STALL as released) | Not on disk, excluded by D-038 | STALL only as a DINOv2 re-implementation, not as released |
+| DeepAction (6.06 GB) | data/deepaction_v1, download in progress at the time of writing (DATA_LOG G1) | Development data |
+| DF26 | **Not available**: every data file returned HTTP 403 for the Hugging Face account on this machine (DATA_LOG G2); the user must accept the licence on the dataset page | Sealed test cannot be prepared until access is granted |
+
+Compatibility: the existing stack (Python 3.13, torch 2.14.1+cu130, transformers 5.20.2, timm 1.0.30) already runs DINOv2 and SigLIP; no new package is needed for the first candidate. Candidate code from the papers' repositories has not been run here, so its compatibility with Python 3.13 is unverified.

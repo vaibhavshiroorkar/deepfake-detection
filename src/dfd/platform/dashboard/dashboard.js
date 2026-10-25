@@ -73,18 +73,29 @@
     $("report").hidden = true;
   }
 
-  function renderBanner(r) {
+  var LIVE_TEXT = "Results come from the modules listed below; each states its own tested scope and limitations.";
+
+  /* live is true only for a report that came from the live analysis path. */
+  function renderBanner(r, live) {
     var b = $("banner");
+    clear(b);
+    b.className = "banner";
     var anyMock = r.modules.some(function (m) { return m.source === "mock"; });
-    if (r.source_summary === "mock" || r.source_summary === "mixed" || anyMock) {
-      b.textContent = r.source_summary === "mixed"
+    var showMock = r.source_summary === "mock" || r.source_summary === "mixed" || anyMock;
+    var showLive = live === true && (r.source_summary === "real" || r.source_summary === "mixed");
+    if (showLive) {
+      b.appendChild(el("div", "live-line", "LIVE ANALYSIS"));
+      b.appendChild(el("div", "live-sub", LIVE_TEXT));
+      b.className = "banner live";
+    }
+    if (showMock) {
+      var t = r.source_summary === "mixed"
         ? "MOCK DATA: some module results below are invented scenario data, not measurements."
         : "MOCK DATA: every result below is invented scenario data. No model ran. Nothing here is a measurement.";
-      b.hidden = false;
-    } else {
-      b.textContent = "";
-      b.hidden = true;
+      b.appendChild(el("div", "mock-line", t));
+      if (showLive) b.className = "banner live mixed";
     }
+    b.hidden = !(showLive || showMock);
   }
 
   function renderMeta(r) {
@@ -107,6 +118,12 @@
       s.appendChild(el("p", "err", "Report state is failed: no module completed. This is not a statement about the media."));
     } else if (st.state === "partial") {
       s.appendChild(el("p", "warn", "Report state is partial: at least one module failed, timed out or was unsupported."));
+      var cov = r.coverage, cnt = function (k) { return Array.isArray(cov[k]) ? cov[k].length : 0; };
+      var n = cnt("failed") + cnt("timed_out") + cnt("unsupported");
+      var note = el("p", "warn partial-note", n + " module(s) did not complete: " + cnt("failed") + " failed, " +
+        cnt("timed_out") + " timed out, " + cnt("unsupported") + " unsupported. Results below cover the remaining modules only.");
+      note.id = "partial-note";
+      s.appendChild(note);
     }
   }
 
@@ -269,12 +286,12 @@
     });
   }
 
-  function renderReport(r) {
+  function renderReport(r, live) {
     $("error").hidden = true;
     var probs = shapeProblems(r);
     if (probs.length) { $("banner").hidden = true; showError(probs); return false; }
     try {
-      renderBanner(r);
+      renderBanner(r, live === true);
       renderMeta(r);
       renderRouting(r);
       renderSections(r);
@@ -294,13 +311,135 @@
     return fetch("/api/fixtures/" + encodeURIComponent(name)).then(function (res) {
       if (!res.ok) throw new Error("Server answered " + res.status + " for " + name);
       return res.json();
-    }).then(renderReport).catch(function (e) {
+    }).then(function (r) { return renderReport(r, false); }).catch(function (e) {
       $("banner").hidden = true;
       showError(["Could not load scenario " + name + ": " + e.message]);
     });
   }
 
+  /* ---------------- live analysis mode ----------------
+     Needs the server routes /api/mode, /api/analyse and /api/jobs/<id>. If /api/mode is missing or fails,
+     the page behaves as fixtures-only. Test hooks via the query string (read once at load):
+       ?poll_interval_ms=N   polling interval, default 1000
+       ?poll_timeout_ms=N    give up polling after N ms, default 600000 (10 minutes) */
+  function qnum(name, dflt) {
+    try {
+      var v = Number(new URLSearchParams(window.location.search).get(name));
+      return (isFinite(v) && v > 0) ? v : dflt;
+    } catch (e) { return dflt; }
+  }
+  var POLL_INTERVAL_MS = qnum("poll_interval_ms", 1000);
+  var POLL_TIMEOUT_MS = qnum("poll_timeout_ms", 600000);
+  var pollToken = 0;
+
+  function setLive(kind, text) {
+    var s = $("live-status");
+    s.className = "live-status " + kind;
+    s.textContent = text;
+    s.hidden = !text;
+  }
+  function setBusy(busy) {
+    $("analyse-btn").disabled = busy;
+    $("analyse-file").disabled = busy;
+  }
+  function errText(e) {
+    return isObj(e) ? (str(e.code) + ": " + str(e.message)) : "Unknown error";
+  }
+  function liveFail(prefix, e) {
+    setLive("failed", prefix + " " + errText(e));
+    setBusy(false);
+  }
+  function readJson(res) {
+    return res.json().catch(function () { return null; }).then(function (j) { return { ok: res.ok, status: res.status, j: j }; });
+  }
+
+  function pollJob(jobId, fname, token, started) {
+    if (token !== pollToken) return;
+    if (Date.now() - started > POLL_TIMEOUT_MS) {
+      setLive("failed", "Timed out: no result after " + (Math.round(POLL_TIMEOUT_MS / 6000) / 10) +
+        " minutes of waiting. The server may still be working; no result is shown for " + fname + ".");
+      setBusy(false);
+      return;
+    }
+    fetch("/api/jobs/" + encodeURIComponent(jobId)).then(readJson).then(function (x) {
+      if (token !== pollToken) return;
+      if (!x.ok || !isObj(x.j)) {
+        liveFail("Could not read job status.", isObj(x.j) && x.j.error ? x.j.error : { code: "HTTP_" + x.status, message: "Unexpected answer from server." });
+        return;
+      }
+      var j = x.j;
+      if (j.state === "done") {
+        if (!isObj(j.report)) { liveFail("Analysis ended without a report.", { code: "NO_REPORT", message: "The job finished but returned no report." }); return; }
+        setBusy(false);
+        setLive("done", "Done: " + fname);
+        renderReport(j.report, true);
+        return;
+      }
+      if (j.state === "failed") {
+        liveFail("Failed: " + fname + ".", j.error || { code: "UNKNOWN", message: "The job failed without details." });
+        return;
+      }
+      var p = isObj(j.progress) ? j.progress : {};
+      if (j.state === "running") {
+        setLive("running", "Running: " + (p.module_id ? str(p.module_id) + " " : "") + "(" + str(p.completed) + " of " + str(p.total) + " modules done) for " + fname);
+      } else {
+        setLive("queued", "Queued: " + fname + " is waiting for its turn.");
+      }
+      setTimeout(function () { pollJob(jobId, fname, token, started); }, POLL_INTERVAL_MS);
+    }).catch(function (e) {
+      if (token !== pollToken) return;
+      liveFail("Could not read job status.", { code: "NETWORK", message: e && e.message ? e.message : "request failed" });
+    });
+  }
+
+  function startAnalysis() {
+    var inp = $("analyse-file");
+    var f = inp.files && inp.files[0];
+    if (!f) { setLive("failed", "NO_FILE: choose a file first."); return; }
+    var fname = f.name;
+    var token = ++pollToken;
+    setBusy(true);
+    setLive("queued", "Uploading " + fname + " ...");
+    var fd = new FormData();
+    fd.append("file", f, f.name);
+    fetch("/api/analyse", { method: "POST", body: fd }).then(readJson).then(function (x) {
+      if (token !== pollToken) return;
+      if (!x.ok || !isObj(x.j) || !x.j.job_id) {
+        liveFail("Refused.", isObj(x.j) && x.j.error ? x.j.error : { code: "HTTP_" + x.status, message: "The server did not accept the file." });
+        return;
+      }
+      setLive("queued", "Queued: " + fname + " is waiting for its turn.");
+      pollJob(str(x.j.job_id), fname, token, Date.now());
+    }).catch(function (e) {
+      if (token !== pollToken) return;
+      liveFail("Upload failed.", { code: "NETWORK", message: e && e.message ? e.message : "request failed" });
+    });
+  }
+
+  function initLive() {
+    var panel = $("live-panel");
+    $("analyse-btn").addEventListener("click", startAnalysis);
+    var unavailable = function () {
+      $("analyse-file").disabled = true;
+      $("analyse-btn").disabled = true;
+      $("live-unavailable").hidden = false;
+      panel.setAttribute("data-live", "false");
+    };
+    fetch("/api/mode").then(function (res) {
+      if (!res.ok) throw new Error("mode " + res.status);
+      return res.json();
+    }).then(function (m) {
+      if (isObj(m) && m.live === true) {
+        panel.setAttribute("data-live", "true");
+        $("live-unavailable").hidden = true;
+        $("analyse-file").disabled = false;
+        $("analyse-btn").disabled = false;
+      } else unavailable();
+    }).catch(unavailable);
+  }
+
   function init() {
+    initLive();
     var sel = $("scenario");
     fetch("/api/fixtures").then(function (res) { return res.json(); }).then(function (names) {
       clear(sel);
@@ -315,7 +454,7 @@
     }).catch(function (e) { showError(["Could not list scenarios: " + e.message]); });
   }
 
-  window.dashboard = { renderReport: renderReport, shapeProblems: shapeProblems, loadFixture: loadFixture };
+  window.dashboard = { renderReport: renderReport, shapeProblems: shapeProblems, config: { pollIntervalMs: POLL_INTERVAL_MS, pollTimeoutMs: POLL_TIMEOUT_MS }, loadFixture: loadFixture };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
 })();

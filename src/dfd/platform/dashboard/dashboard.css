@@ -38,3 +38,11 @@ ul{margin:4px 0 4px 18px;padding:0} li{margin:2px 0}
 .empty{color:var(--mut);font-style:italic}
 .statement{font-weight:600}
 code{font-size:12px;word-break:break-all}
+.banner.live{background:var(--neubg);color:var(--neu);border:3px solid var(--neu)}
+.banner.live.mixed .mock-line{margin-top:6px;color:var(--mock)}
+.banner .live-sub{font-weight:600;letter-spacing:0}
+.live-panel .live-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.live-panel button{font:inherit;padding:4px 14px}
+.live-status{margin-top:8px;padding:6px 10px;border-radius:4px;background:var(--neubg);color:var(--neu);font-weight:600;word-break:break-word}
+.live-status.failed{background:var(--hitbg);color:var(--hit)}
+.live-status.running{background:var(--misbg);color:var(--mis)}
