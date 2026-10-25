@@ -1,6 +1,6 @@
 # PLAN
 
-Last updated: 2026-10-25 (Session 2: MVP done ahead of plan, I-1 started Sunday)
+Last updated: 2026-10-25 (Session 3: I-1 to I-7 and the baseline have logged runs; the freeze is not run)
 
 This plan lists the stages of the project, the question each stage must answer, the day-by-day schedule to the submission date and where each output is recorded. A stage is marked done only when its output exists in the repository and the decisions it needed are logged in DECISIONS.md.
 
@@ -58,16 +58,17 @@ Each slot receives its hypothesis, success criterion and failure criterion befor
 | Slot | Role | Hypothesis | Experiment ID | Outcome |
 |---|---|---|---|---|
 | I-0 | MVP (D-040), done 2026-10-25 | E-001 to E-004 | E-001, E-002, E-003, E-004 | see EXPERIMENTS.md (exploratory, D-041) |
-| I-1 | Fine-tuning depth on T-V (budget D-042), chosen by the I-0 diagnosis (D-051, started Sun 2026-10-25, ahead of the Tue 27 Oct plan) | E-005 | E-005 (running) | none yet |
-| I-2 | Candidate lever: frame-to-video aggregation | to be written before the run | none yet | none yet |
-| I-3 | Candidate lever: loss and class weighting | to be written before the run | none yet | none yet |
-| I-4 | Candidate lever: augmentation and regularisation | to be written before the run | none yet | none yet |
-| I-5 | Candidate lever: combining encoders | to be written before the run | none yet | none yet |
-| I-6 | Candidate lever: late fusion and calibration | to be written before the run | none yet | none yet |
-| I-7 | rPPG (O-010), thresholds in ITERATIONS.md | written in ITERATIONS.md before any run | none yet | none yet |
-| I-8 | Integration and freeze, no experiments | n/a | none | none yet |
+| I-1 | Fine-tuning depth on T-V (D-051, D-042), done 2026-10-25 | E-005 | E-005 | SUPPORTED (mechanical): IMG-17 fine-tuned, validation 0.9899, dev_x 0.9096 against the probe 0.7396 |
+| I-2 | Speech preprocessing, trim and peak-normalise (D-054) | E-007 | E-007 | SUPPORTED: dev_x 0.6723, +0.0623 over I-0 |
+| I-3 | Nuisance augmentation of speech training clips (D-055) | E-008 | E-008 | SUPPORTED: dev_x 0.7455, +0.0732 over the I-2 head |
+| I-4 | Average of three speech encoders (D-056) | E-009 | E-009 | SUPPORTED: dev_x 0.8130, +0.0675 over the single head |
+| I-5 | Frozen heads on LAV-DF, pre-check, then fusion (D-057) | E-010 | E-010 | NOT TESTED: the visual head is below chance on LAV-DF (0.3838) |
+| I-6 | In-domain LAV-DF heads and fusion (D-058); visual head on produced videos only (D-059) | E-011, E-012 | E-011, E-012 | E-011 SUPPORTED mechanically (fused AUC 0.9935) but the post-hoc control shows a pipeline cue (visual 0.507 within produced videos); E-012 NOT SUPPORTED (0.517) |
+| I-7 | rPPG (O-010), thresholds in ITERATIONS.md | E-006 | E-006 | S-1 FAILS (0.301 against 0.6): rPPG signal not recoverable from these data; nothing further run (D-052) |
+| BASE | Xception re-run baseline of D-025 (D-060) | E-013 | E-013 | validation 0.9872, dev_x 0.8750; delta 0.0144 (D-061) |
+| I-8 | Integration and freeze, no experiments | n/a | none | version-2 checkpoint built, 304 tests, GPU parity PASS (2026-10-25); sealed staircase and the two confirmatory comparisons NOT run (freeze Thu 2026-10-29) |
 
-The levers in I-1 to I-6 are starting guesses and are replaced, in the same slot, when the diagnostic battery points elsewhere (ITERATIONS.md).
+The slots follow the order in which levers were triggered (D-056 item 4): the lever labels of ITERATIONS.md were starting guesses and were replaced by the lever used when the diagnostic battery pointed elsewhere.
 
 ## Risks to the schedule
 

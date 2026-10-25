@@ -3,7 +3,9 @@
     PYTHONPATH=src .venv/Scripts/python.exe scripts/make_figures.py [--only fig01 fig07]
 
 Output: assets/figures/<name>.png (300 dpi, for Word and slides) and assets/figures/<name>.pdf (vector, for the paper). The same files go
-into all three documents. Schematic figures carry the small tag "schematic". Nothing here plots a result: no measurement exists in a figure.
+into all three documents. Schematic figures carry the small tag "schematic". The result figures fig08_ladder_results and fig09_lavdf_cells plot
+logged measurements only: every number in them is copied from docs/EXPERIMENTS.md or docs/DOC_FACTS.md section 15 (E-004, E-005, E-007 to E-009,
+E-011, E-013) and they are exploratory (development slice, validation split). fig03_ladder is a table of the measured ladder (same sources).
 Figure 7 (web page) takes screenshots of the local page against the development stand-in (mock adapter) with Playwright and Chromium
 (PLAYWRIGHT_BROWSERS_PATH, default D:\\cache\\playwright) and saves them in assets/screens/. Figure 8 reads parameter counts and feature
 sizes from the extraction sidecars under data/_features/.
@@ -141,35 +143,45 @@ def fig02():
 
 
 # ------------------------------------------------------------------ 3 ladder
+LADDER = [  # step, lever (task), measured result, mechanical verdict; sources: docs/DOC_FACTS.md section 15
+    ("I-0", "frozen encoder, linear head", "dev_x AUC 0.693 video, 0.610 speech", "baseline"),
+    ("I-1", "full fine-tuning (video)", "dev_x 0.910, gain +0.170", "supported"),
+    ("I-2", "trim and normalise (speech)", "dev_x 0.672, gain +0.062", "supported"),
+    ("I-3", "noise, codec, reverb copies (speech)", "dev_x 0.746, gain +0.073", "supported"),
+    ("I-4", "average of three encoders (speech)", "dev_x 0.813, gain +0.068", "supported"),
+    ("I-5", "frozen heads on LAV-DF, then fusion", "video head 0.384, below chance", "not tested"),
+    ("I-6", "heads trained on LAV-DF, fusion", "visual head at chance within produced", "see text"),
+    ("I-7", "rPPG signal check", "0.301 of real clips, 0.6 needed", "failed"),
+    ("I-8", "integration and freeze", "sealed tests not yet run", "pending"),
+]
+LAD_COL = {"baseline": C["gray"], "supported": C["model"], "not tested": C["warn"], "see text": C["out"], "failed": C["warn"], "pending": "#ffffff"}
+
+
 def fig03():
-    fig, ax = canvas(7.0, 3.6)
-    names = [("I-0", "working\nversion", C["model"]), ("I-1", "fine-tuning\ndepth", C["proc"]), ("I-2", "frame\naggregation", C["proc"]), ("I-3", "loss and class\nweighting", C["proc"]),
-             ("I-4", "augmentation,\nregularisation", C["proc"]), ("I-5", "combining\nencoders", C["proc"]), ("I-6", "late fusion,\ncalibration", C["proc"]),
-             ("I-7", "rPPG\nexperiment", C["out"]), ("I-8", "integration\nand freeze", C["warn"])]
-    w, g = 0.66, 0.1
-    xs, prev, boxes = 0.1, None, []
-    for n, t, col in names:
-        b = box(ax, xs, 1.85, w, 1.0, t, fc=col, fs=6.4)
-        ax.text(xs + w / 2, 2.95, n, ha="center", fontsize=8, fontweight="bold", color=C["dark"])
-        if prev:
-            arrow(ax, right(prev), left(b))
-        prev = b
-        boxes.append(b)
-        xs += w + g
-    ax.text(0.1, 3.2, "I-1 to I-6: the lever comes from a family, chosen after the diagnostic battery of the preceding step", fontsize=8, color=MUTED)
-    box(ax, 0.1, 0.3, 6.8, 1.0, "", fc=C["gray"], round_=0.05)
-    ax.text(0.2, 1.12, "Diagnostic battery after every iteration", fontsize=8, fontweight="bold", va="center")
-    ax.text(0.2, 0.62, "per-dataset and per-generator AUC with intervals  |  train versus validation gap  |  validation versus development gap  |  calibration curve, ECE, Brier\n"
-                       "score histograms  |  splits by compression, face size, number of faces  |  the 20 worst errors  |  seed variance", fontsize=6.6, va="center", color=INK, linespacing=1.6)
-    for b in boxes[:7]:
-        arrow(ax, (b[0] + b[2] / 2, 1.85), (b[0] + b[2] / 2, 1.3), color=MUTED, lw=0.6, ls=":")
+    n = len(LADDER)
+    rh = 0.34
+    H = 0.55 + rh * (n + 1)
+    fig, ax = canvas(7.0, H, tag=False)
+    cols = [("Step", 0.1), ("Lever (task)", 0.7), ("Measured result (exploratory)", 3.55), ("Verdict", 6.0)]
+    y0 = H - 0.3
+    for tt, x in cols:
+        ax.text(x, y0, tt, fontsize=9, fontweight="bold", va="center", color=C["dark"])
+    ax.plot([0.1, 6.95], [y0 - 0.17, y0 - 0.17], color=INK, lw=0.7)
+    for k, (s, lev, res, ver) in enumerate(LADDER):
+        yy = y0 - rh * (k + 1)
+        ax.add_patch(plt.Rectangle((5.95, yy - 0.14), 1.0, 0.28, fc=LAD_COL[ver], ec=LINE, lw=0.5))
+        ax.text(0.1, yy, s, fontsize=9, va="center", fontweight="bold")
+        ax.text(0.7, yy, lev, fontsize=9, va="center")
+        ax.text(3.55, yy, res, fontsize=9, va="center")
+        ax.text(6.45, yy, ver, fontsize=9, va="center", ha="center")
+    ax.text(0.1, 0.12, "the lever of each step was chosen from the diagnostic battery of the step before; verdicts are mechanical and exploratory", fontsize=9, color=MUTED)
     save(fig, "fig03_ladder")
 
 
 # ------------------------------------------------------------------ 4 staircase
 def fig04():
     fig, ax = canvas(7.0, 3.5)
-    labels = ["I-0", "I-1", "I-2", "...", "final"]
+    labels = ["I-0", "I-1", "I-2", "...", "final"]  # schematic: the sealed evaluation is not yet run
     for k, lab in enumerate(labels):
         x0 = 0.35 + k * 1.15
         h = 1.0 + k * 0.26
@@ -328,7 +340,76 @@ def fig08():
     save(fig, "fig08_shortlist")
 
 
-FIGS = {"fig01": fig01, "fig02": fig02, "fig03": fig03, "fig04": fig04, "fig05": fig05, "fig06": fig06, "fig07": fig07, "fig08": fig08}
+# ------------------------------------------------------------------ 8b / 9 result figures (measured)
+def save_plain(fig, name):
+    OUT.mkdir(parents=True, exist_ok=True)
+    fig.savefig(OUT / f"{name}.png", dpi=DPI, bbox_inches="tight", pad_inches=0.04)
+    fig.savefig(OUT / f"{name}.pdf", bbox_inches="tight", pad_inches=0.04)
+    plt.close(fig)
+    print("wrote", name)
+
+
+# (label, estimate, low, high): docs/DOC_FACTS.md section 15 and the logged blocks of E-004, E-005, E-007, E-008, E-009, E-013
+LAD_V = [("I-0 frozen probe", 0.6933, 0.6639, 0.7314), ("Xception, fine-tuned", 0.8750, 0.8435, 0.9089), ("I-1 IMG-17, fine-tuned", 0.9096, 0.8776, 0.9388)]
+LAD_A = [("I-0 frozen probe", 0.6100, 0.5434, 0.7256), ("I-2 trim, normalise", 0.6723, 0.6126, 0.7584), ("I-3 plus augmentation", 0.7455, 0.7052, 0.8121), ("I-4 three encoders", 0.8130, 0.7523, 0.8808)]
+
+
+def fig08_ladder_results():
+    fig, axs = plt.subplots(2, 1, figsize=(7.0, 3.7), gridspec_kw={"height_ratios": [len(LAD_V), len(LAD_A)], "hspace": 0.62})
+    for ax, rows, title, col in ((axs[0], LAD_V, "Video: Celeb-DF v2 development slice (15 identities)", C["dark"]),
+                                 (axs[1], LAD_A, "Speech: In-the-Wild development slice (12 speakers)", C["dark"])):
+        ys = list(range(len(rows)))[::-1]
+        for y, (lab, est, lo, hi) in zip(ys, rows):
+            ax.plot([lo, hi], [y, y], color=col, lw=1.6)
+            ax.plot([est], [y], "o", color=col, ms=5)
+            ax.text(hi + 0.01, y, f"{est:.3f}", va="center", fontsize=9, color=INK)
+        ax.set_yticks(ys)
+        ax.set_yticklabels([r[0] for r in rows], fontsize=9)
+        ax.set_xlim(0.5, 1.0)
+        ax.set_ylim(-0.6, len(rows) - 0.4)
+        ax.axvline(0.5, color=LINE, lw=0.6)
+        ax.set_title(title, fontsize=9, loc="left", color=INK)
+        ax.tick_params(axis="x", labelsize=9)
+        for s in ("top", "right"):
+            ax.spines[s].set_visible(False)
+    axs[1].set_xlabel("AUC with 95 percent group-bootstrap interval (exploratory, development slice, mean of 3 seeds)", fontsize=9)
+    save_plain(fig, "fig08_ladder_results")
+
+
+# LAV-DF validation, heads trained on LAV-DF (E-011 block and its post-hoc control in docs/EXPERIMENTS.md)
+CELLS = [("video fake only", (0.9905, 0.9857, 0.9945), (0.5175, 0.4836, 0.5532)), ("audio fake only", (0.9912, 0.9864, 0.9951), (0.8711, 0.8474, 0.8920)),
+         ("both fake", (0.9921, 0.9878, 0.9959), (0.8556, 0.8327, 0.8779))]
+WITHIN = (("within produced videos", (0.5070, 0.4771, 0.5361), (0.8574, 0.8394, 0.8752)),)
+
+
+def fig09_lavdf_cells():
+    fig, ax = plt.subplots(figsize=(7.0, 3.3))
+    groups = [(c[0], c[1], c[2]) for c in CELLS] + [(w[0], w[1], w[2]) for w in WITHIN]
+    xs = list(range(len(groups)))
+    wd = 0.34
+    for k, (lab, v, a) in enumerate(groups):
+        for off, (est, lo, hi), col, nm in ((-wd / 2, v, "#c8553d", "visual head"), (wd / 2, a, C["dark"], "audio head")):
+            ax.bar(k + off, est, wd * 0.92, color=col, label=nm if k == 0 else None, alpha=0.9)
+            ax.plot([k + off, k + off], [lo, hi], color=INK, lw=1.0)
+            ax.text(k + off, hi + 0.02, f"{est:.2f}", ha="center", fontsize=9)
+    ax.axhline(0.5, color=LINE, lw=0.7, ls="--")
+    ax.axvline(len(CELLS) - 0.5, color=LINE, lw=0.7)
+    ax.set_xticks(xs)
+    ax.set_xticklabels(["video fake only
+vs real originals", "audio fake only
+vs real originals", "both fake
+vs real originals", "within produced videos
+(label asked: own modality)"], fontsize=9)
+    ax.set_ylim(0.4, 1.12)
+    ax.set_ylabel("AUC, 95 percent interval", fontsize=9)
+    ax.tick_params(axis="y", labelsize=9)
+    ax.legend(fontsize=9, loc="upper right", frameon=False, ncol=2, bbox_to_anchor=(1.0, 1.08))
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+    save_plain(fig, "fig09_lavdf_cells")
+
+
+FIGS = {"fig01": fig01, "fig02": fig02, "fig03": fig03, "fig04": fig04, "fig05": fig05, "fig06": fig06, "fig07": fig07, "fig08": fig08, "fig10": fig08_ladder_results, "fig11": fig09_lavdf_cells}
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
