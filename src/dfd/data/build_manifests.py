@@ -14,7 +14,7 @@ import json
 import sys
 from pathlib import Path
 
-from .builders import LayoutNotVerified, asvspoof2019_la, celebdf, dfd, ffpp, forensynths, in_the_wild, stubs
+from .builders import LayoutNotVerified, asvspoof2019_la, celebdf, dfd, fakeavceleb, ffpp, forensynths, in_the_wild, stubs
 from .manifest import default_data_root, write_manifest
 
 BUILDERS = {
@@ -30,7 +30,7 @@ BUILDERS = {
     # stubs: layout not yet verified
     "celebdf_pp": celebdf.build_pp,
     "lavdf": stubs.build_lavdf,
-    "fakeavceleb": stubs.build_fakeavceleb,
+    "fakeavceleb": fakeavceleb.build,   # real builder since 2026-10-26 (D-070); the stub in stubs.py is kept for its test
     "wilddeepfake": stubs.build_wilddeepfake,
 }
 
