@@ -28,7 +28,7 @@ def build(B):
     B.equation("auc_emp", r"\widehat{\mathrm{AUC}}=\frac{1}{n_1 n_0}\sum_{i:\,y_i=1}\ \sum_{j:\,y_j=0}\left[\mathbf{1}(s_i>s_j)+\tfrac{1}{2}\mathbf{1}(s_i=s_j)\right]=\frac{U}{n_1 n_0}")
     B.p("The AUC lies in $[0,1]$; $0.5$ means ranking no better than chance and $1$ means that every fake outranks every real example. It is unchanged by any strictly increasing "
         "transformation of the scores, so it does not see calibration or the threshold, and its population value does not depend on the prevalence. These properties are why it is the "
-        "headline metric of the project: the test sets are unbalanced (the pooled Celeb-DF family test set is 89 percent fake), and a metric that depended on the class ratio would change with the "
+        "headline metric of the project: the test sets are unbalanced (the pooled Celeb-DF family test set is 90.3 percent fake, 9.7 percent real), and a metric that depended on the class ratio would change with the "
         "test set and not with the detector.")
     # ------------------------------------------------------------------
     B.h2("Equal Error Rate", trace="MATH_NOTES section 3")

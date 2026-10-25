@@ -2,6 +2,9 @@
 Every number is copied from the logged entries of the encoder comparison and of the working version; they are
 exploratory results on the development slice."""
 
+import os
+from pathlib import Path
+HERE_L = Path(os.path.dirname(os.path.abspath(__file__))) / "_labelled"
 EXPL = "exploratory, development slice"
 
 TV = [  # name, AUC [interval], validation AUC, difference to the leader [interval], permutation p, in tie set
@@ -77,7 +80,7 @@ def sweep_results(B):
         "fine-tuning iteration are DINOv2 small, SigLIP base and DINOv2 base; the two CLIP models do not fit the card.")
     B.h3("Generated images")
     B.p("The slice has 5,998 images, 2,999 real and 2,999 fake, from two generator units. <ref tab:ti> gives the ranking. The OpenAI CLIP ViT-L/14 leads and its tie set contains only itself, so "
-        "the cost rule is not needed. The interval of its AUC, [0.9803, 0.9982], and all other intervals of this task must be read with a caveat: the slice has only two groups, so the "
+        "the cost rule is not needed. The two leading CLIP models reach 1.0000 on the validation split, which therefore cannot separate them, and on the development slice the leader (0.9935) is separated from every other candidate by the paired bootstrap, on only two generator units.  The interval of its AUC, [0.9803, 0.9982], and all other intervals of this task must be read with a caveat: the slice has only two groups, so the "
         "bootstrap interval is not interpretable as a population interval, and the permutation test cannot reach 0.05 with fewer than six groups. The family comparison "
         "(+0.3247 [+0.2845, +0.3565]) and the lower bound above 0.65 meet the criteria, and the verdict is supported on this slice. The per-generator values are in the diagnostic discussion below.")
     B.table("ti", "Encoders on generated images (exploratory, development slice, two groups).", HEAD, [list(r) for r in TI], W, AL, size=8, trace="E-002, ranking T-I, final (exploratory)")
@@ -98,7 +101,7 @@ def sweep_results(B):
     B.p("Because an AUC below 0.5 can come from a labelling error, the mapping of labels was checked first, with the training and development data and the development slice only. The "
         "features of the development slice agree with the metadata of In-the-Wild on every label and speaker (6,991 items, no mismatch), and the features of the ASVspoof 2019 training "
         "and development sets agree with the protocol files (25,380 and 24,844 items, no mismatch). The network from scratch reaches an AUC of 0.99996 to 0.99997 in the training domain and "
-        "0.219 to 0.286 on the development slice for its three seeds. There is therefore no label inversion: the value below 0.5 is a property of the shift between the corpora.")
+        "0.219 to 0.286 on the development slice for its three seeds. There is therefore no label inversion: values below 0.5 indicate a sign-flipped recording-condition shortcut learned from the training corpus, which is a property of the shift between the corpora and not a worse model.")
     B.p("A second check measured simple recording features as the fake score (<ref tab:triv>). The sign of two of them reverses between the training corpus and In-the-Wild: the "
         "leading silence has an AUC of 0.375 on ASVspoof development and 0.719 on the slice, and the energy has 0.594 and 0.248. The energy value on the slice is of the same size as the network "
         "from scratch. With 12 speakers the intervals of these two include 0.5, so the sign supports the hypothesis that recording-condition cues of ASVspoof reverse in In-the-Wild, "
@@ -165,7 +168,7 @@ def working_results(B):
 
 
 def screens(B):
-    B.figure_pair("webreal", ["../screens/real_image.png", "../screens/real_video.png"],
+    B.figure_pair("webreal", [str(HERE_L / "real_image.png"), str(HERE_L / "real_video.png")],
                   "The local web page with the real checkpoint: (a) result for an image, (b) result for a video with audio. The video shows its visual and audio score separately and the verdict undetermined.", 8.0,
                   ["Screenshot of the web page with the result for an image and the real checkpoint", "Screenshot of the web page with the result for a video, with a visual and an audio score"],
                   tag="screenshots of the real checkpoint on training items", trace="E-004 page check on the real checkpoint (training items, no accuracy claim)")

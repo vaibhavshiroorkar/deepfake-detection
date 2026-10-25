@@ -684,7 +684,7 @@ rows = [
     ["Both", "Small network from scratch", "reference, excluded", "0.39 M", "n/a", "n/a", "own code"],
 ]
 gt, th = add_table(s, L, TOP, cw, hdr_s, rows, size="auto", bold_first_col=True, max_h=H - 800000, fill=H - 800000)
-add_text(s, L, TOP + th + 90000, W, 620000, [("cap", "Parameters from the weight files; GFLOPs per forward pass; s per 1,000 inputs end to end (face frames for images). Inference, fp16, batch 64 (speech 32), RTX 5070. DINOv3 is excluded on purpose (manual access gate).")], "short_note")
+add_text(s, L, TOP + th + 90000, W, 620000, [("cap", "Parameters from the weight files; GFLOPs per forward pass; s per 1,000 inputs end to end, median of 3 repeats of the cost record (face frames for images). Other cost columns in this deck come from single extraction runs and differ slightly. Inference, fp16, batch 64 (speech 32), RTX 5070. DINOv3 is excluded on purpose (manual access gate).")], "short_note")
 
 # =====================================================================================================================
 # SLIDE 9a: sweep results
@@ -713,10 +713,10 @@ szs = fit_size(cws, HDR("Face frames"), tv, bold_first_col=False)
 for k_, (nm, rows_) in enumerate([("Face frames", tv), ("Images", ti), ("Speech", ta)]):
     add_table(s, col_x(4 * k_), ty0, cws, HDR(nm), rows_, size=szs, max_h=2600000)
 add_text(s, L, ty0 + 2350000, W, BOT - (ty0 + 2350000), [
-    ("bs", "Cheapest in the tie set wins: face frames DINOv2 small (tie set of five), images CLIP ViT-L/14 OpenAI (tie set of one), speech HuBERT base (tie set of three).", 16),
-    ("bs", "Face frames: EfficientNet-B4 is outside the tie set by the bootstrap, but its permutation p is 0.110; the winner is the same either way.", 16),
-    ("bs", "Images: the development slice has 2 generator units, so the interval is not interpretable as a population interval.", 16),
-    ("bs", "Speech: verdict inconclusive; the from-scratch reference scores 0.246, below chance; development ECE rose after temperature scaling.", 16),
+    ("bs", "Cheapest in the tie set wins: face frames DINOv2 small (tie of five), images CLIP OpenAI (tie of one), speech HuBERT base (tie of three).", 16),
+    ("bs", "Face frames: EfficientNet-B4 is outside the tie set by the bootstrap (permutation p 0.110); same winner either way.", 16),
+    ("bs", "Speech: verdict inconclusive; the from-scratch reference scores 0.246 (seeds 0.22 to 0.29): a sign-flipped shortcut, not a worse model; development ECE rose after scaling.", 16),
+    ("bs", "Images: both leading CLIP models reach 1.0000 on validation; on the development slice the leader (0.9935) is separated from the others by the paired bootstrap, on only two generator units.", 16),
 ], "sweep_text")
 
 # =====================================================================================================================
@@ -779,7 +779,7 @@ for i, (lab, txt, f) in enumerate(labels):
     dbox(s, x, TOP, lw, 800000, "**" + lab + "**" + chr(10) + txt, fill=f, size=C.SZ_TABLE)
     if i:
         darrow(s, x - gap, TOP + 400000, x, TOP + 400000)
-_f, _fw, _fh = fig(s, "fig08_ladder_results.png", L, TOP + 900000, w=span_w(8), alt="Development-slice AUC with intervals: face video from the working version to fine-tuning and the Xception baseline, speech from the working version to the three-encoder average")
+_f, _fw, _fh = fig(s, "fig08_ladder_results.png", L, TOP + 900000, h=BOT - (TOP + 900000) - 300000, alt="Development-slice AUC with intervals: face video from the working version to fine-tuning and the Xception baseline, speech from the working version to the three-encoder average")
 add_card(s, col_x(8), TOP + 900000, span_w(4), 3000000, [
     ("h", "Reading it"),
     ("bs", "Green: supported. Orange: limited. Red: failed.", 16),
@@ -887,7 +887,7 @@ s = new_slide("I-5 and I-6: LAV-DF",
     "The post-hoc control (labelled as such, D-059) keeps only the produced videos: the visual head is then at 0.5070 [0.4771, 0.5361] against the video label, while it separates the real originals from audio-only fakes (frames untouched) with 0.9912; the speech head reaches 0.8574 [0.8394, 0.8752] against the audio label within produced videos. The visual head has therefore learned original versus produced, and the fused AUC is an in-data-set result driven by that cue. "
     "A follow-up trained the visual head on produced videos only (E-012): 0.5169 [0.4945, 0.5392], not supported; no visual manipulation signal was recovered by this recipe. No audio-visual detection claim is made; the page shows the two scores side by side with a warning and no fused verdict. "
     "Evidence: docs/EXPERIMENTS.md E-010 to E-012; docs/DECISIONS.md D-057 to D-059.")
-_f, _fw, _fh = fig(s, "fig09_lavdf_cells.png", L, TOP, w=span_w(8), alt="Bars of AUC for the visual and the audio head on LAV-DF: against real originals for three fake cells, and within produced videos")
+_f, _fw, _fh = fig(s, "fig09_lavdf_cells.png", L, TOP, h=BOT - TOP - 380000, alt="Bars of AUC for the visual and the audio head on LAV-DF: against real originals for three fake cells, and within produced videos")
 add_card(s, col_x(8), TOP, span_w(4), BOT - TOP, [
     ("h", "The control"),
     ("bs", "Frozen face head: 0.3838, below chance.", 16),
@@ -1222,7 +1222,7 @@ s = new_slide("Sweep tables, images and speech",
     "Full tables of experiments E-002 (generated images) and E-003 (speech), exploratory, development slice (D-041, D-049). "
     "Images: trained on 14 ProGAN classes, validation on the other 6, development slice two CNN-synthesis generator units (5,998 images, 2 groups), so the intervals are not population intervals; per generator, CLIP ViT-L/14 OpenAI scores 0.9988 on StarGAN and 0.9830 on whichfaceisreal, the LAION model 0.9978 and 0.7790 (M-004 c). "
     "Speech: trained on ASVspoof 2019 LA train, validation LA dev, development slice In-the-Wild (6,991 clips, 12 speakers); validation AUC is 0.99 to 1.00 for every encoder but the development AUC is 0.50 to 0.64, the verdict is inconclusive, the from-scratch reference is 0.2458 [0.0706, 0.4404] and the label mapping was checked (M-004 a). "
-    "Time is one end-to-end extraction run per 1,000 inputs and the peak memory of the extraction. "
+    "Time is one end-to-end extraction run per 1,000 inputs (a single run, not the median of 3 repeats used on the encoder-shortlist slide, so the values differ slightly) and the peak memory of the extraction. "
     "Evidence: docs/EXPERIMENTS.md E-002, E-003, M-004; data/_results/T-I and T-A (rank.md, model_comparison.md).")
 ri = [["CLIP ViT-L/14 OpenAI", "1.0000", "0.9935 [0.9803, 0.9982]", "+0.007", "yes", "4.9", "2.85"],
       ["CLIP ViT-L/14 LAION", "1.0000", "0.9563 [0.7760, 0.9975]", "+0.044", "no", "4.5", "2.72"],
@@ -1474,7 +1474,23 @@ cp.last_modified_by = 'Vaibhav Shiroorkar, Shivansh Gupta, Adithya Jithesh'
 cp.subject = 'Final year project presentation'
 cp.keywords = ''
 cp.comments = ''
+import datetime as _dt
+cp.created = cp.modified = _dt.datetime.now(_dt.timezone.utc).replace(microsecond=0, tzinfo=None)
+cp.revision = 1
 prs.save(OUT)
+# docProps/app.xml of the reference deck (slide count, editing time, titles) is replaced by a minimal one
+import zipfile as _zf, shutil as _sh
+_tmp = OUT + ".tmp"
+with _zf.ZipFile(OUT) as _zin, _zf.ZipFile(_tmp, "w", _zf.ZIP_DEFLATED) as _zout:
+    for _it in _zin.infolist():
+        _data = _zin.read(_it.filename)
+        if _it.filename == "docProps/app.xml":
+            _data = ('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'
+                     '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" '
+                     'xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"><TotalTime>0</TotalTime><Application>Microsoft Office PowerPoint</Application>'
+                     '<Slides>%d</Slides></Properties>' % len(prs.slides)).encode("utf-8")
+        _zout.writestr(_it, _data)
+_sh.move(_tmp, OUT)
 print("saved", OUT, len(prs.slides), "slides")
 for w in WARN:
     print("WARN", w)

@@ -1,9 +1,9 @@
 \contentsline {table}{\numberline {I}{\ignorespaces Shortlisted frozen encoders per task}}{3}{table.22}%
-\contentsline {table}{\numberline {II}{\ignorespaces Data per task}}{5}{table.29}%
+\contentsline {table}{\numberline {II}{\ignorespaces Data per task}}{6}{table.29}%
 \contentsline {table}{\numberline {III}{\ignorespaces Iteration slots}}{9}{table.40}%
 \contentsline {table}{\numberline {IV}{\ignorespaces Iteration slots, continued}}{10}{table.41}%
-\contentsline {table}{\numberline {V}{\ignorespaces Encoder sweep on the development slice}}{11}{table.46}%
-\contentsline {table}{\numberline {VI}{\ignorespaces Working version (I-0) on the development slice}}{11}{table.48}%
-\contentsline {table}{\numberline {VII}{\ignorespaces Measured iteration results}}{11}{table.50}%
-\contentsline {table}{\numberline {VIII}{\ignorespaces LAV-DF pre-check and in-dataset heads}}{12}{table.54}%
-\contentsline {table}{\numberline {IX}{\ignorespaces Sealed-test AUC per frozen iteration}}{13}{table.58}%
+\contentsline {table}{\numberline {V}{\ignorespaces Encoder sweep on the development slice}}{12}{table.46}%
+\contentsline {table}{\numberline {VI}{\ignorespaces Working version (I-0) on the development slice}}{12}{table.48}%
+\contentsline {table}{\numberline {VII}{\ignorespaces Measured iteration results}}{13}{table.50}%
+\contentsline {table}{\numberline {VIII}{\ignorespaces LAV-DF pre-check and in-dataset heads}}{14}{table.54}%
+\contentsline {table}{\numberline {IX}{\ignorespaces Sealed-test AUC per frozen iteration}}{14}{table.58}%

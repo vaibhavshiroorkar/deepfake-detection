@@ -1,13 +1,15 @@
 """Chapter 4: implementation and experimentation. Only logged measurements appear as numbers; results that are not final are [pending]."""
+import os
 import ch4_results as R
+HERE_L = __import__("pathlib").Path(os.path.dirname(os.path.abspath(__file__))) / "_labelled"
 import ch4_iter as IT
 
 
 
 def build(B):
     B.h1("Implementation and Experimentation")
-    B.box("This chapter presents the implementation and the experimental design: the environment, the data and their licences, the shared preprocessing, the evaluation harness, "
-          "the encoder comparison, the working version, the iteration ladder with its measured results, the web application and the test protocol. Results of the development slice are exploratory, and the sealed-test results, which do not exist yet, are marked as pending.")
+    B.box("This chapter presents the environment, the data, the shared preprocessing, the evaluation harness, the encoder comparison, the working version, the measured iteration "
+          "ladder, the web application and the test protocol. Development-slice results are exploratory; the sealed-test results are not yet run and are marked as pending.")
     environment(B)
     datasets(B)
     preprocessing(B)
@@ -261,7 +263,7 @@ def working(B):
         "calibrated by temperature scaling fitted on validation and the checkpoint metadata is checked at load; metrics with three seeds, standard deviation and bootstrap interval exist on "
         "the validation split and on the development slice without any sealed split touched; the page shows a real result with its source marked real and the warnings for no face and "
         "several faces; the visual and the audio score of a video are shown separately; and the tests pass. <ref fig:pipeline> shows the chain from a file to a calibrated score.")
-    B.figure("pipeline", "fig01_pipeline.png", "From a file to a calibrated score. The encoders are frozen, the temperature and the threshold are fixed on validation data, and the scores are probabilities of fake.", 16.0,
+    B.figure("pipeline", "fig01_pipeline.png", "From a file to a calibrated score. The encoders are frozen, the temperature and the threshold are fixed on validation data, and the scores are probabilities of fake.", 15.5,
              "Three rows of processing blocks for the visual branch of a video, the audio branch and an image, each ending in a score", tag="schematic")
     B.p("A checkpoint is a folder with one metadata file and one head file per task; no pickled object is used, because a pickle executes code when it is loaded. The metadata holds the "
         "checkpoint identifier, the iteration, the commit, the protocol, the seed, the library versions, the manifest and split identifiers and, per task, the encoder (name, revision, "
@@ -290,7 +292,7 @@ def ladder(B):
         "of six families, and the lever of each slot is chosen after the diagnostic battery of the preceding iteration, not in advance; the primary candidate in <ref tab:ladder> is a "
         "starting guess for planning that is replaced without penalty when the battery points elsewhere. I-7 is the pulse experiment and I-8 runs no experiments. <ref fig:ladder> shows the "
         "ladder. The levers that were actually used and their results are given in the section on the results of the iterations.")
-    B.figure("ladder", "fig03_ladder.png", "Iteration ladder. Each step from I-1 to I-6 starts from the diagnostic battery of the preceding step.", 16.0,
+    B.figure("ladder", "fig03_ladder.png", "Iteration ladder. Each step from I-1 to I-6 starts from the diagnostic battery of the preceding step.", 15.5,
              "Row of nine boxes from the working version to integration and freeze, all feeding a diagnostic battery", tag="schematic")
     B.p("Every slot is written in one template: observation (numbers from the battery), diagnosis, mathematical hypothesis, change, prediction with sign and rough size, result and verdict. "
         "The prediction lines are hypotheses, and each is judged against its failure line after the run. Verdicts on the development slice are exploratory.")
@@ -321,7 +323,7 @@ def ladder(B):
         "A signal check, S-1, starts early on the processor, in parallel with I-1 to I-3. It extracts about 10 seconds of contiguous frames at the native frame rate, because the "
         "16-frame sampling cannot carry a pulse, and computes the spectral peak in 0.7 to 3 Hz and its signal-to-noise ratio (Equation <ref eq:snr>) on real clips. The negative control is "
         "the same clips with time-shuffled frames, pooled across clips with at least ten shuffles per clip, and the 95th percentile of the pooled shuffled values is the reference. <ref fig:rppg> shows the chain.")
-    B.figure("rppg", "fig05_rppg.png", "Processing chain of the pulse signal check and its negative control.", 16.0,
+    B.figure("rppg", "fig05_rppg.png", "Processing chain of the pulse signal check and its negative control.", 15.5,
              "Seven processing blocks from contiguous frames to peak and signal-to-noise ratio, with a time-shuffled control", tag="schematic")
     B.p("S-1 passes when at least 60 percent of the real clips have a peak SNR above the 95th percentile of the shuffled control and, if a data set with pulse ground truth is obtained, "
         "the mean absolute heart-rate error is at most 8 beats per minute. If it does not pass, I-7 reports exactly that, “pulse not recoverable from these data”, with the numbers and "
@@ -364,7 +366,7 @@ def webapp(B):
         "harness refuses any run whose metadata says mock, and the document builds fail if a number cites a mock run. The real adapter refuses to run without a checkpoint whose metadata and "
         "preprocessing hash match. <ref fig:web> shows the page, with screenshots taken against the development stand-in; the banner and the undetermined decision for a video are part of the design "
         "and the scores shown mean nothing.")
-    B.figure_pair("web", ["../screens/web_image.png", "../screens/web_video.png"],
+    B.figure_pair("web", [str(HERE_L / "web_image.png"), str(HERE_L / "web_video.png")],
                   "The local web page against the development stand-in: (a) result for an image, (b) result for a video. The banner is part of the design and the scores shown are not measurements.", 8.0,
                   ["Screenshot of the web page with the result for an image and a purple mock banner", "Screenshot of the web page with the result for a video and a purple mock banner"],
                   tag="screenshots against the stand-in")
@@ -378,7 +380,7 @@ def staircase(B):
     B.p("Rankings, hyperparameter choices and iteration verdicts made on the development slice and on the validation split are exploratory: they report sign, size and interval, "
         "and they choose the next step; they are never presented as confirmed performance. At the freeze each frozen iteration is evaluated once on the sealed test sets under the final flag, "
         "which gives a staircase of test scores, one per iteration, each touched once and recorded in the ledger. <ref fig:staircase> shows the protocol.")
-    B.figure("staircase", "fig04_staircase.png", "Staircase test protocol. Verdicts on the development slice are exploratory; each frozen iteration is evaluated once on the sealed test sets and the two pre-declared comparisons are the confirmatory claims.", 15.5,
+    B.figure("staircase", "fig04_staircase.png", "Staircase test protocol. Verdicts on the development slice are exploratory; each frozen iteration is evaluated once on the sealed test sets and the two pre-declared comparisons are the confirmatory claims.", 15.2,
              "Rising blocks for iterations I-0, I-1, I-2 and the final system, with arrows to two confirmatory comparisons", tag="schematic")
     B.p("The confirmatory claims are exactly two, declared before any final run, both as paired group bootstrap comparisons on the sealed data under the comparison rules: the final "
         "system against the working version, and the final system against a re-run published baseline, where the second is the non-inferiority test of Equation <ref eq:noninf>. The margin "

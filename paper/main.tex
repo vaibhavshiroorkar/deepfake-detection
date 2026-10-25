@@ -278,7 +278,7 @@ and there is no temporal localisation. Figure~\ref{fig:pipeline} shows the three
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=0.9\textwidth]{fig01_pipeline.pdf}
+\includegraphics[width=\textwidth]{fig01_pipeline.pdf}
 \caption[Three scoring paths]{Schematic of the three scoring paths. Encoders are frozen, the head is
 linear, and every score is a calibrated probability that the content is fake.
 The visual and the audio score of a video are shown side by side, not fused.}
@@ -440,7 +440,7 @@ a check by content hash that no file appears in two splits.
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=\columnwidth]{fig02_splits.pdf}
+\includegraphics[width=\textwidth]{fig02_splits.pdf}
 \caption[Group-disjoint splits]{Schematic of the group-disjoint splits. The development slice
 (\spl{dev\_x}) and the sealed tests share no group, identity or file content
 with each other or with the training dataset.}
@@ -518,7 +518,7 @@ exploratory.
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=\columnwidth]{fig04_staircase.pdf}
+\includegraphics[width=\textwidth]{fig04_staircase.pdf}
 \caption[Staircase of sealed evaluations]{Schematic of the staircase. Each frozen iteration is evaluated once
 on the sealed test sets and the result is written to the ledger. The two
 confirmatory claims compare the final system with the working version and with
@@ -633,7 +633,7 @@ fine-tuning fit the card.
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=0.9\textwidth]{fig03_ladder.pdf}
+\includegraphics[width=\textwidth]{fig03_ladder.pdf}
 \caption[Iteration ladder]{The measured iteration ladder. Each lever was chosen after the diagnostic
 battery of the previous step; the verdicts are mechanical evaluations of the
 criteria written before the run and are exploratory. The sealed-test evaluation
@@ -813,8 +813,9 @@ invents a score: a missing audio head gives an audio modality marked
 unavailable with its reason. A development stand-in exists for building the
 page; it always reports its source as mock and the page then shows a visible
 banner, so that a stand-in output is never taken for a measurement. The
-screenshots in Figure~\ref{fig:web} were taken against that stand-in and are
-labelled as such.
+screenshots in Figure~\ref{fig:web} were taken against the real working-version
+checkpoint, on items of the training data, and show no banner; the audio
+result carries the warning about the exploratory calibration of audio scores.
 
 The checkpoint format has a second version for the system after the iterations:
 a fine-tuned image encoder with its linear head for the face and video path, an
@@ -829,10 +830,12 @@ checkpoint until the freeze, and the unit tests (304) pass on test doubles.
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=0.86\textwidth]{fig07_web.pdf}
-\caption[Local web page against the development stand-in]{The local web page against the development stand-in: (a) start page,
-(b) an image result, (c) a video result with the visual and audio scores shown
-separately. The banner marks the output as a stand-in, not a measurement.}
+\includegraphics[width=\textwidth]{fig07_web_real.pdf}
+\caption[Local web page with the real checkpoint]{The local web page with the real working-version checkpoint on training items:
+(a) an image result, (b) a video with audio, where the visual and audio scores are
+shown separately and the combined verdict is ``undetermined'', (c) an audio file with
+the calibration warning. The text inside the screenshots is the page as rendered and is
+not meant to be read at this size.}
 \label{fig:web}
 \end{figure*}
 
@@ -1032,7 +1035,7 @@ I-4 three encoders & 0.9964 [0.9943, 0.9982] & 0.8130 [0.7523, 0.8808] \\
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=0.78\textwidth]{fig08_ladder_results.pdf}
+\includegraphics[width=\textwidth]{fig08_ladder_results.pdf}
 \caption[Development-slice AUC along the ladder]{Development-slice AUC with the 95\,\% group-bootstrap interval along
 the measured ladder (exploratory). The widths follow from 15 identities (video)
 and 12 speakers (speech).}
@@ -1109,7 +1112,7 @@ Audio & 0.6476 [0.6244, 0.6701] & 0.8604 [0.8435, 0.8769] \\
 
 \begin{figure*}[!t]
 \centering
-\includegraphics[width=0.78\textwidth]{fig09_lavdf_cells.pdf}
+\includegraphics[width=\textwidth]{fig09_lavdf_cells.pdf}
 \caption[LAV-DF per-cell AUC and control]{LAV-DF validation, heads trained on LAV-DF: AUC of each head
 for each kind of fake against the real originals, and within the produced
 videos only (post-hoc control). The visual head is high against the originals

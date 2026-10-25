@@ -113,7 +113,7 @@ def results(B):
              ["Sum of log-odds", "0.9795 [0.9726, 0.9857]", "not applicable", "not applicable", "not applicable"],
              ["Logistic regression", "0.9935 [0.9905, 0.9962]", "not applicable", "not applicable", "not applicable"]],
             [3.0, 3.5, 3.5, 3.2, 3.2], ["left", "center", "center", "center", "center"], size=8, trace="E-011 (exploratory)")
-    B.figure("lavdfcells", "fig09_lavdf_cells.png", "AUC of the visual and the audio head on the LAV-DF validation subset: against the real originals for each kind of fake, and within the produced videos only.", 15.0,
+    B.figure("lavdfcells", "fig09_lavdf_cells.png", "AUC of the visual and the audio head on the LAV-DF validation subset: against the real originals for each kind of fake, and within the produced videos only.", 14.4,
              "Bars of AUC for the visual head and the audio head for three kinds of fake against real originals, and within produced videos, with intervals",
              tag="exploratory", trace="E-011 and its post-hoc control (exploratory)")
     B.p("Both heads pass the pre-check (0.7491 and 0.8604 against their own labels, lower bounds above 0.55), the logistic-regression fusion exceeds the better single head by +0.0023 [+0.0009, +0.0040] on the "
