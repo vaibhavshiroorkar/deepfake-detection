@@ -709,6 +709,7 @@ Still open:
 ### D-051: Lever of iteration I-1 (fine-tuning depth on the video task), trigger check of I-1 to I-6, and what the audio result means for I-6
 - Date: 2026-10-25 (written before any I-1 run; the first I-1 run starts after this entry and E-005 are committed)
 - Status: Decided autonomously - needs user review
+- Status update (2026-10-25, D-062): Decided (user). The user reviewed this entry and accepts it with the amendments recorded in D-062. The Status line above is kept as written when the entry was made.
 - Question: Which lever I-1 uses, from the I-0 diagnostic battery (E-004, data/_results/I-0/battery.md); how each trigger of ITERATIONS.md stands; what the near-chance T-A result and the sign reversal of trivial audio features (M-004) mean for I-6 and for the fallback claim of PLAN.md risk 7.
 - Options considered: (1) fine-tuning depth on T-V (primary candidate of ITERATIONS.md, scope and budget of D-042); (2) the shift lever (augmentation and regularisation, ITERATIONS I-4) on T-V; (3) combining encoders (I-5 lever) on T-V; (4) a cheap audio preprocessing hypothesis on T-A first.
 - Criteria (written before the choice): the trigger numbers of ITERATIONS.md read against their thresholds; a lever whose trigger is met is preferred to one whose trigger is not; where several triggers are partly met, the lever that is a precondition for the others goes first; no number from dev_x enters a hyperparameter choice (D-035, D-041); the budget of D-042 is kept.
@@ -746,6 +747,7 @@ Still open:
 ### D-052: Outcome of the S-1 pulse check and what follows for iteration I-7
 - Date: 2026-10-25
 - Status: Decided autonomously - needs user review (the rule itself was frozen by D-041; only the consequences are decided here)
+- Status update (2026-10-25, D-062): Decided (user). The user reviewed this entry and accepts it with the amendments recorded in D-062. The Status line above is kept as written when the entry was made.
 - Question: S-1 (E-006) failed its pre-declared rule; what does I-7 do now.
 - Options considered: (1) report the failure as the result of I-7 and run nothing further (the rule of ITERATIONS.md); (2) add a stronger null or a second extraction method and rerun until it passes; (3) run the separation experiment anyway.
 - Criteria: the thresholds of I-7 are frozen and are not edited after the first run (ITERATIONS.md, D-041); CLAUDE.md rules 1, 2 and 9 (failed runs stay in the log, nothing unmeasured is a result).
@@ -758,6 +760,7 @@ Still open:
 ### D-053: Fixes after the independent verification of the three documents (2026-10-25)
 - Date: 2026-10-25
 - Status: Decided autonomously - needs user review
+- Status update (2026-10-25, D-062): Decided (user). The user reviewed this entry and accepts it with the amendments recorded in D-062. The Status line above is kept as written when the entry was made.
 - Question: How the defect list of the fresh verifier (not the builders of the documents; it rendered all 20 paper pages, 70 report pages and 32 slides) is settled, where the list and the instructions of the orchestrator brief disagree.
 - Options considered and decision:
   1. Numbers: the real share of the pooled Celeb-DF test is 9.7 percent (744 of 7,650) and the fake share 90.3 percent; the wrong 10.8 percent (DATA_LOG.md, report 4.2.2, slide 31) and the old "89 percent fake" (report 3.2) are corrected. Slide 25 minutes are recomputed from step_time_alone.json.
@@ -773,6 +776,7 @@ Still open:
 ### D-054: Lever of iteration I-2 (speech preprocessing, hypothesis H-A1) after the I-1 result (2026-10-25)
 - Date: 2026-10-25 (written before the first E-007 run; the experiment entry is E-007, planned earlier in the same day, because E-006 is the S-1 check)
 - Status: Decided autonomously - needs user review
+- Status update (2026-10-25, D-062): Decided (user). The user reviewed this entry and accepts it with the amendments recorded in D-062. The Status line above is kept as written when the entry was made.
 - Question: Which lever the next iteration (I-2 in the order of D-051 item 3) uses, after E-005 and its battery (data/_results/I-1/result.md).
 - Options considered: (1) T-A audio preprocessing H-A1 (E-007); (2) a shift lever on T-V (augmentation and regularisation, ITERATIONS I-4); (3) combining the fine-tuned T-V encoders (I-5 lever); (4) aggregation (I-2 slot of ITERATIONS) or loss and weighting (I-3 slot) on T-V.
 - Criteria (written before the choice): the trigger numbers of ITERATIONS.md against their thresholds; a lever whose trigger is met is preferred; no dev_x number enters a hyperparameter choice (D-035, D-041); the budget left before the freeze (experiments end Wed 2026-10-28 night).
@@ -794,6 +798,7 @@ Still open:
 ### D-055: Lever of iteration I-3 (nuisance augmentation of the speech training clips, hypothesis H-A2) after E-007 (2026-10-25)
 - Date: 2026-10-25 (written before the first E-008 feature exists; experiment entry E-008)
 - Status: Decided autonomously - needs user review
+- Status update (2026-10-25, D-062): Decided (user). The user reviewed this entry and accepts it with the amendments recorded in D-062. The Status line above is kept as written when the entry was made.
 - Question: Which lever the next iteration (I-3) uses, after the E-007 result (data/_results/I-2/ha1.md).
 - Options considered: (1) augmentation of the T-A training clips (the I-4 lever of ITERATIONS, applied to speech); (2) fine-tuning the speech encoder (the I-1 lever on T-A); (3) a T-V shift lever (augmentation of the video frames); (4) the I-6 pre-check on LAV-DF first; (5) combining speech encoders (I-5 lever).
 - Criteria (written before the choice): the trigger numbers against ITERATIONS.md thresholds; a lever whose trigger is met is preferred; no dev_x number enters a hyperparameter choice; ranges of the lever are fixed in the E-entry before the run; budget fits the time left (experiments end Wed 2026-10-28 night).
@@ -814,6 +819,7 @@ Still open:
 ### D-056: Lever of iteration I-4 (average of three speech encoders, hypothesis H-A3) after E-008 (2026-10-25)
 - Date: 2026-10-25 (written before the first E-009 feature exists; experiment entry E-009)
 - Status: Decided autonomously - needs user review
+- Status update (2026-10-25, D-062): Decided (user). The user reviewed this entry and accepts it with the amendments recorded in D-062. The Status line above is kept as written when the entry was made.
 - Question: Which lever the next iteration (I-4) uses, after the E-008 result (data/_results/I-3/ha2.md).
 - Options considered: (1) combining the three tied speech encoders on T-A (the I-5 lever of ITERATIONS); (2) a T-V shift lever (augmentation during fine-tuning); (3) the I-6 pre-check on LAV-DF; (4) fine-tuning the speech encoder; (5) combining the fine-tuned video encoders.
 - Criteria (written before the choice): the trigger numbers against ITERATIONS.md thresholds; a lever whose trigger is met is preferred; no dev_x number enters a hyperparameter choice; the lever is fixed in the E-entry before the run; budget fits the time left (experiments end Wed 2026-10-28 night).
@@ -835,6 +841,7 @@ Still open:
 ### D-057: Iteration I-5 = pre-check on LAV-DF and late fusion (the I-6 lever of ITERATIONS.md), and the LAV-DF subset (2026-10-25)
 - Date: 2026-10-25 (written before any LAV-DF score exists; experiment entry E-010; to be run after E-009)
 - Status: Decided autonomously - needs user review
+- Status update (2026-10-25, D-062): Decided (user). The user reviewed this entry and accepts it with the amendments recorded in D-062. The Status line above is kept as written when the entry was made.
 - Question: What the next iteration is, and which part of LAV-DF is used, now that the audio levers I-2 to I-4 (E-007 to E-009) are measured.
 - Options considered: (1) the pre-check of D-051 item 4 and, if it passes, late fusion; (2) a T-V shift lever (augmentation during fine-tuning); (3) fine-tuning the audio encoder; (4) more audio levers.
 - Criteria (written before the choice): the trigger numbers of ITERATIONS.md; a lever whose trigger is met is preferred; the pre-check is cheap and decides whether the fusion trigger is met; no number from dev_x enters a hyperparameter; the sealed test split is not touched before the freeze; time left (experiments end Wed 2026-10-28 night).
@@ -854,6 +861,7 @@ Still open:
 ### D-058: Iteration I-6 = in-domain heads on LAV-DF and late fusion, after the E-010 pre-check failed (2026-10-25)
 - Date: 2026-10-25 (written after E-010 and before any in-domain head exists; experiment entry E-011)
 - Status: Decided autonomously - needs user review
+- Status update (2026-10-25, D-062): Decided (user). The user reviewed this entry and accepts it with the amendments recorded in D-062. The Status line above is kept as written when the entry was made.
 - Question: What the next iteration does after E-010 (the frozen visual head is below chance on LAV-DF, the frozen audio head is at 0.648; fusion NOT TESTED).
 - Options considered: (1) heads trained on LAV-DF (the alternative named in ITERATIONS I-6 and in D-051 item 4), then fusion; (2) a T-V shift lever (augmentation) on the FF++-trained head; (3) report the failure and stop the multimodal line; (4) fit the fusion regression with the inverted visual head (the E-010 logistic regression reached 0.75 on val with a negative visual weight).
 - Criteria (written before the choice): the trigger text of ITERATIONS I-6 ("instead if one modality is near chance: report single-modality results and the fallback claim, or retrain on LAV-DF"); no use of a sign-flipped cue as a detector; no test split touched; time left (experiments end Wed 2026-10-28 night); the cost of every step must fit the day.
@@ -865,6 +873,7 @@ Still open:
 ### D-059: What E-011 supports, and the follow-up E-012 (visual head on produced videos only) (2026-10-25)
 - Date: 2026-10-25 (written after the E-011 control and before any E-012 head)
 - Status: Decided autonomously - needs user review
+- Status update (2026-10-25, D-062): Decided (user). The user reviewed this entry and accepts it with the amendments recorded in D-062. The Status line above is kept as written when the entry was made.
 - Question: The mechanical verdict of E-011 is SUPPORTED (fusion AUC 0.9935 on the fused label), but the post-hoc control shows that the in-domain visual head is at chance within the produced videos. What may be claimed, and what is run next.
 - Options considered: (1) claim the fused result as audio-visual deepfake detection; (2) keep the verdict, restrict the claim, and run one follow-up that removes the shortcut by construction; (3) restrict the claim and stop.
 - Criteria (written before the choice): CLAUDE.md rules 1 and 8 (no claim that the data do not support); the decision does not change a verdict already logged by script (the control is labelled post-hoc); time left.
@@ -876,6 +885,7 @@ Still open:
 ### D-060: The published baseline of D-025 and the rule for delta (2026-10-25)
 - Date: 2026-10-25 (written before any baseline run; experiment entry E-013)
 - Status: Decided autonomously - needs user review
+- Status update (2026-10-25, D-062): Decided (user). The user reviewed this entry and accepts it with the amendments recorded in D-062. The Status line above is kept as written when the entry was made.
 - Question: Which published detector family is re-run as the baseline of D-025, how it is run, and how delta is chosen, before the final comparison.
 - Options considered: (1) Xception (IMG-04) fine-tuned on the same FF++ frames with the E-005 recipe and budget; (2) a detector of DeepfakeBench re-trained with its own code (not available in this repository, would add a dependency and a different input pipeline); (3) a frozen-feature Xception probe (not a published detector as such, and weaker than the family it stands for).
 - Criteria (written before the choice): D-025 (a published detector family re-run under our data, split, budget and metric; at least 3 seeds; paired bootstrap); it must be runnable in the remaining time; it must not use the test splits.
@@ -887,6 +897,7 @@ Still open:
 ### D-061: Delta of D-025, the definition of "the final system", and the scope of the sealed evaluation (2026-10-25)
 - Date: 2026-10-25 (written before any sealed split is read; the sealed evaluation is the freeze step of Thu 2026-10-29 and was not run in this session)
 - Status: Decided autonomously - needs user review
+- Status update (2026-10-25, D-062): Decided (user). The user reviewed this entry and accepts it with the amendments recorded in D-062. The Status line above is kept as written when the entry was made.
 - Question: Which numbers and definitions the two confirmatory comparisons of the PROTOCOL addendum use, so that they are fixed before the final run.
 - Options considered: (1) the final system is the configuration after the last supported lever of each task (I-4: T-V fine-tuned IMG-17, T-I IMG-13 probe, T-A three-encoder average with trim and normalise and augmentation); (2) the final system includes the LAV-DF audio-visual fusion of I-6; (3) delta from the Xception seed spread by the rule of D-060 or a fixed delta.
 - Criteria (written before the choice): CLAUDE.md rules 1, 3, 4, 8; D-025; D-059 (the visual head of E-011 is at chance within produced videos); the confirmatory claims are exactly two (PROTOCOL addendum).
@@ -894,3 +905,66 @@ Still open:
 - Decision and reason: (1) The final system is the iteration tag I-4 of the freeze scripts (T-V from I-1, T-I from I-0, T-A from I-4). The audio-visual fusion of I-6 is not part of the final system's confirmatory claims; it is evaluated once on LAV-DF `test_in` as exploratory evidence with the wording of D-059. Delta = 2 x max(0.0010, 0.0072) = 0.0143 (above the floor of 0.01), by the rule of D-060. Confirmatory comparison (1): I-4 minus I-0, paired group bootstrap, on the T-V sealed Celeb-DF family test (`celebdf_family`, test_x) and on the T-A sealed In-the-Wild test (test_x); "improved" if the lower bound is above 0. T-I is identical in I-0 and I-4, so there is no comparison for images. Confirmatory comparison (2): I-4 visual minus BASE (Xception) on `celebdf_family` test_x: "superior" if the lower bound is above 0, "non-inferior" if it is above -0.0143, otherwise "not shown non-inferior"; an interval containing zero but not -0.0143 is worded "not distinguished, non-inferior by the rule of D-025", as D-025 requires. All other sealed numbers (per-iteration staircase, other datasets, LAV-DF) are exploratory.
 - Rejected and why: (2) the fused LAV-DF result in the final system (D-059: it is driven by a pipeline cue); a fixed delta (D-025 says delta follows from the measured seed spread).
 - Consequences / what could prove this wrong: delta rests on three seeds, so it is a rough number; the dev_x spread (0.0072) may differ from the spread on the sealed set; if the baseline learning rate at the edge of the grid (1e-4) hid a better rate, the baseline is weaker than it could be, which favours our system (stated as a limit).
+
+### D-062: User review of D-051 to D-061 and five amendments made before any sealed read (2026-10-25)
+- Date: 2026-10-25 (evening; written before any sealed split is read and before the runs it announces)
+- Status: Decided (user)
+- Question: The user has reviewed D-051 to D-061 (all had been tagged decided autonomously - needs user review). Which of them stand, and what changes before the freeze.
+- Options considered: (1) accept all eleven entries unchanged; (2) accept them with amendments the user listed; (3) reopen entries.
+- Criteria (written before the choice): the instruction of the user; CLAUDE.md rules 2, 3 and 10 (hypothesis before run, no test-set tuning, autonomy tag); the amendments must be settled before the first sealed read.
+- Evidence: the user's message of 2026-10-25 (evening). The sealed ledger is empty (docs/STATUS.md, data/_final does not exist as an evaluation record).
+- Decision and reason: (2). D-051 to D-061 are Decided (user) from today; the earlier Status lines are kept word for word and a "Status update" line follows each. Amendments, all executed before any sealed read:
+  (a) Baseline grid (amends D-060). The Xception baseline of E-013 selected 1e-4, the edge of its grid, with validation AUC still rising (0.9646, 0.9809, 0.9883). Learning rate 3e-4 is added, selected on validation only by the same rule; if it wins, seeds 0 to 2 are run with the E-013 recipe. The run is E-013b (hypothesis first); E-013 stays as logged. Delta is recomputed by the D-060 rule (2 x the larger seed sd, floor 0.01) and recorded in a new D-entry after the run; the freeze scripts follow the selected rate through data/_results/baseline/selection_b.json. No rate beyond 3e-4 is added (stated in E-013b).
+  (b) Multiplicity (amends D-061). The confirmatory tests are three: T-V final system vs I-0, T-A final system vs I-0, final system vs baseline. The declared 95 percent rules and decisions are unchanged. A robustness line at the 98.33 percent level (Bonferroni over three: 1 - 0.05/3) is added, computed from the same bootstrap draws; the evaluation tool gets a level option. The robustness line does not change any declared verdict; it is reported beside it.
+  (c) Two extra video iterations before the freeze, because the headline task (T-V) has only I-1. I-1b: augmentation matched to compression, blur and resize, with regularisation (ITERATIONS I-4 lever, MATH_NOTES 14). I-1c: average of the logits of fine-tuned encoders (ITERATIONS I-5 lever, MATH_NOTES 15). Each gets a D-entry with the trigger numbers against ITERATIONS.md and an E-entry with hypothesis, equation, prediction, success and failure lines written before the run; dev_x and validation only. A lever enters the final system only if the lower bound of its paired dev_x difference is above 0 and validation AUC does not fall by more than its interval; otherwise the final system stays as D-061. If either enters, the amended definition of the final system is written in a new D-entry and scripts/freeze/ and E-014 are updated before any sealed read. Time box: both done by Monday 2026-10-26 night. They are follow-ups on the video task (as E-012 was inside I-6) and are named I-1b and I-1c; they do not renumber I-2 to I-7.
+  (d) rPPG positive control (CPU, at most 8 workers). M-005: a known sinusoid near 1.2 Hz is injected into the skin region of real clips in pixel space and the exact S-1 pipeline is run; the result is the smallest amplitude recovered in at least 60 percent of clips by the S-1 SNR rule against the shuffled control. No S-1 threshold and not the S-1 verdict (D-052) is changed.
+  (e) Datasets. No new data is needed. Any download above 1 GB stops and asks the user to switch to the fast connection, with size and ETA. If FakeAVCeleb or WildDeepfake arrive before Wednesday 2026-10-28 12:00, E-015 (predictions first) scores each once as an extra sealed set after E-014; otherwise they are reported as not run. E-015 is reserved for this.
+  Also settled by the user's instructions: the freeze is run only after the readiness steps and a yes from the user (it is no longer fixed to Thu 2026-10-29).
+- Rejected and why: reopening entries (the user accepts them); extending the baseline grid further than one step (a grid can always be extended; the one step answers the stated concern, and the limit is reported if the edge is hit again).
+- Consequences / what could prove this wrong: the extra levers add test count only on dev_x and validation (exploratory); entry into the final system changes the definition of the confirmatory comparisons, which is why it is written down before the first sealed read; the sealed ledger stays empty until the user's yes.
+
+### D-063: Iteration I-1b = augmentation matched to compression, blur and resize, with mixup, on the video task (trigger check, 2026-10-25)
+- Date: 2026-10-25 (evening; written before any I-1b run; the experiment entry is E-016)
+- Status: Decided (user). The slot was requested by the user in D-062 (c); the design choices below (augmentation parameters, mixup, learning rate) were made autonomously and need user review.
+- Question: Which parameters the I-4 lever of ITERATIONS.md takes on the video task, and how its trigger stands after the I-1 battery.
+- Options considered: (1) perturbation augmentation only; (2) perturbation augmentation plus mixup (the lever as written in ITERATIONS I-4); (3) raise the weight decay (rejected below).
+- Criteria (written before the choice): the lever as written in ITERATIONS I-4 and MATH_NOTES 14; no parameter chosen from dev_x (D-035, D-041); the budget and recipe of E-005 unchanged apart from the lever; one setting, no search, so there is nothing to tune on the slice that judges it.
+- Evidence (post-I-1 battery, data/_results/I-1/result.md; IMG-17 fine-tuned, 3 seeds, mean AUC and 95 percent group-bootstrap interval; dev_x numbers exploratory):
+
+| ITERATIONS.md I-4 trigger | number | threshold | verdict |
+|---|---|---|---|
+| validation AUC high, dev_x much lower | validation 0.9899 [0.9809, 0.9967], dev_x 0.9096 [0.8776, 0.9388], gap +0.0803 (I-0: +0.1052) | gap above about 0.10 with validation AUC high | validation high: met. Gap: 0.0803 against about 0.10, not met to the letter (0.020 below); it is 5.0 times the dev_x seed sd (0.0161), so it is not seed noise. Partly met |
+| worse at stronger compression | not measurable: FF++ has one compression level in our data and the compression of Celeb-DF is not recorded (D-051) | worse at stronger compression | not testable |
+| variance or shift rather than bias | train-subset AUC 0.9994, validation 0.9899: train minus validation +0.0095 | the model fits its training data | consistent with a variance or shift limit |
+| faces per clip | dev_x clips with 2 or more faces 0.884 against 0.911 with one face (59 of 1,728 clips) | none stated | no signal |
+
+- Decision and reason: (2), run as the user asked, with the trigger reported as partly met and not met to the letter. Parameters, fixed here and not searched: each training frame (224 px crop) gets, independently and in this order, Gaussian blur with sigma uniform on [0.1, 2.0] with probability 0.3; down-then-up resize with scale uniform on [0.4, 1.0] (INTER_AREA down, INTER_LINEAR up) with probability 0.5; JPEG re-encoding with quality uniform on [40, 95] with probability 0.5. Mixup with lambda ~ Beta(0.2, 0.2) once per batch on pixel values and on labels, class weights applied to the mixed label (w = y w1 + (1 - y) w0). Learning rate 1e-5, the E-005 rate of IMG-17, steps 1,800, batch 32, seeds 0, 1, 2; no rate search under augmentation (a limit). The weight decay stays at 0.05: at learning rate 1e-5 and 1,800 steps the AdamW decay shrinks the weights by a factor of about exp(-lr x wd x steps) = exp(-0.0009), under 0.1 percent, so raising it would not be a regularisation lever in this budget. Mixup is the regulariser (MATH_NOTES 14). The augmentation is applied to the training stream only; validation, dev_x and the sealed sets are scored on unperturbed crops. Seeds control the order of frames, the augmentation draws (per-item generator seeded by (seed, item index)) and the head initialisation.
+- Rejected and why: (1) augmentation alone would be a cleaner attribution, but the lever as written has both and there is no time for an ablation before the freeze; the confound is stated as a limit (an ablation run is optional and is not an input to any decision); (3) a no-op in this budget.
+- Consequences / what could prove this wrong: the augmentation family is the generic one of ITERATIONS I-4 and not matched to a measured Celeb-DF perturbation (the compression of Celeb-DF is not recorded), so a null result says only that generic perturbations do not help here; a gain on dev_x with 15 identities is exploratory; mixup blends two faces and can blur the very artefacts the model needs (the validation line catches a loss in-dataset). Entry into the final system follows the rule of D-062 (c); if the lever does not enter, the final system stays as D-061.
+
+### D-064: Iteration I-1c = mean of the logits of fine-tuned encoders on the video task (trigger check, 2026-10-25)
+- Date: 2026-10-25 (evening; written before any new I-1c run and before any ensemble score was computed; the experiment entry is E-017)
+- Status: Decided (user). The slot was requested by the user in D-062 (c); the design choices below (members, averaging rule) were made autonomously and need user review.
+- Question: Which fine-tuned encoders are averaged, how, and how the I-5 trigger of ITERATIONS.md stands after the I-1 battery.
+- Options considered: (1) mean of the logits of IMG-17, IMG-08 and IMG-07; (2) mean of IMG-17 and IMG-08 only (the validation tie set); (3) concatenation of features (rejected: it adds head parameters, MATH_NOTES 15).
+- Criteria (written before the choice): the lever as written in ITERATIONS I-5; one primary candidate so that the entry rule is not applied to several variants; reuse stage-1 weights where they exist, otherwise train within the budget of D-042 (1,800 steps, cap 600 s).
+- Evidence (computed for this entry on the CPU from data/_results/I-1/<run>/scores.npz, stage-1 seed 0 at learning rate 1e-5 for the three fine-tuned encoders; Spearman rank correlation of the clip scores; the error sets were not compared; no ensemble score was computed before this entry):
+
+| pair | validation rho | dev_x rho | dev_x within real / within fake |
+|---|---|---|---|
+| IMG-17, IMG-07 | 0.912 | 0.860 | 0.758 / 0.838 |
+| IMG-17, IMG-08 | 0.899 | 0.873 | 0.813 / 0.851 |
+| IMG-07, IMG-08 | 0.914 | 0.924 | 0.851 / 0.913 |
+| mean of the three pairs | 0.908 | 0.886 | |
+
+Single-encoder AUC at seed 0 (E-005 stage 1): validation IMG-07 0.9869, IMG-17 0.9893, IMG-08 0.9918; dev_x 0.9031, 0.9210, 0.9036. Validation tie set of D-036: IMG-17 and IMG-08 (IMG-07 is below the leader by 0.0049 [0.0010, 0.0092]).
+
+| ITERATIONS.md I-5 trigger | number | threshold | verdict |
+|---|---|---|---|
+| several candidates tied (D-036) | tie set of two fine-tuned encoders on validation (IMG-17, IMG-08) | tie set larger than one | met |
+| low error correlation | mean score rank correlation 0.908 (validation) and 0.886 (dev_x) | below about 0.8 | not met; within the real class 0.76 to 0.85, below 0.8 for one pair only |
+
+By MATH_NOTES 15 with m = 3 and rho-bar = 0.886 the variance of the mean score is the single-score variance times 0.886 + 0.114 / 3 = 0.924, a fall of 7.6 percent (standard deviation 3.9 percent), and the two weaker members (dev_x 0.9031 and 0.9036 against 0.9210) pull the mean towards their bias.
+- Decision and reason: (1), run as the user asked, with the trigger reported as not met on the correlation criterion. The members are the three fine-tuned encoders of E-005 at learning rate 1e-5, seed s of each member for ensemble seed s = 0, 1, 2. Stage-1 seed 0 weights of IMG-07 and IMG-08 and the three IMG-17 seeds exist in checkpoints/I-1; seeds 1 and 2 of IMG-07 and IMG-08 are trained now with the E-005 recipe unchanged (four runs, about 20 minutes). The ensemble score of a clip is the mean over the members of logit(clip score), the clip score being the mean of frame probabilities (D-024), clipped to [1e-6, 1 - 1e-6] before the logit. Variant (2) is reported as a secondary diagnostic and does not decide entry.
+- Rejected and why: (3) concatenation; a weighted average (weights would have to be fitted, on validation, where the AUC is saturated at 0.99); choosing the members from dev_x.
+- Consequences / what could prove this wrong: the prediction from the equation is a small gain at most (the trigger is not met), so "no entry" is the more likely outcome; three members triple the inference cost of the video branch; the member seeds are paired by index only, so the seed spread of the ensemble is not that of a single model; the correlation is on scores, not on errors. Entry follows the rule of D-062 (c); if the lever does not enter, the final system stays as D-061.
