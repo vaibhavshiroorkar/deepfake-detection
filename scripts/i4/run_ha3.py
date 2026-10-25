@@ -70,6 +70,8 @@ def main():
         hs = [heads.train_head(tra, va, s) for s in (0, 1, 2)]
         sc[c] = {k: np.array([heads.clip_scores(h.prob_rows(sp.X), sp.clip_of, sp.y.size) for h in hs]) for k, sp in (("val", va), ("dev", dv))}
         sc[c]["epochs"] = [h.best_epoch for h in hs]
+        for h in hs:   # the head parameters, for the checkpoint of the frozen system (I-8) and the fusion iteration
+            np.savez(OUT / f"head_{c}_s{h.seed}.npz", mean=h.mean, std=h.std, w=h.w, b=np.float64(h.b), best_epoch=h.best_epoch, val_auc=h.val_auc)
         if not ids:
             ids = dict(val=va, dev=dv)
         else:
