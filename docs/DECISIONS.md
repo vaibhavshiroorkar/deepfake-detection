@@ -1008,3 +1008,14 @@ By MATH_NOTES 15 with m = 3 and rho-bar = 0.886 the variance of the mean score i
 - Rejected and why: waiting (the user decided).
 - Consequences / what could prove this wrong: each tag is evaluated once; a second evaluation needs --repeat with a reason and is listed under Mistakes in STATUS.md. The sealed numbers may be lower than the development numbers and are reported as they come.
 
+
+### D-068: Reading of the sealed freeze, and what the documents may claim (2026-10-25)
+- Date: 2026-10-25 (late night; written after E-014 was run, before the documents were changed)
+- Status: Decided autonomously - needs user review
+- Question: What the three confirmatory tests and the staircase of E-014 support, and one item of the readiness check.
+- Options considered: (1) report each test by its declared rule and add the Bonferroni line beside it; (2) report only the robust wording; (3) treat the checker's one-class item as a problem and rerun.
+- Criteria (written before the choice): the rules of E-014 and D-061, D-062 (b), D-066, written before any sealed read; CLAUDE.md rules 1 and 8.
+- Evidence: E-014 result block. T1 +0.1980 [+0.1688, +0.2242] (98.33 percent line [+0.1627, +0.2303]); T2 +0.1633 [+0.1177, +0.2266] ([+0.1085, +0.2481]); T3 +0.0176 [+0.0025, +0.0327] ([-0.0011, +0.0355]); delta 0.0100.
+- Decision and reason: (1). T1 and T2 are "improved" by the declared rule and robust. T3 is "superior" by the declared 95 percent rule; the 98.33 percent interval includes zero, so the documents write: "superior at the 95 percent level, not robust to the Bonferroni level; non-inferior (above -0.0100) at both levels", and make no claim of being better than the baseline beyond that. Two of the four numeric predictions about the speech side failed (above the ranges); they stay in the log and are stated in the documents. Item 3: the raw `celebdf_pp` block has one class by construction (D-045); the evaluator omits the AUC with a note, the check flags it, and nothing needs a rerun: no second final evaluation was made.
+- Rejected and why: (2) the declared rule is the rule; (3) a rerun would need `--repeat` and is not needed.
+- Consequences / what could prove this wrong: the Celeb-DF family interval is governed by 344 identity groups and mixes two sources (Celeb-DF v2 test and Celeb-DF++ fakes against the v2 reals); the speech interval by 42 speakers; the baseline is one family at one input size (224 px); all these are limits stated beside the numbers. Every sealed number outside T1 to T3 is exploratory. The sealed evaluation cannot be repeated without a logged reason.
