@@ -996,3 +996,15 @@ By MATH_NOTES 15 with m = 3 and rho-bar = 0.886 the variance of the mean score i
 - Decision and reason: (1). The freeze scripts follow data/_results/baseline/selection_b.json (best_lr 0.0003), scripts/freeze/score_final.py reads it and scripts/freeze/check_score_files.py checks the BASE parity against these runs. Delta = max(0.01, 2 x max(0.0003, 0.0020)) = 0.0100, the floor, replacing 0.0143 of D-061 for the comparison of the final system with the baseline (confirmatory test T3). Non-inferior: lower bound of (final system minus baseline) above -0.0100; superior: above 0; an interval containing zero but not -0.0100 is worded "not distinguished, non-inferior by the rule of D-025". E-013 stays as logged (1e-4, delta 0.0143) and is reported as the first pass of the baseline.
 - Rejected and why: (2) the stated concern was the grid edge, and the declared rule selected 3e-4; (3) D-025 says delta follows from the measured seed spread.
 - Consequences / what could prove this wrong: delta fell because the seed spread of the new runs is small (three numbers per split, a rough estimate), and the floor 0.01 now decides it, not the data; 3e-4 is itself the edge of the extended grid, so a still better baseline rate cannot be excluded (a limit, stated); a smaller delta makes non-inferiority harder to show, which is the conservative direction for the claim.
+
+### D-067: Go-ahead for the sealed freeze, and the paper length (2026-10-25)
+- Date: 2026-10-25 (late evening; written before the first sealed read)
+- Status: Decided (user)
+- Question: Run the sealed freeze now, after the readiness checks of D-062 STEP 2; what to do about the paper page limit.
+- Options considered: run now; wait.
+- Criteria (written before the choice): the gate question of D-062: readiness report, ledger empty, definitions fixed (D-061, D-065, D-066, E-014 with its amendment).
+- Evidence: docs/_agents/FREEZE.md readiness section (all paths passed on non-sealed data with the GPU), 305 tests, VERIFY4 fixes, E-014.
+- Decision and reason: the user answered "Yes, run it now". The freeze runs from this commit under docs/_agents/FREEZE.md: tags iter-1 to iter-4 and base, scripts/freeze/run_all.sh --final, check_score_files.py, run_eval.sh, the three comparisons, E-014 result block. Paper length: the page limit of the template is unknown to the user, who will ask the guide; the instruction is to keep the long version and cut nothing.
+- Rejected and why: waiting (the user decided).
+- Consequences / what could prove this wrong: each tag is evaluated once; a second evaluation needs --repeat with a reason and is listed under Mistakes in STATUS.md. The sealed numbers may be lower than the development numbers and are reported as they come.
+
