@@ -113,6 +113,9 @@ def main():
     Path("data/_results/I-1b").mkdir(parents=True, exist_ok=True)
     Path("data/_results/I-1c").mkdir(parents=True, exist_ok=True)
     (I1B / "e016_e017.json").write_text(json.dumps(out, indent=1, default=float))
+    for k, d in (("I-1b", I1B), ("I-1c", I1C)):
+        if k in out:
+            (d / ("e016.json" if k == "I-1b" else "e017.json")).write_text(json.dumps(dict(out[k], entry=out["entry"]), indent=1, default=float))
 
     blocks = {}
     if "I-1b" in out:

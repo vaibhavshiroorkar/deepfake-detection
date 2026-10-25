@@ -27,7 +27,7 @@ PAPER, REPORT, SLIDES = ROOT / "paper", ROOT / "report", ROOT / "slides"
 NUMBERS = ROOT / "docs" / "NUMBERS.json"
 NUMBER_STATS: dict = {}     # document -> (matched, unmatched list, ids used), filled by number_checks and printed with --numbers
 
-ID_RE = re.compile(r"\b(?:D|O|E|R)-\d{3}\b|ENV-DESKTOP-GPU")
+ID_RE = re.compile(r"\b(?:D|O|E|R|M)-\d{3}[a-z]?\b|ENV-DESKTOP-GPU")
 REVIEWER = ["venue not verified", "title page read", "No sentence is written here", "Insert Table of Figures", "TO BE FILLED", "TBD", "LY Project",
             "previous version", "earlier version", "old project", "rebuild", "rebuilt", "as before", "reviewer", "TODO", "FIXME", "Lorem"]
 DASH = re.compile("[\u2014\u2013]")

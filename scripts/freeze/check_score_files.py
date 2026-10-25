@@ -57,6 +57,11 @@ def parity(t, problems):
     if tag in ("I-1", "I-2", "I-3", "I-4"):
         ref = [np.load(f"data/_results/I-1/IMG-17_lr1e-05_s{s}/scores.npz", allow_pickle=True) for s in K.SEEDS]
         checks.append(("visual", "ffpp", {str(sid): np.array([r["val_scores"][i] for r in ref]) for i, sid in enumerate(ref[0]["val_sample_id"])}))
+    if tag == "BASE":     # Xception at the selected rate: also checks that the BatchNorm statistics were restored (E-013, E-013b)
+        sel = Path("data/_results/baseline/selection_b.json")
+        lr = json.loads((sel if sel.is_file() else Path("data/_results/baseline/selection.json")).read_text())["best_lr"]
+        ref = [np.load(f"data/_results/baseline/IMG-04_lr{lr:g}_s{s}/scores.npz", allow_pickle=True) for s in K.SEEDS]
+        checks.append(("visual", "ffpp", {str(sid): np.array([r["val_scores"][i] for r in ref]) for i, sid in enumerate(ref[0]["val_sample_id"])}))
     for mod, ds, table in checks:
         worst, n = 0.0, 0
         for s in K.SEEDS:

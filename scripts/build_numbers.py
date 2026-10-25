@@ -32,6 +32,8 @@ FILE_IDS = [  # (glob under data/_results, ID)
     ("I-0/parity.json", "E-004"), ("I-0/web_real_check.json", "E-004"), ("I-0/*/metrics.json", "E-004"),
     ("M-004/m004.json", "M-004"), ("I-1/result.md", "E-005"), ("I-1/selection.json", "E-005"), ("I-1/analysis.json", "E-005"),
     ("S-1/summary.json", "E-006"), ("S-1/result.md", "E-006"),
+    ("M-005/summary.json", "M-005"), ("M-005/result_block.md", "M-005"), ("baseline/e013b.json", "E-013b"), ("baseline/e013b.md", "E-013b"),
+    ("I-1b/e016.json", "E-016"), ("I-1c/e017.json", "E-017"),
 ]
 TEXT_SOURCES = ["docs/EXPERIMENTS.md", "docs/DATA_LOG.md", "docs/RESEARCH.md", "docs/NUMBERS_LIT.json", "docs/NUMBERS_DERIVED.json"]
 
@@ -54,7 +56,7 @@ def experiments_rows():
         if h:
             flush()
             level, title = len(h.group(1)), h.group(2).strip()
-            m = re.match(r"((?:E|M|V)-\d{3})", title)
+            m = re.match(r"((?:E|M|V)-\d{3}[a-z]?)", title)
             t = re.match(r"(T-[VIA]).*generated", title)
             if m:
                 cur, head = m.group(1), m.group(1)
