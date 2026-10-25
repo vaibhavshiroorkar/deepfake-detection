@@ -1,8 +1,8 @@
 # STATUS
 
-Last updated: 2026-10-25 (Session 2, I-0 MVP built, I-1 running)
+Last updated: 2026-10-25 (Session 3: I-1 and I-2 done, I-3 running)
 
-NEXT STEP: I-1 (E-005, D-051) is running in the background (scripts/i1/run_i1.py, log data/_logs/i1_run.log, resumable: rerun the same command and finished runs are skipped; it ends by writing data/_results/I-1/DONE). When DONE exists: run `PYTHONPATH=src .venv/Scripts/python.exe scripts/i1/analyse_i1.py --write` (verdict by the written criteria C1 to C3 goes into E-005), read the battery block, write the lever decision for I-2 as a new D-entry (candidates: T-A audio preprocessing H-A1 of D-051 item 5, a T-V shift lever, combining encoders), rebuild docs/NUMBERS.json (`python scripts/build_numbers.py`) and run `python scripts/check_docs.py`. In parallel: the S-1 rPPG check (CPU only; worker output in src/dfd/rppg, scripts/rppg, data/_results/S-1; E-006 must be written before the full run) and the independent verification report of the three documents (defect list to fix, then rerun the checkers).
+NEXT STEP: E-008 (I-3, D-055) feature extraction is running in the background (log data/_logs/e008_extract.log; features data/_features_aug/AU-8/T-A/ aug1 to aug3 for asvspoof_train and aug1 for asvspoof_dev). When data/_features_aug/AU-8/T-A has asvspoof_train_aug1..3 and asvspoof_dev_aug1 (.npz and .json): run `PYTHONPATH=src .venv/Scripts/python.exe scripts/i3/run_ha2.py --write` (CPU, minutes; verdict goes into E-008), then write the I-4 lever decision as a new D-entry (candidates: T-V shift lever with augmentation, trigger by the letter not met in D-054; the I-6 pre-check on LAV-DF; see D-051 item 3 and D-054), write its E-entry before any run, run it. Done in Session 3: E-005 (I-1) SUPPORTED, E-007 (I-2) SUPPORTED, S-1 (E-006) failed earlier (D-052). Documents: paper, report and slides still show [pending] for I-1 onward; fill them from E-005, E-007, E-008 (and later runs) at the end of the experiment block, then run `python scripts/build_numbers.py`, `python scripts/check_docs.py --numbers`, report/layout_check.py and slides/check_slides.py, and the independent verification by a fresh subagent.
 
 ## Where the project stands
 
@@ -97,3 +97,6 @@ NEXT STEP: I-1 (E-005, D-051) is running in the background (scripts/i1/run_i1.py
 - 2026-10-25 02:47 From-scratch reference for T-A trained (10 epochs, 3 seeds, excluded from the selection); dev_x AUC per seed [0.2319, 0.2193, 0.2862]; the ranking chain will include it.
 - 2026-10-25 02:49 E-003 (T-A) ranked and written into EXPERIMENTS.md by script: leader AU-6, tie set ['AU-8', 'AU-4', 'AU-6'], winner under the D-036 rule AU-8, mechanical verdict INCONCLUSIVE (best lower bound at or below 0.55); results in data/_results/T-A/.
 - 2026-10-25 03:19 I-0 MVP checkpoint written (checkpoints/I-0-mvp, id I-0-mvp-20261025-0319); parity PASS; page check PASS; battery done; no job of the chain or of the MVP is running.
+- 2026-10-25 13:52 I-1 job resumed (the first attempt of IMG-08 lr 1e-4 had died at step 1,750 on a data-loader worker error; its record is kept in data/_results/I-1_failed_attempts/); 14:10 finished: winner IMG-17 lr 1e-5, validation 0.9899, dev_x 0.9096, E-005 verdict SUPPORTED (mechanical), written by script.
+- 2026-10-25 14:15 E-007 (I-2, H-A1, D-054) run: dev_x 0.6723 vs 0.6100 (+0.0623 [0.0114, 0.1048]), validation -0.0054, verdict SUPPORTED (mechanical, exploratory). 
+- 2026-10-25 E-008 (I-3, H-A2, D-055) planned and committed; feature extraction of augmented training clips started.
