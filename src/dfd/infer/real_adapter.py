@@ -1,4 +1,9 @@
-"""The real adapter: frozen encoder, linear head, temperature scaling, threshold, from a checkpoint folder (D-028, D-040).
+"""The real adapter: encoder(s) and head(s), temperature scaling, threshold, from a checkpoint folder (D-028, D-040).
+
+Per task the checkpoint says what the scorer is (dfd.infer.checkpoint): a frozen encoder with a linear head (version 1 and the T-I task), a
+fine-tuned encoder with its head (T-V of version 2, E-005), or a mean of the logits of several frozen encoders with a linear head each (T-A of
+version 2, E-009). The preprocessing applied is the one the checkpoint records and the code knows (audio: first window only, or silence
+trimmed and peak-normalised before the window, E-007).
 
 It refuses to exist without a checkpoint: construction raises ``NoCheckpointError`` when the folder has no metadata.json,
 ``CheckpointError`` when the metadata or a head file breaks the contract, ``PreprocessMismatchError`` when the checkpoint's
@@ -22,8 +27,8 @@ import cv2
 import numpy as np
 
 from dfd.infer.adapters import AdapterResult, Media, ModalityScore
-from dfd.infer.checkpoint import (CheckpointError, NoCheckpointError, PreprocessMismatchError, config_hash_of,  # noqa: F401
-                                  load_checkpoint)
+from dfd.infer.checkpoint import (CheckpointError, Ensemble, FineTunedModel, NoCheckpointError, PreprocessMismatchError,  # noqa: F401
+                                  config_hash_of, load_checkpoint)
 from dfd.prep import audio as A
 from dfd.prep import config as P
 from dfd.prep import face as F
@@ -31,6 +36,11 @@ from dfd.prep import video as V
 
 INFERENCE_SOURCE = "real"
 EPS = 1e-6
+
+# Extension point for the audio-visual mode (not implemented): a rule that turns the visual and audio scores of one video into a fused score. It needs
+# in-domain unimodal heads and a fusion layer of 3 parameters (intercept and one weight per calibrated log-odds), see docs/_agents/INTEGRATION.md.
+# A checkpoint that names a fusion rule is refused by load_checkpoint, and a video keeps separate scores and the decision "undetermined" (O-009).
+AUDIO_VISUAL_FUSION = None
 
 
 AUDIO_CALIBRATION_WARNING = {
@@ -57,6 +67,7 @@ class RealAdapter:
         self._encoder_factory = encoder_factory
         self._audio_encoder_factory = audio_encoder_factory
         self._audio_enc: dict = {}
+        self._finetuned_cache: dict = {}
         self._detector_factory = detector_factory
         self._encoders: dict = {}
         self._detector = None
@@ -68,9 +79,11 @@ class RealAdapter:
         """The encoder weights on disk must be the verified ones the checkpoint was trained with."""
         from dfd.sweep import encoders
         for task, tm in self.meta["tasks"].items():
-            rec = encoders._record(tm["encoder"]["cid"])  # raises if the weights are missing or not hash-verified
-            if rec["revision"] != tm["encoder"]["revision"]:
-                raise CheckpointError(f"{task}: encoder {tm['encoder']['cid']} revision {rec['revision']} differs from the checkpoint's {tm['encoder']['revision']}")
+            enc_metas = list(tm["model"]["members"]) if tm.get("model", {}).get("kind") == "ensemble_logit_mean" else [tm["encoder"]]
+            for em in enc_metas:
+                rec = encoders._record(em["cid"])  # raises if the weights are missing or not hash-verified
+                if rec["revision"] != em["revision"]:
+                    raise CheckpointError(f"{task}: encoder {em['cid']} revision {rec['revision']} differs from the checkpoint's {em['revision']}")
 
     def _device(self) -> str:
         if self.device is None:
@@ -78,15 +91,33 @@ class RealAdapter:
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
         return self.device
 
+    def _make_encoder(self, cid: str):
+        if self._encoder_factory is not None:
+            return self._encoder_factory(cid)
+        from dfd.sweep import encoders
+        return encoders.load(cid, self._device())
+
     def _encoder(self, task: str):
         cid = self.meta["tasks"][task]["encoder"]["cid"]
         if cid not in self._encoders:
-            if self._encoder_factory is not None:
-                self._encoders[cid] = self._encoder_factory(cid)
+            self._encoders[cid] = self._make_encoder(cid)
+        return self._encoders[cid]
+
+    def _audio_encoder(self, cid: str):
+        if cid not in self._audio_enc:
+            if self._audio_encoder_factory is not None:
+                self._audio_enc[cid] = self._audio_encoder_factory(cid)
             else:
                 from dfd.sweep import encoders
-                self._encoders[cid] = encoders.load(cid, self._device())
-        return self._encoders[cid]
+                self._audio_enc[cid] = encoders.load_audio(cid, self._device())
+        return self._audio_enc[cid]
+
+    def _audio_window(self, wav: np.ndarray) -> np.ndarray:
+        """The preprocessing the checkpoint records (dfd.prep.config.audio_config): optional silence trimming and peak normalisation, then the window."""
+        cfg = self.meta["tasks"]["T-A"]["preprocess_config"]
+        if cfg.get("peak_normalise"):
+            wav = A.trim_and_peak_normalise(wav, float(cfg["trim_silence_abs"]))
+        return A.window_first_repeat(wav, int(cfg["window_samples"]))
 
     def _score_audio(self, media: Media) -> ModalityScore:
         """Calibrated probability of fake from the first 4 seconds of audio (file or the audio track of a video)."""
@@ -95,16 +126,18 @@ class RealAdapter:
         wav = A.extract_audio(media.path) if media.media_type == "video" else A.load_audio(media.path)
         if wav.size == 0:
             return ModalityScore(False, None, None, "no decodable audio")
-        cid = self.meta["tasks"]["T-A"]["encoder"]["cid"]
-        if cid not in self._audio_enc:
-            if self._audio_encoder_factory is not None:
-                self._audio_enc[cid] = self._audio_encoder_factory(cid)
-            else:
-                from dfd.sweep import encoders
-                self._audio_enc[cid] = encoders.load_audio(cid, self._device())
-        out = self._audio_enc[cid](A.window_first_repeat(wav)[None, :])
-        feat = out.detach().cpu().numpy() if hasattr(out, "detach") else np.asarray(out)
-        p = float(self.heads["T-A"].prob_rows(feat)[0])
+        window = self._audio_window(wav)[None, :]
+        spec = self.heads["T-A"]
+        if isinstance(spec, Ensemble):
+            members = [(m.cid, m.head) for m in spec.members]
+        else:
+            members = [(self.meta["tasks"]["T-A"]["encoder"]["cid"], spec)]
+        logits = []
+        for cid, head in members:
+            out = self._audio_encoder(cid)(window)
+            feat = out.detach().cpu().numpy() if hasattr(out, "detach") else np.asarray(out)
+            logits.append(float(head.logit_rows(feat)[0]))
+        p = float(1.0 / (1.0 + np.exp(-np.mean(logits))))       # mean of the members' logits (one member: its own probability)
         return ModalityScore(True, round(_calibrate(p, float(self.meta["tasks"]["T-A"]["calibration"]["temperature"])), 6), 1)
 
     def _det(self):
@@ -117,6 +150,8 @@ class RealAdapter:
     def _score_rgb(self, task: str, rgb: list[np.ndarray]) -> float:
         """Calibrated probability of fake for a list of RGB uint8 images of the size the encoder expects (mean of the image probabilities)."""
         import torch
+        if isinstance(self.heads[task], FineTunedModel):
+            return self._score_rgb_finetuned(task, rgb)
         enc = self._encoder(task)
         dev = self._device() if self._encoder_factory is None else None
         feats = []
@@ -128,6 +163,50 @@ class RealAdapter:
             feats.append(out.detach().cpu().numpy() if hasattr(out, "detach") else np.asarray(out))
         p = float(self.heads[task].prob_rows(np.concatenate(feats)).mean())
         return _calibrate(p, float(self.meta["tasks"][task]["calibration"]["temperature"]))
+
+    def _finetuned(self, task: str):
+        """(encoder with the fine-tuned parameters, head), built once per task. The encoder is a separate instance from the frozen ones, so that the
+        fine-tuned parameters never leak into a frozen scorer that uses the same weights."""
+        if task not in self._finetuned_cache:
+            import torch
+            spec: FineTunedModel = self.heads[task]
+            enc = self._make_encoder(self.meta["tasks"][task]["encoder"]["cid"])
+            w = torch.load(spec.weights_path, map_location="cpu")
+            model = getattr(enc, "model", None)
+            if w.get("params"):
+                if model is None:
+                    raise CheckpointError(f"{task}: the weights file holds encoder parameters but the encoder has no model to load them into")
+                names = dict(model.named_parameters())
+                unknown = [n for n in w["params"] if n not in names]
+                if unknown:
+                    raise CheckpointError(f"{task}: {len(unknown)} fine-tuned parameters do not exist in the encoder, first {unknown[0]}")
+                with torch.no_grad():
+                    for n, v in w["params"].items():
+                        names[n].copy_(v.to(names[n].device, names[n].dtype))
+            if model is not None:
+                model.eval()
+            head = torch.nn.Linear(spec.dim, 1)
+            head.load_state_dict(w["head"])
+            if self._encoder_factory is None:
+                head = head.to(self._device())
+            self._finetuned_cache[task] = (enc, head)
+        return self._finetuned_cache[task]
+
+    def _score_rgb_finetuned(self, task: str, rgb: list[np.ndarray]) -> float:
+        """As in training (dfd.train.finetune.score_frames): sigmoid(head(encoder(x))) per image under fp16 autocast on a GPU, mean over the images
+        (D-024), then temperature scaling."""
+        import torch
+        enc, head = self._finetuned(task)
+        dev = self._device() if self._encoder_factory is None else None
+        probs = []
+        for k in range(0, len(rgb), 64):
+            batch = torch.from_numpy(np.stack(rgb[k:k + 64]).transpose(0, 3, 1, 2).copy())
+            if dev:
+                batch = batch.to(dev)
+            with torch.no_grad(), torch.autocast("cuda", dtype=torch.float16, enabled=(dev == "cuda")):
+                z = head(enc(batch)).squeeze(1)
+            probs.append(torch.sigmoid(z.float()).cpu().numpy())
+        return _calibrate(float(np.concatenate(probs).mean()), float(self.meta["tasks"][task]["calibration"]["temperature"]))
 
     def _score_whole_image(self, task: str, bgr: np.ndarray) -> float:
         """Whole image by the encoder's own model-card rule, as in the extraction (E-002); a double without a processor gets a plain resize."""
@@ -238,7 +317,8 @@ class RealAdapter:
         ts = used or list(self.meta["tasks"])
         tm = self.meta["tasks"]
         per_task = {t: {"encoder": tm[t]["encoder"]["cid"], "revision": tm[t]["encoder"]["revision"], "preprocess_id": tm[t]["preprocess_id"],
-                        "calibration": tm[t]["calibration"], "threshold": tm[t]["threshold"]} for t in ts}
+                        "calibration": tm[t]["calibration"], "threshold": tm[t]["threshold"],
+                        "model_kind": tm[t].get("model", {}).get("kind", "linear_probe")} for t in ts}
         one = len(ts) == 1
         return {"checkpoint_id": self.meta["checkpoint_id"], "config_hash": config_hash_of(self.meta),
                 "preprocess_id": tm[ts[0]]["preprocess_id"] if one else {t: tm[t]["preprocess_id"] for t in ts},

@@ -32,8 +32,10 @@ OUT = Path("data/_results/I-6")
 LR = 1e-5
 
 
-def table(manifest, split_csv, crops, split, final=False):
+def table(manifest, split_csv, crops, split, final=False, drop_real=False):
     recs = L.select_records(manifest, split_csv, split, modality="video", final=final)
+    if drop_real:   # E-012: matched pipeline, the real originals are left out of the training set
+        recs = [r for r in recs if r.method != "real"]
     paths, clip_of = [], []
     for i, r in enumerate(recs):
         with open(Path(crops) / folder_name(r.sample_id) / "index.csv", "r", encoding="utf-8", newline="") as fh:
@@ -45,12 +47,13 @@ def table(manifest, split_csv, crops, split, final=False):
     return recs, np.array(paths), np.array(clip_of), y
 
 
-def run(seed, workers, final):
-    out = OUT / f"visual_lavdf_s{seed}.npz"
+def run(seed, workers, final, produced=False):
+    tag = "produced_" if produced else ""
+    out = OUT / f"visual_lavdf_{tag}s{seed}.npz"
     if out.is_file() and (not final or "test_in_p" in np.load(out, allow_pickle=True).files):
         print("skip", out, flush=True)
         return
-    wdir = Path("checkpoints/I-6") / f"IMG-17_lavdf_s{seed}"
+    wdir = Path("checkpoints/I-6") / f"IMG-17_lavdf_{tag}s{seed}"
     enc = encoders.load("IMG-17")
     head = torch.nn.Linear(enc.dim, 1).cuda()
     if (wdir / "weights.pt").is_file():
@@ -65,7 +68,7 @@ def run(seed, workers, final):
     else:
         torch.manual_seed(seed)
         np.random.seed(seed)
-        _, paths, clip_of, y = table(*TRAIN)
+        _, paths, clip_of, y = table(*TRAIN, drop_real=produced)
         n_tr = len(paths)
         n1 = float(y[clip_of].sum())
         n0 = n_tr - n1
@@ -122,10 +125,11 @@ def main():
     ap.add_argument("--seeds", type=int, nargs="+", default=[0, 1, 2])
     ap.add_argument("--workers", type=int, default=10)
     ap.add_argument("--final", action="store_true")
+    ap.add_argument("--produced-only", action="store_true", help="E-012: train on produced videos only (audio fakes are the visual negatives)")
     a = ap.parse_args()
     OUT.mkdir(parents=True, exist_ok=True)
     for s in a.seeds:
-        run(s, a.workers, a.final)
+        run(s, a.workers, a.final, a.produced_only)
 
 
 if __name__ == "__main__":
