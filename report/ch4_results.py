@@ -179,19 +179,13 @@ def screens(B):
 
 def status_table(B):
     pend = lambda x: "<pend %s>" % x
-    N = "E-005 or later"
-    B.p("<ref tab:status> lists the results that do not exist yet. Each cell is filled only from a logged run, and the sealed test sets are not read before the freeze.")
-    B.table("status", "Results that are still pending.",
+    N = "E-014 (freeze)"
+    B.p("<ref tab:status> lists the results that do not exist yet. They are all sealed-test results: each cell is filled only from a logged final evaluation, and the sealed test sets are not read before the freeze.")
+    B.table("status", "Results that are still pending (sealed test sets, freeze on 29 October 2026).",
             ["Result", "Where it is measured", "Value"],
             [["AUC of the working version on its sealed test sets", "sealed in-dataset and cross-dataset tests, once, at the freeze", pend(N)],
-             ["Verdict of iteration 1 (fine-tuning depth) on the development slice", "paired interval against the working version", pend(N)],
-             ["Verdict of iteration 2 (frame aggregation)", "paired interval against the preceding iteration", pend(N)],
-             ["Verdict of iteration 3 (loss and class weighting)", "paired interval against the preceding iteration", pend(N)],
-             ["Verdict of iteration 4 (augmentation and regularisation)", "paired interval against the preceding iteration", pend(N)],
-             ["Verdict of iteration 5 (combining encoders)", "paired interval against the preceding iteration", pend(N)],
-             ["Verdict of iteration 6 (late fusion with calibration)", "paired interval on LAV-DF", pend(N)],
-             ["Verdict of iteration 7 (pulse signal check)", "share of clips above the shuffled control", pend(N)],
              ["Sealed test AUC of each frozen iteration", "staircase, one evaluation per iteration", pend(N)],
-             ["Final system against the working version", "paired group bootstrap on the sealed data", pend(N)],
-             ["Final system against the re-run published baseline", "non-inferiority interval and the margin", pend(N)]],
+             ["Final system against the working version", "paired group bootstrap on the sealed Celeb-DF family and In-the-Wild tests", pend(N)],
+             ["Final face-video system against the re-run baseline", "non-inferiority interval with the margin 0.0143", pend(N)],
+             ["LAV-DF sealed test of the unimodal heads and the fusion", "exploratory, once", pend(N)]],
             [7.2, 6.4, 2.8], ["left", "left", "center"], size=9)

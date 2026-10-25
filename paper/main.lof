@@ -1,5 +1,7 @@
-\contentsline {figure}{\numberline {1}{\ignorespaces Three scoring paths}}{3}{figure.15}%
+\contentsline {figure}{\numberline {1}{\ignorespaces Three scoring paths}}{4}{figure.15}%
 \contentsline {figure}{\numberline {2}{\ignorespaces Group-disjoint splits}}{5}{figure.28}%
 \contentsline {figure}{\numberline {3}{\ignorespaces Staircase of sealed evaluations}}{6}{figure.32}%
-\contentsline {figure}{\numberline {4}{\ignorespaces Iteration ladder}}{7}{figure.39}%
-\contentsline {figure}{\numberline {5}{\ignorespaces Local web page against the development stand-in}}{9}{figure.43}%
+\contentsline {figure}{\numberline {4}{\ignorespaces Iteration ladder}}{8}{figure.39}%
+\contentsline {figure}{\numberline {5}{\ignorespaces Local web page against the development stand-in}}{8}{figure.43}%
+\contentsline {figure}{\numberline {6}{\ignorespaces Development-slice AUC along the ladder}}{12}{figure.51}%
+\contentsline {figure}{\numberline {7}{\ignorespaces LAV-DF per-cell AUC and control}}{13}{figure.55}%

@@ -917,7 +917,7 @@ Selected learning rate (validation AUC only): 0.0001; stage 1 validation AUC by 
 | validation | 0.9872 [0.9784, 0.9942] (seed sd 0.0010) | 0.9899 [0.9809, 0.9967] | +0.0027 [-0.0009, +0.0060] | 0.7985 [0.7731, 0.8269] | +0.1887 [+0.1602, +0.2152] |
 | dev_x | 0.8750 [0.8435, 0.9089] (seed sd 0.0072) | 0.9096 [0.8776, 0.9388] | +0.0346 [+0.0136, +0.0550] | 0.6933 [0.6639, 0.7314] | +0.1817 [+0.1396, +0.2166] |
 
-Hypothesis of E-013 (IMG-17 fine-tuned is superior to the Xception baseline on dev_x, lower bound of the paired difference above 0): **SUPPORTED** (mechanical, exploratory, D-041). The seed standard deviation of the baseline on each split (above) is the quantity from which delta of D-025 is chosen before the final comparison (D-060).
+Hypothesis of E-013 (IMG-17 fine-tuned is superior to the Xception baseline on dev_x, lower bound of the paired difference above 0): **SUPPORTED** (mechanical, exploratory, D-041). The seed standard deviation of the baseline on each split (above) is the quantity from which delta of D-025 is chosen before the final comparison (D-060). Delta by the rule of D-060 (2 times the larger seed standard deviation, floor 0.01): 0.0143.
 
 
 <!-- E-013 RESULT end -->

@@ -125,9 +125,10 @@ def abstract(B):
         "intervals and several seeds, candidates are compared in a paired way, and a result is called comparable with a published detector only if it is non-inferior to a re-run "
         "of that detector on the same protocol.")
     B.p("The report describes the mathematical background, the evaluation harness and its acceptance test, the datasets and their licences, the shared preprocessing, the design of "
-        "the encoder comparison, the working version, the iteration ladder, the local web application and the test protocol. The encoder comparison and the first working checkpoint have "
-        "exploratory results on the development slice, which are reported with their intervals; the sealed-test, confirmatory and later-iteration results are marked as pending until "
-        "their runs are frozen.")
+        "the encoder comparison, the working version, the iteration ladder with its measured results, the local web application and the test protocol. All results are exploratory, "
+        "on validation data and on development slices, and are reported with their intervals: fine-tuning the face encoder raises the development AUC from 0.6933 to 0.9096, three levers raise the speech AUC "
+        "from 0.6100 to 0.8130, a pulse signal check fails, and on LAV-DF a control shows that the fused result is driven by a production-pipeline cue of the visual head. The sealed-test results "
+        "and the two confirmatory comparisons are marked as pending until the freeze.")
     B.p("<b>Keywords:</b> deepfake detection, multimodal, group-disjoint evaluation, frozen encoders, calibration, group bootstrap, non-inferiority, remote photoplethysmography.")
 
 

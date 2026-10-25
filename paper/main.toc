@@ -1,11 +1,11 @@
 \contentsline {frontmatter}{Certificate}{i}{Doc-Start}%
 \contentsline {frontmatter}{Declaration}{ii}{Doc-Start}%
 \contentsline {frontmatter}{Acknowledgements}{iii}{Doc-Start}%
-\contentsline {frontmatter}{List of Figures}{vi}{Doc-Start}%
-\contentsline {frontmatter}{List of Tables}{vii}{Doc-Start}%
-\contentsline {frontmatter}{Abbreviations}{viii}{Doc-Start}%
+\contentsline {frontmatter}{List of Figures}{v}{Doc-Start}%
+\contentsline {frontmatter}{List of Tables}{vi}{Doc-Start}%
+\contentsline {frontmatter}{Abbreviations}{vii}{Doc-Start}%
 \contentsline {section}{\numberline {I}Introduction}{1}{section*.1}%
-\contentsline {section}{\numberline {II}Related Work}{1}{section*.7}%
+\contentsline {section}{\numberline {II}Related Work}{2}{section*.7}%
 \contentsline {subsection}{\numberline {\mbox {II-A}}Datasets for face forgery}{2}{subsection*.8}%
 \contentsline {subsection}{\numberline {\mbox {II-B}}Visual detectors and generalisation}{2}{subsection*.9}%
 \contentsline {subsection}{\numberline {\mbox {II-C}}Physiological signals}{2}{subsection*.10}%
@@ -16,23 +16,25 @@
 \contentsline {subsection}{\numberline {\mbox {III-B}}Preprocessing}{3}{subsection*.16}%
 \contentsline {subsection}{\numberline {\mbox {III-C}}Frozen encoder and linear head}{3}{subsection*.17}%
 \contentsline {subsection}{\numberline {\mbox {III-D}}Clip score, calibration and threshold}{3}{subsection*.18}%
-\contentsline {subsection}{\numberline {\mbox {III-E}}Candidate encoders}{4}{subsection*.21}%
+\contentsline {subsection}{\numberline {\mbox {III-E}}Candidate encoders}{3}{subsection*.21}%
 \contentsline {subsection}{\numberline {\mbox {III-F}}Cost record}{4}{subsection*.23}%
 \contentsline {subsection}{\numberline {\mbox {III-G}}Pulse evidence (candidate component)}{4}{subsection*.24}%
 \contentsline {section}{\numberline {IV}Experimental Protocol}{4}{section*.25}%
 \contentsline {subsection}{\numberline {\mbox {IV-A}}Setup}{4}{subsection*.26}%
 \contentsline {subsection}{\numberline {\mbox {IV-B}}Data and splits}{4}{subsection*.27}%
 \contentsline {subsection}{\numberline {\mbox {IV-C}}Celeb-DF++ de-duplication and test balance}{4}{subsection*.30}%
-\contentsline {subsection}{\numberline {\mbox {IV-D}}Sealed tests and the staircase}{4}{subsection*.31}%
+\contentsline {subsection}{\numberline {\mbox {IV-D}}Sealed tests and the staircase}{5}{subsection*.31}%
 \contentsline {subsection}{\numberline {\mbox {IV-E}}Metrics and statistics}{5}{subsection*.33}%
 \contentsline {subsection}{\numberline {\mbox {IV-F}}Seed policy and fine-tuning budget}{6}{subsection*.37}%
-\contentsline {section}{\numberline {V}Iteration Plan}{6}{section*.38}%
-\contentsline {section}{\numberline {VI}Software}{6}{section*.42}%
+\contentsline {section}{\numberline {V}Iterations}{6}{section*.38}%
+\contentsline {section}{\numberline {VI}Software}{7}{section*.42}%
 \contentsline {section}{\numberline {VII}Results}{7}{section*.44}%
 \contentsline {subsection}{\numberline {\mbox {VII-A}}Encoder sweep (exploratory, development slice)}{7}{subsection*.45}%
-\contentsline {subsection}{\numberline {\mbox {VII-B}}Working version on the development slice (exploratory)}{8}{subsection*.47}%
-\contentsline {subsection}{\numberline {\mbox {VII-C}}Staircase and confirmatory comparisons}{8}{subsection*.49}%
-\contentsline {subsection}{\numberline {\mbox {VII-D}}Calibration, per-generator behaviour and pulse check}{8}{subsection*.51}%
-\contentsline {section}{\numberline {VIII}Limitations}{10}{section*.52}%
-\contentsline {section}{\numberline {IX}Conclusion}{10}{section*.53}%
-\contentsline {section}{References}{10}{section*.54}%
+\contentsline {subsection}{\numberline {\mbox {VII-B}}Working version on the development slice (exploratory)}{9}{subsection*.47}%
+\contentsline {subsection}{\numberline {\mbox {VII-C}}Iterations I-1 to I-4 (exploratory)}{10}{subsection*.49}%
+\contentsline {subsection}{\numberline {\mbox {VII-D}}Audio-visual evidence on LAV-DF (exploratory)}{12}{subsection*.53}%
+\contentsline {subsection}{\numberline {\mbox {VII-E}}Staircase and confirmatory comparisons}{12}{subsection*.57}%
+\contentsline {subsection}{\numberline {\mbox {VII-F}}Calibration and per-generator behaviour}{13}{subsection*.59}%
+\contentsline {section}{\numberline {VIII}Limitations}{13}{section*.60}%
+\contentsline {section}{\numberline {IX}Conclusion}{14}{section*.61}%
+\contentsline {section}{References}{14}{section*.62}%

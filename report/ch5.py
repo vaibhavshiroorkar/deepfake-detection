@@ -4,7 +4,7 @@
 def conclusions(B):
     B.h1("Conclusions and Further Work")
     B.box("This chapter presents the conclusions that the evidence of the project supports at this stage, with the important points in list form, and the further work that completes "
-          "the planned path from the working version to the frozen system.")
+          "the work that remains between the present exploratory results and the frozen, sealed-test evaluation.")
     B.h2("Conclusions", trace="CLAUDE.md rules 1 and 8; DOC_FACTS; STATUS")
     B.p("The project built, from zero and in one repository, the foundations of a multimodal deepfake detector and the protocol under which it is judged. A group-disjoint evaluation "
         "harness exists, with a development slice for ranking, sealed test sets behind a guard and a ledger, bootstrap intervals over groups and seeds, paired and non-inferiority "
@@ -12,10 +12,16 @@ def conclusions(B):
         "corrected so that no source video is counted twice. A shared preprocessing package, a measured choice of face detector, a checkpoint format that refuses a mismatch, an "
         "inference library and a local web page exist. Eleven pretrained encoders were compared on the development slice under one rule, hypotheses, success criteria and failure "
         "criteria having been written before any run, and the first working checkpoint was built from the three winners and tested end to end.")
-    B.p("The results so far are exploratory, on the development slice. Frozen DINOv2 small separates face-video clips of unseen identities with an AUC of 0.6933 [0.6639, 0.7314], "
-        "the OpenAI CLIP separates generated images at 0.9935 on two generator units, and frozen speech encoders did not transfer reliably to In-the-Wild (the best lower bound, 0.5338, is "
-        "below the line fixed in advance, so that comparison is inconclusive). What the project does not yet have is a confirmed performance: the sealed-test, confirmatory and later-iteration "
-        "results are marked as pending in this report because their runs are not frozen, and the report makes no claim about detection accuracy on sealed data or comparability with a published detector. "
+    B.p("The results are exploratory, on validation data and on development slices. On face video, frozen DINOv2 small separated clips of unseen identities with an AUC of 0.6933 [0.6639, 0.7314], "
+        "and full fine-tuning of SigLIP base raised the slice AUC to 0.9096 [0.8776, 0.9388] (validation 0.9899); a re-run Xception baseline with the same recipe reaches 0.8750 [0.8435, 0.9089], and the "
+        "difference on the slice is +0.0346 [+0.0136, +0.0550]. On speech, frozen encoders did not transfer reliably to In-the-Wild (the best lower bound, 0.5338, was below the line fixed in advance, so that "
+        "comparison was inconclusive), and three levers took the slice AUC from 0.6100 [0.5434, 0.7256] to 0.8130 [0.7523, 0.8808]: trimming and normalising the clip, augmenting the training clips, and averaging three encoders. "
+        "On generated images the OpenAI CLIP head separates the two generator units of the slice with 0.9935. On LAV-DF the frozen face head was below chance (0.3838), and a head trained on LAV-DF "
+        "reached a fused AUC of 0.9935 that a control shows is driven by a cue that separates original videos from produced ones, not by a visual manipulation signal (0.5070 within the produced videos); "
+        "the audio head, at 0.8574 within the produced videos, is the part that detects a manipulation there. The pulse signal was not recoverable from the data (0.301 against the required 0.6).")
+    B.p("What the project does not yet have is a confirmed performance. The sealed-test results and the two confirmatory comparisons, the final system against the working version and against the re-run "
+        "baseline with a margin of 0.0143, are marked as pending, because the freeze is on Thursday 29 October 2026 and no sealed test set has been read. The report makes no claim about detection accuracy on sealed data, "
+        "no claim of audio-visual detection, and no claim that the system is comparable with a published detector beyond the exploratory difference to the re-run baseline given above. "
         "Where numbers of other papers are quoted, they are quoted with their own protocol and as context.")
     B.p("The important points are the following.")
     B.bullets([
@@ -24,19 +30,23 @@ def conclusions(B):
         "The evaluation harness passes its acceptance checks, including a bootstrap coverage of 192 of 200 simulated data sets against a requirement of 90 percent.",
         "Eleven pretrained encoders, seven for images and four for speech, plus two small networks trained from scratch as references, are compared under one rule that prefers the cheaper candidate when the paired interval includes zero.",
         "The working version is defined by seven checkable conditions and meets them: its checkpoint scores a file through the local web page with the source marked real, the parity between stored features and the raw-file path is within 0.0019, and a visible banner keeps a development stand-in from being mistaken for a result.",
-        "The pulse experiment has its thresholds written before any run, and it reports a negative outcome as an outcome.",
-        "Two limitations are stated with the design: small development slices, and weights of two encoders that are research-only.",
+        "Fine-tuning the face encoder removed the bias seen in the working version (training AUC 0.837 to 0.9994) and raised the development AUC by +0.1700 [+0.1228, +0.2114] over the probe of the same encoder; most of that gain comes from fine-tuning, since the Xception baseline gains +0.1817 [+0.1396, +0.2166] over the working version as well.",
+        "The speech task is the weakest: three levers raised the slice AUC to 0.8130, the slice has only 12 speakers, and the calibration error stays high, so the audio score is a ranking score.",
+        "The audio-visual result on LAV-DF is an in-data-set result that a production-pipeline cue of the visual head drives; the visual head has no demonstrated ability to detect a visual manipulation there, and the audio head does. The system therefore shows the two scores side by side with a warning and no fused verdict.",
+        "The pulse experiment has its thresholds written before any run, and it reported a negative outcome as an outcome: the pulse signal is not recoverable from these data.",
+        "A version-2 checkpoint of the frozen system exists, is covered by 304 unit tests, and passed a parity check on the graphics processor (largest difference 0.0019); the web page still runs the checkpoint of the working version until the freeze.",
+        "Limitations are stated with the results: small development slices, a baseline learning rate at the edge of its grid, and weights of two encoders that are research-only.",
     ])
     B.h2("Further Work", trace="ITERATIONS; DECISIONS D-038, D-042, D-045; DOC_FACTS section 13")
     B.p("The remaining work follows the plan of the iteration ladder and the notes of the decisions.")
     B.bullets([
-        "Choose the lever of the first iteration from the diagnostic battery of the working version, whose candidate diagnoses are bias for the face task and shift for the audio task.",
-        "Run iterations I-1 to I-7, each with its lever chosen from the diagnostic battery of the preceding iteration, and report an iteration that is not finished as not run.",
-        "Evaluate every frozen iteration once on the sealed test sets and run the two confirmatory comparisons, which needs the published baseline to be named and re-run, and the margin $\\delta$ to be fixed from its seed spread.",
-        "Fine-tune the generated-image and the speech tasks if time remains, and consider a low-rank adapter variant of the two CLIP ViT-L/14 models, which do not fit the card for full fine-tuning.",
-        "Treat the audio treatment as an open question: recording-condition cues that reverse between ASVspoof and In-the-Wild, and short repeat-padded clips, are the candidates.",
-        "Decide the combining rule for the visual and audio scores of a video once both unimodal heads are calibrated on LAV-DF.",
-        "Add DINOv3 as an iteration if its access gate is accepted, add FakeAVCeleb and WildDeepfake as further tests when obtained, and add UBFC-rPPG only if the pulse experiment needs ground truth.",
+        "Freeze the code, the preprocessing and the checkpoints on Thursday 29 October 2026, tag every frozen iteration, and evaluate each once on the sealed test sets under the final flag.",
+        "Run the two confirmatory comparisons on the sealed data: the final system against the working version, and against the re-run Xception baseline with the margin of 0.0143.",
+        "Report an iteration that cannot be frozen in time as not run, and fill the pending cells only from the ledger of the final evaluations.",
+        "Look for a visual manipulation signal on LAV-DF with a recipe that does not rely on the production pipeline, for example more frames per video or a temporal model, before any audio-visual claim is made.",
+        "Extend the baseline grid beyond the learning rate of 1e-4 if the comparison is to be repeated, and fine-tune the generated-image task if time remains.",
+        "Treat the audio calibration as open: the calibration error on the slice stays high after temperature scaling.",
+        "Add DINOv3 as an iteration if its access gate is accepted, add FakeAVCeleb and WildDeepfake as further tests when obtained, and add UBFC-rPPG only if a pulse experiment is repeated with ground truth.",
         "Treat the JPEG quality of the stored crops as a candidate preprocessing iteration, and revisit the identity exclusion of Celeb-DF++ with a narrower rule (target identity only) if that is preferred.",
         "Extend the output with temporal localisation, which was excluded from the first version because temporal labels are not available in every data set.",
     ])

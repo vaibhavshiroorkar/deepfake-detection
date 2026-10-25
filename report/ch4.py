@@ -1,12 +1,13 @@
 """Chapter 4: implementation and experimentation. Only logged measurements appear as numbers; results that are not final are [pending]."""
 import ch4_results as R
+import ch4_iter as IT
 
 
 
 def build(B):
     B.h1("Implementation and Experimentation")
     B.box("This chapter presents the implementation and the experimental design: the environment, the data and their licences, the shared preprocessing, the evaluation harness, "
-          "the encoder comparison, the working version, the iteration ladder, the web application and the test protocol. Results of the development slice are exploratory, and results that do not exist yet are marked as pending.")
+          "the encoder comparison, the working version, the iteration ladder with its measured results, the web application and the test protocol. Results of the development slice are exploratory, and the sealed-test results, which do not exist yet, are marked as pending.")
     environment(B)
     datasets(B)
     preprocessing(B)
@@ -14,13 +15,15 @@ def build(B):
     sweep(B)
     working(B)
     ladder(B)
+    IT.results(B)
     webapp(B)
     staircase(B)
     B.h2("Summary and Outline of the Next Chapter")
-    B.p("This chapter described what was built and how it is tested. The data, the group-disjoint splits, the shared preprocessing, the evaluation harness with its acceptance test, the "
-        "design of the encoder comparison, the working version, the iteration ladder, the web application and the staircase test protocol exist and are documented; the encoder comparison and the first "
-        "working checkpoint have exploratory results on the development slice, and the sealed-test, confirmatory and later-iteration results are marked as pending until their runs "
-        "are frozen. Chapter 5 states the conclusions that the present evidence supports and the further work.")
+    B.p("This chapter described what was built, how it is tested and what the iterations found. The data, the group-disjoint splits, the shared preprocessing, the evaluation harness with its acceptance test, the "
+        "design of the encoder comparison, the working version, the iteration ladder, the web application and the staircase test protocol exist and are documented. The encoder comparison, the seven "
+        "iterations and the re-run baseline have exploratory results on the development slice and on validation data, with their intervals and mechanical verdicts; the sealed-test results and the two "
+        "confirmatory comparisons are marked as pending, because the freeze is on Thursday 29 October 2026 and no sealed test set has been read. Chapter 5 states the conclusions that the present evidence "
+        "supports and the further work.")
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -286,12 +289,12 @@ def ladder(B):
     B.p("After the working version the project has seven experimental iterations, I-1 to I-7, and a last step, I-8, that integrates and freezes. I-1 to I-6 take their lever from one "
         "of six families, and the lever of each slot is chosen after the diagnostic battery of the preceding iteration, not in advance; the primary candidate in <ref tab:ladder> is a "
         "starting guess for planning that is replaced without penalty when the battery points elsewhere. I-7 is the pulse experiment and I-8 runs no experiments. <ref fig:ladder> shows the "
-        "ladder.")
+        "ladder. The levers that were actually used and their results are given in the section on the results of the iterations.")
     B.figure("ladder", "fig03_ladder.png", "Iteration ladder. Each step from I-1 to I-6 starts from the diagnostic battery of the preceding step.", 16.0,
              "Row of nine boxes from the working version to integration and freeze, all feeding a diagnostic battery", tag="schematic")
     B.p("Every slot is written in one template: observation (numbers from the battery), diagnosis, mathematical hypothesis, change, prediction with sign and rough size, result and verdict. "
         "The prediction lines are hypotheses, and each is judged against its failure line after the run. Verdicts on the development slice are exploratory.")
-    B.table("ladder", "Primary candidate lever, trigger, prediction and failure line of iterations I-1 to I-6. The predictions are hypotheses written before any run.",
+    B.table("ladder", "Candidate lever, trigger, prediction and failure line of iterations I-1 to I-6 as planned before the runs. The predictions are hypotheses written before any run; the measured ladder is in the section on results.",
             ["Slot", "Lever", "Triggered when", "Prediction", "Failure line"],
             [["I-1", "Fine-tuning depth: linear probe to the last blocks, low-rank adapters or full fine-tuning", "Bias: training and validation AUC both low or close (gap under 0.02, AUC under about 0.90)", "Validation AUC up by about 0.02 to 0.05; development slice between slightly negative and +0.03", "Paired development interval includes zero or is below zero while validation AUC rises; or memory or time is outside the 12 GB budget"],
              ["I-2", "Frame aggregation: mean to top-k mean, maximum or learned attention pooling", "Frame-level AUC clearly above video-level AUC, a wide spread of frame scores, or many frames without a face", "Video AUC change from 0 to +0.02 when few frames are informative; negative when frame noise dominates", "Paired interval includes zero, or the real-video score histogram moves right (more false alarms)"],
@@ -326,12 +329,12 @@ def ladder(B):
         "identity-disjoint split for at least two generator families, with success if the lower bound is above 0.55 and failure if the interval includes 0.5; the added value of the fused "
         "model with the pulse over the model without it, a paired group bootstrap on the development slice with three seeds, adopted only if the whole interval is above zero; and negative "
         "controls with time-shuffled and identity-mismatched signals, whose AUC intervals must include 0.5, otherwise the separation is an artefact. The decision to adopt or not is made on the "
-        "development slice and never on a sealed test set. The prior expectation, a hypothesis and not a result, is that most of the videos are compressed, which attenuates the pulse, so S-1 "
-        "is expected to pass only partially.")
+        "development slice and never on a sealed test set. The prior expectation, a hypothesis and not a result, was that most of the videos are compressed, which attenuates the pulse, so that S-1 "
+        "would pass only partially. S-1 was run and failed (130 of 432 real clips above the control, 0.301 [0.260, 0.346], against the required 0.6), so none of the three further tests was run; the numbers are in the section on the results of the iterations.")
     B.h3("Integration and freeze (iteration I-8)")
     B.p("I-8 runs no new experiments. It freezes the code, the preprocessing and the checkpoints, tags every frozen iteration in version control, evaluates each frozen iteration once on the "
         "sealed test sets under the final flag, runs the leakage check on the final splits, fills the paper, the report and the slides only from logged experiments, demonstrates the "
-        "system end to end with the source set to real, and deletes the LAV-DF archive by hand. Anything not frozen by Thursday 29 October is reported as not done.")
+        "system end to end with the source set to real, and deletes the LAV-DF archive by hand. Anything not frozen by Thursday 29 October is reported as not done. At the time of writing I-8 has not been run: the tools for it (the scoring scripts for the staircase, the checkpoint of the frozen system and its parity check) exist, and no sealed split has been read.")
 
 
 def webapp(B):
@@ -367,6 +370,7 @@ def webapp(B):
                   tag="screenshots against the stand-in")
     R.screens(B)
     B.p("Tests with synthetic media cover the response contract, the stand-in and its banner, the real adapter stub, the web routes and, in a real browser, the page itself against the stand-in.")
+    IT.software(B)
 
 
 def staircase(B):
@@ -378,10 +382,12 @@ def staircase(B):
              "Rising blocks for iterations I-0, I-1, I-2 and the final system, with arrows to two confirmatory comparisons", tag="schematic")
     B.p("The confirmatory claims are exactly two, declared before any final run, both as paired group bootstrap comparisons on the sealed data under the comparison rules: the final "
         "system against the working version, and the final system against a re-run published baseline, where the second is the non-inferiority test of Equation <ref eq:noninf>. The margin "
-        "$\\delta$ is stated before the comparison and chosen from the measured seed-to-seed spread of the baseline, so the baseline must be trained before $\\delta$ exists; if it cannot "
-        "be trained within the time budget, the word comparable would have to be weakened and the report would say so. Every other comparison in the report is labelled exploratory.")
+        "$\\delta$ is stated before the comparison and chosen from the measured seed-to-seed spread of the baseline, so the baseline had to be trained before $\\delta$ existed; it was trained "
+        "(Xception, three seeds) and $\\delta$ is 0.0143. Every other comparison in the report is labelled exploratory.")
     B.p("The standing limitations of this protocol are stated with it. The development slices have 15 identities, 12 speakers and 2 generator units, so intervals are wide and ties are "
         "likely; the sealed Celeb-DF family tests have about 44 independent identity groups; the threshold is chosen on validation data from the training distribution, which may be too easy, "
         "so it can transfer badly across data sets, and that would appear as a gap between the in-dataset and the cross-dataset balanced accuracy and be reported; and temperature scaling "
         "does not repair a shift between data sets.")
+    IT.final_system(B)
     R.status_table(B)
+    IT.limits(B)

@@ -50,11 +50,13 @@ def main():
         sd = float(np.std([B.cluster_bootstrap(y, sb[k], g, "auc", n_boot=10).estimate for k in range(3)], ddof=1))
         res[name] = dict(baseline=bb.as_dict(), ours=bo.as_dict(), diff_ours_minus_baseline=d.as_dict(), i0=bi.as_dict(), diff_baseline_minus_i0=d2.as_dict(), baseline_seed_sd=sd)
         md.append(f"| {name} | {fmt(res[name]['baseline'])} (seed sd {sd:.4f}) | {fmt(res[name]['ours'])} | {dfmt(res[name]['diff_ours_minus_baseline'])} | {fmt(res[name]['i0'])} | {dfmt(res[name]['diff_baseline_minus_i0'])} |")
+    delta = max(0.01, 2 * max(res["validation"]["baseline_seed_sd"], res["dev_x"]["baseline_seed_sd"]))
+    res["delta_d025"] = delta
     dv = res["dev_x"]["diff_ours_minus_baseline"]
     verdict = ("SUPPORTED" if dv["low"] > 0 else "NOT SUPPORTED")
     res["verdict"] = verdict
     md += ["", "Hypothesis of E-013 (IMG-17 fine-tuned is superior to the Xception baseline on dev_x, lower bound of the paired difference above 0): "
-           f"**{verdict}** (mechanical, exploratory, D-041). The seed standard deviation of the baseline on each split (above) is the quantity from which delta of D-025 is chosen before the final comparison (D-060).", ""]
+           f"**{verdict}** (mechanical, exploratory, D-041). The seed standard deviation of the baseline on each split (above) is the quantity from which delta of D-025 is chosen before the final comparison (D-060). Delta by the rule of D-060 (2 times the larger seed standard deviation, floor 0.01): {delta:.4f}.", ""]
     block = "\n".join(md)
     (OUT / "e013.md").write_text(block + "\n", encoding="utf-8")
     (OUT / "e013.json").write_text(json.dumps(res, indent=1, default=float))

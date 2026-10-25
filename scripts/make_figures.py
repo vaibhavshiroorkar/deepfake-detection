@@ -350,7 +350,7 @@ def save_plain(fig, name):
 
 
 # (label, estimate, low, high): docs/DOC_FACTS.md section 15 and the logged blocks of E-004, E-005, E-007, E-008, E-009, E-013
-LAD_V = [("I-0 frozen probe", 0.6933, 0.6639, 0.7314), ("Xception, fine-tuned", 0.8750, 0.8435, 0.9089), ("I-1 IMG-17, fine-tuned", 0.9096, 0.8776, 0.9388)]
+LAD_V = [("I-0 frozen probe", 0.6933, 0.6639, 0.7314), ("Xception, fine-tuned", 0.8750, 0.8435, 0.9089), ("I-1 SigLIP base, fine-tuned", 0.9096, 0.8776, 0.9388)]
 LAD_A = [("I-0 frozen probe", 0.6100, 0.5434, 0.7256), ("I-2 trim, normalise", 0.6723, 0.6126, 0.7584), ("I-3 plus augmentation", 0.7455, 0.7052, 0.8121), ("I-4 three encoders", 0.8130, 0.7523, 0.8808)]
 
 

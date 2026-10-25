@@ -65,7 +65,7 @@ Each slot receives its hypothesis, success criterion and failure criterion befor
 | I-5 | Frozen heads on LAV-DF, pre-check, then fusion (D-057) | E-010 | E-010 | NOT TESTED: the visual head is below chance on LAV-DF (0.3838) |
 | I-6 | In-domain LAV-DF heads and fusion (D-058); visual head on produced videos only (D-059) | E-011, E-012 | E-011, E-012 | E-011 SUPPORTED mechanically (fused AUC 0.9935) but the post-hoc control shows a pipeline cue (visual 0.507 within produced videos); E-012 NOT SUPPORTED (0.517) |
 | I-7 | rPPG (O-010), thresholds in ITERATIONS.md | E-006 | E-006 | S-1 FAILS (0.301 against 0.6): rPPG signal not recoverable from these data; nothing further run (D-052) |
-| BASE | Xception re-run baseline of D-025 (D-060) | E-013 | E-013 | validation 0.9872, dev_x 0.8750; delta 0.0144 (D-061) |
+| BASE | Xception re-run baseline of D-025 (D-060) | E-013 | E-013 | validation 0.9872, dev_x 0.8750; delta 0.0143 (D-061) |
 | I-8 | Integration and freeze, no experiments | n/a | none | version-2 checkpoint built, 304 tests, GPU parity PASS (2026-10-25); sealed staircase and the two confirmatory comparisons NOT run (freeze Thu 2026-10-29) |
 
 The slots follow the order in which levers were triggered (D-056 item 4): the lever labels of ITERATIONS.md were starting guesses and were replaced by the lever used when the diagnostic battery pointed elsewhere.
