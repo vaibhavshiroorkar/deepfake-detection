@@ -211,7 +211,8 @@ def run(cand, lr, seed, out_root, steps=STEPS, workers=10, limit=None, tag=None)
         wdir = Path("checkpoints/I-1") / name
         wdir.mkdir(parents=True, exist_ok=True)
         sd = {n: p.detach().cpu() for n, p in enc.model.named_parameters() if p.requires_grad and any(p is q for q in ps)}
-        torch.save(dict(params=sd, head={k: v.cpu() for k, v in head.state_dict().items()}, cand=cand, lr=lr, seed=seed), wdir / "weights.pt")
+        bufs = {n: b.detach().cpu() for n, b in enc.model.named_buffers()}   # BatchNorm running statistics of the CNN baseline (E-013); empty effect for the ViTs
+        torch.save(dict(params=sd, buffers=bufs, head={k: v.cpu() for k, v in head.state_dict().items()}, cand=cand, lr=lr, seed=seed), wdir / "weights.pt")
     print(json.dumps({k: v for k, v in res.items() if k != "loss_curve"}), flush=True)
     del enc, head, opt
     torch.cuda.empty_cache()
