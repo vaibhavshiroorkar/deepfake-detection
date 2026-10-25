@@ -126,9 +126,9 @@ def abstract(B):
         "of that detector on the same protocol.")
     B.p("The report describes the mathematical background, the evaluation harness and its acceptance test, the datasets and their licences, the shared preprocessing, the design of "
         "the encoder comparison, the working version, the iteration ladder with its measured results, the local web application and the test protocol. All results are exploratory, "
-        "on validation data and on development slices, and are reported with their intervals: fine-tuning the face encoder raises the development AUC from 0.6933 to 0.9096, three levers raise the speech AUC "
-        "from 0.6100 to 0.8130, a pulse signal check fails, and on LAV-DF a control shows that the fused result is driven by a production-pipeline cue of the visual head. The sealed-test results "
-        "and the two confirmatory comparisons are marked as pending until the freeze.")
+        "on validation data and on development slices, and are reported with their intervals: fine-tuning the face encoder raises the development AUC from 0.6933 to 0.9096 (two further levers, augmentation with mixup and an average of three encoders, give 0.9315 and 0.9192 and do not enter the final system), three levers raise the speech AUC "
+        "from 0.6100 to 0.8130, a pulse signal check fails (a positive control shows that the pipeline recovers an injected sinusoid of a relative green amplitude of 0.008 in 87 percent of the clips), and on LAV-DF a control shows that the fused result is driven by a production-pipeline cue of the visual head. The sealed-test results "
+        "and the three confirmatory tests are marked as pending until the sealed run.")
     B.p("<b>Keywords:</b> deepfake detection, multimodal, group-disjoint evaluation, frozen encoders, calibration, group bootstrap, non-inferiority, remote photoplethysmography.")
 
 

@@ -6,8 +6,9 @@ M = "−"   # minus sign
 
 
 def results(B):
-    B.h2("Results of the Iterations", trace="EXPERIMENTS E-005 to E-013; DECISIONS D-051, D-054 to D-061; DOC_FACTS section 15")
+    B.h2("Results of the Iterations", trace="EXPERIMENTS E-005 to E-017, E-013b, M-005; DECISIONS D-051, D-054 to D-066; DOC_FACTS section 15")
     B.p("All seven experimental iterations after the working version were run on 25 October 2026, each from a hypothesis, a success line and a failure line written before the run. "
+        "Two further iterations on the face-video task, called 1b and 1c, were added the same evening at the request of the project team, after the first pass over the ladder. "
         "The lever of each slot was chosen from the diagnostic battery of the preceding step, so the order in which levers were used differs from the order of the candidate table above. "
         "Every number below is exploratory: it is measured on the validation split or on the development slice, is the mean of three seeds with a 95 percent group bootstrap interval, "
         "and every verdict is the mechanical evaluation of the criteria that were written before the run. None of the sealed test sets was read. <ref tab:ladderres> summarises the ladder as it was measured.")
@@ -15,6 +16,8 @@ def results(B):
             ["Step", "Lever and task", "Validation AUC", "Development slice AUC", "Mechanical verdict"],
             [["0", "Working version: frozen encoder and linear head (face video, generated images, speech)", "0.7985, 1.0000, 0.9942", "0.6933, 0.9935, 0.6100", "baseline"],
              ["1", "Full fine-tuning of the face-video encoder (SigLIP base)", "0.9899 [0.9809, 0.9967]", "0.9096 [0.8776, 0.9388]", "supported"],
+             ["1b", "Face video: augmentation matched to compression, blur and resize, plus mixup, on the fine-tuned encoder", "0.9705 [0.9618, 0.9795]", "0.9315 [0.9055, 0.9548]", "trade-off: slice up, validation down; does not enter the final system"],
+             ["1c", "Face video: mean of the logits of three fine-tuned encoders", "0.9903 [0.9823, 0.9968]", "0.9192 [0.8948, 0.9457]", "interval includes zero; does not enter the final system"],
              ["2", "Speech: trim silence and normalise the peak", "0.9889 [0.9831, 0.9933]", "0.6723 [0.6126, 0.7584]", "supported"],
              ["3", "Speech: augmentation of the training clips", "0.9869 [0.9818, 0.9911]", "0.7455 [0.7052, 0.8121]", "supported"],
              ["4", "Speech: average of three encoders", "0.9964 [0.9943, 0.9982]", "0.8130 [0.7523, 0.8808]", "supported"],
@@ -23,9 +26,9 @@ def results(B):
              ["7", "Pulse signal check", "not applicable", "not applicable", "fails: signal not recoverable from these data"]],
             [0.9, 5.0, 3.9, 3.3, 3.3], ["center", "left", "center", "center", "left"], size=8, keep=False,
             trace="E-004 to E-012, E-006; exploratory")
-    B.figure("ladderres", "fig08_ladder_results.png", "Measured ladder on the development slice: face video (top) and speech (bottom), with 95 percent intervals. The sealed test results are not yet available.", 15.5,
-             "Two panels of AUC with intervals on the development slice, face video from the working version to fine-tuning and the baseline, speech from the working version to the three-encoder average",
-             tag="exploratory", trace="E-004, E-005, E-007, E-008, E-009, E-013 (exploratory)")
+    B.figure("ladderres", "fig08_ladder_results.png", "Measured ladder on the development slice: face video (top, with the re-run baseline and the two further iterations 1b and 1c) and speech (bottom), with 95 percent intervals. The sealed test results are not yet available.", 15.5,
+             "Two panels of AUC with intervals on the development slice, face video from the working version to fine-tuning, the baseline and the two further iterations, speech from the working version to the three-encoder average",
+             tag="exploratory", trace="E-004, E-005, E-007, E-008, E-009, E-013b, E-016, E-017 (exploratory)")
 
     # ---- iteration 1
     B.h3("Iteration 1: fine-tuning depth on the face-video task", trace="E-005; D-051")
@@ -58,6 +61,33 @@ def results(B):
         "Aggregation still does not help: the frame level scores 0.852 on the slice, the clip mean 0.921, and the median and the mean of the three highest 0.921 and 0.926. After temperature scaling the "
         "calibration error is 0.0174 on validation and 0.0331 on the slice, and the balanced accuracy at the validation threshold is 0.974 and 0.824. Of the 20 worst errors on the slice, 7 belong to one identity group. "
         "The slice has 15 identity groups and one kind of fake, so these numbers say nothing yet about other sources; they are the reason for the sealed test.")
+
+
+    # ---- iterations 1b and 1c
+    B.h3("Iterations 1b and 1c: two further levers on the face-video task", trace="E-016, E-017; D-062 c, D-063, D-064, D-065")
+    B.p("After the first pass over the ladder, the project team asked for two more levers on the face-video task. Iteration 1b is the augmentation lever: the fine-tuned SigLIP base was trained "
+        "with the same recipe as iteration 1 and, on the training stream only, Gaussian blur, a down-and-up resize and JPEG compression, each drawn independently with a probability and a range "
+        "fixed before the run, followed by mixup of the examples of a batch. Its hypothesis was that the validation-to-slice gap of iteration 1 (0.0803) comes from a difference in compression, blur or "
+        "resolution between the training and the slice videos, so that invariance to these perturbations transfers; if the gap comes from a different manipulation family it does not. The prediction was "
+        "+0.01 to +0.04 on the slice and a change of at most −0.01 on validation. Iteration 1c averages the logits of three fine-tuned encoders (SigLIP base, DINOv2 base and DINOv2 small, three seeds each), "
+        "on the hypothesis that the variance of the average falls with the correlation of its members; with a correlation of about 0.89 the formula allows a variance fall of only 7.6 percent. The prediction was a "
+        "change within −0.01 to +0.01 on the slice and within ±0.003 on validation.")
+    B.p("Both levers were run although the triggers written in the plan were not met to the letter: the gap of iteration 1 is 0.0803 against about 0.10 for the augmentation lever, and the score "
+        "correlation of the three encoders is 0.89 to 0.91 against the value below 0.8 required for combining encoders. The mechanical rule for entering the final system was written before the runs: "
+        "the lower bound of the paired slice difference to iteration 1 must be above zero and the paired validation difference must not fall by more than 0.0079, the half-width of the validation interval of iteration 1. "
+        "<ref tab:i1bc> gives the result.")
+    B.table("i1bc", "Iterations 1b and 1c against iteration 1 (three seeds each; paired difference with a 95 percent group bootstrap interval; exploratory).",
+            ["Split", "Iteration 1b", "Iteration 1c", "Iteration 1", "1b minus 1", "1c minus 1"],
+            [["Validation", "0.9705 [0.9618, 0.9795]", "0.9903 [0.9823, 0.9968]", "0.9899 [0.9809, 0.9967]", "−0.0194 [−0.0251, −0.0129]", "+0.0004 [−0.0011, +0.0023]"],
+             ["Development slice", "0.9315 [0.9055, 0.9548]", "0.9192 [0.8948, 0.9457]", "0.9096 [0.8776, 0.9388]", "+0.0219 [+0.0090, +0.0382]", "+0.0096 [−0.0020, +0.0231]"]],
+            [2.4, 2.8, 2.8, 2.8, 2.8, 2.8], ["left", "center", "center", "center", "center", "center"], size=8, trace="E-016, E-017 (exploratory)")
+    B.p("Iteration 1b raised the slice AUC by +0.0219 [+0.0090, +0.0382], inside the predicted range, and lowered the validation AUC by 0.0194 [0.0129, 0.0251], more than the predicted 0.01. The first line is met and the second is not, "
+        "so the mechanical verdict is that it does not enter the final system. The finding is a trade-off, higher on the slice and lower in the training data set, and not a failure of the augmentation to act: "
+        "the training-subset AUC fell from 0.9994 to 0.9913, as expected from stronger regularisation, and the realised rates of the perturbations were checked on 2,000 training frames before the runs (blur 0.307, resize 0.4975 and JPEG 0.503 against the intended 0.3, 0.5 and 0.5). "
+        "Two things are not separated: the effect of the perturbations from the effect of mixup, and the transfer to perturbation types that were not trained on, because no held-out perturbation slice exists. "
+        "Iteration 1c reached 0.9192 [0.8948, 0.9457] on the slice, +0.0096 [−0.0020, +0.0231] over iteration 1; the lower bound is below zero, so it does not enter either. The three members are within 0.004 of each other "
+        "on both splits (slice 0.9096, 0.9082 and 0.9057), so the average adds no accuracy that the interval can show, in line with the score correlation. A secondary variant, the mean of the two best members, has a slice lower bound of +0.0009; "
+        "it was not the declared candidate, it is one of two variants looked at, and it does not change the verdict. The final system stays as defined before these two runs. Both results are exploratory, on the development slice and on validation only.")
 
     # ---- iterations 2 to 4
     B.h3("Iterations 2 to 4: speech preprocessing, augmentation and combination", trace="E-007, E-008, E-009; D-054 to D-056")
@@ -136,30 +166,56 @@ def results(B):
         "and the iteration reports exactly this: <i>the pulse signal is not recoverable from these data</i>. No separation or fusion experiment was run. The check has no ground-truth pulse, so it says that this extractor "
         "does not recover a pulse from these compressed videos, not that no pulse exists; another extractor or uncompressed video could differ.")
 
+    B.p("A positive control, run afterwards on the processor, asks whether this extractor would have recovered a pulse that was there. The exact pipeline of the check was run again on the same 432 clips, "
+        "after a known sinusoid of 1.2 Hz had been added to the skin pixels of every frame at eight relative amplitudes of the green channel, with a phase drawn per clip; the channel weights of the injected signature are the implementer's choice, "
+        "and a green-only signature was run as a sensitivity check. With no injection the control reproduces the first check (0.301; the largest difference of the signal-to-noise ratio is 5 millionths of a decibel). "
+        "<ref tab:rppgctl> gives the share of clips recovered. With the primary signature, the smallest tested amplitude recovered in at least 60 percent of the clips is 0.008 (377 of 432, 0.873 [0.838, 0.901]; at 0.004 the share is 0.546), "
+        "and with green only it is 0.004 (0.789). An amplitude of 0.008 in the green channel is about one grey level at a skin value near 130.")
+    B.table("rppgctl", "Positive control of the pulse check: share of the 432 clips in which the injected 1.2 Hz sinusoid is recovered by the rule of the check (Wilson 95 percent interval; exploratory).",
+            ["Relative green amplitude", "Primary signature", "Green only"],
+            [["0 (control)", "0.301 [0.260, 0.346]", "0.301 [0.260, 0.346]"],
+             ["0.001", "0.303 [0.262, 0.348]", "0.319 [0.277, 0.365]"],
+             ["0.002", "0.343 [0.299, 0.389]", "0.410 [0.364, 0.457]"],
+             ["0.004", "0.546 [0.499, 0.593]", "0.789 [0.748, 0.825]"],
+             ["0.008", "0.873 [0.838, 0.901]", "0.958 [0.935, 0.973]"],
+             ["0.016", "0.972 [0.952, 0.984]", "0.975 [0.955, 0.986]"],
+             ["0.032", "0.981 [0.964, 0.991]", "0.986 [0.970, 0.994]"]],
+            [4.6, 5.4, 5.4], ["left", "center", "center"], size=9, trace="M-005 (exploratory)")
+    B.p("This shows that the pipeline, with its face track, skin mask, projection, spectral rule and shuffled null, is sensitive to a clean sinusoid of that size, so the failure of the check is not caused by an insensitive pipeline for a modulation of that size and form. "
+        "It does not show that a real pulse exists in these videos, nor what its amplitude, form and spectrum are (the amplitude of a real pulse in these videos was not measured, and no source on typical amplitudes was read); "
+        "it does not show that a pulse survives H.264 compression, because the injection is made after decoding and is not re-encoded; and it says nothing about forged videos. The injected sinusoid is constant in frequency and amplitude, "
+        "which is easier than a real pulse. The verdict of the check (0.301 against 0.6) and the conclusion of the iteration are unchanged.")
+
     # ---- baseline
-    B.h3("The re-run baseline and the margin of the comparison", trace="E-013; D-060, D-061")
+    B.h3("The re-run baseline and the margin of the comparison", trace="E-013, E-013b; D-060, D-061, D-062 a, D-066")
     B.p("The comparison with a published detector is made against a family that is re-run on the same data, split, budget and metric. The family is Xception with ImageNet weights, fine-tuned on the "
-        "same FaceForensics++ frames with the recipe and budget of iteration 1; the learning rate was chosen on validation data from the same three values and three seeds were run. The selected rate, 1e-4, is "
-        "the highest of the grid (validation AUC 0.9646, 0.9809 and 0.9883 for 1e-5, 3e-5 and 1e-4), so a better rate outside the grid cannot be excluded, which would favour the system in the comparison. "
-        "<ref tab:baseline> gives the result.")
-    B.table("baseline", "Xception baseline against the fine-tuned SigLIP base, three seeds each (exploratory).",
-            ["Split", "Xception baseline", "SigLIP base fine-tuned", "Difference [95 percent interval]"],
-            [["Validation", "0.9872 [0.9784, 0.9942]", "0.9899 [0.9809, 0.9967]", "+0.0027 [−0.0009, +0.0060]"],
-             ["Development slice", "0.8750 [0.8435, 0.9089]", "0.9096 [0.8776, 0.9388]", "+0.0346 [+0.0136, +0.0550]"]],
-            [3.6, 4.2, 4.2, 4.4], ["left", "center", "center", "center"], size=9, trace="E-013 (exploratory)")
-    B.p("The seed standard deviation of the baseline is 0.0010 on validation and 0.0072 on the slice. On the slice the fine-tuned system is higher by +0.0346 [+0.0136, +0.0550], and the hypothesis that "
-        "it is higher (lower bound above zero) is supported as an exploratory result. The baseline, however, also gains +0.1817 [+0.1396, +0.2166] on the slice over the working version, so most of the gain of iteration 1 comes from fine-tuning and "
-        "not from the particular encoder. The margin of the non-inferiority comparison was fixed before any sealed evaluation by the rule that the margin is twice the larger of the two seed standard deviations, "
-        "with a floor of 0.01, computed from the unrounded standard deviations: $\\delta$ = 0.0143.")
+        "same FaceForensics++ frames with the recipe and budget of iteration 1; the learning rate was chosen on validation data and three seeds were run. In the first pass the grid was 1e-5, 3e-5 and 1e-4, "
+        "and the selected rate, 1e-4, was the highest of the grid (validation AUC 0.9646, 0.9809 and 0.9883), so a better rate outside the grid could not be excluded, which would have favoured the system in the comparison. "
+        "The grid was therefore extended by one step, 3e-4, before any sealed evaluation. At seed 0 it gave a validation AUC of 0.9909 against 0.9883, so by the same rule 3e-4 was selected, and two further seeds were run at it. "
+        "The first pass stays reported as the first pass. <ref tab:baseline> gives both.")
+    B.table("baseline", "Xception baseline at the first-pass rate and at the selected rate, against the fine-tuned SigLIP base, three seeds each (exploratory).",
+            ["Split", "Xception, 1e-4 (first pass)", "Xception, 3e-4 (selected)", "SigLIP base fine-tuned", "SigLIP minus Xception at 3e-4 [95 percent interval]"],
+            [["Validation", "0.9872 [0.9784, 0.9942]", "0.9912 [0.9849, 0.9963]", "0.9899 [0.9809, 0.9967]", "−0.0013 [−0.0063, +0.0033]"],
+             ["Development slice", "0.8750 [0.8435, 0.9089]", "0.8716 [0.8364, 0.9076]", "0.9096 [0.8776, 0.9388]", "+0.0380 [+0.0172, +0.0592]"]],
+            [3.0, 3.4, 3.4, 3.3, 3.5], ["left", "center", "center", "center", "center"], size=8, trace="E-013, E-013b (exploratory)")
+    B.p("The rate of 3e-4 moved the validation AUC of the baseline by +0.0040 [+0.0009, +0.0077] and the slice AUC by −0.0034 [−0.0167, +0.0094] against the first pass. The seed standard deviation of the selected baseline is 0.0003 on validation "
+        "and 0.0020 on the slice (0.0010 and 0.0072 in the first pass). On the slice the fine-tuned system is higher than the selected baseline by +0.0380 [+0.0172, +0.0592], and the hypothesis that it is higher (lower bound above zero) is supported as an exploratory result. "
+        "The selected baseline also gains +0.1783 [+0.1296, +0.2140] on the slice over the working version, so most of the gain of iteration 1 comes from fine-tuning and not from the particular encoder. "
+        "The margin of the non-inferiority comparison was fixed before any sealed evaluation by the rule that the margin is twice the larger of the two seed standard deviations, with a floor of 0.01, computed from the unrounded standard deviations. "
+        "For the first pass the rule gave $\\delta$ = 0.0143; for the selected baseline both standard deviations are small, the floor applies and $\\delta$ = 0.0100, which is the margin used. "
+        "Since 3e-4 is again the best rate of the grid, the edge of the grid is stated as a limit of the baseline, and no further rate was added.")
 
 
 def final_system(B):
     B.p("The definition of the final system and the comparisons were also fixed before any sealed evaluation. The final system is the configuration after the last supported lever of each task: "
         "the fine-tuned SigLIP base for face video, the frozen OpenAI CLIP head for generated images, and the average of the three speech encoders with trimming, normalisation and augmentation for speech. "
-        "The audio-visual fusion on LAV-DF is not part of it. The first confirmatory comparison is the final system against the working version, on the sealed Celeb-DF family test for face video and on the sealed "
-        "In-the-Wild test for speech; the image head is the same in both, so there is nothing to compare. It is called an improvement if the lower bound of the paired interval is above zero. "
-        "The second is the final face-video system against the Xception baseline on the sealed Celeb-DF family test: superior if the lower bound is above zero, non-inferior if it is above −0.0143, and, if the interval "
-        "contains zero but not −0.0143, worded as not distinguished and non-inferior by the rule. All other sealed numbers are exploratory. The freeze is on Thursday 29 October 2026; "
+        "Neither iteration 1b nor iteration 1c entered it, and the audio-visual fusion on LAV-DF is not part of it. The confirmatory comparisons are three tests. The first is the final system against the working version "
+        "on the sealed Celeb-DF family test for face video, and the second is the same comparison on the sealed In-the-Wild test for speech; the image head is the same in both versions, so there is nothing to compare. "
+        "Each is called an improvement if the lower bound of the paired 95 percent interval is above zero. The third is the final face-video system against the Xception baseline at its selected rate on the sealed Celeb-DF family test: "
+        "superior if the lower bound is above zero, non-inferior if it is above −0.0100, and, if the interval "
+        "contains zero but not −0.0100, worded as not distinguished and non-inferior by the rule. For each of the three, a robustness line is printed beside the declared verdict: the interval at the 98.33 percent level, "
+        "which is the Bonferroni correction for three tests, computed from the same bootstrap resamples. It does not replace the declared rule; a verdict that the corrected interval does not support is reported as not robust to the Bonferroni level. "
+        "All other sealed numbers are exploratory. The sealed run follows the readiness checks of the tools and the approval of the project team; "
         "none of these sealed evaluations has been run, and their cells in <ref tab:status> are marked pending.")
 
 
@@ -177,7 +233,9 @@ def limits(B):
     B.bullets([
         "Every verdict above rests on the validation split or on a development slice and is exploratory. The slices are small: 15 identity groups for face video, two generator units for generated images and 12 speakers for speech, so the intervals are wide and a gain below about +0.09 cannot be shown on the speech slice.",
         "The development slice of the face task has one kind of fake, so the gain from fine-tuning is not shown to hold on other manipulations before the sealed test.",
-        "The baseline learning rate is at the edge of the grid, one run was repeated after a data-loader error, and three seeds give only a rough standard deviation for the margin.",
+        "The baseline learning rate, 3e-4, is the highest of its grid, which was extended by one step and then closed, so a better rate outside the grid cannot be excluded; one run was repeated after a data-loader error, and three seeds give only a rough standard deviation for the margin.",
+        "Iterations 1b and 1c were run although their triggers were not met to the letter; iteration 1b is a trade-off (slice up, validation down) in which the perturbations and mixup are not separated, and the transfer to perturbation types that were not trained on could not be tested.",
+        "The positive control of the pulse check uses an injected sinusoid of constant frequency, made after decoding and not re-encoded, with channel weights chosen by the implementer, so it measures the sensitivity of the pipeline to that signal and not the presence or the amplitude of a real pulse.",
         "The LAV-DF subset has 2,000 videos per split, the identities of LAV-DF are not in its metadata, and the early-stopping epoch of its audio heads was chosen on its validation part, so the audio values there are slightly optimistic.",
         "The pulse check has no ground-truth pulse, and the image task has two generator units, so its intervals are not population intervals.",
     ])

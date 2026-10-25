@@ -100,7 +100,9 @@ on a paired group-bootstrap interval with a margin fixed beforehand.
 Exploratory results on the development slices: fine-tuning the image encoder
 raised the AUC on Celeb-DF v2 identities from 0.693 [0.664, 0.731] to
 0.910 [0.878, 0.939], while an Xception network re-run with the same recipe
-reached 0.875 [0.844, 0.909]; three changes on the speech side (silence
+reached 0.872 [0.836, 0.908]; two further video levers (matched augmentation
+with mixup, and an average of three fine-tuned encoders) did not enter the
+final system; three changes on the speech side (silence
 trimming with peak normalisation, noisy, compressed and reverberant copies of
 the training clips, and an average of three encoders) raised the AUC on
 In-the-Wild speakers from 0.610 to 0.813, with wide intervals from 12 speakers.
@@ -108,7 +110,7 @@ On LAV-DF, a fused score trained in the same dataset reaches an AUC of 0.99, but
 a control shows that the visual head separates the dataset's original videos
 from its produced ones and is at chance (0.507) within the produced videos, so
 no audio-visual detection claim is made; the pulse signal check failed. The
-sealed-test results and the two confirmatory comparisons are not yet run and are
+sealed-test results and the three confirmatory tests are not yet run and are
 marked pending. The limits of the evidence include the small development slices
 and the roughly 44 independent identity groups of the Celeb-DF test family.
 \end{abstract}
@@ -510,19 +512,25 @@ sealed split unless the run is flagged final and carries an iteration tag, and
 a ledger records the date, iteration, dataset, split, run identifiers and score
 file hash of every final evaluation. A second final evaluation of the same
 iteration and dataset is refused unless a reason is given, and a repeat is
-listed as a correction. The confirmatory claims are exactly two, declared before
-any final run, both paired group-bootstrap comparisons on sealed data: the final
-system against the working version, and the final system against a re-run
-published baseline. Every other comparison in the paper is labelled
+listed as a correction. The confirmatory claims are exactly three tests, declared
+before any final run, all paired group-bootstrap comparisons on sealed data: the
+final system against the working version on the Celeb-DF family (video, T1) and
+on In-the-Wild (speech, T2), and the final system against a re-run published
+baseline on the Celeb-DF family (T3). The declared rule of each test uses the
+95\,\% interval; because there are three tests, a robustness line at the
+98.33\,\% level (Bonferroni over three, from the same bootstrap resamples) is
+printed next to each, and a declared verdict that this interval does not support
+is written as not robust to the Bonferroni level. The robustness line does not
+replace the declared rule. Every other comparison in the paper is labelled
 exploratory.
 
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=\textwidth]{fig04_staircase.pdf}
 \caption[Staircase of sealed evaluations]{Schematic of the staircase. Each frozen iteration is evaluated once
-on the sealed test sets and the result is written to the ledger. The two
-confirmatory claims compare the final system with the working version and with
-a re-run published baseline.}
+on the sealed test sets and the result is written to the ledger. The
+confirmatory tests compare the final system with the working version (two
+tests, video and speech) and with a re-run published baseline (one test).}
 \label{fig:staircase}
 \end{figure*}
 
@@ -576,8 +584,13 @@ are context only, with their own protocol named. The baseline is an Xception
 network with ImageNet weights, fine-tuned on the same FaceForensics++ frames
 with the recipe and budget of the fine-tuning iteration. The margin was fixed
 before any sealed split was read as twice the larger of the baseline's seed
-standard deviations of the AUC on the validation split (0.0010) and on the
-development slice (0.0072), with a floor of 0.01, so $\delta=0.0143$.
+standard deviations of the AUC on the validation split and on the development
+slice, with a floor of 0.01. The first pass of the baseline (learning rate
+$10^{-4}$, seed standard deviations 0.0010 and 0.0072) gave $\delta=0.0143$.
+That rate was the edge of its grid, so the grid was extended once, to
+$3\times10^{-4}$, before any sealed read; the new rate was selected on
+validation, and with its seed standard deviations (0.0003 and 0.0020) the rule
+gives the floor, $\delta=0.0100$, which the comparison with the baseline uses. % E-013 E-013b
 
 \subsection{Seed policy and fine-tuning budget}
 The head of every candidate in the sweep is trained with three seeds. The
@@ -630,6 +643,20 @@ and the calibration error after temperature scaling was small (0.033), so
 their triggers were not met. Low-rank adapters~\cite{hu2022lora} were the
 cheaper alternative to full fine-tuning and were not needed, because full
 fine-tuning fit the card.
+
+Because the headline task had only one video iteration, two further video
+iterations were run before the sealed run, each with a written hypothesis, an
+equation and success and failure lines fixed beforehand. I-1b applies the
+augmentation lever to the fine-tuned video encoder: blur, a down-and-up resize
+and JPEG re-encoding of the training crops, followed by mixup. I-1c applies the
+averaging lever: the mean of the logits of three fine-tuned encoders. A lever
+enters the final system only if the lower bound of its paired development-slice
+difference to I-1 is above zero and its validation AUC does not fall by more
+than 0.0079, the half-width of the interval of the I-1 validation AUC. Both were
+run on request although their triggers were not met to the letter: the
+validation-to-development gap after I-1 was 0.0803 against about 0.10 for I-1b,
+and the score correlation of the three encoders was 0.89 to 0.91 against below
+0.8 for I-1c. % E-016 E-017
 
 \begin{figure*}[!t]
 \centering
@@ -703,6 +730,26 @@ Supported. SigLIP base, learning rate $10^{-5}$: validation 0.9899 [0.9809,
 against 0.7396, gain +0.1700 [+0.1228, +0.2114]; training subset 0.9994. % E-005
 \\
 \addlinespace[3pt]
+I-1b & Video: augmentation matched to compression, blur and resize, with mixup &
+Training on perturbed crops and mixed pairs makes the fine-tuned encoder
+insensitive to compression, blur and resolution differences between
+FaceForensics++ and Celeb-DF. Enters if the lower bound of the paired development
+gain over I-1 is above zero and the validation change is not below $-0.0079$.
+Failure: either line not met. &
+Does not enter. Validation 0.9705 [0.9618, 0.9795], development 0.9315 [0.9055,
+0.9548]; against I-1 the paired difference is $-0.0194$ [$-0.0251$, $-0.0129$] on
+validation and +0.0219 [+0.0090, +0.0382] on the development slice: a trade-off,
+with mixup and perturbations not separated. % E-016
+\\
+\addlinespace[3pt]
+I-1c & Video: mean logit of three fine-tuned encoders &
+Averaging scores of tied encoders lowers variance by the factor of the
+correlation formula above. Same entry lines as I-1b. &
+Does not enter. Validation 0.9903, development 0.9192 [0.8948, 0.9457]; paired
+difference to I-1 +0.0004 [$-0.0011$, +0.0023] on validation and +0.0096
+[$-0.0020$, +0.0231] on the development slice. % E-017
+\\
+\addlinespace[3pt]
 I-2 & Speech: trim silence, normalise the peak &
 Removing leading and trailing silence and the level before the 4-second window
 is cut removes recording cues that reverse between corpora. Success: a
@@ -715,7 +762,19 @@ Supported. Development 0.6723 [0.6126, 0.7584], gain +0.0623 [+0.0114,
 +0.1048]; validation 0.9889 (change -0.0054). RMS energy keeps AUC 0.135 [0.054,
 0.382] on In-the-Wild, so a level-related cue remains. % E-007
 \\
-\addlinespace[3pt]
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table*}[!t]
+\centering
+\caption[Iteration slots, continued]{Iterations, continued: I-3 to I-7.}
+\label{tab:iters2}
+\small
+\begin{tabular}{@{}l L{2.4cm} L{7.1cm} L{3.8cm}@{}}
+\toprule
+Slot & Lever & Written hypothesis, success threshold and failure line & Outcome \\
+\midrule
 I-3 & Speech: noise, low-pass, reverberation and MP3 copies of the training clips &
 The head trained on the original and three augmented copies of every training
 clip relies on cues that survive the transforms. Precondition: the I-2 head
@@ -726,19 +785,7 @@ Supported. Development 0.7455 [0.7052, 0.8121], gain +0.0732 [+0.0122,
 +0.1225]; validation 0.9869 (change -0.0020); on the augmented validation copy
 the I-2 head falls to 0.6569 and the new head to 0.9436. % E-008
 \\
-\bottomrule
-\end{tabular}
-\end{table*}
-
-\begin{table*}[!t]
-\centering
-\caption[Iteration slots, continued]{Iterations, continued: I-4 to I-7.}
-\label{tab:iters2}
-\small
-\begin{tabular}{@{}l L{2.4cm} L{7.1cm} L{3.8cm}@{}}
-\toprule
-Slot & Lever & Written hypothesis, success threshold and failure line & Outcome \\
-\midrule
+\addlinespace[3pt]
 I-4 & Speech: mean logit of three encoders &
 Three tied encoders with weakly correlated scores give a lower variance of
 the mean. Success: the lower bound of the paired development gain over the
@@ -774,7 +821,8 @@ no further experiment is run. If it passes, separation, added value and
 controls follow, with thresholds written beforehand. &
 S-1 fails: 130 of 432 real clips (0.301 [0.260, 0.346]) are above the control
 threshold, 0.6 was required. The pulse is not recoverable from these data and
-nothing further was run. % E-006
+nothing further was run. A positive control with an injected sinusoid followed
+(Section~\ref{sec:results}). % E-006 M-005
 \\
 \bottomrule
 \end{tabular}
@@ -848,7 +896,7 @@ choose the next step, and they are not confirmed performance. They are the mean
 AUC over three head seeds with the 95\,\% group-bootstrap interval. The verdicts
 are mechanical evaluations of criteria that were written before the run. The
 sealed-test results and the confirmatory comparisons are not yet run (the
-freeze is on Thursday 29 October 2026) and are marked pending.
+sealed run follows the readiness checks) and are marked pending.
 
 \subsection{Encoder sweep (exploratory, development slice)}
 Table~\ref{tab:sweep} gives the ranking of every candidate. On the face-frame
@@ -967,7 +1015,7 @@ T-A & HuBERT base & 0.9997 [0.9996, 0.9999] & 0.9942 [0.9910, 0.9967] & 0.6100 [
 \end{tabular}
 \end{table*}
 
-\subsection{Iterations I-1 to I-4 (exploratory)}
+\subsection{Iterations I-1 to I-4, I-1b and I-1c (exploratory)}
 Table~\ref{tab:ladderres} and Figure~\ref{fig:ladderres} give the measured
 steps. \emph{Fine-tuning (I-1).} Nine stage-1 runs (three encoders, three
 learning rates, one seed) trained all encoder weights for 1\,800 steps. The
@@ -1006,11 +1054,31 @@ processes 64 clips per second against 237 for HuBERT). Every speech interval is
 wide because the slice has 12 speakers, and a true gain below about +0.09 could
 not be shown there.
 
+\emph{Two further video levers (I-1b and I-1c).} Both are exploratory
+(validation and development slice only) and are compared with the three I-1
+seeds. With augmentation and mixup (I-1b) the validation AUC is 0.9705 [0.9618,
+0.9795] and the development AUC 0.9315 [0.9055, 0.9548]; the paired difference
+to I-1 is $-0.0194$ [$-0.0251$, $-0.0129$] on validation and +0.0219 [+0.0090,
++0.0382] on the development slice. The development gain has a lower bound above
+zero but the validation fall exceeds the allowance of 0.0079, so I-1b does not
+enter. It is a trade-off, in-dataset validation down and the unseen identities
+up, with the validation-to-development gap falling from 0.0803 to 0.0390; the
+effects of mixup and of the perturbations are not separated, and nothing is
+known about perturbation types not trained on. The mean of the logits of the
+three fine-tuned encoders (I-1c) reaches 0.9903 on validation and 0.9192 [0.8948,
+0.9457] on the development slice, differences to I-1 of +0.0004 [$-0.0011$,
++0.0023] and +0.0096 [$-0.0020$, +0.0231]; the interval includes zero, so I-1c
+does not enter, in line with the high correlation of the members. A two-member
+average looked at afterwards had a development lower bound of +0.0009 but was
+not the declared candidate and does not change the verdict. The final system
+stays as defined before these runs. % E-016 E-017
+
 \begin{table}[!t]
 \centering
 \caption[Measured iteration results]{Measured results of the iterations on the validation split and the
 development slice (exploratory; mean over three seeds, 95\,\% group-bootstrap
-interval). The Xception row is the re-run baseline, not an iteration.}
+interval). The Xception row is the re-run baseline at its selected learning
+rate, not an iteration.}
 \label{tab:ladderres}
 \scriptsize
 \setlength{\tabcolsep}{2pt}
@@ -1022,7 +1090,9 @@ Step & Validation AUC & Development AUC \\
 I-0 DINOv2 small probe & 0.7985 [0.7731, 0.8269] & 0.6933 [0.6639, 0.7314] \\
 SigLIP base probe & 0.8767 [0.8582, 0.8966] & 0.7396 [0.7031, 0.7832] \\
 I-1 SigLIP base, fine-tuned & 0.9899 [0.9809, 0.9967] & 0.9096 [0.8776, 0.9388] \\
-Xception, fine-tuned & 0.9872 [0.9784, 0.9942] & 0.8750 [0.8435, 0.9089] \\
+I-1b augmentation, mixup & 0.9705 [0.9618, 0.9795] & 0.9315 [0.9055, 0.9548] \\ % E-016
+I-1c three encoders & 0.9903 [0.9823, 0.9968] & 0.9192 [0.8948, 0.9457] \\ % E-017
+Xception, fine-tuned & 0.9912 [0.9849, 0.9963] & 0.8716 [0.8364, 0.9076] \\ % E-013b
 \midrule
 \multicolumn{3}{@{}l}{\textit{Speech: validation ASVspoof dev, development In-the-Wild (12 speakers)}}\\
 I-0 HuBERT base probe & 0.9942 [0.9910, 0.9967] & 0.6100 [0.5434, 0.7256] \\
@@ -1038,25 +1108,37 @@ I-4 three encoders & 0.9964 [0.9943, 0.9982] & 0.8130 [0.7523, 0.8808] \\
 \includegraphics[width=\textwidth]{fig08_ladder_results.pdf}
 \caption[Development-slice AUC along the ladder]{Development-slice AUC with the 95\,\% group-bootstrap interval along
 the measured ladder (exploratory). The widths follow from 15 identities (video)
-and 12 speakers (speech).}
+and 12 speakers (speech). The video panel includes the two extra levers and the
+baseline at its selected learning rate.}
 \label{fig:ladderres}
 \end{figure*}
 
 \paragraph*{Re-run baseline (exploratory).}
 An Xception network with ImageNet weights, fine-tuned on the same
 FaceForensics++ frames with the recipe and budget of the fine-tuning iteration,
-reached a validation AUC of 0.9872 [0.9784, 0.9942] (seed standard deviation
-0.0010) and a development AUC of 0.8750 [0.8435, 0.9089] (seed standard
-deviation 0.0072); the learning rate chosen on validation was $10^{-4}$, the
-largest of the three, so a better rate outside the grid cannot be excluded. The
-fine-tuned SigLIP base minus the Xception baseline is +0.0027 [-0.0009, +0.0060]
-on validation and +0.0346 [+0.0136, +0.0550] on the development slice, so on this
-exploratory slice the SigLIP model is higher, with an interval that excludes
-zero. Xception minus the working-version probe is +0.1817 [+0.1396, +0.2166]
-on the development slice: most of the gain of the fine-tuning iteration over the
-working version comes from fine-tuning, which the data suggest and one encoder pair cannot establish. The
-sealed comparison uses the margin $\delta=0.0143$ derived from these seed
-spreads (Section~\ref{sec:stats}).
+was first run at three learning rates. The first pass selected $10^{-4}$, the
+largest of the three, with a validation AUC still rising (0.9646, 0.9809,
+0.9883), and reached 0.9872 [0.9784, 0.9942] on validation (seed standard
+deviation 0.0010) and 0.8750 [0.8435, 0.9089] on the development slice (0.0072).
+A baseline tuned only up to the edge of its grid might be weaker than it could
+be, which would favour our system, so the grid was extended by one step,
+$3\times10^{-4}$, before any sealed read. That rate was selected on validation
+alone (seed 0: 0.9909 against 0.9883) and gives, over three seeds, a validation
+AUC of 0.9912 [0.9849, 0.9963] (seed standard deviation 0.0003) and a
+development AUC of 0.8716 [0.8364, 0.9076] (0.0020). Against the first pass the
+paired difference is +0.0040 [+0.0009, +0.0077] on validation and $-0.0034$
+[$-0.0167$, +0.0094] on the development slice, so the edge of the grid hid a
+slightly better in-dataset rate and the development value did not move beyond
+its interval. The rate $3\times10^{-4}$ is the new edge of the grid; no further
+rate was run, so a better rate cannot be excluded. The fine-tuned SigLIP base
+minus this baseline is $-0.0013$ [$-0.0063$, +0.0033] on validation and +0.0380
+[+0.0172, +0.0592] on the development slice, so on this exploratory slice the
+SigLIP model is higher, with an interval that excludes zero. Xception minus the
+working-version probe is +0.1783 [+0.1296, +0.2140] on the development slice:
+most of the gain of the fine-tuning iteration over the working version comes
+from fine-tuning, which the data suggest and one encoder pair cannot establish.
+The sealed comparison with the baseline uses the margin $\delta=0.0100$
+(Section~\ref{sec:stats}). % E-013 E-013b
 
 \subsection{Audio-visual evidence on LAV-DF (exploratory)}
 LAV-DF changes the video and the audio of a clip independently, so it has a
@@ -1131,45 +1213,70 @@ recoverable from these data and no separation or fusion experiment was run.
 The check has no pulse ground truth, so it says that this extractor does not
 recover a pulse from these compressed videos, not that no pulse exists.
 
-\subsection{Staircase and confirmatory comparisons}
-The sealed test result of each frozen iteration and the two confirmatory
-comparisons (final system against the working version, and against the re-run
-baseline) are to be given in Table~\ref{tab:final}. They are not yet run: the
-freeze is on Thursday 29 October 2026, each frozen iteration is then evaluated
-once, and the cells stay pending until then. What is fixed beforehand: the final
-system is the configuration after the last supported lever of each task
-(fine-tuned SigLIP base for face frames, the CLIP probe for generated images,
-and the three-encoder average with trim, normalise and augmentation for speech);
-the LAV-DF fusion is not part of the confirmatory claims and is evaluated once
-as exploratory evidence. The first comparison asks whether the lower bound of
-the paired difference to the working version is above zero on the sealed
-Celeb-DF family test (video) and on the sealed In-the-Wild test (speech); there
-is no image comparison, because the image head is the same in both. The second
-asks whether the final video system is non-inferior to the Xception baseline,
-with $\delta=0.0143$, on the sealed Celeb-DF family test.
+A positive control tested whether that extractor could recover a pulse at all.
+The same 432 clips went through the unchanged check after a known 1.2\,Hz
+sinusoid was added to the skin pixels at eight relative amplitudes of the green
+channel, from 0.0005 to 0.032. With no sinusoid the control reproduces the
+original fraction (0.301). With the primary signature (a colour-selective
+modulation whose channel weights are an implementer's choice) the smallest tested
+amplitude recovered in at least 60\,\% of the clips is 0.008 (377 of 432, 0.873
+[0.838, 0.901]); at 0.004 it is 0.546, and with a green-only modulation the
+smallest such amplitude is 0.004 (0.789). So the pipeline is sensitive to a clean
+sinusoid of that size. The control does not show that a real pulse exists in
+these videos, what its amplitude or form is, that it survives H.264 compression
+(the sinusoid was added after decoding), or anything about forgeries; a constant
+frequency and amplitude is also easier to recover than a real pulse. The verdict
+of the check stands. % M-005
+
+\subsection{Staircase and confirmatory tests}
+The sealed test result of each frozen iteration and the three confirmatory tests
+are to be given in Table~\ref{tab:final}. They are not yet run: the sealed run
+follows the readiness checks, each frozen iteration is then evaluated once, and
+the cells stay pending until then. What is fixed beforehand: the final system is
+the configuration after the last supported lever of each task (fine-tuned SigLIP
+base for face frames, the CLIP probe for generated images, and the
+three-encoder average with trim, normalise and augmentation for speech); neither
+I-1b nor I-1c is part of it, and the LAV-DF fusion is not part of the
+confirmatory claims and is evaluated once as exploratory evidence. The first
+test (T1) asks whether the lower bound of the paired difference to the working
+version is above zero on the sealed Celeb-DF family test (video), and the second
+(T2) asks the same on the sealed In-the-Wild test (speech); there is no image
+test, because the image head is the same in both. The third (T3) asks whether the
+final video system is non-inferior to the Xception baseline at $3\times10^{-4}$,
+with $\delta=0.0100$, on the sealed Celeb-DF family test. Each test is decided by
+its declared 95\,\% rule, and the 98.33\,\% robustness interval is printed next
+to it.
 
 \begin{table}[!t]
 \centering
 \caption[Sealed-test AUC per frozen iteration]{Sealed-test AUC per frozen iteration (staircase), and the paired
-difference of the two confirmatory comparisons with its 95\,\% group-bootstrap
+difference of the three confirmatory tests (T1 to T3), each with its 95\,\%
+group-bootstrap interval (the declared rule) and the 98.33\,\% robustness
 interval.}
 \label{tab:final}
 \small
-\begin{tabular}{@{}L{4.3cm} c c@{}}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}L{3.3cm} c c c@{}}
 \toprule
-Row & AUC [95\,\%] & Verdict \\
+Row & 95\,\% & 98.33\,\% & Verdict \\
 \midrule
-I-0, sealed Celeb-DF family & [pending] % E-000 placeholder, no experiment registered yet
-& [pending] % E-000 placeholder, no experiment registered yet
+I-0, sealed Celeb-DF family & [pending] % E-014
+& & [pending] % E-014
 \\
-Final system, same set & [pending] % E-000 placeholder, no experiment registered yet
-& [pending] % E-000 placeholder, no experiment registered yet
+Final system, same set & [pending] % E-014
+& & [pending] % E-014
 \\
-Final minus I-0 & [pending] % E-000 placeholder, no experiment registered yet
-& [pending] % E-000 placeholder, no experiment registered yet
+T1 final minus I-0, Celeb-DF family & [pending] % E-014
+& [pending] % E-014
+& [pending] % E-014
 \\
-Final minus re-run baseline & [pending] % E-000 placeholder, no experiment registered yet
-& [pending] % E-000 placeholder, no experiment registered yet
+T2 final minus I-0, In-the-Wild & [pending] % E-014
+& [pending] % E-014
+& [pending] % E-014
+\\
+T3 final minus baseline, Celeb-DF family & [pending] % E-014
+& [pending] % E-014
+& [pending] % E-014
 \\
 \bottomrule
 \end{tabular}
@@ -1217,12 +1324,23 @@ the audio score keeps its exploratory calibration warning.
         come from one speech synthesiser and one lip-sync generator. The fused
         LAV-DF result is in-dataset and driven by a production-pipeline cue of
         the visual head; no audio-visual detection is claimed.
-  \item The Xception baseline chose the largest learning rate of its grid, so a
-        better rate may exist; one stage-1 run was repeated after a data-loader
-        error; the margin $\delta$ rests on three seeds.
+  \item The Xception baseline chose the largest learning rate of its grid
+        again after one extension step ($3\times10^{-4}$), so a better rate may
+        exist; two runs were repeated after data-loader errors with the same
+        recipe; the margin $\delta$ rests on three seeds and is now set by its
+        floor, not by the seed spread.
+  \item I-1b and I-1c were run on request with their triggers not met to the
+        letter, are exploratory on 15 identities, and did not enter. In I-1b
+        mixup and the perturbations are not separated, the perturbations are
+        generic and not matched to a measured property of Celeb-DF, and the
+        result is a trade-off (development up, validation down), not a
+        confirmed gain. The three confirmatory tests share one bootstrap, so the
+        98.33\,\% line is a robustness check and not a second decision rule.
   \item The pulse check found no recoverable signal in 432 real clips. It has no
         pulse ground truth, so it does not show that no pulse exists, and
-        different extractors or uncompressed video could differ.
+        different extractors or uncompressed video could differ. The positive
+        control shows sensitivity to a clean injected sinusoid only, not to a
+        real pulse or to one that has passed through compression.
   \item The speech gains are measured on 12 speakers, so only a gain above about
         +0.09 could be shown by a single comparison; the audio score keeps an
         exploratory calibration.
@@ -1239,14 +1357,15 @@ frozen iteration, paired group-bootstrap statistics with a cheapest-wins rule,
 and a non-inferiority definition of ``comparable''. Within that protocol, on the
 development slices and exploratory, fine-tuning the image encoder raised the AUC
 on unseen Celeb-DF v2 identities from 0.693 to 0.910, a re-run Xception
-reached 0.875, and three speech-side changes raised the AUC on In-the-Wild
+reached 0.872, two further video levers (I-1b, I-1c) did not enter the final
+system, and three speech-side changes raised the AUC on In-the-Wild
 speakers from 0.610 to 0.813 with wide intervals. What the evidence does not
 support is as important: the visual head trained on FaceForensics++ is below
 chance on LAV-DF, the fused LAV-DF result comes from a production-pipeline cue
 of the visual head and not from a visual manipulation signal, and the pulse
 signal check failed, so no audio-visual detection and no pulse evidence is
-claimed. The sealed-test results and the two confirmatory comparisons are not yet
-run and are [pending]. % E-000 placeholder, no experiment registered yet; the freeze is on 29 October 2026
+claimed. The sealed-test results and the three confirmatory tests are not yet
+run and are [pending]. % E-014
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bibliographystyle{IEEEtran_hyphen}

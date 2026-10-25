@@ -151,14 +151,14 @@ def fig02():
 # ------------------------------------------------------------------ 3 ladder
 LADDER = [  # step, lever (task), measured result, mechanical verdict; sources: docs/DOC_FACTS.md section 15
     ("I-0", "frozen encoder, linear head", "dev_x AUC 0.693 video, 0.610 speech", "baseline"),
-    ("I-1", "full fine-tuning (video)", "dev_x 0.910, gain +0.170", "supported"),
+    ("I-1", "full fine-tuning (video); I-1b, I-1c", "dev_x 0.910, gain +0.170; I-1b 0.932 and I-1c 0.919 do not enter", "supported"),
     ("I-2", "trim and normalise (speech)", "dev_x 0.672, gain +0.062", "supported"),
     ("I-3", "noise, codec, reverb copies (speech)", "dev_x 0.746, gain +0.073", "supported"),
     ("I-4", "average of three encoders (speech)", "dev_x 0.813, gain +0.068", "supported"),
     ("I-5", "frozen heads on LAV-DF, then fusion", "video head 0.384, below chance", "not tested"),
     ("I-6", "heads trained on LAV-DF, fusion", "visual head at chance within produced videos", "see text"),
-    ("I-7", "rPPG signal check", "0.301 of real clips, 0.6 needed", "failed"),
-    ("I-8", "integration and freeze", "sealed tests not yet run", "pending"),
+    ("I-7", "rPPG signal check, positive control", "0.301 of real clips, 0.6 needed; control sensitive", "failed"),
+    ("I-8", "integration and freeze", "sealed tests follow the readiness checks", "pending"),
 ]
 LAD_COL = {"baseline": C["gray"], "supported": C["model"], "not tested": C["warn"], "see text": C["out"], "failed": C["warn"], "pending": "#ffffff"}
 
@@ -198,11 +198,13 @@ def fig04():
             ax.text(x0 + 0.42, 0.18, "frozen,\nevaluated\nonce", ha="center", va="bottom", fontsize=9, color=INK, linespacing=1.15)
     ax.text(0.1, 3.45, "development slice: exploratory verdicts (sign, size, interval)", fontsize=9, color=MUTED)
     ax.text(0.1, 3.2, "sealed test sets: one evaluation per frozen iteration, in a ledger", fontsize=9, color=MUTED)
-    ax.text(5.35, 2.7, "two pre-declared\nconfirmatory claims", ha="center", va="center", fontsize=9, color=MUTED, linespacing=1.2)
-    c1 = box(ax, 4.8, 1.75, 1.2, 0.65, "final vs I-0", fc=C["out"], fs=FS, bold=True)
-    c2 = box(ax, 4.8, 0.85, 1.2, 0.65, "final vs\nbaseline", fc=C["out"], fs=FS, bold=True)
-    arrow(ax, (4.68, 1.9), left(c1), rad=-0.1)
-    arrow(ax, (4.68, 1.5), left(c2), rad=0.1)
+    ax.text(5.4, 3.0, "three pre-declared\nconfirmatory tests", ha="center", va="center", fontsize=9, color=MUTED, linespacing=1.2)
+    c1 = box(ax, 4.8, 2.0, 1.2, 0.55, "video: final\nvs I-0", fc=C["out"], fs=10, bold=True)
+    c2 = box(ax, 4.8, 1.3, 1.2, 0.55, "speech: final\nvs I-0", fc=C["out"], fs=10, bold=True)
+    c3 = box(ax, 4.8, 0.6, 1.2, 0.55, "video: final\nvs baseline", fc=C["out"], fs=10, bold=True)
+    arrow(ax, (4.68, 2.0), left(c1), rad=-0.1)
+    arrow(ax, (4.68, 1.5), left(c2), rad=0.0)
+    arrow(ax, (4.68, 1.0), left(c3), rad=0.1)
     save(fig, "fig04_staircase")
 
 
@@ -356,15 +358,16 @@ def save_plain(fig, name):
     print("wrote", name)
 
 
-# (label, estimate, low, high): docs/DOC_FACTS.md section 15 and the logged blocks of E-004, E-005, E-007, E-008, E-009, E-013
-LAD_V = [("I-0 frozen probe", 0.6933, 0.6639, 0.7314), ("Xception, fine-tuned", 0.8750, 0.8435, 0.9089), ("I-1 SigLIP base, fine-tuned", 0.9096, 0.8776, 0.9388)]
+# (label, estimate, low, high): docs/DOC_FACTS.md section 15 and the logged blocks of E-004, E-005, E-007, E-008, E-009, E-013b (baseline at 3e-4), E-016, E-017
+LAD_V = [("I-0 frozen probe", 0.6933, 0.6639, 0.7314), ("Xception, fine-tuned", 0.8716, 0.8364, 0.9076), ("I-1 SigLIP base, fine-tuned", 0.9096, 0.8776, 0.9388),
+         ("I-1b with augmentation, mixup", 0.9315, 0.9055, 0.9548), ("I-1c mean of three encoders", 0.9192, 0.8948, 0.9457)]
 LAD_A = [("I-0 frozen probe", 0.6100, 0.5434, 0.7256), ("I-2 trim, normalise", 0.6723, 0.6126, 0.7584), ("I-3 plus augmentation", 0.7455, 0.7052, 0.8121), ("I-4 three encoders", 0.8130, 0.7523, 0.8808)]
 
 
 def fig08_ladder_results():
     # slide 11 shows this figure at about 1.0 times its size, so every text is made 13 pt here (at least 12 pt on the slide)
     FS = 13
-    fig, axs = plt.subplots(2, 1, figsize=(6.4, 3.5), gridspec_kw={"height_ratios": [len(LAD_V), len(LAD_A)], "hspace": 0.7})
+    fig, axs = plt.subplots(2, 1, figsize=(6.4, 4.1), gridspec_kw={"height_ratios": [len(LAD_V), len(LAD_A)], "hspace": 0.62})
     for ax, rows, title, col in ((axs[0], LAD_V, "Video: Celeb-DF v2 development slice (15 identities)", C["dark"]),
                                  (axs[1], LAD_A, "Speech: In-the-Wild development slice (12 speakers)", C["dark"])):
         ys = list(range(len(rows)))[::-1]

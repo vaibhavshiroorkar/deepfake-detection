@@ -52,9 +52,10 @@ def main():
             fn, fr = fn[m], fr[m]
         d = float(np.abs(fn.astype(np.float32) - fr.astype(np.float32)).max())
         c = cos_min(fn, fr)
-        ok = c > 0.99 and np.array_equal(new["label"], ref["label"][idx])
+        leq = np.array_equal(new["label"], ref["label"][idx]) if "label" in ref else None   # the LAV-DF training-time file has no labels
+        ok = c > 0.99 and leq is not False
         results.append((name, len(new["sample_id"]), d, c, ok))
-        print(f"  {name}: {len(new['sample_id'])} items, max |diff| {d:.4g}, min cosine {c:.5f}, labels equal {np.array_equal(new['label'], ref['label'][idx])} -> {'OK' if ok else 'FAIL'}", flush=True)
+        print(f"  {name}: {len(new['sample_id'])} items, max |diff| {d:.4g}, min cosine {c:.5f}, labels equal {leq} -> {'OK' if ok else 'FAIL'}", flush=True)
 
     # sealed guard, all three branches
     for fn, args in ((K.video_features, ("IMG-07", ds_of(K.VIDEO_SETS, "celebdf_v2"), "test_x")), (K.image_features, ("IMG-13", ds_of(K.IMAGE_SETS, "diffusion_test"), "test_x")),

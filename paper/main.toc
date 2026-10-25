@@ -25,16 +25,16 @@
 \contentsline {subsection}{\numberline {\mbox {IV-C}}Celeb-DF++ de-duplication and test balance}{5}{subsection*.30}%
 \contentsline {subsection}{\numberline {\mbox {IV-D}}Sealed tests and the staircase}{5}{subsection*.31}%
 \contentsline {subsection}{\numberline {\mbox {IV-E}}Metrics and statistics}{5}{subsection*.33}%
-\contentsline {subsection}{\numberline {\mbox {IV-F}}Seed policy and fine-tuning budget}{6}{subsection*.37}%
+\contentsline {subsection}{\numberline {\mbox {IV-F}}Seed policy and fine-tuning budget}{7}{subsection*.37}%
 \contentsline {section}{\numberline {V}Iterations}{7}{section*.38}%
 \contentsline {section}{\numberline {VI}Software}{8}{section*.42}%
-\contentsline {section}{\numberline {VII}Results}{10}{section*.44}%
-\contentsline {subsection}{\numberline {\mbox {VII-A}}Encoder sweep (exploratory, development slice)}{10}{subsection*.45}%
+\contentsline {section}{\numberline {VII}Results}{8}{section*.44}%
+\contentsline {subsection}{\numberline {\mbox {VII-A}}Encoder sweep (exploratory, development slice)}{8}{subsection*.45}%
 \contentsline {subsection}{\numberline {\mbox {VII-B}}Working version on the development slice (exploratory)}{11}{subsection*.47}%
-\contentsline {subsection}{\numberline {\mbox {VII-C}}Iterations I-1 to I-4 (exploratory)}{11}{subsection*.49}%
-\contentsline {subsection}{\numberline {\mbox {VII-D}}Audio-visual evidence on LAV-DF (exploratory)}{13}{subsection*.53}%
-\contentsline {subsection}{\numberline {\mbox {VII-E}}Staircase and confirmatory comparisons}{14}{subsection*.57}%
-\contentsline {subsection}{\numberline {\mbox {VII-F}}Calibration and per-generator behaviour}{14}{subsection*.59}%
-\contentsline {section}{\numberline {VIII}Limitations}{14}{section*.60}%
-\contentsline {section}{\numberline {IX}Conclusion}{15}{section*.61}%
-\contentsline {section}{References}{16}{section*.62}%
+\contentsline {subsection}{\numberline {\mbox {VII-C}}Iterations I-1 to I-4, I-1b and I-1c (exploratory)}{12}{subsection*.49}%
+\contentsline {subsection}{\numberline {\mbox {VII-D}}Audio-visual evidence on LAV-DF (exploratory)}{14}{subsection*.53}%
+\contentsline {subsection}{\numberline {\mbox {VII-E}}Staircase and confirmatory tests}{15}{subsection*.57}%
+\contentsline {subsection}{\numberline {\mbox {VII-F}}Calibration and per-generator behaviour}{16}{subsection*.59}%
+\contentsline {section}{\numberline {VIII}Limitations}{16}{section*.60}%
+\contentsline {section}{\numberline {IX}Conclusion}{17}{section*.61}%
+\contentsline {section}{References}{17}{section*.62}%

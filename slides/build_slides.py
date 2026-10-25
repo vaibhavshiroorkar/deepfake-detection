@@ -765,25 +765,26 @@ add_text(s, L, TOP + 2800000 + th + 50000, W, BOT - (TOP + 2800000 + th + 50000)
 s = new_slide("Iteration ladder",
     "After the working version come seven experimental iterations, I-1 to I-7, and a last slot for integration and freeze (D-041, ITERATIONS.md). "
     "The lever of each slot was chosen after the diagnostic battery of the preceding step and written, with its hypothesis, success line and failure line, before the run (D-051, D-054 to D-058). "
-    "I-1 was full fine-tuning of the face encoder (E-005): development AUC 0.7396 to 0.9096 for the same SigLIP encoder, supported. I-2 to I-4 are speech levers (E-007, E-008, E-009): trimming and normalising the clip, augmenting the training clips, and averaging three encoders; the speech development AUC goes from 0.6100 to 0.6723, 0.7455 and 0.8130, each step supported by its mechanical criteria but each on only 12 speakers. "
+    "I-1 was full fine-tuning of the face encoder (E-005): development AUC 0.7396 to 0.9096 for the same SigLIP encoder, supported. After the first pass, two more video levers were run at the request of the team (D-062 c, D-065): I-1b, augmentation matched to compression, blur and resize plus mixup (E-016), development AUC 0.9315 and validation 0.9705, a trade-off that does not enter the final system; and I-1c, the mean of the logits of three fine-tuned encoders (E-017), development AUC 0.9192, paired difference to I-1 +0.0096 [-0.0020, +0.0231], which does not enter either. The final system stays as defined in D-061. The Xception baseline in the figure is the one at the selected rate 3e-4 (E-013b, D-066). I-2 to I-4 are speech levers (E-007, E-008, E-009): trimming and normalising the clip, augmenting the training clips, and averaging three encoders; the speech development AUC goes from 0.6100 to 0.6723, 0.7455 and 0.8130, each step supported by its mechanical criteria but each on only 12 speakers. "
     "I-5 and I-6 are on LAV-DF (E-010 to E-012): the frozen face head is below chance there, so the fusion was not tested; heads trained on LAV-DF give a fused AUC of 0.9935 that a control shows is driven by a production-pipeline cue of the visual head. I-7 is the rPPG check, which failed (E-006). I-8 runs no experiments; it freezes the code and evaluates every frozen iteration once on the sealed tests, which has not been run. "
     "The figure shows the development-slice results with their 95 percent group-bootstrap intervals; all of them are exploratory (D-041). "
-    "Evidence: docs/EXPERIMENTS.md E-004 to E-013, docs/DOC_FACTS.md section 15.")
-labels = [("I-0", "working version", F_GREEN), ("I-1", "fine-tuning", F_GREEN), ("I-2", "trim, normalise", F_GREEN),
-          ("I-3", "augmentation", F_GREEN), ("I-4", "three encoders", F_GREEN), ("I-5", "LAV-DF check", F_ORANGE),
+    "Evidence: docs/EXPERIMENTS.md E-004 to E-017 and E-013b, docs/DOC_FACTS.md section 15.")
+labels = [("I-0", "working version", F_GREEN), ("I-1", "fine-tuning", F_GREEN), ("I-1b", "augment, mixup", F_ORANGE), ("I-1c", "mean of three", F_ORANGE), ("I-2", "trim, normalise", F_GREEN),
+          ("I-3", "augment", F_GREEN), ("I-4", "three encoders", F_GREEN), ("I-5", "LAV-DF check", F_ORANGE),
           ("I-6", "LAV-DF heads", F_ORANGE), ("I-7", "rPPG fails", F_RED), ("I-8", "freeze", F_GREY)]
-gap = 90000
-lw = (W - 8 * gap) // 9
+gap = 60000
+lw = (W - 10 * gap) // 11
 for i, (lab, txt, f) in enumerate(labels):
     x = L + i * (lw + gap)
     dbox(s, x, TOP, lw, 800000, "**" + lab + "**" + chr(10) + txt, fill=f, size=C.SZ_TABLE)
     if i:
         darrow(s, x - gap, TOP + 400000, x, TOP + 400000)
-_f, _fw, _fh = fig(s, "fig08_ladder_results.png", L, TOP + 900000, h=BOT - (TOP + 900000) - 300000, alt="Development-slice AUC with intervals: face video from the working version to fine-tuning and the Xception baseline, speech from the working version to the three-encoder average")
-add_card(s, col_x(8), TOP + 900000, span_w(4), 3000000, [
+_f, _fw, _fh = fig(s, "fig08_ladder_results.png", L, TOP + 900000, h=BOT - (TOP + 900000) - 300000, alt="Development-slice AUC with intervals: face video from the working version to fine-tuning, the Xception baseline and the two further iterations I-1b and I-1c, speech from the working version to the three-encoder average")
+add_card(s, col_x(8), TOP + 900000, span_w(4), 3150000, [
     ("h", "Reading it"),
-    ("bs", "Green: supported. Orange: limited. Red: failed.", 16),
+    ("bs", "Green: supported. Orange: limited, or tried and not in the final system. Red: failed.", 16),
     ("bs", "Fine-tuning: +0.1700 over the probe.", 16),
+    ("bs", "I-1b: slice up, validation down. I-1c: no gain.", 16),
     ("bs", "Speech: 0.6100 to 0.8130.", 16),
     ("bs", "Sealed tests: [pending].", 16),
 ], name="card_ladder")
@@ -821,33 +822,64 @@ s = new_slide("I-1: fine-tuning the face encoder",
     "The diagnostic battery of the working version showed bias for the face task: the training AUC of the frozen feature with a linear head was 0.837, so the lever was fine-tuning depth, with the budget fixed beforehand (D-042, D-051). "
     "Nine runs of stage 1 (three encoders, three learning rates, one seed) showed that only the lowest rate, 1e-5, works for every encoder; five of the six runs at the higher rates lost most of the signal. Selection on validation data alone gave SigLIP base as the cheapest member of the tie set. "
     "Three seeds of SigLIP base reach a validation AUC of 0.9899 [0.9809, 0.9967] and a development AUC of 0.9096 [0.8776, 0.9388], against 0.8767 and 0.7396 for the linear probe of the same encoder; the gains are +0.1132 and +0.1700, larger than the predicted +0.02 to +0.05 and at most +0.03, and the three criteria are met (E-005, supported, exploratory). "
-    "The baseline is the Xception family re-run with the same recipe and budget (E-013, D-060): development AUC 0.8750 [0.8435, 0.9089]; SigLIP minus Xception is +0.0346 [+0.0136, +0.0550] on the development slice and +0.0027 [-0.0009, +0.0060] on validation. Xception also gains +0.1817 over the working version, so most of the gain comes from fine-tuning and not from the encoder. "
-    "Limits: 15 identity groups, one kind of fake on the slice, the baseline learning rate 1e-4 is the highest of the grid, one run was repeated after a data-loader error. The margin of the non-inferiority comparison is 0.0143, twice the larger seed standard deviation of the baseline (D-061). "
-    "Evidence: docs/EXPERIMENTS.md E-005 and E-013, docs/DECISIONS.md D-060 and D-061.")
+    "The baseline is the Xception family re-run with the same recipe and budget (E-013, D-060). In the first pass the grid was 1e-5, 3e-5 and 1e-4 and the selected rate 1e-4 was the edge of the grid: development AUC 0.8750 [0.8435, 0.9089], delta 0.0143. The grid was then extended by one step (E-013b, D-062 a, D-066): 3e-4 gave a validation AUC of 0.9909 against 0.9883 at seed 0 and was selected on validation only; three seeds at 3e-4: validation 0.9912 [0.9849, 0.9963] (seed sd 0.0003), development 0.8716 [0.8364, 0.9076] (seed sd 0.0020). SigLIP minus Xception at 3e-4 is +0.0380 [+0.0172, +0.0592] on the development slice and -0.0013 [-0.0063, +0.0033] on validation. Xception at 3e-4 also gains +0.1783 [+0.1296, +0.2140] over the working version, so most of the gain comes from fine-tuning and not from the encoder. "
+    "Limits: 15 identity groups, one kind of fake on the slice, the baseline learning rate 3e-4 is again the highest of the grid (a stated limit; no further rate was added), one run was repeated after a data-loader error. The margin of the non-inferiority comparison is now 0.0100, the floor of the rule 2 times the larger seed standard deviation, because both standard deviations are small (D-066); it was 0.0143 in the first pass. "
+    "Evidence: docs/EXPERIMENTS.md E-005, E-013 and E-013b, docs/DECISIONS.md D-060, D-061 and D-066.")
 rows_i1 = [["Training subset", "0.9245 [0.9093, 0.9388]", "0.9994 [0.9986, 1.0000]", "not recorded"],
-           ["Validation", "0.8767 [0.8582, 0.8966]", "0.9899 [0.9809, 0.9967]", "0.9872 [0.9784, 0.9942]"],
-           ["Development slice", "0.7396 [0.7031, 0.7832]", "0.9096 [0.8776, 0.9388]", "0.8750 [0.8435, 0.9089]"]]
-hdr_i1 = ["AUC", "Probe, SigLIP base", "Fine-tuned, SigLIP base", "Xception baseline"]
+           ["Validation", "0.8767 [0.8582, 0.8966]", "0.9899 [0.9809, 0.9967]", "0.9912 [0.9849, 0.9963]"],
+           ["Development slice", "0.7396 [0.7031, 0.7832]", "0.9096 [0.8776, 0.9388]", "0.8716 [0.8364, 0.9076]"]]
+hdr_i1 = ["AUC", "Probe, SigLIP base", "Fine-tuned, SigLIP base", "Xception baseline, rate 3e-4"]
 cw_i1 = [span_w(3), span_w(3), span_w(3)]
 cw_i1.append(W - sum(cw_i1))
 sz_i1 = fit_size(cw_i1, hdr_i1, rows_i1, sizes=(15, 14, 13, 12), bold_first_col=True)
 gt, th = add_table(s, L, TOP, cw_i1, hdr_i1, rows_i1, size=sz_i1, bold_first_col=True, max_h=1700000)
 add_card(s, col_x(0), TOP + th + 150000, span_w(6), BOT - (TOP + th + 150000), [
     ("h", "What was done"),
-    ("bs", "Full fine-tuning, 1,800 steps, learning rate 1e-5, batch 32; three seeds; same recipe for the Xception baseline.", 18),
+    ("bs", "Full fine-tuning, 1,800 steps, learning rate 1e-5, batch 32; three seeds; same recipe for the Xception baseline, whose rate (3e-4) was chosen on validation data.", 18),
     ("bs", "Higher learning rates collapsed in five of six runs.", 18),
     ("bs", "Criteria met: validation gain, training AUC at least 0.90, development gain.", 18),
 ], name="card_i1_done")
 add_card(s, col_x(6), TOP + th + 150000, span_w(6), BOT - (TOP + th + 150000), [
     ("h", "What it supports"),
     ("bs", "Gain over the probe: +0.1132 on validation, +0.1700 on the slice.", 18),
-    ("bs", "SigLIP minus Xception on the slice: +0.0346 [+0.0136, +0.0550].", 18),
+    ("bs", "SigLIP minus Xception on the slice: +0.0380 [+0.0172, +0.0592]. Margin of the non-inferiority test: 0.0100.", 18),
     ("bs", "Exploratory; 15 identities, one kind of fake. Sealed tests: [pending].", 18),
 ], name="card_i1_says")
 
 # =====================================================================================================================
 # I-2 to I-4
 # =====================================================================================================================
+# =====================================================================================================================
+# I-1b and I-1c
+# =====================================================================================================================
+s = new_slide("I-1b and I-1c: two more video levers",
+    "After the first pass over the ladder, two more levers on the face-video task were run at the request of the team (D-062 c, D-063, D-064, D-065). Both triggers were not met to the letter, and this is said here: for I-1b the validation to development gap of I-1 is 0.0803 against about 0.10, for I-1c the score correlation of the three encoders is 0.89 to 0.91 against below 0.8. "
+    "I-1b (E-016): the fine-tuned SigLIP base trained with blur (sigma 0.1 to 2.0, probability 0.3), a down-and-up resize (scale 0.4 to 1.0, probability 0.5), JPEG (quality 40 to 95, probability 0.5) and mixup (Beta(0.2, 0.2)), all fixed before the run, no parameter searched; the realised rates were 0.307, 0.4975 and 0.503 on 2,000 frames before the runs. "
+    "Prediction written before: slice AUC up by 0.01 to 0.04, validation flat or down by at most 0.01. Found: slice 0.9315 [0.9055, 0.9548], paired +0.0219 [+0.0090, +0.0382] over I-1; validation 0.9705 [0.9618, 0.9795], paired -0.0194 [-0.0251, -0.0129]. The entry rule needs the slice lower bound above 0 (met) and the validation difference not below -0.0079 (not met), so it does not enter. It is a trade-off, not a failure to act; the train-subset AUC fell from 0.9994 to 0.9913; perturbations and mixup are not separated, and transfer to perturbation types not trained on cannot be tested. "
+    "I-1c (E-017): the mean of the logits of SigLIP base, DINOv2 base and DINOv2 small, each fine-tuned, three seeds each; the variance formula allows a fall of only 7.6 percent at a correlation of 0.886. Found: slice 0.9192 [0.8948, 0.9457], paired +0.0096 [-0.0020, +0.0231]; validation 0.9903, paired +0.0004 [-0.0011, +0.0023]. The slice lower bound is below zero, so it does not enter. The members are within 0.004 of each other on both splits. "
+    "The final system stays as defined in D-061. All numbers are exploratory (development slice and validation). Evidence: docs/EXPERIMENTS.md E-016 and E-017; docs/DECISIONS.md D-063 to D-065.")
+rows_b = [["I-1, fine-tuned SigLIP base", "0.9899 [0.9809, 0.9967]", "0.9096 [0.8776, 0.9388]", "reference", "reference"],
+          ["I-1b, augmentation and mixup", "0.9705 [0.9618, 0.9795]", "0.9315 [0.9055, 0.9548]", "-0.0194 [-0.0251, -0.0129]", "+0.0219 [+0.0090, +0.0382]"],
+          ["I-1c, mean of three encoders", "0.9903 [0.9823, 0.9968]", "0.9192 [0.8948, 0.9457]", "+0.0004 [-0.0011, +0.0023]", "+0.0096 [-0.0020, +0.0231]"]]
+hdr_b = ["Face video, 3 seeds", "Validation AUC", "Development slice AUC", "Validation, paired with I-1", "Slice, paired with I-1"]
+cw_b = [2000000]
+cw_b += [(W - 2000000) // 4] * 3
+cw_b.append(W - sum(cw_b))
+sz_b = fit_size(cw_b, hdr_b, rows_b, sizes=(14, 13, 12), bold_first_col=True)
+gt, th = add_table(s, L, TOP, cw_b, hdr_b, rows_b, size=sz_b, bold_first_col=True, max_h=1900000)
+add_card(s, col_x(0), TOP + th + 150000, span_w(6), BOT - (TOP + th + 150000), [
+    ("h", "What was done"),
+    ("bs", "I-1b: blur, down-up resize and JPEG on the training stream, then mixup; nothing searched.", 16),
+    ("bs", "I-1c: mean of the logits of SigLIP base, DINOv2 base and DINOv2 small, each fine-tuned.", 16),
+    ("bs", "Run on the team's request although the triggers were not met to the letter (gap 0.0803 against about 0.10; correlation 0.89 to 0.91 against below 0.8).", 16),
+], name="card_i1b_done")
+add_card(s, col_x(6), TOP + th + 150000, span_w(6), BOT - (TOP + th + 150000), [
+    ("h", "What it shows"),
+    ("bs", "I-1b: slice up, validation down by more than the allowed 0.0079: a trade-off; it does not enter.", 16),
+    ("bs", "I-1c: slice interval includes zero; it does not enter.", 16),
+    ("bs", "The final system is unchanged. Exploratory; sealed tests: [pending].", 16),
+], name="card_i1b_says")
+
 s = new_slide("I-2 to I-4: three levers for speech",
     "The speech task kept a large shift gap after the working version: validation AUC 0.9942, development AUC 0.6100 on 12 speakers, with recording-condition cues that reverse in sign between ASVspoof 2019 and In-the-Wild (M-004). "
     "I-2 (E-007, D-054): trim leading and trailing silence and normalise the peak before the 4 second window; a manipulation check written beforehand passed; the development AUC rose to 0.6723 [0.6126, 0.7584], +0.0623 [+0.0114, +0.1048], validation fell by 0.0054; supported. "
@@ -940,12 +972,46 @@ add_card(s, col_x(7), ty, span_w(5), BOT - ty, [
     ("h", "Outcome"),
     ("p", "Signal check: fails, 130 of 432 real clips (0.301 [0.260, 0.346]) against 0.6 required", 18),
     ("p", "Separation and added value: not run", 18),
+    ("p", "Positive control: next slide", 18),
     ("p", "Result: pulse not recoverable from these data", 18),
 ], name="card_rppg")
 
 # =====================================================================================================================
 # SLIDE 12: web demo
 # =====================================================================================================================
+# =====================================================================================================================
+# rPPG positive control
+# =====================================================================================================================
+s = new_slide("rPPG: positive control",
+    "A failed check is uninformative unless the pipeline is known to recover a pulse that is there (M-005, requested in D-062 d, written before any injected clip was analysed). The exact pipeline of the signal check was run on the same 432 clips after a known 1.2 Hz sinusoid had been injected into the skin pixels at eight relative green amplitudes, with a random phase per clip; the channel weights are R 0.3, G 1.0 and B 0.5 (an implementer's choice, because a modulation common to the three channels is cancelled by the projection), and a green-only signature is the sensitivity run. "
+    "The control with amplitude 0 reproduces the signal check (0.301, maximum difference 5 millionths of a decibel). The smallest tested amplitude recovered in at least 60 percent of the clips is 0.008 for the primary signature (377 of 432 = 0.873 [0.838, 0.901]; at 0.004 it is 0.546) and 0.004 for green only (0.789). 0.008 is about one grey level at a skin value near 130. "
+    "What it shows: the pipeline (face track, skin mask, projection, spectral rule, shuffled null) is sensitive to a clean sinusoid of that size and form, so the failure is not caused by an insensitive pipeline for such a modulation. What it does not show: that a real pulse exists in these videos, its amplitude, form or spectrum (not measured, and no source on typical amplitudes was read); that a pulse survives H.264 compression (the injection is made after decoding and is not re-encoded); anything about forged videos. The injected sinusoid is constant in frequency and amplitude, which is easier than a real pulse. "
+    "The signal-check verdict (0.301 against 0.6) and the conclusion of the iteration are unchanged. All numbers are exploratory. Evidence: docs/EXPERIMENTS.md M-005; docs/DECISIONS.md D-052.")
+rows_c = [["0 (control)", "0.301 [0.260, 0.346]", "0.301 [0.260, 0.346]"],
+          ["0.002", "0.343 [0.299, 0.389]", "0.410 [0.364, 0.457]"],
+          ["0.004", "0.546 [0.499, 0.593]", "0.789 [0.748, 0.825]"],
+          ["0.008", "0.873 [0.838, 0.901]", "0.958 [0.935, 0.973]"],
+          ["0.016", "0.972 [0.952, 0.984]", "0.975 [0.955, 0.986]"],
+          ["0.032", "0.981 [0.964, 0.991]", "0.986 [0.970, 0.994]"]]
+hdr_c = ["Relative green amplitude", "Primary signature", "Green only"]
+cw_c = [1500000, 1900000]
+cw_c.append(span_w(6) - sum(cw_c))
+sz_c = fit_size(cw_c, hdr_c, rows_c, sizes=(14, 13, 12), bold_first_col=True)
+gt, th = add_table(s, L, TOP, cw_c, hdr_c, rows_c, size=sz_c, bold_first_col=True, max_h=3300000, fill=3300000)
+add_text(s, L, TOP + th + 60000, span_w(6), BOT - (TOP + th + 60000), [
+    ("cap", "Share of the 432 clips in which the injected sinusoid is recovered by the rule of the check; Wilson 95 percent interval. Smallest amplitude with at least 0.60: 0.008 (primary), 0.004 (green only). Exploratory.")], "ctrl_note")
+add_card(s, col_x(6), TOP, span_w(6), 2300000, [
+    ("h", "It shows"),
+    ("bs", "The pipeline recovers a clean 1.2 Hz sinusoid of relative amplitude 0.008 in most clips.", 16),
+    ("bs", "With no injection it reproduces the check: 0.301.", 16),
+], name="card_ctrl_shows")
+add_card(s, col_x(6), TOP + 2450000, span_w(6), BOT - (TOP + 2450000), [
+    ("h", "It does not show"),
+    ("bs", "That a real pulse exists in these videos, or its amplitude.", 16),
+    ("bs", "That a pulse survives H.264 compression.", 16),
+    ("bs", "Anything about forged videos. The check still fails: 0.301 against 0.6.", 16),
+], name="card_ctrl_not")
+
 s = new_slide("Web demo (real checkpoint)",
     "The software is a local web page served by Flask on 127.0.0.1 only, with a 512 MB upload limit; uploaded files are deleted after every request (D-043). "
     "It calls an inference library with a fixed response structure: a score per modality, a status, warnings, errors, a model block and a fixed sentence that says what the score means (D-027). "
@@ -1013,7 +1079,7 @@ for i in range(8):     # day grid lines
     gl.name = _name("arrow_grid")
     gl.line.color.rgb = rgb("D9D9D9"); gl.line.width = Pt(0.75)
 add_text(s, L, ry0 + 7 * rh + 150000, W, 700000, [
-    ("s", "An iteration not finished by Wednesday is reported as not run. Status on 25 October: I-1 to I-7 have a logged run; the freeze and the sealed tests are on Thursday 29 October.", 16)], "timeline_note")
+    ("s", "An iteration not finished by Wednesday is reported as not run. Status on 25 October: I-1 to I-7 and the extra iterations I-1b and I-1c have a logged run; the sealed run follows the readiness checks. The bars show the original plan.", 16)], "timeline_note")
 
 # =====================================================================================================================
 # SLIDE 14: limitations
@@ -1025,29 +1091,30 @@ s = new_slide("Limitations",
     "Cross-dataset numbers quoted from papers use other protocols and are context only. "
     "rPPG may not be recoverable from compressed video, and nothing in this project is claimed beyond what its interval supports. Evidence: docs/DOC_FACTS.md section 13, docs/DATA_LOG.md Celeb-DF++ section.")
 add_text(s, L, TOP + 50000, W, 4750000, [
-    ("b", "Small development slices (15 identities, 12 speakers, two generator units): intervals are wide and ties are likely.", 20),
-    ("b", "The Celeb-DF family test has about 44 independent identity groups; intervals stay wide whatever the video count.", 20),
-    ("b", "Every verdict so far is exploratory (development slice or validation); no sealed test set has been read.", 20),
-    ("b", "On LAV-DF the fused result is driven by a production-pipeline cue of the visual head; no audio-visual detection is claimed.", 20),
-    ("b", "The baseline learning rate is at the edge of its grid; the margin 0.0143 rests on three seeds.", 20),
-    ("b", "Two encoder weights (OpenAI CLIP, WavLM) are conditionally licensed and accepted as research-only.", 20),
-    ("b", "Cross-dataset numbers from papers use other protocols and are context only; the pulse could not be recovered, and the check has no ground truth.", 20),
+    ("b", "Small development slices (15 identities, 12 speakers, two generator units): intervals are wide and ties are likely.", 18),
+    ("b", "The Celeb-DF family test has about 44 independent identity groups; intervals stay wide whatever the video count.", 18),
+    ("b", "Every verdict so far is exploratory (development slice or validation); no sealed test set has been read.", 18),
+    ("b", "On LAV-DF the fused result is driven by a production-pipeline cue of the visual head; no audio-visual detection is claimed.", 18),
+    ("b", "The baseline learning rate, 3e-4, is the highest of its grid; the margin 0.0100 is the floor of its rule and rests on three seeds.", 18),
+    ("b", "I-1b and I-1c were run though their triggers were not met to the letter; the positive control of the pulse check says nothing about a real pulse.", 18),
+    ("b", "Two encoder weights (OpenAI CLIP, WavLM) are conditionally licensed and accepted as research-only.", 18),
+    ("b", "Cross-dataset numbers from papers use other protocols and are context only; the pulse could not be recovered, and the check has no ground truth.", 18),
 ], "limits")
 
 # =====================================================================================================================
 # SLIDE 15: conclusion
 # =====================================================================================================================
 s = new_slide("Conclusion",
-    "This slide states what the exploratory evidence supports and keeps the sealed-test cells as [pending] until the freeze on Thursday 29 October. "
+    "This slide states what the exploratory evidence supports and keeps the sealed-test cells as [pending] until the sealed run, which follows the readiness checks and the approval of the team. "
     "What already stands without any result is the design: a group-disjoint protocol with sealed test sets, a rule that prefers the cheaper candidate when evidence ties, a staircase of one sealed evaluation per frozen iteration, and a working-version definition that requires the whole chain to run. "
-    "The two confirmatory claims are declared in advance: the final system against the working version, and the final system against a re-run published baseline, the latter judged by non-inferiority with delta fixed beforehand (D-025, D-041). "
+    "The confirmatory tests are three and are declared in advance (D-062 b): the final system against the working version on face video (Celeb-DF family) and on speech (In-the-Wild), and the final system against the re-run published baseline on the Celeb-DF family, the latter judged by non-inferiority with delta 0.0100 fixed beforehand (D-025, D-041, D-066); a 98.33 percent interval (Bonferroni over three) is printed beside each as a robustness line. "
     "Every other comparison is labelled exploratory. Evidence: docs/PROTOCOL.md addendum, docs/ITERATIONS.md; the cells below are [pending] until the ledger entries of the freeze exist.")
 add_text(s, col_x(0), TOP, span_w(6), 4800000, [
     ("h", "What stands without any result"),
     ("b", "A group-disjoint protocol with sealed test sets and a ledger.", 18),
     ("b", "A rule that prefers the cheaper candidate when the evidence ties.", 18),
     ("b", "One sealed evaluation per frozen iteration (the staircase).", 18),
-    ("b", "Two confirmatory claims, declared before any final run.", 18),
+    ("b", "Three confirmatory tests, declared before any final run.", 18),
     ("h", "What the exploratory runs show"),
     ("b", "Face development AUC 0.7396 to 0.9096 by fine-tuning.", 18),
     ("b", "Speech 0.6100 to 0.8130 on 12 speakers.", 18),
@@ -1055,9 +1122,10 @@ add_text(s, col_x(0), TOP, span_w(6), 4800000, [
 ], "concl_left")
 gt, th = add_table(s, col_x(6), TOP, [span_w(4), span_w(2)], ["Claim", "Outcome"], [
     ["Working version, development AUC (exploratory)", "0.693; 0.994; 0.610"],
-    ["Face video, fine-tuned SigLIP minus Xception, development slice (exploratory)", "+0.0346 [+0.0136, +0.0550]"],
-    ["Final system versus working version (paired, sealed tests)", "[pending]"],
-    ["Final system versus re-run baseline (non-inferiority)", "[pending]"],
+    ["Face video, fine-tuned SigLIP minus Xception, development slice (exploratory)", "+0.0380 [+0.0172, +0.0592]"],
+    ["Two more video levers I-1b and I-1c, development slice (exploratory)", "0.9315 and 0.9192; neither enters"],
+    ["Final system versus working version, video and speech (paired, sealed tests)", "[pending]"],
+    ["Final system versus re-run baseline (non-inferiority, margin 0.0100)", "[pending]"],
     ["rPPG: adopt or not", "not adopted: signal not recoverable"],
 ], size="auto", max_h=3600000, pad=60000)
 add_text(s, col_x(6), TOP + th + 140000, span_w(6), 900000, [("s", "An iteration that is not finished is reported as not run.")], "concl_note")
@@ -1122,7 +1190,7 @@ s = new_slide("Backup slides",
 add_text(s, L, TOP, W, 4800000, [
     ("h", "Contents"),
     ("b", "**Statistics and decision rules:** metrics, bootstrap, seed policy, non-inferiority, tie rule"),
-    ("b", "**Staircase and confirmatory claims:** one sealed evaluation per frozen iteration; the margin 0.0143"),
+    ("b", "**Staircase and confirmatory claims:** one sealed evaluation per frozen iteration; three tests; the margin 0.0100"),
     ("b", "**Preprocessing:** frames, face crops, audio window"),
     ("b", "**Sweep tables and cost record:** full tables per task, cost and fine-tuning fit"),
     ("b", "**I-0 diagnostic battery:** metrics, subsets, score distributions, worst errors"),
@@ -1155,9 +1223,9 @@ add_text(s, col_x(6), TOP, span_w(6), 4800000, [
 s = new_slide("Staircase and confirmatory claims",
     "Verdicts on the development slice are exploratory: they report sign, size and interval and they choose the next step, never a confirmed performance (D-041). "
     "At the freeze each frozen iteration is evaluated once on the sealed test sets, which gives one test score per iteration, a staircase, and each evaluation is written to the ledger. "
-    "The confirmatory claims are exactly two and were declared before any final run: the final system against the working version, and the final system against the re-run published baseline, both as paired group-bootstrap comparisons on sealed data. "
+    "The confirmatory claims were declared before any final run (D-062 b) and are three tests: the final system against the working version on the sealed Celeb-DF family test (face video) and on the sealed In-the-Wild test (speech), and the final system against the re-run published baseline on the sealed Celeb-DF family test, all as paired group-bootstrap comparisons on sealed data. The declared 95 percent rules are unchanged; a 98.33 percent interval (Bonferroni over three, from the same resamples) is printed beside each as a robustness line, and a verdict that it does not support is written not robust to the Bonferroni level. "
     "Every other comparison is labelled exploratory. "
-    "The baseline was re-run (Xception, three seeds, E-013) and the margin is delta = 2 times the larger seed standard deviation (0.0010 on validation, 0.0072 on the development slice), with a floor of 0.01, that is 0.0143 from the unrounded values (D-060, D-061). The final system is the face encoder fine-tuned in I-1, the unchanged image head and the three-encoder speech average; the LAV-DF fusion is not part of it. "
+    "The baseline was re-run (Xception, three seeds, E-013, then extended to the rate 3e-4 in E-013b) and the margin is delta = 2 times the larger seed standard deviation, with a floor of 0.01: in the first pass 0.0143 (seed sd 0.0010 on validation, 0.0072 on the development slice), for the selected baseline 0.0003 and 0.0020, so the floor applies and delta is 0.0100 (D-060, D-061, D-066). The final system is the face encoder fine-tuned in I-1, the unchanged image head and the three-encoder speech average; neither I-1b nor I-1c entered, and the LAV-DF fusion is not part of it (D-065). "
     "Evidence: docs/PROTOCOL.md addendum, ledger/final_ledger.jsonl, docs/ITERATIONS.md.")
 nb = 5
 bwid = 1450000
@@ -1171,12 +1239,12 @@ for i in range(nb):
     dbox(s, x, base_y - heights[i], bwid, heights[i], "**" + names[i] + "**" + chr(10) + "frozen, evaluated once", fill=f, anchor=MSO_ANCHOR.TOP, size=C.SZ_BODY_S)
 cx = L + nb * (bwid + gap) + 100000
 cwid = L + W - cx
-dbox(s, cx, base_y - 3300000, cwid, 1000000, "**final versus working version**", fill=F_ORANGE, size=C.SZ_BODY_S)
+dbox(s, cx, base_y - 3300000, cwid, 1000000, "**final versus working version**" + chr(10) + "video and speech", fill=F_ORANGE, size=C.SZ_BODY_S)
 dbox(s, cx, base_y - 1900000, cwid, 1000000, "**final versus re-run baseline**" + chr(10) + "non-inferiority", fill=F_ORANGE, size=C.SZ_BODY_S)
 darrow(s, L + 4 * (bwid + gap) + bwid, base_y - 2900000, cx, base_y - 2800000)
 darrow(s, L + 4 * (bwid + gap) + bwid, base_y - 1700000, cx, base_y - 1400000)
 add_text(s, L, base_y + 100000, W, 800000, [
-    ("s", "Development slice: exploratory verdicts. Sealed test sets: one evaluation per frozen iteration, in a ledger; not yet run (freeze on 29 October). Two pre-declared claims; non-inferiority margin 0.0143 from the baseline seed spread.")], "stair_note")
+    ("s", "Development slice: exploratory verdicts. Sealed test sets: one evaluation per frozen iteration, in a ledger; not yet run (the sealed run follows the readiness checks). Three pre-declared tests; non-inferiority margin 0.0100 from the baseline seed spread; 98.33 percent robustness line.")], "stair_note")
 
 # preprocessing
 s = new_slide("Preprocessing",
