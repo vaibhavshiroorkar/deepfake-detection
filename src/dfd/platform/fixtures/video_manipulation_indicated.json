@@ -1,0 +1,180 @@
+{
+ "conflicts": [
+  {
+   "modules": [
+    "face_video",
+    "speech"
+   ],
+   "note": "Some modules found indications of manipulation and others found none within their tested scope. The modules cover different kinds of manipulation, so this is not necessarily a contradiction."
+  }
+ ],
+ "coverage": {
+  "completed": [
+   {
+    "module_id": "face_video"
+   },
+   {
+    "module_id": "speech"
+   },
+   {
+    "module_id": "lip_sync"
+   },
+   {
+    "module_id": "c2pa"
+   }
+  ],
+  "failed": [],
+  "not_applicable": [],
+  "skipped": [],
+  "timed_out": [],
+  "unsupported": []
+ },
+ "input": {
+  "filename": "mock_clip.mp4",
+  "media_type": "video",
+  "mime_type": "video/mp4",
+  "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "size_bytes": 1000000
+ },
+ "modules": [
+  {
+   "errors": [],
+   "finding": "indicates_manipulation",
+   "limitations": [
+    "MOCK: invented by a scenario script; no model ran.",
+    "Scenario data for dashboard development only."
+   ],
+   "model": null,
+   "module_id": "face_video",
+   "observations": [],
+   "reason": null,
+   "score": {
+    "calibrated": false,
+    "meaning": "MOCK number with no meaning; it is not a measurement.",
+    "threshold": null,
+    "value": 0.97
+   },
+   "section": "authenticity",
+   "segments": [
+    {
+     "end_s": 3.5,
+     "note": "MOCK segment",
+     "start_s": 1.0
+    }
+   ],
+   "source": "mock",
+   "status": "completed",
+   "tested_scope": "MOCK: invented by a scenario script; no model ran.",
+   "timing_ms": 0.0,
+   "units_analysed": 16,
+   "version": "mock-0",
+   "warnings": []
+  },
+  {
+   "errors": [],
+   "finding": "no_indication_within_tested_scope",
+   "limitations": [
+    "MOCK: invented by a scenario script; no model ran.",
+    "Scenario data for dashboard development only."
+   ],
+   "model": null,
+   "module_id": "speech",
+   "observations": [],
+   "reason": null,
+   "score": {
+    "calibrated": false,
+    "meaning": "MOCK number with no meaning; it is not a measurement.",
+    "threshold": null,
+    "value": 0.3
+   },
+   "section": "authenticity",
+   "segments": [],
+   "source": "mock",
+   "status": "completed",
+   "tested_scope": "MOCK: invented by a scenario script; no model ran.",
+   "timing_ms": 0.0,
+   "units_analysed": 16,
+   "version": "mock-0",
+   "warnings": []
+  },
+  {
+   "errors": [],
+   "finding": "potential_mismatch",
+   "limitations": [
+    "MOCK: invented by a scenario script; no model ran.",
+    "Scenario data for dashboard development only."
+   ],
+   "model": null,
+   "module_id": "lip_sync",
+   "observations": [],
+   "reason": null,
+   "score": null,
+   "section": "cross_modal",
+   "segments": [],
+   "source": "mock",
+   "status": "completed",
+   "tested_scope": "MOCK: invented by a scenario script; no model ran.",
+   "timing_ms": 0.0,
+   "units_analysed": 16,
+   "version": "mock-0",
+   "warnings": []
+  },
+  {
+   "errors": [],
+   "finding": "no_credentials_found",
+   "limitations": [
+    "MOCK: invented by a scenario script; no model ran.",
+    "Scenario data for dashboard development only."
+   ],
+   "model": null,
+   "module_id": "c2pa",
+   "observations": [],
+   "reason": null,
+   "score": null,
+   "section": "provenance",
+   "segments": [],
+   "source": "mock",
+   "status": "completed",
+   "tested_scope": "MOCK: invented by a scenario script; no model ran.",
+   "timing_ms": 0.0,
+   "units_analysed": 16,
+   "version": "mock-0",
+   "warnings": []
+  }
+ ],
+ "probe": {
+  "container": "mov,mp4",
+  "duration_s": 8.0,
+  "filename": "mock_clip.mp4",
+  "has_audio": true,
+  "has_video": true,
+  "height": 360,
+  "media_type": "video",
+  "mime_type": "video/mp4",
+  "n_faces": 1,
+  "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "size_bytes": 1000000,
+  "speech_detected": true,
+  "width": 640
+ },
+ "request_id": "mock-video_manipulation_indicated",
+ "schema_version": "2",
+ "sections": {
+  "authenticity": [
+   "face_video",
+   "speech"
+  ],
+  "cross_modal": [
+   "lip_sync"
+  ],
+  "provenance": [
+   "c2pa"
+  ]
+ },
+ "source_summary": "mock",
+ "statement": "This report lists what each module found within its tested scope. A module that found nothing, did not run, was unsupported or was inconclusive does not show that the media is authentic. No single probability that the media is fake is given.",
+ "status": {
+  "processing_time_ms": 0.0,
+  "state": "ok"
+ }
+}
