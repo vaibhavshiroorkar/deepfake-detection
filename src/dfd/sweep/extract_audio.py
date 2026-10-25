@@ -36,7 +36,7 @@ OUT = Path("data/_features")
 
 
 CACHE_TRIMNORM = Path("data/_cache/audio_trimnorm_64600")
-VARIANTS = ("first", "trim_norm")   # "first": E-003 (the first 4 s, repeat-padded); "trim_norm": H-A1 of D-051, E-007 (trim silence and peak-normalise first)
+VARIANTS = ("first", "trim_norm", "aug1", "aug2", "aug3")   # "first": E-003 (the first 4 s, repeat-padded); "trim_norm": H-A1 of D-051, E-007 (trim silence and peak-normalise first)
 
 
 def window_of(wav: np.ndarray, variant: str = "first") -> np.ndarray:
@@ -45,6 +45,10 @@ def window_of(wav: np.ndarray, variant: str = "first") -> np.ndarray:
     if variant == "trim_norm":
         wav = A.trim_and_peak_normalise(wav)
     return A.window_first_repeat(wav, WINDOW)
+
+
+def aug_rng(sample_id: str, copy: int) -> np.random.Generator:
+    return np.random.default_rng(int(hashlib.sha1(f"E-008|{sample_id}|{copy}".encode()).hexdigest()[:12], 16))
 
 
 class AudioSet(Dataset):
@@ -57,6 +61,15 @@ class AudioSet(Dataset):
     def __getitem__(self, i):
         r = self.records[i]
         f = None
+        if self.variant.startswith("aug"):   # E-008: the E-007 window (trimmed, normalised) plus a seeded nuisance augmentation, never cached
+            from dfd.prep import audio_aug
+            fc = CACHE_TRIMNORM / (hashlib.sha1(r.sample_id.encode()).hexdigest() + ".npy")
+            if fc.is_file():
+                wav = np.load(fc).astype(np.float32) / 32767.0
+            else:
+                wav = window_of(A.extract_audio(self.root / r.path) if r.modality == "video" else A.load_audio(self.root / r.path), "trim_norm")
+            wav, _ = audio_aug.augment(wav, aug_rng(r.sample_id, int(self.variant[3:])))
+            return torch.from_numpy(wav), i
         if self.cache is not None:
             f = self.cache / (hashlib.sha1(r.sample_id.encode()).hexdigest() + ".npy")
             if f.is_file():
@@ -71,7 +84,7 @@ class AudioSet(Dataset):
 
 
 def run_job(enc, name, manifest, split_csv, split, workers, batch, out_root=OUT, cache=CACHE, variant="first"):
-    out = out_root / enc.cid / "T-A" / f"{name}.npz"
+    out = out_root / enc.cid / "T-A" / (f"{name}.npz" if not variant.startswith("aug") else f"{name}_{variant}.npz")
     if out.is_file() and out.with_suffix(".json").is_file():
         print("skip", out, flush=True)
         return
@@ -89,7 +102,7 @@ def run_job(enc, name, manifest, split_csv, split, workers, batch, out_root=OUT,
     meta = dict(cand=enc.cid, encoder=enc.name, revision=enc.revision, dim=2 * enc.dim, params=enc.n_params, input_size=WINDOW, dataset=name,
                 split=split, n_items=len(recs), seconds=round(dt, 1), items_per_s=round(len(recs) / dt, 1),
                 peak_vram_gb=round(torch.cuda.max_memory_allocated() / 2**30, 2), torch=torch.__version__, gpu=torch.cuda.get_device_name(0),
-                preprocessing=("first 64,600 samples at 16 kHz, repeat-padded" if variant == "first" else "silence trimmed (0.005 of full scale), peak-normalised, then the first 64,600 samples at 16 kHz, repeat-padded") + "; own feature extractor; mean and std over time of the last hidden layer"
+                preprocessing=("first 64,600 samples at 16 kHz, repeat-padded" if variant == "first" else f"E-007 window (trimmed, normalised) with the seeded nuisance augmentation of dfd.prep.audio_aug, copy {variant[3:]}" if variant.startswith("aug") else "silence trimmed (0.005 of full scale), peak-normalised, then the first 64,600 samples at 16 kHz, repeat-padded") + "; own feature extractor; mean and std over time of the last hidden layer"
                               + ("; Whisper: 30 s input, 202 frames pooled" if enc.kind == "whisper" else ""),
                 note="end-to-end incl. decoding (first encoder run fills the sample cache, later runs read it), one run, not the section 7 cost record")
     out.with_suffix(".json").write_text(json.dumps(meta, indent=1))
@@ -105,10 +118,13 @@ def main(argv=None) -> int:
     ap.add_argument("--out-root", default=str(OUT), help="use another folder for a test run")
     ap.add_argument("--no-cache", action="store_true")
     ap.add_argument("--variant", choices=VARIANTS, default="first")
+    ap.add_argument("--jobs", default=None, help="comma-separated job names (default all three)")
     a = ap.parse_args(argv)
     enc = encoders.load_audio(a.cand)
     cache = CACHE if a.variant == "first" else CACHE_TRIMNORM
     for job in JOBS[:a.limit_jobs]:
+        if a.jobs and job[0] not in a.jobs.split(","):
+            continue
         run_job(enc, *job, a.workers, a.batch, Path(a.out_root), None if a.no_cache else cache, a.variant)
     return 0
 
