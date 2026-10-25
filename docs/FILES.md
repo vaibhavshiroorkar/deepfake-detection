@@ -87,3 +87,5 @@ One row per file or folder. Status is `exists`, `planned` or `missing`. A `plann
 | Document Template/ | The supplied Word report template and the PowerPoint and PDF of an earlier project, used only for look and identity; not committed | Source of the templates (D-014); its body content is not reused (D-001) | exists (untracked, ignored) |
 | Git tags per frozen iteration | `setup` and `iter-0-mvp` (commit cbff3e4, pushed 2026-10-25); the others at their freeze | Required by D-008 | partly exists |
 | Software (detection system) | Not yet created; form is open decision O-011 | Deliverable under D-003 | planned |
+| src/dfd/platform/ (schema.py, module.py, coordinator.py, mocks.py, fixtures/*.json) | WS2 platform core on branch feat/ws2-platform-core: report schema v2 and checker, detector-module interface, coordinator, scenario mocks (all MOCK) | Basis for the dashboard and all later modules (D-069); does not touch the frozen v1 path | exists (branch only) |
+| tests/platform/test_platform_core.py | 25 contract, failure-path and mock tests for the platform core | Verification of D-069 | exists (branch only) |
