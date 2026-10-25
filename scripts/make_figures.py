@@ -362,7 +362,9 @@ LAD_A = [("I-0 frozen probe", 0.6100, 0.5434, 0.7256), ("I-2 trim, normalise", 0
 
 
 def fig08_ladder_results():
-    fig, axs = plt.subplots(2, 1, figsize=(WD, 4.1), gridspec_kw={"height_ratios": [len(LAD_V), len(LAD_A)], "hspace": 0.7})
+    # slide 11 shows this figure at about 1.0 times its size, so every text is made 13 pt here (at least 12 pt on the slide)
+    FS = 13
+    fig, axs = plt.subplots(2, 1, figsize=(6.4, 3.5), gridspec_kw={"height_ratios": [len(LAD_V), len(LAD_A)], "hspace": 0.7})
     for ax, rows, title, col in ((axs[0], LAD_V, "Video: Celeb-DF v2 development slice (15 identities)", C["dark"]),
                                  (axs[1], LAD_A, "Speech: In-the-Wild development slice (12 speakers)", C["dark"])):
         ys = list(range(len(rows)))[::-1]

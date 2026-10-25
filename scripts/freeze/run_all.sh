@@ -32,12 +32,12 @@ $PY scripts/freeze/prepare_heads.py > $LOG/freeze_heads.log 2>&1 || { step "head
 if [ "$MODE" = "--final" ]; then
   step "crops of the sealed test videos"
   $PY scripts/freeze/prepare_crops.py --workers 8 > $LOG/freeze_crops.log 2>&1 || { step "crops FAILED"; exit 1; }
-  for f in data/_results/baseline/DONE; do [ -f "$f" ] || { step "the Xception baseline (E-013) has not finished: BASE will fail"; }; done
+  for f in data/_results/baseline/DONE data/_results/baseline/DONE_b; do [ -f "$f" ] || { step "the Xception baseline ($f, E-013 / E-013b) has not finished: BASE will fail"; }; done
 fi
 
 for TAG in I-0 I-1 I-2 I-3 I-4 BASE I-5 I-6 I-6b; do
-  if [ "$TAG" = "BASE" ] && [ ! -f data/_results/baseline/DONE ] && [ "$MODE" = "--final" ]; then
-    step "BASE skipped: data/_results/baseline/DONE is missing"; continue
+  if [ "$TAG" = "BASE" ] && { [ ! -f data/_results/baseline/DONE ] || [ ! -f data/_results/baseline/DONE_b ]; } && [ "$MODE" = "--final" ]; then
+    step "BASE skipped: data/_results/baseline/DONE or DONE_b is missing"; continue
   fi
   step "scoring $TAG"
   $PY scripts/freeze/score_final.py --iteration $TAG "${EXTRA[@]}" > $LOG/freeze_score_$TAG.log 2>&1 || { step "$TAG FAILED, see $LOG/freeze_score_$TAG.log"; exit 1; }

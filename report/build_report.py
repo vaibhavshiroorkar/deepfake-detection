@@ -56,6 +56,10 @@ TITLE = "Multimodal Deepfake Detection for Images, Video and Audio"
 SUBTITLE = "A Hypothesis-Driven Study Under a Group-Disjoint Protocol"
 FONT = "Times New Roman"
 FOOT_AFTER = 548   # twips of space after the footer text: puts the footer rule where the template has it
+FOOT_BEFORE = 180  # twips of space above the footer rule: the template (compatibility mode 11) puts the extra line leading of
+                   # 1.5 spacing BELOW the text, so its last body line clears the rule by about 3.6 mm; compatibility mode 15
+                   # (kept for the equations and tables) puts it above, so the last line touched the rule. The rule stays
+                   # where it is; only the body area ends this much higher.
 
 NS = {
     "w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
@@ -567,8 +571,8 @@ class Builder:
                 return ['<w:p><w:pPr><w:pStyle w:val="Footer"/></w:pPr></w:p>']
             para = ('<w:p><w:pPr><w:pStyle w:val="Footer"/><w:pBdr><w:top w:val="thinThickSmallGap" w:sz="24" w:space="1" w:color="622423"/></w:pBdr>'
                     '<w:tabs><w:tab w:val="clear" w:pos="4680"/><w:tab w:val="clear" w:pos="9360"/><w:tab w:val="right" w:pos="9027"/></w:tabs>'
-                    '<w:spacing w:after="%d"/><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/></w:rPr></w:pPr>'
-                    '<w:r>%s<w:t xml:space="preserve">%s</w:t></w:r>%s</w:p>' % (FOOT_AFTER, rp, esc(FOOTER_TEXT), field("PAGE \\* MERGEFORMAT", "1", True, 10.5)))
+                    '<w:spacing w:before="%d" w:after="%d"/><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/></w:rPr></w:pPr>'
+                    '<w:r>%s<w:t xml:space="preserve">%s</w:t></w:r>%s</w:p>' % (FOOT_BEFORE, FOOT_AFTER, rp, esc(FOOTER_TEXT), field("PAGE \\* MERGEFORMAT", "1", True, 10.5)))
             return [para, '<w:p><w:pPr><w:pStyle w:val="Footer"/></w:pPr></w:p>']
 
         def fill(part, xmls):
