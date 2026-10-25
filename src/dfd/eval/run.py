@@ -283,6 +283,19 @@ def build_parser():
     return p
 
 
+# D-062 (b): three confirmatory tests, so a robustness line at the Bonferroni level 1 - 0.05 / 3 (98.33 percent), read from the SAME bootstrap
+# replicates as the declared 95 percent interval (no new draws). It never replaces the declared rule.
+ROBUST_LEVEL = 1.0 - 0.05 / 3
+
+
+def _robust_interval(reps, level) -> dict:
+    ok = np.asarray(reps, dtype=float)
+    ok = ok[~np.isnan(ok)]
+    a = (1.0 - level) / 2.0
+    low, high = (float(v) for v in np.quantile(ok, [a, 1.0 - a]))
+    return {"level": level, "low": low, "high": high, "n_replicates": int(ok.size), "contains_zero": bool(low <= 0.0 <= high)}
+
+
 COMPARE_METRICS = (*RANK_METRICS, *PROB_METRICS, *CAL_METRICS)
 NEEDS_FIT = ("balanced_accuracy", "precision", "recall", *CAL_METRICS)
 
@@ -307,7 +320,8 @@ def _compare_side(table, spec, modality, dataset, split, metric, label):
 
 def compare(table_a, table_b, *, run_a, run_b, modality, dataset, split, metric,
             n_boot=bs.N_BOOT, level=bs.LEVEL, seed=bs.BASE_SEED, iteration=None,
-            iteration_b=None, final=False, ledger_path=DEFAULT_LEDGER) -> dict:
+            iteration_b=None, final=False, ledger_path=DEFAULT_LEDGER,
+            robust_levels=(ROBUST_LEVEL,)) -> dict:
     """Paired bootstrap of metric(A) - metric(B) on one (modality, dataset, split) block.
 
     Each side is one or several runs (several = several seeds, section 6 rule:
@@ -362,6 +376,7 @@ def compare(table_a, table_b, *, run_a, run_b, modality, dataset, split, metric,
                              "several seeds: metric per seed per resample, averaged"},
         "a": side("A", a), "b": side("B", b),
         "difference": {**diff.as_dict(), "contains_zero": bool(diff.low <= 0.0 <= diff.high)},
+        "robustness": [_robust_interval(diff.replicates, lv) for lv in robust_levels],
     }
 
 
@@ -379,6 +394,9 @@ def format_compare(rep: dict) -> str:
         f"[{d['low']:+.4f}, {d['high']:+.4f}]  "
         + ("contains 0: the data do not separate A and B" if d["contains_zero"] else "excludes 0"),
     ]
+    for r in rep.get("robustness", []):
+        lines.append(f"  robustness (same replicates, level {r['level'] * 100:.2f}%, Bonferroni over three, D-062 b): "
+                     f"[{r['low']:+.4f}, {r['high']:+.4f}]  " + ("contains 0" if r["contains_zero"] else "excludes 0"))
     return "\n".join(lines)
 
 

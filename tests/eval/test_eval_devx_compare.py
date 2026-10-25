@@ -122,6 +122,22 @@ def test_compare_one_file_two_runs_matches_library_paired_bootstrap(make_scores)
     assert rep["difference"]["high"] == pytest.approx(diff.high, abs=1e-12)
 
 
+def test_compare_robustness_level_uses_same_replicates(make_scores):
+    """D-062 (b): the 98.33 percent line is read from the same bootstrap replicates, is wider than the 95 percent interval and leaves it unchanged."""
+    from dfd.eval.run import ROBUST_LEVEL, compare
+    f = make_scores(seeds=(1, 2), groups_per_split=30, layout=DEV_LAYOUT, scorer="signal")
+    t = read_scores(f)
+    kw = dict(run_a="r1", run_b="r2", modality="visual", dataset="synthB", split="dev_x", metric="auc", n_boot=400)
+    rep = compare(t, t, **kw)
+    only95 = compare(t, t, robust_levels=(), **kw)
+    assert rep["difference"] == only95["difference"] and only95["robustness"] == []
+    r = rep["robustness"][0]
+    assert r["level"] == pytest.approx(1 - 0.05 / 3) == pytest.approx(ROBUST_LEVEL)
+    d = rep["difference"]
+    assert r["low"] <= d["low"] + 1e-12 and r["high"] >= d["high"] - 1e-12
+    assert r["n_replicates"] == 400
+
+
 def test_compare_input_errors(make_scores, tmp_path):
     f = make_scores(seeds=(1, 2), groups_per_split=10, layout=DEV_LAYOUT)
     base = compare_args(f)
