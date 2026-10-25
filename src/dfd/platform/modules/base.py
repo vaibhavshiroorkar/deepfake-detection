@@ -114,6 +114,7 @@ class AdapterModule:
     source = "real"
     section = "authenticity"
     module_id = ""
+    requires_gpu = True        # the coordinator does not start a second GPU module while a timed-out GPU module is still running
 
     def __init__(self, provider: Optional[AdapterProvider] = None, timeout_s: float = 120.0):
         self.provider = provider or shared_provider()

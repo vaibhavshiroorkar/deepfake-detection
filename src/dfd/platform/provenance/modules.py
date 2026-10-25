@@ -127,14 +127,16 @@ class ContentCredentialsModule:
             lim.insert(1, "A failed check shows a mismatch with what was signed (edit, re-encode or damage); it does not say why or by whom.")
         elif state == "Trusted":
             finding, code = "credentials_valid", "C2PA_VALID_TRUSTED"
-            text = f"manifest cryptographically valid and the signing certificate chains to a configured trust anchor (signer: {who})"
+            text = (f"manifest signature and hashes match and the signing certificate chains to a trust anchor configured by the operator "
+                    f"(signer: {who}); this is relative to that configuration and does not make the content authentic")
+            lim.insert(1, "Trust is only as good as the configured trust anchors (DFD_C2PA_TRUST_ANCHORS); none are built in.")
         elif state == "Valid" and trust == "untrusted_signer":
             finding, code = "inconclusive", "C2PA_VALID_SIGNER_UNTRUSTED"
             text = (f"manifest integrity checked (signature and hashes match) but the signer ({who}) is not on a trust list, so who "
                     "signed it is not established")
             warns.append({"code": code, "message": text})
-            lim.insert(1, "No trust list is configured, so the signer identity is not verified; anyone can sign a manifest with a "
-                          "self-made certificate.")
+            lim.insert(1, "No trust anchor is configured, or the signer does not chain to a configured one, so the signer identity is not "
+                          "verified; anyone can sign a manifest with a self-made certificate.")
         else:
             finding, code = "inconclusive", "C2PA_STATE_UNRECOGNISED"
             text = f"the library reported validation state {state!r}, which this module does not map to a verdict"

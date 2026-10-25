@@ -187,10 +187,15 @@
     head.appendChild(el("h3", null, str(m.module_id)));
     var tags = el("div");
     if (m.source === "mock") tags.appendChild(el("span", "tag mock", "MOCK"));
+    if (Array.isArray(m.warnings) && m.warnings.some(function (w) { return isObj(w) && /^EXPERIMENTAL/.test(str(w.code)); })) tags.appendChild(el("span", "tag mock", "EXPERIMENTAL"));
     tags.appendChild(el("span", "tag status st-" + status, STATUS_LABEL[m.status] || str(m.status)));
     head.appendChild(tags);
     card.appendChild(head);
     card.appendChild(el("div", "kv", "version " + str(m.version) + " | source " + str(m.source)));
+    if (isObj(m.model)) {
+      card.appendChild(el("div", "kv", "Model: " + str(m.model.name)));
+      card.appendChild(el("div", "kv", "Evaluation: " + str(m.model.evaluation)));
+    }
 
     if (m.status === "completed") {
       var f = el("div", "finding " + (FINDING_CLASS[m.finding] || "f-neutral"), FINDING_LABEL[m.finding] || "Inconclusive");

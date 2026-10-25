@@ -7,8 +7,9 @@ needs the decoded media (for example, no face found).
 """
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional, Protocol
+from typing import Any, Callable, MutableMapping, Optional, Protocol
 
 from .schema import ModuleResult
 
@@ -57,9 +58,26 @@ class Probe:
 
 @dataclass
 class Context:
+    """What a module receives in ``run``.
+
+    Cancellation convention: when a module exceeds its timeout the coordinator sets ``cancel_event``. A module with a
+    long loop (frame decoding, batched inference) should poll ``ctx.cancelled`` between steps and return early; the
+    return value is then discarded. Python cannot kill a thread, so a module that never polls (or is stuck in one
+    native call) keeps running until it finishes on its own. The coordinator guarantees that such a late result,
+    late exception or late ``ctx.cache`` write cannot change the report or the cache seen by other modules.
+
+    ``cache`` is shared across modules within one analysis (the coordinator hands each module a view of it that
+    ignores writes after that module was cancelled). Modules must be thread-safe if one Coordinator is used by
+    several concurrent ``analyse()`` calls: the coordinator does not serialise them.
+    """
     probe: Probe
-    cache: dict = field(default_factory=dict)       # shared extraction cache (frames, face tracks, audio), filled by modules or the pipeline
+    cache: MutableMapping = field(default_factory=dict)       # shared extraction cache (frames, face tracks, audio), filled by modules or the pipeline
     progress: Optional[Callable[[str], None]] = None
+    cancel_event: threading.Event = field(default_factory=threading.Event)
+
+    @property
+    def cancelled(self) -> bool:
+        return self.cancel_event.is_set()
 
 
 class DetectorModule(Protocol):
@@ -67,6 +85,8 @@ class DetectorModule(Protocol):
     version: str
     section: str                    # authenticity, cross_modal or provenance
     timeout_s: float
+    # optional: requires_gpu: bool = False. If True, the coordinator will not start this module while an abandoned
+    # (timed-out, still running) GPU module is alive; it is reported as skipped instead.
 
     def applicability(self, probe: Probe) -> Applicability: ...
     def run(self, ctx: Context) -> ModuleResult: ...

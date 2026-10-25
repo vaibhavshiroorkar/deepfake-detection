@@ -27,14 +27,21 @@ REPO_ROOT = Path(__file__).resolve().parents[4]
 DEFAULT_WEIGHTS = REPO_ROOT / "data" / "models" / "syncnet" / "syncnet_v2.model"
 DEFAULT_YUNET_DIR = REPO_ROOT / "data" / "_prep_bench" / "models"
 
-MODULE_VERSION = "syncnet-v2-port-1"
+MODULE_VERSION = "syncnet-v2-port-3"
 MODEL_NAME = "SyncNet v2 (Chung and Zisserman, Oxford VGG)"
 LICENCE = "code MIT (joonson/syncnet_python); weights licence not stated by the source"
 NOT_EVALUATED = "not evaluated"
 
 # Project placeholders (see module docstring): uncalibrated, not from the reference, not evaluated on project data.
-MIN_CONFIDENCE = 1.0              # below this the offset curve has no clear minimum: inconclusive
-OFFSET_TOLERANCE_FRAMES = 2       # |offset| up to this (80 ms at 25 fps) is reported as consistent
+# MIN_CONFIDENCE was 1.0 (a pure placeholder) and is now 3.0, CHOSEN ON THE E-022 DEVELOPMENT SET (40 LAV-DF train clips, shifted-audio and
+# synthetic non-speech cases): there, correctly in-range cases had confidence >= 4.46 and out-of-range (+-1000 ms) cases <= 2.66. The
+# value sits in that gap by inspection, not by optimisation. NO held-out check was done; it is still uncalibrated.
+MIN_CONFIDENCE = 3.0              # below this the offset curve has no clear minimum: inconclusive
+OFFSET_TOLERANCE_FRAMES = 2       # symmetric tolerance (80 ms at 25 fps), used only when offset_band is None (port-2 behaviour)
+# Port-3: asymmetric band of offsets reported as consistent, FITTED in E-025 stage 1 on 230 real clips (150 LAV-DF train, 80 FakeAVCeleb
+# development; 2.5th to 97.5th percentile of the confident offsets) and validated on 230 disjoint real clips (false alarms 1.3% [0.4, 3.8]).
+# It is a property of VoxCeleb2-derived clips, not a universal tolerance, and it makes the Wav2Lip -3 frame offset (E-024) unflaggable.
+OFFSET_BAND_FRAMES = (-6, 2)
 SCORE_DISPLAY_SCALE = 10.0        # display value = min(confidence, 10) / 10; 10.02 is the confidence printed in the reference README demo
 MIN_SECONDS = 2.0                 # shorter clips: inconclusive (the offset search spans +-15 frames and needs windows beyond that)
 MAX_SECONDS = 30.0                # analysed prefix (memory and time bound); the rest of the file is not analysed
@@ -42,22 +49,47 @@ MIN_FACE_FRACTION = 0.5           # a face must be found in at least this fracti
 MAX_MULTI_FACE_FRACTION = 0.10    # more frames than this with two or more faces: speaker attribution not established
 AUDIO_ACTIVE_RMS = 0.01           # 20 ms blocks above this RMS (full scale 1.0) count as audible
 MIN_ACTIVE_FRACTION = 0.20        # fewer audible blocks than this: no usable audio, inconclusive
-SPEECH_NOT_CHECKED = ("No speech detector is used: audible content of any kind (speech, music, noise) passes the audio check, so "
-                      "non-speech audio can produce a result that carries no information about lip movement.")
+# Heuristic speech-likelihood gate (NOT a speech detector). Cheap, non-learned: 25 ms frames, band 100-4000 Hz, frames above
+# AUDIO_ACTIVE_RMS only. Speech-like if the median spectral flatness (geometric / arithmetic mean of the power spectrum) of active
+# frames lies in [SPEECH_FLATNESS_MIN, SPEECH_FLATNESS_MAX] (below: steady tones and chords; above: noise) and the coefficient of
+# variation of the active-frame RMS is at least SPEECH_RMS_CV_MIN (steady sounds fail). Values CHOSEN ON THE E-022 DEVELOPMENT SET
+# (40 LAV-DF train audio tracks against 50 synthetic white/pink/tone/chord tracks); no held-out check was done. Natural music, singing,
+# and speech over music or noise were not tested and may pass or fail wrongly.
+SPEECH_FLATNESS_MIN = 0.001
+SPEECH_FLATNESS_MAX = 0.28
+SPEECH_RMS_CV_MIN = 0.15
+SPEECH_NOT_CHECKED = ("Speech is only screened by a cheap heuristic (energy, spectral flatness, loudness variation), not a speech "
+                      "detector: some non-speech audio (natural music, singing, speech over noise) may pass it and then carries no "
+                      "information about lip movement, and some speech may fail it.")
 
 TESTED_SCOPE = ("Temporal agreement between the audio and the lip region of one tracked face, as the offset in frames (25 fps) within "
                 "+-15 frames of zero that minimises SyncNet v2 embedding distance over the analysed prefix (at most 30 s). Smoke-tested "
-                "on one clip only (data/_results/platform/lip_sync_smoke.json); not evaluated on any labelled data.")
+                "on one clip (data/_results/platform/lip_sync_smoke.json) and checked on controlled cases of LAV-DF train clips (E-022, development set "
+                "only, no held-out check), validated once on new clips with the earlier +-2 frame tolerance (E-024: failed three of eight preregistered lines), and "
+                "re-fitted and validated in E-025 (offset band -6 to +2 frames fitted on 230 real clips, validated on 230 disjoint real clips; see limitations).")
 LIMITATIONS = [
     "It measures audio-visual temporal agreement of one face track. It does not detect manipulation.",
     "A mismatch is not proof of manipulation: dubbed content, bad muxing, variable frame rate and off-sync recordings produce one.",
     "A synchronised fake passes: generators that are trained or tuned for lip synchronisation can yield a consistent result.",
-    "The offset search covers +-15 frames (+-0.6 s); a larger shift is not measured and tends to give a low confidence.",
-    "The decision rule (confidence and offset tolerance) is an uncalibrated placeholder of this project, not taken from the reference "
-    "code and not evaluated on any data. The score is a rescaled confidence, not a probability.",
+    "The offset search covers +-15 frames (+-0.6 s); a larger shift is not measured: it usually gives a low confidence or an offset at the edge of the range, both reported as inconclusive, but not every case is caught.",
+    "The decision rule (confidence minimum 3.0, offset tolerance, speech heuristic) is an uncalibrated rule of this project, not taken from the "
+    "reference code. The confidence minimum and the speech heuristic values were chosen on the E-022 development set with no held-out check. "
+    "The score is a rescaled confidence, not a probability.",
     "Faces come from YuNet, not from the S3FD detector the reference pipeline uses, and tracking is simpler than the reference's. "
     "The effect on the result has not been measured.",
-    "Tested scope: one real talking clip as an integration smoke test. No accuracy, false-alarm rate or robustness is known.",
+    "Tested scope: independent validation E-024 (frozen configuration, new clips, 95% Wilson intervals): unmodified synchronised clips were flagged potential_mismatch "
+    "in 15.0% [8.1, 26.1] of 60 LAV-DF train clips and 13.3% [6.9, 24.2] of 60 FakeAVCeleb development clips (preregistered limit: 10%), and "
+    "25.0% [15.8, 37.2] of clips shifted by only +-40 ms. Roughly one real clip in seven shows a confident offset of 3 to 8 frames, so a "
+    "potential_mismatch is weak evidence on its own. In-range shifts of 120 to 480 ms were recovered within 2 frames or flagged in 97.8% [94.4, 99.1]; "
+    "shifts of 1000 ms were all reported inconclusive; synthetic non-speech audio was inconclusive in 100 of 100 cases (natural music is untested).",
+    "Wav2Lip-based fake clips of FakeAVCeleb (development half) were flagged potential_mismatch in 85 to 93% of cases, almost all at an offset of exactly -3 "
+    "frames. This is the opposite of the pre-stated expectation and is not a calibrated detector result: it may reflect a systematic lag in those "
+    "clips or in this implementation, and was not investigated or used to change any threshold.",
+    "Tested scope: E-025 (preregistered; band fitted on one pool of 230 real VoxCeleb2-derived clips, validated on a disjoint pool of 230): unmodified real clips "
+    "were flagged potential_mismatch in 1.3% [0.4, 3.8] (3 of 230) under the band -6 to +2 frames, against 11.7% (27 of 230) under the earlier +-2 frame rule. "
+    "The cost: the 160 Wav2Lip-based FakeAVCeleb fakes, which sit at an offset of -3 or -2 frames, are now flagged in 0 of 160 cases (E-024 flagged 85 to 93% with "
+    "the old rule), and audio shifted by -120, +120, -240, +240, +-480 ms (sign as in E-022) is flagged in 14, 2, 26, 14 and 26 of 28 clips each (30 LAV-DF clips, those with a confident base offset). The band describes how far real speech clips in this data drift from SyncNet's zero; it is not a "
+    "detector of lip-sync fakes and has not been tested on any other media.",
     SPEECH_NOT_CHECKED,
 ]
 SCORE_MEANING = ("SyncNet confidence (median over the 31 candidate shifts of the mean embedding distance, minus its minimum), divided by "
@@ -111,6 +143,34 @@ def build_track(per_frame_faces: list) -> tuple[Optional[np.ndarray], dict]:
     return boxes, info
 
 
+def speech_like_metrics(wav: np.ndarray, sr: int = 16000) -> dict:
+    """Heuristic speech-likelihood features: median spectral flatness (100-4000 Hz) and RMS coefficient of variation of active 25 ms frames."""
+    n = int(0.025 * sr)
+    k = len(wav) // n
+    out = {"active_frames": 0, "flatness_median": None, "rms_cv": None}
+    if k == 0:
+        return out
+    x = wav[:k * n].reshape(k, n).astype(np.float64)
+    rms = np.sqrt((x ** 2).mean(1))
+    act = rms > AUDIO_ACTIVE_RMS
+    out["active_frames"] = int(act.sum())
+    if act.sum() < 3:
+        return out
+    sp = np.abs(np.fft.rfft(x[act] * np.hanning(n), axis=1)) ** 2 + 1e-12
+    sp = sp[:, int(100 / sr * n):int(4000 / sr * n)]
+    flat = np.exp(np.log(sp).mean(1)) / sp.mean(1)
+    out["flatness_median"] = float(np.median(flat))
+    out["rms_cv"] = float(rms[act].std() / rms[act].mean())
+    return out
+
+
+def looks_speech_like(m: dict) -> bool:
+    """True when the heuristic features are in the speech-like region (see SPEECH_FLATNESS_*). A heuristic, not a speech detector."""
+    if m["flatness_median"] is None:
+        return False
+    return SPEECH_FLATNESS_MIN <= m["flatness_median"] <= SPEECH_FLATNESS_MAX and m["rms_cv"] >= SPEECH_RMS_CV_MIN
+
+
 def audible_fraction(wav: np.ndarray, sr: int = 16000) -> float:
     """Fraction of 20 ms blocks whose RMS exceeds AUDIO_ACTIVE_RMS."""
     n = int(0.02 * sr)
@@ -130,12 +190,13 @@ class LipSyncModule:
     def __init__(self, weights_path: str | Path | None = None, device: Optional[str] = None, timeout_s: float = 180.0,
                  detector_factory: Optional[Callable[[], object]] = None, min_confidence: float = MIN_CONFIDENCE,
                  offset_tolerance_frames: int = OFFSET_TOLERANCE_FRAMES, min_seconds: float = MIN_SECONDS,
-                 max_seconds: float = MAX_SECONDS):
+                 max_seconds: float = MAX_SECONDS, offset_band: Optional[tuple] = OFFSET_BAND_FRAMES):
         self.weights_path = Path(weights_path) if weights_path is not None else DEFAULT_WEIGHTS
         self.device = device
         self.timeout_s = timeout_s
         self._detector_factory = detector_factory
         self.min_confidence, self.offset_tolerance = min_confidence, offset_tolerance_frames
+        self.offset_band = tuple(offset_band) if offset_band is not None else (-offset_tolerance_frames, offset_tolerance_frames)
         self.min_seconds, self.max_seconds = min_seconds, max_seconds
         self._model = None
         self._detector = None
@@ -249,6 +310,11 @@ class LipSyncModule:
         if frac < MIN_ACTIVE_FRACTION:
             return self._inconclusive("NO_AUDIBLE_AUDIO", f"Only {frac:.0%} of the audio is above the silence level "
                                       f"(RMS {AUDIO_ACTIVE_RMS:g}); there is nothing to compare with the lips.")
+        sm = speech_like_metrics(wav)
+        if not looks_speech_like(sm):
+            return self._inconclusive("AUDIO_NOT_SPEECH_LIKE", "A cheap heuristic (spectral flatness and loudness variation; not a speech "
+                                      f"detector) finds the audio unlike speech (flatness {sm['flatness_median']}, loudness variation "
+                                      f"{sm['rms_cv']}). Lip movement cannot be compared with noise, steady tones or music, so no offset is reported.")
         faces = self._detect_faces(path)
         boxes, info = build_track(faces)
         if boxes is None and info["reason"] == "no_face":
@@ -274,11 +340,14 @@ class LipSyncModule:
             res = self._inconclusive("LOW_SYNC_CONFIDENCE", f"The confidence {conf:.2f} is below the placeholder minimum {self.min_confidence:g}: "
                                      "no audio-visual offset stands out clearly (silence, non-speech audio, an unusable face crop or a shift "
                                      "beyond the search range can all cause this).", obs, score, r.n_windows)
+        elif abs(off) >= r.vshift:
+            res = self._inconclusive("OFFSET_AT_SEARCH_BOUNDARY", f"The best offset ({off} frames) is at the edge of the search range "
+                                     f"(+-{r.vshift} frames); the true shift may be larger than the range, so it is not reliable.", obs, score, r.n_windows)
         else:
-            finding = "consistent" if abs(off) <= self.offset_tolerance else "potential_mismatch"
+            finding = "consistent" if self.offset_band[0] <= off <= self.offset_band[1] else "potential_mismatch"
             if finding == "potential_mismatch":
                 warns.append({"code": "OFFSET_BEYOND_TOLERANCE", "message": f"The best audio-visual offset is {off} frames "
-                              f"({off * 40} ms), outside the placeholder tolerance of +-{self.offset_tolerance} frames. This is not proof of manipulation."})
+                              f"({off * 40} ms), outside the band of {self.offset_band[0]} to {self.offset_band[1]} frames fitted on real clips (E-025). This is not proof of manipulation."})
             res = self._result(status="completed", finding=finding, score=score, units_analysed=r.n_windows, model=self._model_block(),
                                tested_scope=TESTED_SCOPE, limitations=list(LIMITATIONS), warnings=warns, observations=obs)
         res.timing_ms = round((time.perf_counter() - t0) * 1000.0, 3)

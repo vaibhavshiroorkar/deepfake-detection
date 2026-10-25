@@ -41,9 +41,9 @@ def test_video_with_audio_is_routed_and_every_module_is_accounted_for(media):
     m = by_id(r)
     assert m["face_video"]["status"] == "not_applicable"            # no face is never a finding
     assert m["image_detector"]["status"] == "not_applicable"
-    assert m["generated_video"]["status"] == "unsupported" and "not implemented" in m["generated_video"]["reason"]
+    assert "generated_video" not in m                                  # not in this test's registry (fake adapter); see test_generated_video_registered_and_unsupported_without_head
     assert m["media_metadata"]["status"] == "completed" and m["content_credentials"]["status"] == "completed"
-    assert r["status"]["state"] == "partial"
+    assert r["status"]["state"] == "ok"                                 # nothing failed or unsupported in this registry
     assert r["source_summary"] == "real"
     assert all(x["finding"] != "no_indication_within_tested_scope" for x in r["modules"] if x["module_id"] in ("face_video", "image_detector"))
 
@@ -87,6 +87,15 @@ def test_unusable_input_is_refused_before_any_module_runs(media, name, code):
 
 def test_planned_modules_and_default_registry():
     from dfd.platform.pipeline import default_modules
-    assert [m.module_id for m in planned_modules()] == ["generated_video"]
+    assert planned_modules() == []
     ids = [m.module_id for m in default_modules()]
     assert ids == ["face_video", "image_detector", "speech", "lip_sync", "generated_video", "media_metadata", "content_credentials"]
+
+
+def test_generated_video_registered_and_unsupported_without_head(media, tmp_path):
+    from dfd.platform.modules.generated_video import GeneratedVideoModule
+    mods = modules() + [GeneratedVideoModule(tmp_path / "missing_head.npz")]
+    r = analyse_file(media / "clip_audio.mp4", modules=mods)
+    assert validate_report(r) == []
+    g = by_id(r)["generated_video"]
+    assert g["status"] == "unsupported" and "no trained generated-video detector" in g["reason"] and g["finding"] is None

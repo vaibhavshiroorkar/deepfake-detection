@@ -23,12 +23,21 @@ def face(x=100, y=80, w=60, h=60):
     return SimpleNamespace(x=x, y=y, w=w, h=h, score=0.9)
 
 
+def speechlike(seconds=4.0, sr=16000, seed=0):
+    """Synthetic stand-in with the features the heuristic looks for: harmonic voice-like source, syllable-rate loudness modulation, noise."""
+    rng = np.random.default_rng(seed)
+    t = np.arange(int(seconds * sr)) / sr
+    x = sum(np.sin(2 * np.pi * 120 * h * t) / h for h in range(1, 12))
+    env = np.clip(np.sin(2 * np.pi * 3.5 * t), 0, None) ** 2 + 0.05
+    return (0.25 * x * env / np.abs(x * env).max() + 0.004 * rng.standard_normal(len(t))).astype(np.float32)
+
+
 class Fake(ls.LipSyncModule):
     """Module with every heavy step replaced; weights hash is a constant so no file is needed."""
 
     def __init__(self, wav=None, faces=None, result=None, **kw):
         super().__init__(weights_path="nonexistent.model", device="cpu", **kw)
-        self.wav = np.sin(np.linspace(0, 3000, 16000 * 4)).astype(np.float32) * 0.2 if wav is None else wav
+        self.wav = speechlike() if wav is None else wav
         self.faces = [[face()] for _ in range(100)] if faces is None else faces
         self.result = result or SyncResult(0, 4.0, 5.0, 80, 15, np.zeros(31))
         self.scored = 0
@@ -143,7 +152,7 @@ def test_vocabulary_and_wording():
         assert "indicates_manipulation" not in blob and "deepfake detected" not in blob and chr(0x2014) not in blob
     assert any("not proof of manipulation" in l for l in results[0].limitations)
     assert any("synchronised fake passes" in l for l in results[0].limitations)
-    assert any("one real talking clip" in l for l in results[0].limitations)
+    assert any("Tested scope" in l for l in results[0].limitations)
 
 
 def test_inference_error_propagates():
@@ -178,3 +187,43 @@ def test_weights_load_strict_and_hash_matches_source_record():
     assert a.shape == (2, 1024) and v.shape == (2, 1024)
     rec = json.loads(WEIGHTS.with_name("SOURCE.json").read_text(encoding="utf-8"))
     assert ls.LipSyncModule(WEIGHTS).weights_sha256() == rec["sha256"]
+
+
+def test_speech_heuristic_accepts_speechlike_and_rejects_steady_and_noise():
+    sr = 16000
+    t = np.arange(4 * sr) / sr
+    rng = np.random.default_rng(1)
+    assert ls.looks_speech_like(ls.speech_like_metrics(speechlike()))
+    assert not ls.looks_speech_like(ls.speech_like_metrics((0.2 * np.sin(2 * np.pi * 220 * t)).astype(np.float32)))      # steady tone
+    assert not ls.looks_speech_like(ls.speech_like_metrics((0.2 * rng.standard_normal(4 * sr)).astype(np.float32)))        # white noise
+    assert not ls.looks_speech_like(ls.speech_like_metrics(np.zeros(4 * sr, np.float32)))
+
+
+def test_non_speech_audio_is_inconclusive_not_scored():
+    t = np.arange(16000 * 4) / 16000
+    m = Fake(wav=(0.2 * np.sin(2 * np.pi * 440 * t)).astype(np.float32))
+    r = run(m)
+    assert r.finding == "inconclusive" and r.warnings[0]["code"] == "AUDIO_NOT_SPEECH_LIKE" and m.scored == 0
+    assert "not a speech" in r.warnings[0]["message"]
+
+
+def test_offset_at_search_boundary_is_inconclusive():
+    for off in (15, -15):
+        r = run(Fake(result=SyncResult(off, 4.0, 6.0, 80, 15, np.zeros(31))))
+        assert r.finding == "inconclusive" and r.warnings[0]["code"] == "OFFSET_AT_SEARCH_BOUNDARY"
+    assert run(Fake(result=SyncResult(14, 4.0, 6.0, 80, 15, np.zeros(31)))).finding == "potential_mismatch"
+
+
+def test_confidence_between_old_and_new_minimum_is_inconclusive():
+    r = run(Fake(result=SyncResult(0, 4.0, 2.0, 80, 15, np.zeros(31))))
+    assert r.finding == "inconclusive" and r.warnings[0]["code"] == "LOW_SYNC_CONFIDENCE"
+
+
+def test_offset_band_is_asymmetric_and_old_tolerance_still_available():
+    r = lambda off: SyncResult(off, 4.0, 6.0, 80, 15, np.zeros(31))
+    assert ls.OFFSET_BAND_FRAMES == (-6, 2) and ls.MODULE_VERSION == "syncnet-v2-port-3"
+    for off, want in ((-6, "consistent"), (-3, "consistent"), (2, "consistent"), (3, "potential_mismatch"), (-7, "potential_mismatch")):
+        assert run(Fake(result=r(off))).finding == want
+    sym = Fake(result=r(-3), offset_band=None)                  # port-2 behaviour: symmetric +-2
+    assert sym.offset_band == (-2, 2) and run(sym).finding == "potential_mismatch"
+    assert run(Fake(result=r(-3), offset_band=(-2, 2))).finding == "potential_mismatch"
