@@ -111,10 +111,24 @@ In-the-Wild speakers from 0.610 to 0.813, with wide intervals from 12 speakers.
 On LAV-DF, a fused score trained in the same dataset reaches an AUC of 0.99, but
 a control shows that the visual head separates the dataset's original videos
 from its produced ones and is at chance (0.507) within the produced videos, so
-no audio-visual detection claim is made; the pulse signal check failed. The
-sealed-test results and the three confirmatory tests are not yet run and are
-marked pending. The limits of the evidence include the small development slices
-and the roughly 44 independent identity groups of the Celeb-DF test family.
+no audio-visual detection claim is made; the pulse signal check failed.
+Each frozen iteration was then read once on the sealed test sets, and three
+confirmatory tests were declared beforehand. On the sealed Celeb-DF family test
+(7\,650 videos, 344 groups) the final video system reaches an AUC of
+0.8218 [0.8020, 0.8393] against 0.6238 [0.6015, 0.6486] for the working
+version, a paired difference of +0.1980 [+0.1688, +0.2242], improved by the
+declared rule and also at the 98.33\,\% level. On the sealed In-the-Wild test
+(24\,788 clips, 42 speakers) the final speech system reaches 0.9148 [0.8896,
+0.9383] against 0.7516 [0.6802, 0.8035], a difference of +0.1633 [+0.1177,
++0.2266], improved and robust. Against the re-run Xception baseline (AUC 0.8042
+[0.7841, 0.8223]) the final video system is higher by +0.0176 [+0.0025, +0.0327],
+superior by the declared 95\,\% rule; the 98.33\,\% interval
+[$-0.0011$, +0.0355] contains zero, so superiority is not robust to the
+Bonferroni level, while non-inferiority with a margin of 0.0100 holds at both
+levels. Two of the four written predictions for the speech results failed in the
+optimistic direction. The limits of the evidence include one baseline family at
+one input size, 344 groups for video, 42 speakers for speech, a margin set from
+three seeds and a floor, and one sealed run of each frozen iteration.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -165,7 +179,7 @@ detectors on a protocol that we define and run ourselves.
 \end{enumerate}
 The encoder sweep, the working version and the iterations are reported on the
 development slices and the validation splits and are exploratory; the
-sealed-test results are not yet run and are marked pending
+sealed-test results and the three confirmatory tests are given separately
 (Section~\ref{sec:results}), and a result is stated only after its experiment
 is logged.
 
@@ -500,8 +514,9 @@ videos and no real video, in 44 identity groups, so an AUC on it is computed
 against the real videos of Celeb-DF v2. The pooled family test set holds 744
 real and 6\,906 fake videos, which is strongly imbalanced toward fakes, so
 balanced accuracy and the threshold carry more noise than the AUC. Since the
-independent units are about 44 identities, the intervals stay wide whatever the
-number of videos.
+independent units are the 344 groups of the family set (44 identity groups and
+300 real YouTube videos), and not the videos, the intervals stay wide whatever
+the number of videos.
 
 \subsection{Sealed tests and the staircase}
 Rankings, hyperparameter choices and iteration verdicts that rest on the

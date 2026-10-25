@@ -91,7 +91,11 @@ Result: every path below ran and passed. Logs data/_logs/freeze_test_branches.lo
 - `DRY=1 bash scripts/freeze/run_eval.sh` (the evaluation logic without `--final`, own ledger file): all 15 tags evaluated, exit 0.
 - prepare_crops.py: all four sealed video sets complete (scripts/freeze/check_crops.py): Celeb-DF v2 test_x 4,801 of 4,801 videos, DFD 3,431, Celeb-DF++ 2,849, LAV-DF test_in 2,000; no video without a face frame; 16 of 16 frames in 99.8 percent of the videos or more.
 
-## Untested after the readiness test
+## The freeze run of 2026-10-25 (D-067)
+
+`bash scripts/freeze/run_all.sh --final` 20:16 to 22:07 (I-0 14 min, I-1 18, I-2 to I-4 33, BASE 19, LAV-DF 25); check_score_files.py: all blocks complete, parity at most 5e-09, one expected item (the raw `celebdf_pp` block has one class); `bash scripts/freeze/run_eval.sh` rc 0; three `--compare --final` (T1 to T3) written to data/_final/eval/compare_T*.json; `python scripts/freeze/summarise_final.py` writes data/_results/E-014/. Results: docs/EXPERIMENTS.md E-014.
+
+## Untested after the readiness test (now run, see above)
 
 - The `--final` run on the real sealed files (reading them is the freeze itself): the DFD, Celeb-DF v2 test_x, Celeb-DF++, test_in image and audio extraction at full size, and the evaluation of the sealed score files (first `--final` evaluation of every tag, the ledger writes). Their code paths ran on non-sealed equivalents above.
 - The three `--compare --final` commands (the compare code is unit-tested and now prints the 98.33 percent robustness line, tests/eval/test_eval_devx_compare.py).
