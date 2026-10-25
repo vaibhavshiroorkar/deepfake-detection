@@ -395,11 +395,8 @@ def fig09_lavdf_cells():
     ax.axhline(0.5, color=LINE, lw=0.7, ls="--")
     ax.axvline(len(CELLS) - 0.5, color=LINE, lw=0.7)
     ax.set_xticks(xs)
-    ax.set_xticklabels(["video fake only
-vs real originals", "audio fake only
-vs real originals", "both fake
-vs real originals", "within produced videos
-(label asked: own modality)"], fontsize=9)
+    ax.set_xticklabels(["video fake only\nvs real originals", "audio fake only\nvs real originals", "both fake\nvs real originals",
+                        "within produced videos\n(label asked: own modality)"], fontsize=9)
     ax.set_ylim(0.4, 1.12)
     ax.set_ylabel("AUC, 95 percent interval", fontsize=9)
     ax.tick_params(axis="y", labelsize=9)

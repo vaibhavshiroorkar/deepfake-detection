@@ -13,8 +13,8 @@ This plan lists the stages of the project, the question each stage must answer, 
 | 2 | Metrics, splits, seeds, threshold policy, fixed before any model exists | Evaluation protocol and acceptance test | done: docs/PROTOCOL.md; acceptance A1 to A8 pass (V-001 and V-002) |
 | 3 | The simplest end-to-end MVP | Baseline v0 with results | done on Sun 2026-10-25, ahead of the Mon 2026-10-26 plan: I-0 working version, checkpoint I-0-mvp, parity PASS, page checked on the real checkpoint, E-004, tag iter-0-mvp |
 | 4 | Other models in the same harness, so the final choice has evidence | Comparison table with accuracy, cost, ease of fine-tuning | sweep E-001 to E-003 final (D-049); ease of fine-tuning measured in E-005 for the video task |
-| 5 | Seven experimental iterations I-1 to I-7 after the MVP, each from a written hypothesis and the diagnostic battery; I-8 is integration and freeze | One experiment note per iteration; ladder in docs/ITERATIONS.md (Decided, D-041) | not started |
-| 6 | Whether and where remote heart-rate (rPPG) evidence enters | Feasibility test, then a decision; it is iteration I-7 with its thresholds written in docs/ITERATIONS.md (frozen by D-041) | not started; the sanity check S-1 is planned in parallel with I-1 to I-3 |
+| 5 | Seven experimental iterations I-1 to I-7 after the MVP, each from a written hypothesis and the diagnostic battery; I-8 is integration and freeze | One experiment note per iteration; ladder in docs/ITERATIONS.md (Decided, D-041) | done for the exploratory runs on 2026-10-25 (E-005 to E-012, verdicts in the slot table); the sealed staircase is the freeze step and is not run |
+| 6 | Whether and where remote heart-rate (rPPG) evidence enters | Feasibility test, then a decision; it is iteration I-7 with its thresholds written in docs/ITERATIONS.md (frozen by D-041) | done: S-1 failed (E-006, D-052), rPPG signal not recoverable from these data, no separation or fusion experiment run |
 | 7 | Paper (IEEE, LaTeX), technical report, presentation | Documents assembled from the logs | scaffolds built and committed (D-014); no results |
 
 ## Deadline and constraints
