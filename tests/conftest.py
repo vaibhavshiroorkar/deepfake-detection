@@ -31,3 +31,15 @@ def media(tmp_path_factory):
     (d / "empty.png").write_bytes(b"")
     (d / "notes.txt").write_text("hello")
     return d
+
+
+def pytest_report_header(config):
+    """Print the tested source state at the top of every run, so that a saved log identifies the commit (read-only git queries)."""
+    def git(*a):
+        try:
+            return subprocess.run(["git", *a], capture_output=True, text=True, timeout=10, cwd=str(config.rootpath)).stdout.strip()
+        except Exception:  # noqa: BLE001 - header only, never fails a run
+            return ""
+    head = git("rev-parse", "HEAD") or "unknown (not a git checkout?)"
+    dirty = git("status", "--porcelain", "--untracked-files=no")
+    return f"tested source state: git HEAD {head}; tracked files {'MODIFIED vs HEAD (' + str(len(dirty.splitlines())) + ' files)' if dirty else 'clean'}"

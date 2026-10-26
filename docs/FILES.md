@@ -115,3 +115,8 @@ One row per file or folder. Status is `exists`, `planned` or `missing`. A `plann
 | scripts/genvideo/install_head.py, e020_diagnostic.py, repro_check.py | Install C2 as head.npz with corrected metadata; descriptive post-hoc diagnostic of the frozen head; live-vs-experiment reproducibility check | D-072, E-020 | run 2026-10-26 |
 | scripts/lipsync_eval/e025.py, data/_results/platform/e025_*.json | Offset band calibration and disjoint validation (module used unchanged as instrument) | E-025, D-073 | run 2026-10-26 |
 | scripts/platform/live_c2pa_e2e.py, data/_results/platform/live_c2pa_e2e.json | Live API check of C2PA states with an ephemeral test PKI | Workstream 5 | run 2026-10-26 |
+| README.md, docs/SETUP.md | Entry point and setup guide: environment, optional C2PA, ignored artifacts, hashes, what happens when one is missing, unresolved licences, how a future head is approved | D-074 (post-audit) | exists |
+| docs/RESEARCH_INTEGRITY.md | What git history can and cannot show about the order of preregistrations and runs (E-019 to E-025), protected-path integrity limits, ledger field note, rules for future runs | D-074, CLAUDE.md rules 2 and 9 | exists |
+| tests/platform_provenance/test_c2pa_unavailable.py | C2PA behaviour without the optional package (simulated) | D-074 | exists |
+| tests/conftest.py (pytest_report_header) | Prints git HEAD and dirty state at the top of every test run | D-074 | exists |
+| pyproject.toml, uv.lock | Dependencies: transformers and timm core, requests and cryptography in the dev group, optional extra `c2pa` (c2pa-python==0.38.0); lock regenerated with uv on 2026-10-26 | D-074 | updated (uncommitted) |

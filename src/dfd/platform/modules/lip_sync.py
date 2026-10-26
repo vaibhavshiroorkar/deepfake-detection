@@ -89,7 +89,7 @@ LIMITATIONS = [
     "were flagged potential_mismatch in 1.3% [0.4, 3.8] (3 of 230) under the band -6 to +2 frames, against 11.7% (27 of 230) under the earlier +-2 frame rule. "
     "The cost: the 160 Wav2Lip-based FakeAVCeleb fakes, which sit at an offset of -3 or -2 frames, are now flagged in 0 of 160 cases (E-024 flagged 85 to 93% with "
     "the old rule), and audio shifted by -120, +120, -240, +240, +-480 ms (sign as in E-022) is flagged in 14, 2, 26, 14 and 26 of 28 clips each (30 LAV-DF clips, those with a confident base offset). The band describes how far real speech clips in this data drift from SyncNet's zero; it is not a "
-    "detector of lip-sync fakes and has not been tested on any other media.",
+    "detector of lip-sync fakes and has not been tested on any other media. The LAV-DF half of the fitting and validation pools was split by file, not by speaker, so same-speaker overlap cannot be excluded: the 1.3% is not evidence of speaker-independent generalisation.",
     SPEECH_NOT_CHECKED,
 ]
 SCORE_MEANING = ("SyncNet confidence (median over the 31 candidate shifts of the mean embedding distance, minus its minimum), divided by "
@@ -256,7 +256,13 @@ class LipSyncModule:
             return Applicability.no("the video has no audio stream")
         if probe.has_video is False:
             return Applicability.no("the file has no video stream")
+        if not self._weights_available():
+            return Applicability.unsupported(f"the SyncNet weights file is not installed ({self.weights_path.name} not found; see docs/SETUP.md)")
         return Applicability.yes()
+
+    def _weights_available(self) -> bool:
+        """A missing weights file is an unsupported configuration, not an inference failure (tests replace this with a constant)."""
+        return self.weights_path.is_file()
 
     def _result(self, **kw) -> ModuleResult:
         return ModuleResult(module_id=self.module_id, version=self.version, section=self.section, source=self.source, **kw)

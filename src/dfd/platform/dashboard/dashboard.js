@@ -204,7 +204,8 @@
       if (isObj(m.score)) {
         var sc = el("div", "kv");
         sc.appendChild(el("b", null, "Score: "));
-        sc.appendChild(el("span", null, str(m.score.value) + (m.source === "mock" ? " (MOCK number)" : "")));
+        var expScore = Array.isArray(m.warnings) && m.warnings.some(function (w) { return isObj(w) && /^EXPERIMENTAL/.test(str(w.code)); });
+        sc.appendChild(el("span", null, str(m.score.value) + (m.source === "mock" ? " (MOCK number)" : "") + (expScore ? " (experimental, for inspection only; no decision is made from it)" : "")));
         card.appendChild(sc);
         card.appendChild(el("div", "kv", "Meaning: " + str(m.score.meaning)));
         card.appendChild(el("div", "kv", "Calibrated: " + (m.score.calibrated ? "yes" : "no") +

@@ -45,6 +45,9 @@ class Fake(ls.LipSyncModule):
     def weights_sha256(self):
         return "a" * 64
 
+    def _weights_available(self):
+        return True
+
     def _load_audio(self, path):
         return self.wav
 
@@ -227,3 +230,16 @@ def test_offset_band_is_asymmetric_and_old_tolerance_still_available():
     sym = Fake(result=r(-3), offset_band=None)                  # port-2 behaviour: symmetric +-2
     assert sym.offset_band == (-2, 2) and run(sym).finding == "potential_mismatch"
     assert run(Fake(result=r(-3), offset_band=(-2, 2))).finding == "potential_mismatch"
+
+
+def test_missing_weights_file_is_unsupported_not_a_failure(tmp_path):
+    m = ls.LipSyncModule(weights_path=tmp_path / "absent.model", device="cpu")
+    a = m.applicability(probe())
+    assert a.kind == "unsupported" and "weights" in a.reason
+    assert m.applicability(probe(media_type="image", has_audio=False)).kind == "not_applicable"   # media checks still come first
+
+
+def test_missing_weights_file_through_coordinator_is_unsupported(tmp_path):
+    from dfd.platform.coordinator import Coordinator
+    r = Coordinator([ls.LipSyncModule(weights_path=tmp_path / "absent.model", device="cpu")]).analyse(probe(), "t")
+    assert schema.validate_report(r) == [] and r["modules"][0]["status"] == "unsupported" and r["modules"][0]["finding"] is None
