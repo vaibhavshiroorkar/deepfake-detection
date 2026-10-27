@@ -1,8 +1,7 @@
-"""The torch cross-attention must not drift from the documented numpy spec.
+"""The torch cross-attention must not drift from the numpy specification below.
 
-`dashboard/lib/cross_modal.py` is what the streams pages have shown and what the
-handbook describes. If the trainable module quietly diverges from it, the page
-stops describing the model and nobody finds out.
+The two numpy functions are the formulas the handbook states. If the trainable
+module quietly diverges from them, the docs stop describing the model.
 """
 
 import numpy as np
@@ -11,15 +10,27 @@ import pytest
 pytest.importorskip("torch")
 import torch
 
-pytest.importorskip("streamlit")
-
-
-from deepfake_detection.dashboard.lib import cross_modal
-from deepfake_detection.streams.cross_attention import (
+from deepfake_detection.streams.cross_attention import (  # noqa: E402
     CrossModalAttention,
     diagonal_mass,
     scaled_dot_product_attention,
 )
+
+
+def reference_attention(query, key, value):
+    """softmax(QK^T / sqrt(d_k)) V, returning (weights, output)."""
+    scores = query @ key.T / np.sqrt(query.shape[1])
+    weights = np.exp(scores - scores.max(axis=1, keepdims=True))
+    weights /= weights.sum(axis=1, keepdims=True)
+    return weights, weights @ value
+
+
+def reference_diagonal_mass(weights, band=1):
+    """Fraction of attention mass within `band` steps of the diagonal."""
+    rows, cols = weights.shape
+    r = np.arange(rows)[:, None]
+    c = np.arange(cols)[None, :]
+    return float(weights[np.abs(r * (cols / rows) - c) <= band].sum() / rows)
 
 
 def test_attention_matches_the_numpy_specification() -> None:
@@ -28,9 +39,7 @@ def test_attention_matches_the_numpy_specification() -> None:
     key = generator.normal(size=(11, 16)).astype(np.float32)
     value = generator.normal(size=(11, 16)).astype(np.float32)
 
-    expected_weights, expected_attended = cross_modal.scaled_dot_product_attention(
-        query, key, value
-    )
+    expected_weights, expected_attended = reference_attention(query, key, value)
     result = scaled_dot_product_attention(
         torch.from_numpy(query).unsqueeze(0),
         torch.from_numpy(key).unsqueeze(0),
@@ -46,7 +55,7 @@ def test_diagonal_mass_matches_the_numpy_specification() -> None:
     weights = generator.random((13, 13)).astype(np.float32)
     weights /= weights.sum(axis=1, keepdims=True)
 
-    expected = cross_modal.diagonal_mass(weights, band=1)
+    expected = reference_diagonal_mass(weights, band=1)
     result = diagonal_mass(torch.from_numpy(weights).unsqueeze(0), band=1)
 
     assert result.shape == (1,)

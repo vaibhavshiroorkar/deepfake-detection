@@ -148,9 +148,7 @@ def main(argv: list[str] | None = None) -> int:
 
     branches = ("visual", "audio", "sync")
     combinations = [
-        tuple(c)
-        for size in (1, 2, 3)
-        for c in itertools.combinations(branches, size)
+        tuple(c) for size in (1, 2, 3) for c in itertools.combinations(branches, size)
     ]
 
     results = []
@@ -280,7 +278,9 @@ def main(argv: list[str] | None = None) -> int:
     }
     out = arguments.output or run / "evaluation" / f"fusion-ablation{suffix}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    out.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     print(f"\nwrote {out}")
     return 0
 

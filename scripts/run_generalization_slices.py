@@ -266,9 +266,7 @@ def main(argv: list[str] | None = None) -> int:
         if entry["roc_auc"] is not None and entry["roc_auc_with_method_in_fit"]:
             entry["delta"] = entry["roc_auc"] - entry["roc_auc_with_method_in_fit"]
         holdout[method] = entry
-    _print_table(
-        "head-only method holdout (branches still saw every method):", holdout
-    )
+    _print_table("head-only method holdout (branches still saw every method):", holdout)
     print("  delta against the same method with it in the fit:")
     for method, entry in holdout.items():
         if "delta" in entry:
@@ -286,9 +284,7 @@ def main(argv: list[str] | None = None) -> int:
         subgroups[field] = rows
         _print_table(f"{field}, shipped fusion head on in-domain test:", rows)
 
-    resolved = [
-        entry["roc_auc"] for entry in per_method.values() if entry["roc_auc"]
-    ]
+    resolved = [entry["roc_auc"] for entry in per_method.values() if entry["roc_auc"]]
     if resolved:
         print(
             f"per-method spread: {min(resolved):.4f} to {max(resolved):.4f}, "

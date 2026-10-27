@@ -1,3 +1,4 @@
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -171,6 +172,45 @@ def fixture_record() -> ClipRecord:
             "leading_silence_sec": "0.5",
         }
     )
+
+
+def test_silent_video_keeps_visual_evidence_and_has_no_audio_lengths(tmp_path):
+    class SilentDecoder(FixtureDecoder):
+        def probe(self, path):
+            return MediaInfo(5.0, 25.0, 0.0, False)
+
+        def read_audio(self, *args, **kwargs):
+            raise AssertionError("Silent media must not decode audio")
+
+    media = tmp_path / "silent.mp4"
+    media.write_bytes(b"fixture")
+    prepared = Preprocessor(
+        decoder=SilentDecoder(),
+        detector=FixtureDetector(),
+        config=ViewConfig(),
+        code_version="test",
+    ).prepare(fixture_record(), media)
+
+    assert prepared.visual_view is not None
+    assert prepared.audio_view is None
+    assert prepared.audio_valid_samples is None
+    assert prepared.sync_audio_valid_samples is None
+    assert "missing_audio" in prepared.quality.full_fusion_blockers()
+
+
+def test_explicit_zero_sync_start_preserves_a_genuine_annotated_window(tmp_path):
+    media = tmp_path / "matched.mp4"
+    media.write_bytes(b"fixture")
+    decoder = RecordingDecoder()
+    Preprocessor(
+        decoder=decoder,
+        detector=FixtureDetector(),
+        config=ViewConfig(),
+        code_version="test",
+    ).prepare(replace(fixture_record(), sync_start_sec=0.0), media)
+
+    assert decoder.frame_requests[1][0] == pytest.approx(0.02)
+    assert (0.0, 2.0) in decoder.audio_requests
 
 
 def test_view_config_rejects_unknown_mouth_crop_mode() -> None:

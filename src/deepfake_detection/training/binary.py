@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -11,6 +10,8 @@ from torch.optim import Optimizer
 from deepfake_detection.data.datasets import BranchBatch
 
 from .engine import run_accumulated_epoch
+from .ranking import roc_auc
+from .selection import BestEpoch
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,6 +39,9 @@ class BinaryEpochRecord:
     validation_loss: float
     optimizer_steps: int
     backbone_trainable: bool
+    # Selection score. NaN when the validation split holds one class. Histories
+    # written before selection moved to AUC do not carry it.
+    validation_auc: float = float("nan")
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,34 +64,34 @@ def _batch_loss(
 
 
 def _forward(model: nn.Module, batch: BranchBatch, values: torch.Tensor):
-    """Call the branch, passing valid lengths only when both sides have them.
+    from .input_contract import audio_forward
 
-    Visual batches never carry a sample count and the visual branch takes no
-    such argument, so the keyword is passed only for audio batches from a cache
-    that recorded it. Everything else is the original single-argument call.
-    """
-    if batch.valid_samples is None:
-        return model(values)
-    return model(values, valid_samples=batch.valid_samples.to(values.device))
+    return audio_forward(model, values, batch.valid_samples)
 
 
-def _validation_loss(
+def _validate(
     model: nn.Module,
     batches: Sequence[BranchBatch],
     *,
     device: str,
     criterion: nn.Module,
-) -> float:
+) -> tuple[float, float]:
+    """Mean validation loss and ROC-AUC."""
     if not batches:
         raise ValueError("Validation batches cannot be empty")
     model.eval()
     losses: list[float] = []
+    scores: list[torch.Tensor] = []
+    labels: list[torch.Tensor] = []
     with torch.inference_mode():
         for batch in batches:
-            losses.append(
-                float(_batch_loss(model, batch, device=device, criterion=criterion))
-            )
-    return sum(losses) / len(losses)
+            values = batch.values.to(device)
+            target = batch.labels.to(device)
+            logits = _forward(model, batch, values).logits
+            losses.append(float(criterion(logits, target)))
+            scores.append(logits.detach().cpu())
+            labels.append(target.detach().cpu())
+    return sum(losses) / len(losses), roc_auc(torch.cat(scores), torch.cat(labels))
 
 
 def fit_binary_branch(
@@ -104,10 +108,10 @@ def fit_binary_branch(
         pos_weight=torch.tensor(config.positive_weight, device=device)
     )
     records: list[BinaryEpochRecord] = []
-    best_loss = float("inf")
-    best_epoch = 0
-    best_state: dict[str, torch.Tensor] | None = None
-    stale_epochs = 0
+    selection = BestEpoch(
+        patience=config.early_stopping_patience,
+        minimum_improvement=config.minimum_improvement,
+    )
     for epoch in range(config.epochs):
         backbone_trainable = epoch >= config.freeze_epochs
         setter = getattr(model, "set_backbone_trainable", None)
@@ -128,11 +132,19 @@ def fit_binary_branch(
                 criterion=criterion,
             ),
         )
-        validation_loss = _validation_loss(
+        validation_loss, validation_auc = _validate(
             model,
             validation_batches,
             device=device,
             criterion=criterion,
+        )
+        # Printed, not only logged: MLflow receives metrics when the run ends,
+        # so without this an hour-long run is invisible until it finishes.
+        print(
+            f"epoch {epoch + 1}/{config.epochs}  train {train.mean_loss:.4f}  "
+            f"val {validation_loss:.4f}  AUC {validation_auc:.4f}  "
+            f"backbone={'on' if backbone_trainable else 'frozen'}",
+            flush=True,
         )
         records.append(
             BinaryEpochRecord(
@@ -141,18 +153,10 @@ def fit_binary_branch(
                 validation_loss=validation_loss,
                 optimizer_steps=train.optimizer_steps,
                 backbone_trainable=backbone_trainable,
+                validation_auc=validation_auc,
             )
         )
-        if validation_loss < best_loss - config.minimum_improvement:
-            best_loss = validation_loss
-            best_epoch = epoch + 1
-            best_state = copy.deepcopy(model.state_dict())
-            stale_epochs = 0
-        else:
-            stale_epochs += 1
-            if stale_epochs >= config.early_stopping_patience:
-                break
-    if best_state is None:
-        raise RuntimeError("Training did not produce a checkpoint candidate")
-    model.load_state_dict(best_state)
+        if selection.update(epoch=epoch + 1, score=validation_auc, model=model):
+            break
+    best_epoch = selection.restore(model)
     return BinaryTrainingHistory(epochs=tuple(records), best_epoch=best_epoch)

@@ -1,5 +1,11 @@
 # Findings
 
+The fusion, LAV-DF and PE/CLIP results below are historical measurements with known protocol defects.
+Outer-fold labels selected the checkpoints that produced the original OOF features.
+Explicit zero-start LAV-DF windows could shift into annotated manipulation.
+PE/CLIP features used the wrong input normalization.
+Affected registry rows require reruns. Their old scores do not establish the corrected pipeline's performance.
+
 ## Finding contract
 
 Every finding cites a result ID from
@@ -1274,7 +1280,7 @@ target. Scoring the two arms on one axis needs a reduction that is fair to both,
 and inventing one after seeing the losses is how a comparison becomes a
 rationalisation.
 
-### F33. Perception Encoder beats DINOv3 on unseen generators, by half what was claimed
+### F33. Historical encoder comparison requires corrected normalization
 
 Result: `A-encoder-comparison`, with `C-df26-logo-pe` as the new headline. Three
 frozen encoders, one probe, one split: the frame-rate-controlled DF26 corpus
@@ -1286,8 +1292,8 @@ normalised with ImageNet statistics. That is right for DINOv3 and wrong for the
 other two: Perception Encoder was trained with mean and std 0.5, CLIP with the
 OpenAI values, so PE saw inputs scaled about 2.2 times off. The extractor now
 applies each encoder's own statistics and records them in the feature file. The
-numbers below are what the mis-normalised encoders scored, and stand until the
-features are re-extracted.
+numbers below describe the old features. The ranking and encoder recommendation
+are withdrawn until corrected features are extracted and scored.
 
 | Encoder | Macro ROC-AUC | Against DINOv3 |
 | --- | ---: | --- |
@@ -1298,8 +1304,8 @@ features are re-extracted.
 Perception Encoder leads DINOv3 on all seven held-out generators. The largest
 gains are Wan 2.6 at +0.148 and HunyuanVideo at +0.090, the two generators the
 frame-rate control hit hardest. PE against CLIP is not separated, -0.0073
-[-0.0603, +0.0463], so PE ships on its point estimate and because it was the
-encoder the recommendation already named.
+[-0.0603, +0.0463], so the historical comparison did not separate them. It no longer supports
+shipping PE or ranking the encoders.
 
 | Held-out generator | PE ROC-AUC |
 | --- | --- |
@@ -1332,6 +1338,10 @@ One seed and one split. The probe is linear and deterministic given the split,
 so the remaining variance is which source videos land in the test set.
 
 ### F34. An unseen manipulation family costs 0.12, and one family is at chance
+
+The historical FF++ probe separates target sources only. Donor identities can
+appear on both sides. Use `train_logo_probe.py --identity-protocol ffpp-strict`
+for the donor-aware stress test. That corrected stress test remains unmeasured.
 
 Result: `C-ffpp-family-holdout`. The visual stream, face crops through a
 fine-tuned EfficientNet, retrained six times on FaceForensics++ c23 with one

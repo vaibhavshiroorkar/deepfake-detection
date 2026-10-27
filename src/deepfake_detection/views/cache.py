@@ -38,7 +38,7 @@ def cache_fingerprint(
     config: ViewConfig,
     code_version: str,
     leading_silence_sec: float = 0.0,
-    sync_start_sec: float = 0.0,
+    sync_start_sec: float | None = None,
 ) -> str:
     payload = {
         "preprocessing_config_hash": preprocessing_config_hash(
@@ -49,15 +49,9 @@ def cache_fingerprint(
         "leading_silence_sec": leading_silence_sec,
         "media_sha256": _content_hash(media_path),
     }
-    # Added to the payload only when a dataset actually overrides the window,
-    # which keeps every fingerprint written before this option existed
-    # byte-identical. A new key present on every clip would have invalidated the
-    # whole cache to record a value that is zero almost everywhere.
-    #
-    # Two windows cut from one clip must not collide, so the offset has to be
-    # part of the key: the same media file, same config and same dataset would
-    # otherwise map both to one entry and the second would overwrite the first.
-    if sync_start_sec:
+    # Explicit zero formerly used the default window. Giving it a distinct key
+    # prevents a corrected genuine window from reusing that contaminated entry.
+    if sync_start_sec is not None:
         payload["sync_start_sec"] = sync_start_sec
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(encoded).hexdigest()

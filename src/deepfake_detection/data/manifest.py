@@ -35,8 +35,8 @@ class ClipRecord:
     # knows better than the default. LAV-DF places a 0.8 to 1.6 second forgery
     # somewhere inside an otherwise genuine clip, so a window pinned to the
     # start of the clip usually contains no manipulation at all while carrying a
-    # fake label. Zero means "decide it the usual way".
-    sync_start_sec: float = 0.0
+    # fake label. None selects the default; zero explicitly starts at the origin.
+    sync_start_sec: float | None = None
 
     def __post_init__(self) -> None:
         for name in ("clip_id", "dataset", "method", "source"):
@@ -46,7 +46,9 @@ class ClipRecord:
             raise ValueError("video_path cannot be blank")
         if not math.isfinite(self.leading_silence_sec) or self.leading_silence_sec < 0:
             raise ValueError("Leading silence must be a finite nonnegative value")
-        if not math.isfinite(self.sync_start_sec) or self.sync_start_sec < 0:
+        if self.sync_start_sec is not None and (
+            not math.isfinite(self.sync_start_sec) or self.sync_start_sec < 0
+        ):
             raise ValueError("Sync start must be a finite nonnegative value")
         expected_video_fake = self.manipulation_type.startswith("FakeVideo-")
         expected_audio_fake = self.manipulation_type.endswith("-FakeAudio")
@@ -85,7 +87,11 @@ class ClipRecord:
             race=row.get("race", "unknown").strip() or "unknown",
             gender=row.get("gender", "unknown").strip() or "unknown",
             leading_silence_sec=float(row.get("leading_silence_sec", "0") or 0),
-            sync_start_sec=float(row.get("sync_start_sec", "0") or 0),
+            sync_start_sec=(
+                float(row["sync_start_sec"])
+                if str(row.get("sync_start_sec", "") or "").strip()
+                else None
+            ),
         )
 
 
@@ -99,8 +105,9 @@ def load_manifest(path: Path, *, dataset: str) -> ManifestLoadResult:
     with path.open(newline="", encoding="utf-8-sig") as handle:
         rows: Sequence[dict[str, str]] = tuple(csv.DictReader(handle))
 
-    def window_of(row: dict[str, str]) -> float:
-        return float(row.get("sync_start_sec", "0") or 0)
+    def window_of(row: dict[str, str]) -> float | None:
+        value = str(row.get("sync_start_sec", "") or "").strip()
+        return float(value) if value else None
 
     # Keyed on the window as well as the file. LAV-DF cuts two clips from one
     # recording on purpose, a window on the manipulated span and a window that
@@ -110,12 +117,23 @@ def load_manifest(path: Path, *, dataset: str) -> ManifestLoadResult:
     #
     # The original guard is unchanged for everything else: FakeAVCeleb lists
     # about 22 files twice with conflicting methods and no window offset, so
-    # those still collide on (path, 0.0) and are still quarantined.
-    by_window: dict[tuple[Path, float], list[dict[str, str]]] = {}
+    # those still collide on (path, None) and are still quarantined.
+    by_window: dict[tuple[Path, float | None], list[dict[str, str]]] = {}
+    allowed_datasets = (
+        {"FakeAVCeleb", "FaceForensics++"}
+        if dataset == "FakeAVCeleb+FF++"
+        else {dataset}
+    )
     for row in rows:
+        stored_dataset = (row.get("dataset") or "").strip()
+        if stored_dataset and stored_dataset not in allowed_datasets:
+            raise ValueError(
+                f"Manifest dataset {stored_dataset!r} does not match requested dataset {dataset!r}"
+            )
+        row["dataset"] = stored_dataset or dataset
         by_window.setdefault((Path(row["video_path"]), window_of(row)), []).append(row)
 
-    paths_by_clip: dict[str, set[tuple[Path, float]]] = {}
+    paths_by_clip: dict[str, set[tuple[Path, float | None]]] = {}
     for row in rows:
         paths_by_clip.setdefault(row["clip_id"], set()).add(
             (Path(row["video_path"]), window_of(row))
@@ -134,7 +152,7 @@ def load_manifest(path: Path, *, dataset: str) -> ManifestLoadResult:
         if len(signatures) > 1:
             quarantined.append(video_path)
             continue
-        records.append(ClipRecord.from_mapping({**path_rows[0], "dataset": dataset}))
+        records.append(ClipRecord.from_mapping(path_rows[0]))
 
     return ManifestLoadResult(
         records=tuple(records),

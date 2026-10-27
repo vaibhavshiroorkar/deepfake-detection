@@ -1,17 +1,21 @@
 # Validity checks catch a detector that looks right and is not
 
-Draft. Every number here resolves to a row in
-[result traceability](result-traceability.md). Of 41 rows, 6 are `accepted`, 35
-are `provisional (1 seed)` and none is `pending`. The protocol asks for three
-training seeds. Design A's three branches and its fusion head now have them, and
-every Design B stream has one. Section 7 states that and the rest of the limits
-plainly, and section 5.13 measures what a seed is worth.
+The fusion, LAV-DF and PE/CLIP results below are historical measurements with known protocol defects.
+Outer-fold labels selected the checkpoints that produced the original OOF features.
+Explicit zero-start LAV-DF windows could shift into annotated manipulation.
+PE/CLIP features used the wrong input normalization.
+Affected registry rows require reruns. Their old scores do not establish the corrected pipeline's performance.
+
+Draft. Every historical number resolves through [result traceability](result-traceability.md).
+A declared seed count does not establish acceptance. The registry requires
+verified seed artifacts and matching protocols.
 
 ## Abstract
 
 We ask whether cue-specific fusion of visual artifacts, audio spoofing and
 mouth-audio alignment generalizes better than a strong visual baseline, under
-source-disjoint and shortcut-controlled evaluation. It does not, on our data.
+source-disjoint and shortcut-controlled evaluation. Historical measurements
+suggested no gain, but that conclusion requires a nested cross-fitting rerun.
 The contribution is not the architecture and not the accuracy. It is a set of
 validity checks that caught a detector which looked right and was not, and the
 measurements those checks produced.
@@ -37,9 +41,9 @@ A second track applies the same checks to video generated whole. On DF26, a
 frozen encoder with a linear probe is scored on each of seven generators it never
 saw. Four shortcuts were caught before any number was reported: scene content,
 shared real clips, sibling generation modes and audio presence. A frame-rate
-control followed. Under that protocol a Perception Encoder probe reads macro
-ROC-AUC **0.7527**, and it beats DINOv3 by 0.0741 in a paired comparison. That
-reversed the mechanism argument the project had used to keep DINOv3.
+control followed. The historical PE score was 0.7527, with a paired difference of 0.0741 against DINOv3.
+PE and CLIP used incorrect normalization. These scores cannot support encoder
+selection until corrected features and paired comparisons have been rerun.
 
 Two further results bound where any of this works. A full-frame probe is at
 chance on face manipulation, while face crops lose 0.12 to an unseen

@@ -2,26 +2,16 @@
 
 Run: uv run streamlit run src/deepfake_detection/dashboard/app.py
 
-Two things live side by side here. The teaching pages walk one clip through the
-pipeline a stage at a time with configurable models. The Evidence gate runs the
-one frozen baseline that has provenance behind it. Both are reachable from the
-same sidebar so the difference between "what a stage does" and "what this
-project can currently claim" is visible rather than implied.
+The pages walk one clip through the pipeline a stage at a time with models you
+configure, and report what each stage measured. Verdicts for users come from
+the web app (`ddf-web`), not from here.
 
 Nothing in this dashboard trains a model or writes into data/.
 """
 
-from pathlib import Path
-
 import streamlit as st
 
-from deepfake_detection.dashboard.configuration import dashboard_defaults
-from deepfake_detection.dashboard.lib import locked
-
-_THRESHOLD = 0.5
-_DEVICE = "cuda"
-
-st.set_page_config(page_title="Evidence Gate", page_icon=None, layout="wide")
+st.set_page_config(page_title="Pipeline", page_icon=None, layout="wide")
 
 st.markdown(
     """
@@ -122,72 +112,35 @@ st.markdown(
 )
 
 
-# One flat list in pipeline order, each entry carrying how to draw it. A spec
-# marks a page locked: it shows in place, dimmed with a lock icon, and does not
-# respond to a click. `child` indents an entry under the section above it.
-#
-# Nothing is locked now. Fusion and Explainability were, because the only fusion
-# artifact was a software fixture and there was no trained model to explain.
-# `runs/program-20260906` holds a fusion model fitted on genuine out-of-fold
-# features with an ablation over every branch subset, so both pages read
-# recorded results instead of describing what they will hold.
-#
-# The nav is still drawn by hand: st.navigation has no disabled entry, so the
-# built-in one stays hidden and st.page_link renders the list, ready to dim a
-# future stage the same way.
+# One flat list in pipeline order. `child` indents an entry under the section
+# above it. The nav is drawn by hand because st.navigation's section headers
+# cannot themselves be pages, which the Streams hub has to be.
 PAGES = [
-    (st.Page("pages/overview.py", title="Overview", default=True), None, False),
-    (st.Page("pages/gate.py", title="Evidence gate"), None, False),
+    (st.Page("pages/overview.py", title="Overview", default=True), False),
     # The pipeline spine, in the order a clip travels it: preprocessing turns
     # a video into tensors, the three streams read those tensors, and fusion
     # combines what they produce.
-    (st.Page("pages/preprocess.py", title="Preprocessing"), None, False),
-    (st.Page("pages/streams.py", title="Streams"), None, False),
-    (st.Page("pages/stream_visual.py", title="Visual"), None, True),
-    (st.Page("pages/stream_lipsync.py", title="Lip-Sync"), None, True),
-    (st.Page("pages/stream_emotion.py", title="Emotion"), None, True),
-    (st.Page("pages/fusion.py", title="Fusion"), None, False),
-    # The Design A branches. They used to sit indented under Streams, which put
-    # two pages from the other architecture between the streams and the fusion
-    # that reads them. They are their own lineage, so they stand on their own.
-    (st.Page("pages/audio_branch.py", title="Audio branch"), None, False),
-    (st.Page("pages/sync_branch.py", title="Sync branch"), None, False),
-    (st.Page("pages/experiments.py", title="Experiments"), None, False),
-    (st.Page("pages/explainability.py", title="Explainability"), None, False),
-    (st.Page("pages/documentation.py", title="Documentation"), None, False),
+    (st.Page("pages/preprocess.py", title="Preprocessing"), False),
+    (st.Page("pages/streams.py", title="Streams"), False),
+    (st.Page("pages/stream_visual.py", title="Visual"), True),
+    (st.Page("pages/stream_lipsync.py", title="Lip-Sync"), True),
+    (st.Page("pages/stream_emotion.py", title="Emotion"), True),
+    (st.Page("pages/fusion.py", title="Fusion"), False),
+    # The Design A branches are their own lineage, so they stand on their own
+    # rather than under the Design B streams.
+    (st.Page("pages/audio_branch.py", title="Audio branch"), False),
+    (st.Page("pages/sync_branch.py", title="Sync branch"), False),
+    (st.Page("pages/experiments.py", title="Experiments"), False),
+    (st.Page("pages/explainability.py", title="Explainability"), False),
+    (st.Page("pages/documentation.py", title="Documentation"), False),
 ]
 
-nav = st.navigation([page for page, _, _ in PAGES], position="hidden")
-
-defaults = dashboard_defaults(root=Path.cwd())
+nav = st.navigation([page for page, _ in PAGES], position="hidden")
 
 with st.sidebar:
-    for page, spec, child in PAGES:
-        # A narrow spacer column is the indent. st.page_link has no notion of
-        # nesting, and st.navigation's section headers cannot themselves be
-        # pages, which the Streams hub has to be.
+    for page, child in PAGES:
+        # A narrow spacer column is the indent; st.page_link has no nesting.
         target = st.columns([1, 9])[1] if child else st
-        if spec is None:
-            target.page_link(page, width="stretch")
-        else:
-            target.page_link(
-                page,
-                icon=":material/lock:",
-                disabled=True,
-                help=locked.tooltip(spec),
-                width="stretch",
-            )
-
-    st.divider()
-    st.header("Frozen baseline")
-    st.write("Visual-only EfficientNet-B0 plus GRU")
-    st.caption(f"Checkpoint: {defaults.visual_checkpoint.name}")
-    st.caption(f"Run: {defaults.run_id}")
-    st.caption(f"Decision threshold: {_THRESHOLD:.2f}")
-    st.caption(f"Compute device: {_DEVICE}")
-    st.caption(
-        "These provenance values bind the Evidence gate only. The teaching pages "
-        "build their own models and load whatever checkpoint you pick."
-    )
+        target.page_link(page, width="stretch")
 
 nav.run()

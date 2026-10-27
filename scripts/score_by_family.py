@@ -19,7 +19,6 @@ tables for the same family is the generalization measurement.
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import sys
 from dataclasses import dataclass
@@ -80,9 +79,7 @@ def main(argv: list[str] | None = None) -> int:
     checkpoint = arguments.checkpoint or (
         arguments.run_dir / "checkpoints" / "visual-efficientnet.pt"
     )
-    manifest = arguments.manifest or (
-        arguments.run_dir / "split" / "test-usable.csv"
-    )
+    manifest = arguments.manifest or (arguments.run_dir / "split" / "test-usable.csv")
     history = json.loads(
         checkpoint.with_name(checkpoint.stem + "-history.json").read_text(
             encoding="utf-8"
@@ -93,10 +90,9 @@ def main(argv: list[str] | None = None) -> int:
     load_checkpoint(checkpoint, model=model)
     model = model.to(arguments.device).eval()
 
-    index: dict[str, Path] = {}
-    with (arguments.run_dir / "cache-index.csv").open(encoding="utf-8") as handle:
-        for row in csv.DictReader(handle):
-            index[row["clip_id"]] = arguments.run_dir / row["cache_path"]
+    from deepfake_detection.data.cache_index import read_cache_index
+
+    index = read_cache_index(arguments.run_dir / "cache-index.csv")
     store = CacheStore(arguments.run_dir / "cache")
 
     records = []
@@ -107,9 +103,7 @@ def main(argv: list[str] | None = None) -> int:
         prepared = store.load(path, views=("visual_view",))
         if prepared.visual_view is None:
             continue
-        if not same_preprocessing(
-            prepared.preprocessing_config_hash, expected_hash
-        ):
+        if not same_preprocessing(prepared.preprocessing_config_hash, expected_hash):
             raise SystemExit(
                 f"Cache hash {prepared.preprocessing_config_hash[:12]} does not "
                 f"match the checkpoint's {expected_hash[:12]}"
@@ -130,12 +124,12 @@ def main(argv: list[str] | None = None) -> int:
         for batch in batches:
             logit, _ = model(batch.values.to(arguments.device))
             for clip_id, value, label in zip(
-                batch.clip_ids, logit.cpu().tolist(), batch.labels.tolist(),
+                batch.clip_ids,
+                logit.cpu().tolist(),
+                batch.labels.tolist(),
                 strict=True,
             ):
-                scored.append(
-                    _Scored(float(value), int(label), by_id[clip_id].source)
-                )
+                scored.append(_Scored(float(value), int(label), by_id[clip_id].source))
 
     # One label definition throughout. `item.label` comes from the visual branch
     # dataset, which is `video_fake`, so the family arm must use `video_fake`
@@ -149,9 +143,7 @@ def main(argv: list[str] | None = None) -> int:
     # below keeps that an assumption this script states rather than one it
     # depends on silently.
     divergent = [
-        record.clip_id
-        for record in records
-        if record.video_fake != record.clip_fake
+        record.clip_id for record in records if record.video_fake != record.clip_fake
     ]
     if divergent:
         raise SystemExit(

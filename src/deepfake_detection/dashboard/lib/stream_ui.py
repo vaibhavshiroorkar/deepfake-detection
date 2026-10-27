@@ -14,7 +14,7 @@ which show the forward pass step by step rather than reporting one number.
 from pathlib import Path
 
 from deepfake_detection.dashboard.lib import checkpoints
-from deepfake_detection.dashboard.paths import PROJECT_ROOT
+from deepfake_detection.paths import PROJECT_ROOT
 
 # The Architecture control's labels, so the picker can name the setting to
 # change rather than describe the tensor shapes that did not fit.

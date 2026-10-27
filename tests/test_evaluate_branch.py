@@ -10,10 +10,10 @@ from pathlib import Path
 
 import pytest
 
-from deepfake_detection.cli import (
-    _branch_evaluation_report,
-    _flat_metrics,
-    _grouped_rates,
+from deepfake_detection.evaluation.branch_report import (
+    branch_evaluation_report,
+    flat_metrics,
+    grouped_rates,
 )
 from deepfake_detection.training.checkpoints import RunMetadata
 
@@ -70,7 +70,7 @@ def test_both_classes_present_produces_ranking_metrics(checkpoint: Path) -> None
         row(0, 0.2, "real"),
     ]
 
-    report = _branch_evaluation_report(
+    report = branch_evaluation_report(
         arguments(checkpoint, dataset="FakeAVCeleb", scope="development_validation"),
         rows,
         FakeState(),
@@ -96,7 +96,7 @@ def test_fake_only_set_reports_a_detection_rate_and_no_auc(checkpoint: Path) -> 
         row(1, 0.2, "mnw-diff2lip"),
     ]
 
-    report = _branch_evaluation_report(
+    report = branch_evaluation_report(
         arguments(checkpoint, dataset="MNW", scope="external_mnw"),
         rows,
         FakeState(),
@@ -112,7 +112,7 @@ def test_fake_only_set_reports_a_detection_rate_and_no_auc(checkpoint: Path) -> 
 def test_real_only_set_reports_specificity(checkpoint: Path) -> None:
     rows = [row(0, 0.1, "real"), row(0, 0.9, "real")]
 
-    report = _branch_evaluation_report(
+    report = branch_evaluation_report(
         arguments(checkpoint, dataset="Celeb-DF-v2", scope="generalization_celebdf"),
         rows,
         FakeState(),
@@ -130,7 +130,7 @@ def test_report_records_the_split_the_checkpoint_was_trained_on(
     """A cross-dataset row must not claim the evaluation set's own split hash."""
     rows = [row(1, 0.9, "mnw-wav2lip"), row(0, 0.1, "real")]
 
-    report = _branch_evaluation_report(
+    report = branch_evaluation_report(
         arguments(checkpoint, dataset="MNW", scope="external_mnw"),
         rows,
         FakeState(),
@@ -151,7 +151,7 @@ def test_per_method_rates_separate_each_generator() -> None:
         row(1, 0.2, "mnw-vasa_1"),
     ]
 
-    rates = _grouped_rates(rows, "method")
+    rates = grouped_rates(rows, "method")
 
     assert rates["mnw-wav2lip"]["accuracy"] == 1.0
     assert rates["mnw-vasa_1"]["accuracy"] == 0.0
@@ -162,14 +162,14 @@ def test_flat_metrics_emits_the_single_class_rate_for_tracking(
     checkpoint: Path,
 ) -> None:
     rows = [row(1, 0.9, "mnw-wav2lip"), row(1, 0.1, "mnw-vasa_1")]
-    report = _branch_evaluation_report(
+    report = branch_evaluation_report(
         arguments(checkpoint, dataset="MNW", scope="external_mnw"),
         rows,
         FakeState(),
         "prep-hash",
     )
 
-    flat = dict(_flat_metrics(report))
+    flat = dict(flat_metrics(report))
 
     assert flat["detection_rate"] == 0.5
     assert flat["confusion.true_positive"] == 1
@@ -193,7 +193,7 @@ def test_lopsided_class_balance_is_flagged_as_unreliable(checkpoint: Path) -> No
     rows = [row(1, 0.9, "mnw-wav2lip") for _ in range(20)]
     rows.append(row(0, 0.1, "real"))
 
-    report = _branch_evaluation_report(
+    report = branch_evaluation_report(
         arguments(checkpoint, dataset="MNW", scope="external_mnw"),
         rows,
         FakeState(),
@@ -212,7 +212,7 @@ def test_balanced_set_is_marked_reliable(checkpoint: Path) -> None:
     rows = [row(1, 0.9, "wav2lip") for _ in range(12)]
     rows += [row(0, 0.1, "real") for _ in range(12)]
 
-    report = _branch_evaluation_report(
+    report = branch_evaluation_report(
         arguments(checkpoint, dataset="FakeAVCeleb", scope="development_validation"),
         rows,
         FakeState(),
@@ -229,7 +229,7 @@ def test_detection_rate_is_recorded_even_when_both_classes_exist(
     """It is the statistic that survives a lopsided or unseen-generator set."""
     rows = [row(1, 0.9, "g"), row(1, 0.1, "g"), row(0, 0.1, "real")]
 
-    report = _branch_evaluation_report(
+    report = branch_evaluation_report(
         arguments(checkpoint, dataset="MNW", scope="external_mnw"),
         rows,
         FakeState(),

@@ -22,7 +22,6 @@ asks what an FF++ model makes of it.
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import sys
 from dataclasses import dataclass
@@ -129,12 +128,10 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{name}: no manifest at {manifest}, skipping")
             continue
         if run_dir not in stores:
+            from deepfake_detection.data.cache_index import read_cache_index
             from deepfake_detection.views.cache_store import CacheStore
 
-            index: dict[str, Path] = {}
-            with (run_dir / "cache-index.csv").open(encoding="utf-8") as handle:
-                for row in csv.DictReader(handle):
-                    index[row["clip_id"]] = run_dir / row["cache_path"]
+            index = read_cache_index(run_dir / "cache-index.csv")
             stores[run_dir] = (index, CacheStore(run_dir / "cache"))
         index, store = stores[run_dir]
 
@@ -179,7 +176,9 @@ def main(argv: list[str] | None = None) -> int:
             for batch in batches:
                 logit, _ = model(batch.values.to(arguments.device))
                 for clip_id, value, label in zip(
-                    batch.clip_ids, logit.cpu().tolist(), batch.labels.tolist(),
+                    batch.clip_ids,
+                    logit.cpu().tolist(),
+                    batch.labels.tolist(),
                     strict=True,
                 ):
                     scored.append(
@@ -211,10 +210,7 @@ def main(argv: list[str] | None = None) -> int:
             f"coverage {len(scored) / len(listed):.1%}"
         )
 
-    output = (
-        arguments.output
-        or Path("runs/ffpp-20260913/evaluation/zero-shot.json")
-    )
+    output = arguments.output or Path("runs/ffpp-20260913/evaluation/zero-shot.json")
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(
         json.dumps(

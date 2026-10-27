@@ -221,11 +221,7 @@ def test_cli_reference_discovers_every_leaf_command() -> None:
     assert command_paths(build_parser()) == (
         "ddf cache build",
         "ddf cache merge",
-        "ddf detector compare",
         "ddf detector fetch-yunet",
-        "ddf detector run",
-        "ddf detector sample",
-        "ddf detector validate-annotations",
         "ddf evaluate branch",
         "ddf evaluate predictions",
         "ddf features export",
@@ -339,7 +335,7 @@ def test_markdown_checker_ignores_inline_and_fenced_code(tmp_path: Path) -> None
 
 def test_change_contract_requires_docs_and_changelog_for_source_changes() -> None:
     issues = check_change_contract(
-        (Path("src/deepfake_detection/cli.py"), Path("tests/test_cli.py"))
+        (Path("src/deepfake_detection/cli/train.py"), Path("tests/test_cli.py"))
     )
 
     assert {issue.rule for issue in issues} == {
@@ -352,7 +348,7 @@ def test_change_contract_accepts_code_docs_and_changelog_together() -> None:
     assert (
         check_change_contract(
             (
-                Path("src/deepfake_detection/cli.py"),
+                Path("src/deepfake_detection/cli/train.py"),
                 Path("tests/test_cli.py"),
                 Path("docs/reference/cli.md"),
                 Path("CHANGELOG.md"),
@@ -360,21 +356,6 @@ def test_change_contract_accepts_code_docs_and_changelog_together() -> None:
         )
         == ()
     )
-
-
-def test_detector_annotation_protocol_defines_visible_face_error_accounting() -> None:
-    protocol = " ".join(
-        Path("docs/model-selection.md").read_text(encoding="utf-8").split()
-    )
-
-    for required in (
-        "box for every visible face",
-        "at most one suitable speaking target",
-        "five landmarks",
-        "Unmatched detections are false detections",
-        "other visible faces are not false positives",
-    ):
-        assert required in protocol
 
 
 def test_external_link_checker_reports_only_failed_targets(tmp_path: Path) -> None:

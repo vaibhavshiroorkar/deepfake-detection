@@ -2,90 +2,39 @@
 
 ## Current state
 
-Two tracks, and they answer different questions.
+The next experiments must use the corrected data and checkpoint contracts in
+[reproducibility](reproducibility.md). Historical artifacts remain on disk.
+The result registry marks affected rows `requires rerun`.
 
-**Track one, the research pipeline**, is complete and measured. Design A trains
-three cue-specific branches on FakeAVCeleb with source-grouped cross-fitting and
-a calibrated late-fusion head. Design B replaces them with configurable streams
-and a feature-level head. Both score through one evaluation path, every headline
-number carries an identity-clustered interval, and every number resolves to a
-row in [result traceability](research/result-traceability.md). The findings are
-recorded in [findings](research/findings.md), including the claims this project
-made and later withdrew.
+The PE/CLIP features used incorrect input normalization. The old PE macro score
+of 0.7527 does not establish performance after the correction. Re-extract all
+comparison arms into a new directory with `scripts/run_encoder_comparison.sh`.
+It runs three source-split seeds and writes per-clip predictions and completion receipts.
 
-**Track two, open-world generated media**, is newer and is where the work is
-pointed now. The system detects manipulation of a real recording; media
-generated whole is a different problem, and the design for it is in
-[architecture](research/architecture.md). DF26 is the benchmark: 2,691 clips,
-271 real and 2,420 from seven modern generators including Veo 3.1, Kling 3.0,
-Grok Imagine and Wan 2.6.
+The old OOF folds used the outer holdout for epoch selection. Run
+`scripts/run_crossfit_seeds.ps1` to create inner validation folds and retrain.
+The new runner writes separate evidence and checks training and selection sources
+before exporting the outer holdout.
+
+The LAV-DF cache must be rebuilt from manifests that retain explicit zero starts.
+The old default shifted those windows, which can contaminate genuine labels.
+Retrain and rescore the lip-sync stream before interpreting its old 0.9969 score.
+New streams record temporal positions. Legacy checkpoints retain their original computation.
 
 ### Where the four stated targets stand
 
 | Target | Status | Evidence |
 | --- | --- | --- |
-| 0.991 visual detection, in-domain | **met** | Design A fusion 0.9990 on the FakeAVCeleb test partition, visual branch 0.9988 |
-| 0.844+ from audiovisual cues on genuine-frame fakes | **met on the number, failed on the mechanism** | Lip-sync stream 0.9969 on LAV-DF, which is exactly that case. Its `diagonal_mass` sat at chance in every epoch of three runs, so the audiovisual cue is not what produced the number |
-| Fusion beats the strongest single stream | **met in-domain, not cross-corpus, and smaller than the cited 0.099** | Paired source bootstrap: +0.0247 [0.0220, 0.0280] over the calibrated visual score in-domain, separated from zero. Against a visual-plus-quality head it is +0.0159 [+0.0129, +0.0190] (F19). Cross-corpus -0.0083 [-0.0185, 0.0024], not separated, at seed 17; at seeds 29 and 43 fusion is measurably worse, -0.0215 and -0.0417 (F19). The seed spread there is 0.1078 (F27) |
-| 0.64+ on unseen generators without fine-tuning | **met** | DF26 leave-one-generator-out macro **0.7527** with a frozen Perception Encoder probe, container-controlled, range 0.6542 to 0.8496. DINOv3 reads 0.6786 on the same split (F33) |
+| 0.991 visual detection, in-domain | met by the historical visual branch | Single visual branch 0.9988; independent of the OOF head |
+| 0.844+ from audiovisual cues on genuine-frame fakes | requires rerun | LAV-DF window contamination and an order-blind legacy stream |
+| Fusion beats the strongest single stream | requires rerun | Original OOF selection used the holdout labels |
+| 0.64+ on unseen generators without fine-tuning | requires rerun for the PE claim | PE normalization was wrong; corrected result is unknown |
 
-### The protocol, which is the actual contribution
-
-Leave-one-generator-out is the only headline. There is no in-domain column,
-because a strong in-domain number has four times in this project turned out to
-be a shortcut rather than skill: 0.9990 against 0.4920 cross-corpus, a 0.9969
-matched-pair stream reading 0.5059 once capture conditions changed, a 0.9997 on
-Veo 3 that was pure content confound, and a 1.0000 on every arm of a smoke test
-that was a split leak.
-
-Four shortcuts were caught before they produced a reported result, each by one
-cheap check run before training rather than after:
-
-- Veo 3 lab clips scored against talking-head reals, which would have given a
-  perfect-looking content classifier.
-- Real clips on both sides of a generator split, and in FaceForensics++ a fake
-  can be matched to its own source video, so the split is on source as well as
-  generator.
-- Generation modes of one model treated as separate generators, which leaks the
-  model through its sibling.
-- Audio presence in DF26 predicting the label almost perfectly, which would have
-  given a near-perfect audio branch measuring a container property.
-
-### What is measured and settled
-
-Every settled number lives in [findings](research/findings.md), so it is stated
-once. By topic:
-
-| Topic | Findings |
-| --- | --- |
-| Unseen generators on DF26, encoder comparison, frame-rate control | F15, F33 |
-| Fusion against the best single branch, in-domain and DFDC | F19, F23, F27 |
-| Fusion head choice, calibration, quality features | F8, F18 |
-| Seed spread | F21, F27, F29 |
-| Capture conditions against manipulation type | F10, F12, F34 |
-| Region of interest: full frame against face crop | F13 |
-| False alarms on genuine footage, and the familiarity gate | F16, F17 |
-| Corruption and the operating point | F24, F25 |
-| Codec shortcut in FakeAVCeleb, and training against it | F35, F37 |
-| The served visual ensemble | F36 |
-| Confidence and abstention cross-corpus | F9, F22 |
-| Branch challengers (ConvNeXt, WavLM) | F28, F29 |
-| Sync branch and the cross-modal streams | F1, F1a, F26, F32 |
-
-### What is running or blocked
-
-The AV-HuBERT lip-sync and HSEmotion emotion streams are training into
-`runs/encoders-20261022` (`scripts/train_encoder_streams.sh`). Blocked on
-other people: DeepSpeak v2 awaits author review,
-AV-Deepfake1M needs a signed EULA, Deepfake-Eval-2024 was refused.
-
-### The audiovisual gap, which is the open opportunity
-
-DF26 cannot support audiovisual work: audio presence predicts its labels and
-only 27 of 271 real clips carry audio at all. Its authors name audio, speech
-quality and lip-sync as future work, so the gap is real and unclaimed. The
-corpora that could fill it are in [corpora](research/datasets.md), and LAV-DF is
-already on disk and hash-unified with the main cache.
+The AV-HuBERT and HSEmotion checkpoints in `runs/encoders-20261022` are historical
+artifacts. Their presence does not establish completed training. The corrected
+runner writes into a new run and verifies completion before reuse.
+DeepSpeak v2 needs author review. AV-Deepfake1M needs a signed EULA.
+Deepfake-Eval-2024 access was refused.
 
 ## Dataset inventory
 

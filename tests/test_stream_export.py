@@ -8,6 +8,7 @@ did exactly that with the waveform, normalising by peak where the dataset
 centres and divides by standard deviation.
 """
 
+import zlib
 from pathlib import Path
 
 import numpy as np
@@ -91,7 +92,7 @@ def record(clip_id: str, *, fake: bool) -> ClipRecord:
 
 
 def store_clip(store: CacheStore, clip_id: str, *, full: bool = True) -> Path:
-    generator = np.random.default_rng(abs(hash(clip_id)) % 2**32)
+    generator = np.random.default_rng(zlib.crc32(clip_id.encode()) % 2**32)
     prepared = PreparedClip(
         clip_id=clip_id,
         visual_view=generator.normal(size=(FRAMES, 3, SIZE, SIZE)).astype(np.float32),
@@ -133,7 +134,7 @@ def run_export(tmp_path, records, index, store, streams):
         streams=streams,
         split_hash="split",
         preprocessing_hash=HASH,
-        partition_role="oof",
+        partition_role="test",
         run_id="run",
         device="cpu",
     )
@@ -265,7 +266,7 @@ def test_a_different_preprocessing_hash_is_an_error(tmp_path: Path, cached) -> N
             streams=[StreamSpec("dinov3", RecordingVisualStream(), "h", "visual")],
             split_hash="split",
             preprocessing_hash="a-different-hash",
-            partition_role="oof",
+            partition_role="test",
             run_id="run",
             device="cpu",
         )

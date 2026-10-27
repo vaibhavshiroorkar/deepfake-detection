@@ -73,7 +73,9 @@ def main(argv: list[str] | None = None) -> int:
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir", type=Path, required=True)
-    parser.add_argument("--source-run", type=Path, default=Path("runs/program-20260906"))
+    parser.add_argument(
+        "--source-run", type=Path, default=Path("runs/program-20260906")
+    )
     parser.add_argument("--train-clips", type=int, default=1400)
     parser.add_argument("--validation-clips", type=int, default=400)
     parser.add_argument("--seed", type=int, default=17)
@@ -95,10 +97,9 @@ def main(argv: list[str] | None = None) -> int:
         arguments.seed,
     )
 
-    index: dict[str, Path] = {}
-    with (arguments.source_run / "cache-index.csv").open(encoding="utf-8") as handle:
-        for row in csv.DictReader(handle):
-            index[row["clip_id"]] = arguments.source_run / row["cache_path"]
+    from deepfake_detection.data.cache_index import read_cache_index
+
+    index = read_cache_index(arguments.source_run / "cache-index.csv")
     store = CacheStore(arguments.source_run / "cache")
 
     def loader(manifest: Path, dataset: str, *, shuffle: bool = False):
@@ -112,9 +113,7 @@ def main(argv: list[str] | None = None) -> int:
 
     train_batches = loader(train_manifest, "FakeAVCeleb", shuffle=True)
     validation_batches = loader(validation_manifest, "FakeAVCeleb")
-    dfdc_batches = loader(
-        arguments.source_run / "split" / "dfdc-visual.csv", "DFDC"
-    )
+    dfdc_batches = loader(arguments.source_run / "split" / "dfdc-visual.csv", "DFDC")
     print(
         f"train {len(train_batches.dataset):,}  "
         f"validation {len(validation_batches.dataset):,}  "
@@ -186,8 +185,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"{row['arm']:28} {row['validation_auc']:11.4f} {row['dfdc_auc']:8.4f}")
 
     output = (
-        arguments.output
-        or arguments.run_dir / "evaluation" / "batchnorm-sweep.json"
+        arguments.output or arguments.run_dir / "evaluation" / "batchnorm-sweep.json"
     )
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(

@@ -27,9 +27,12 @@ if not breakdowns and not fusion.available:
     st.stop()
 
 if breakdowns:
-    labels = {f"{item.branch} on {item.dataset}": item for item in breakdowns}
-    chosen = st.selectbox("Which result to look at", list(labels), key="explain_eval")
-    item = labels[chosen]
+    item = st.selectbox(
+        "Which result to look at",
+        breakdowns,
+        format_func=lambda report: report.label,
+        key="explain_eval",
+    )
 
     methods = {
         name: values
@@ -122,6 +125,9 @@ if breakdowns:
             f"branch        {item.branch}\n"
             f"dataset       {item.dataset}\n"
             f"clips         {item.rows}\n"
+            f"report        {item.report_path}\n"
+            f"architecture  {item.architecture}\n"
+            f"seed          {item.seed}\n"
             f"checkpoint    {item.checkpoint_sha256}",
             language="text",
         )

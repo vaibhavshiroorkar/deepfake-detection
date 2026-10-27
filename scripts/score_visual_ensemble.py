@@ -129,6 +129,14 @@ def main(argv: list[str] | None = None) -> int:
         seed_mean = _sigmoid(
             _logit(frame[[n for n, _ in MEMBERS[:3]]].to_numpy()).mean(axis=1)
         )
+        # The ensemble's ROC-AUC with each member left out, so the claim that a
+        # member earns its place is a recorded number rather than a remark.
+        leave_one_out = {}
+        for left_out, _ in MEMBERS:
+            rest = [n for n, _ in MEMBERS if n != left_out]
+            leave_one_out[left_out] = float(
+                roc_auc_score(labels, _logit(frame[rest].to_numpy()).mean(axis=1))
+            )
 
         def paired(
             right: np.ndarray,
@@ -176,6 +184,7 @@ def main(argv: list[str] | None = None) -> int:
             "bootstrap_samples": arguments.bootstrap_samples,
             "bootstrap_unit": "source_identity",
             "member_roc_auc": members,
+            "roc_auc_without_member": leave_one_out,
             "paired_roc_auc_difference": {
                 "versus_efficientnet_seed17": paired(
                     frame["efficientnet-b0-seed17"].to_numpy()

@@ -79,9 +79,7 @@ def _analyse(rows: list[dict], *, threshold: float) -> dict:
 
     def confidence(row: dict) -> float:
         """How sure the model was of the answer it gave, regardless of side."""
-        return (
-            row["probability"] if row["predicted"] == 1 else 1.0 - row["probability"]
-        )
+        return row["probability"] if row["predicted"] == 1 else 1.0 - row["probability"]
 
     by_source: collections.Counter = collections.Counter(
         row["source"] for row in errors
@@ -112,9 +110,7 @@ def _analyse(rows: list[dict], *, threshold: float) -> dict:
         "mean_confidence_when_wrong": (
             statistics.fmean(confidence(row) for row in errors) if errors else None
         ),
-        "confident_errors_over_0_9": sum(
-            1 for row in errors if confidence(row) > 0.9
-        ),
+        "confident_errors_over_0_9": sum(1 for row in errors if confidence(row) > 0.9),
         "identities": len(sources),
         "identities_with_an_error": len({row["source"] for row in errors}),
         "worst_identities": [

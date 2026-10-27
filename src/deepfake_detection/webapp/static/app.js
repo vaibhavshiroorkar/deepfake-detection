@@ -14,6 +14,7 @@ const state = {
   // sound files have their own fitted values.
   thresholdTouched: false,
   analysis: null,
+  requestId: 0,
 };
 
 const MODEL_NAMES = {
@@ -63,14 +64,21 @@ $("#theme").addEventListener("click", () => {
   if (state.research) renderCharts();
 });
 
-/* Tabs */
+/* Pages. Each nav link names a page; the hash keeps the page on reload. */
 function showTab(name) {
-  $$(".tab").forEach((tab) => tab.setAttribute("aria-selected", String(tab.dataset.tab === name)));
+  $$(".tab").forEach((tab) => {
+    if (tab.dataset.tab === name) tab.setAttribute("aria-current", "page");
+    else tab.removeAttribute("aria-current");
+  });
   $$("main > section").forEach((section) => { section.hidden = section.id !== `tab-${name}`; });
   if (name !== "check") loadResearch();
   try { history.replaceState(null, "", `#${name}`); } catch { /* file URL */ }
+  window.scrollTo(0, 0);
 }
-$$(".tab").forEach((tab) => tab.addEventListener("click", () => showTab(tab.dataset.tab)));
+$$("[data-tab]").forEach((link) => link.addEventListener("click", (event) => {
+  event.preventDefault();
+  showTab(link.dataset.tab);
+}));
 
 /* Config */
 async function loadConfig() {
@@ -79,11 +87,11 @@ async function loadConfig() {
   const { settings } = state.config;
   state.model = settings.default_model;
   state.threshold = settings.default_threshold;
-  if (!settings.show_research_tabs) $$(".tab.research").forEach((tab) => tab.remove());
+  if (!settings.show_research_tabs) $$(".research").forEach((item) => item.remove());
   if (!settings.allow_unfamiliar_override) $("#withhold").disabled = true;
   $("#withhold").checked = settings.withhold_unfamiliar;
   if (state.config.admin_enabled) {
-    $("#footer").insertAdjacentHTML("beforeend", ' <a href="/admin">Admin settings</a>');
+    $("#footer").insertAdjacentHTML("beforeend", '<a href="/admin">Admin settings</a>');
   }
   renderModels();
   renderSamples();
@@ -92,13 +100,17 @@ async function loadConfig() {
 function renderModels() {
   const box = $("#models");
   box.innerHTML = state.config.models.map((model) => {
-    const scores = Object.entries(model.metrics).map(([dataset, m]) =>
+    // DFDC is the unseen footage the models are compared on, so it leads.
+    const entries = Object.entries(model.metrics);
+    const key = entries.find(([dataset]) => dataset === "DFDC");
+    const rest = entries.filter(([dataset]) => dataset !== "DFDC").map(([dataset, m]) =>
       `<span>${escapeHtml(dataset)} <b>${fmt(m.roc_auc, 3)}</b></span>`).join("");
     return `<label class="model">
       <input type="radio" name="model" value="${escapeHtml(model.id)}" ${model.id === state.model ? "checked" : ""}>
-      <span class="model-name">${escapeHtml(model.label)}${model.id === "ensemble" ? " (recommended)" : ""}</span>
+      <span class="model-name">${escapeHtml(model.label)}${model.id === "ensemble" ? '<span class="badge">Recommended</span>' : ""}</span>
+      ${key ? `<span class="model-key">DFDC <b>${fmt(key[1].roc_auc, 3)}</b></span>` : "<span></span>"}
       <span class="model-summary">${escapeHtml(model.summary)}</span>
-      ${scores ? `<span class="model-scores"><span class="quiet">ROC-AUC</span>${scores}</span>` : ""}
+      ${rest ? `<span class="model-scores"><span>ROC-AUC</span>${rest}</span>` : ""}
     </label>`;
   }).join("");
   $$("input[name=model]", box).forEach((input) => input.addEventListener("change", () => {
@@ -121,9 +133,10 @@ function renderSamples() {
   if (!samples.length) return;
   $("#samples-sheet").hidden = false;
   $("#samples").innerHTML = samples.map((sample) => `
-    <button class="sample" type="button" data-id="${escapeHtml(sample.id)}" aria-pressed="false">
-      <span class="sample-head"><b>${escapeHtml(sample.title)}</b><span class="truth ${sample.truth}">${sample.truth === "fake" ? "Manipulated" : "Genuine"}</span></span>
-      <span>${escapeHtml(sample.kind.replace(/\.$/, ""))}. ${escapeHtml(sample.dataset)}.</span>
+    <button class="sample" type="button" data-id="${escapeHtml(sample.id)}" aria-pressed="false" title="${escapeHtml(sample.kind)}">
+      <b>${escapeHtml(sample.title)}</b>
+      <span class="tag ${sample.truth}">${sample.truth === "fake" ? "Fake" : "Real"}</span>
+      <span class="sample-meta">${escapeHtml(sample.dataset)}</span>
     </button>`).join("");
   $$(".sample").forEach((button) => button.addEventListener("click", () => chooseSample(button.dataset.id)));
 }
@@ -145,17 +158,20 @@ fileInput.addEventListener("change", () => { if (fileInput.files[0]) chooseFile(
 $("#clear").addEventListener("click", clearInput);
 
 let previewUrl = null;
-function setPreview(src, name) {
+function setPreview(src, name, note = "") {
   if (previewUrl) URL.revokeObjectURL(previewUrl);
   previewUrl = src.startsWith("blob:") ? src : null;
   const video = $("#preview-video");
   video.src = src;
   $("#preview-name").textContent = name;
+  $("#preview-note").textContent = note;
+  $("#preview-note").hidden = !note;
   $("#preview").classList.add("on");
   $("#go").disabled = false;
 }
 
 function chooseFile(file) {
+  invalidateAnalysis();
   state.file = file;
   state.sample = null;
   $$(".sample").forEach((b) => b.setAttribute("aria-pressed", "false"));
@@ -163,15 +179,17 @@ function chooseFile(file) {
 }
 
 function chooseSample(id) {
+  invalidateAnalysis();
   const sample = state.config.samples.find((s) => s.id === id);
   state.sample = id;
   state.file = null;
   fileInput.value = "";
   $$(".sample").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === id)));
-  setPreview(`/api/samples/${encodeURIComponent(id)}/video`, `${sample.title}, ${sample.dataset}`);
+  setPreview(`/api/samples/${encodeURIComponent(id)}/video`, `${sample.title}, ${sample.dataset}`, sample.kind);
 }
 
 function clearInput() {
+  invalidateAnalysis();
   state.file = null;
   state.sample = null;
   fileInput.value = "";
@@ -184,30 +202,48 @@ function clearInput() {
 /* Analysis */
 $("#go").addEventListener("click", analyze);
 
+function invalidateAnalysis() {
+  state.requestId += 1;
+  state.analysis = null;
+  $("#result").innerHTML = "";
+  delete $("#result").dataset.verdict;
+}
+
 async function analyze() {
   if (!state.file && !state.sample) return;
+  const requestId = ++state.requestId;
+  const submittedFile = state.file;
+  const submittedSample = state.sample
+    ? { ...state.config.samples.find((s) => s.id === state.sample) } : null;
   const form = new FormData();
   form.append("model", state.model);
   if (state.thresholdTouched) form.append("threshold", String(state.threshold));
   form.append("withhold_unfamiliar", String($("#withhold").checked));
   let url = "/api/analyze";
-  if (state.file) form.append("file", state.file);
-  else { form.append("sample", state.sample); url = "/api/analyze-sample"; }
+  if (submittedFile) form.append("file", submittedFile);
+  else { form.append("sample", submittedSample.id); url = "/api/analyze-sample"; }
 
   $("#go").disabled = true;
+  delete $("#result").dataset.verdict;
   $("#result").innerHTML = `<div class="busy"><div class="spinner"></div><span>Finding the face and scoring 16 frames. The first check loads the models and takes longer.</span></div>`;
   try {
     const response = await fetch(url, { method: "POST", body: form });
     const body = await response.json().catch(() => ({}));
+    if (requestId !== state.requestId) return;
     if (!response.ok) throw new Error(body.detail || `The server answered ${response.status}`);
     state.analysis = body;
-    state.analysis.sample = state.sample
-      ? state.config.samples.find((s) => s.id === state.sample) : null;
+    state.analysis.sample = submittedSample;
     renderResult();
+    // In one column the result sits below the controls, out of sight.
+    if (matchMedia("(max-width: 1100px)").matches) {
+      const smooth = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+      $("#result").scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" });
+    }
   } catch (error) {
+    if (requestId !== state.requestId) return;
     $("#result").innerHTML = `<div class="error"><strong>The check did not finish.</strong> ${escapeHtml(error.message)}</div>`;
   } finally {
-    $("#go").disabled = false;
+    if (requestId === state.requestId) $("#go").disabled = !state.file && !state.sample;
   }
 }
 
@@ -280,6 +316,9 @@ function renderResult() {
   if (a.familiarity && !a.familiarity.familiar) {
     notices.push(`<div class="notice">${WARN}<span><strong>Unfamiliar footage.</strong> Distance ${a.familiarity.distance.toFixed(1)} from the genuine training footage, past the ${a.familiarity.threshold.toFixed(1)} that familiar clips stay within. On footage like this the face models have called up to 91% of genuine videos fake (Celeb-DF).${a.withheld ? "" : " You chose to see the verdict anyway."}</span></div>`);
   }
+  if (a.blockers.includes("familiarity_check_unavailable")) {
+    notices.push(`<div class="notice">${WARN}<span><strong>Familiarity check did not run.</strong> The model that recognises unfamiliar footage could not be loaded, so this verdict was not checked against it.</span></div>`);
+  }
   if (a.sample && a.sample.id === "favc-voiceclone" && a.model !== "multimodal") {
     notices.push(`<div class="notice info">${INFO}<span>Only the voice is fake in this clip. The face models judge the video, which is genuine, so they are expected to call it real. The audio-visual fusion is the model that can hear it.</span></div>`);
   }
@@ -299,7 +338,7 @@ function renderResult() {
           <span class="member-value">${fmtProb(p)}</span>
         </div>`).join("")}
       </div>
-      <p class="quiet" style="margin-top:8px;font-size:.88rem">Bars use the same log-odds scale as above. ${a.model === "ensemble" ? "The ensemble averages the six logits." : ""}</p>
+      <p class="note">Bars use the same log-odds scale as above. ${a.model === "ensemble" ? "The ensemble averages the six logits." : ""}</p>
     </details>` : "";
 
   const facesHtml = a.faces && a.faces.length ? `
@@ -311,7 +350,7 @@ function renderResult() {
   const probability = a.probability;
   const scale = probability == null ? "" : `
     <div class="scale">
-      <div class="label-row"><span class="label">Probability of manipulation</span><small>Log-odds scale, so the low end is readable</small></div>
+      <div class="scale-head"><b>Probability of manipulation</b><small>Log-odds scale, so the low end is readable</small></div>
       <div class="scale-track" id="scale-track">
         <div class="scale-bar"></div>
         <div class="scale-zone" id="scale-zone"></div>
@@ -334,11 +373,10 @@ function renderResult() {
       <div id="rates"></div>
     </div>`;
 
+  $("#result").dataset.verdict = verdict;
   $("#result").innerHTML = `
-    <div class="verdict">
-      <span class="verdict-word ${verdict}" id="verdict-word">${VERDICT_WORDS[verdict]}</span>
-    </div>
-    <div class="verdict-meta" style="margin-top:8px"><b>${escapeHtml(modelLabel)}</b>, checked in ${a.seconds.toFixed(1)} s</div>
+    <span class="verdict-word ${verdict}" id="verdict-word">${VERDICT_WORDS[verdict]}</span>
+    <div class="verdict-meta"><b>${escapeHtml(modelLabel)}</b>, checked in ${a.seconds.toFixed(1)} s</div>
     <p class="verdict-line" id="verdict-line">${escapeHtml(verdictSentence(a, verdict))}</p>
     ${notices.join("")}
     ${scale}
@@ -398,6 +436,7 @@ function refreshThreshold() {
 
   const verdict = verdictFor(a);
   const word = $("#verdict-word");
+  $("#result").dataset.verdict = verdict;
   word.className = `verdict-word ${verdict}`;
   word.textContent = VERDICT_WORDS[verdict];
   $("#verdict-line").textContent = verdictSentence(a, verdict);
@@ -407,16 +446,16 @@ function refreshThreshold() {
   });
 
   const rates = ratesAt(state.threshold);
-  $("#rates").innerHTML = rates ? `
+  $("#rates").innerHTML = rates?.length ? `
     <table class="rates">
-      <caption class="quiet" style="text-align:left;padding:4px 0 6px;font-size:.88rem">What a threshold near ${fmtProb(rates[0].threshold)} did on test footage with known answers</caption>
+      <caption>What a threshold near ${fmtProb(rates[0].threshold)} did on test footage with known answers</caption>
       <thead><tr><th>Footage</th><th class="num">Fakes caught</th><th class="num">Genuine flagged</th></tr></thead>
       <tbody>${rates.map((r) => `<tr>
-        <td>${escapeHtml(r.dataset)}${r.dataset === "FakeAVCeleb test" ? " (like training)" : " (unseen)"}</td>
-        <td class="num">${r.detection == null ? "n/a" : pct(r.detection)} <span class="rate-bar" style="width:${(r.detection || 0) * 60}px;background:var(--fake)"></span></td>
-        <td class="num">${r.falseAlarm == null ? "n/a" : pct(r.falseAlarm)} <span class="rate-bar" style="width:${(r.falseAlarm || 0) * 60}px;background:var(--held)"></span></td>
+        <td>${escapeHtml(r.dataset)} <small>${r.dataset === "FakeAVCeleb test" ? "like training" : "unseen"}</small></td>
+        <td class="num">${r.detection == null ? "n/a" : pct(r.detection)} <span class="rate-bar caught" style="width:${(r.detection || 0) * 60}px"></span></td>
+        <td class="num">${r.falseAlarm == null ? "n/a" : pct(r.falseAlarm)} <span class="rate-bar flagged" style="width:${(r.falseAlarm || 0) * 60}px"></span></td>
       </tr>`).join("")}</tbody>
-    </table>` : `<p class="quiet" style="margin-top:12px">No per-threshold record is saved for this model. Its fitted cut-off for ${escapeHtml(a.media_kind || "video")} is the default.</p>`;
+    </table>` : `<p class="no-rates">No per-threshold record is saved for this model. Its fitted cut-off for ${escapeHtml(a.media_kind || "video")} is the default.</p>`;
 }
 
 /* Research tabs */
@@ -434,11 +473,11 @@ async function loadResearch() {
 
 function renderMath() {
   $("#math").innerHTML = state.research.math.map((block, b) => `
-    <div class="sheet math-block">
-      <h3>${escapeHtml(block.title)}</h3>
+    <section class="panel math-block">
+      <h2 class="panel-title">${escapeHtml(block.title)}</h2>
       <div class="src">${escapeHtml(block.source)}</div>
       ${block.items.map((item, i) => `<div class="eq"><div class="eq-tex" id="eq-${b}-${i}"></div><p>${escapeHtml(item.note)}</p></div>`).join("")}
-    </div>`).join("");
+    </section>`).join("");
   state.research.math.forEach((block, b) => block.items.forEach((item, i) => {
     const node = $(`#eq-${b}-${i}`);
     try { katex.render(item.tex, node, { displayMode: true, throwOnError: false }); }
@@ -508,7 +547,7 @@ function seedChart(host, seeds) {
       const span = values.length > 1 ? `<line x1="${x(Math.min(...values.map((v) => v.roc_auc)))}" x2="${x(Math.max(...values.map((v) => v.roc_auc)))}" y1="${cy}" y2="${cy}" stroke="${cssVar("--line-strong")}" stroke-width="2" />` : "";
       return `<text x="${m.l - 10}" y="${cy + 4}" text-anchor="end" font-size="13" fill="${cssVar("--ink")}" font-weight="${ensemble ? 600 : 400}">${escapeHtml(label)}</text>
         ${span}
-        ${values.map((v) => `<circle cx="${x(v.roc_auc)}" cy="${cy}" r="${ensemble ? 7 : 5.5}" fill="${ensemble ? cssVar("--cobalt") : cssVar("--ink-2")}" stroke="${cssVar("--sheet")}" stroke-width="2"><title>${escapeHtml(label)}, seed ${v.seed}: ${v.roc_auc.toFixed(4)}</title></circle>
+        ${values.map((v) => `<circle cx="${x(v.roc_auc)}" cy="${cy}" r="${ensemble ? 7 : 5.5}" fill="${ensemble ? cssVar("--accent") : cssVar("--ink-2")}" stroke="${cssVar("--surface")}" stroke-width="2"><title>${escapeHtml(label)}, seed ${v.seed}: ${v.roc_auc.toFixed(4)}</title></circle>
           ${ensemble || v.seed === 17 ? `<text x="${x(v.roc_auc)}" y="${cy - 11}" text-anchor="middle" font-size="11" fill="${cssVar("--ink-2")}">${ensemble ? v.roc_auc.toFixed(3) : "seed 17"}</text>` : ""}`).join("")}`;
     }).join("")}
     <text x="${m.l + iw / 2}" y="${H - 2}" text-anchor="middle" font-size="12" fill="${cssVar("--ink-2")}">DFDC ROC-AUC</text>
@@ -526,19 +565,19 @@ function renderCharts() {
     const p17 = e.paired.versus_efficientnet_seed17, pm = e.paired.versus_efficientnet_seed_mean;
     const sign = (v) => (v >= 0 ? "+" : "") + v.toFixed(4);
     $("#ensemble-note").innerHTML = `
-      <h3>Why the app defaults to the ensemble</h3>
-      <p style="margin-top:10px">Six models trained on the same data disagree on DFDC by up to 0.13 of ROC-AUC. Averaging their logits gives <b>${e.roc_auc.toFixed(4)}</b> [${e.ci[0].toFixed(3)}, ${e.ci[1].toFixed(3)}] on DFDC, above every member.</p>
-      <ul class="plain">
+      <h2 class="panel-title">Why the app defaults to the ensemble</h2>
+      <p>Six models trained on the same data disagree on DFDC by up to 0.13 of ROC-AUC. Averaging their logits gives <b>${e.roc_auc.toFixed(4)}</b> [${e.ci[0].toFixed(3)}, ${e.ci[1].toFixed(3)}] on DFDC, above every member.</p>
+      <ul>
         <li>Against the average single seed: <b>${sign(pm.estimate)}</b> [${sign(pm.lower)}, ${sign(pm.upper)}], clear of zero.</li>
         <li>Against the luckiest seed: <b>${sign(p17.estimate)}</b> [${sign(p17.lower)}, ${sign(p17.upper)}], not clear of zero.</li>
       </ul>
-      <p style="margin-top:10px">The gain does not carry to every dataset.</p>
-      <ul class="plain">
+      <p>The gain does not carry to every dataset.</p>
+      <ul>
         ${e.celebdf ? `<li>Celeb-DF: <b>${e.celebdf.roc_auc.toFixed(4)}</b>, level with the seed-17 model (${sign(e.celebdf.paired.versus_efficientnet_seed17.estimate)}, interval spans zero).</li>` : ""}
         ${e.mnw ? `<li>MNW, at threshold 0.5: catches <b>${e.mnw.ensemble} of ${e.mnw.fakes}</b> fakes, against ${e.mnw.best_single} for the seed-17 model. The ConvNeXt members score these fakes low.</li>` : ""}
         <li>One member, ConvNeXt seed 43, diverged in training and is effectively never fine-tuned (F29). Leaving it out lowers DFDC to 0.7666 and Celeb-DF to 0.6553, so it stays.</li>
       </ul>
-      <p class="quiet" style="margin-top:10px">No weight was fitted. "All six" was chosen after comparing three groupings on DFDC, so treat the gain over the luckiest seed as unproven. Its probabilities are badly calibrated off-domain (ECE 0.87), which is why the check page shows measured rates rather than trusting the number.</p>`;
+      <p class="note">No weight was fitted. "All six" was chosen after comparing three groupings on DFDC, so treat the gain over the luckiest seed as unproven. Its probabilities are badly calibrated off-domain (ECE 0.87), which is why the check page shows measured rates rather than trusting the number.</p>`;
   }
 }
 
@@ -554,7 +593,7 @@ function renderTable() {
     const ci = r.ci && r.ci[0] != null ? `<line x1="${x(r.ci[0])}" x2="${x(r.ci[1])}" y1="11" y2="11" stroke="${cssVar("--ink-3")}" stroke-width="2" />` : "";
     return `<svg class="forest" viewBox="0 0 ${w} 22" aria-hidden="true">
       <line x1="${x(0.5)}" x2="${x(0.5)}" y1="2" y2="20" stroke="${cssVar("--chance")}" stroke-dasharray="2 2" />
-      ${ci}<circle cx="${x(r.roc_auc)}" cy="11" r="4.5" fill="${r.group === "Served in this app" ? cssVar("--cobalt") : cssVar("--ink")}" /></svg>`;
+      ${ci}<circle cx="${x(r.roc_auc)}" cy="11" r="4.5" fill="${r.group === "Served in this app" ? cssVar("--accent") : cssVar("--ink")}" /></svg>`;
   };
   let group = null;
   const body = visible.map((r) => {
@@ -563,7 +602,7 @@ function renderTable() {
     return `${head}<tr class="${r.group === "Served in this app" ? "served" : ""}" title="Source: ${escapeHtml(r.source)}">
       <td>${escapeHtml(r.model)}</td><td>${escapeHtml(r.dataset)}</td>
       <td class="num"><b>${fmt(r.roc_auc)}</b></td>
-      <td class="num quiet">${r.ci && r.ci[0] != null ? `${fmt(r.ci[0], 3)} to ${fmt(r.ci[1], 3)}` : ""}</td>
+      <td class="num dim">${r.ci && r.ci[0] != null ? `${fmt(r.ci[0], 3)} to ${fmt(r.ci[1], 3)}` : ""}</td>
       <td>${forest(r)}</td>
       <td class="num">${fmt(r.eer, 3)}</td><td class="num">${fmt(r.balanced_accuracy, 3)}</td><td class="num">${fmt(r.ece, 3)}</td>
     </tr>`;
@@ -577,7 +616,7 @@ function renderPrior() {
   $("#targets").innerHTML = `<thead><tr><th>Target from the literature</th><th>This project</th><th>Status</th></tr></thead><tbody>${r.targets.map((t) => `
     <tr><td>${escapeHtml(t.target)}</td><td>${escapeHtml(t.ours)}</td><td class="status ${statusClass(t.status)}">${escapeHtml(t.status)}</td></tr>`).join("")}</tbody>`;
   $("#prior").innerHTML = r.prior_work.map((p) => `
-    <article class="card"><h3>${escapeHtml(p.title)}</h3><p>${escapeHtml(p.comparison)}</p><p class="diff">${escapeHtml(p.difference)}</p><p class="src">${escapeHtml(p.source)}</p></article>`).join("");
+    <article class="ledger-row"><h3>${escapeHtml(p.title)}</h3><div><p>${escapeHtml(p.comparison)}</p><p class="diff">${escapeHtml(p.difference)}</p><p class="src">${escapeHtml(p.source)}</p></div></article>`).join("");
   $("#contributions").innerHTML = r.contributions.map((c) => `<li>${escapeHtml(c)}</li>`).join("");
 }
 
@@ -585,9 +624,9 @@ function renderFailures() {
   const r = state.research;
   $("#limits").innerHTML = r.limits.map((l) => `<li>${escapeHtml(l)}</li>`).join("");
   $("#failures").innerHTML = r.failures.map((g) => `
-    <div class="sheet failure-group"><h2>${escapeHtml(g.group)}</h2>
+    <section class="panel failure-group"><h2 class="panel-title">${escapeHtml(g.group)}</h2>
       ${g.items.map((f) => `<div class="failure"><b>${escapeHtml(f.title)}</b><span class="src">${escapeHtml(f.source)}</span><p>${escapeHtml(f.detail)}</p></div>`).join("")}
-    </div>`).join("");
+    </section>`).join("");
 }
 
 loadConfig().then(() => {

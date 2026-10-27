@@ -1,5 +1,9 @@
 # Synthetic-media detection: the system to build now, and the one after it
 
+The encoder recommendations below are design proposals. Historical PE/CLIP
+comparisons require corrected normalization, as recorded in
+[result traceability](result-traceability.md).
+
 Two designs, for two different jobs, and the first one is the priority.
 
 **The demo detector** has to survive people generating fakes in front of it with
@@ -31,9 +35,9 @@ blanket guarantee is how an unverifiable number gains credibility: the
 Perception Encoder comparison that drove the frozen-probe recommendation for
 weeks had no artifact behind it and contradicted this project's own registered
 measurement of the same encoder. It has since been re-run as
-`A-encoder-comparison`: Perception Encoder does beat DINOv3, by 0.0741 rather
-than 15 points, and is now the probe encoder (F33 in
-[findings](findings.md)).
+`A-encoder-comparison`, but that run used the wrong PE/CLIP normalization.
+The historical +0.0741 does not establish an encoder ranking. F33 in
+[findings](findings.md) requires corrected feature extraction and comparisons.
 
 ## 0. The demo detector
 

@@ -16,7 +16,7 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from deepfake_detection.dashboard.paths import RUNS_DIR
+from deepfake_detection.paths import RUNS_DIR
 
 # The Design A run that produced the trained fusion model. Named rather than
 # discovered: several run directories carry a `fusion-ablation.json`, and the
@@ -118,6 +118,17 @@ class BranchBreakdown:
     per_method: dict
     per_manipulation_type: dict
     checkpoint_sha256: str
+    report_path: Path = Path()
+    architecture: str = "unknown"
+    seed: int | None = None
+
+    @property
+    def label(self) -> str:
+        return (
+            f"{self.branch} on {self.dataset}, {self.architecture}, "
+            f"seed {self.seed}, checkpoint {self.checkpoint_sha256[:12] or 'unknown'} "
+            f"({self.report_path})"
+        )
 
 
 def load_branch_breakdowns(
@@ -148,6 +159,9 @@ def load_branch_breakdowns(
                 per_method=payload.get("per_method", {}),
                 per_manipulation_type=payload.get("per_manipulation_type", {}),
                 checkpoint_sha256=str(payload.get("checkpoint_sha256", "")),
+                report_path=path,
+                architecture=str(payload.get("architecture", "unknown")),
+                seed=payload.get("seed"),
             )
         )
     return found

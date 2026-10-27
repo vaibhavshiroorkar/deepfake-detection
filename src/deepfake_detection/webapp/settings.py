@@ -12,7 +12,7 @@ from pathlib import Path
 
 import yaml
 
-from deepfake_detection.dashboard.paths import PROJECT_ROOT
+from deepfake_detection.paths import PROJECT_ROOT
 
 from .engines import MODEL_IDS
 

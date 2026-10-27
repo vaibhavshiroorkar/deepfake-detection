@@ -1,10 +1,8 @@
 """Cross-modal attention: one modality asks, the other answers.
 
-This is the trainable version of the mechanism the dashboard has demonstrated on
-random projections since the streams pages were written. `dashboard/lib/
-cross_modal.py` is the specification, and `tests/test_cross_attention.py` asserts
-this module matches its numpy result to floating-point tolerance, so the two
-cannot drift apart.
+`tests/test_cross_attention.py` holds the numpy specification of the attention
+and of `diagonal_mass`, and asserts this module matches it to floating-point
+tolerance, so the formulas the handbook states cannot drift from the model.
 
 Why the project wants this at all: a visual-only classifier learns what authentic
 video looks like, which is a dataset-specific question, and the measured result
@@ -62,8 +60,7 @@ def scaled_dot_product_attention(
 def diagonal_mass(weights: Tensor, band: int = 1) -> Tensor:
     """Fraction of attention mass within `band` steps of the diagonal, per item.
 
-    Ported from `dashboard/lib/cross_modal.py` so the eventual stream and the
-    teaching page measure the same thing. The `cols / rows` scaling matters
+    The `cols / rows` scaling matters
     whenever the two modalities are sampled at different rates, which is the
     normal case here: a 2 second window is 50 video frames but a different
     number of audio tokens.

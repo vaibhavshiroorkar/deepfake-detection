@@ -23,8 +23,8 @@ second.
 
 import streamlit as st
 
-from deepfake_detection.dashboard.paths import PROJECT_ROOT
 from deepfake_detection.dashboard.sections.documentation import DOCUMENTS
+from deepfake_detection.paths import PROJECT_ROOT
 
 DIAGRAM = PROJECT_ROOT / "assets" / "flow.png"
 

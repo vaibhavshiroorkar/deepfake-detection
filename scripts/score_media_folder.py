@@ -52,7 +52,7 @@ def _wilson(successes: int, total: int) -> tuple[float, float]:
 
 def _walk(folder: Path):
     """Every media file under the folder, with its group and its true label."""
-    from deepfake_detection.dashboard.lib import media_kind
+    from deepfake_detection import media_kind
 
     real_root = folder / "real"
     if real_root.is_dir():
@@ -75,8 +75,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--folder", type=Path, required=True)
     parser.add_argument("--device", default="cuda")
-    parser.add_argument("--threshold", type=float, default=None,
-                        help="Overrides the per-media-kind threshold in the head.")
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=None,
+        help="Overrides the per-media-kind threshold in the head.",
+    )
     parser.add_argument("--output", type=Path, default=None)
     arguments = parser.parse_args(argv)
 
@@ -143,7 +147,9 @@ def main(argv: list[str] | None = None) -> int:
     summary: dict[str, dict] = {}
     for group, items in sorted(groups.items()):
         called = sum(1 for item in items if item["verdict"] == "fake")
-        outside_count = sum(1 for item in items if item["outside_training_distribution"])
+        outside_count = sum(
+            1 for item in items if item["outside_training_distribution"]
+        )
         low, high = _wilson(called, len(items))
         summary[group] = {
             "clips": len(items),

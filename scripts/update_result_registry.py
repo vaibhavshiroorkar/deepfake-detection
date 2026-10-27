@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -53,12 +54,42 @@ class Result:
     # thing this registry exists to make visible.
     missing_reason: str = ""
     extra: tuple[str, ...] = field(default_factory=tuple)
+    seed_reports: tuple[str, ...] = field(default_factory=tuple)
 
 
 PROGRAM = Path("runs/program-20260906")
 DESIGN_B = Path("runs/design-b-20260910")
 STREAMS = Path("runs/streams-20260905")
 FFPP = Path("runs/ffpp-20260913")
+RETRAIN = Path("runs/retrain-20261022")
+
+REVALIDATION_REASONS = {
+    **dict.fromkeys(
+        ("C-df26-logo-pe", "A-encoder-comparison", "A-gate-encoder"),
+        "Historical PE/CLIP features lack the corrected normalization contract.",
+    ),
+    **dict.fromkeys(
+        ("B-lavdf-lipsync", "B-lavdf-transfer"),
+        "Historical zero-start genuine windows can overlap manipulated spans.",
+    ),
+    **dict.fromkeys(
+        (
+            "A-fusion-dfdc",
+            "A-fusion-in-domain",
+            "A-operating-point",
+            "A-fusion-seed-spread",
+            "A-branch-ablation",
+            "A-fusion-model-ablation",
+            "A-generalization-slices",
+            "A-error-analysis",
+        ),
+        "Outer OOF labels selected the branch checkpoints used to train these heads.",
+    ),
+    **dict.fromkeys(
+        ("B-deep-ablation", "B-fusion-ablations", "B-gate-thresholds", "B-gate-fusion"),
+        "Fusion training needs features untouched by branch checkpoint selection and exact serving checkpoint bindings.",
+    ),
+}
 
 RESULTS: tuple[Result, ...] = (
     Result(
@@ -116,7 +147,7 @@ RESULTS: tuple[Result, ...] = (
             "runs/probe-20260914/ood2-dinov3.npz --reference real"
         ),
         report=Path("runs/probe-20260914/ood2-density-0.10.json"),
-        predictions=Path("runs/probe-20260914/ood2-dinov3.json"),
+        predictions=Path("runs/probe-20260914/ood2-dinov3.npz"),
         mlflow=(),
         decision=(
             "Intercepts 74.4 percent of unfamiliar genuine clips at 8.7 percent "
@@ -137,7 +168,7 @@ RESULTS: tuple[Result, ...] = (
             "--save-model runs/probe-20260914/authenticity-density-pe.npz"
         ),
         report=Path("runs/probe-20260914/ood2-pe-density-0.10.json"),
-        predictions=Path("runs/probe-20260914/ood2-pe.json"),
+        predictions=Path("runs/probe-20260914/ood2-pe.npz"),
         mlflow=(),
         decision=(
             "Perception Encoder intercepts 32.8 percent over twenty splits "
@@ -275,9 +306,7 @@ RESULTS: tuple[Result, ...] = (
     Result(
         result_id="B-batchnorm-arms",
         paper_location="Results, freezing BatchNorm trades transfer for accuracy",
-        command=(
-            "python scripts/score_batchnorm_arms.py"
-        ),
+        command=("python scripts/score_batchnorm_arms.py"),
         report=DESIGN_B / "evaluation" / "batchnorm-arms.json",
         predictions=None,
         mlflow=(
@@ -293,9 +322,7 @@ RESULTS: tuple[Result, ...] = (
     Result(
         result_id="B-batchnorm-trade",
         paper_location="Results, freezing BatchNorm trades transfer for accuracy",
-        command=(
-            "python scripts/batchnorm_sweep.py --run-dir runs/design-b-20260910"
-        ),
+        command=("python scripts/batchnorm_sweep.py --run-dir runs/design-b-20260910"),
         report=DESIGN_B / "evaluation" / "batchnorm-sweep.json",
         predictions=None,
         mlflow=(),
@@ -319,7 +346,7 @@ RESULTS: tuple[Result, ...] = (
             "runs/probe-20260914/df26-dinov3.npz"
         ),
         report=Path("runs/probe-20260914/df26-dinov3-logo.json"),
-        predictions=Path("runs/probe-20260914/df26-dinov3.json"),
+        predictions=Path("runs/probe-20260914/df26-dinov3.npz"),
         mlflow=(),
         decision=(
             "Macro 0.6942 across seven unseen generators before the frame-rate "
@@ -339,7 +366,7 @@ RESULTS: tuple[Result, ...] = (
             "runs/probe-20260914/df26-norm-dinov3.npz"
         ),
         report=Path("runs/probe-20260914/df26-norm-dinov3-logo.json"),
-        predictions=Path("runs/probe-20260914/df26-norm-dinov3.json"),
+        predictions=Path("runs/probe-20260914/df26-norm-dinov3.npz"),
         mlflow=(),
         decision=(
             "Macro 0.6786 with every clip re-encoded at 24 fps. Wan 2.6 fell "
@@ -357,7 +384,7 @@ RESULTS: tuple[Result, ...] = (
             "runs/probe-20260914/df26-norm-pe.npz"
         ),
         report=Path("runs/probe-20260914/df26-norm-pe-logo.json"),
-        predictions=Path("runs/probe-20260914/df26-norm-pe.json"),
+        predictions=Path("runs/probe-20260914/df26-norm-pe.npz"),
         mlflow=(),
         decision=(
             "Macro 0.7527 across seven unseen generators, frame-rate controlled, "
@@ -389,7 +416,7 @@ RESULTS: tuple[Result, ...] = (
             "runs/probe-20260914/ffpp-dinov3.npz"
         ),
         report=Path("runs/probe-20260914/ffpp-dinov3-logo.json"),
-        predictions=Path("runs/probe-20260914/ffpp-dinov3.json"),
+        predictions=Path("runs/probe-20260914/ffpp-dinov3.npz"),
         mlflow=(),
         decision=(
             "A frozen full-frame probe is at chance on face manipulation, "
@@ -661,8 +688,7 @@ RESULTS: tuple[Result, ...] = (
         result_id="A-fusion-seed-spread",
         paper_location="Results, what a seed is worth cross-corpus",
         command=(
-            "python scripts/run_fusion_seed_spread.py "
-            "--run-dir runs/program-20260906"
+            "python scripts/run_fusion_seed_spread.py --run-dir runs/program-20260906"
         ),
         report=PROGRAM / "evaluation" / "fusion-seed-spread.json",
         predictions=PROGRAM / "features" / "dfdc-seed29.parquet",
@@ -706,9 +732,7 @@ RESULTS: tuple[Result, ...] = (
     Result(
         result_id="A-visual-seeds",
         paper_location="Results, what a seed is worth cross-corpus",
-        command=(
-            "pwsh scripts/run_seeds.ps1 -Branches visual -SkipTraining"
-        ),
+        command=("pwsh scripts/run_seeds.ps1 -Branches visual -SkipTraining"),
         report=PROGRAM / "evaluation" / "visual-dfdc-seed29-metrics.json",
         predictions=PROGRAM / "evaluation" / "visual-dfdc-seed29-predictions.csv",
         mlflow=(),
@@ -799,6 +823,74 @@ RESULTS: tuple[Result, ...] = (
         decision="One threshold cannot serve video, image and audio",
         seeds=1,
     ),
+    Result(
+        result_id="B-gate-fusion",
+        paper_location="Results, the served audio-visual head",
+        command="python scripts/score_gate_fusion.py --run-dir runs/design-b-20260910",
+        report=DESIGN_B / "evaluation" / "gate-fusion-dfdc-metrics.json",
+        predictions=DESIGN_B / "evaluation" / "gate-fusion-dfdc-predictions.csv",
+        mlflow=(),
+        decision=(
+            "The head the web app serves reads 0.9987 in-domain and 0.5488 "
+            "[0.507, 0.592] on DFDC, close to chance cross-corpus"
+        ),
+        seeds=1,
+        extra=(str(DESIGN_B / "evaluation" / "gate-fusion-in-domain-metrics.json"),),
+    ),
+    Result(
+        result_id="A-visual-ensemble",
+        paper_location="Results, averaging the seed lottery away",
+        command="python scripts/score_visual_ensemble.py",
+        report=PROGRAM / "evaluation" / "visual-ensemble-dfdc-metrics.json",
+        predictions=PROGRAM / "evaluation" / "visual-ensemble-dfdc-predictions.csv",
+        mlflow=(),
+        decision=(
+            "Six visual checkpoints averaged in logit space read 0.7739 on DFDC, "
+            "+0.0469 [+0.0286, +0.0666] over the seed mean, and 0.6677 on "
+            "Celeb-DF against 0.6682 for seed 17. Leaving one member out moves "
+            "DFDC between 0.7343 and 0.7888, so membership chosen on DFDC would "
+            "be tuning on a test set"
+        ),
+        seeds=3,
+        extra=(
+            str(PROGRAM / "evaluation" / "visual-ensemble-celebdf-metrics.json"),
+            str(PROGRAM / "evaluation" / "visual-ensemble-in-domain-test-metrics.json"),
+        ),
+    ),
+    Result(
+        result_id="A-codec-shortcut",
+        paper_location="Results, the codec shortcut in FakeAVCeleb",
+        command="python scripts/codec_shortcut_check.py",
+        report=PROGRAM / "evaluation" / "codec-shortcut-check.json",
+        predictions=None,
+        mlflow=(),
+        decision=(
+            "Re-encoding genuine test clips as MPEG-4 makes the served ensemble "
+            "call 93.3 percent of them fake, against 0.0 percent for an H.264 "
+            "re-encode; re-encoding face-swap plus wav2lip fakes as H.264 drops "
+            "detection from 100 to 30.7 percent"
+        ),
+        # One evaluation of one ensemble, so one seed, although its members
+        # span three training seeds and all agree.
+        seeds=1,
+    ),
+    Result(
+        result_id="A-visual-recipes",
+        paper_location="Results, training against the codec shortcut",
+        command=(
+            "python scripts/run_visual_recipes.py --seeds 17 && "
+            "python scripts/summarize_visual_recipes.py"
+        ),
+        report=RETRAIN / "evaluation" / "recipes-summary.json",
+        predictions=RETRAIN / "evaluation" / "plain-seed17-dfdc-predictions.csv",
+        mlflow=(),
+        decision=(
+            "No recipe beats the shipped one on DFDC: plain 0.7611, compress "
+            "0.5720, blend 0.6496, blend-ffpp 0.6756; Celeb-DF separates none; "
+            "the served model stays the six-checkpoint ensemble"
+        ),
+        seeds=1,
+    ),
 )
 
 
@@ -845,13 +937,40 @@ def _mlflow_ids(entries, tracking_uri: str) -> dict[tuple[str, str], str]:
 
 
 def _status(result: Result, resolved: bool) -> str:
+    if result.result_id in REVALIDATION_REASONS:
+        return "requires rerun"
     if not resolved:
         return "pending"
-    if result.seeds < 3:
-        # The frozen protocol asks for three training seeds. One seed is a real
-        # result and not an accepted one.
-        return "provisional (1 seed)"
-    return "accepted"
+    verified = set()
+    protocols = set()
+    for path in result.seed_reports:
+        try:
+            report = json.loads(Path(path).read_text(encoding="utf-8"))
+            seed = int(report["seed"])
+            protocol = (
+                report["protocol"],
+                report["identity_protocol"],
+                report["source_pattern"],
+                report["test_fraction"],
+                report["regularization"],
+                report["feature_sha256"],
+            )
+            features = Path(report["features"])
+            predictions = Path(report["predictions"])
+            if (
+                not report["source_assignments"]
+                or not report["arm_assignments"]
+                or _sha256(features) != report["feature_sha256"]
+                or _sha256(predictions) != report["predictions_sha256"]
+            ):
+                continue
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+        verified.add(seed)
+        protocols.add(protocol)
+    if len(verified) >= max(3, result.seeds) and len(protocols) == 1:
+        return "accepted"
+    return f"provisional ({len(verified)} verified seeds)"
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -880,6 +999,13 @@ def main(argv: list[str] | None = None) -> int:
             for key in result.mlflow
         ]
         decision = result.decision
+        if result.result_id in REVALIDATION_REASONS:
+            decision = (
+                "Historical result only. "
+                + REVALIDATION_REASONS[result.result_id]
+                + " "
+                + decision
+            )
         if result.missing_reason and not resolved:
             decision = f"{decision}. {result.missing_reason}"
         lines.append(
@@ -896,12 +1022,12 @@ def main(argv: list[str] | None = None) -> int:
         _, tail = rest.split(END, 1)
         text = head + block + tail
     else:
-        text = text.replace(
-            "## Acceptance rules", block + "\n\n## Acceptance rules", 1
-        )
+        text = text.replace("## Acceptance rules", block + "\n\n## Acceptance rules", 1)
     arguments.registry.write_text(text, encoding="utf-8")
 
-    print(f"{len(RESULTS)} rows, {pending} pending -> {arguments.registry}")
+    print(
+        f"{len(RESULTS)} rows, {len(REVALIDATION_REASONS)} require reruns, {pending} pending -> {arguments.registry}"
+    )
     for result in RESULTS:
         for key in result.mlflow:
             if key not in run_ids:

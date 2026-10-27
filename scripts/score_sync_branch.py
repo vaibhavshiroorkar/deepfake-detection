@@ -111,12 +111,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"No checkpoint at {arguments.checkpoint}", file=sys.stderr)
         return 1
 
-    index = {
-        row["clip_id"]: run / row["cache_path"]
-        for row in csv.DictReader(
-            (run / "cache-index.csv").open(encoding="utf-8", newline="")
-        )
-    }
+    from deepfake_detection.data.cache_index import read_cache_index
+
+    index = read_cache_index(run / "cache-index.csv")
     records = [
         record
         for record in load_manifest(manifest, dataset=arguments.dataset).records
@@ -182,9 +179,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     probabilities = [item.probability for item in scored]
-    metrics = binary_metrics(
-        labels=labels, probabilities=probabilities, threshold=0.5
-    )
+    metrics = binary_metrics(labels=labels, probabilities=probabilities, threshold=0.5)
     interval = _interval(
         scored, seed=arguments.seed, samples=arguments.bootstrap_samples
     )

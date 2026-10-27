@@ -1,27 +1,22 @@
 from __future__ import annotations
 
-import hashlib
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
 import joblib
 
-from deepfake_detection.branches.audio import build_wav2vec2_audio_branch
-from deepfake_detection.branches.sync import build_sync_branch
-from deepfake_detection.branches.visual import build_efficientnet_b0
+from deepfake_detection.branches.registry import load_design_a_branches
+from deepfake_detection.digest import file_sha256
 from deepfake_detection.fusion.late import FusionArtifact
-from deepfake_detection.training.checkpoints import (
-    load_checkpoint,
-    validate_branch_states,
-)
+from deepfake_detection.training.checkpoints import validate_branch_states
 from deepfake_detection.views.cache import preprocessing_config_hash
 from deepfake_detection.views.face_detector import MTCNNFaceDetector, YuNetFaceDetector
 from deepfake_detection.views.media import FFmpegMediaDecoder
 from deepfake_detection.views.preprocessor import Preprocessor
 from deepfake_detection.views.timeline import ViewConfig
 
-from .predictor import PredictionEngine, VisualPredictionEngine
+from .predictor import PredictionEngine
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,29 +34,6 @@ class InferenceConfig:
     crop_mode: Literal["box", "landmark"] = "box"
     model_path: Path | None = None
     expected_model_hash: str | None = None
-
-
-@dataclass(frozen=True, slots=True)
-class VisualInferenceConfig:
-    visual_checkpoint: Path
-    code_version: str
-    expected_checkpoint_sha256: str
-    expected_run_id: str
-    expected_split_hash: str
-    expected_git_commit: str
-    expected_seed: int
-    threshold: float = 0.5
-    device: str = "cuda"
-    detector: Literal["mtcnn", "yunet"] = "mtcnn"
-    tracker: Literal["greedy_iou", "constant_velocity"] = "greedy_iou"
-    crop_mode: Literal["box", "landmark"] = "box"
-    model_path: Path | None = None
-    expected_model_hash: str | None = None
-
-
-def _file_sha256(path: Path) -> str:
-    with path.open("rb") as handle:
-        return hashlib.file_digest(handle, "sha256").hexdigest()
 
 
 def build_preprocessor(
@@ -84,7 +56,7 @@ def build_preprocessor(
     if detector == "yunet":
         if model_path is None or expected_model_hash is None:
             raise ValueError("YuNet requires a model path and expected model hash")
-        actual_hash = _file_sha256(model_path)
+        actual_hash = file_sha256(model_path)
         if actual_hash != expected_model_hash:
             raise ValueError("YuNet model hash does not match the expected hash")
         backend = YuNetFaceDetector(
@@ -121,20 +93,13 @@ def build_preprocessor(
 
 
 def load_prediction_engine(config: InferenceConfig) -> PredictionEngine:
-    visual = build_efficientnet_b0(pretrained=False)
-    audio = build_wav2vec2_audio_branch(
-        model_name=config.audio_model,
-        pretrained=False,
+    models, states = load_design_a_branches(
+        visual=config.visual_checkpoint,
+        audio=config.audio_checkpoint,
+        sync=config.sync_checkpoint,
+        audio_fallback=config.audio_model,
     )
-    sync = build_sync_branch(
-        audio_model_name=config.audio_model,
-        pretrained=False,
-    )
-    states = {
-        "visual": load_checkpoint(config.visual_checkpoint, model=visual),
-        "audio": load_checkpoint(config.audio_checkpoint, model=audio),
-        "sync": load_checkpoint(config.sync_checkpoint, model=sync),
-    }
+    visual, audio, sync = models["visual"], models["audio"], models["sync"]
     provenance = validate_branch_states(states)
     fusion = joblib.load(config.fusion_model)
     if not isinstance(fusion, FusionArtifact):
@@ -168,48 +133,6 @@ def load_prediction_engine(config: InferenceConfig) -> PredictionEngine:
         audio_model=audio,
         sync_model=sync,
         fusion=fusion,
-        threshold=config.threshold,
-        device=config.device,
-    )
-
-
-def load_visual_prediction_engine(
-    config: VisualInferenceConfig,
-) -> VisualPredictionEngine:
-    if _file_sha256(config.visual_checkpoint) != config.expected_checkpoint_sha256:
-        raise ValueError("Visual checkpoint does not match the expected SHA-256")
-    visual = build_efficientnet_b0(pretrained=False)
-    state = load_checkpoint(config.visual_checkpoint, model=visual)
-    provenance = validate_branch_states({"visual": state})
-    metadata = state.metadata
-    if metadata.run_id != config.expected_run_id:
-        raise ValueError("Visual checkpoint does not match the expected run ID")
-    if metadata.split_hash != config.expected_split_hash:
-        raise ValueError("Visual checkpoint does not match the expected split hash")
-    if metadata.git_commit != config.expected_git_commit:
-        raise ValueError("Visual checkpoint does not match the expected Git commit")
-    if metadata.seed != config.expected_seed:
-        raise ValueError("Visual checkpoint does not match the expected seed")
-    preprocessor = build_preprocessor(
-        code_version=config.code_version,
-        device=config.device,
-        detector=config.detector,
-        tracker=config.tracker,
-        crop_mode=config.crop_mode,
-        model_path=config.model_path,
-        expected_model_hash=config.expected_model_hash,
-    )
-    if (
-        preprocessing_config_hash(
-            config=preprocessor.config,
-            code_version=config.code_version,
-        )
-        != provenance.preprocessing_hash
-    ):
-        raise ValueError("Runtime preprocessing does not match the checkpoint")
-    return VisualPredictionEngine(
-        preprocessor=preprocessor,
-        visual_model=visual,
         threshold=config.threshold,
         device=config.device,
     )

@@ -55,8 +55,3 @@ def validate_evidence_scope(value: str) -> str:
             f"{', '.join(EVIDENCE_SCOPES)}."
         )
     return value
-
-
-def is_generalization(value: str) -> bool:
-    """Whether this scope's metrics come from an unseen dataset."""
-    return value in GENERALIZATION_SCOPES

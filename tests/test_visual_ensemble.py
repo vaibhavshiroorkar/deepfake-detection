@@ -10,9 +10,9 @@ pytest.importorskip("torch")
 import torch
 from torch import nn
 
+from deepfake_detection.branches.registry import architecture_of
 from deepfake_detection.inference.ensemble import (
     VisualEnsembleEngine,
-    architecture_for,
     program_members,
 )
 from deepfake_detection.inference.predictor import _InferenceRecord
@@ -103,12 +103,13 @@ def test_program_members_name_six_checkpoints_by_architecture():
     members = program_members(Path("checkpoints"))
     assert len(members) == 6
     for member in members:
-        assert architecture_for(member.checkpoint) == member.architecture
+        # Old checkpoints record no architecture, so the name has to decide.
+        assert member.name.startswith(architecture_of(member.checkpoint, "visual"))
 
 
 def test_an_upload_record_carries_every_field_the_preprocessor_reads():
     # prepare_visual reads sync_start_sec for the fingerprint. Without it the
     # visual-only engine raised AttributeError on every upload.
     record = _InferenceRecord(clip_id="upload")
-    assert record.sync_start_sec == 0.0
+    assert record.sync_start_sec is None
     assert record.leading_silence_sec == 0.0

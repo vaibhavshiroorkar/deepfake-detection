@@ -63,7 +63,7 @@ def _auc_of(items) -> float:
     degenerate sample discards neither the interval nor the honesty of it."""
     import torch
 
-    from deepfake_detection.training.fusion import _auc
+    from deepfake_detection.training.ranking import roc_auc as _auc
 
     labels = [item.label for item in items]
     if len(set(labels)) != 2:
@@ -129,6 +129,20 @@ def main(argv: list[str] | None = None) -> int:
         "is the run's cost driver.",
     )
     parser.add_argument("--output", type=Path, default=None)
+    parser.add_argument(
+        "--streams",
+        nargs="+",
+        default=None,
+        help="Ablate only these streams. Default: every stream in the store.",
+    )
+    parser.add_argument(
+        "--sizes",
+        type=int,
+        nargs="+",
+        default=None,
+        help="Subset sizes to fit, e.g. 1 5 for each stream alone and all five. "
+        "Default: every size.",
+    )
     arguments = parser.parse_args(argv)
 
     features = arguments.run_dir / "features"
@@ -142,7 +156,14 @@ def main(argv: list[str] | None = None) -> int:
     available = sorted(
         {row.branch for row in FeatureStore(train_path).read() if row.available}
     )
+    if arguments.streams is not None:
+        missing = sorted(set(arguments.streams) - set(available))
+        if missing:
+            print(f"Not in the store: {', '.join(missing)}")
+            return 1
+        available = sorted(arguments.streams)
     print(f"streams: {', '.join(available)}")
+    sizes = arguments.sizes or range(1, len(available) + 1)
 
     partitions = {
         name: features / f"{name}.parquet"
@@ -152,7 +173,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"partitions: {', '.join(partitions)}\n")
 
     results = []
-    for size in range(1, len(available) + 1):
+    for size in sizes:
         for subset in itertools.combinations(available, size):
             train_rows = _rows(train_path, subset)
             dims = stream_dimensions(train_rows)
@@ -167,8 +188,11 @@ def main(argv: list[str] | None = None) -> int:
                 # change what is being compared between rows of the table.
                 presence_patterns={"video": 1.0},
             )
-            row = {"streams": list(subset), "size": size,
-                   "train_clips": history.train_clips}
+            row = {
+                "streams": list(subset),
+                "size": size,
+                "train_clips": history.train_clips,
+            }
             for name, path in partitions.items():
                 interval = _score(
                     model,
@@ -213,9 +237,7 @@ def main(argv: list[str] | None = None) -> int:
         singles = [r for r in scored if r["size"] == 1]
         full = next((r for r in scored if r["size"] == len(available)), None)
         beats = (
-            full is not None
-            and singles
-            and all(full[name] > s[name] for s in singles)
+            full is not None and singles and all(full[name] > s[name] for s in singles)
         )
         # Two claims, because they are not the same claim. "Beats" compares
         # point estimates; "separated" asks whether the best combination's

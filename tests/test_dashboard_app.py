@@ -13,7 +13,6 @@ PAGES = APP.parent / "pages"
 # as their own lineage rather than sitting between the streams and fusion.
 EXPECTED_NAVIGATION = [
     ("Overview", False),
-    ("Evidence gate", False),
     ("Preprocessing", False),
     ("Streams", False),
     ("Visual", False),
@@ -57,14 +56,6 @@ def test_shell_draws_the_pipeline_ordered_sidebar() -> None:
     assert [(link.label, link.disabled) for link in links] == EXPECTED_NAVIGATION
 
 
-def test_shell_shows_the_frozen_baseline_provenance() -> None:
-    app = run_app()
-    assert any(item.value == "Frozen baseline" for item in app.header)
-    captions = " ".join(item.value for item in app.caption)
-    assert "Decision threshold: 0.50" in captions
-    assert "Compute device: cuda" in captions
-
-
 def test_shell_opens_on_the_overview_page() -> None:
     app = run_app()
     headers = [item.value for item in app.header]
@@ -76,20 +67,6 @@ def test_every_registered_page_exists() -> None:
     app = run_app()
     for link in app.get("page_link"):
         assert (PAGES / f"{link.page}.py").is_file() or link.label == "Overview"
-
-
-def test_gate_page_keeps_the_four_step_workflow() -> None:
-    page = run_page("gate.py")
-    assert not page.exception
-    body = " ".join(item.value for item in page.markdown)
-    assert "Verdict follows" in body
-    assert "coverage." in body
-    assert [item.label for item in page.expander] == [
-        "1. Video input",
-        "2. Preprocessing",
-        "3. Visual model",
-        "4. Prediction",
-    ]
 
 
 def test_documentation_page_links_the_repository_records() -> None:

@@ -6,6 +6,7 @@ rather than a `StreamOutput`. So the same overfit check is repeated against the
 separate code path, because that is where a wiring fault would live.
 """
 
+import zlib
 from pathlib import Path
 
 import numpy as np
@@ -51,7 +52,7 @@ def record(clip_id: str, *, fake: bool) -> ClipRecord:
 
 
 def store_clip(store: CacheStore, clip_id: str, *, fake: bool) -> Path:
-    generator = np.random.default_rng(abs(hash(clip_id)) % 2**32)
+    generator = np.random.default_rng(zlib.crc32(clip_id.encode()) % 2**32)
     bias = 1.5 if fake else -1.5
     prepared = PreparedClip(
         clip_id=clip_id,

@@ -168,10 +168,23 @@ def _run_trace():
 
             report = checkpoints.load_into(model, checkpoint)
 
-    detector, _device = media.get_detector()
-    with st.spinner("Detecting faces…"):
-        faces = inference.decode_face_clip(str(video_path), config.num_frames, detector)
-        frames = inference.frames_to_tensor(faces)
+    if checkpoint is not None:
+        # A trained checkpoint is scored on the crops it was trained on: the
+        # pipeline's square box, margin and detector threshold. The teaching
+        # crops below differ in all three, and a trained model scored on them
+        # reports a number for inputs it never saw.
+        with st.spinner("Preprocessing the clip as the pipeline does…"):
+            faces, frames = inference.pipeline_face_clip(str(video_path))
+        if faces is None:
+            st.error("No stable face track in this clip, so the pipeline abstains.")
+            st.stop()
+    else:
+        detector, _device = media.get_detector()
+        with st.spinner("Detecting faces…"):
+            faces = inference.decode_face_clip(
+                str(video_path), config.num_frames, detector
+            )
+            frames = inference.frames_to_tensor(faces)
     with st.spinner("Forward pass…"):
         trace = introspect.trace_visual_stream(model, frames, int(detail_frame))
     return {

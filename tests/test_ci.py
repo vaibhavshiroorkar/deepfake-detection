@@ -47,7 +47,7 @@ def test_ci_workflow_uses_read_only_windows_job_and_required_actions() -> None:
     setup_python = next(
         step for step in steps if step.get("uses") == "actions/setup-python@v6"
     )
-    assert setup_python["with"] == {"python-version": "3.11"}
+    assert setup_python["with"] == {"python-version": "${{ matrix.python }}"}
 
 
 def test_ci_workflow_runs_the_local_quality_and_smoke_contract() -> None:
@@ -58,11 +58,11 @@ def test_ci_workflow_runs_the_local_quality_and_smoke_contract() -> None:
     # skip silently and the dashboard goes untested in CI.
     assert step_with_name(steps, "Install")["run"] == (
         "uv sync --extra cpu --extra media --extra ml --extra tracking "
-        "--extra dashboard --group dev"
+        "--extra dashboard --extra web --extra probe --group dev"
     )
-    assert step_with_name(steps, "Lint")["run"] == "uv run ruff check src tests"
+    assert step_with_name(steps, "Lint")["run"] == "uv run ruff check src tests scripts"
     assert step_with_name(steps, "Format")["run"] == (
-        "uv run ruff format --check src tests"
+        "uv run ruff format --check src tests scripts"
     )
     assert step_with_name(steps, "Lock")["run"] == "uv lock --check"
     assert step_with_name(steps, "Documentation")["run"] == "uv run ddf-docs"
@@ -70,9 +70,6 @@ def test_ci_workflow_runs_the_local_quality_and_smoke_contract() -> None:
     assert step_with_name(steps, "Tracked smoke")["run"] == (
         "uv run --extra tracking ddf run --root . --config configs/local.yaml "
         "--config configs/smoke.yaml"
-    )
-    assert step_with_name(steps, "Detector evaluator fixture smoke")["run"] == (
-        "uv run pytest tests/test_detector_cli.py -k detector_compare_fixture_smoke"
     )
 
 
@@ -84,3 +81,20 @@ def test_ci_workflow_checks_pull_request_documentation_contract() -> None:
     assert step["run"] == (
         "uv run ddf-docs --changed-from ${{ github.event.pull_request.base.sha }}"
     )
+
+
+def test_ci_covers_supported_python_versions_and_browser_behavior():
+    workflow = load_workflow()
+    assert set(workflow["jobs"]["test"]["strategy"]["matrix"]["python"]) == {
+        "3.11",
+        "3.12",
+        "3.13",
+    }
+    steps = workflow_steps(workflow)
+    assert (
+        step_with_name(steps, "Browser behavior")["run"]
+        == "node --test tests/test_webapp_behavior.js"
+    )
+    base = workflow["jobs"]["base-install"]
+    assert set(base["strategy"]["matrix"]["python"]) == {"3.11", "3.12", "3.13"}
+    assert any("ddf --help" in step.get("run", "") for step in base["steps"])

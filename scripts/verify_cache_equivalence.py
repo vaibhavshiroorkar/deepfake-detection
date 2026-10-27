@@ -93,7 +93,9 @@ def main(argv: list[str] | None = None) -> int:
         "identical": identical,
         "differences": differing[:20],
     }
-    print(f"compared {compared} clips across {len(fields)} arrays: {', '.join(sorted(fields))}")
+    print(
+        f"compared {compared} clips across {len(fields)} arrays: {', '.join(sorted(fields))}"
+    )
     if identical:
         print("IDENTICAL. The two hashes label the same preprocessing.")
     else:

@@ -20,7 +20,9 @@ VIDEO_STEPS = 50
 AUDIO_SAMPLES = 32_000
 
 
-def tiny_stream(*, heads: int = 4, dim: int = 32) -> CrossModalStream:
+def tiny_stream(
+    *, heads: int = 4, dim: int = 32, position_mode: str = "sinusoidal"
+) -> CrossModalStream:
     config = StreamConfig(
         stream_name="lipsync",
         backbone_name="resnet18",
@@ -30,7 +32,11 @@ def tiny_stream(*, heads: int = 4, dim: int = 32) -> CrossModalStream:
         frame_chunk_size=25,
     )
     return CrossModalStream(
-        config=config, pretrained=False, attention_heads=heads, query_steps=VIDEO_STEPS
+        config=config,
+        pretrained=False,
+        attention_heads=heads,
+        query_steps=VIDEO_STEPS,
+        temporal_position_mode=position_mode,
     )
 
 
@@ -127,16 +133,9 @@ def test_embedding_depends_on_the_video_content() -> None:
     assert relative_change(first.embedding, second.embedding) > 0.01
 
 
-def test_frame_order_is_ignored_until_attention_sharpens() -> None:
-    """Documents a real property rather than asserting a wish.
-
-    With attention uniform at initialisation the attended vector is the mean
-    over frames, and a mean cannot see order. So an untrained stream is
-    order-blind by construction. Becoming order-sensitive is exactly what
-    training has to achieve, which makes this the check to re-run on a trained
-    checkpoint: there the assertion should invert.
-    """
-    model = tiny_stream().eval()
+def test_legacy_frame_encoder_cannot_represent_mouth_order() -> None:
+    """Historical checkpoints keep their order-blind computation when loaded."""
+    model = tiny_stream(position_mode="none").eval()
     video, audio = inputs(batch=1)
 
     with torch.no_grad():

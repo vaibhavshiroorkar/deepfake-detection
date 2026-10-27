@@ -1,5 +1,11 @@
 # Paper source book
 
+The fusion, LAV-DF and PE/CLIP results below are historical measurements with known protocol defects.
+Outer-fold labels selected the checkpoints that produced the original OOF features.
+Explicit zero-start LAV-DF windows could shift into annotated manipulation.
+PE/CLIP features used the wrong input normalization.
+Affected registry rows require reruns. Their old scores do not establish the corrected pipeline's performance.
+
 Everything the paper needs, in one place. Write the paper from this file.
 
 Two kinds of content live here and they are kept apart on purpose. The prose is
@@ -127,21 +133,35 @@ served.
 | `sync-final-sync-seed29-metrics.json` | FakeAVCeleb | 0 | 0.4570 | 0.5000 |
 | `sync-final-sync-seed43-metrics.json` | FakeAVCeleb | 0 | 0.4931 | 0.5000 |
 | `visual-celebdf-metrics.json` | Celeb-DF-v2 | 462 | 0.6682 | 0.5435 |
+| `visual-celebdf-seed29-metrics.json` | Celeb-DF-v2 | 462 | 0.6698 | 0.5821 |
+| `visual-celebdf-seed43-metrics.json` | Celeb-DF-v2 | 462 | 0.6611 | 0.5628 |
+| `visual-convnext-celebdf-metrics.json` | Celeb-DF-v2 | 462 | 0.6155 | 0.5956 |
+| `visual-convnext-celebdf-seed29-metrics.json` | Celeb-DF-v2 | 462 | 0.6184 | 0.6302 |
+| `visual-convnext-celebdf-seed43-metrics.json` | Celeb-DF-v2 | 462 | 0.6287 | 0.5913 |
 | `visual-convnext-dfdc-metrics.json` | DFDC | 2,410 | 0.7272 | 0.5066 |
 | `visual-convnext-dfdc-seed29-metrics.json` | DFDC | 2,410 | 0.6776 | 0.5358 |
 | `visual-convnext-dfdc-seed43-metrics.json` | DFDC | 2,410 | 0.6301 | 0.5720 |
 | `visual-convnext-in-domain-test-metrics.json` | FakeAVCeleb | 1,648 | 0.9992 | 0.9973 |
 | `visual-convnext-in-domain-test-seed29-metrics.json` | FakeAVCeleb | 1,648 | 0.9986 | 0.9957 |
 | `visual-convnext-in-domain-test-seed43-metrics.json` | FakeAVCeleb | 1,648 | 0.9032 | 0.7919 |
+| `visual-convnext-mnw-metrics.json` | MNW | 85 | 0.0000 | 0.0238 |
+| `visual-convnext-mnw-seed29-metrics.json` | MNW | 85 | 0.0238 | 0.0476 |
+| `visual-convnext-mnw-seed43-metrics.json` | MNW | 85 | 0.3571 | 0.5655 |
 | `visual-dfdc-metrics.json` | DFDC | 2,410 | 0.7611 | 0.5677 |
 | `visual-dfdc-seed17-metrics.json` | DFDC | 2,410 | 0.7611 | 0.5677 |
 | `visual-dfdc-seed29-metrics.json` | DFDC | 2,410 | 0.6963 | 0.5354 |
 | `visual-dfdc-seed43-metrics.json` | DFDC | 2,410 | 0.6878 | 0.5216 |
+| `visual-ensemble-celebdf-metrics.json` | Celeb-DF-v2 | 462 | 0.6677 | 0.6143 |
+| `visual-ensemble-dfdc-metrics.json` | DFDC | 2,410 | 0.7739 | 0.5181 |
+| `visual-ensemble-in-domain-test-metrics.json` | FakeAVCeleb | 1,648 | 0.9994 | 0.9990 |
+| `visual-ensemble-mnw-metrics.json` | MNW | 85 | undefined, one class | n/a |
 | `visual-in-domain-test-metrics.json` | FakeAVCeleb | 1,648 | 0.9988 | 0.9990 |
 | `visual-in-domain-test-seed17-metrics.json` | FakeAVCeleb | 1,648 | 0.9988 | 0.9990 |
 | `visual-in-domain-test-seed29-metrics.json` | FakeAVCeleb | 1,648 | 0.9991 | 0.9990 |
 | `visual-in-domain-test-seed43-metrics.json` | FakeAVCeleb | 1,648 | 0.9993 | 0.9987 |
 | `visual-mnw-metrics.json` | MNW | 85 | 0.0000 | 0.1429 |
+| `visual-mnw-seed29-metrics.json` | MNW | 85 | 0.0952 | 0.1131 |
+| `visual-mnw-seed43-metrics.json` | MNW | 85 | 0.0000 | 0.1190 |
 <!-- END GENERATED DESIGNA -->
 
 ## 5. Design B results
@@ -512,10 +532,10 @@ surveyed in [corpora for the generative-video problem](datasets.md).
 ## 10. Provenance
 
 <!-- BEGIN GENERATED REGISTRY -->
-41 registered results.
+45 registered results.
 
-- 6 `accepted`
-- 35 `provisional (1 seed)`
+- 28 `provisional (0 verified seeds)`
+- 17 `requires rerun`
 
 The rows themselves, with each artifact's SHA-256 and MLflow run, are in [result traceability](result-traceability.md).
 <!-- END GENERATED REGISTRY -->

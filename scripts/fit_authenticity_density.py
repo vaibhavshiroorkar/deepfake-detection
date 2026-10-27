@@ -149,9 +149,7 @@ def main(argv: list[str] | None = None) -> int:
             "median_distance": float(np.median(values)),
             "flagged": flagged,
         }
-        print(
-            f"{group:32} {len(values):6} {np.median(values):16.2f} {flagged:8.1%}"
-        )
+        print(f"{group:32} {len(values):6} {np.median(values):16.2f} {flagged:8.1%}")
 
     spread: dict[str, dict] = {}
     if arguments.splits > 1:

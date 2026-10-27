@@ -18,7 +18,6 @@ DINOv3 is the control. It is a frozen ViT with no running statistics, so the two
 arms must agree to the last decimal, and they do.
 """
 
-import csv
 import json
 from pathlib import Path
 
@@ -27,6 +26,7 @@ from torch.utils.data import DataLoader
 
 ROOT = Path(__file__).resolve().parents[1]
 
+from deepfake_detection.data.cache_index import read_cache_index  # noqa: E402
 from deepfake_detection.data.datasets import (  # noqa: E402
     CachedBranchDataset,
     collate_branch_items,
@@ -40,10 +40,7 @@ from deepfake_detection.views.cache_store import CacheStore  # noqa: E402
 SOURCE = ROOT / "runs" / "program-20260906"
 RUN = ROOT / "runs" / "design-b-20260910"
 
-index = {}
-with (SOURCE / "cache-index.csv").open(encoding="utf-8") as handle:
-    for row in csv.DictReader(handle):
-        index[row["clip_id"]] = SOURCE / row["cache_path"]
+index = read_cache_index(SOURCE / "cache-index.csv")
 store = CacheStore(SOURCE / "cache")
 
 

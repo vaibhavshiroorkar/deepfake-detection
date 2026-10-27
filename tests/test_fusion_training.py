@@ -7,6 +7,7 @@ that out; a random split here would reintroduce it one layer higher.
 """
 
 import dataclasses
+import zlib
 
 import pytest
 
@@ -33,7 +34,7 @@ def row(
 ) -> AssembledFeature:
     """One assembled clip whose embeddings separate the classes linearly."""
     present = DIMS if streams is None else streams
-    generator = torch.Generator().manual_seed(abs(hash(clip)) % 2**31)
+    generator = torch.Generator().manual_seed(zlib.crc32(clip.encode()) % 2**31)
     bias = 1.0 if label else -1.0
     return AssembledFeature(
         dataset="fixture",

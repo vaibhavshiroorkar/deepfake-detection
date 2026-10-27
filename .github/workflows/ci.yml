@@ -10,6 +10,13 @@ permissions:
 jobs:
   test:
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    env:
+      OMP_NUM_THREADS: "1"
+      MKL_NUM_THREADS: "1"
     steps:
       - uses: actions/checkout@v6
         with:
@@ -20,17 +27,20 @@ jobs:
           version: "0.12.1"
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - name: Install
         # `dashboard` is needed for the tests to actually run rather than skip.
         # The dashboard tests guard themselves with `importorskip("streamlit")`,
         # so without this extra they are silently skipped and the dashboard goes
         # untested in CI.
-        run: uv sync --extra cpu --extra media --extra ml --extra tracking --extra dashboard --group dev
+        run: uv sync --extra cpu --extra media --extra ml --extra tracking --extra dashboard --extra web --extra probe --group dev
       - name: Lint
-        run: uv run ruff check src tests
+        run: uv run ruff check src tests scripts
       - name: Format
-        run: uv run ruff format --check src tests
+        run: uv run ruff format --check src tests scripts
       - name: Lock
         run: uv lock --check
       - name: Documentation
@@ -40,7 +50,28 @@ jobs:
         run: uv run ddf-docs --changed-from ${{ github.event.pull_request.base.sha }}
       - name: Tests
         run: uv run pytest
-      - name: Detector evaluator fixture smoke
-        run: uv run pytest tests/test_detector_cli.py -k detector_compare_fixture_smoke
+      - name: Browser behavior
+        run: node --test tests/test_webapp_behavior.js
       - name: Tracked smoke
         run: uv run --extra tracking ddf run --root . --config configs/local.yaml --config configs/smoke.yaml
+  base-install:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9
+        with:
+          version: "0.12.1"
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install base package
+        run: uv sync --locked --no-dev
+      - name: Base CLI and documentation
+        run: |
+          uv run --no-sync ddf --help
+          uv run --no-sync ddf split --help
+          uv run --no-sync ddf-docs

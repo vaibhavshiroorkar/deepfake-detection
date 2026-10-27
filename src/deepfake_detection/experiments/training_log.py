@@ -1,18 +1,16 @@
 from __future__ import annotations
 
-import hashlib
 import math
 from collections.abc import Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from deepfake_detection.benchmarks.detector_metrics import (
-    DetectorBenchmarkReport,
-    read_detector_report,
-)
-from deepfake_detection.benchmarks.detector_runner import validate_candidate_artifact
+from deepfake_detection.digest import file_sha256
 from deepfake_detection.experiments.tracking import RunLogger
-from deepfake_detection.training.binary import BinaryTrainingHistory
-from deepfake_detection.training.sync import SyncTrainingHistory
+
+if TYPE_CHECKING:
+    from deepfake_detection.training.binary import BinaryTrainingHistory
+    from deepfake_detection.training.sync import SyncTrainingHistory
 
 
 def log_binary_training(
@@ -34,6 +32,7 @@ def log_binary_training(
                 "validation.loss": record.validation_loss,
                 "optimizer.steps": float(record.optimizer_steps),
                 "stage.backbone_trainable": float(record.backbone_trainable),
+                **_finite_only({"validation.auc": record.validation_auc}),
             },
         )
         for record in history.epochs
@@ -72,6 +71,14 @@ def log_sync_training(
                 "optimizer.steps": float(record.optimizer_steps),
                 "stage.heads": float(record.stage == "heads"),
                 "stage.upper": float(record.stage == "upper"),
+                **_finite_only(
+                    {
+                        "validation.misalignment_auc": (
+                            record.validation_misalignment_auc
+                        ),
+                        "validation.offset_accuracy": record.validation_offset_accuracy,
+                    }
+                ),
             },
         )
         for record in history.epochs
@@ -108,65 +115,11 @@ def log_fusion_training(
             "fusion.model_kind": model_kind,
             "fusion.split_hash": split_hash,
             "fusion.preprocessing_hash": preprocessing_hash,
-            "fusion.model_sha256": _file_hash(model_path),
+            "fusion.model_sha256": file_sha256(model_path),
         }
     )
     logger.log_artifact(model_path, artifact_path="models")
     logger.log_artifact(metadata_path, artifact_path="metadata")
-
-
-def log_detector_benchmark(
-    logger: RunLogger,
-    *,
-    report: DetectorBenchmarkReport,
-    report_path: Path,
-    predictions_path: Path,
-) -> None:
-    validate_candidate_artifact(predictions_path)
-    predictions_hash = _file_hash(predictions_path)
-    if predictions_hash != report.raw_results_sha256:
-        raise ValueError("Candidate artifact raw-results hash does not match report")
-    artifact_report = read_detector_report(report_path)
-    if artifact_report != report:
-        raise ValueError("Detector report artifact does not match supplied report")
-    logger.log_params(
-        {
-            "detector.name": report.detector_name,
-            "detector.revision": report.detector_revision,
-            "detector.model_sha256": report.model_sha256,
-            "detector.rule_revision": report.rule_revision,
-            "detector.evidence_scope": report.evidence_scope,
-            "detector.raw_results_sha256": report.raw_results_sha256,
-            "detector.evaluation_set_sha256": report.evaluation_set_sha256,
-            "detector.split_hash": report.split_hash,
-            "detector.identity_strict_split_hash": (report.identity_strict_split_hash),
-            "detector.reviewed_sample_sha256": report.reviewed_sample_sha256,
-            "detector.annotation_audit_sha256": report.annotation_audit_sha256,
-            "detector.source_run_id": report.source_run_id,
-            "detector.environment_lock_sha256": report.environment_lock_sha256,
-        }
-    )
-    metrics = {
-        "detector.target_recall": report.metrics.target_recall,
-        "detector.false_detections_per_frame": (
-            report.metrics.false_detections_per_frame
-        ),
-        "detector.non_target_detections_per_frame": (
-            report.metrics.non_target_detections_per_frame
-        ),
-        "detector.landmark_coverage": report.metrics.landmark_coverage,
-        "detector.latency_median_ms": report.latency.median_ms,
-        "detector.latency_p95_ms": report.latency.p95_ms,
-        "detector.throughput_fps": report.latency.throughput_fps,
-        "detector.comparison_clips": float(report.comparison_clip_count),
-    }
-    if report.metrics.landmark_nme is not None:
-        metrics["detector.landmark_nme"] = report.metrics.landmark_nme
-    if report.metrics.aligned_mouth_jitter is not None:
-        metrics["detector.aligned_mouth_jitter"] = report.metrics.aligned_mouth_jitter
-    logger.log_metrics(metrics)
-    logger.log_artifact(report_path, artifact_path="detector/aggregate")
-    logger.log_artifact(predictions_path, artifact_path="detector/predictions")
 
 
 def _log_training(
@@ -195,7 +148,7 @@ def _log_training(
             "training.best_epoch": history_best_epoch,
             "training.elapsed_seconds": elapsed_seconds,
             "configuration.sha256": configuration_hash,
-            "checkpoint.sha256": _file_hash(checkpoint),
+            "checkpoint.sha256": file_sha256(checkpoint),
         }
     )
     for epoch, values in metrics:
@@ -210,6 +163,11 @@ def _log_training(
     logger.log_artifact(history_path, artifact_path="history")
 
 
+def _finite_only(values: dict[str, float]) -> dict[str, float]:
+    """Drop a score that is undefined, such as AUC on a one-class split."""
+    return {name: value for name, value in values.items() if math.isfinite(value)}
+
+
 def _require_finite(*values: float) -> None:
     if not all(math.isfinite(value) for value in values):
         raise ValueError("Training metrics must be finite")
@@ -219,11 +177,3 @@ def _require_positive_finite(*values: float) -> None:
     _require_finite(*values)
     if not all(value > 0 for value in values):
         raise ValueError("Training cost metrics must be positive")
-
-
-def _file_hash(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()

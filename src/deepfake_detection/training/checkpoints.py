@@ -12,6 +12,8 @@ import torch
 from torch import nn
 from torch.optim import Optimizer
 
+from deepfake_detection.digest import file_sha256
+
 
 @dataclass(frozen=True, slots=True)
 class RunMetadata:
@@ -22,16 +24,21 @@ class RunMetadata:
     preprocessing_hash: str
     config_hash: str
     seed: int
-    # The source identities this checkpoint trained on, so an out-of-fold export
-    # can be verified rather than asserted. Without it `--partition-role oof` is
-    # a string the operator types and nothing can check: every fold shares one
-    # `split_hash`, so `validate_branch_states` cannot see fold contamination.
-    #
-    # Empty means "not recorded", which is what every checkpoint written before
-    # this field existed reports. Absence is not a claim of purity, so the
-    # verification in `fusion/export.py` skips rather than passes when it is
-    # empty. Loading is by keyword, so old checkpoints still load.
     trained_source_identities: tuple[str, ...] = ()
+    # None identifies legacy checkpoints with no model-selection provenance.
+    selection_source_identities: tuple[str, ...] | None = None
+    # The backbone or audio model this checkpoint was trained as, so loaders
+    # rebuild the right model (`branches/registry.py`). Empty in checkpoints
+    # written before the field existed; the registry falls back to the name.
+    architecture: str = ""
+    # Missing in historical files, whose forwards never used padding masks.
+    masking_mode: str = "legacy_none"
+
+    def __post_init__(self) -> None:
+        from .input_contract import MASKING_MODES
+
+        if self.masking_mode not in MASKING_MODES:
+            raise ValueError(f"Unknown checkpoint masking mode: {self.masking_mode}")
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,14 +82,6 @@ def hash_config(config: Mapping[str, Any]) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
-def _file_hash(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
 def save_checkpoint(
     path: Path,
     *,
@@ -113,7 +112,7 @@ def save_checkpoint(
     finally:
         if temporary is not None and temporary.exists():
             temporary.unlink()
-    return _file_hash(path)
+    return file_sha256(path)
 
 
 def load_checkpoint(
@@ -132,14 +131,32 @@ def load_checkpoint(
     model.load_state_dict(payload["model"])
     if optimizer is not None:
         optimizer.load_state_dict(payload["optimizer"])
-    metadata = dict(payload["metadata"])
+    metadata = _metadata(payload["metadata"])
+    model.masking_mode = metadata.masking_mode
+    model.trained_source_identities = metadata.trained_source_identities
+    model.selection_source_identities = metadata.selection_source_identities
+    return CheckpointState(
+        metadata=metadata,
+        epoch=int(payload["epoch"]),
+    )
+
+
+def read_metadata(path: Path) -> RunMetadata:
+    """The run metadata alone, without building a model. The file is mapped."""
+    payload = torch.load(path, map_location="cpu", weights_only=True, mmap=True)
+    return _metadata(payload["metadata"])
+
+
+def _metadata(stored: Mapping[str, Any]) -> RunMetadata:
+    metadata = dict(stored)
     # `asdict` writes the tuple as a list, and a checkpoint written before the
     # field existed has no key at all. Normalise both so callers always get a
     # tuple and the dataclass default covers the old files.
     metadata["trained_source_identities"] = tuple(
         metadata.get("trained_source_identities") or ()
     )
-    return CheckpointState(
-        metadata=RunMetadata(**metadata),
-        epoch=int(payload["epoch"]),
+    selected = metadata.get("selection_source_identities")
+    metadata["selection_source_identities"] = (
+        tuple(selected) if selected is not None else None
     )
+    return RunMetadata(**metadata)

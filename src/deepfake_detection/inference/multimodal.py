@@ -6,7 +6,7 @@ comes back indeterminate. That is right for the frozen Design A system, where
 fusion cannot consume a subset. The feature-level head can, so this engine runs
 what the input supports and fuses what ran.
 
-The routing is not decided here. `dashboard/lib/media_kind.py` owns the table of
+The routing is not decided here. `media_kind.py` owns the table of
 which streams a media kind can drive, and this asks it, so the serving path and
 the panel the user sees can never disagree about what will run.
 
@@ -25,7 +25,7 @@ from typing import Any
 import numpy as np
 import torch
 
-from deepfake_detection.dashboard.lib import media_kind
+from deepfake_detection import media_kind
 from deepfake_detection.fusion.deep_loading import LoadedFusion, fuse, load_fusion
 from deepfake_detection.fusion.stream_export import StreamSpec, _forward
 from deepfake_detection.inference import distribution_gate
@@ -39,7 +39,7 @@ class _Record:
     clip_id: str
     dataset: str = "upload"
     leading_silence_sec: float = 0.0
-    sync_start_sec: float = 0.0
+    sync_start_sec: float | None = None
 
 
 class MultimodalEngine:
@@ -59,6 +59,10 @@ class MultimodalEngine:
         if unknown:
             raise ValueError(
                 f"Streams the fusion head was not trained on: {', '.join(unknown)}"
+            )
+        if fusion.stream_checkpoint_hashes:
+            fusion.validate_checkpoints(
+                {name: spec.checkpoint_hash for name, spec in streams.items()}
             )
         # A stream the head knows about and this server has no checkpoint for.
         # Not an error: the head masks an absent stream to exactly zero, which is
@@ -212,6 +216,7 @@ def load_multimodal_engine(
     threshold: float = 0.5,
     root: Path | None = None,
     density_path: Path | None = None,
+    with_familiarity: bool = True,
 ) -> MultimodalEngine:
     """Build the served engine from one run directory.
 
@@ -220,6 +225,9 @@ def load_multimodal_engine(
     produces face crops of a different size or a waveform with a different
     silence rule, and every number that follows is quietly wrong. The two hashes
     are the only thing that catches it.
+
+    `with_familiarity=False` builds the engine without its own familiarity
+    gate, for a caller that runs the gate itself.
     """
     from deepfake_detection.fusion.stream_loading import load_streams
     from deepfake_detection.inference.loading import build_preprocessor
@@ -241,6 +249,7 @@ def load_multimodal_engine(
         )
 
     specs = load_streams(run_dir, device, root=root, only=tuple(fusion.stream_dims))
+    fusion.validate_checkpoints({spec.name: spec.checkpoint_hash for spec in specs})
     if not specs:
         raise ValueError(
             f"None of the head's streams have checkpoints in {run_dir}: "
@@ -251,14 +260,16 @@ def load_multimodal_engine(
     # Absent is a normal state. A checkout with no fitted density model serves
     # verdicts as before rather than failing, and the caller can see which it
     # got from `engine.familiarity`.
-    familiarity = load_gate(
-        density_path
-        or (root or Path.cwd())
-        / "runs"
-        / "probe-20260914"
-        / "authenticity-density.npz",
-        device=device,
-    )
+    familiarity = None
+    if with_familiarity:
+        familiarity = load_gate(
+            density_path
+            or (root or Path.cwd())
+            / "runs"
+            / "probe-20260914"
+            / "authenticity-density.npz",
+            device=device,
+        )
     return MultimodalEngine(
         preprocessor=preprocessor,
         streams={spec.name: spec for spec in specs},

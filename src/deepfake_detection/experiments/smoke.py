@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import csv
-import hashlib
 import json
 import os
 import tempfile
@@ -13,6 +12,7 @@ from typing import Any
 import joblib
 import numpy as np
 
+from deepfake_detection.digest import file_sha256
 from deepfake_detection.evaluation.metrics import (
     binary_metrics,
     select_balanced_accuracy_threshold,
@@ -105,8 +105,8 @@ def run_fusion_smoke(
         ),
     )
     payload_artifact_hashes = {
-        fusion_path.name: _file_sha256(fusion_path),
-        predictions_path.name: _file_sha256(predictions_path),
+        fusion_path.name: file_sha256(fusion_path),
+        predictions_path.name: file_sha256(predictions_path),
     }
     report = SmokeReport(
         seed=seed,
@@ -126,7 +126,7 @@ def run_fusion_smoke(
             validation_rows=validation_rows,
         ),
     )
-    report_byte_hash = _file_sha256(report_path)
+    report_byte_hash = file_sha256(report_path)
     _log_smoke_evidence(
         active_logger,
         report,
@@ -277,14 +277,6 @@ def _atomic_write(path: Path, write: Callable[[Path], object]) -> None:
     finally:
         if temporary_path is not None:
             temporary_path.unlink(missing_ok=True)
-
-
-def _file_sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _log_smoke_evidence(

@@ -28,7 +28,6 @@ generalization.
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import sys
 from pathlib import Path
@@ -43,8 +42,8 @@ def main(argv: list[str] | None = None) -> int:
         collate_av_pair_items,
     )
     from deepfake_detection.data.manifest import load_manifest
+    from deepfake_detection.fusion.stream_loading import build_model
     from deepfake_detection.streams.cross_attention import diagonal_mass
-    from deepfake_detection.streams.cross_modal_stream import build_lipsync_stream
     from deepfake_detection.training.checkpoints import load_checkpoint
     from deepfake_detection.training.ranking import roc_auc
     from deepfake_detection.views.cache_store import CacheStore
@@ -64,7 +63,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--checkpoint",
         type=Path,
-        default=Path("runs/streams-20260905/checkpoints/lavdf-lipsync-stream-seed17.pt"),
+        default=Path(
+            "runs/streams-20260905/checkpoints/lavdf-lipsync-stream-seed17.pt"
+        ),
     )
     parser.add_argument(
         "--manifest",
@@ -80,18 +81,14 @@ def main(argv: list[str] | None = None) -> int:
         arguments.checkpoint.stem + "-history.json"
     )
     history = json.loads(history_path.read_text(encoding="utf-8"))
-    model = build_lipsync_stream(
-        pretrained=False,
-        common_dim=history["config"]["model"].get("common_dim", 256),
-    )
+    model, _ = build_model("stream-lipsync", history)
     load_checkpoint(arguments.checkpoint, model=model)
     model = model.to(arguments.device).eval()
 
     cache_run = arguments.cache_run or arguments.run_dir
-    index: dict[str, Path] = {}
-    with (cache_run / "cache-index.csv").open(encoding="utf-8") as handle:
-        for row in csv.DictReader(handle):
-            index[row["clip_id"]] = cache_run / row["cache_path"]
+    from deepfake_detection.data.cache_index import read_cache_index
+
+    index = read_cache_index(cache_run / "cache-index.csv")
     store = CacheStore(cache_run / "cache")
 
     expected_hash = history["metadata"]["preprocessing_hash"]
@@ -113,8 +110,10 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
     if probe.preprocessing_config_hash != expected_hash:
-        print(f"note: hashes differ but are verified equivalent. "
-              f"{evidence_for(probe.preprocessing_config_hash, expected_hash)[:90]}")
+        print(
+            f"note: hashes differ but are verified equivalent. "
+            f"{evidence_for(probe.preprocessing_config_hash, expected_hash)[:90]}"
+        )
     dataset = CachedAVPairDataset(
         records=records, cache_index=index, cache_store=store, stream="lipsync"
     )
@@ -122,8 +121,7 @@ def main(argv: list[str] | None = None) -> int:
         dataset, batch_size=arguments.batch_size, collate_fn=collate_av_pair_items
     )
     print(
-        f"{len(dataset):,} of {len(listed):,} clips from "
-        f"{arguments.manifest.name}",
+        f"{len(dataset):,} of {len(listed):,} clips from {arguments.manifest.name}",
         flush=True,
     )
 
@@ -163,9 +161,7 @@ def main(argv: list[str] | None = None) -> int:
             f"diagonal mass {float(mass.mean()):.4f} against a chance of "
             f"{chance:.4f} at {queries} query steps"
         )
-        print(
-            "  above chance" if float(mass.mean()) > chance * 1.05 else "  at chance"
-        )
+        print("  above chance" if float(mass.mean()) > chance * 1.05 else "  at chance")
 
     output = (
         arguments.output

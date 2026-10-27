@@ -1,8 +1,6 @@
 """Run a trained cross-modal stream on one clip, stage by stage.
 
-The older `cross_modal.py` renders the same two pages over *random* projections,
-because when it was written neither stream existed. Both are trained now, so
-this runs the real thing: the checkpoint, the real encoders, the real attention
+This runs the real thing: the checkpoint, the real encoders, the real attention
 weights, the real logit.
 
 That matters beyond freshness. The attention map on this page is the evidence
@@ -43,11 +41,17 @@ def chance_diagonal_mass(queries: int, keys: int, band: int = BAND) -> float:
 
 
 def measured_diagonal_mass(weights: np.ndarray, band: int = BAND) -> float:
-    """Fraction of attention mass within `band` of the diagonal."""
-    rows, cols = weights.shape
-    r = np.arange(rows)[:, None]
-    c = np.arange(cols)[None, :]
-    return float(weights[np.abs(r * (cols / rows) - c) <= band].sum() / rows)
+    """Fraction of attention mass within `band` of the diagonal.
+
+    Delegates to the training metric so the page and the recorded history
+    measure the same thing.
+    """
+    import torch
+
+    from deepfake_detection.streams.cross_attention import diagonal_mass
+
+    values = torch.from_numpy(np.asarray(weights, dtype=np.float32)).unsqueeze(0)
+    return float(diagonal_mass(values, band=band)[0])
 
 
 def prepare_clip(video_path: str, stream: str):
@@ -84,6 +88,9 @@ def prepare_clip(video_path: str, stream: str):
 
 def run_stream(stream: str, checkpoint, prepared, device: str = "cuda") -> dict:
     """One forward pass, keeping every intermediate the page draws."""
+    import json
+    from pathlib import Path
+
     import torch
 
     from deepfake_detection.data.datasets import (
@@ -97,12 +104,38 @@ def run_stream(stream: str, checkpoint, prepared, device: str = "cuda") -> dict:
     )
 
     builder = build_lipsync_stream if stream == "lipsync" else build_emotion_stream
-    model = builder(pretrained=checkpoint is None, common_dim=256)
+    history = (
+        Path(checkpoint).with_name(Path(checkpoint).stem + "-history.json")
+        if checkpoint is not None
+        else None
+    )
+    if history is not None and history.is_file():
+        from deepfake_detection.fusion.stream_loading import build_model
+
+        model, _ = build_model(
+            f"stream-{stream}", json.loads(history.read_text(encoding="utf-8"))
+        )
+    else:
+        model = builder(
+            pretrained=checkpoint is None, common_dim=256, temporal_position_mode="none"
+        )
     report = None
     if checkpoint is not None:
         from deepfake_detection.dashboard.lib import checkpoints as checkpoints_lib
 
         report = checkpoints_lib.load_into(model, checkpoint)
+        if (
+            any(
+                report.get(key)
+                for key in ("missing", "unexpected", "mismatched", "error")
+            )
+            or not history.is_file()
+        ):
+            return {
+                "incompatible_checkpoint": True,
+                "report": report,
+                "missing_architecture": not history.is_file(),
+            }
     model = model.to(device).eval()
 
     video_field, audio_field = STREAM_VIEWS[stream]

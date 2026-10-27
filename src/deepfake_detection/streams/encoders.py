@@ -6,21 +6,22 @@ comparison would throw away exactly the information a synchronisation signal is
 made of.
 
 On encoder choice. `dashboard/lib/stream_spec.py` names AV-HuBERT and Whisper
-for lip-sync. Neither is used here yet, deliberately:
+for lip-sync, and HSEmotion for the emotion stream's face side.
 
   - AV-HuBERT's released implementation needs fairseq, which pins PyTorch to
-    1.08/1.13/2.0. This environment runs torch 2.12.1+cu130, and installing
-    fairseq would take the working CUDA stack down with it.
+    1.08/1.13/2.0, too old for this GPU. `streams/avhubert.py` restates the
+    model in plain torch instead, and `AVHubertPairEncoder` below serves it.
+  - HSEmotion's release is a pickle timm 1.0 cannot run, but its weights fit
+    timm's `tf_efficientnet_b0`, which is what `FrameTokenEncoder` builds when
+    `StreamConfig.backbone_weights` names the file (`streams/hsemotion.py`).
   - Whisper's encoder does not accept a waveform. It takes `[B, 80, 3000]`
     log-mel and hard-rejects any other length, because 3000 frames is 30
     seconds and its positional embeddings are sized for exactly that. The
     lip-sync window is 2 seconds, so Whisper would mean 28 seconds of padding
-    and 100 useful tokens out of 1500.
+    and 100 useful tokens out of 1500. It is not used.
 
 Wav2Vec2 takes a raw waveform of any length and is already used by
-`branches/audio.py`, so it is the audio encoder here. The contribution is the
-cross-modal mechanism, not the choice of encoder, and swapping one in later is
-a clean ablation rather than a rewrite.
+`branches/audio.py`, so it is the default audio encoder.
 """
 
 from __future__ import annotations
@@ -116,3 +117,62 @@ class FrameTokenEncoder(nn.Module):
     def set_backbone_trainable(self, trainable: bool) -> None:
         for parameter in self.backbone.parameters():
             parameter.requires_grad = trainable
+
+
+class AVHubertPairEncoder(nn.Module):
+    """Frozen AV-HuBERT, run once on the lips alone and once on the audio alone.
+
+    One model serves both modalities, so it is a pair encoder rather than two:
+    two copies would double 103M frozen parameters for no gain. AV-HuBERT was
+    pretrained with modality dropout, so a lips-only and an audio-only pass land
+    in one feature space and their tokens can be compared frame by frame, which
+    is the comparison the lip-sync stream makes.
+
+    It stays frozen and in eval mode for the whole run. Its ResNet frontend has
+    BatchNorm, and a training-mode pass would rewrite the running statistics
+    even with every weight frozen.
+    """
+
+    def __init__(
+        self,
+        *,
+        checkpoint: str = "",
+        lip_crop: float = 1.0,
+        lip_center_y: float = 0.5,
+    ) -> None:
+        super().__init__()
+        from pathlib import Path
+
+        from deepfake_detection.streams.avhubert import WIDTH, AVHubert, load_avhubert
+
+        self.model = load_avhubert(Path(checkpoint)) if checkpoint else AVHubert()
+        self.model.requires_grad_(False)
+        self.lip_crop = lip_crop
+        self.lip_center_y = lip_center_y
+        self.width = WIDTH
+
+    def train(self, mode: bool = True) -> AVHubertPairEncoder:
+        super().train(mode)
+        self.model.eval()
+        return self
+
+    def forward(self, video: Tensor, audio: Tensor) -> tuple[Tensor, Tensor]:
+        import torch
+
+        from deepfake_detection.streams.avhubert import audio_features, lip_frames
+
+        with torch.no_grad(), torch.autocast(video.device.type, enabled=False):
+            lips = lip_frames(
+                video.float(), crop=self.lip_crop, center_y=self.lip_center_y
+            )
+            sound = audio_features(audio.float())
+            # AV-HuBERT's loader trims or zero-pads audio to the video length.
+            frames = lips.shape[2]
+            if sound.shape[2] >= frames:
+                sound = sound[:, :, :frames]
+            else:
+                sound = torch.nn.functional.pad(sound, (0, frames - sound.shape[2]))
+            return self.model(video=lips), self.model(audio=sound)
+
+    def set_backbone_trainable(self, trainable: bool) -> None:
+        """Ignored: the encoder is frozen by design (see the class docstring)."""

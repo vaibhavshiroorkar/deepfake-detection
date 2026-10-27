@@ -31,9 +31,66 @@ should not be compared against them directly.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
+import uuid
 from pathlib import Path
+
+
+def split_masks(
+    groups,
+    names,
+    *,
+    source_pattern="prefix",
+    modes_are_one_generator=True,
+    test_fraction=0.4,
+    seed=17,
+    identity_protocol="target-only",
+):
+    """Split targets first, then optionally exclude shared FF++ donor identities."""
+    import numpy as np
+
+    if not 0 < test_fraction < 1:
+        raise ValueError("test_fraction must be between zero and one")
+    if identity_protocol not in {"target-only", "ffpp-strict"}:
+        raise ValueError("Unknown identity protocol")
+    groups = np.asarray(groups)
+    if modes_are_one_generator:
+        groups = np.asarray(
+            [g[:-4] if g.endswith(("_i2v", "_t2v")) else g for g in groups.tolist()]
+        )
+    stems = [Path(str(name)).stem for name in names]
+    sources = np.asarray(
+        [
+            stem.split("_", 1)[0] if source_pattern == "prefix" else stem
+            for stem in stems
+        ]
+    )
+    identities = [set(stem.split("_")) for stem in stems]
+    if identity_protocol == "ffpp-strict" and any(
+        len(stem.split("_")) != (1 if group == "real" else 2)
+        or not all(part.isdigit() for part in stem.split("_"))
+        for stem, group in zip(stems, groups, strict=True)
+    ):
+        raise ValueError("ffpp-strict requires real ID and fake target_donor filenames")
+    unique = sorted(set(sources.tolist()))
+    if len(unique) < 2:
+        raise ValueError("At least two source videos are required")
+    order = np.random.default_rng(seed).permutation(len(unique))
+    cut = min(len(unique) - 1, max(1, int(len(unique) * test_fraction)))
+    test_sources = {unique[i] for i in order[:cut]}
+    in_test_source = np.asarray([source in test_sources for source in sources])
+    masks = {}
+    for generator in sorted(set(groups.tolist()) - {"real"}):
+        held = groups == generator
+        train = (~held) & (~in_test_source)
+        test = (held | (groups == "real")) & in_test_source
+        if identity_protocol == "ffpp-strict":
+            test_ids = set().union(*(identities[i] for i in np.flatnonzero(test)))
+            train &= np.asarray([not ids & test_ids for ids in identities])
+        masks[generator] = train, test
+    return sources, groups, test_sources, masks
 
 
 def _bootstrap(scores, labels, samples: int, seed: int):
@@ -66,6 +123,7 @@ def held_out_scores(
     test_fraction: float = 0.4,
     regularization: float = 1.0,
     seed: int = 17,
+    identity_protocol: str = "target-only",
 ):
     """Score every generator with a probe that never saw it.
 
@@ -77,36 +135,22 @@ def held_out_scores(
     from sklearn.linear_model import LogisticRegression
     from sklearn.preprocessing import StandardScaler
 
-    if modes_are_one_generator:
-        # LTX_2.3_distilled_i2v and LTX_2.3_distilled_t2v are one model in two
-        # modes. Holding out a mode while training on its sibling leaks the
-        # model, which is the same class of leak as sharing a source video.
-        groups = np.asarray(
-            [g[:-4] if g.endswith(("_i2v", "_t2v")) else g for g in groups.tolist()]
-        )
-    generators = sorted({g for g in groups.tolist() if g != "real"})
-    real = groups == "real"
-
-    def source_of(name: str) -> str:
-        stem = Path(str(name)).stem
-        return stem.split("_", 1)[0] if source_pattern == "prefix" else stem
-
-    sources = np.asarray([source_of(n) for n in names.tolist()])
-    unique = sorted(set(sources.tolist()))
-    rng = np.random.default_rng(seed)
-    order = rng.permutation(len(unique))
-    cut = max(1, int(len(unique) * test_fraction))
-    test_sources = {unique[i] for i in order[:cut]}
-    in_test_source = np.asarray([s in test_sources for s in sources.tolist()])
+    sources, groups, test_sources, masks = split_masks(
+        groups,
+        names,
+        source_pattern=source_pattern,
+        modes_are_one_generator=modes_are_one_generator,
+        test_fraction=test_fraction,
+        seed=seed,
+        identity_protocol=identity_protocol,
+    )
 
     arms: dict[str, tuple] = {}
-    for generator in generators:
-        held = groups == generator
-        # Two exclusions, not one. The held-out generator never appears in
-        # training, and no source video appears on both sides, so neither the
-        # real clips nor a fake's own source can be memorised.
-        train_mask = (~held) & (~in_test_source)
-        test_mask = (held | real) & in_test_source
+    for generator, (train_mask, test_mask) in masks.items():
+        if len(set(labels[train_mask].tolist())) != 2:
+            raise ValueError(f"{generator}: training split needs both classes")
+        if len(set(labels[test_mask].tolist())) != 2:
+            raise ValueError(f"{generator}: test split needs both classes")
 
         scaler = StandardScaler().fit(features[train_mask])
         probe = LogisticRegression(
@@ -155,8 +199,24 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--regularization", type=float, default=1.0)
     parser.add_argument("--bootstrap-samples", type=int, default=1000)
     parser.add_argument("--seed", type=int, default=17)
+    parser.add_argument(
+        "--identity-protocol",
+        choices=("target-only", "ffpp-strict"),
+        default="target-only",
+        help="Target-only separation is the historical protocol. "
+        "ffpp-strict also excludes donors shared with test clips.",
+    )
     parser.add_argument("--output", type=Path, default=None)
     arguments = parser.parse_args(argv)
+    output = arguments.output or arguments.features.with_name(
+        f"{arguments.features.stem}-logo-seed{arguments.seed}-{uuid.uuid4().hex[:12]}.json"
+    )
+    predictions = output.with_name(output.stem + "-predictions.json")
+    if output.exists() or predictions.exists():
+        raise FileExistsError(
+            f"Evidence already exists at {output}; choose a new output"
+        )
+    output.parent.mkdir(parents=True, exist_ok=True)
 
     payload = np.load(arguments.features, allow_pickle=False)
     features = payload["features"]
@@ -173,6 +233,7 @@ def main(argv: list[str] | None = None) -> int:
         test_fraction=arguments.test_fraction,
         regularization=arguments.regularization,
         seed=arguments.seed,
+        identity_protocol=arguments.identity_protocol,
     )
     generators = list(arms)
     print(
@@ -220,14 +281,59 @@ def main(argv: list[str] | None = None) -> int:
                 "shares no source video with the training side."
             )
 
-    output = arguments.output or arguments.features.with_name(
-        arguments.features.stem + "-logo.json"
+    _, _, _, masks = split_masks(
+        groups,
+        names,
+        source_pattern=arguments.source_pattern,
+        modes_are_one_generator=arguments.modes_are_one_generator,
+        test_fraction=arguments.test_fraction,
+        seed=arguments.seed,
+        identity_protocol=arguments.identity_protocol,
     )
-    output.write_text(
+    prediction_rows = [
+        {
+            "generator": generator,
+            "file": str(names[index]),
+            "source": str(sources[index]),
+            "label": int(labels[index]),
+            "probability_fake": float(score),
+        }
+        for generator, (indices, scores, _) in arms.items()
+        for index, score in zip(indices, scores, strict=True)
+    ]
+    with predictions.open("x", encoding="utf-8") as handle:
+        json.dump(prediction_rows, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+    report = (
         json.dumps(
             {
                 "protocol": "leave-one-generator-out",
                 "features": str(arguments.features).replace("\\", "/"),
+                "feature_sha256": hashlib.sha256(
+                    arguments.features.read_bytes()
+                ).hexdigest(),
+                "predictions": str(predictions.resolve()).replace("\\", "/"),
+                "predictions_sha256": hashlib.sha256(
+                    predictions.read_bytes()
+                ).hexdigest(),
+                "seed": arguments.seed,
+                "regularization": arguments.regularization,
+                "test_fraction": arguments.test_fraction,
+                "bootstrap_samples": arguments.bootstrap_samples,
+                "source_pattern": arguments.source_pattern,
+                "modes_are_one_generator": arguments.modes_are_one_generator,
+                "identity_protocol": arguments.identity_protocol,
+                "source_assignments": {
+                    str(source): "test" if source in test_sources else "train"
+                    for source in sorted(set(sources.tolist()))
+                },
+                "arm_assignments": {
+                    generator: {
+                        "train_files": names[train].tolist(),
+                        "test_files": names[test].tolist(),
+                    }
+                    for generator, (train, test) in masks.items()
+                },
                 "generators": rows,
                 "macro_mean": float(np.mean([r["roc_auc"] for r in rows.values()]))
                 if rows
@@ -236,9 +342,10 @@ def main(argv: list[str] | None = None) -> int:
             indent=2,
             sort_keys=True,
         )
-        + "\n",
-        encoding="utf-8",
+        + "\n"
     )
+    with output.open("x", encoding="utf-8") as handle:
+        handle.write(report)
     print(f"wrote {output}")
     return 0
 

@@ -24,8 +24,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from deepfake_detection.dashboard.lib import datasets, media_kind
-from deepfake_detection.dashboard.paths import DATA_DIR, RUNS_DIR
+from deepfake_detection import media_kind
+from deepfake_detection.dashboard.lib import datasets
+from deepfake_detection.paths import DATA_DIR, RUNS_DIR
 
 MANIP_TYPES = [
     "RealVideo-RealAudio",

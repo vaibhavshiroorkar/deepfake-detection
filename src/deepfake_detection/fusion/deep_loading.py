@@ -1,6 +1,6 @@
 """Load a trained `StreamFusion` and score a clip from whatever streams ran.
 
-`cli._deep_fusion` saves the head and the shape it was built with, and until now
+`ddf train fusion --model deep` (`cli/fusion.py`) saves the head and the shape it was built with, and until now
 nothing read that back: the deep path could train and never predict. This is the
 other end of the trip.
 
@@ -36,6 +36,17 @@ class LoadedFusion:
     # with no entry has no calibrated threshold, and the caller is expected to
     # say so rather than reaching for 0.5.
     thresholds: dict[str, float] = field(default_factory=dict)
+    stream_checkpoint_hashes: dict[str, str] = field(default_factory=dict)
+    training_checkpoint_hashes: dict[str, tuple[str, ...]] = field(default_factory=dict)
+
+    def validate_checkpoints(self, actual: Mapping[str, str]) -> None:
+        if set(self.stream_checkpoint_hashes) != set(self.stream_dims):
+            raise ValueError(
+                "Fusion checkpoint has no complete stream checkpoint binding; refit with explicit checkpoint provenance"
+            )
+        for name, digest in actual.items():
+            if not digest or self.stream_checkpoint_hashes.get(name) != digest:
+                raise ValueError(f"Stream checkpoint mismatch for {name}")
 
     def threshold_for(self, kind: str) -> float | None:
         return self.thresholds.get(kind)
@@ -77,6 +88,13 @@ def load_fusion(path: Path, device: str = "cpu") -> LoadedFusion:
         thresholds={
             str(kind): float(cut)
             for kind, cut in (payload.get("thresholds") or {}).items()
+        },
+        stream_checkpoint_hashes=dict(payload.get("stream_checkpoint_hashes") or {}),
+        training_checkpoint_hashes={
+            name: tuple(hashes)
+            for name, hashes in (
+                payload.get("training_checkpoint_hashes") or {}
+            ).items()
         },
     )
 

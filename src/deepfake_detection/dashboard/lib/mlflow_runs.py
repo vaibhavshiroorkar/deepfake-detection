@@ -14,7 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from deepfake_detection.dashboard.paths import MLFLOW_DB
+from deepfake_detection.paths import MLFLOW_DB
 
 # Preferred column order, not the set of columns. Anything a run recorded that
 # is not named here still appears, after these, sorted. That matters because

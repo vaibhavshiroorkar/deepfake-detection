@@ -24,6 +24,7 @@ accuracy being good, which makes it worth more than the accuracy.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 import torch
@@ -34,7 +35,16 @@ from deepfake_detection.streams.cross_attention import (
     CrossModalAttention,
     diagonal_mass,
 )
-from deepfake_detection.streams.encoders import FrameTokenEncoder, Wav2Vec2TokenEncoder
+from deepfake_detection.streams.encoders import (
+    AVHubertPairEncoder,
+    FrameTokenEncoder,
+    Wav2Vec2TokenEncoder,
+)
+
+# The encoders each stream can be built with. "default" is an ImageNet
+# EfficientNet-B0 for the face side and Wav2Vec2 for the voice.
+LIPSYNC_ENCODERS = ("default", "avhubert")
+EMOTION_ENCODERS = ("default", "hsemotion")
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,19 +100,34 @@ class CrossModalStream(nn.Module):
         pretrained: bool = True,
         attention_heads: int = 4,
         query_steps: int = 50,
+        pair_encoder: nn.Module | None = None,
+        temporal_position_mode: str = "sinusoidal",
     ) -> None:
         super().__init__()
         self.config = config
         self.query_steps = query_steps
+        if temporal_position_mode not in {"none", "sinusoidal"}:
+            raise ValueError("Temporal position mode must be none or sinusoidal")
+        self.temporal_position_mode = temporal_position_mode
 
-        self.video_encoder = FrameTokenEncoder(config)
-        self.audio_encoder = Wav2Vec2TokenEncoder(
-            model_name=audio_model, pretrained=pretrained
-        )
+        # A pair encoder reads both modalities with one model (AV-HuBERT), in
+        # place of a separate frame encoder and audio encoder.
+        self.pair_encoder = pair_encoder
+        if pair_encoder is None:
+            self.video_encoder = FrameTokenEncoder(config)
+            self.audio_encoder = Wav2Vec2TokenEncoder(
+                model_name=audio_model, pretrained=pretrained
+            )
+            video_width = self.video_encoder.width
+            audio_width = self.audio_encoder.width
+        else:
+            self.video_encoder = None
+            self.audio_encoder = None
+            video_width = audio_width = pair_encoder.width
 
         dim = config.common_dim
-        self.video_projection = nn.Linear(self.video_encoder.width, dim)
-        self.audio_projection = nn.Linear(self.audio_encoder.width, dim)
+        self.video_projection = nn.Linear(video_width, dim)
+        self.audio_projection = nn.Linear(audio_width, dim)
         self.attention = CrossModalAttention(dim=dim, num_heads=attention_heads)
         self.projection = nn.Sequential(nn.Linear(dim, dim), nn.LayerNorm(dim))
         # Development only, exactly as VisualStream.temp_head is. The stream's
@@ -111,12 +136,40 @@ class CrossModalStream(nn.Module):
         self.temp_head = nn.Linear(dim, 1)
 
     def forward(self, *, video: Tensor, audio: Tensor) -> StreamOutput:
-        video_tokens = self.video_projection(self.video_encoder(video))
-        audio_tokens = self.audio_projection(self.audio_encoder(audio))
+        if self.pair_encoder is not None:
+            video_features, audio_features = self.pair_encoder(video, audio)
+        else:
+            video_features = self.video_encoder(video)
+            audio_features = self.audio_encoder(audio)
+        video_tokens = self.video_projection(video_features)
+        audio_tokens = self.audio_projection(audio_features)
 
         steps = min(self.query_steps, video_tokens.shape[1], audio_tokens.shape[1])
         video_tokens = resample_tokens(video_tokens, size=steps)
         audio_tokens = resample_tokens(audio_tokens, size=steps)
+        if self.temporal_position_mode == "sinusoidal":
+            # Frame encoders have no order information. Tag both time axes before
+            # attention so reversing mouth frames can change the mismatch vector.
+            positions = torch.arange(
+                steps, device=video_tokens.device, dtype=video_tokens.dtype
+            )[:, None]
+            frequencies = torch.exp(
+                torch.arange(
+                    0,
+                    video_tokens.shape[-1],
+                    2,
+                    device=video_tokens.device,
+                    dtype=video_tokens.dtype,
+                )
+                * (-math.log(10000.0) / video_tokens.shape[-1])
+            )
+            encoding = torch.zeros_like(video_tokens[:1])
+            encoding[0, :, 0::2] = torch.sin(positions * frequencies)
+            encoding[0, :, 1::2] = torch.cos(
+                positions * frequencies[: video_tokens.shape[-1] // 2]
+            )
+            video_tokens = video_tokens + encoding
+            audio_tokens = audio_tokens + encoding
 
         # Audio is Query, video is Key and Value. The direction is the claim:
         # the sound is what we have, and we ask how well the mouth accounts for it.
@@ -146,8 +199,9 @@ class CrossModalStream(nn.Module):
     def set_backbone_trainable(self, trainable: bool) -> None:
         """Both encoders move together, so the staged-freeze schedule in
         `training/binary.py` applies unchanged."""
-        self.video_encoder.set_backbone_trainable(trainable)
-        self.audio_encoder.set_backbone_trainable(trainable)
+        for encoder in (self.pair_encoder, self.video_encoder, self.audio_encoder):
+            if encoder is not None:
+                encoder.set_backbone_trainable(trainable)
 
 
 def build_lipsync_stream(
@@ -157,13 +211,30 @@ def build_lipsync_stream(
     pretrained: bool = True,
     common_dim: int = 256,
     attention_heads: int = 4,
+    encoder: str = "default",
+    temporal_position_mode: str = "sinusoidal",
+    query_steps: int = 50,
 ) -> CrossModalStream:
     """Mouth crops against the audio track.
 
     Reads `sync_video_view` and `sync_audio_view`, which the cache already holds
     and which are both exactly 2.0 seconds from the same start, so the two
     modalities are aligned by construction with no window to reconcile.
+
+    `encoder="avhubert"` reads both through frozen AV-HuBERT instead of an
+    EfficientNet and Wav2Vec2. `video_backbone` and `audio_model` are then
+    unused. Without `pretrained` the AV-HuBERT weights come from the stream
+    checkpoint, which carries them.
     """
+    if encoder not in LIPSYNC_ENCODERS:
+        raise ValueError(f"Lip-sync encoder must be one of {LIPSYNC_ENCODERS}")
+    pair_encoder = None
+    if encoder == "avhubert":
+        from deepfake_detection.paths import AVHUBERT_CHECKPOINT
+
+        pair_encoder = AVHubertPairEncoder(
+            checkpoint=str(AVHUBERT_CHECKPOINT) if pretrained else ""
+        )
     config = StreamConfig(
         stream_name="lipsync",
         backbone_name=video_backbone,
@@ -177,7 +248,9 @@ def build_lipsync_stream(
         audio_model=audio_model,
         pretrained=pretrained,
         attention_heads=attention_heads,
-        query_steps=50,
+        query_steps=query_steps,
+        pair_encoder=pair_encoder,
+        temporal_position_mode=temporal_position_mode,
     )
 
 
@@ -188,6 +261,9 @@ def build_emotion_stream(
     pretrained: bool = True,
     common_dim: int = 256,
     attention_heads: int = 4,
+    encoder: str = "default",
+    temporal_position_mode: str = "sinusoidal",
+    query_steps: int = 8,
 ) -> CrossModalStream:
     """Facial expression against vocal affect.
 
@@ -196,14 +272,24 @@ def build_emotion_stream(
     is a fixed 4.0 second window, so the dataset trims the video to the leading
     frames the audio actually covers (see `STREAM_FRAME_LIMITS`).
 
-    `stream_spec.py` names HSEmotions for the face side. EmotiEffLib, its
-    maintained successor, targets timm 0.9 while this environment runs 1.0.27,
-    so the same general backbone as lip-sync is used until that is resolved. The
-    mechanism is the contribution; the encoder is an ablation.
+    `encoder="hsemotion"` starts the face side from HSEmotion's AffectNet
+    expression weights (`streams/hsemotion.py`) in place of ImageNet's. The
+    architecture is the same EfficientNet-B0, so the two runs differ in their
+    starting weights alone.
     """
+    if encoder not in EMOTION_ENCODERS:
+        raise ValueError(f"Emotion encoder must be one of {EMOTION_ENCODERS}")
+    backbone_weights = ""
+    if encoder == "hsemotion":
+        from deepfake_detection.paths import HSEMOTION_WEIGHTS
+        from deepfake_detection.streams.hsemotion import ARCHITECTURE
+
+        video_backbone = ARCHITECTURE
+        backbone_weights = str(HSEMOTION_WEIGHTS) if pretrained else ""
     config = StreamConfig(
         stream_name="emotion",
         backbone_name=video_backbone,
+        backbone_weights=backbone_weights,
         pretrained=pretrained,
         common_dim=common_dim,
         image_size=224,
@@ -216,5 +302,6 @@ def build_emotion_stream(
         attention_heads=attention_heads,
         # The trimmed face sequence, so the comparison runs over frames the
         # audio window genuinely covers.
-        query_steps=8,
+        query_steps=query_steps,
+        temporal_position_mode=temporal_position_mode,
     )

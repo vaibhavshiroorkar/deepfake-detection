@@ -1,5 +1,11 @@
 # Model card
 
+The fusion, LAV-DF and PE/CLIP results below are historical measurements with known protocol defects.
+Outer-fold labels selected the checkpoints that produced the original OOF features.
+Explicit zero-start LAV-DF windows could shift into annotated manipulation.
+PE/CLIP features used the wrong input normalization.
+Affected registry rows require reruns. Their old scores do not establish the corrected pipeline's performance.
+
 For the Design A late-fusion system trained in `program-20260906`. Every number
 here resolves to a row in [result traceability](research/result-traceability.md)
 and every claim is drawn from [findings](research/findings.md). Nothing in this
@@ -21,7 +27,8 @@ Three cue-specific branches over one clip, combined by a calibrated late head.
 | Head | Logistic regression over Platt-calibrated branch logits plus three quality features | Combination |
 
 The head is fitted only on out-of-fold rows from source-grouped cross-fitting,
-so no branch scores a clip its own checkpoint trained on. The logistic head was
+but the historical fold checkpoints selected epochs on those same holdout rows.
+The head therefore requires retraining on nested OOF features. The logistic head was
 selected over a small MLP by measurement, not preference: see F18.
 
 A clip missing any branch is abstained on rather than imputed. The head demands

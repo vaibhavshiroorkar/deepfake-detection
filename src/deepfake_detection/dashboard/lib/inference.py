@@ -10,6 +10,8 @@ model, load a checkpoint if one exists, and trace the forward pass through
 deepfake_detection/streams/introspect.py.
 """
 
+from pathlib import Path
+
 import numpy as np
 
 # ImageNet statistics. The default timm backbone (EfficientNet-NS)
@@ -41,3 +43,29 @@ def decode_face_clip(
     timestamps = media.sample_timestamps(duration, num_frames, 0.35)
     frames = media.decode_frames(video_path, timestamps)
     return [media.detect_and_crop(f, detector, conf_thresh, margin)[0] for f in frames]
+
+
+def pipeline_face_clip(video_path: str):
+    """The pipeline's own visual view: (crops as uint8 RGB, tensor) or (None, None).
+
+    Built through `views.preprocessor`, as the trained checkpoints were, with the
+    streams' code version so the preprocessing hash matches theirs.
+    """
+    import torch
+
+    from deepfake_detection.dashboard.configuration import dashboard_defaults
+    from deepfake_detection.inference.loading import build_preprocessor
+    from deepfake_detection.inference.predictor import _InferenceRecord
+    from deepfake_detection.paths import PROJECT_ROOT
+    from deepfake_detection.training.augment import to_pixels
+
+    code_version = dashboard_defaults(root=PROJECT_ROOT).stream_code_version
+    preprocessor = build_preprocessor(code_version=code_version, device="cuda")
+    prepared = preprocessor.prepare_visual(
+        _InferenceRecord(clip_id="dashboard"), Path(video_path)
+    )
+    if prepared.visual_view is None:
+        return None, None
+    view = np.asarray(prepared.visual_view, dtype=np.float32)
+    crops = list(to_pixels(view))
+    return crops, torch.from_numpy(view).unsqueeze(0).contiguous()

@@ -1,4 +1,5 @@
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -79,7 +80,7 @@ def test_feature_export_is_a_real_producer_with_clip_level_fusion_labels(
         checkpoint_hashes={"visual": "v", "audio": "a", "sync": "s"},
         split_hash="split",
         preprocessing_hash="pipeline-1",
-        partition_role="oof",
+        partition_role="test",
         run_id="run",
         device="cpu",
     )
@@ -120,7 +121,7 @@ def test_feature_export_keeps_missing_cache_entries_as_unavailable_rows(
         checkpoint_hashes={"visual": "v", "audio": "a", "sync": "s"},
         split_hash="split",
         preprocessing_hash="pipeline-1",
-        partition_role="oof",
+        partition_role="test",
         run_id="run",
         device="cpu",
     )
@@ -171,7 +172,18 @@ def test_out_of_fold_export_is_allowed_when_no_source_overlaps() -> None:
         records=records,
         partition_role="oof",
         trained_source_identities={"visual": ("id2",), "audio": ("id3",)},
+        selection_source_identities={"visual": ("id4",), "audio": ("id5",)},
     )
+
+
+def test_out_of_fold_export_rejects_checkpoint_selection_on_the_holdout() -> None:
+    with pytest.raises(ValueError, match="selection"):
+        verify_out_of_fold(
+            records=[_fixture_record("clip-1", "id1")],
+            partition_role="oof",
+            trained_source_identities={"visual": ("id2",)},
+            selection_source_identities={"visual": ("id1",)},
+        )
 
 
 def test_only_the_out_of_fold_role_is_checked() -> None:
@@ -187,19 +199,63 @@ def test_only_the_out_of_fold_role_is_checked() -> None:
         )
 
 
-def test_a_checkpoint_without_recorded_sources_skips_rather_than_passes() -> None:
-    """Empty means "not recorded", not "trained on nothing".
-
-    Checkpoints written before the field existed report an empty tuple, so the
-    check must not read that as a clean bill of health.
-    """
+def test_a_checkpoint_without_recorded_sources_cannot_claim_out_of_fold() -> None:
     records = [_fixture_record("clip-1", "id1")]
 
-    verify_out_of_fold(
-        records=records,
-        partition_role="oof",
-        trained_source_identities={"visual": ()},
+    for provenance in ({"visual": ()}, None):
+        with pytest.raises(ValueError, match="provenance"):
+            verify_out_of_fold(
+                records=records,
+                partition_role="oof",
+                trained_source_identities=provenance,
+            )
+
+
+@pytest.mark.parametrize("allow_unavailable,code", [(False, 2), (True, 0)])
+def test_export_reports_missing_modalities_with_an_explicit_partial_success_policy(
+    tmp_path, monkeypatch, allow_unavailable, code
+):
+    import deepfake_detection.cli.fusion as cli
+    import deepfake_detection.fusion.export as exporter
+
+    metadata = SimpleNamespace(
+        split_hash="s",
+        preprocessing_hash="p",
+        trained_source_identities=("train",),
+        selection_source_identities=("validation",),
     )
-    verify_out_of_fold(
-        records=records, partition_role="oof", trained_source_identities=None
+    states = {
+        name: SimpleNamespace(metadata=metadata) for name in ("visual", "audio", "sync")
+    }
+    checkpoint = tmp_path / "checkpoint"
+    checkpoint.write_bytes(b"weights")
+    monkeypatch.setattr(
+        cli, "load_manifest", lambda *a, **kw: SimpleNamespace(records=[])
     )
+    monkeypatch.setattr(cli, "read_cache_index", lambda *a: {})
+    monkeypatch.setattr(
+        cli, "_load_trained_branches", lambda *a: (None, None, None, states)
+    )
+    monkeypatch.setattr(
+        exporter, "export_features", lambda **kw: exporter.ExportReport(1, 3, 1)
+    )
+    report = tmp_path / "report.json"
+    args = SimpleNamespace(
+        partition_role="external",
+        dataset="fixture",
+        manifest=checkpoint,
+        cache_index=checkpoint,
+        cache_root=tmp_path,
+        feature_store=tmp_path / "features",
+        visual_checkpoint=checkpoint,
+        audio_checkpoint=checkpoint,
+        sync_checkpoint=checkpoint,
+        run_id="run",
+        device="cpu",
+        report=report,
+        allow_unavailable=allow_unavailable,
+    )
+    assert cli._features_export(args) == code
+    import json
+
+    assert json.loads(report.read_text())["unavailable_rows"] == 1

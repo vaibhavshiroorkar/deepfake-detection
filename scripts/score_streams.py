@@ -71,7 +71,9 @@ def main(argv: list[str] | None = None) -> int:
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir", type=Path, required=True)
-    parser.add_argument("--source-run", type=Path, default=Path("runs/program-20260906"))
+    parser.add_argument(
+        "--source-run", type=Path, default=Path("runs/program-20260906")
+    )
     parser.add_argument("--device", default="cuda")
     parser.add_argument(
         "--bootstrap-samples",
@@ -98,12 +100,9 @@ def main(argv: list[str] | None = None) -> int:
         print("nothing trained yet")
         return 1
 
-    cache_index = {}
-    with (arguments.source_run / "cache-index.csv").open(encoding="utf-8") as handle:
-        import csv
+    from deepfake_detection.data.cache_index import read_cache_index
 
-        for row in csv.DictReader(handle):
-            cache_index[row["clip_id"]] = arguments.source_run / row["cache_path"]
+    cache_index = read_cache_index(arguments.source_run / "cache-index.csv")
     cache_store = CacheStore(arguments.source_run / "cache")
 
     # `holdout` is the validation partition. The streams trained on
@@ -122,7 +121,11 @@ def main(argv: list[str] | None = None) -> int:
             "FakeAVCeleb",
             "test",
         ),
-        "dfdc": (arguments.source_run / "split" / "dfdc-visual.csv", "DFDC", "external"),
+        "dfdc": (
+            arguments.source_run / "split" / "dfdc-visual.csv",
+            "DFDC",
+            "external",
+        ),
     }
 
     summary: dict[str, dict[str, float | None]] = {}
@@ -153,10 +156,7 @@ def main(argv: list[str] | None = None) -> int:
             run_id=f"score-{partition}",
             device=arguments.device,
         )
-        print(
-            f"  {report.exported_rows:,} rows, "
-            f"{report.unavailable_rows:,} abstained"
-        )
+        print(f"  {report.exported_rows:,} rows, {report.unavailable_rows:,} abstained")
 
         by_stream: dict[str, list[_Scored]] = {}
         for row in store.read():

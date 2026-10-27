@@ -748,13 +748,14 @@ name = "deepfake-generalization"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "joblib" },
     { name = "numpy" },
+    { name = "pandas" },
     { name = "pyarrow" },
     { name = "pyyaml" },
     { name = "scikit-learn" },
     { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-23-deepfake-generalization-cpu' and extra == 'extra-23-deepfake-generalization-cu130')" },
     { name = "scipy", version = "1.18.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-23-deepfake-generalization-cpu' and extra == 'extra-23-deepfake-generalization-cu130')" },
-    { name = "tqdm" },
 ]
 
 [package.optional-dependencies]
@@ -800,6 +801,7 @@ web = [
 dev = [
     { name = "pytest" },
     { name = "pytest-cov" },
+    { name = "python-speech-features" },
     { name = "ruff" },
 ]
 
@@ -809,12 +811,14 @@ requires-dist = [
     { name = "facenet-pytorch", marker = "extra == 'media'", specifier = "==2.5.3" },
     { name = "fastapi", marker = "extra == 'web'", specifier = "==0.141.1" },
     { name = "jinja2", marker = "extra == 'web'", specifier = "==3.1.6" },
+    { name = "joblib", specifier = "==1.5.3" },
     { name = "librosa", marker = "extra == 'media'", specifier = "==0.11.0" },
     { name = "matplotlib", marker = "extra == 'dashboard'", specifier = "==3.11.0" },
     { name = "mlflow", marker = "extra == 'tracking'", specifier = "==3.15.1" },
     { name = "numpy", specifier = "==2.4.6" },
     { name = "open-clip-torch", marker = "extra == 'probe'", specifier = "==3.3.0" },
     { name = "opencv-python", marker = "extra == 'media'", specifier = "==5.0.0.93" },
+    { name = "pandas", specifier = "==2.3.3" },
     { name = "pillow", marker = "extra == 'web'", specifier = "==12.2.0" },
     { name = "pyarrow", specifier = "==24.0.0" },
     { name = "python-multipart", marker = "extra == 'web'", specifier = "==0.0.32" },
@@ -828,7 +832,6 @@ requires-dist = [
     { name = "torch", marker = "extra == 'cu130'", specifier = "==2.12.1", index = "https://download.pytorch.org/whl/cu130", conflict = { package = "deepfake-generalization", extra = "cu130" } },
     { name = "torchvision", marker = "extra == 'cpu'", specifier = "==0.27.1", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "deepfake-generalization", extra = "cpu" } },
     { name = "torchvision", marker = "extra == 'cu130'", specifier = "==0.27.1", index = "https://download.pytorch.org/whl/cu130", conflict = { package = "deepfake-generalization", extra = "cu130" } },
-    { name = "tqdm", specifier = "==4.70.0" },
     { name = "transformers", marker = "extra == 'ml'", specifier = "==5.13.0" },
     { name = "uvicorn", marker = "extra == 'web'", specifier = "==0.52.4" },
 ]
@@ -838,6 +841,7 @@ provides-extras = ["media", "ml", "probe", "dashboard", "tracking", "web", "cpu"
 dev = [
     { name = "pytest", specifier = "==9.0.2" },
     { name = "pytest-cov", specifier = "==7.0.0" },
+    { name = "python-speech-features", specifier = "==0.6" },
     { name = "ruff", specifier = "==0.16.3" },
 ]
 
@@ -2706,6 +2710,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/5b/42/55c32bb9b12693c09
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e1/04/e8135ebd1ad02c56ec633277529b2602ff99ff634be76cdba5744cf554fd/python_multipart-0.0.32-py3-none-any.whl", hash = "sha256:ff6d3f776f16878c894e52e107296ffc890e913c611b1a4ec6c44e2821fe2e23", size = 30042, upload-time = "2026-06-04T16:18:57.319Z" },
 ]
+
+[[package]]
+name = "python-speech-features"
+version = "0.6"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ff/d1/94c59e20a2631985fbd2124c45177abaa9e0a4eee8ba8a305aa26fc02a8e/python_speech_features-0.6.tar.gz", hash = "sha256:a0aebf746464bc929dc3162cb369d7ff967c398c5120ddf5fb40a65f01b92b11", size = 5588, upload-time = "2017-08-16T01:46:13.644Z" }
 
 [[package]]
 name = "pytz"

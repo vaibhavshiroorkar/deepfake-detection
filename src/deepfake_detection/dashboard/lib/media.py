@@ -4,20 +4,15 @@ Frame decoding and the Streamlit-cached detector loader live here; the actual
 per-step ops (detect/crop/mouth, audio decode/window, timestamps) come from
 preprocessing.ops so the dashboard and the real pipeline run the SAME code.
 Never writes into data/ and never writes the cache.
-
-Also home to the clip player's re-encode step (playable_video_bytes): OpenCV and
-PyAV decode a far wider range of codecs than a browser will play, so a clip the
-rest of this module handles fine can still arrive at st.video as a blank player.
 """
 
-import tempfile
 from pathlib import Path
 from time import perf_counter
 
-import av
 import cv2
 import numpy as np
 
+from deepfake_detection import media_kind
 from deepfake_detection.preprocessing.ops import audio as _audio
 from deepfake_detection.preprocessing.ops import constants as _constants
 from deepfake_detection.preprocessing.ops import detectors as _detectors
@@ -26,20 +21,13 @@ from deepfake_detection.preprocessing.ops.constants import (
     FRAME_SIZE,
     MOUTH_SIZE,
 )
+from deepfake_detection.views.playback import playable_video_bytes
 
 # Re-exported so pages/tests can keep importing them from deepfake_detection.dashboard.lib.media.
 sample_timestamps = _audio.sample_timestamps
 AUDIO_SR = _constants.AUDIO_SR
 DETECTOR_NAMES = _detectors.DETECTOR_NAMES
 DEFAULT_DETECTOR = _detectors.DEFAULT_DETECTOR
-
-# Video codecs that every current browser can decode natively. FakeAVCeleb is
-# NOT uniformly one of them: the wav2lip generator wrote its output with an
-# MPEG-4 Part 2 encoder, so every FakeVideo-FakeAudio clip (and some
-# FakeVideo-RealAudio ones) is `mpeg4`, which no browser will play. Those are
-# exactly the lip-sync forgeries this project is built around, so the clip
-# player has to re-encode rather than shrug.
-BROWSER_VIDEO_CODECS = frozenset({"h264", "vp8", "vp9", "av1"})
 
 
 def get_detector(name: str = _detectors.DEFAULT_DETECTOR):
@@ -57,86 +45,6 @@ def get_detector(name: str = _detectors.DEFAULT_DETECTOR):
     return _load(name)
 
 
-def video_codec(video_path) -> str | None:
-    """Name of the file's video codec, or None if it carries no video stream."""
-    with av.open(str(video_path)) as container:
-        if not container.streams.video:
-            return None
-        return container.streams.video[0].codec_context.name
-
-
-def transcode_to_h264(video_path) -> bytes:
-    """Re-encode a clip to browser-playable H.264/AAC MP4 and return its bytes.
-
-    Goes through PyAV rather than a system ffmpeg binary, for the same reason the
-    audio path does (see deepfake_detection/preprocessing/ops/audio.decode): PyAV bundles ffmpeg's
-    libraries, so this needs no external install.
-
-    Written to a real temp file rather than a BytesIO because `+faststart` moves
-    the moov atom to the front in a second pass, which needs a seekable,
-    re-openable output. Video and audio are encoded in separate passes over the
-    input, which keeps the muxer's interleaving simple and preserves duration.
-    """
-    with tempfile.TemporaryDirectory() as tmpdir:
-        out_path = Path(tmpdir) / "playable.mp4"
-        with av.open(str(video_path)) as inp:
-            if not inp.streams.video:
-                raise ValueError(f"{video_path} has no video stream to re-encode")
-            src_v = inp.streams.video[0]
-            src_a = inp.streams.audio[0] if inp.streams.audio else None
-
-            out = av.open(
-                str(out_path),
-                mode="w",
-                format="mp4",
-                options={"movflags": "+faststart"},
-            )
-            dst_v = out.add_stream("libx264", rate=src_v.average_rate or 25)
-            dst_v.width, dst_v.height = src_v.width, src_v.height
-            dst_v.pix_fmt = "yuv420p"  # the only pix_fmt browsers all decode
-            dst_v.options = {"crf": "23", "preset": "veryfast"}
-
-            dst_a = resampler = None
-            if src_a is not None:
-                dst_a = out.add_stream("aac", rate=src_a.rate)
-                # Some clips carry mp3 audio, whose frame format the AAC encoder
-                # will not take directly.
-                resampler = av.AudioResampler(
-                    format=dst_a.format.name, layout=dst_a.layout.name, rate=dst_a.rate
-                )
-
-            for frame in inp.decode(video=0):
-                for packet in dst_v.encode(frame):
-                    out.mux(packet)
-            for packet in dst_v.encode():
-                out.mux(packet)
-
-            if dst_a is not None:
-                inp.seek(0)
-                for frame in inp.decode(audio=0):
-                    for resampled in resampler.resample(frame):
-                        for packet in dst_a.encode(resampled):
-                            out.mux(packet)
-                for packet in dst_a.encode():
-                    out.mux(packet)
-            out.close()
-
-        return out_path.read_bytes()
-
-
-def playable_video_bytes(video_path) -> tuple[bytes, str | None]:
-    """(mp4 bytes st.video can play, the codec that forced a re-encode or None).
-
-    A clip already in a browser codec is handed over untouched; anything else is
-    re-encoded, and the second element names what it was so the caller can say
-    so rather than silently serving different pixels than are on disk.
-    """
-    codec = video_codec(video_path)
-    if codec in BROWSER_VIDEO_CODECS:
-        return Path(video_path).read_bytes(), None
-    return transcode_to_h264(video_path), codec
-
-
 def cached_playable_video(video_path) -> tuple[bytes, str | None]:
     """playable_video_bytes memoized on (path, mtime, size): the page-facing entry.
 
@@ -146,15 +54,21 @@ def cached_playable_video(video_path) -> tuple[bytes, str | None]:
     import streamlit as st
 
     @st.cache_data(show_spinner=False, max_entries=32)
-    def _load(path: str, _mtime: float, _size: int):
+    def _load(path: str, mtime_ns: int, size: int):
         return playable_video_bytes(path)
 
     stat = Path(video_path).stat()
-    return _load(str(video_path), stat.st_mtime, stat.st_size)
+    return _load(str(video_path), stat.st_mtime_ns, stat.st_size)
 
 
 def frame_meta(video_path: str) -> tuple[float, float]:
     """Return (duration_sec, fps)."""
+    kind = media_kind.classify(video_path)
+    if kind == media_kind.IMAGE:
+        return 0.0, 0.0
+    if kind == media_kind.AUDIO:
+        waveform, rate = decode_audio(video_path)
+        return (waveform.shape[-1] / rate if rate else 0.0), 0.0
     cap = cv2.VideoCapture(str(video_path))
     fps = cap.get(cv2.CAP_PROP_FPS)
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -164,6 +78,11 @@ def frame_meta(video_path: str) -> tuple[float, float]:
 
 
 def decode_frames(video_path: str, timestamps: np.ndarray) -> list[np.ndarray]:
+    if media_kind.classify(video_path) == media_kind.IMAGE:
+        image = cv2.imread(str(video_path))
+        if image is None:
+            raise ValueError(f"Cannot decode image: {video_path}")
+        return [cv2.cvtColor(image, cv2.COLOR_BGR2RGB)]
     cap = cv2.VideoCapture(str(video_path))
     frames = []
     for t in timestamps:
@@ -193,11 +112,16 @@ def cached_decode_frames(video_path, timestamps) -> list[np.ndarray]:
     import streamlit as st
 
     @st.cache_data(show_spinner=False, max_entries=8)
-    def _load(path: str, _mtime: float, ts: tuple[float, ...]):
+    def _load(path: str, mtime_ns: int, size: int, ts: tuple[float, ...]):
         return decode_frames(path, np.asarray(ts, dtype=float))
 
     stat = Path(video_path).stat()
-    return _load(str(video_path), stat.st_mtime, tuple(float(t) for t in timestamps))
+    return _load(
+        str(video_path),
+        stat.st_mtime_ns,
+        stat.st_size,
+        tuple(float(t) for t in timestamps),
+    )
 
 
 def cached_face_mouth(
@@ -225,7 +149,8 @@ def cached_face_mouth(
     @st.cache_data(show_spinner="Detecting faces...", max_entries=8)
     def _run(
         path: str,
-        _mtime: float,
+        mtime_ns: int,
+        size: int,
         ts: tuple[float, ...],
         conf: float,
         mrg: float,
@@ -247,7 +172,8 @@ def cached_face_mouth(
     stat = Path(video_path).stat()
     return _run(
         str(video_path),
-        stat.st_mtime,
+        stat.st_mtime_ns,
+        stat.st_size,
         tuple(float(t) for t in timestamps),
         float(conf_thresh),
         float(margin),

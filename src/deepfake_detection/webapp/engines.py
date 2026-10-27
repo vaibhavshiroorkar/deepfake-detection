@@ -19,7 +19,7 @@ from typing import Any
 
 import numpy as np
 
-from deepfake_detection.dashboard.paths import PROJECT_ROOT
+from deepfake_detection.paths import PROJECT_ROOT
 
 PROGRAM_CHECKPOINTS = PROJECT_ROOT / "runs" / "program-20260906" / "checkpoints"
 STREAM_RUN = PROJECT_ROOT / "runs" / "design-b-20260910"
@@ -179,13 +179,13 @@ class Registry:
             from deepfake_detection.inference.multimodal import load_multimodal_engine
 
             # The gate runs here for every model, so the engine is built
-            # without its own copy. A path that does not exist turns it off.
+            # without its own copy.
             return load_multimodal_engine(
                 run_dir=STREAM_RUN,
                 code_version=CODE_VERSION,
                 device=self.device,
                 root=PROJECT_ROOT,
-                density_path=PROJECT_ROOT / "runs" / "no-density-here.npz",
+                with_familiarity=False,
             )
 
         return self._get("multimodal", build)
@@ -219,17 +219,21 @@ class Registry:
         for value in (threshold, default_threshold):
             if value is not None and not 0 <= value <= 1:
                 raise ValueError("Threshold must be in [0, 1]")
-        from deepfake_detection.dashboard.lib import media_kind
+        from deepfake_detection import media_kind
 
         started = time.perf_counter()
         kind = media_kind.classify(path)
         familiarity = None
+        gate_unavailable = False
         if kind == media_kind.VIDEO:
+            # A gate that is missing or fails to load must not quietly turn
+            # into "familiar": the verdict says the check did not run.
             try:
                 gate = self.familiarity()
             except Exception:
                 gate = None
             check = gate.check_clip(path) if gate is not None else None
+            gate_unavailable = check is None
             if check is not None:
                 familiarity = {
                     "familiar": check.familiar,
@@ -274,6 +278,8 @@ class Registry:
         unfamiliar = familiarity is not None and not familiarity["familiar"]
         if unfamiliar:
             blockers = (*blockers, "unfamiliar_capture_conditions")
+        if gate_unavailable and withhold_unfamiliar:
+            blockers = (*blockers, "familiarity_check_unavailable")
         withheld = bool(unfamiliar and withhold_unfamiliar)
         if probability is None:
             verdict = "indeterminate"

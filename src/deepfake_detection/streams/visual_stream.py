@@ -38,6 +38,18 @@ def _create_backbone(config: StreamConfig) -> nn.Module:
     """
     import timm
 
+    if config.backbone_weights and config.pretrained:
+        from pathlib import Path
+
+        from deepfake_detection.streams.hsemotion import ARCHITECTURE, build_hsemotion
+
+        if config.backbone_name != ARCHITECTURE or config.global_pool != "avg":
+            raise ValueError(
+                f"{config.backbone_weights} holds a {ARCHITECTURE} with average "
+                f"pooling, not {config.backbone_name!r} with {config.global_pool!r}"
+            )
+        return build_hsemotion(Path(config.backbone_weights))
+
     kwargs = {
         "pretrained": config.pretrained,
         "num_classes": 0,

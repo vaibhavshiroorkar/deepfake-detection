@@ -108,6 +108,13 @@ def render(st, stream: str) -> None:
             icon=":material/refresh:",
         )
 
+    if result.get("incompatible_checkpoint"):
+        st.error(
+            "The checkpoint is incomplete or lacks its architecture history. Inference was refused."
+        )
+        st.write(result.get("report"))
+        return
+
     if result.get("missing"):
         st.error(
             f"This clip has no `{result['missing']}`, so the stream cannot read "

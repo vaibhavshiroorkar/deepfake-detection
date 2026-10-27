@@ -11,6 +11,79 @@ MLflow evidence. `ddf run` resolves layered YAML configuration files from an
 explicit project root. With tracking enabled, it records the resolved
 configuration, runtime snapshot, metrics, and artifacts in a local MLflow run.
 
+## Corrected experiment contracts
+
+Cross-fitting uses three source-disjoint sets inside each fold. Optimizer updates
+use training rows. Epoch selection uses inner validation rows. OOF export reads
+the outer holdout only after selection. Checkpoints record both training and
+selection sources. OOF export refuses missing provenance or overlap with either set.
+Legacy checkpoints remain usable for scoring, but cannot establish a new OOF claim.
+
+`run_program.ps1` writes corrected caches, manifests, final branches and evaluation
+into separate `v2` paths. Its `-SkipCache` option explicitly reuses the original
+cache. The nested runner also accepts `-CacheIndex`, `-CacheRoot`, `-CacheAudit`
+and `-TrainingManifest` when corrected inputs live elsewhere.
+
+```powershell
+& ./scripts/run_crossfit_seeds.ps1 -Seeds @(17, 29, 43)
+```
+
+The runner reads the original cache and split, then writes separate nested
+artifacts under `runs/nested-crossfit-v2-20261024`. Rebuild old audio caches first:
+new audio training defaults to `valid_samples` masking and requires real sample
+counts. Historical checkpoints default to `legacy_none`; rebuilt caches cannot
+silently change their masking behavior. Use `--masking-mode legacy_none` only
+for an explicit historical reproduction.
+
+An unspecified sync start is `None`. Explicit `0.0` means the window starts at
+zero. Rebuild LAV-DF caches with a new code version and new index before training.
+The changed zero-start fingerprint prevents `--skip-cached` from reusing the old
+window. Existing indexes still point at historical entries until rebuilt.
+
+```bash
+bash scripts/run_encoder_comparison.sh
+bash scripts/train_encoder_streams.sh
+```
+
+The encoder comparison re-extracts DINOv3, PE and CLIP into a new run directory.
+It records normalization, input and feature digests, source assignments, probe
+arguments and per-clip scores. Three seeds vary the source split. They do not
+measure fine-tuning seed variation because the encoders remain frozen.
+
+Completion receipts bind commands, implementation files, inputs and outputs.
+A file without a receipt is incomplete evidence. A mismatched receipt requires a
+new run path. A failed child stops its runner. Receipts for training and export also hash
+the cache NPZ payloads selected by their input manifests. Historical artifacts are retained.
+The encoder comparison validates existing features before reuse.
+OOF export explicitly permits reported unavailable rows with
+`features export --allow-unavailable`. The head's `--drop-incomplete` option
+records how many clips it omits from training. Evaluation coverage stays visible.
+
+New cross-modal streams use temporal positions. History files record the mode,
+attention heads, encoders and query steps. Legacy histories restore `none`, which
+preserves their old order-blind computation. A changed architecture needs retraining.
+
+Deep fusion records training checkpoint hashes and separate final serving hashes.
+OOF deep-fusion training requires `--stream-checkpoints` pointing to a JSON mapping
+of every stream name to its final checkpoint path. Holdout fusion binds the exact
+checkpoints that produced its training features. Loaders reject replacements and
+legacy heads with no complete binding. Fit a new head rather than adding a binding
+to an old artifact after training.
+
+## Local quality checks
+
+```powershell
+.venv/Scripts/ruff.exe check src tests scripts
+.venv/Scripts/ruff.exe format --check src tests scripts
+.venv/Scripts/python.exe -m pytest
+.venv/Scripts/python.exe -m deepfake_detection.documentation
+node --test tests/test_webapp_behavior.js
+uv lock --check
+```
+
+CI runs Python 3.11, 3.12 and 3.13. Its full install includes web, dashboard and
+probe extras. Separate base installs check CLI help and documentation without Torch.
+
 ## Tracking data and redaction
 
 Redaction uses sensitive configuration and tag key names. Sensitive values are

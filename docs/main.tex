@@ -52,9 +52,9 @@ cross-attention streams that compare the mouth with the sound and the face
 with the voice, fused at the feature level. Then we tested whether it does
 what its parts are named for. We ask whether cue-specific fusion generalizes
 better than a strong visual baseline under source-disjoint, shortcut-controlled
-evaluation. On our data it does not. Fusion gains $+0.0159$ ROC-AUC in-domain
-and is no better on an unseen corpus at any of three seeds, and measurably
-worse at two. The stronger result is how close the project came to reporting
+evaluation. The historical fusion comparison requires a nested rerun. Historical fusion comparisons found an in-domain gain and no cross-corpus
+gain, but their outer-holdout labels selected branch checkpoints. Those
+comparisons require nested cross-fitting before they support a conclusion. The stronger result is how close the project came to reporting
 the opposite. A cross-attention stream reached 0.9991 ROC-AUC while its
 attention stayed at the uniform value, so its accuracy is real and its named
 mechanism is absent. The served visual models partly read the video codec:
@@ -72,6 +72,13 @@ their failures.
 Audio-visual deepfakes, cross-attention, cross-corpus generalization,
 feature-level fusion, media forensics, shortcut learning.
 \end{IEEEkeywords}
+
+\paragraph{Evidence validity}
+The fusion, LAV-DF and PE/CLIP tables retain historical measurements.
+The old OOF protocol used outer-holdout labels for epoch selection.
+Explicit zero-start LAV-DF windows could overlap manipulated spans.
+PE/CLIP features used incorrect normalization.
+These results require reruns and do not establish corrected performance.
 
 \section{Introduction}
 
@@ -91,8 +98,8 @@ voice. A learned head fuses all of them at the feature level.
 The research question was fixed before the experiments and anticipated a
 negative answer: under source-disjoint and shortcut-controlled evaluation,
 does cue-specific fusion of visual artifacts, audio spoofing and mouth-audio
-alignment generalize better than a strong visual baseline? We report that it
-does not on our data, with confidence intervals.
+alignment generalize better than a strong visual baseline? The historical
+comparison suggested no gain, but requires a nested cross-fitting rerun.
 
 The more useful finding is what we had to check to say so. Four results would
 each have passed unnoticed under an evaluation built on accuracy tables alone:

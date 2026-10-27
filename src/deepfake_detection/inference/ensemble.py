@@ -17,8 +17,7 @@ import numpy as np
 import torch
 from torch import nn
 
-from deepfake_detection.branches.visual import build_visual_branch
-from deepfake_detection.training.checkpoints import load_checkpoint
+from deepfake_detection.branches.registry import load_branch
 from deepfake_detection.views.cache import preprocessing_config_hash
 
 from .loading import build_preprocessor
@@ -28,7 +27,6 @@ from .predictor import PredictionResult, _InferenceRecord
 @dataclass(frozen=True, slots=True)
 class EnsembleMember:
     name: str
-    architecture: str
     checkpoint: Path
 
 
@@ -43,15 +41,6 @@ class EnsemblePrediction:
     visual_view: np.ndarray | None
 
 
-def architecture_for(checkpoint: Path) -> str:
-    """The backbone a checkpoint was trained as.
-
-    The checkpoint metadata does not record it, so the file name decides, the
-    same convention the evaluation reports use.
-    """
-    return "convnext-tiny" if "convnext" in checkpoint.stem else "efficientnet-b0"
-
-
 def program_members(checkpoint_dir: Path) -> tuple[EnsembleMember, ...]:
     """The six final visual checkpoints of the program run, seeds 17, 29, 43."""
     members = []
@@ -63,7 +52,6 @@ def program_members(checkpoint_dir: Path) -> tuple[EnsembleMember, ...]:
             members.append(
                 EnsembleMember(
                     name=f"{architecture}-seed{seed}",
-                    architecture=architecture,
                     checkpoint=checkpoint_dir / f"{stem}-seed{seed}.pt",
                 )
             )
@@ -180,10 +168,7 @@ def load_visual_ensemble(
     )
     models: list[tuple[str, nn.Module]] = []
     for member in members:
-        model = build_visual_branch(architecture=member.architecture, pretrained=False)
-        state = load_checkpoint(member.checkpoint, model=model)
-        if state.metadata.branch != "visual":
-            raise ValueError(f"{member.name} is not a visual checkpoint")
+        model, state = load_branch(member.checkpoint, "visual")
         if state.metadata.preprocessing_hash != runtime_hash:
             raise ValueError(
                 f"{member.name} was trained on different preprocessing than the "

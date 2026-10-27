@@ -303,8 +303,7 @@ def main(argv: list[str] | None = None) -> int:
         delta = float(np.abs(mine - theirs).max())
         if delta > 1e-9:
             print(
-                f"rebuild check FAILED on {name}: "
-                f"max probability delta {delta:.3e}",
+                f"rebuild check FAILED on {name}: max probability delta {delta:.3e}",
                 file=sys.stderr,
             )
             return 1

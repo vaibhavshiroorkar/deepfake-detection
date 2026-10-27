@@ -51,3 +51,28 @@ def test_the_page_renders_without_a_clip_selected(page: str) -> None:
 
     assert not rendered.exception
     assert rendered.title
+
+
+def test_partial_checkpoint_is_refused_before_forward(tmp_path, monkeypatch):
+    import torch
+
+    from deepfake_detection.dashboard.lib import cross_modal_live
+    from deepfake_detection.streams import cross_modal_stream
+
+    class TinyModel(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.head = torch.nn.Linear(2, 1)
+
+        def forward(self, **kwargs):
+            pytest.fail("Partial weights reached inference")
+
+    monkeypatch.setattr(
+        cross_modal_stream, "build_lipsync_stream", lambda **kwargs: TinyModel()
+    )
+    checkpoint = tmp_path / "stream-lipsync.pt"
+    torch.save({"model": {"head.weight": torch.zeros(1, 3)}}, checkpoint)
+    result = cross_modal_live.run_stream("lipsync", checkpoint, object(), device="cpu")
+    assert result["incompatible_checkpoint"]
+    assert result["report"]["mismatched"]
+    assert "probability" not in result

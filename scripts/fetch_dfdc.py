@@ -44,9 +44,10 @@ def credentials() -> str:
     if not path.is_file():
         raise SystemExit(f"No Kaggle credentials at {path}")
     values = json.loads(path.read_text(encoding="utf-8"))
-    return "Basic " + base64.b64encode(
-        f"{values['username']}:{values['key']}".encode()
-    ).decode()
+    return (
+        "Basic "
+        + base64.b64encode(f"{values['username']}:{values['key']}".encode()).decode()
+    )
 
 
 def ranged(auth: str, start: int, end: int) -> bytes:
@@ -174,7 +175,9 @@ def main(argv: list[str] | None = None) -> int:
     wanted = [e for e in entries if e[0].split("/")[0] in wanted_parts]
     end = max(offset + compressed for _, offset, compressed, _ in wanted)
     print(f"parts: {', '.join(wanted_parts)}")
-    print(f"{len(wanted):,} files, prefix of {end / 1e9:.2f} GB of {TOTAL_BYTES / 1e9:.0f} GB")
+    print(
+        f"{len(wanted):,} files, prefix of {end / 1e9:.2f} GB of {TOTAL_BYTES / 1e9:.0f} GB"
+    )
 
     free = shutil.disk_usage(".").free
     if free < end * 2:

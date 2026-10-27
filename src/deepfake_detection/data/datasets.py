@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
 import torch
 from torch import Tensor
 from torch.utils.data import Dataset
@@ -66,9 +67,12 @@ class CachedBranchDataset(Dataset[BranchItem]):
         cache_store: CacheStore,
         branch: str,
         preprocessing_hash: str | None = None,
+        augment: Callable[[np.ndarray, float], tuple[np.ndarray, float]] | None = None,
     ) -> None:
         if branch not in {"visual", "audio"}:
             raise ValueError(f"Unsupported supervised branch: {branch}")
+        if augment is not None and branch != "visual":
+            raise ValueError("Augmentation is implemented for the visual branch only")
         missing = sorted(
             record.clip_id for record in records if record.clip_id not in cache_index
         )
@@ -79,6 +83,9 @@ class CachedBranchDataset(Dataset[BranchItem]):
         self.cache_store = cache_store
         self.branch = branch
         self.preprocessing_hash = preprocessing_hash
+        # Training only. It can change the label as well as the pixels: a
+        # self-blended genuine clip becomes a fake (`training/augment.py`).
+        self.augment = augment
 
     def __len__(self) -> int:
         return len(self.records)
@@ -108,6 +115,9 @@ class CachedBranchDataset(Dataset[BranchItem]):
             label = record.audio_fake
         if values is None:
             raise ValueError(f"Cache entry {record.clip_id} has no {self.branch} view")
+        label = float(label)
+        if self.augment is not None:
+            values, label = self.augment(values, label)
         valid_samples = None
         if self.branch == "audio" and prepared.audio_valid_samples is not None:
             valid_samples = torch.tensor(
@@ -116,7 +126,7 @@ class CachedBranchDataset(Dataset[BranchItem]):
         return BranchItem(
             clip_id=record.clip_id,
             values=torch.from_numpy(values).float(),
-            label=torch.tensor(float(label), dtype=torch.float32),
+            label=torch.tensor(label, dtype=torch.float32),
             quality=prepared.quality,
             valid_samples=valid_samples,
         )

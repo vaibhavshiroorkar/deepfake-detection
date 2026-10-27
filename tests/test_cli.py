@@ -1,16 +1,45 @@
 import argparse
 import csv
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import joblib
 import pytest
 
-from deepfake_detection import cli
-from deepfake_detection.cli import build_parser, main
+from deepfake_detection.cli import build_parser, common, main
+from deepfake_detection.data.cache_index import read_cache_index, write_cache_index
 from deepfake_detection.experiments import runtime
 from deepfake_detection.fusion.late import FusionArtifact
 from deepfake_detection.fusion.store import FeatureRecord, FeatureStore
+
+
+def test_cli_help_and_documentation_do_not_import_optional_model_dependencies():
+    script = """
+import importlib.abc
+import sys
+
+class WithoutModels(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname.split(".")[0] in {"torch", "streamlit", "av", "cv2", "timm", "transformers"}:
+            raise ModuleNotFoundError(fullname)
+
+sys.meta_path.insert(0, WithoutModels())
+from deepfake_detection.cli import build_parser
+from deepfake_detection.documentation.cli_reference import render_command_block
+parser = build_parser()
+assert "ddf split crossfit" in render_command_block(parser)
+try:
+    parser.parse_args(["split", "crossfit", "--help"])
+except SystemExit as stopped:
+    assert stopped.code == 0
+"""
+    # A fresh interpreter prevents already imported optional modules hiding a leak.
+    result = subprocess.run(  # noqa: S603
+        [sys.executable, "-c", script], capture_output=True, text=True, check=False
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def test_public_parser_exposes_the_documented_command_tree() -> None:
@@ -53,7 +82,7 @@ def test_resolved_config_hash_skips_the_fallback_when_present() -> None:
         raise AssertionError("fallback hash must not run")
 
     assert (
-        cli._configuration_hash(
+        common._configuration_hash(
             argparse.Namespace(_config_hash="resolved"), {}, fallback
         )
         == "resolved"
@@ -61,7 +90,7 @@ def test_resolved_config_hash_skips_the_fallback_when_present() -> None:
 
 
 def test_training_cost_metrics_use_completed_epochs() -> None:
-    assert cli._training_cost_metrics(
+    assert common._training_cost_metrics(
         train_samples=24,
         completed_epochs=3,
         elapsed_seconds=6.0,
@@ -197,18 +226,19 @@ def write_fixture_manifest(path: Path) -> None:
             )
 
 
-def test_cache_index_value_round_trips_from_index_directory(tmp_path: Path) -> None:
+def test_cache_index_round_trips_relative_to_its_directory(tmp_path: Path) -> None:
     index = tmp_path / "run" / "cache-index.csv"
-    cache_path = tmp_path / "run" / "cache" / "dataset" / "clip.npz"
+    inside = tmp_path / "run" / "cache" / "dataset" / "clip.npz"
+    outside = tmp_path / "elsewhere" / "clip.npz"
 
-    value = cli._cache_index_value(cache_path, index=index)
+    write_cache_index(index, {"clip-1": inside, "clip-2": outside})
 
-    index.parent.mkdir(parents=True)
-    index.write_text(
-        f"clip_id,cache_path\nclip-1,{value}\n",
-        encoding="utf-8",
-    )
-    assert cli._read_cache_index(index)["clip-1"] == cache_path.resolve()
+    assert "cache" in index.read_text(encoding="utf-8").splitlines()[1]
+    assert str(tmp_path) not in index.read_text(encoding="utf-8").splitlines()[1]
+    assert read_cache_index(index) == {
+        "clip-1": inside.resolve(),
+        "clip-2": outside.resolve(),
+    }
 
 
 def test_manifest_and_split_commands_emit_reproducible_artifacts(

@@ -75,31 +75,6 @@ def uniform_timestamps(
     return tuple(start_sec + (index + 0.5) * step for index in range(count))
 
 
-def sliding_window_starts(
-    *,
-    duration_sec: float,
-    window_sec: float,
-    overlap: float,
-) -> tuple[float, ...]:
-    if duration_sec <= 0 or window_sec <= 0:
-        raise ValueError("Durations must be positive")
-    if not 0 <= overlap < 1:
-        raise ValueError("Overlap must be in [0, 1)")
-    if duration_sec <= window_sec:
-        return (0.0,)
-
-    final_start = duration_sec - window_sec
-    stride = window_sec * (1 - overlap)
-    starts: list[float] = []
-    current = 0.0
-    while current <= final_start + 1e-9:
-        starts.append(round(current, 9))
-        current += stride
-    if abs(starts[-1] - final_start) > 1e-9:
-        starts.append(final_start)
-    return tuple(starts)
-
-
 def make_sync_window(*, start_sec: float, config: ViewConfig) -> SyncWindow:
     if start_sec < 0:
         raise ValueError("Sync window start cannot be negative")

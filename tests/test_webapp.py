@@ -166,3 +166,124 @@ def test_invalid_admin_settings_are_rejected(client):
         assert (
             http.put("/api/admin/settings", headers=good, json=body).status_code == 422
         )
+
+
+def test_a_non_ascii_admin_token_is_refused_not_a_server_error(client):
+    http, _, monkeypatch = client
+    monkeypatch.setenv("DDF_ADMIN_TOKEN", "secret")
+    # Sent as raw latin-1 bytes, which is what a browser puts on the wire.
+    token = "sécret".encode("latin-1")
+    response = http.get("/api/admin/settings", headers={"X-Admin-Token": token})
+    assert response.status_code == 401
+
+
+def test_a_gate_that_cannot_load_is_reported_not_skipped(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    from deepfake_detection.webapp.engines import Registry
+
+    class StubEnsemble:
+        def predict(self, path, *, threshold, members):
+            return SimpleNamespace(
+                result=SimpleNamespace(probability=0.2, blockers=()),
+                member_probabilities={"a": 0.2},
+                visual_view=None,
+            )
+
+    def broken_gate():
+        raise RuntimeError("density model is corrupt")
+
+    registry = Registry(device="cpu")
+    monkeypatch.setattr(registry, "familiarity", broken_gate)
+    monkeypatch.setattr(registry, "ensemble", lambda: StubEnsemble())
+    clip = tmp_path / "clip.mp4"
+    clip.write_bytes(b"x")
+
+    analysis = registry.analyze(
+        clip, model="ensemble", threshold=None, withhold_unfamiliar=True
+    )
+
+    assert "familiarity_check_unavailable" in analysis.blockers
+    assert analysis.verdict == "real"
+
+
+def test_an_oversized_upload_is_refused_from_its_declared_length(client):
+    http, registry, _ = client
+    settings_module.save(settings_module.Settings(max_upload_mb=1))
+    response = http.post(
+        "/api/analyze",
+        content=b"x" * (3 << 20),
+        headers={"content-type": "multipart/form-data; boundary=x"},
+    )
+    assert response.status_code == 413
+    assert registry.calls == []
+
+
+def test_chunked_upload_stops_before_spooling_the_whole_body(client, monkeypatch):
+    import anyio
+    import starlette.formparsers
+
+    http, registry, _ = client
+    settings_module.save(settings_module.Settings(max_upload_mb=1))
+    spooled = 0
+    original = starlette.formparsers.SpooledTemporaryFile
+
+    def tracked_file(*args, **kwargs):
+        file = original(*args, **kwargs)
+        write = file.write
+
+        def tracked_write(data):
+            nonlocal spooled
+            spooled += len(data)
+            return write(data)
+
+        file.write = tracked_write
+        return file
+
+    monkeypatch.setattr(starlette.formparsers, "SpooledTemporaryFile", tracked_file)
+    body = (
+        b'--bound\r\nContent-Disposition: form-data; name="file"; '
+        b'filename="clip.mp4"\r\nContent-Type: video/mp4\r\n\r\n'
+        + b"x" * (3 << 20)
+        + b"\r\n--bound--\r\n"
+    )
+    responses = []
+
+    async def exercise():
+        offset = 0
+
+        async def receive():
+            nonlocal offset
+            chunk = body[offset : offset + 65536]
+            offset += len(chunk)
+            return {
+                "type": "http.request",
+                "body": chunk,
+                "more_body": offset < len(body),
+            }
+
+        async def send(message):
+            responses.append(message)
+
+        await http.app(
+            {
+                "type": "http",
+                "asgi": {"version": "3.0"},
+                "http_version": "1.1",
+                "method": "POST",
+                "scheme": "http",
+                "path": "/api/analyze",
+                "raw_path": b"/api/analyze",
+                "query_string": b"",
+                "headers": [(b"content-type", b"multipart/form-data; boundary=bound")],
+                "client": ("test", 123),
+                "server": ("test", 80),
+            },
+            receive,
+            send,
+        )
+
+    anyio.run(exercise)
+    assert responses[0]["status"] == 413
+    assert spooled <= 2 << 20
+    assert registry.calls == []

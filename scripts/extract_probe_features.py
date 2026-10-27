@@ -33,77 +33,23 @@ import json
 import sys
 from pathlib import Path
 
-# Imported rather than redeclared, so this probe and the served gate embed the
-# same way. The default is Perception Encoder, which `A-encoder-comparison`
-# measured 0.0741 above DINOv3 under leave-one-generator-out. It needs the
-# `probe` extra.
+from research_artifacts import sha256
+
+# Share preprocessing with serving. Historical PE/CLIP results require reruns.
 from deepfake_detection.inference.frozen_features import (  # noqa: E402
     ENCODERS,
+    embed_windows,
     load_encoder,
+    normalisation,
+    read_windows,
 )
-
-
-def _windows(total: int, count: int, length: int) -> list[int]:
-    """Start indices for `count` contiguous windows spread across the clip."""
-    if total <= length:
-        return [0]
-    if count == 1:
-        return [max(0, (total - length) // 2)]
-    span = total - length
-    return [round(span * i / (count - 1)) for i in range(count)]
-
-
-def _read_windows(path: Path, count: int, length: int, size: int):
-    """Decoded windows as uint8 arrays, [window, frame, H, W, 3]."""
-    import cv2
-    import numpy as np
-
-    capture = cv2.VideoCapture(str(path))
-    if not capture.isOpened():
-        return None
-    total = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
-    if total <= 0:
-        total = length * count
-    starts = _windows(total, count, length)
-    wanted = {index for start in starts for index in range(start, start + length)}
-
-    frames: dict[int, np.ndarray] = {}
-    index = 0
-    while True:
-        ok, bgr = capture.read()
-        if not ok:
-            break
-        if index in wanted:
-            rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
-            frames[index] = cv2.resize(rgb, (size, size), interpolation=cv2.INTER_AREA)
-        index += 1
-        if index > max(wanted, default=0):
-            break
-    capture.release()
-    if not frames:
-        return None
-
-    ordered = sorted(frames)
-    stacked = []
-    for start in starts:
-        picked = [frames[i] for i in range(start, start + length) if i in frames]
-        if not picked:
-            picked = [frames[ordered[0]]]
-        while len(picked) < length:
-            picked.append(picked[-1])
-        stacked.append(np.stack(picked))
-    return np.stack(stacked)
 
 
 def main(argv: list[str] | None = None) -> int:
     import numpy as np
-    import torch
 
-    from deepfake_detection.dashboard.lib import media_kind
-    from deepfake_detection.preprocessing.ops.constants import (
-        IMAGENET_MEAN,
-        IMAGENET_STD,
-    )
+    from deepfake_detection import media_kind
+    from deepfake_detection.inference import frozen_features
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--folder", type=Path, required=True)
@@ -114,21 +60,53 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--limit", type=int, default=0)
     parser.add_argument("--device", default="cuda")
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Reuse only complete features with matching inputs and configuration.",
+    )
+    parser.add_argument(
+        "--validate-only",
+        action="store_true",
+        help="Validate an existing artifact without loading encoder weights.",
+    )
     arguments = parser.parse_args(argv)
+    output = arguments.output or arguments.folder / f"features-{arguments.encoder}.npz"
+    meta = output.with_suffix(".json")
+    previous = None
+    if output.exists() or meta.exists():
+        if not (arguments.resume or arguments.validate_only):
+            raise FileExistsError(f"Evidence exists at {output}; choose a new output")
+        if not (output.is_file() and meta.is_file()):
+            raise ValueError(
+                f"Incomplete feature artifact at {output}; choose a new output"
+            )
+        previous = json.loads(meta.read_text(encoding="utf-8"))
+        if not previous.get("normalisation"):
+            raise ValueError(
+                "Legacy features have no normalisation metadata; re-extract to a new path"
+            )
+    elif arguments.validate_only:
+        raise FileNotFoundError(output)
 
     files: list[tuple[Path, str, int]] = []
     real_root = arguments.folder / "real"
     if real_root.is_dir():
         found = [
-            p for p in sorted(real_root.rglob("*"))
+            p
+            for p in sorted(real_root.rglob("*"))
             if p.is_file() and media_kind.classify(p) == media_kind.VIDEO
         ]
-        files += [(p, "real", 0) for p in (found[: arguments.limit] if arguments.limit else found)]
+        files += [
+            (p, "real", 0)
+            for p in (found[: arguments.limit] if arguments.limit else found)
+        ]
     fake_root = arguments.folder / "fake"
     if fake_root.is_dir():
         for source in sorted(p for p in fake_root.iterdir() if p.is_dir()):
             found = [
-                p for p in sorted(source.rglob("*"))
+                p
+                for p in sorted(source.rglob("*"))
                 if p.is_file() and media_kind.classify(p) == media_kind.VIDEO
             ]
             chosen = found[: arguments.limit] if arguments.limit else found
@@ -137,11 +115,40 @@ def main(argv: list[str] | None = None) -> int:
         print(f"No video under {arguments.folder}, expected real/ and fake/<gen>/")
         return 1
 
+    configuration = {
+        "encoder": arguments.encoder,
+        "encoder_model": ENCODERS[arguments.encoder][0],
+        "normalisation": normalisation(arguments.encoder),
+        "size": ENCODERS[arguments.encoder][1],
+        "windows": arguments.windows,
+        "window_length": arguments.window_length,
+        "limit": arguments.limit,
+        "batch_size": arguments.batch_size,
+        "folder": str(arguments.folder.resolve()).replace("\\", "/"),
+        "implementation_sha256": {
+            "extractor": sha256(Path(__file__)),
+            "frozen_features": sha256(Path(frozen_features.__file__)),
+        },
+        "input_sha256": {
+            str(path.relative_to(arguments.folder)).replace("\\", "/"): sha256(path)
+            for path, _, _ in files
+        },
+    }
+    # JSON normalizes tuples from model configuration into lists.
+    configuration = json.loads(json.dumps(configuration))
+    if previous is not None:
+        if previous.get("configuration") != configuration:
+            raise ValueError(
+                "Feature configuration or input digest mismatch; use a new output"
+            )
+        if previous.get("feature_sha256") != sha256(output):
+            raise ValueError("Feature digest mismatch; use a new output")
+        print(f"verified complete features: {output}")
+        return 0
+
     # Through the shared loader, so a timm name and an open_clip name behave the
     # same and this script cannot drift from the served gate's embedding.
     model, size = load_encoder(arguments.encoder, device=arguments.device)
-    mean = torch.tensor(IMAGENET_MEAN, device=arguments.device).view(1, 3, 1, 1)
-    std = torch.tensor(IMAGENET_STD, device=arguments.device).view(1, 3, 1, 1)
     print(
         f"{len(files)} clips, {arguments.encoder} at {size}px, "
         f"{arguments.windows} windows of {arguments.window_length}",
@@ -154,32 +161,17 @@ def main(argv: list[str] | None = None) -> int:
     names: list[str] = []
     skipped = 0
     for index, (path, group, label) in enumerate(files, start=1):
-        windows = _read_windows(
-            path, arguments.windows, arguments.window_length, size
-        )
+        windows = read_windows(path, arguments.windows, arguments.window_length, size)
         if windows is None:
             skipped += 1
             continue
-        flat = torch.from_numpy(windows.reshape(-1, size, size, 3))
-        flat = flat.permute(0, 3, 1, 2).float().div_(255.0)
-        pieces = []
-        with torch.inference_mode():
-            for start in range(0, flat.shape[0], arguments.batch_size):
-                batch = flat[start : start + arguments.batch_size].to(arguments.device)
-                batch = (batch - mean) / std
-                pieces.append(model(batch).float().cpu())
-        embedded = torch.cat(pieces).reshape(windows.shape[0], windows.shape[1], -1)
-        # Mean over frames within a window, then over windows, and the standard
-        # deviation across windows beside it: a generated clip is often steadier
-        # across time than a real one, and averaging alone would discard that.
-        per_window = embedded.mean(dim=1)
-        # unbiased=False so a clip short enough to yield a single window gets a
-        # spread of zero rather than NaN. Zero is the honest value: no variation
-        # was observed because there was nothing to vary across.
-        vector = torch.cat(
-            [per_window.mean(dim=0), per_window.std(dim=0, unbiased=False)]
+        # Mean over frames within a window, then over windows, and the spread
+        # across windows beside it: a generated clip is often steadier across
+        # time than a real one, and averaging alone would discard that.
+        vector = embed_windows(
+            model, windows, arguments.device, batch_size=arguments.batch_size
         )
-        vectors.append(vector.numpy())
+        vectors.append(vector)
         labels.append(label)
         groups.append(group)
         names.append(str(path.relative_to(arguments.folder)).replace("\\", "/"))
@@ -189,14 +181,15 @@ def main(argv: list[str] | None = None) -> int:
     if not vectors:
         print("Nothing could be decoded.")
         return 1
-    output = arguments.output or arguments.folder / f"features-{arguments.encoder}.npz"
-    np.savez_compressed(
-        output,
-        features=np.stack(vectors).astype(np.float32),
-        labels=np.asarray(labels, dtype=np.int64),
-        groups=np.asarray(groups),
-        files=np.asarray(names),
-    )
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with output.open("xb") as handle:
+        np.savez_compressed(
+            handle,
+            features=np.stack(vectors).astype(np.float32),
+            labels=np.asarray(labels, dtype=np.int64),
+            groups=np.asarray(groups),
+            files=np.asarray(names),
+        )
     counts: dict[str, int] = {}
     for group in groups:
         counts[group] = counts.get(group, 0) + 1
@@ -204,12 +197,17 @@ def main(argv: list[str] | None = None) -> int:
     for group, count in sorted(counts.items(), key=lambda item: -item[1]):
         print(f"  {group:28} {count:5}")
     print(f"wrote {output}")
-    meta = output.with_suffix(".json")
-    meta.write_text(
+    metadata = (
         json.dumps(
             {
                 "encoder": arguments.encoder,
                 "encoder_model": ENCODERS[arguments.encoder][0],
+                # Recorded because features extracted before 2026-10-22 used
+                # ImageNet statistics for every encoder, which was wrong for
+                # PE and CLIP. A file without this key is one of those.
+                "normalisation": configuration["normalisation"],
+                "configuration": configuration,
+                "feature_sha256": sha256(output),
                 "size": size,
                 "windows": arguments.windows,
                 "window_length": arguments.window_length,
@@ -220,9 +218,10 @@ def main(argv: list[str] | None = None) -> int:
             indent=2,
             sort_keys=True,
         )
-        + "\n",
-        encoding="utf-8",
+        + "\n"
     )
+    with meta.open("x", encoding="utf-8") as handle:
+        handle.write(metadata)
     return 0
 
 

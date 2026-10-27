@@ -29,7 +29,6 @@ tensor built exactly the way its training tensors were.
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import sys
 from pathlib import Path
@@ -140,8 +139,9 @@ def main(argv: list[str] | None = None) -> int:
         run / "checkpoints" / f"final-{branch}-seed17.pt"
     )
     manifest = arguments.manifest or (
-        run / "split" / ("test-usable.csv" if branch == "visual" else
-                         "test-audio-usable.csv")
+        run
+        / "split"
+        / ("test-usable.csv" if branch == "visual" else "test-audio-usable.csv")
     )
     if not checkpoint.is_file():
         print(f"No checkpoint at {checkpoint}", file=sys.stderr)
@@ -150,12 +150,9 @@ def main(argv: list[str] | None = None) -> int:
         print(f"No manifest at {manifest}", file=sys.stderr)
         return 1
 
-    index = {
-        row["clip_id"]: run / row["cache_path"]
-        for row in csv.DictReader(
-            (run / "cache-index.csv").open(encoding="utf-8", newline="")
-        )
-    }
+    from deepfake_detection.data.cache_index import read_cache_index
+
+    index = read_cache_index(run / "cache-index.csv")
     records = [
         record
         for record in load_manifest(manifest, dataset=arguments.dataset).records
@@ -171,18 +168,12 @@ def main(argv: list[str] | None = None) -> int:
         print("No manifest rows resolve to a cache entry", file=sys.stderr)
         return 1
 
-    if branch == "visual":
-        from deepfake_detection.branches.visual import build_visual_branch
+    from deepfake_detection.branches.registry import load_branch
 
-        model = build_visual_branch(pretrained=False)
-        view_name = "visual_view"
-    else:
-        from deepfake_detection.branches.audio import build_wav2vec2_audio_branch
-
-        model = build_wav2vec2_audio_branch(pretrained=False)
-        view_name = "audio_view"
-    state = torch.load(checkpoint, map_location="cpu", weights_only=True)
-    model.load_state_dict(state["model"] if "model" in state else state)
+    # Through the registry, so the branch is rebuilt as it was trained and its
+    # metadata is checked rather than skipped.
+    model, _ = load_branch(checkpoint, branch)
+    view_name = "visual_view" if branch == "visual" else "audio_view"
     model.to(arguments.device).eval()
 
     store = CacheStore(run)
@@ -208,8 +199,10 @@ def main(argv: list[str] | None = None) -> int:
     if len(set(labels)) < 2:
         print("Scored set has a single class, no ranking metric exists")
         return 1
-    print(f"loaded {len(views):,} views (fake {sum(labels)}, real "
-          f"{len(labels) - sum(labels)})\n")
+    print(
+        f"loaded {len(views):,} views (fake {sum(labels)}, real "
+        f"{len(labels) - sum(labels)})\n"
+    )
 
     report: dict[str, dict] = {}
     for name, kind, parameters in conditions:
@@ -225,8 +218,8 @@ def main(argv: list[str] | None = None) -> int:
                     )
                     for view in chunk
                 ]
-                batch = torch.from_numpy(np.stack(corrupted)).float().to(
-                    arguments.device
+                batch = (
+                    torch.from_numpy(np.stack(corrupted)).float().to(arguments.device)
                 )
                 scores.extend(
                     torch.sigmoid(model(batch).logits).detach().cpu().tolist()
@@ -280,9 +273,7 @@ def main(argv: list[str] | None = None) -> int:
         ),
         "conditions": report,
     }
-    out = arguments.output or (
-        run / "evaluation" / f"corruption-{branch}.json"
-    )
+    out = arguments.output or (run / "evaluation" / f"corruption-{branch}.json")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(
         json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"

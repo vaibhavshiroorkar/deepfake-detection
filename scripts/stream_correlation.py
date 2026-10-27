@@ -105,9 +105,13 @@ def main(argv: list[str] | None = None) -> int:
         print("No feature stores found. Run scripts/score_streams.py first.")
         return 1
 
-    out = arguments.output or arguments.run_dir / "evaluation" / "stream-correlation.json"
+    out = (
+        arguments.output or arguments.run_dir / "evaluation" / "stream-correlation.json"
+    )
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    out.write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     print(f"\nwrote {out}")
     return 0
 

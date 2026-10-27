@@ -17,8 +17,9 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, HTMLResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from . import content, results, settings
 from .engines import MODELS, Registry
@@ -27,6 +28,37 @@ STATIC = Path(__file__).parent / "static"
 TEMPLATES = Path(__file__).parent / "templates"
 ADMIN_TOKEN_ENV = "DDF_ADMIN_TOKEN"  # noqa: S105 (the variable name, not a token)
 _CHUNK = 1 << 20
+
+
+class _UploadLimitMiddleware:
+    """Bound incoming multipart bytes before the parser writes them to disk."""
+
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        if scope["type"] != "http" or scope["path"] != "/api/analyze":
+            return await self.app(scope, receive, send)
+        # Reserve a bounded allowance for multipart headers and form fields.
+        limit = (settings.load().max_upload_mb << 20) + _CHUNK
+        declared = dict(scope["headers"]).get(b"content-length", b"")
+        if declared.isdigit() and int(declared) > limit:
+            response = JSONResponse(
+                {"detail": "The upload exceeds the size limit"}, status_code=413
+            )
+            return await response(scope, receive, send)
+        received = 0
+
+        async def bounded_receive():
+            nonlocal received
+            message = await receive()
+            if message["type"] == "http.request":
+                received += len(message.get("body", b""))
+                if received > limit:
+                    raise HTTPException(413, "The upload exceeds the size limit")
+            return message
+
+        return await self.app(scope, bounded_receive, send)
 
 
 def _model_cards(enabled: tuple[str, ...]) -> list[dict]:
@@ -49,7 +81,7 @@ def _model_cards(enabled: tuple[str, ...]) -> list[dict]:
 
 @functools.cache
 def _research() -> dict:
-    """Everything the research tabs and the report read. Cached: it only
+    """Everything the research pages and the report read. Cached: it only
     changes when a new evaluation is written, and a restart picks that up."""
     return {
         "table": results.metric_table(),
@@ -65,6 +97,21 @@ def _research() -> dict:
     }
 
 
+@functools.lru_cache(maxsize=16)
+def _playable(path: str, _mtime: float) -> tuple[bytes, str]:
+    """A sample clip as browser-playable bytes, and its media type.
+
+    Cached on the file's modification time, because re-encoding costs a few
+    hundred milliseconds and the page asks again on every play.
+    """
+    from deepfake_detection.views.playback import playable_video_bytes
+
+    payload, reencoded_from = playable_video_bytes(path)
+    if reencoded_from is None and Path(path).suffix.lower() == ".webm":
+        return payload, "video/webm"
+    return payload, "video/mp4"
+
+
 def create_app(registry: Registry | None = None) -> FastAPI:
     app = FastAPI(title="Deepfake check", docs_url=None, redoc_url=None)
     app.state.registry = registry or Registry()
@@ -73,11 +120,17 @@ def create_app(registry: Registry | None = None) -> FastAPI:
     inference_lock = threading.Lock()
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
+    app.add_middleware(_UploadLimitMiddleware)
+
     def admin_guard(token: str | None) -> None:
         expected = os.environ.get(ADMIN_TOKEN_ENV)
         if not expected:
             raise HTTPException(404, "The admin page is off. Set DDF_ADMIN_TOKEN.")
-        if token is None or not secrets.compare_digest(token, expected):
+        # Compared as bytes: `compare_digest` raises on non-ASCII strings,
+        # which would turn a wrong token into a server error.
+        if token is None or not secrets.compare_digest(
+            token.encode("utf-8"), expected.encode("utf-8")
+        ):
             raise HTTPException(401, "Wrong or missing admin token")
 
     @app.get("/", response_class=HTMLResponse)
@@ -111,10 +164,9 @@ def create_app(registry: Registry | None = None) -> FastAPI:
         sample = results.samples().get(sample_id)
         if sample is None:
             raise HTTPException(404, "No such sample on this machine")
-        from deepfake_detection.dashboard.lib.media import playable_video_bytes
-
-        payload, _ = playable_video_bytes(sample["path"])
-        return Response(payload, media_type="video/mp4")
+        path = Path(sample["path"])
+        payload, media_type = _playable(str(path), path.stat().st_mtime)
+        return Response(payload, media_type=media_type)
 
     def run_analysis(
         path: Path, model: str | None, threshold: float | None, withhold: bool | None
@@ -151,7 +203,7 @@ def create_app(registry: Registry | None = None) -> FastAPI:
     ) -> dict:
         limit = settings.load().max_upload_mb << 20
         suffix = Path(file.filename or "upload").suffix.lower()
-        from deepfake_detection.dashboard.lib import media_kind
+        from deepfake_detection import media_kind
 
         # UPLOAD_SUFFIXES holds extensions without the dot, the form
         # st.file_uploader takes.

@@ -15,7 +15,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from deepfake_detection.dashboard.paths import DATA_DIR, RUNS_DIR
+from deepfake_detection.paths import DATA_DIR, RUNS_DIR
 
 PROGRAM = "program-20260906/evaluation"
 GATE = "design-b-20260910/evaluation"

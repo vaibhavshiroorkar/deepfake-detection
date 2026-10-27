@@ -14,10 +14,11 @@ the weights.
 
 from __future__ import annotations
 
-import hashlib
 import json
 from collections.abc import Callable
 from pathlib import Path
+
+from deepfake_detection.digest import file_sha256
 
 # Which cached views each stream reads, and so which trainer built it. Keyed by
 # the checkpoint stem the training script writes.
@@ -26,6 +27,11 @@ STREAM_KINDS: dict[str, tuple[str, str | None]] = {
     "visual-efficientnet": ("visual", "efficientnet"),
     "stream-lipsync": ("lipsync", None),
     "stream-emotion": ("emotion", None),
+    # The same two streams with the encoders their design named: AV-HuBERT for
+    # lip-sync, HSEmotion for the face side of emotion. The encoder itself is
+    # read from each history file, so the second field is informational.
+    "stream-lipsync-avhubert": ("lipsync", "avhubert"),
+    "stream-emotion-hsemotion": ("emotion", "hsemotion"),
     # The Design A audio branch, reused rather than retrained: it already emits
     # a 256-dim embedding, the same width the streams project to, so it drops
     # into the fusion head unchanged. It is also the only model an audio-only
@@ -39,14 +45,6 @@ STREAM_KINDS: dict[str, tuple[str, str | None]] = {
 EXTERNAL_CHECKPOINTS = {
     "final-audio-seed17": Path("runs/program-20260906/checkpoints"),
 }
-
-
-def checkpoint_sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1 << 20), b""):
-            digest.update(block)
-    return digest.hexdigest()
 
 
 def build_model(name: str, history: dict):
@@ -95,7 +93,16 @@ def build_model(name: str, history: dict):
 
     builder = build_lipsync_stream if kind == "lipsync" else build_emotion_stream
     return builder(
-        pretrained=False, common_dim=model_config.get("common_dim", 256)
+        pretrained=False,
+        common_dim=model_config.get("common_dim", 256),
+        encoder=model_config.get("encoder", "default"),
+        video_backbone=model_config.get(
+            "video_backbone", "tf_efficientnet_b0.ns_jft_in1k"
+        ),
+        audio_model=model_config.get("audio_model", "facebook/wav2vec2-base"),
+        attention_heads=model_config.get("attention_heads", 4),
+        temporal_position_mode=model_config.get("temporal_position_mode", "none"),
+        query_steps=model_config.get("query_steps", 50 if kind == "lipsync" else 8),
     ), kind
 
 
@@ -136,7 +143,7 @@ def load_streams(
             StreamSpec(
                 name=name,
                 model=model.to(device).eval(),
-                checkpoint_hash=checkpoint_sha256(checkpoint),
+                checkpoint_hash=file_sha256(checkpoint),
                 kind=kind,
             )
         )

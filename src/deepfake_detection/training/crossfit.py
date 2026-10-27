@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import random
 from collections import defaultdict
 from collections.abc import Sequence
@@ -14,6 +15,8 @@ class GroupFold:
     holdout_sources: tuple[str, ...]
     train_indices: tuple[int, ...]
     holdout_indices: tuple[int, ...]
+    validation_sources: tuple[str, ...] = ()
+    validation_indices: tuple[int, ...] = ()
 
 
 def build_group_folds(
@@ -21,7 +24,10 @@ def build_group_folds(
     *,
     folds: int,
     seed: int,
+    validation_fraction: float = 0.15,
 ) -> tuple[GroupFold, ...]:
+    if not math.isfinite(validation_fraction) or not 0 < validation_fraction < 1:
+        raise ValueError("Validation fraction must be between zero and one")
     sources = sorted({record.source for record in records})
     if folds < 2 or folds > len(sources):
         raise ValueError("Fold count must be between two and the source count")
@@ -52,9 +58,18 @@ def build_group_folds(
 
     result: list[GroupFold] = []
     all_sources = set(sources)
-    for holdout in holdout_groups:
+    for fold_index, holdout in enumerate(holdout_groups):
         holdout_set = set(holdout)
         train_set = all_sources - holdout_set
+        if len(train_set) < 2:
+            raise ValueError("Each outer training fold needs at least two sources")
+        candidates = sorted(train_set)
+        random.Random(seed + fold_index + 1).shuffle(candidates)  # noqa: S311
+        count = max(
+            1, min(len(candidates) - 1, round(len(candidates) * validation_fraction))
+        )
+        validation_set = set(candidates[:count])
+        train_set -= validation_set
         result.append(
             GroupFold(
                 train_sources=tuple(sorted(train_set)),
@@ -68,6 +83,12 @@ def build_group_folds(
                     index
                     for index, record in enumerate(records)
                     if record.source in holdout_set
+                ),
+                validation_sources=tuple(sorted(validation_set)),
+                validation_indices=tuple(
+                    index
+                    for index, record in enumerate(records)
+                    if record.source in validation_set
                 ),
             )
         )

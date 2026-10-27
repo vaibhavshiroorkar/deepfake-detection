@@ -14,7 +14,6 @@ split here would put it straight back in one layer higher.
 
 from __future__ import annotations
 
-import copy
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
@@ -23,6 +22,9 @@ from torch import Tensor, nn
 
 from deepfake_detection.fusion.deep import StreamFusion
 from deepfake_detection.fusion.store import AssembledFeature
+
+from .ranking import roc_auc
+from .selection import BestEpoch
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,25 +108,9 @@ def as_tensors(
     return values, presence, labels
 
 
-def _auc(scores: Tensor, labels: Tensor) -> float:
-    """ROC-AUC by rank, so the training loop needs no sklearn import."""
-    positive = labels > 0.5
-    count_positive = int(positive.sum())
-    count_negative = int(labels.numel() - count_positive)
-    if count_positive == 0 or count_negative == 0:
-        return float("nan")
-    order = scores.argsort()
-    ranks = torch.empty_like(order, dtype=torch.float64)
-    ranks[order] = torch.arange(1, scores.numel() + 1, dtype=torch.float64)
-    rank_sum = float(ranks[positive].sum())
-    return (rank_sum - count_positive * (count_positive + 1) / 2) / (
-        count_positive * count_negative
-    )
-
-
 # What an input can drive, and how often each case is expected at inference.
 # A video reaches every stream; a still image reaches only the visual ones; a
-# sound file only the audio branch. `dashboard/lib/media_kind.py` is the same
+# sound file only the audio branch. `media_kind.py` is the same
 # table on the serving side.
 #
 # This exists because i.i.d. stream dropout does not produce these patterns
@@ -239,10 +225,7 @@ def fit_stream_fusion(
     stream_order = sorted(dims)
 
     records: list[FusionEpochRecord] = []
-    best_loss = float("inf")
-    best_epoch = 0
-    best_state: dict[str, Tensor] | None = None
-    stale = 0
+    selection = BestEpoch(patience=patience)
     generator = torch.Generator().manual_seed(seed)
 
     for epoch in range(epochs):
@@ -273,7 +256,7 @@ def fit_stream_fusion(
         with torch.inference_mode():
             output = model(validation[0], validation[1])
             validation_loss = float(criterion(output.logit, validation[2]))
-            auc = _auc(output.logit, validation[2])
+            auc = roc_auc(output.logit, validation[2])
         records.append(
             FusionEpochRecord(
                 epoch=epoch + 1,
@@ -282,17 +265,10 @@ def fit_stream_fusion(
                 validation_auc=auc,
             )
         )
-        if validation_loss < best_loss - 1e-4:
-            best_loss, best_epoch, stale = validation_loss, epoch + 1, 0
-            best_state = copy.deepcopy(model.state_dict())
-        else:
-            stale += 1
-            if stale >= patience:
-                break
+        if selection.update(epoch=epoch + 1, score=auc, model=model):
+            break
 
-    if best_state is None:
-        raise RuntimeError("Fusion training produced no checkpoint candidate")
-    model.load_state_dict(best_state)
+    best_epoch = selection.restore(model)
     return model, FusionTrainingHistory(
         epochs=tuple(records),
         best_epoch=best_epoch,

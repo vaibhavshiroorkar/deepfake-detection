@@ -10,7 +10,7 @@ import pytest
 pytest.importorskip("streamlit")
 
 
-from deepfake_detection.dashboard.lib import media_kind
+from deepfake_detection import media_kind
 
 
 @pytest.mark.parametrize(

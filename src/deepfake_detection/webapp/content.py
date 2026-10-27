@@ -152,20 +152,20 @@ TARGETS: tuple[dict, ...] = (
     {
         "target": "0.844+ from audio-visual cues on genuine-frame fakes",
         "literature": "0.844",
-        "ours": "0.9969 lip-sync stream on LAV-DF",
-        "status": "met on the number, failed on the mechanism",
+        "ours": "Historical 0.9969 on LAV-DF; genuine windows need rebuilding",
+        "status": "requires rerun",
     },
     {
         "target": "Fusion beats the strongest single branch by about 0.099",
         "literature": "+0.099",
-        "ours": "+0.0159 in-domain; -0.0085, -0.0215, -0.0417 on DFDC at three seeds",
-        "status": "not met",
+        "ours": "Historical comparison used holdout labels for branch checkpoint selection",
+        "status": "requires nested cross-fitting",
     },
     {
         "target": "0.64+ on unseen generators without fine-tuning",
         "literature": "0.64",
-        "ours": "0.7527 DF26 leave-one-generator-out (Perception Encoder probe)",
-        "status": "met",
+        "ours": "Historical PE score 0.7527 used incorrect normalization",
+        "status": "requires rerun",
     },
 )
 
@@ -175,12 +175,12 @@ PRIOR_WORK: tuple[dict, ...] = (
         "comparison": (
             "Our first DF26 probe read 0.6942, level with the best published "
             "FF++-trained detector on DF26 (0.697). With the frame-rate leak "
-            "removed and a Perception Encoder probe it reads 0.7527."
+            "removed, the historical PE probe read 0.7527. Its normalization "
+            "was wrong, so corrected performance is unknown."
         ),
         "difference": (
-            "The published ranking has open-source generators easier to catch "
-            "than commercial ones. Ours is the reverse, 0.81 against 0.68. The "
-            "reason is untested."
+            "The historical encoder ranking requires corrected features and "
+            "paired comparisons before it supports a conclusion."
         ),
         "source": "findings.md F15, F33",
     },
@@ -202,7 +202,7 @@ PRIOR_WORK: tuple[dict, ...] = (
         "comparison": (
             "We use the same idea, audio querying mouth motion. Our emotion "
             "stream reaches 0.9978 in-domain and the lip-sync stream 0.9969 on "
-            "LAV-DF."
+            "LAV-DF. That LAV-DF score requires rebuilding contaminated windows."
         ),
         "difference": (
             "We also logged diagonal attention mass every epoch. It sat at "
@@ -252,7 +252,7 @@ CONTRIBUTIONS: tuple[str, ...] = (
     "A published list of eight withdrawn claims, each with the measurement that replaced it.",
     "The cue-label trap: the same visual logits read 0.9988 or 0.9742 depending on which label is scored, which hides a fusion gain of +0.0159 (F19).",
     "A measured ceiling for fusion: on DFDC, 1,585 of 2,351 clips are wrong under both fusion and its visual branch, so no head can fix them (F23).",
-    "Seed variance larger than any effect reported, and a six-model ensemble that removes the seed choice: DFDC 0.7739, +0.047 over the seed mean, though it gains nothing on Celeb-DF.",
+    "Seed variance larger than any effect reported, and a six-model ensemble that removes the seed choice: DFDC 0.7739, +0.0469 over the seed mean, though it gains nothing on Celeb-DF.",
 )
 
 FAILURES: tuple[dict, ...] = (
@@ -281,7 +281,7 @@ FAILURES: tuple[dict, ...] = (
             },
             {
                 "title": "Capture conditions decide transfer, not the forgery type",
-                "detail": "A lip-sync stream at 0.9969 on LAV-DF reads 0.7407 on FakeAVCeleb and 0.5059 on DFDC.",
+                "detail": "Historical LAV-DF transfer scores require retraining after the window-label correction.",
                 "source": "F12",
             },
             {
@@ -291,7 +291,7 @@ FAILURES: tuple[dict, ...] = (
             },
             {
                 "title": "The ensemble's gain is DFDC only",
-                "detail": "Averaging six face models adds +0.047 over the seed mean on DFDC. On Celeb-DF it reads 0.6677 against 0.6682 for the seed-17 model. On MNW at 0.5 it catches 8 of 84 fakes against 24, because the ConvNeXt members score those fakes low. One member, ConvNeXt seed 43, diverged in training and shipped never fine-tuned (F29). It stays in because removing it lowers DFDC to 0.7666 and Celeb-DF to 0.6553.",
+                "detail": "Averaging six face models adds +0.0469 over the seed mean on DFDC. On Celeb-DF it reads 0.6677 against 0.6682 for the seed-17 model. On MNW at 0.5 it catches 8 of 84 fakes against 24, because the ConvNeXt members score those fakes low. One member, ConvNeXt seed 43, diverged in training and shipped never fine-tuned (F29). It stays in because removing it lowers DFDC to 0.7666 and Celeb-DF to 0.6553.",
                 "source": "visual-ensemble-*-metrics.json, F29",
             },
         ),

@@ -14,7 +14,7 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
 
-from deepfake_detection.dashboard.paths import PROJECT_ROOT
+from deepfake_detection.paths import PROJECT_ROOT
 
 TEMPLATES = Path(__file__).parent / "templates"
 PDF_PATH = PROJECT_ROOT / "dist" / "final-report.pdf"

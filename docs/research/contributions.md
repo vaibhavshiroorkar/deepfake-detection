@@ -25,13 +25,11 @@ from a search is not absence from a literature. Treat every one of these as
 is already published. Our version may still be a useful replication or a
 sharper measurement, and where that is the case it says so.
 
-**One limit applies to everything below.** Of 41 registry rows, 6 are
-`accepted`, 35 are `provisional (1 seed)` and none is `pending`. The protocol
-asks for three training seeds. Design A's branches and fusion head have them,
-and most other rows quote one. F21 and F27 measure what that costs: seed alone
-moves the cross-corpus number by 0.0733 for the visual branch and 0.1078 for the
-fused system, which is wider than several effects reported here. Nothing in this file should
-be presented as settled until the seeds are done.
+**Evidence limits apply to every claim below.** The registry marks known protocol
+failures `requires rerun`. Other rows remain provisional until their seed
+artifacts and protocols are verified. Historical fusion, LAV-DF and PE/CLIP
+numbers do not establish performance after the corrections in
+[reproducibility](../reproducibility.md).
 
 ## 1. A detector that is accurate and provably not using the cue it is named for
 

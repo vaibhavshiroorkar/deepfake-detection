@@ -47,20 +47,23 @@ def fingerprint(media: Path, **kwargs) -> str:
 
 
 def test_default_records_carry_no_override() -> None:
-    assert record().sync_start_sec == 0.0
+    assert record().sync_start_sec is None
 
 
 def test_override_survives_the_manifest_round_trip() -> None:
     assert record(sync_start_sec="3.75").sync_start_sec == pytest.approx(3.75)
 
 
-def test_no_override_leaves_the_fingerprint_unchanged(media: Path) -> None:
-    """The load-bearing test. Every clip cached before this option existed must
-    keep its key, or adding the feature silently invalidates the whole cache."""
+def test_explicit_zero_is_distinct_from_an_unspecified_window(media: Path) -> None:
     before = fingerprint(media)
     after = fingerprint(media, sync_start_sec=0.0)
 
-    assert before == after
+    assert before != after
+
+
+def test_blank_csv_offset_is_unspecified_but_zero_is_explicit():
+    assert record(sync_start_sec="").sync_start_sec is None
+    assert record(sync_start_sec="0").sync_start_sec == 0.0
 
 
 def test_two_windows_of_one_clip_get_different_keys(media: Path) -> None:

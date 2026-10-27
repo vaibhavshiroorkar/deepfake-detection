@@ -30,8 +30,10 @@ from deepfake_detection.data.datasets import (
     _normalize_waveform,
 )
 from deepfake_detection.data.manifest import ClipRecord
+from deepfake_detection.training.input_contract import audio_forward
 from deepfake_detection.views.cache_store import CacheStore
 
+from .export import verify_out_of_fold
 from .store import FeatureRecord, FeatureStore
 
 # The two single-modality kinds read one view each and take no second
@@ -107,7 +109,12 @@ def _forward(
         if values is None:
             raise LookupError(field)
         if spec.kind == "audio":
-            output = spec.model(_normalized_audio(values, device))
+            # Cached audio is already normalized over valid samples, as in training.
+            output = audio_forward(
+                spec.model,
+                _tensor(values, device),
+                getattr(prepared, "audio_valid_samples", None),
+            )
             # BranchOutput calls it `logits`; the stream models call it `logit`.
             return float(output.logits[0].cpu()), tuple(
                 float(value) for value in output.embedding[0].cpu().flatten()
@@ -153,6 +160,18 @@ def export_stream_features(
     names = [spec.name for spec in streams]
     if len(set(names)) != len(names):
         raise ValueError(f"Stream names must be unique: {', '.join(sorted(names))}")
+    verify_out_of_fold(
+        records=records,
+        partition_role=partition_role,
+        trained_source_identities={
+            spec.name: getattr(spec.model, "trained_source_identities", ())
+            for spec in streams
+        },
+        selection_source_identities={
+            spec.name: getattr(spec.model, "selection_source_identities", None)
+            for spec in streams
+        },
+    )
     for spec in streams:
         spec.model.to(device).eval()
 

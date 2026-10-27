@@ -97,7 +97,9 @@ def download(target: Path, token: str | None) -> Path:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--destination", type=Path, default=Path("data/FaceForensics++"))
+    parser.add_argument(
+        "--destination", type=Path, default=Path("data/FaceForensics++")
+    )
     parser.add_argument(
         "--archive-name", default="FaceForensics++_C23.zip", help="Local file name."
     )

@@ -24,6 +24,10 @@ class StreamConfig:
     stream_name: str = "efficientnet"
     backbone_name: str = EFFICIENTNET_B0
     pretrained: bool = True
+    # A released weight file to start from in place of timm's own pretrained
+    # weights. Only HSEmotion's expression model is read today
+    # (`streams/hsemotion.py`); empty means timm's weights.
+    backbone_weights: str = ""
 
     # temporal model: num_frames per-frame embeddings into one clip vector
     temporal_type: str = "lstm"  # "lstm", "gru" or "mean"

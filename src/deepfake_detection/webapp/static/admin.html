@@ -4,49 +4,47 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Deepfake Check Admin</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@600;700&display=swap">
-<link rel="stylesheet" href="/static/app.css">
-<style>
-  .form { display: grid; gap: 18px; max-width: 640px; }
-  .field { display: grid; gap: 6px; }
-  .field > span { font-weight: 600; }
-  .field small { color: var(--ink-2); }
-  .field input[type="number"], .field input[type="password"], .field select {
-    font: inherit; padding: 9px 10px; border-radius: var(--radius-control);
-    border: 1px solid var(--line-strong); background: var(--sheet); color: var(--ink); max-width: 320px;
-  }
-  .checks { display: grid; gap: 6px; }
-  .saved { color: var(--real); font-weight: 600; }
-</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/static/app.css?v=2">
 </head>
 <body>
-<header class="bar"><div class="bar-inner"><div class="brand">Deepfake Check admin</div><a href="/" style="margin-left:auto">Back to the app</a></div></header>
-<main>
-  <div class="page-head">
-    <h1>Settings for the user app</h1>
-    <p>Choose which models users see, the default threshold, and how unfamiliar footage is handled. Changes apply to the next check, with no restart.</p>
-  </div>
-  <div class="sheet" id="login">
-    <form class="form" id="login-form">
-      <label class="field"><span>Admin token</span><input type="password" id="token" autocomplete="current-password" required><small>The value of DDF_ADMIN_TOKEN on the server.</small></label>
-      <button class="go" type="submit" style="max-width:240px">Open settings</button>
-      <p class="error" id="login-error" hidden></p>
-    </form>
-  </div>
-  <div class="sheet" id="editor" hidden>
-    <form class="form" id="settings-form">
-      <div class="field"><span>Models users can choose</span><div class="checks" id="enabled"></div></div>
-      <label class="field"><span>Default model</span><select id="default_model"></select></label>
-      <label class="field"><span>Default threshold</span><input type="number" id="default_threshold" min="0.001" max="0.999" step="0.001"><small>Probability at or above this is called manipulated.</small></label>
-      <label class="toggle"><input type="checkbox" id="lock_threshold"><span><strong>Lock the threshold</strong>Users see the scale but cannot move it.</span></label>
-      <label class="toggle"><input type="checkbox" id="withhold_unfamiliar"><span><strong>Hold back verdicts on unfamiliar footage by default</strong>Uses the DINOv3 familiarity check.</span></label>
-      <label class="toggle"><input type="checkbox" id="allow_unfamiliar_override"><span><strong>Let users turn that off for one check</strong></span></label>
-      <label class="toggle"><input type="checkbox" id="show_research_tabs"><span><strong>Show the research tabs</strong>How it works, Results, Against prior work, Failures and limits, Report.</span></label>
-      <label class="field"><span>Upload limit (MB)</span><input type="number" id="max_upload_mb" min="1" max="2048" step="1"></label>
-      <div><button class="go" type="submit" style="max-width:240px">Save settings</button> <span class="saved" id="saved" hidden>Saved</span></div>
-      <p class="error" id="save-error" hidden></p>
-      <div class="field"><span>Loaded engines</span><small id="engines"></small></div>
-    </form>
+<header class="topbar">
+  <a class="brand" href="/">
+    <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--accent)"/><rect x="7" y="9" width="18" height="14" rx="2" fill="none" stroke="var(--on-accent)" stroke-width="2.5"/><path d="M7 16h18" stroke="var(--on-accent)" stroke-width="2.5"/></svg>
+    <span>Deepfake Check admin</span>
+  </a>
+  <a href="/">Back to the app</a>
+</header>
+<main class="admin">
+  <div class="page">
+    <header class="page-head">
+      <h1>Settings for the user app</h1>
+      <p>Choose which models users see, the default threshold, and how unfamiliar footage is handled. Changes apply to the next check, with no restart.</p>
+    </header>
+    <section class="panel" id="login">
+      <form class="form" id="login-form">
+        <label class="field"><span>Admin token</span><input type="password" id="token" autocomplete="current-password" required><small>The value of DDF_ADMIN_TOKEN on the server.</small></label>
+        <div><button class="button primary" type="submit">Open settings</button></div>
+        <p class="error" id="login-error" hidden></p>
+      </form>
+    </section>
+    <section class="panel" id="editor" hidden>
+      <form class="form" id="settings-form">
+        <div class="field"><span>Models users can choose</span><div class="checks" id="enabled"></div></div>
+        <label class="field"><span>Default model</span><select id="default_model"></select></label>
+        <label class="field"><span>Default threshold</span><input type="number" id="default_threshold" min="0.001" max="0.999" step="0.001"><small>Probability at or above this is called manipulated.</small></label>
+        <label class="toggle"><input type="checkbox" id="lock_threshold"><span><strong>Lock the threshold</strong>Users see the scale but cannot move it.</span></label>
+        <label class="toggle"><input type="checkbox" id="withhold_unfamiliar"><span><strong>Hold back verdicts on unfamiliar footage by default</strong>Uses the DINOv3 familiarity check.</span></label>
+        <label class="toggle"><input type="checkbox" id="allow_unfamiliar_override"><span><strong>Let users turn that off for one check</strong></span></label>
+        <label class="toggle"><input type="checkbox" id="show_research_tabs"><span><strong>Show the research pages</strong>How it works, Results, Against prior work, Failures and limits, Report.</span></label>
+        <label class="field"><span>Upload limit (MB)</span><input type="number" id="max_upload_mb" min="1" max="2048" step="1"></label>
+        <div class="actions"><button class="button primary" type="submit">Save settings</button><span class="saved" id="saved" hidden>Saved</span></div>
+        <p class="error" id="save-error" hidden></p>
+        <div class="field"><span>Loaded engines</span><small id="engines"></small></div>
+      </form>
+    </section>
   </div>
 </main>
 <script>

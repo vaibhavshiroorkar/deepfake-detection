@@ -49,9 +49,14 @@ def _probe(path: Path) -> dict:
     try:
         # ffprobe from PATH, arguments built here rather than from user input.
         probe_command = [  # noqa: S607
-            "ffprobe", "-v", "error", "-show_entries",
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
             "stream=codec_type,codec_name,width,height,r_frame_rate,sample_rate",
-            "-of", "json", str(path),
+            "-of",
+            "json",
+            str(path),
         ]
         output = subprocess.run(  # noqa: S603
             probe_command,
@@ -83,16 +88,35 @@ def normalize(source: Path, target: Path, settings: dict) -> bool:
         f"fps={settings['fps']},format=yuv420p"
     )
     command = [
-        "ffmpeg", "-y", "-loglevel", "error", "-i", str(source),
-        "-map_metadata", "-1",
-        "-vf", video_filter,
-        "-c:v", "libx264", "-preset", settings["preset"],
-        "-crf", str(settings["crf"]), "-pix_fmt", "yuv420p",
+        "ffmpeg",
+        "-y",
+        "-loglevel",
+        "error",
+        "-i",
+        str(source),
+        "-map_metadata",
+        "-1",
+        "-vf",
+        video_filter,
+        "-c:v",
+        "libx264",
+        "-preset",
+        settings["preset"],
+        "-crf",
+        str(settings["crf"]),
+        "-pix_fmt",
+        "yuv420p",
     ]
     if _has_audio(probe):
         command += [
-            "-c:a", "aac", "-b:a", settings["audio_bitrate"],
-            "-ar", str(settings["audio_rate"]), "-ac", "1",
+            "-c:a",
+            "aac",
+            "-b:a",
+            settings["audio_bitrate"],
+            "-ar",
+            str(settings["audio_rate"]),
+            "-ac",
+            "1",
         ]
     else:
         command += ["-an"]
@@ -111,7 +135,7 @@ def normalize(source: Path, target: Path, settings: dict) -> bool:
 
 
 def main(argv: list[str] | None = None) -> int:
-    from deepfake_detection.dashboard.lib import media_kind
+    from deepfake_detection import media_kind
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, required=True)
@@ -162,8 +186,13 @@ def main(argv: list[str] | None = None) -> int:
     report.parent.mkdir(parents=True, exist_ok=True)
     report.write_text(
         json.dumps(
-            {"settings": settings, "written": written, "skipped": skipped,
-             "failed": failed, "source": str(arguments.source).replace("\\", "/")},
+            {
+                "settings": settings,
+                "written": written,
+                "skipped": skipped,
+                "failed": failed,
+                "source": str(arguments.source).replace("\\", "/"),
+            },
             indent=2,
             sort_keys=True,
         )

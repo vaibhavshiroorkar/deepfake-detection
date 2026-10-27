@@ -17,7 +17,7 @@ it as a plain dict, not as a StreamConfig instance.
 
 from pathlib import Path
 
-from deepfake_detection.dashboard.paths import CHECKPOINT_DIR, RUNS_DIR
+from deepfake_detection.paths import CHECKPOINT_DIR, RUNS_DIR
 
 SUFFIXES = (".pt", ".pth", ".ckpt")
 

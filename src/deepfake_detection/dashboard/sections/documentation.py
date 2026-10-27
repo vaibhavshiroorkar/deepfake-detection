@@ -1,8 +1,3 @@
-import streamlit as st
-
-from deepfake_detection.dashboard.components import render_page_header, render_status
-from deepfake_detection.dashboard.status import PageState
-
 DOCUMENTS = (
     (
         "Project handoff",
@@ -29,21 +24,3 @@ DOCUMENTS = (
         "https://github.com/vaibhavshiroorkar/deepfake-detection/blob/main/docs/reference/cli.md",
     ),
 )
-
-
-def render_documentation(*, embedded: bool = False) -> None:
-    if not embedded:
-        render_page_header(
-            "Project record",
-            "Documentation",
-            "Open the repository records that define scope, data, runs, and reproducibility.",
-        )
-    render_status(PageState.READY)
-
-    st.subheader("Repository records")
-    for label, target in DOCUMENTS:
-        st.markdown(f"[{label}]({target})")
-
-
-if __name__ == "__main__":
-    render_documentation()

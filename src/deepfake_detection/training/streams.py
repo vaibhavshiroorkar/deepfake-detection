@@ -19,7 +19,6 @@ diagonal mass says it found a shortcut instead.
 
 from __future__ import annotations
 
-import copy
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -31,6 +30,7 @@ from deepfake_detection.data.datasets import AVPairBatch
 
 from .engine import run_accumulated_epoch
 from .ranking import roc_auc
+from .selection import BestEpoch
 
 
 @dataclass(frozen=True, slots=True)
@@ -118,7 +118,7 @@ def parameter_groups(
     *,
     head_lr: float,
     encoder_lr: float,
-    encoder_names: tuple[str, ...] = ("video_encoder", "audio_encoder"),
+    encoder_names: tuple[str, ...] = ("video_encoder", "audio_encoder", "pair_encoder"),
 ) -> list[dict]:
     """Split the model so pretrained encoders learn far slower than new heads.
 
@@ -173,13 +173,10 @@ def fit_visual_stream(
     model.to(device)
     criterion = nn.BCEWithLogitsLoss()
     records: list[StreamEpochRecord] = []
-    # Selection maximises AUC, so the sentinel is -inf rather than +inf. An
-    # epoch whose AUC is NaN, which happens when the validation split holds one
-    # class, never beats it and so is never selected.
-    best_auc = float("-inf")
-    best_epoch = 0
-    best_state: dict[str, torch.Tensor] | None = None
-    stale = 0
+    selection = BestEpoch(
+        patience=config.early_stopping_patience,
+        minimum_improvement=config.minimum_improvement,
+    )
 
     def batch_loss(current: nn.Module, batch) -> torch.Tensor:
         logit, _ = current(batch.values.to(device))
@@ -229,16 +226,9 @@ def fit_visual_stream(
                 validation_auc=validation_auc,
             )
         )
-        if validation_auc > best_auc + config.minimum_improvement:
-            best_auc, best_epoch, stale = validation_auc, epoch + 1, 0
-            best_state = copy.deepcopy(model.state_dict())
-        else:
-            stale += 1
-            if stale >= config.early_stopping_patience:
-                break
-    if best_state is None:
-        raise RuntimeError("Training did not produce a checkpoint candidate")
-    model.load_state_dict(best_state)
+        if selection.update(epoch=epoch + 1, score=validation_auc, model=model):
+            break
+    best_epoch = selection.restore(model)
     return StreamTrainingHistory(epochs=tuple(records), best_epoch=best_epoch)
 
 
@@ -256,12 +246,10 @@ def fit_stream(
         pos_weight=torch.tensor(config.positive_weight, device=device)
     )
     records: list[StreamEpochRecord] = []
-    # Maximised, so the sentinel is -inf. See training/ranking.py for why this
-    # is AUC and not the loss.
-    best_auc = float("-inf")
-    best_epoch = 0
-    best_state: dict[str, torch.Tensor] | None = None
-    stale_epochs = 0
+    selection = BestEpoch(
+        patience=config.early_stopping_patience,
+        minimum_improvement=config.minimum_improvement,
+    )
 
     for epoch in range(config.epochs):
         # Both encoders move together. Unfreezing a pretrained backbone into a
@@ -308,17 +296,7 @@ def fit_stream(
                 validation_auc=validation_auc,
             )
         )
-        if validation_auc > best_auc + config.minimum_improvement:
-            best_auc = validation_auc
-            best_epoch = epoch + 1
-            best_state = copy.deepcopy(model.state_dict())
-            stale_epochs = 0
-        else:
-            stale_epochs += 1
-            if stale_epochs >= config.early_stopping_patience:
-                break
-
-    if best_state is None:
-        raise RuntimeError("Training did not produce a checkpoint candidate")
-    model.load_state_dict(best_state)
+        if selection.update(epoch=epoch + 1, score=validation_auc, model=model):
+            break
+    best_epoch = selection.restore(model)
     return StreamTrainingHistory(epochs=tuple(records), best_epoch=best_epoch)

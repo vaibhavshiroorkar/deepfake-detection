@@ -1,18 +1,12 @@
-from pathlib import Path
-
 import streamlit as st
 
 from deepfake_detection.dashboard.components import render_page_header, render_status
 from deepfake_detection.dashboard.evidence import load_validation_evidence
 from deepfake_detection.dashboard.status import PageState
+from deepfake_detection.paths import RUNS_DIR
 
-_PROJECT_ROOT = Path(__file__).resolve().parents[4]
-_METRICS_PATH = (
-    _PROJECT_ROOT / "runs" / "initial-20260902" / "visual-validation-metrics.json"
-)
-_HISTORY_PATH = (
-    _PROJECT_ROOT / "runs" / "initial-20260902" / "visual-initial-history.json"
-)
+_METRICS_PATH = RUNS_DIR / "initial-20260902" / "visual-validation-metrics.json"
+_HISTORY_PATH = RUNS_DIR / "initial-20260902" / "visual-initial-history.json"
 
 
 def render_experiments(*, embedded: bool = False) -> None:

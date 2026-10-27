@@ -5,6 +5,7 @@ on a handful of examples it sees every epoch has a wiring or gradient fault, and
 finding that out here costs seconds instead of finding it out after a GPU run.
 """
 
+import zlib
 from pathlib import Path
 
 import numpy as np
@@ -49,7 +50,7 @@ def store_clip(store: CacheStore, clip_id: str, *, fake: bool) -> Path:
     Fake clips get a constant offset the model can find. The point is to test
     that the machinery learns, not that it solves deepfake detection.
     """
-    generator = np.random.default_rng(abs(hash(clip_id)) % 2**32)
+    generator = np.random.default_rng(zlib.crc32(clip_id.encode()) % 2**32)
     bias = 1.5 if fake else -1.5
     prepared = PreparedClip(
         clip_id=clip_id,

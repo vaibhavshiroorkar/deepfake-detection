@@ -26,7 +26,11 @@ from pathlib import Path
 
 DATASETS = {
     "dfdc": ("dfdc-visual.csv", "DFDC", "visual-dfdc-predictions.csv"),
-    "in-domain": ("test-usable.csv", "FakeAVCeleb", "visual-in-domain-test-predictions.csv"),
+    "in-domain": (
+        "test-usable.csv",
+        "FakeAVCeleb",
+        "visual-in-domain-test-predictions.csv",
+    ),
     "celebdf": ("celebdf-visual.csv", "Celeb-DF-v2", "visual-celebdf-predictions.csv"),
 }
 
@@ -68,10 +72,9 @@ def main(argv: list[str] | None = None) -> int:
         for row in csv.DictReader(handle):
             scores[row["clip_id"]] = (float(row["probability"]), int(row["label"]))
 
-    index: dict[str, Path] = {}
-    with (arguments.run_dir / "cache-index.csv").open(encoding="utf-8") as handle:
-        for row in csv.DictReader(handle):
-            index[row["clip_id"]] = arguments.run_dir / row["cache_path"]
+    from deepfake_detection.data.cache_index import read_cache_index
+
+    index = read_cache_index(arguments.run_dir / "cache-index.csv")
     store = CacheStore(arguments.run_dir / "cache")
 
     motion: list[float] = []
@@ -136,7 +139,8 @@ def main(argv: list[str] | None = None) -> int:
         + ", ".join(f"{value:.4f}" for value in quantiles)
     )
     print(
-        "        tails " + ", ".join(f"{k} {v:.4f}" for k, v in tails.items())
+        "        tails "
+        + ", ".join(f"{k} {v:.4f}" for k, v in tails.items())
         + f", min {motion_array.min():.4f}, max {motion_array.max():.4f}"
     )
     print(f"motion against fake probability, all clips : {overall:+.3f}")
@@ -147,9 +151,7 @@ def main(argv: list[str] | None = None) -> int:
     ):
         if mask.sum() < 10:
             continue
-        value = _spearman(
-            motion_array[mask].tolist(), probability_array[mask].tolist()
-        )
+        value = _spearman(motion_array[mask].tolist(), probability_array[mask].tolist())
         result[f"spearman_{name.split()[0]}"] = value
         print(f"motion against fake probability, {name:15}: {value:+.3f}")
 

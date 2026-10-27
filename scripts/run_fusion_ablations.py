@@ -149,7 +149,9 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     streams = tuple(
-        sorted({row.branch for row in FeatureStore(holdout_path).read() if row.available})
+        sorted(
+            {row.branch for row in FeatureStore(holdout_path).read() if row.available}
+        )
     )
     print(f"streams: {', '.join(streams)}\n")
 

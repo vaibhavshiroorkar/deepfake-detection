@@ -441,7 +441,7 @@ class Preprocessor:
         context_available = info.audio_present and context_lower <= context_upper
         if context_available:
             sync_start = context_lower
-        if record.sync_start_sec:
+        if record.sync_start_sec is not None:
             # The dataset knows where the manipulation is; the default guess
             # does not. Clamped so an annotation near the end of a clip cannot
             # ask for a window that runs past the media.
@@ -486,6 +486,8 @@ class Preprocessor:
         sync_audio = None
         sync_audio_context = None
         audio_clipped = False
+        audio_valid_samples = None
+        sync_valid_samples = None
         if info.audio_present:
             audio_start = min(
                 content_start,

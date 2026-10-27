@@ -28,7 +28,7 @@ from pathlib import Path
 
 def _kind_streams(streams) -> dict[str, tuple[str, ...]]:
     """Which trained streams each media kind can drive, by the routing table."""
-    from deepfake_detection.dashboard.lib import media_kind
+    from deepfake_detection import media_kind
     from deepfake_detection.inference.multimodal import _modality
 
     table = {}
@@ -74,10 +74,12 @@ def _youden_threshold(probabilities, labels) -> tuple[float, float]:
         return 0.5, 0.0
     best_cut, best_j = 0.5, -1.0
     for cut in sorted({round(p, 4) for p in probabilities} | {0.5}):
-        true_positive = sum(1 for p, y in zip(probabilities, labels, strict=True)
-                            if p >= cut and y == 1)
-        false_positive = sum(1 for p, y in zip(probabilities, labels, strict=True)
-                             if p >= cut and y == 0)
+        true_positive = sum(
+            1 for p, y in zip(probabilities, labels, strict=True) if p >= cut and y == 1
+        )
+        false_positive = sum(
+            1 for p, y in zip(probabilities, labels, strict=True) if p >= cut and y == 0
+        )
         j = true_positive / positives - false_positive / negatives
         if j > best_j:
             best_cut, best_j = float(cut), float(j)

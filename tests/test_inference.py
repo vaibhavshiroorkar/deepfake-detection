@@ -6,10 +6,7 @@ from torch import nn
 
 from deepfake_detection.branches.contracts import BranchOutput
 from deepfake_detection.branches.sync import SyncOutput
-from deepfake_detection.inference.predictor import (
-    PredictionEngine,
-    VisualPredictionEngine,
-)
+from deepfake_detection.inference.predictor import PredictionEngine
 from deepfake_detection.views.contracts import PreparedClip, QualityReport
 
 
@@ -105,44 +102,3 @@ def test_missing_audio_returns_indeterminate_without_a_full_model_score() -> Non
     assert result.verdict == "indeterminate"
     assert result.probability is None
     assert "missing_audio" in result.blockers
-
-
-def test_visual_prediction_converts_the_branch_logit_to_a_probability() -> None:
-    engine = VisualPredictionEngine(
-        preprocessor=FixturePreprocessor(prepared_clip(complete=True)),
-        visual_model=FixtureBranch(0.0),
-        threshold=0.5,
-        device="cpu",
-    )
-
-    result = engine.predict(Path("clip.mp4"))
-
-    assert result.verdict == "fake"
-    assert result.probability == 0.5
-    assert result.branch_logits == {"visual": 0.0}
-    assert result.blockers == ()
-
-
-def test_visual_prediction_withholds_a_score_when_the_face_view_is_missing() -> None:
-    prepared = prepared_clip(complete=True)
-    prepared = PreparedClip(
-        clip_id=prepared.clip_id,
-        visual_view=None,
-        audio_view=prepared.audio_view,
-        sync_video_view=prepared.sync_video_view,
-        sync_audio_view=prepared.sync_audio_view,
-        quality=prepared.quality,
-        preprocessing_fingerprint=prepared.preprocessing_fingerprint,
-    )
-    engine = VisualPredictionEngine(
-        preprocessor=FixturePreprocessor(prepared),
-        visual_model=FixtureBranch(1.0),
-        threshold=0.5,
-        device="cpu",
-    )
-
-    result = engine.predict(Path("clip.mp4"))
-
-    assert result.verdict == "indeterminate"
-    assert result.probability is None
-    assert result.blockers == ("missing_visual",)

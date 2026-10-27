@@ -10,7 +10,6 @@ from deepfake_detection.views.cache import (
 from deepfake_detection.views.timeline import (
     ViewConfig,
     make_sync_window,
-    sliding_window_starts,
     uniform_timestamps,
 )
 
@@ -24,24 +23,6 @@ class TimelineTests(unittest.TestCase):
         self.assertEqual(
             uniform_timestamps(duration_sec=1.0, count=4, start_sec=0.0),
             (0.125, 0.375, 0.625, 0.875),
-        )
-
-    def test_sliding_windows_include_the_final_complete_interval(self) -> None:
-        self.assertEqual(
-            sliding_window_starts(
-                duration_sec=5.0,
-                window_sec=4.0,
-                overlap=0.5,
-            ),
-            (0.0, 1.0),
-        )
-        self.assertEqual(
-            sliding_window_starts(
-                duration_sec=3.0,
-                window_sec=4.0,
-                overlap=0.5,
-            ),
-            (0.0,),
         )
 
     def test_sync_window_has_exact_video_and_audio_alignment(self) -> None:

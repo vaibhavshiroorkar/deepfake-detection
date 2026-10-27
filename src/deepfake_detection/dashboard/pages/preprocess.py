@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import streamlit as st
 
+from deepfake_detection import media_kind
 from deepfake_detection.dashboard.lib import media, selectors, sticky
 
 # Shared with the Streams pages so both walks through a clip lay frames out alike.
@@ -148,7 +149,7 @@ def cached_clip():
     )
 
 
-def _prepared_clip():
+def _prepared_clip(view: str):
     """Shared guard for the Visual/Audio tabs: cached clip + decode metadata, or None."""
     clip = cached_clip()
     if clip is None:
@@ -158,6 +159,15 @@ def _prepared_clip():
     if not video_path.exists():
         st.error(f"Video not found: {video_path}")
         return None
+    kind = media_kind.classify(video_path)
+    if kind == media_kind.AUDIO and view == "visual":
+        st.info("This audio file has no picture. Use the Audio tab.")
+        return None
+    if kind == media_kind.IMAGE and view == "audio":
+        st.info("This image has no audio. Use the Visual tab.")
+        return None
+    if kind == media_kind.IMAGE:
+        n_frames = 1
     duration, fps = media.frame_meta(str(video_path))
     timestamps = media.sample_timestamps(duration, n_frames, window_sec)
     return row, video_path, n_frames, window_sec, duration, fps, timestamps
@@ -210,6 +220,21 @@ def render_config():
     m2.metric("Audio", f"[{n_frames}, {win_samples}]")
     m3.metric("Label", selectors.label_text(row))
     st.caption(f"Clip `{row['clip_id']}`, before any preprocessing.")
+
+    kind = media_kind.classify(video_path)
+    if kind == media_kind.AUDIO:
+        raw2d, native_sr = media.decode_audio(str(video_path))
+        if raw2d.size:
+            mono = AF.downmix(raw2d)
+            st.pyplot(waveform_fig(mono, native_sr, f"Audio ({native_sr} Hz)"))
+            st.audio(mono, sample_rate=native_sr)
+        else:
+            st.warning("No audio samples could be decoded.")
+        return
+    if kind == media_kind.IMAGE:
+        st.image(media.cached_decode_frames(video_path, [0.0])[0])
+        st.caption("One image supplies one visual frame.")
+        return
 
     duration, fps = media.frame_meta(str(video_path))
     timestamps = media.sample_timestamps(duration, n_frames, window_sec)
@@ -274,7 +299,7 @@ def render_config():
 
 # ============================== VISUAL ===================================== #
 def render_visual():
-    prep = _prepared_clip()
+    prep = _prepared_clip("visual")
     if prep is None:
         return
     row, video_path, n_frames, window_sec, duration, fps, timestamps = prep
@@ -483,7 +508,7 @@ def render_visual():
 
 # =============================== AUDIO ===================================== #
 def render_audio():
-    prep = _prepared_clip()
+    prep = _prepared_clip("audio")
     if prep is None:
         return
     row, video_path, n_frames, window_sec, duration, fps, timestamps = prep

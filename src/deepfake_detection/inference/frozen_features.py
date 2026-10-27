@@ -20,9 +20,8 @@ import numpy as np
 ENCODERS = {
     "dinov3": ("vit_small_patch16_dinov3.lvd1689m", 224),
     "dinov3-b": ("vit_base_patch16_dinov3.lvd1689m", 224),
-    # open_clip, so they need the `probe` extra. `pe` is Perception Encoder,
-    # the probe encoder since `A-encoder-comparison` measured it 0.0741 above
-    # DINOv3 on unseen generators. `clip` is not separated from it.
+    # These open_clip encoders need the `probe` extra. Their historical probe
+    # ranking used wrong normalization and requires corrected extraction.
     "pe": ("PE-Core-B-16", 224),
     # `-quickgelu`, not plain `ViT-B-16`. OpenAI trained these weights with
     # QuickGELU, and open_clip will load them into the standard-GELU
@@ -98,20 +97,14 @@ def read_windows(
 def embed_windows(model, windows: np.ndarray, device: str, batch_size: int = 32):
     """Mean and spread across windows, concatenated.
 
-    The spread uses `unbiased=False` so a clip short enough to produce a single
-    window gets zero rather than NaN. Zero is the honest value: nothing varied
-    because there was nothing to vary across.
+    `model` takes RGB pixels in [0, 1] and applies its own normalisation, which
+    is what `load_encoder` returns. The spread uses `unbiased=False` so a clip
+    short enough to produce a single window gets zero rather than NaN. Zero is
+    the honest value: nothing varied because there was nothing to vary across.
     """
     import torch
 
-    from deepfake_detection.preprocessing.ops.constants import (
-        IMAGENET_MEAN,
-        IMAGENET_STD,
-    )
-
     size = windows.shape[-2]
-    mean = torch.tensor(IMAGENET_MEAN, device=device).view(1, 3, 1, 1)
-    std = torch.tensor(IMAGENET_STD, device=device).view(1, 3, 1, 1)
     flat = torch.from_numpy(windows.reshape(-1, size, size, 3))
     flat = flat.permute(0, 3, 1, 2).float().div_(255.0)
 
@@ -119,7 +112,6 @@ def embed_windows(model, windows: np.ndarray, device: str, batch_size: int = 32)
     with torch.inference_mode():
         for start in range(0, flat.shape[0], batch_size):
             batch = flat[start : start + batch_size].to(device)
-            batch = (batch - mean) / std
             pieces.append(model(batch).float().cpu())
     embedded = torch.cat(pieces).reshape(windows.shape[0], windows.shape[1], -1)
     per_window = embedded.mean(dim=1)
@@ -127,32 +119,38 @@ def embed_windows(model, windows: np.ndarray, device: str, batch_size: int = 32)
     return vector.numpy()
 
 
-def _open_clip_visual(model):
-    """Wrap an open_clip model so it looks like the timm probes to callers.
+def _normalised(encode, mean, std):
+    """Wrap an encoder so it takes [0, 1] pixels and normalises them itself.
 
-    `embed_windows` calls the encoder and expects one vector per frame, which is
-    what `encode_image` returns. Built here rather than at module scope because
-    this module imports torch lazily to keep CLI startup cheap.
+    Each encoder was trained with its own statistics: ImageNet for the timm
+    models, 0.5 for Perception Encoder, the OpenAI values for CLIP. Applying
+    ImageNet statistics to all of them fed PE inputs scaled about 2.2 times off,
+    which runs without error and quietly measures a different model.
+
+    Built here rather than at module scope because this module imports torch
+    lazily to keep CLI startup cheap.
     """
     import torch
 
-    class OpenClipVisual(torch.nn.Module):
-        def __init__(self, wrapped) -> None:
+    class NormalisedEncoder(torch.nn.Module):
+        def __init__(self) -> None:
             super().__init__()
-            self.model = wrapped
+            self.encode = encode
+            self.register_buffer("mean", torch.tensor(mean).view(1, 3, 1, 1))
+            self.register_buffer("std", torch.tensor(std).view(1, 3, 1, 1))
 
         def forward(self, frames):
-            return self.model.encode_image(frames)
+            return self.encode((frames - self.mean) / self.std)
 
-    return OpenClipVisual(model)
+    return NormalisedEncoder()
 
 
 def load_encoder(name: str = "dinov3", device: str = "cuda"):
     """The frozen encoder and the input size it expects.
 
     Two families. The timm names are loaded directly. The open_clip names, which
-    are Perception Encoder and CLIP, need the `probe` extra and come back wrapped
-    so both look the same to `embed_windows`.
+    are Perception Encoder and CLIP, need the `probe` extra. Both come back
+    wrapped to take [0, 1] pixels, so `embed_windows` treats them the same.
 
     The default stays `dinov3` because the served authenticity gate was fitted
     on DINOv3 features, and a gate queried with another encoder's features
@@ -167,15 +165,33 @@ def load_encoder(name: str = "dinov3", device: str = "cuda"):
                 f"Encoder {name!r} needs open_clip_torch. Install the probe "
                 "extra: uv sync --extra probe"
             ) from error
-        model, _, _ = open_clip.create_model_and_transforms(
-            model_name, pretrained=OPEN_CLIP_ENCODERS[name]
-        )
-        return _open_clip_visual(model).to(device).eval(), size
+        tag = OPEN_CLIP_ENCODERS[name]
+        model = open_clip.create_model(model_name, pretrained=tag)
+        config = open_clip.get_pretrained_cfg(model_name, tag)
+        wrapped = _normalised(model.encode_image, config["mean"], config["std"])
+        wrapped.add_module("model", model)
+        return wrapped.to(device).eval(), size
 
     import timm
 
     model = timm.create_model(model_name, pretrained=True, num_classes=0)
-    return model.to(device).eval(), size
+    config = model.pretrained_cfg
+    wrapped = _normalised(model, config["mean"], config["std"])
+    return wrapped.to(device).eval(), size
+
+
+def normalisation(name: str) -> dict[str, tuple[float, ...]]:
+    """The mean and std `load_encoder` applies for `name`, for feature metadata."""
+    model_name, _ = ENCODERS[name]
+    if name in OPEN_CLIP_ENCODERS:
+        import open_clip
+
+        config = open_clip.get_pretrained_cfg(model_name, OPEN_CLIP_ENCODERS[name])
+    else:
+        import timm
+
+        config = timm.create_model(model_name, pretrained=False).pretrained_cfg
+    return {"mean": tuple(config["mean"]), "std": tuple(config["std"])}
 
 
 def embed_clip(path: Path, model, size: int, device: str = "cuda") -> np.ndarray | None:

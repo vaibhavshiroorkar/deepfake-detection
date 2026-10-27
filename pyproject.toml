@@ -9,13 +9,14 @@ description = "Shortcut-controlled multimodal deepfake detection research platfo
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [
+    "joblib==1.5.3",
     "numpy==2.4.6",
+    "pandas==2.3.3",
     "pyarrow==24.0.0",
     "PyYAML==6.0.3",
     "scikit-learn==1.9.0",
     "scipy==1.17.1; python_version < '3.12'",
     "scipy==1.18.1; python_version >= '3.12'",
-    "tqdm==4.70.0",
 ]
 
 [project.optional-dependencies]
@@ -65,6 +66,7 @@ cu130 = [
 dev = [
     "pytest==9.0.2",
     "pytest-cov==7.0.0",
+    "python-speech-features==0.6",
     "ruff==0.16.3",
 ]
 
