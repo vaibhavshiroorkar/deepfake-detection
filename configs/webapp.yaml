@@ -1,0 +1,10 @@
+default_model: ensemble
+enabled_models:
+- ensemble
+- visual-best
+default_threshold: 0.5
+lock_threshold: false
+withhold_unfamiliar: true
+allow_unfamiliar_override: true
+show_research_tabs: true
+max_upload_mb: 90

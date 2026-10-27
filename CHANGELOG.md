@@ -14,6 +14,31 @@ number instead of restating it.
 
 ## Unreleased
 
+### Added
+
+- Public demo start, status and stop commands. The demo serves an isolated
+  visual-model runtime through a temporary HTTPS tunnel and excludes datasets.
+
+### Fixed
+
+- Preserve explicit zero-start windows, initialize silent-media audio counts,
+  retain dataset identities, and keep pilot evaluation distributions intact.
+- Split cross-fitting into training, inner validation and untouched outer holdout.
+  Record checkpoint-selection sources and reject contaminated OOF exports.
+- Bind audio masks to checkpoint metadata. Preserve reused audio normalization
+  across evaluation, feature export and serving.
+- Restore recorded stream architectures, add temporal positions for new streams,
+  and bind deep fusion to its exact serving checkpoints.
+- Refuse partial dashboard checkpoint loads, invalidate replaced-media caches,
+  preserve request identity in the web app, and bound incoming upload streams.
+- Retain coverage reports when abstention leaves fewer than two scored classes.
+- Keep optional model imports inside the cache and prediction handlers. Resolve
+  training-history type annotations without importing Torch for CLI help.
+- Bind research-stage reuse to configuration and artifact digests. Propagate
+  child failures and retain historical evidence while corrected runs are pending.
+- Mark affected research claims as requiring reruns. Extend CI to research
+  scripts, browser behavior, base installs and Python 3.11 through 3.13.
+
 ### Removed
 
 - The detector benchmark package (`benchmarks/`), its `ddf detector sample`,

@@ -4,9 +4,9 @@ This repository tests whether three cue-specific detectors generalize better tog
 
 The branches inspect visual artifacts, audio spoofing, and mouth-audio alignment. The final model uses calibrated late fusion. It does not issue a full verdict when required evidence is missing.
 
-A second track asks whether a frozen encoder with a linear probe can detect a video generator it has never seen. On DF26, holding out each of seven generators in turn, a Perception Encoder probe reads macro ROC-AUC 0.7527.
+A second track asks whether a frozen encoder with a linear probe can detect a video generator it has never seen. The historical DF26 Perception Encoder score of 0.7527 used the wrong input normalization. Corrected performance is unknown.
 
-The answer to the first question is no on our data: fusion does not beat the visual branch cross-corpus. The [paper draft](docs/research/paper.md) reports both tracks, and every number in it resolves to a row in [result traceability](docs/research/result-traceability.md). The [handoff](docs/handoff.md) is the shortest route to the current state.
+Historical fusion comparisons found no cross-corpus gain. Their fold checkpoints used outer-holdout labels for epoch selection, so the conclusion requires a nested cross-fitting rerun. The [paper draft](docs/research/paper.md) reports both tracks, and every number in it resolves to a row in [result traceability](docs/research/result-traceability.md). The [handoff](docs/handoff.md) is the shortest route to the current state.
 
 ## Project documents
 
@@ -235,6 +235,9 @@ uv run ddf-web --preload
 ```
 
 Open `http://127.0.0.1:8000`. The server binds to the local host.
+
+[Public demo hosting](docs/hosting.md) covers the GPU PC setup, temporary HTTPS
+link, isolated model runtime, and start and stop commands.
 
 - **Default model:** the visual ensemble. It averages the logits of the six
   final visual checkpoints in `runs\program-20260906\checkpoints`, EfficientNet-B0
