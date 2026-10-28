@@ -241,3 +241,20 @@ Branch trim/docs. Records commit eb8a4f9. Claim fixes A1 to A10 of deliverables_
 
 Viewed by eye: paper pages 1 to 8 of the paper proper (first, results, last pages, every table and figure); report cover, contents, chapters 3 and 6 to 8, references (agent also viewed the other page types); deck slides 7 and 14 by the main agent, all 25 by the deck agent. A sealed-results table of the paper that overflowed the right margin was fixed. Report text sits about 3 mm nearer the right border than the left because of the template margins (left 25.4 mm, right 19.8 mm, border 8.5 mm); not changed, open question for the user.
 
+## 16. Final pass (2026-10-29)
+
+Branch trim/docs. D-092 logged (answers of the user, margin decision, trace of 0.4543). Nothing merged.
+
+| Command or action | Result |
+|---|---|
+| `CUDA_VISIBLE_DEVICES=-1 .venv/Scripts/python.exe -m pytest tests -p no:cacheprovider -rs -q` with the 13 data-dependent items deselected | 713 passed, 2 skipped, 13 deselected, exit 0 (`docs/test_evidence/2026-10-29_final/full_safe_suite_pre_merge.txt`) |
+| `uv run ... deliverables_v2/project_report/layout_check.py` | 28 of 28 rows within 2 mm (26 rows as before, text-edge rows against the centred reference, one new row for equal gaps) |
+| `latexmk -g -pdf main.tex` (college build) and a clean rebuild from submission/sources/paper | 16 pages, 0 undefined references, identical text |
+| `deliverables_v2/presentation/check_deck_v2.py` | 428 pass, 0 fail |
+| originals: `check_docs.py --numbers`, `report/layout_check.py`, `slides/check_slides.py` | 71 pass 0 fail; 26 of 26; 955 pass 0 fail |
+| `deliverables_v2/check_v2.py` | 0 superior sentences without the qualifier; every 3-decimal number of the paper, report, deck and notes is in the record (0.4543 traced in D-092) |
+| Website on port 8012, real checkpoint (image, video with sound, audio) | 3 of 3 completed; labels as in D-087 and its addendum; no MOCK banner on live results; the face-video flag label was not exercised because no input flagged; collapsed technical panels hold decision and experiment ids |
+| Render review | paper 16 pages, report 37 pages and deck 25 slides rendered and looked at by the main agent; problems found and fixed: right-shifted front matter (report and paper), missing space after the abstract label, pipeline figure too small, one table wider than the page (paper); none left |
+
+Left unchanged: the report footer rule sits 1.6 mm closer to the right border than to the left (it must stay within 2 mm of the template), the screenshots of the website stay out of git.
+
