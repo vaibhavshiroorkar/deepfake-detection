@@ -1,0 +1,40 @@
+sha256 e0c78a8cd1b1f19a23cb3e82cdffba65979cfb4c368e75527c6eea09c79f383f
+('forensynths_progan_test', 'test_in') folders 20 mean AP 1.0000 mean AUC 1.0000
+   airplane               n=  400 fake=  200 AP=1.0000 AUC=1.0000
+   bicycle                n=  400 fake=  200 AP=1.0000 AUC=1.0000
+   bird                   n=  400 fake=  200 AP=1.0000 AUC=1.0000
+   boat                   n=  400 fake=  200 AP=1.0000 AUC=1.0000
+   bottle                 n=  400 fake=  200 AP=0.9998 AUC=0.9998
+   bus                    n=  400 fake=  200 AP=1.0000 AUC=1.0000
+   car                    n=  400 fake=  200 AP=1.0000 AUC=1.0000
+   cat                    n=  400 fake=  200 AP=1.0000 AUC=1.0000
+   chair                  n=  400 fake=  200 AP=1.0000 AUC=1.0000
+   cow                    n=  400 fake=  200 AP=1.0000 AUC=1.0000
+   diningtable            n=  400 fake=  200 AP=1.0000 AUC=1.0000
+   dog                    n=  400 fake=  200 AP=1.0000 AUC=1.0000
+   horse                  n=  400 fake=  200 AP=1.0000 AUC=1.0000
+   motorbike              n=  400 fake=  200 AP=1.0000 AUC=1.0000
+   person                 n=  400 fake=  200 AP=1.0000 AUC=1.0000
+   pottedplant            n=  400 fake=  200 AP=0.9999 AUC=0.9999
+   sheep                  n=  400 fake=  200 AP=1.0000 AUC=1.0000
+   sofa                   n=  400 fake=  200 AP=1.0000 AUC=1.0000
+   train                  n=  400 fake=  200 AP=1.0000 AUC=1.0000
+   tvmonitor              n=  400 fake=  200 AP=1.0000 AUC=1.0000
+('forensynths_cnn_subset', 'test_x') folders 6 mean AP 0.9714 mean AUC 0.9683
+   biggan                 n= 4000 fake= 2000 AP=0.9900 AUC=0.9882
+   cyclegan               n= 2642 fake= 1321 AP=0.9985 AUC=0.9981
+   deepfake               n= 5405 fake= 2698 AP=0.9028 AUC=0.8870
+   gaugan                 n=10000 fake= 5000 AP=0.9995 AUC=0.9995
+   stylegan               n=11582 fake= 5991 AP=0.9692 AUC=0.9686
+   stylegan2              n=15176 fake= 7988 AP=0.9683 AUC=0.9686
+('diffusion_test', 'test_x') folders 10 mean AP 0.8000 mean AUC nan
+   dalle                  n= 1000 fake= 1000 AP=1.0000 AUC=nan
+   glide_100_10           n= 1000 fake= 1000 AP=1.0000 AUC=nan
+   glide_100_27           n= 1000 fake= 1000 AP=1.0000 AUC=nan
+   glide_50_27            n= 1000 fake= 1000 AP=1.0000 AUC=nan
+   guided                 n= 1000 fake= 1000 AP=1.0000 AUC=nan
+   imagenet               n= 1000 fake=    0 AP=0.0000 AUC=nan
+   laion                  n= 1000 fake=    0 AP=0.0000 AUC=nan
+   ldm_100                n= 1000 fake= 1000 AP=1.0000 AUC=nan
+   ldm_200                n= 1000 fake= 1000 AP=1.0000 AUC=nan
+   ldm_200_cfg            n= 1000 fake= 1000 AP=1.0000 AUC=nan

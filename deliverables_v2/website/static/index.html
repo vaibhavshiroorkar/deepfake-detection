@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Media Analysis</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div>
+        <p class="brand-name">Media Analysis</p>
+        <p class="brand-sub">Multimodal checks for manipulated and generated media</p>
+      </div>
+    </div>
+    <nav class="nav" aria-label="Main">
+      <button type="button" id="nav-analyse" class="nav-link" aria-current="page">Analyse a file</button>
+      <button type="button" id="nav-lab" class="nav-link">Evaluation Lab</button>
+      <button type="button" id="nav-about" class="nav-link">About the checks</button>
+    </nav>
+    <span id="mode-pill" class="pill" hidden></span>
+  </div>
+</header>
+
+<main id="main" class="page" tabindex="-1">
+
+<!-- ======================= Analyse a file ======================= -->
+<div id="view-analyse" class="view">
+
+  <!-- stage 1: choose what and which file -->
+  <section id="stage-upload" class="stage" aria-labelledby="live-h">
+    <div class="hero">
+      <p class="kicker">Local research tool</p>
+      <h1 id="live-h">Check an image, video or audio file</h1>
+      <p class="lede">Several independent checks look at your file. Each one reports only what it examined and how far its result can be relied on. No overall score is given.</p>
+    </div>
+
+    <div id="live-panel" class="panel upload-card" data-live="false">
+      <fieldset id="type-picker" class="seg" aria-describedby="type-note">
+        <legend>What are you analysing?</legend>
+        <div class="seg-row">
+          <label class="seg-opt"><input type="radio" name="content-type" value="auto" checked><span>Detect from the file</span></label>
+          <label class="seg-opt"><input type="radio" name="content-type" value="image"><span>Image</span></label>
+          <label class="seg-opt"><input type="radio" name="content-type" value="video"><span>Video</span></label>
+          <label class="seg-opt"><input type="radio" name="content-type" value="audio"><span>Audio</span></label>
+        </div>
+        <p id="type-note" class="hint"></p>
+      </fieldset>
+
+      <div id="dropzone" class="dropzone" data-state="empty">
+        <input type="file" id="analyse-file" class="file-input" aria-describedby="accept-text" disabled>
+        <div class="dz-empty">
+          <span class="dz-icon" aria-hidden="true"></span>
+          <p class="dz-title"><span class="dz-drag">Drop a file here, or </span><label for="analyse-file" class="linklike" id="choose-label">choose a file</label></p>
+          <p id="accept-text" class="hint">Images, videos and audio files are accepted.</p>
+        </div>
+        <div class="dz-file" id="file-card" hidden>
+          <div class="preview" id="preview" aria-hidden="true"></div>
+          <div class="file-meta">
+            <p class="file-name" id="file-name"></p>
+            <p class="file-sub" id="file-sub"></p>
+            <p id="type-mismatch" class="inline-warn" role="alert" hidden></p>
+            <div class="file-actions">
+              <button type="button" id="analyse-btn" class="btn primary" disabled>Analyse this file</button>
+              <button type="button" id="change-btn" class="btn">Choose another file</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="will-run" class="will-run" hidden></div>
+      <p id="live-unavailable" class="notice" hidden>Live analysis is not available on this server. Demo scenarios with invented data can still be shown.</p>
+      <div id="live-status" class="live-status" role="status" aria-live="polite" hidden></div>
+      <p class="privacy">The file is analysed on this computer by the local server and deleted when the analysis ends.</p>
+    </div>
+
+    <ol class="how" aria-label="What happens when you press Analyse">
+      <li><b>The file is checked.</b> Its type, streams and length are read; an unsupported or damaged file is refused.</li>
+      <li><b>Independent checks run.</b> Each looks for one kind of evidence; a check that does not apply says so.</li>
+      <li><b>You get a report.</b> What was done, what was observed and what it cannot tell you. There is no overall score.</li>
+    </ol>
+
+    <div class="demo-row">
+      <label for="scenario">Or look at an example report. Its data is invented, so it carries a MOCK banner.</label>
+      <select id="scenario"><option value="">Choose a demo scenario</option></select>
+    </div>
+  </section>
+
+  <!-- stage 2: analysis in progress, or a refusal -->
+  <section id="stage-progress" class="stage" aria-labelledby="progress-h" hidden>
+    <div class="panel progress-card">
+      <p class="kicker">Analysis</p>
+      <h2 id="progress-h" class="file-title"></h2>
+      <div id="progress-status" class="progress-status" role="status" aria-live="polite"></div>
+      <div id="progress-meter" class="meter" role="progressbar" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0" aria-label="Checks completed" hidden><span></span></div>
+      <ol id="steps" class="steps" aria-label="Checks as they run" hidden></ol>
+      <div id="progress-error" class="error-box" role="alert" hidden></div>
+      <div class="progress-actions"><button type="button" id="progress-back" class="btn" hidden>Choose another file</button></div>
+    </div>
+  </section>
+
+  <div id="banner" class="banner" role="note" hidden></div>
+  <div id="error" class="error-box" role="alert" hidden></div>
+
+  <!-- stage 3: results -->
+  <div id="report" class="report" hidden>
+    <section id="meta" class="panel overview" aria-labelledby="overview-h"></section>
+    <div class="top-grid">
+      <section id="outcome" class="panel outcome" aria-labelledby="outcome-h"></section>
+      <section id="summary" class="panel summary" aria-labelledby="summary-h"></section>
+    </div>
+    <section id="conflicts" class="panel conflicts" hidden></section>
+    <section id="evidence" class="evidence" aria-label="Results of each check"></section>
+    <section class="panel limits" aria-labelledby="limits-h">
+      <h2 id="limits-h" class="h3">What this report cannot tell you</h2>
+      <p id="statement" class="statement"></p>
+      <ul id="limits-extra" class="limits-extra"></ul>
+    </section>
+    <section class="panel tech-report">
+      <details>
+        <summary>Technical details for the whole report</summary>
+        <div id="report-tech"></div>
+        <div id="coverage"></div>
+      </details>
+    </section>
+    <div class="report-actions">
+      <label class="toggle"><input type="checkbox" id="sources-toggle"> Show where each sentence comes from</label>
+      <button type="button" id="download-btn" class="btn">Download report (JSON)</button>
+      <button type="button" id="print-btn" class="btn">Print or save as PDF</button>
+      <button type="button" id="again-btn" class="btn primary">Analyse another file</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= Evaluation Lab ======================= -->
+<div id="view-lab" class="view" hidden>
+  <div id="lab-root" aria-live="polite"><p class="empty">Loading the Evaluation Lab ...</p></div>
+</div>
+
+<!-- ======================= About the checks ======================= -->
+<div id="view-about" class="view" hidden>
+  <section class="panel about-hero">
+    <p class="kicker">About the checks</p>
+    <h1>What the checks do, and what they cannot do</h1>
+    <p class="lede">Each check is a separate piece of evidence about one aspect of a file. They are listed side by side and are never combined into a single score or verdict.</p>
+  </section>
+  <section class="panel" aria-labelledby="about-checks-h">
+    <h2 id="about-checks-h" class="h3">The checks and the files they run on</h2>
+    <div id="about-checks" class="about-checks"><p class="empty">Loading the list of checks ...</p></div>
+  </section>
+  <section class="panel" aria-labelledby="about-read-h">
+    <h2 id="about-read-h" class="h3">How to read a report</h2>
+    <dl id="about-groups" class="about-groups"></dl>
+    <ul class="about-notes">
+      <li>A number shown for a check is a model output or a ranking score. It is not a probability and is not a percentage of fake.</li>
+      <li>Uncertainty is stated per check. A check that found nothing does not show that a file is unmanipulated.</li>
+      <li>Checks marked experimental are research prototypes. They never make a finding.</li>
+      <li>Software tests show that this application behaves as designed. They are not a measure of detection accuracy.</li>
+    </ul>
+  </section>
+  <section class="panel" aria-labelledby="about-cannot-h">
+    <h2 id="about-cannot-h" class="h3">What a report cannot tell you</h2>
+    <p id="about-statement" class="statement"></p>
+    <ul id="about-extra" class="limits-extra"></ul>
+  </section>
+</div>
+
+</main>
+<footer class="site-footer"><p>Research prototype. Software tests show that the application behaves as designed; they are not a measure of detection accuracy.</p></footer>
+<script src="/assets/app.js"></script>
+<script src="/assets/evallab.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+2026-10-26T22:14:36+05:30
+============================= test session starts =============================
+platform win32 -- Python 3.13.15, pytest-9.1.1, pluggy-1.7.0
+tested source state: git HEAD 5af239a9427339890bb63169476de12099fc5f47; tracked files MODIFIED vs HEAD (27 files)
+rootdir: D:\Final Year Project
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 5 items
+
+tests\platform_modules\test_parity.py .                                  [ 20%]
+tests\platform_live_face\test_live_face.py ....                          [100%]
+
+============================= 5 passed in 34.51s ==============================
+exit=0

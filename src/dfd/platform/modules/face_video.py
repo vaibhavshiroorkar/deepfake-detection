@@ -1,6 +1,8 @@
 """face_video: the frozen visual head (T-V, fine-tuned SigLIP base) on the largest face of a video (WS2)."""
 from __future__ import annotations
 
+from dfd.prep import video as V
+
 from ..module import Applicability, Context, Probe
 from ..schema import ModuleResult
 from .base import (LARGEST_FACE_LIMITATION, SCORE_MEANING_V2, AdapterModule, finding_for, threshold_of, warnings_for, weights_hash)
@@ -28,6 +30,13 @@ class FaceVideoModule(AdapterModule):
         if s is None or not s.available or s.score is None:
             return self._not_applicable(s.reason if s is not None and s.reason else "no visual score available for this file", warns)
         thr = threshold_of(meta, "T-V")
+        obs = []
+        try:   # processing record only: recomputes how many frames the adapter sampled (header read, no decoding); the score is untouched
+            n_sampled = len(V.sample_indices(V.probe(ctx.probe.path).n_frames, meta["tasks"]["T-V"]["preprocess_config"]["n_frames"]))
+            obs.append({"kind": "processing", "code": "frames_sampled", "value": n_sampled,
+                        "text": "Frames sampled at even intervals across the video before face detection"})
+        except Exception:  # noqa: BLE001 - a missing processing record leaves the sentence out; it never changes the result
+            pass
         limits = ["Trained and sealed-tested on face-swap material (FaceForensics++, Celeb-DF family, DFD). Not evaluated on talking-head "
                   "generated video; on LAV-DF (content-driven edits) the sealed AUC is below 0.5 (E-014).",
                   "A manipulation of the audio only is not visible to this module.",
@@ -41,7 +50,7 @@ class FaceVideoModule(AdapterModule):
             units_analysed=s.n_units,
             tested_scope=(f"Face manipulation of the largest face in {s.n_units} sampled frames (at most 16, YuNet detector, 1.3 enlarged "
                           "crop, 224 px), scored by the fine-tuned SigLIP base video head."),
-            limitations=limits, warnings=warns,
+            limitations=limits, warnings=warns, observations=obs,
             model={"name": "SigLIP base (google/siglip-base-patch16-224), fully fine-tuned, task T-V", "version": self.provider.checkpoint_id(),
                    "weights_sha256": weights_hash(meta, "weights_T-V.pt"),
                    "licence": "Encoder: Apache-2.0 tag (docs/EXPERIMENTS.md encoder table); training data terms: see docs/DATA_LOG.md",

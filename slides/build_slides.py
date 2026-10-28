@@ -465,7 +465,7 @@ add_footer(s, 1)
 s.notes_slide.notes_text_frame.text = (
     "Introduce the project: one system that scores images, videos and the audio inside videos, built from zero and documented as a path from a simple working version to a measured detector. "
     "Introduce the three members in the report order (Vaibhav Shiroorkar, Shivansh Gupta, Adithya Jithesh) and the guide, Dr. Tejashree Phatak, Assistant Professor. "
-    "State the shape of the talk: the problem, the literature, the protocol and method, the data and the encoder shortlist, the rule for the working version, the iteration ladder, the rPPG test, the web demo, the timeline to 30 October and the limitations. "
+    "State the shape of the talk: the problem, the literature, the protocol and method, the data and the encoder shortlist, the rule for the working version, the iteration ladder, the rPPG test, the web demo, the analysis platform built after the freeze with its demonstration, tests and later experiments, the timeline to 30 October, the limitations, the conclusion and the future work. "
     "Say at once that the iterations have exploratory results on the development slice, and that the sealed test sets were read once for each frozen iteration on 25 October 2026: only three declared comparisons are confirmatory, and every other sealed number is exploratory. "
     "Evidence pointers: docs/IDENTITY.md for the identity fields, docs/DOC_FACTS.md for the wording, docs/PLAN.md for the schedule. "
     "The title and the subtitle (Group-Disjoint Protocol) are the decided title of the project and are the same in the paper and the report.")
@@ -475,7 +475,7 @@ s.notes_slide.notes_text_frame.text = (
 # =====================================================================================================================
 s = new_slide("Problem and scope",
     "The task is to say whether an image, a video with its audio, or a standalone audio clip is real or generated. "
-    "The output is a calibrated probability that the content is fake and a statement of which modality carries the evidence; for a video the visual score and the audio score are shown separately, because the rule for combining them is tested only in the late-fusion iteration (I-6, D-018, D-019). "
+    "The output is a score that the content is fake, temperature-scaled on validation data (a probability only for content like that data; the speech score is read as a ranking score), and a statement of which modality carries the evidence; for a video the visual score and the audio score are shown separately, because the rule for combining them is tested only in the late-fusion iteration (I-6, D-018, D-019). "
     "The published literature reports numbers under different protocols, so they cannot be read side by side; DeepfakeBench trained plain detectors on FaceForensics++ c23 and measured a mean AUC of 0.945 within the domain and 0.772 across eight other sets for Xception (Yan et al., 2023, table of R-017, their protocol, not our result). "
     "The aim is a documented path with results comparable to published detectors on a protocol we define and run ourselves (D-005, D-025), not the best model. "
     "Evidence: docs/DOC_FACTS.md section 2, docs/REQUIREMENTS.md, docs/RESEARCH.md R-017.")
@@ -489,7 +489,7 @@ add_text(s, x1, TOP, w1, 3150000, [
 ], "problem")
 add_card(s, x2, TOP, w2, 3150000, [
     ("h", "What the system returns"),
-    ("b", "A calibrated probability that the content is fake."),
+    ("b", "A score that the content is fake, calibrated on validation data only."),
     ("b", "Which modality carries the evidence."),
     ("b", "For a video: a visual score and an audio score, shown separately."),
     ("b", "No temporal localisation."),
@@ -498,6 +498,26 @@ add_card(s, L, TOP + 3300000, W, 1450000, [
     ("h", "Aim"),
     ("p", "A documented path: a simple working version, then seven iterations that each follow from a written hypothesis, then integration and freeze. The goal is a result comparable with published detectors on a protocol we define and run ourselves, not the best model."),
 ], name="card_aim")
+
+# =====================================================================================================================
+# SLIDE: objectives
+# =====================================================================================================================
+s = new_slide("Objectives",
+    "These are the objectives of the project as written in the report, chapter 1 (D-003 to D-006, D-016, D-025, D-041, D-069). "
+    "The first six describe the detector and its protocol: build everything from zero, fix the protocol before any model, compare encoders under one rule, iterate from written hypotheses, test rPPG as a candidate only, and define comparable as non-inferior. "
+    "The seventh was added after the freeze: the frozen detectors are wrapped in an analysis platform that reports one finding per module and never a single overall fake probability, and further modules enter only with the status their evidence supports. "
+    "The last objective is the four deliverables from one body of logged evidence. "
+    "Evidence: report chapter 1, docs/DECISIONS.md D-069.")
+add_text(s, L, TOP, W, 4800000, [
+    ("n", "1.  Build the whole system from zero: data, evaluation harness, three detectors, inference library and web page.", 20),
+    ("n", "2.  Fix one protocol before any model: group-disjoint splits, a development slice, sealed test sets behind a guard.", 20),
+    ("n", "3.  Compare pretrained encoders under one rule that prefers the cheaper candidate when the evidence ties.", 20),
+    ("n", "4.  Improve in iterations, each from a written hypothesis with success and failure lines; keep failed runs.", 20),
+    ("n", "5.  Test rPPG as a candidate and adopt it only on evidence.", 20),
+    ("n", "6.  Define comparable as non-inferior to a re-run published detector on the same protocol.", 20),
+    ("n", "7.  Wrap the frozen detectors in a platform that reports one finding per module, with no overall fake score.", 20),
+    ("n", "8.  Produce the software, the paper, the report and this presentation from the same logged evidence.", 20),
+], "text_objectives")
 
 # =====================================================================================================================
 # SLIDE 3: literature
@@ -602,7 +622,7 @@ y2 = y1 + bh + 560000
 row_boxes(s, y2, ["Face found?", "Face crop, or whole image", "Frozen image encoder", "Linear head", "Temperature scaling", "**Image score**"],
           [F_BLUE, F_BLUE, F_GREEN, F_GREEN, F_BLUE, F_ORANGE], "Image")
 add_text(s, L, y2 + bh + 110000, W, 640000,
-         [("s", "Green boxes hold learned or pretrained weights. The threshold and the temperature are fixed on validation data; scores are probabilities that the content is fake.")], "pipeline_note")
+         [("s", "Green boxes hold learned or pretrained weights. The threshold and the temperature are fixed on validation data; scores are calibrated on that data only.")], "pipeline_note")
 
 # =====================================================================================================================
 # SLIDE 6: method and maths
@@ -1077,7 +1097,8 @@ s = new_slide("Web demo (real checkpoint)",
     "It calls an inference library with a fixed response structure: a score per modality, a status, warnings, errors, a model block and a fixed sentence that says what the score means (D-027). "
     "The three screenshots were taken with the real adapter and the I-0 checkpoint, so there is no MOCK banner: an image, a video with its audio and an audio file, each a training item, so they show that the path works and say nothing about accuracy (E-004, assets/screens/real_image.png, real_video.png, real_audio.png). "
     "For the video the visual and the audio score are shown separately and the verdict is undetermined, because no combining rule is claimed; the audio score carries the warning that its calibration is exploratory (D-050). "
-    "Earlier screenshots against the development stand-in remain in the report as a labelled figure; the real adapter refuses to run without a checkpoint whose metadata and preprocessing identifier match (D-044).")
+    "On 25 October the page was also run with the frozen checkpoint on three training files and passed its page check (scripts/freeze/web_freeze_check.py, data/_results/freeze/web_freeze_check.json); the analysis platform on the following slides calls the frozen system for every file. "
+    "Screenshots against the development stand-in remain in the report as a labelled figure; the real adapter refuses to run without a checkpoint whose metadata and preprocessing identifier match (D-044).")
 SH = 3050000
 spec = [("real_image.png", "(a) image", 0.16, 0.16, 0.08, 0.07), ("real_video.png", "(b) video with audio", 0.16, 0.16, 0.08, 0.07),
         ("real_audio.png", "(c) audio file", 0.16, 0.16, 0.08, 0.07)]
@@ -1107,8 +1128,343 @@ add_card(s, right_x, TOP, span_w(4), 4800000, [
 ty = TOP + SH + 400000
 add_text(s, L, ty, xs[-1] + pw[-1] - L, BOT - ty, [
     ("bs", "Local Flask page on 127.0.0.1; uploads up to 512 MB; files deleted after each request.", 16),
-    ("bs", "The page still runs the working version; it has not been switched to the frozen system.", 16),
+    ("bs", "A page check with the frozen checkpoint passed on three training files; these screenshots show the working version.", 16),
 ], "web_text")
+
+# =====================================================================================================================
+# AFTER THE FREEZE: analysis platform, capabilities, demonstration, testing, later experiments
+# =====================================================================================================================
+s = new_slide("Analysis platform: architecture",
+    "After the freeze the frozen detectors were placed, unchanged, in a modular analysis platform (src/dfd/platform, D-069). "
+    "Each capability is a module with an applicability check and a run function; the coordinator runs the modules one at a time because the GPU is shared, gives each a time limit, and turns an exception, a timeout or a result that breaks the contract into a reported failed or timed_out entry. "
+    "A timed-out thread cannot be killed in Python, so the coordinator sets a cancel flag, discards late results and ignores late cache writes; a second GPU module is skipped while an abandoned one still runs. "
+    "Every module appears once in report schema version 2.1, in one of three sections: authenticity, cross_modal and provenance; version 2.1 adds a server-written explanation per module (D-076). "
+    "There is no global fake score and no finding that means genuine. Evidence: src/dfd/platform/coordinator.py and schema.py, paper/figures/fig10_platform.png.")
+from PIL import Image as _ImP
+_pf = os.path.join(ROOT, "paper", "figures", "fig10_platform.png")
+_iw, _ih = _ImP.open(_pf).size
+_pw = span_w(8)
+_ph_ = int(_pw * _ih / _iw)
+add_pic(s, _pf, L, TOP, w=_pw, h=_ph_, alt="Diagram of the analysis platform: file, probe, coordinator, modules in three sections, report schema version 2.1 and dashboard")
+add_text(s, L, TOP + _ph_ + 60000, _pw, 300000, [("cap", "Structure of the platform (schematic). The frozen detectors are wrapped, not changed.")], "pic_caption")
+add_card(s, col_x(8), TOP, span_w(4), 4800000, [
+    ("h", "Design rules"),
+    ("bs", "Each capability is a module: applicability first, then run.", 16),
+    ("bs", "One module at a time, each with a time limit.", 16),
+    ("bs", "Exceptions and timeouts become reported statuses.", 16),
+    ("bs", "Every module appears once, in one of three sections.", 16),
+    ("bs", "No global fake score; no finding means genuine.", 16),
+], name="card_platform")
+
+s = new_slide("Report contract: statuses and findings",
+    "The report of schema version 2.1 has one entry per module with its status, finding, score with a sentence on what it means, model, tested scope and limitations (src/dfd/platform/schema.py). "
+    "Six statuses say whether and why a module ran: completed, not_applicable, unsupported, failed, timed_out and skipped; every status other than completed needs a reason, and failed and timed_out need an error entry. "
+    "Each section allows its own findings; the strongest negative finding is no indication within the tested scope, never genuine. "
+    "The contract checker rejects a report that carries a fused score, an overall probability or a verdict, and every report ends with a fixed statement that a module that found nothing does not show that the media is authentic. "
+    "The report state is failed when nothing completed, partial when any module failed, timed out, was unsupported or was skipped, and ok otherwise.")
+_wl = [span_w(2), span_w(4)]
+gt, th_l = add_table(s, L, TOP, _wl, ["Status", "Meaning"], [
+    ["completed", "ran and returned a valid result"],
+    ["not_applicable", "the input lacks what the module needs"],
+    ["unsupported", "weights or head not installed here"],
+    ["failed", "exception or broken contract"],
+    ["timed_out", "no result within its time limit"],
+    ["skipped", "not started: time limit or GPU held"],
+], size="auto", bold_first_col=True, max_h=3000000, fill=3000000)
+_wr = [span_w(2), span_w(4) - 150000]
+_wr[1] = W - span_w(6) - 150000 - _wr[0]
+gt, th_r = add_table(s, col_x(6), TOP, _wr, ["Section", "Findings allowed"], [
+    ["authenticity", "indicates_manipulation; no_indication_within_tested_scope; inconclusive"],
+    ["cross_modal", "consistent; potential_mismatch; inconclusive"],
+    ["provenance", "credentials_valid; credentials_invalid; no_credentials_found; inconclusive"],
+], size="auto", bold_first_col=True, max_h=3000000, fill=3000000)
+_cy = TOP + max(th_l, th_r) + 150000
+add_card(s, L, _cy, W, BOT - _cy, [
+    ("h", "What the report never says"),
+    ("bs", "No fused score, overall probability or verdict: the contract checker rejects them.", 16),
+    ("bs", "Fixed statement on every report: a module that found nothing does not show that the media is authentic.", 16),
+], name="card_contract")
+
+s = new_slide("Implemented capabilities",
+    "Seven modules are registered by default (src/dfd/platform/pipeline.py). "
+    "The three authenticity modules that wrap the frozen detectors quote their sealed results (E-014): face video 0.8218 on the Celeb-DF family and below 0.5 on LAV-DF, the image path 0.9316 on the CNN subset and 0.9354 on the diffusion set, speech 0.9148 on In-the-Wild with an exploratory calibration; a face crop of a still image goes through the video head and is marked as not calibrated for stills. "
+    "The generated-video module is experimental: its head is at chance on DF26 (0.4957), and a gate with an empty approval table keeps its finding inconclusive (D-072, D-074). "
+    "The lip-sync module is weak evidence with the band of minus 6 to plus 2 frames (D-073). "
+    "Media metadata is descriptive and always inconclusive; Content Credentials are valid only relative to a trust anchor that the operator configures, and an untrusted signer is inconclusive.")
+gt, th = add_table(s, L, TOP, [span_w(3), span_w(2) - 100000, span_w(4) - 100000, W - (span_w(3) + span_w(2) + span_w(4) - 200000)], ["Module", "Section", "What it does", "Evidence status"], [
+    ["face_video", "authenticity", "fine-tuned SigLIP base on the largest face, 16 frames", "sealed Celeb-DF family 0.8218; LAV-DF below 0.5"],
+    ["image_detector", "authenticity", "face crop: video head; no face: CLIP head", "sealed CNN subset 0.9316, diffusion set 0.9354"],
+    ["speech", "authenticity", "mean logit of three speech encoders, first 4 s", "sealed In-the-Wild 0.9148; exploratory calibration"],
+    ["generated_video", "authenticity", "DINOv2 small, mean embedding, logistic regression", "experimental: DF26 0.4957; always inconclusive"],
+    ["lip_sync", "cross_modal", "SyncNet offset in a band of -6 to +2 frames", "weak evidence; not a detector"],
+    ["media_metadata", "provenance", "container, stream and tag description", "descriptive; always inconclusive"],
+    ["content_credentials", "provenance", "C2PA manifest check with c2pa-python", "valid only with an operator trust anchor"],
+], size="auto", bold_first_col=True, max_h=H, fill=H)
+
+s = new_slide("Demonstration workflow",
+    "The demonstration follows the demonstration guide docs/DEMO.md, checked again on 27 October 2026 after the redesign; it shows that the software runs end to end, not the accuracy of any detector. "
+    "Start: PYTHONPATH=src .venv/Scripts/python.exe -m dfd.platform.dashboard.serve 8002 --live, then open http://127.0.0.1:8002/ ; the first analysis loads the models (about 11 seconds), later ones took about 0.4 to 3 seconds. The page opens on the upload panel; invented MOCK scenarios appear only when chosen from the Demo scenarios menu. "
+    "The eight inputs are built by scripts/platform/make_demo_inputs.py from non-sealed files only: an FF++ face swap and its original (validation, no audio), a LAV-DF training clip with speech, an ASVspoof development utterance, one frame of the face swap as a still image, a synthetic test pattern with a 440 Hz tone, an unsupported text file and a corrupt video. "
+    "Observed: the face swap gets indicates manipulation from face_video and the original no indication; speech and lip_sync are not applicable without audio; generated_video is always inconclusive and tagged EXPERIMENTAL; the tone clip gets a speech finding with score 0.0 although it is not speech (documented limitation) while lip_sync reports the audio as not speech-like; the two error cases fail with UNSUPPORTED_MEDIA_TYPE and UNREADABLE_FILE and show no report. "
+    "Say: each module answers for itself, there is no overall score and no authentic answer, and one clip is not an accuracy measurement.")
+_steps = ["**1  Start**\nserve 8002 --live, open 127.0.0.1:8002",
+          "**2  Drop a file**\npreview, then Analyse",
+          "**3  Modules run**\none at a time, card by card",
+          "**4  Done or Failed**\nLIVE ANALYSIS banner or error code",
+          "**5  Read the groups**\nno overall score"]
+_g = 150000
+_bw = (W - 4 * _g) // 5
+for _i, _t in enumerate(_steps):
+    _x = L + _i * (_bw + _g)
+    dbox(s, _x, TOP, _bw, 1150000, _t, fill=[F_BLUE, F_BLUE, F_GREEN, F_GREEN, F_ORANGE][_i], size=C.SZ_BODY_S)
+    if _i:
+        darrow(s, _x - _g, TOP + 575000, _x, TOP + 575000)
+_cy = TOP + 1300000
+add_card(s, col_x(0), _cy, span_w(6), BOT - _cy, [
+    ("h", "Inputs of the guide docs/DEMO.md"),
+    ("bs", "Face swap and its original video, no audio.", 16),
+    ("bs", "Talking head with speech; a speech audio file.", 16),
+    ("bs", "A still frame of the face swap.", 16),
+    ("bs", "Synthetic clip: no face, 440 Hz tone.", 16),
+    ("bs", "Error cases: a text file, a corrupt video.", 16),
+], name="card_demo_inputs")
+add_card(s, col_x(6), _cy, span_w(6), BOT - _cy, [
+    ("h", "Reading the outcome"),
+    ("bs", "Done: checks are grouped by what they found; read each on its own.", 16),
+    ("bs", "Inconclusive or experimental: the check ran and makes no finding; it says why.", 16),
+    ("bs", "Not applicable: the input lacks what the module needs.", 16),
+    ("bs", "Failed: the file was rejected with an error code; no report.", 16),
+], name="card_demo_read")
+
+s = new_slide("Dashboard and explanations",
+    "The dashboard was redesigned on 27 October 2026 (D-076) for readers who do not know how the models work. It opens on an upload panel; the report starts with the file and a sentence that only counts the checks by what they found, then the checks grouped by meaning, each with a plain headline, one rounded number and what the result does not establish. "
+    "Identifiers, raw scores, thresholds and evaluation lines stay under Technical details. The experimental generated-video check sits in its own group and shows its score only as an experimental signal. "
+    "The explanations are written on the server by fixed templates from the fields of each module's result (src/dfd/platform/explain.py); each sentence names its fields, and a validator rejects numbers not in those fields, missing fields, model output from a module that did not run, and wording such as authentic or proves. "
+    "They describe the stored result; they do not explain how a network reached its score, and no language model writes them. Evidence shown on request: the lip-sync offset curve and the 8 frames the experimental video model saw, both already computed by the modules. "
+    "Screenshot: demonstration input 3, a real LAV-DF training clip (docs/test_evidence/2026-10-27_redesign), taken before the per-module verdict labels of the slide Verdicts and the Evaluation Lab were added.")
+_df = os.path.join(ROOT, "paper", "figures", "fig11_dashboard.png")
+_iw, _ih = _ImP.open(_df).size
+_dh = BOT - TOP - 420000
+_dw = min(span_w(7), int(_dh * _iw / _ih))
+_dh = int(_dw * _ih / _iw)
+add_pic(s, _df, L, TOP, w=_dw, h=_dh, alt="Screenshot of the dashboard: file description, a summary counting checks by what they found with no overall score, and the first check cards")
+add_text(s, L, TOP + _dh + 60000, _dw, 300000, [("cap", "Live report, 27 October 2026, before the verdict labels. Screenshot, not a result.")], "pic_caption_dash")
+add_card(s, col_x(7), TOP, span_w(5), BOT - TOP, [
+    ("h", "How explanations are made"),
+    ("bs", "Fixed templates on the server, from the module's own fields.", 16),
+    ("bs", "Every sentence names the fields it uses.", 16),
+    ("bs", "Numbers must appear in those fields; tested.", 16),
+    ("bs", "No finding for a check that did not run.", 16),
+    ("bs", "Experimental output is never a headline number.", 16),
+    ("bs", "No overall score; no language model.", 16),
+], name="card_explain")
+
+s = new_slide("Testing (engineering verification)",
+    "Testing is kept apart from the experiments: a test shows that the software behaves as specified, not how well a detector separates real from fake (docs/TESTING_RECORD.md section 7, logs in docs/test_evidence/2026-10-27_redesign/). "
+    "On 27 October 2026, after the redesign, in the project environment: the safe suite with CUDA_VISIBLE_DEVICES=-1 (GPU hidden) gave 551 passed and 2 skipped (497 on 26 October before the redesign), the two opt-in tests, with 13 data-dependent tests deselected; the opt-in GPU tests gave 5 passed, including wrapper parity on 11 non-sealed files with the largest difference 0.0019 against a tolerance of 0.02; the documentation check gave 71 pass and 0 fail. "
+    "The live dashboard was driven in Edge on the 8 demonstration inputs: the six media files finished with all seven modules reported, every report valid and every number shown equal to the stored score; the two error cases failed with UNSUPPORTED_MEDIA_TYPE and UNREADABLE_FILE. "
+    "Defect found and fixed in that run: after a failed or refused analysis the MOCK scenario of page load stayed on screen next to the failure; the page now hides the report before a new analysis, with a regression test. "
+    "History, not re-run on this state: live checks 60 with 0 failed, C2PA 5 of 5, generated-video reproducibility 16 of 16, the earlier full suite 508 passed and 2 skipped with the GPU visible, and the clean install 495 passed and 2 skipped.")
+gt, th = add_table(s, L, TOP, [span_w(3), span_w(5), W - span_w(8)], ["Level (27 October)", "What was run", "Recorded outcome"], [
+    ["Safe suite", "unit and contract tests, GPU hidden; 13 data tests left out", "551 passed, 2 skipped"],
+    ["Opt-in, GPU", "wrapper parity on 11 non-sealed files; live face path", "5 passed"],
+    ["Live dashboard", "8 demonstration inputs in Edge, reports checked", "6 media files done; 2 error cases failed as expected"],
+    ["Documentation check", "paper, report and slides, project environment", "71 pass, 0 fail"],
+    ["Earlier records", "live checks; C2PA cases; reproducibility", "60 checks, 0 failed; 5 of 5; 16 of 16 (not re-run)"],
+], size="auto", bold_first_col=True, max_h=3000000, fill=3000000)
+_cy = TOP + th + 150000
+add_card(s, L, _cy, W, BOT - _cy, [
+    ("h", "Read this as"),
+    ("bs", "Behaviour of the software, not detector accuracy. New tests check the explanations against the stored fields and the contrast of the palette.", 16),
+], name="card_testing")
+
+s = new_slide("After the freeze: FakeAVCeleb",
+    "FakeAVCeleb arrived after the freeze and was split by identity into a development half and a sealed half, 250 identities each, none shared (D-070). "
+    "The sealed half, 5,013 clips, was scored once by the frozen system with the predictions written before the labels were read (E-015). "
+    "Visual AUC 0.9552 [0.9442, 0.9657], audio 0.9263 [0.9149, 0.9366], and the two cross-modality controls 0.5613 and 0.5011 inside 0.40 to 0.60: all four pre-stated criteria met; the visual prediction of 0.55 to 0.80 was wrong. "
+    "The frozen thresholds do not transfer: visual sensitivity 0.480 at specificity 0.996, audio specificity 0.637. "
+    "On the development half (E-021, E-023) the codec alone separates real from fake video, a common re-encode lowers the frozen visual AUC from 0.9732 to 0.8772, and a codec-matched control did not lower it further (0.8856 against 0.8763); codec and method coincide in this data set, so whether the sealed number is inflated is not estimated.")
+gt, th = add_table(s, L, TOP, [span_w(4), span_w(4), W - span_w(8)], ["Sealed half (5,013 clips, once)", "AUC [95 percent interval]", "Pre-stated rule"], [
+    ["Visual: real against fake video", "0.9552 [0.9442, 0.9657]", "supported"],
+    ["Audio: real against fake audio", "0.9263 [0.9149, 0.9366]", "supported"],
+    ["Visual score, same real video", "0.5613 [0.5428, 0.5816]", "supported (0.40 to 0.60)"],
+    ["Audio score, same real audio", "0.5011 [0.4801, 0.5243]", "supported"],
+], size="auto", bold_first_col=True, max_h=2500000, fill=2500000)
+_cy = TOP + th + 150000
+add_card(s, col_x(0), _cy, span_w(6), BOT - _cy, [
+    ("h", "Limits"),
+    ("bs", "Thresholds do not transfer: visual sensitivity 0.480, audio specificity 0.637.", 16),
+    ("bs", "Real audio is interview speech, fake audio clean synthesis.", 16),
+], name="card_fav_limits")
+add_card(s, col_x(6), _cy, span_w(6), BOT - _cy, [
+    ("h", "Development half"),
+    ("bs", "Common re-encode: frozen visual AUC 0.9732 to 0.8772.", 16),
+    ("bs", "Codec-matched reals: 0.8856 against 0.8763; codec and method coincide.", 16),
+], name="card_fav_dev")
+
+s = new_slide("Generated video and lip sync",
+    "Generated video (E-018 to E-020): the metadata of DeepAction separated real from generated clips perfectly, so every clip was re-encoded by one recipe; the third recipe made all headers constant, but seven pixel statistics still reach 0.773 [0.729, 0.817], so the clips are not shortcut-free. "
+    "Of three candidates on frozen DINOv2 small features, only the appearance baseline met the selection rule fixed in advance (0.8281 on DeepAction with each generator left out); on DF26, read once for evaluation only, it reached 0.4957 [0.4755, 0.5168], and 0.4880 on the pre-registered closed-generator subset, so transfer is not supported and the module stays experimental. "
+    "Lip sync (E-022, E-024, E-025): with a tolerance of 2 frames real clips were flagged in 15.0 and 13.3 percent and Wav2Lip clips in 85 to 93 percent, almost all at minus 3 frames. "
+    "A band of minus 6 to plus 2 frames, fitted on 230 real clips, flagged 1.3 percent [0.4, 3.8] of 230 disjoint real clips and 0 of 160 Wav2Lip clips: the earlier separation rested on a one-frame margin. "
+    "The LAV-DF half of those pools was split by file, not by speaker, so this is not evidence of speaker-independent behaviour. "
+    "E-026 (27 October, pre-registered, nothing fitted): the installed head scored 338 of 440 unmodified real clips from FF++ and LAV-DF above its threshold, 0.7682 [0.7265, 0.8052], against 19 of 100 DeepAction real clips out of fold, so the source-confound hypothesis is supported; which property drives it is not identified.")
+gt, th1 = add_table(s, L, TOP, [span_w(5), span_w(3) + span_w(1) // 2, W - span_w(8) - span_w(1) // 2 - 150000],
+                    ["Generated-video candidate", "DeepAction, development", "DF26, held out"], [
+    ["Temporal geometry (ReStraV-style)", "0.5073 [0.4608, 0.5542]", "0.5077 [0.4723, 0.5424]"],
+    ["Mean embedding, logistic regression (installed)", "0.8281 [0.7908, 0.8662]", "0.4957 [0.4755, 0.5168]"],
+    ["Seven pixel statistics (control)", "0.7613 [0.7182, 0.8033]", "0.5604 [0.5361, 0.5852]"],
+], size="auto", bold_first_col=True, max_h=2100000, fill=2100000)
+gt, th2 = add_table(s, L, TOP + th1 + 130000, [span_w(5), span_w(3) + span_w(1) // 2, W - span_w(8) - span_w(1) // 2 - 150000],
+                    ["Lip-sync rule (real clips; Wav2Lip clips)", "Real clips flagged", "Wav2Lip clips flagged"], [
+    ["Tolerance of 2 frames, fresh clips", "15.0 and 13.3 percent", "85 to 93 percent"],
+    ["Band of -6 to +2 frames, disjoint clips", "1.3 percent [0.4, 3.8]", "0 of 160"],
+], size="auto", bold_first_col=True, max_h=1500000, fill=1500000)
+_cy = TOP + th1 + th2 + 260000
+add_text(s, L, _cy, W, BOT - _cy, [
+    ("bs", "Real clips from FF++ and LAV-DF: 338 of 440 above the generated-video threshold (pre-registered check).", 16),
+    ("bs", "Generated video stays experimental and always inconclusive; lip sync is weak evidence, not a detector.", 16),
+], "text_later")
+
+s = new_slide("Modern generators, published numbers",
+    "E-027 (27 October, pre-registered): heads trained only on the six open generators of DF26, as its licence allows, with real clips split by source video and each open family held out in turn. "
+    "The chosen head, a logistic regression on the mean CLIP ViT-L/14 embedding of 8 frames, reached 0.7453 [0.7174, 0.7710] on held-out families, against 0.4921 for pixel statistics and 0.4995 for the installed head. "
+    "In one counted look at the four commercial generators it reached 0.7548 [0.7189, 0.7885]; Kling 3.0 was hardest (0.6483), Wan 2.6 easiest (0.8758). Temporal features did not help. "
+    "But the deployable head flags 0.8023 [0.7625, 0.8368] of real FF++ and LAV-DF clips at its balanced threshold, so the source confound persists and the head is not installed (D-085). "
+    "Published comparison (docs/PERFORMANCE_BENCHMARK.md): only like-for-like rows get a difference. Speech EER on the official ASVspoof 2019 LA eval, computed afterwards from stored sealed scores (E-030): 6.94 percent against 1.13 for AASIST, 5.81 points worse. "
+    "In-the-Wild EER 15.8 percent on our 42 sealed speakers; published 33.9 (Muller et al.) and 7.2 (Pascu et al.) are on the full set, so no gap is computed. "
+    "On DF26 zero-shot our earlier head (0.4957) lies inside the 44.0 to 69.7 range the DF26 authors report for FF++-trained detectors.")
+gt, th1 = add_table(s, L, TOP, [span_w(7), W - span_w(7)],
+                    ["Video head trained on DF26 open generators", "Result [95 percent interval]"], [
+    ["AUC, open families held out (chosen head)", "0.7453 [0.7174, 0.7710]"],
+    ["AUC, commercial generators, one counted look", "0.7548 [0.7189, 0.7885]"],
+    ["Share of real FF++ and LAV-DF clips flagged", "0.8023 [0.7625, 0.8368]"],
+], size="auto", bold_first_col=True, max_h=1700000, fill=1700000)
+gt, th2 = add_table(s, L, TOP + th1 + 130000, [span_w(4), span_w(4), W - span_w(8)],
+                    ["Speech, equal error rate", "Ours", "Published"], [
+    ["ASVspoof 2019 LA eval (same protocol)", "6.94 percent", "1.13 percent (AASIST)"],
+    ["In-the-Wild (42 of 54 speakers)", "15.8 percent", "33.9 and 7.2 percent, full set"],
+], size="auto", bold_first_col=True, max_h=1300000, fill=1300000)
+_cy = TOP + th1 + th2 + 260000
+add_text(s, L, _cy, W, BOT - _cy, [
+    ("bs", "In-domain training moves commercial generators from chance to 0.75, but real clips of other sources still look generated.", 16),
+    ("bs", "Differences are computed only where task, data, protocol and metric match.", 16),
+], "text_modern")
+
+s = new_slide("Modern generated images",
+    "E-028 (27 October, pre-registered, nothing fitted): the generated-image model of the product, a linear probe on frozen CLIP ViT-L/14 trained on ProGAN images, was scored unchanged on 11,550 images of a test-only subset of Community Forensics-Eval: 5,759 generated by 21 generators and 5,791 real. "
+    "The subset is the set of cheapest shards, chosen by a written rule before any image was seen; eight generators share one pooled set of 121 RAISE photographs as their real images. "
+    "Macro AUC over the 21 generators 0.7039 [0.6855, 0.7229]; pooled AUC 0.7973; at the frozen threshold 0.7395 [0.7300, 0.7500] of the generated images are missed and 0.0418 of the real ones flagged. By the line fixed in advance (macro AUC upper bound below 0.75) the model is inadequate for modern generators. "
+    "It separates the two GANs (0.9580) but is at chance on DeciDiffusionV2 (0.4951) and below chance on kandinsky 2.2 (0.4145), and misses 71 to 95 percent of every commercial generator. "
+    "Format control: 92.8 percent of the generated images are PNG and 88.1 percent of the real ones JPEG; a score that reads only the format reaches 0.9222; the model's AUC on PNG against PNG only is 0.6123 [0.5908, 0.6353]; re-encoding 380 generated PNG files as JPEG lowered the pooled AUC by 0.059. "
+    "Images with a face: the product's face detector finds a face in 3,119 of the images. The whole-image model reaches 0.7859 [0.7717, 0.7995] on them, the face-swap path that the product applies to them 0.6020 [0.5836, 0.6202]; paired difference +0.1839 [+0.1596, +0.2074]. But the whole-image model still misses 80.6 percent of the generated faces, so neither is usable. "
+    "That is why the product shows a whole-image score for images with a face only as an experimental check that makes no finding. "
+    "Limits: a subset chosen by cost, pooled real images for eight generators, format and size differ between real and generated images, and nothing here says anything about edited images or images shared through social networks. "
+    "Evidence: docs/EXPERIMENTS.md E-028 (recomputed independently from the stored scores); docs/PERFORMANCE_BENCHMARK.md.")
+gt, th1 = add_table(s, L, TOP, [span_w(8), W - span_w(8)],
+                    ["Frozen model, 11,550 images, 21 generators", "Result [95 percent interval]"], [
+    ["Macro AUC over the 21 generators", "0.7039 [0.6855, 0.7229]"],
+    ["Generated images missed at the frozen threshold (pooled)", "0.7395 [0.7300, 0.7500]"],
+    ["AUC: two GANs / commercial generators", "0.9580 / 0.7351"],
+    ["AUC on PNG real against PNG generated images only", "0.6123 [0.5908, 0.6353]"],
+], size="auto", bold_first_col=True, max_h=2000000, fill=2000000)
+gt, th2 = add_table(s, L, TOP + th1 + 130000, [span_w(8), W - span_w(8)],
+                    ["Images with a face (3,119): AUC", "Result [95 percent interval]"], [
+    ["Whole-image model (experimental check)", "0.7859 [0.7717, 0.7995]"],
+    ["Face-swap path used by the product today", "0.6020 [0.5836, 0.6202]"],
+    ["Paired difference", "+0.1839 [+0.1596, +0.2074]"],
+], size="auto", bold_first_col=True, max_h=1700000, fill=1700000)
+_cy = TOP + th1 + th2 + 260000
+add_text(s, L, _cy, W, BOT - _cy, [
+    ("bs", "Inadequate by the line fixed in advance: about three quarters of modern generated images are missed.", 16),
+    ("bs", "Part of the separation is PNG against JPEG; on faces both paths miss most generated images, so the check stays experimental.", 16),
+], "text_modern_images")
+
+s = new_slide("Retraining on recent generators",
+    "E-029 (27 October, pre-registered before any feature was extracted): the same kind of head as the installed generated-image model (frozen CLIP ViT-L/14 features, one linear layer) was retrained on 23,807 images of 125 recent generators from the training part of Community Forensics-Small, with a validation split by generator and by real source (31 other generators, COCO and FFHQ real images), three seeds, and the temperature, threshold and choice of encoder taken from validation only (validation AUC 0.9823). "
+    "The frozen heads were then scored once on the same 11,550 evaluation images of E-028 and paired against the installed head. Macro AUC over 21 generators not in training: 0.8839 (seeds 0.8863, 0.8832, 0.8823; SD 0.0021) against 0.7039; paired gain +0.1800 [+0.1643, +0.1959], each seed's interval above zero, so the hypothesis of improvement is supported. "
+    "The gain is largest on latent diffusion (+0.32), +0.12 on commercial generators, none on pixel diffusion, and +0.1675 [+0.1540, +0.1803] on the 18 generators without a related model in training. It survives restricting to PNG real against PNG generated images (0.8365 against 0.6123), although JPEG re-encoding of generated PNG files lowers the pooled AUC by 0.073. "
+    "But the threshold chosen on validation does not transfer: it flags 0.5213 [0.5091, 0.5339] of the real evaluation images (0.5885 of LAION photographs, 0.0328 of COCO photographs), because validation real images came from two sources only. The line fixed in advance for a candidate product check (false-positive rate at most 0.10, JPEG control below 0.10) is not met, so the heads are research artefacts and nothing is installed. "
+    "The encoder that validation ranked lower reached a higher macro AUC on the evaluation images (0.9142); the rule fixed in advance was applied as written. Three written predictions failed. Limits: a subset of the training data, validation real images from two sources, no edited or socially shared images. "
+    "Evidence: docs/EXPERIMENTS.md E-029 (recomputed independently from the frozen head files and cached features).")
+gt, th1 = add_table(s, L, TOP, [span_w(8), W - span_w(8)],
+                    ["Head retrained on 125 recent generators", "Result [95 percent interval]"], [
+    ["Validation AUC, held-out generators", "0.9823 [0.9662, 0.9969]"],
+    ["Macro AUC, 21 evaluation generators (installed head 0.7039)", "0.8839 [0.8732, 0.8942]"],
+    ["Paired gain over the installed head", "+0.1800 [+0.1643, +0.1959]"],
+    ["Gain, 18 generators without a related model in training", "+0.1675 [+0.1540, +0.1803]"],
+], size="auto", bold_first_col=True, max_h=2000000, fill=2000000)
+gt, th2 = add_table(s, L, TOP + th1 + 130000, [span_w(8), W - span_w(8)],
+                    ["At the head's validation threshold", "Share"], [
+    ["Real images flagged (all / LAION / COCO)", "0.5213 / 0.5885 / 0.0328"],
+    ["Generated images missed", "0.0545 [0.0495, 0.0596]"],
+], size="auto", bold_first_col=True, max_h=1400000, fill=1400000)
+_cy = TOP + th1 + th2 + 260000
+add_text(s, L, _cy, W, BOT - _cy, [
+    ("bs", "Better ranking on unseen generators, but the threshold flags about half of the real images: not usable, not installed.", 16),
+    ("bs", "The evaluation images were scored once, after the heads were frozen; nothing was tuned on them.", 16),
+], "text_modern_retrain")
+
+s = new_slide("Verdicts and the Evaluation Lab",
+    "Decisions of 27 October 2026 (D-083 to D-087). Each completed module result carries an additive assessment: a verdict label, a tier (detector, limited, experimental, provenance, context), the basis, the raw score with its kind (model output or ranking score), a calibration statement, an uncertainty level and evidence entries tied to stored result files; a unit test checks each entry against its file. "
+    "There is no report-level verdict and no fused score; the schema still rejects keys such as verdict, overall_score, fused and probability_fake. The scores of the face-video, image and speech detectors were temperature-scaled on each detector's validation split, so they behave like probabilities only for data like that split; the sealed FakeAVCeleb and modern-image measurements show they do not elsewhere, so the text says score. "
+    "Why the labels are weak: on the sealed FakeAVCeleb half the frozen video threshold had specificity 0.996 but sensitivity 0.480; computed afterwards from the stored sealed scores, the same threshold flagged about 0.11 of the real videos of the Celeb-DF family and 0.14 of those of DFD, so the face-video flag reads Possible manipulation with high uncertainty; audio specificity was 0.637; the generated-image model missed 0.7395 of modern generated images (macro AUC 0.7039), so a low whole-image score is not reassuring. "
+    "Experimental modules always read Experimental signal observed, no reliable verdict available; Likely AI-generated exists in the vocabulary but no rule reaches it, and a test pins this. The approval table of the generated-video module is empty, so the code refuses a finding from any head file whose hash is not in it. "
+    "Evaluation Lab (D-086, D-087): a separate dashboard page and an API under /api/evallab. It re-analyses recorded score files only: it runs no model, trains nothing, writes no checkpoint, never reads or writes the approval table or a threshold, and writes nothing to the evaluation ledger. A good lab result is not a product approval. "
+    "Safeguards: the score file's SHA-256, row count and git state are recorded; the configuration and its hash are frozen before any metric is computed; a final held-out split runs only as a re-analysis of an evaluation already in the ledger, with purpose final re-analysis and a matching SHA-256; thresholds are fitted only on validation rows of the same runs, or given with provenance; leakage checks cover shared groups, duplicate sample ids and duplicate file hashes. Known limit: the lab cannot prove training data excluded the evaluated items when the score file does not record it. "
+    "Engineering check on 28 October 2026 (software behaviour, not a new result): re-analysis of the frozen final system on the sealed Celeb-DF family reproduced the logged AUC 0.8218; a first look at a sealed split labelled development was refused; the ledger file was byte-identical afterwards. Evidence: docs/DECISIONS.md D-083 to D-088; docs/TESTING_RECORD.md section 10.")
+add_text(s, col_x(0), TOP, span_w(6), 400000, [("h", "Per-module verdicts")], "text_verdict_head")
+_vy = TOP + 420000
+gt, th = add_table(s, col_x(0), _vy, [span_w(2), span_w(2), span_w(2)], ["Module", "Flag", "No flag"], [
+    ["Face video", "Possible manipulation", "No strong evidence found"],
+    ["Image, face crop", "Possible manipulation (weak)", "Inconclusive"],
+    ["Image, whole", "Possible AI-generated (weak)", "Inconclusive"],
+    ["Speech", "Possible manipulation (weak)", "No strong evidence"],
+    ["Experimental", "Experimental signal only", "Same label"],
+], size="auto", bold_first_col=True, max_h=2250000, fill=2250000)
+_cy = _vy + th + 100000
+add_card(s, col_x(0), _cy, span_w(6), BOT - _cy, [
+    ("bs", "Each check gives its own verdict and uncertainty; no overall verdict.", 16),
+    ("bs", "A score is a score, not a probability.", 16),
+    ("bs", "Experimental checks never give a finding.", 16),
+], name="card_verdict")
+add_text(s, col_x(6), TOP, span_w(6), 400000, [("h", "Evaluation Lab")], "text_lab_head")
+_cy2 = TOP + 400000
+add_card(s, col_x(6), _cy2, span_w(6), BOT - _cy2, [
+    ("h", "Safeguards"),
+    ("bs", "Re-analyses recorded scores only; runs no model.", 16),
+    ("bs", "Provenance hash and frozen configuration.", 16),
+    ("bs", "Sealed splits only as re-analysis of a logged evaluation, with hash match.", 16),
+    ("bs", "Thresholds never fitted on evaluated rows.", 16),
+    ("bs", "Leakage checks before any metric.", 16),
+    ("bs", "A good lab result is not a product approval.", 16),
+], name="card_lab")
+
+s = new_slide("Benchmark, limits, unapproved heads",
+    "Benchmark audit of 27 October 2026 (docs/PERFORMANCE_BENCHMARK.md sections 9 to 13; E-014, E-020, E-027 to E-030). Four classes: A directly comparable (same data, test items, metric, aggregation, declared training protocol; only class A rows get a difference), B same dataset with a different protocol, C cross-dataset, D contextual only. "
+    "Speech: official ASVspoof 2019 LA evaluation set, pooled EER computed post hoc from the stored sealed scores (no model run): ours 6.94 percent [5.95, 7.82]; AASIST 1.13 percent, so ours is worse by 5.81 points; RawNet2 under the protocol of Pascu et al. 5.9 percent, ours slightly higher in point estimate and the sign is not established. "
+    "Zero-shot generated video on DF26: our head AUC 0.4957, at chance; nine published FF++-trained detectors 44.0 to 69.7 pooled AUROC, no intervals published. Our re-run Xception baseline was compared with the final video system on the same sealed tests (Celeb-DF family: final system 0.8218, Xception 0.8042, paired difference +0.0176 [+0.0025, +0.0327], superior by the declared 95 percent rule but not robust at the Bonferroni level, E-014). "
+    "No class A row exists for the face-video task against any published detector (other subsets, frame counts, training compression, no published intervals), and DFDC was never used. In-the-Wild speech EER 15.8 percent [12.7, 18.8] on 42 sealed speakers is class B. "
+    "Why the heads stay unapproved: the retrained image heads rank better (macro AUC 0.8839, gain +0.1800) but flag 0.5213 of real evaluation images at the validation threshold (E-029); the generated-video head trained on DF26 open generators reached 0.7548 on unseen closed generators but flags 0.8023 of unmodified real clips from two other sources, a source confound (E-027, D-085); the installed generated-video head is display-only and was at chance zero-shot on DF26, AUC 0.4957 (E-020). The whole-image check on portraits uses the installed generated-image model and is shown only as experimental because it missed 0.7395 of modern generated images (E-028, D-083). The approval table stays empty; promotion needs a new preregistered test with a false-positive line on sources not used for calibration. "
+    "Evidence: docs/EXPERIMENTS.md, docs/PERFORMANCE_BENCHMARK.md.")
+gt, th = add_table(s, L, TOP, [span_w(3), span_w(5), W - span_w(8)], ["Class A row", "Ours", "Published / baseline"], [
+    ["Speech EER, ASVspoof 2019 LA", "6.94 percent [5.95, 7.82]", "AASIST 1.13 percent; RawNet2 5.9 percent"],
+    ["Zero-shot video, DF26 (AUC)", "0.4957, at chance", "nine detectors, 44.0 to 69.7"],
+    ["Face video, Celeb-DF family (AUC)", "0.8218 (final system)", "re-run Xception 0.8042; paired +0.0176 [+0.0025, +0.0327]"],
+], size="auto", bold_first_col=True, max_h=1700000, fill=1700000)
+_cy = TOP + th + 130000
+add_card(s, col_x(0), _cy, span_w(6), BOT - _cy, [
+    ("h", "Limitations"),
+    ("bs", "No class A row for face video; DFDC never used.", 16),
+    ("bs", "Thresholds do not transfer.", 16),
+    ("bs", "Speech EER is worse than AASIST.", 16),
+], name="card_bench_limits")
+add_card(s, col_x(6), _cy, span_w(6), BOT - _cy, [
+    ("h", "Why experimental heads stay unapproved"),
+    ("bs", "Retrained image heads (not installed): flag 0.5213 of real images.", 16),
+    ("bs", "Video head trained on DF26 (not installed): flags 0.8023 of real clips from other sources.", 16),
+    ("bs", "Installed video head: AUC 0.4957 zero-shot, so display only, never a finding.", 16),
+], name="card_bench_heads")
 
 # =====================================================================================================================
 # SLIDE 13: timeline
@@ -1150,7 +1506,7 @@ s = new_slide("Limitations",
     "Only the three declared comparisons are confirmatory; every other sealed number is exploratory and is one run of each frozen iteration with three seeds. "
     "The baseline is one family, Xception at 224 pixels, so the superiority at the 95 percent level says nothing about other detectors, and it is not robust at the 98.33 percent level. The margin 0.0100 is the floor of its rule and rests on three seeds. "
     "The two speech predictions failed upward and the sealed video value is below its development value; no experiment explains these differences. "
-    "On LAV-DF the sealed subset repeats the development pattern, and iterations 1b and 1c were not tested on the sealed sets. The web page runs the working version and not the frozen system. "
+    "On LAV-DF the sealed subset repeats the development pattern, and iterations 1b and 1c were not tested on the sealed sets. The web page was checked with the frozen checkpoint on three training files only (scripts/freeze/web_freeze_check.py), which shows the page works and nothing about accuracy. The limits of the work after the freeze are on the next slide. "
     "Frozen features may be inadequate for face forgery, the research-only weights of some encoders restrict reuse, cross-dataset numbers quoted from papers use other protocols and are context only, and rPPG could not be recovered from compressed video. Evidence: docs/DOC_FACTS.md section 13, docs/DATA_LOG.md Celeb-DF++ section, docs/EXPERIMENTS.md E-014.")
 add_text(s, L, TOP + 50000, W, 4750000, [
     ("b", "Small development slices (15 identities, 12 speakers, two generator units): intervals are wide and ties are likely.", 17),
@@ -1159,9 +1515,26 @@ add_text(s, L, TOP + 50000, W, 4750000, [
     ("b", "One baseline family, Xception at 224 pixels: superior at 95 percent, not robust at 98.33 percent. The margin 0.0100 is a floor from three seeds.", 17),
     ("b", "Two speech predictions failed upward and the sealed video value is below its development value; no experiment explains this.", 17),
     ("b", "On LAV-DF the fused result is driven by a pipeline cue, repeated on the sealed subset; no audio-visual detection is claimed.", 17),
-    ("b", "I-1b and I-1c were not tested on the sealed sets; the web page runs the working version, not the frozen system.", 17),
+    ("b", "I-1b and I-1c were not tested on the sealed sets; the web page was checked with the frozen checkpoint on three training files only.", 17),
     ("b", "Two encoder weights are research-only; the pulse could not be recovered, and the check has no ground truth.", 17),
 ], "limits")
+
+s = new_slide("Limitations of the later work",
+    "These limits belong to the work after the freeze and are stated in the report and the paper (docs/RESEARCH_INTEGRITY.md). "
+    "The registration texts of the later experiments first appear in version control in one commit, together with their scripts, so the order of text and run rests on the project's own statements; this is a gap in the record, not evidence of a different order, and the history is not rewritten. "
+    "The re-encoding recipe that passed the header audit was the third tried on the same data, and pixel statistics still separate the classes at about 0.77 to 0.79 (E-019). "
+    "In FakeAVCeleb codec and method coincide completely (E-023), the lip-sync pools were split by file on the LAV-DF side (E-025), and the SyncNet weights have no stated licence while the FakeAVCeleb request terms are not recorded. "
+    "The speech module wraps the frozen speech detector and has no speech check of its own, so a synthetic 440 Hz tone receives a speech finding with score 0.0 (docs/DEMO.md, docs/TESTING_RECORD.md); no gate was added because it would change a frozen detector's decision with an unevaluated heuristic. "
+    "Test counts are engineering records, not accuracy.")
+add_text(s, L, TOP + 50000, W, 4750000, [
+    ("b", "Order of registration: the later registration texts entered version control in one commit with their scripts, so git cannot show they came first.", 17),
+    ("b", "The re-encoding recipe that passed the header audit was the third tried; pixel statistics still reach about 0.77 to 0.79.", 17),
+    ("b", "FakeAVCeleb: codec and method coincide, so the sealed AUC may be inflated by an artefact; not estimated.", 17),
+    ("b", "Lip-sync pools split by file, not speaker, on the LAV-DF side; both sources derive from VoxCeleb2.", 17),
+    ("b", "Licences: SyncNet weights without a stated licence; FakeAVCeleb request terms not recorded; no redistribution.", 17),
+    ("b", "The speech module has no speech check of its own: a pure tone gets a speech finding (score 0.0).", 17),
+    ("b", "Test counts describe the behaviour of the code, not detector accuracy.", 17),
+], "limits_later")
 
 # =====================================================================================================================
 # SLIDE 15: conclusion
@@ -1170,11 +1543,10 @@ s = new_slide("Conclusion",
     "This slide states what the evidence supports. The design stands on its own: a group-disjoint protocol with sealed test sets, a rule that prefers the cheaper candidate when evidence ties, a staircase of one sealed evaluation per frozen iteration, and a working-version definition that requires the whole chain to run. "
     "The sealed run was made on 25 October 2026 (E-014, D-067, D-068). The three confirmatory tests were declared in advance (D-062 b): the final system against the working version on face video (Celeb-DF family) and on speech (In-the-Wild), and the final system against the re-run published baseline on the Celeb-DF family, the latter judged with delta 0.0100 fixed beforehand (D-025, D-041, D-066); a 98.33 percent interval (Bonferroni over three) is printed beside each as a robustness line. "
     "Results: video improved by +0.1980 [+0.1688, +0.2242] (robustness interval [+0.1627, +0.2303]); speech improved by +0.1633 [+0.1177, +0.2266] (robustness interval [+0.1085, +0.2481]); against the baseline +0.0176 [+0.0025, +0.0327], superior at 95 percent, the robustness interval [-0.0011, +0.0355] contains zero so it is not robust to the Bonferroni level, and the system is non-inferior at both levels. Say exactly this and nothing beyond it. "
-    "Every other comparison is exploratory. Evidence: docs/PROTOCOL.md addendum, docs/EXPERIMENTS.md E-014 result block.")
+    "Every other comparison is exploratory. After the freeze the detectors were wrapped in the analysis platform, which reports one finding per module and no global score; the later experiments add limits, not claims (E-015, E-020, E-025). Evidence: docs/PROTOCOL.md addendum, docs/EXPERIMENTS.md E-014 result block.")
 add_text(s, col_x(0), TOP, span_w(6), 4800000, [
     ("h", "What the design gives"),
-    ("b", "Group-disjoint protocol, sealed test sets, a ledger.", 16),
-    ("b", "One sealed evaluation per frozen iteration; three tests declared beforehand.", 16),
+    ("b", "Group-disjoint protocol; sealed sets read once per frozen iteration; three tests declared beforehand.", 16),
     ("h", "What the exploratory runs show"),
     ("b", "Face development AUC 0.7396 to 0.9096 by fine-tuning.", 16),
     ("b", "Speech 0.6100 to 0.8130 on 12 speakers.", 16),
@@ -1182,6 +1554,8 @@ add_text(s, col_x(0), TOP, span_w(6), 4800000, [
     ("h", "What the sealed run adds"),
     ("b", "Video and speech improved over the working version, at both levels.", 16),
     ("b", "Superior to the re-run baseline at 95 percent only.", 16),
+    ("h", "After the freeze"),
+    ("b", "One finding per module, no global score; generated video experimental.", 16),
 ], "concl_left")
 gt, th = add_table(s, col_x(6), TOP, [span_w(3), span_w(3)], ["Claim", "Outcome"], [
     ["Working version, development AUC (exploratory)", "0.693; 0.994; 0.610"],
@@ -1194,11 +1568,35 @@ gt, th = add_table(s, col_x(6), TOP, [span_w(3), span_w(3)], ["Claim", "Outcome"
 ], size="auto", max_h=3900000, pad=30000)
 add_text(s, col_x(6), TOP + th + 100000, span_w(6), 600000, [("s", "Only the three sealed rows are confirmatory; every other row is exploratory.", 16)], "concl_note")
 
+s = new_slide("Future work",
+    "Further work follows from the limits (report chapter 5). "
+    "For the detectors: more baseline families and input sizes, more seeds for the margin, sealed sets with more identities and speakers, and an experiment that explains why the speech predictions failed upward. "
+    "For the platform: validate a generated-video head on data that played no part in its training or selection before any head may give a finding (DF26 may not be used to select it), measure the lip-sync band on other media with speaker-disjoint pools, and test the codec question on a data set where codec and method are not confounded. "
+    "For the record: commit each future registration on its own before the run, record a hash list of the frozen files, run the tests from a fresh clone, configure a C2PA trust list if credentials are to be reported as valid, and settle the licence questions before any redistribution. "
+    "WildDeepfake is a further test when obtained.")
+add_text(s, col_x(0), TOP, span_w(6), 4800000, [
+    ("h", "Detectors"),
+    ("b", "More baseline families and input sizes; more seeds for the margin.", 16),
+    ("b", "Sealed sets with more identities and speakers.", 16),
+    ("b", "Explain the speech predictions that failed upward.", 16),
+    ("h", "Record"),
+    ("b", "Commit each registration on its own before its run.", 16),
+    ("b", "A hash list of the frozen files; tests from a fresh clone.", 16),
+], "text_future_l")
+add_text(s, col_x(6), TOP, span_w(6), 4800000, [
+    ("h", "Platform"),
+    ("b", "Validate a generated-video head on independent data before it may give a finding.", 16),
+    ("b", "Lip-sync band on other media, speaker-disjoint pools.", 16),
+    ("b", "Codec question on data where codec and method differ.", 16),
+    ("b", "A C2PA trust list; settle the licence questions.", 16),
+], "text_future_r")
+
 # =====================================================================================================================
 # SLIDE 16: references
 # =====================================================================================================================
 REFS = [
     "Cai, Z. et al. (2022). Do you really mean that? Content driven audio-visual deepfake dataset (LAV-DF). DICTA.",
+    "Bohacek, M., Farid, H. (2025). Human Action CLIPs: detecting AI-generated human motion. IJCAI workshop.",
     "Chugh, K. et al. (2020). Not made for each other: audio-visual dissonance-based deepfake detection and localization. ACM Multimedia.",
     "Ciftci, U. A., Demir, I., Yin, L. (2020). FakeCatcher: detection of synthetic portrait videos using biological signals. IEEE TPAMI.",
     "Dolhansky, B. et al. (2020). The DeepFake Detection Challenge (DFDC) dataset. arXiv:2006.07397.",
@@ -1206,6 +1604,7 @@ REFS = [
     "Guo, C., Pleiss, G., Sun, Y., Weinberger, K. Q. (2017). On calibration of modern neural networks. ICML, PMLR 70.",
     "Harraq, O., Aldwairi, T. (2026). Physiological signals as a forensic modality for talking-face deepfake detection. arXiv:2607.21776.",
     "Hernandez-Ortega, J. et al. (2021). DeepFakesON-Phys: DeepFakes detection based on heart rate estimation. AAAI Workshops.",
+    "Interno, C. et al. (2025). AI-generated video detection via perceptual straightening. NeurIPS.",
     "Jung, J. et al. (2022). AASIST: audio anti-spoofing using integrated spectro-temporal graph attention networks. ICASSP.",
     "Khalid, H. et al. (2021). FakeAVCeleb: a novel audio-video multimodal deepfake dataset. NeurIPS Datasets and Benchmarks.",
     "Kornblith, S., Shlens, J., Le, Q. V. (2019). Do better ImageNet models transfer better? CVPR.",
@@ -1217,6 +1616,7 @@ REFS = [
     "Ojha, U., Li, Y., Lee, Y. J. (2023). Towards universal fake image detectors that generalize across generative models. CVPR.",
     "Rossler, A. et al. (2019). FaceForensics++: learning to detect manipulated facial images. ICCV.",
     "Seibold, C. et al. (2025). High-quality deepfakes have a heart! Frontiers in Imaging 4. doi:10.3389/fimag.2025.1504551.",
+    "Shykula, S. et al. (2026). DF26: we cannot tell fake from real anymore. arXiv:2609.07369.",
     "Tak, H. et al. (2022). Automatic speaker verification spoofing and deepfake detection using wav2vec 2.0 and data augmentation. Odyssey.",
     "Wang, X. et al. (2020). ASVspoof 2019: a large-scale public database of synthesized, converted and replayed speech. Computer Speech and Language. doi:10.1016/j.csl.2020.101114.",
     "Yan, Z. et al. (2023). DeepfakeBench: a comprehensive benchmark of deepfake detection. NeurIPS Datasets and Benchmarks.",
@@ -1227,14 +1627,15 @@ s = new_slide("References",
     "All entries have status READ or PARTIAL in the project's literature matrix; the parts that were read are recorded there, and numbers quoted on the slides come from those parts. "
     "The in-text form is author and year, with 2020a and 2020b separating the two Li et al. papers of 2020. "
     "Evidence: docs/RESEARCH.md and paper/refs.bib; slides/NEW_REFERENCES.md records how the list was checked.")
-half_n = (len(REFS) + 1) // 2
+_cum = [sum(len(r) for r in REFS[:k]) for k in range(len(REFS) + 1)]
+half_n = min(range(1, len(REFS)), key=lambda k: abs(_cum[k] - _cum[-1] / 2))
 for k, chunk in enumerate([REFS[:half_n], REFS[half_n:]]):
     add_text(s, col_x(6 * k), TOP, span_w(6), 4800000, [("cap", r) for r in chunk], "refs")
 # give the reference paragraphs some air
 for sh in s.shapes:
     if sh.name.startswith("refs"):
         for p in sh.text_frame.paragraphs:
-            set_spacing(p, 0, 3)
+            set_spacing(p, 0, 1)
             for r in p.runs:
                 r.font.italic = False
                 r.font.color.rgb = rgb(DARK)

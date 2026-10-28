@@ -56,3 +56,13 @@ The task text called DeepfakeBench "ICML 2023". The evidence found says NeurIPS 
 ## D. Check of the two quoted DeepfakeBench numbers
 
 arXiv:2307.01426v2 (28 Oct 2023), PDF page 6, Table 3 ("Within-domain and cross-domain evaluations using the AUC metric. All detectors are trained on FF-c23 and evaluated on other data"), row "Naive, Xception, backbone Xception": within-domain Avg 0.9450 (columns FF-c23, FF-c40, FF-DF, FF-F2F, FF-FS, FF-NT: 0.9637, 0.8261, 0.9799, 0.9785, 0.9833, 0.9385) and cross-domain Avg 0.7718 (eight columns CDFv1, CDFv2, DF-1.0, DFD, DFDC, DFDCP, Fsh, UADFV: 0.7794, 0.7365, 0.8341, 0.8163, 0.7077, 0.7374, 0.6249, 0.9379). The text of section 4.2 quotes 94.50 percent for Xception within-domain. Protocol (section 4.1): frame-level AUC, face crops from DLIB aligned to 256 by 256, 32 frames per video, Adam with learning rate 0.0002, batch 32, each entry the average of the top three values of the metric. The same cross-domain average, 0.7718, is also printed for the EfficientNet-B4 row. Both numbers are confirmed.
+
+## Added 2026-10-26 (paper update for the analysis platform and the later experiments)
+
+| Key | RESEARCH ID | Venue as entered | Basis |
+|---|---|---|---|
+| interno2025restrav | R-078 | NeurIPS 2025 per the arXiv comments field and journal reference (proceedings page not checked); arXiv:2507.00583 | RESEARCH.md R-078, PARTIAL (method, datasets, results, limitations read) |
+| shykula2026df26 | R-081 | arXiv preprint 2609.07369, no venue listed | RESEARCH.md R-081, PARTIAL (composition, protocol, results, licence read) |
+| bohacek2025deepaction | R-082 | IJCAI 2025 workshop on deepfake detection, localization and interpretability (arXiv journal reference); arXiv:2412.00526 | RESEARCH.md R-082, PARTIAL (dataset, method, protocol, licence read) |
+
+SyncNet, Wav2Lip and C2PA are named as software, a generator family and a standard; none of their papers is in docs/RESEARCH.md, so none is cited.

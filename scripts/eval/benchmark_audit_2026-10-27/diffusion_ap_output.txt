@@ -1,0 +1,19 @@
+sha256 e0c78a8cd1b1f19a23cb3e82cdffba65979cfb4c368e75527c6eea09c79f383f
+  vs laion    dalle          AP=0.9500 AUC=0.9415
+  vs laion    glide_100_10   AP=0.9745 AUC=0.9729
+  vs laion    glide_100_27   AP=0.9718 AUC=0.9699
+  vs laion    glide_50_27    AP=0.9788 AUC=0.9777
+  vs laion    guided         AP=0.8391 AUC=0.8366
+  vs laion    ldm_100        AP=0.9628 AUC=0.9598
+  vs laion    ldm_200        AP=0.9604 AUC=0.9567
+  vs laion    ldm_200_cfg    AP=0.8720 AUC=0.8620
+MEAN over 8 fake sets vs laion : AP 0.9387  AUC 0.9346
+  vs imagenet dalle          AP=0.9499 AUC=0.9427
+  vs imagenet glide_100_10   AP=0.9741 AUC=0.9732
+  vs imagenet glide_100_27   AP=0.9713 AUC=0.9704
+  vs imagenet glide_50_27    AP=0.9783 AUC=0.9778
+  vs imagenet guided         AP=0.8404 AUC=0.8417
+  vs imagenet ldm_100        AP=0.9624 AUC=0.9604
+  vs imagenet ldm_200        AP=0.9600 AUC=0.9574
+  vs imagenet ldm_200_cfg    AP=0.8725 AUC=0.8651
+MEAN over 8 fake sets vs imagenet : AP 0.9386  AUC 0.9361

@@ -1,0 +1,4 @@
+Extract from paper/main.log after 'latexmk -g -pdf main.tex' (exit 0); the full verbose build output is not kept because it embeds local installation paths.
+Overfull \vbox (4.24503pt too high) has occurred while \output is active []
+Output written on main.pdf (31 pages, 894525 bytes).
+undefined-reference warnings: 0

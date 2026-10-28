@@ -3,38 +3,117 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Analysis Report Dashboard</title>
+<title>Media Analysis</title>
+<link rel="icon" href="data:,">
 <link rel="stylesheet" href="/dashboard.css">
+<link rel="stylesheet" href="/evallab.css">
 </head>
 <body>
+<a class="skip" href="#main">Skip to content</a>
 <header class="top">
-  <h1>Media analysis report</h1>
-  <div class="picker">
-    <label for="scenario">Scenario</label>
-    <select id="scenario"></select>
+  <div class="top-inner">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div>
+        <p class="brand-name">Media Analysis</p>
+        <p class="brand-sub">Multimodal checks for manipulated and generated media</p>
+      </div>
+    </div>
+    <nav class="nav" aria-label="Main">
+      <button type="button" id="nav-analyse" class="nav-link" aria-current="page">Analyse a file</button>
+      <button type="button" id="nav-lab" class="nav-link">Evaluation Lab</button>
+    </nav>
+    <div class="top-actions">
+      <span id="mode-pill" class="pill" hidden></span>
+      <div class="picker">
+        <label for="scenario">Demo scenarios</label>
+        <select id="scenario"><option value="">Choose a demo scenario</option></select>
+      </div>
+    </div>
   </div>
 </header>
-<section id="live-panel" class="panel live-panel" data-live="false" aria-labelledby="live-h">
-  <h2 id="live-h">Analyse a file</h2>
-  <div class="live-row">
-    <input type="file" id="analyse-file" aria-label="File to analyse" disabled>
-    <button type="button" id="analyse-btn" disabled>Analyse</button>
+
+<main id="main" class="page" tabindex="-1">
+<div id="view-analyse" class="view">
+  <section id="live-panel" class="panel upload" data-live="false" aria-labelledby="live-h">
+    <div id="upload-intro">
+      <p class="hero-kicker">Local research tool</p>
+      <h1 id="live-h">Check an image, video or audio file</h1>
+      <p class="lede">Several independent checks look at the file. Each reports only what it examined and how far its result can be trusted.
+        No single overall score is given.</p>
+    </div>
+    <div id="dropzone" class="dropzone" data-state="empty">
+      <input type="file" id="analyse-file" class="file-input" aria-describedby="accept-text" disabled>
+      <div class="dz-empty">
+        <span class="dz-icon" aria-hidden="true"></span>
+        <p class="dz-title"><span class="dz-drag">Drop a file here, or </span><label for="analyse-file" class="linklike" id="choose-label">choose a file</label></p>
+        <p id="accept-text" class="dz-hint">Images, videos and audio files are accepted.</p>
+        <p class="dz-kinds" aria-hidden="true"><span>IMAGE</span><span>VIDEO</span><span>AUDIO</span></p>
+      </div>
+      <div class="dz-file" id="file-card" hidden>
+        <div class="preview" id="preview" aria-hidden="true"></div>
+        <div class="file-meta">
+          <p class="file-name" id="file-name"></p>
+          <p class="file-sub" id="file-sub"></p>
+          <div class="file-actions">
+            <button type="button" id="analyse-btn" class="btn primary" disabled>Analyse</button>
+            <button type="button" id="change-btn" class="btn">Choose another file</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="will-run" class="will-run" hidden></div>
+    <ol class="how" aria-label="What happens when you press Analyse">
+      <li><b>The file is checked.</b> Its type, streams and length are read; an unsupported or damaged file is refused.</li>
+      <li><b>Independent checks run.</b> Each looks for one kind of evidence and reports only on that; a check that does not apply to the file says so.</li>
+      <li><b>You get a report.</b> For each check: what was done, what was observed, why the result was reported and what it cannot tell you. There is no overall score.</li>
+    </ol>
+    <details id="which-checks" class="which-checks" hidden>
+      <summary>Which checks run on which files</summary>
+      <div id="which-checks-body"></div>
+    </details>
+    <p class="privacy">The file is analysed on this computer by the local server and deleted when the analysis ends.</p>
+    <p id="live-unavailable" class="notice" hidden>Live analysis is not available on this server. Demo scenarios with invented data can still be shown.</p>
+    <div class="status-row">
+      <div id="live-status" class="live-status" role="status" aria-live="polite" hidden></div>
+      <button type="button" id="again-top" class="btn primary again-top">Analyse another file</button>
+    </div>
+    <ol id="steps" class="steps" hidden aria-label="Analysis steps"></ol>
+  </section>
+
+  <div id="banner" class="banner" role="note" hidden></div>
+  <div id="error" class="error-box" role="alert" hidden></div>
+
+  <div id="report" class="report" hidden>
+    <section id="meta" class="panel overview" aria-labelledby="overview-h"></section>
+    <section id="summary" class="panel summary" aria-labelledby="summary-h"></section>
+    <section id="conflicts" class="panel conflicts" hidden></section>
+    <section id="evidence" class="evidence" aria-label="Results of each check"></section>
+    <section class="panel limits">
+      <h2 class="h3">What this report cannot tell you</h2>
+      <p id="statement" class="statement"></p>
+    </section>
+    <section class="panel tech-report">
+      <details>
+        <summary>Technical details for the whole report</summary>
+        <div id="report-tech"></div>
+        <div id="coverage"></div>
+      </details>
+    </section>
+    <div class="report-actions">
+      <label class="toggle"><input type="checkbox" id="sources-toggle"> Show where each sentence comes from</label>
+      <button type="button" id="download-btn" class="btn">Download report (JSON)</button>
+      <button type="button" id="print-btn" class="btn">Print or save as PDF</button>
+      <button type="button" id="again-btn" class="btn primary" hidden>Analyse another file</button>
+    </div>
   </div>
-  <p id="live-unavailable" class="empty">Live analysis is not available on this server</p>
-  <div id="live-status" class="live-status" role="status" aria-live="polite" hidden></div>
-</section>
-<div id="banner"class="banner" role="alert" hidden></div>
-<div id="error" class="error-box" role="alert" hidden></div>
-<main id="report" hidden>
-  <section id="meta" class="panel"></section>
-  <section id="routing" class="panel"></section>
-  <section id="sec-authenticity" class="section"></section>
-  <section id="sec-cross_modal" class="section"></section>
-  <section id="sec-provenance" class="section"></section>
-  <section id="coverage" class="panel"></section>
-  <section id="conflicts" class="panel"></section>
-  <section id="statement" class="panel statement"></section>
+</div>
+<div id="view-lab" class="view" hidden>
+  <div id="lab-root" aria-live="polite"><p class="empty">Loading the Evaluation Lab ...</p></div>
+</div>
 </main>
+<footer class="foot"><p>Research prototype. Software tests show that the application behaves as designed; they are not a measure of detection accuracy.</p></footer>
 <script src="/dashboard.js"></script>
+<script src="/evallab.js"></script>
 </body>
 </html>

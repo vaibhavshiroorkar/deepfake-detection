@@ -1,0 +1,3 @@
+pages: 119
+
+placeholders: 0 citations: 53 figures: 14 tables: 45 equations: 42

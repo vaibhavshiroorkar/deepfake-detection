@@ -10,9 +10,17 @@ from dfd.platform import schema
 from dfd.platform.coordinator import Coordinator
 from dfd.platform.module import Context, Probe
 from dfd.platform.modules import AdapterProvider, SpeechModule, build_default_modules
-from dfd.platform.modules.base import DEFAULT_CHECKPOINT, LARGEST_FACE_LIMITATION
+from dfd.platform.modules.base import LARGEST_FACE_LIMITATION
+from dfd.platform.modules.base import DEFAULT_CHECKPOINT
+from dfd.platform.modules.speech import HEADS as SPEECH_HEADS
 
-META = json.loads((DEFAULT_CHECKPOINT / "metadata.json").read_text(encoding="utf-8"))
+# SYNTHETIC checkpoint metadata with the keys the wrappers read (checkpoint_id, per-task threshold, per-file hashes). The values are made up and
+# deliberately differ from every real checkpoint; these tests check that the wrappers pass metadata through, so they need no ignored artifact
+# (checkpoints/ is git-ignored). Behaviour on the real frozen checkpoint is covered by the opt-in test_parity.py (RUN_PARITY=1).
+META = {"checkpoint_id": "synthetic-test-checkpoint",
+        "files": {"weights_T-V.pt": "1" * 64, "head_T-I.npz": "2" * 64, "head_T-A_AU-4.npz": "3" * 64,
+                  "head_T-A_AU-6.npz": "4" * 64, "head_T-A_AU-8.npz": "5" * 64},
+        "tasks": {"T-V": {"threshold": {"value": 0.37}}, "T-I": {"threshold": {"value": 0.61}}, "T-A": {"threshold": {"value": 0.52}}}}
 T_V, T_I, T_A = (META["tasks"][t]["threshold"]["value"] for t in ("T-V", "T-I", "T-A"))
 FORBIDDEN = re.compile(r"\b(real|genuine|authentic\w*)\b", re.I)
 
@@ -130,7 +138,7 @@ def test_speech(score, finding):
     lim = " ".join(r.limitations)
     assert "64,600" in lim and "exploratory" in lim and "0.6462" in lim
     assert r.warnings[0]["code"] == "AUDIO_CALIBRATION_EXPLORATORY"
-    assert "head_T-A_AU-8.npz" in r.model["weights_sha256"]
+    assert r.model["weights_sha256"] == ";".join(f"{f}={META['files'][f]}" for f in SPEECH_HEADS)     # every member head, in order
     assert schema.validate_module_result(r.to_dict()) == []
 
 
@@ -200,3 +208,18 @@ def test_coordinator_image_and_audio_only():
         rep = Coordinator(mods(ad)).analyse(p, "r")
         assert schema.validate_report(rep) == []
         assert [m["module_id"] for m in rep["modules"] if m["status"] == "completed"] == [done]
+
+
+def test_real_checkpoint_metadata_has_the_fields_the_wrappers_read():
+    """Schema check of the git-ignored real I-5 metadata (no model is loaded, no file is hashed). Skipped when the checkpoint is absent."""
+    f = DEFAULT_CHECKPOINT / "metadata.json"
+    if not f.is_file():
+        pytest.skip(f"real checkpoint metadata not present ({f}); the wrapper tests above use synthetic metadata")
+    meta = json.loads(f.read_text(encoding="utf-8"))
+    assert isinstance(meta["checkpoint_id"], str) and meta["checkpoint_id"]
+    for task in ("T-V", "T-I", "T-A"):
+        v = meta["tasks"][task]["threshold"]["value"]
+        assert isinstance(v, float) and 0.0 < v < 1.0
+    for name in ("weights_T-V.pt", "head_T-I.npz", *SPEECH_HEADS):
+        h = meta["files"][name]
+        assert isinstance(h, str) and re.fullmatch(r"[0-9a-f]{64}", h), name

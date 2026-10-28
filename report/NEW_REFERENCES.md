@@ -52,3 +52,13 @@ For the main agent to log in docs/RESEARCH.md. Nothing here was cited from memor
 ## Not cited in the report
 
 R-059 (McDuff et al., compression and pulse): status READ, but the venue is still not retrieved, so it is not cited. DeepFakesON-Phys (R-007) is cited as arXiv only: Crossref lists the title under a later book chapter (Handbook of Digital Face Manipulation and Detection, 2022) with a different title, and the AAAI workshop venue of the paper bib was not confirmed by this agent.
+
+## Added 2026-10-26 (report update for the analysis platform and the later experiments)
+
+| RESEARCH ID | Report key | Author, year | Venue as written | Basis |
+|---|---|---|---|---|
+| R-078 | restrav | Internò, Geirhos, Olhofer, Liu, Hammer, Klindt, 2025 | NeurIPS 2025 per the arXiv comments field and journal reference; proceedings page not checked; arXiv:2507.00583 | docs/RESEARCH.md R-078 (PARTIAL: method, datasets, results, limitations read); cited only to name the method that the generated-video head is not |
+| R-081 | df26 | Shykula, Yermakov, Samarskyi, Mishkin, Cech, Mishchuk, 2026 | arXiv preprint 2609.07369v1, no venue | docs/RESEARCH.md R-081 (PARTIAL: composition, protocol, licence read); cited for the held-out benchmark |
+| R-082 | deepaction | Bohacek, Farid, 2024/2025 | IJCAI 2025 workshop on deepfake detection, localization and interpretability (arXiv journal reference); arXiv:2412.00526 | docs/RESEARCH.md R-082 (PARTIAL: dataset, method, licence read); cited for the development corpus |
+
+SyncNet, Wav2Lip and C2PA are named in the report as software, a generator family and a standard; no paper of theirs is in docs/RESEARCH.md, so none is cited.

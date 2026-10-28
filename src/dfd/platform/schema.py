@@ -10,7 +10,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional
 
-SCHEMA_VERSION = "2"
+SCHEMA_VERSION = "2.1"
+# 2.1 (D3, additive): optional module ``evidence`` (data the module computed, for display), server-written module ``explanation``
+# and report ``summary`` (``dfd.platform.explain``). All three are OPTIONAL (D3); when present they are validated. A version 2 report
+# (stored runs, docs/test_evidence) must not carry explanation or summary. ``coordinator.build_report`` always writes both (tested).
+ACCEPTED_VERSIONS = ("2", SCHEMA_VERSION)
+OPTIONAL_MODULE_KEYS = ("evidence",)
+EVIDENCE_KINDS = ("offset_curve", "frames")
 SECTIONS = ("authenticity", "cross_modal", "provenance")
 SOURCES = ("real", "mock", "external")
 STATUSES = ("completed", "not_applicable", "unsupported", "failed", "timed_out", "skipped")
@@ -20,7 +26,7 @@ FINDINGS = {
     "provenance": ("credentials_valid", "credentials_invalid", "no_credentials_found", "inconclusive"),
 }
 ERROR_CODES = ("MODULE_EXCEPTION", "MODULE_TIMEOUT", "INVALID_RESULT", "APPLICABILITY_FAILED")
-OBSERVATION_KINDS = ("file_metadata", "heuristic", "marker_scan", "verification")
+OBSERVATION_KINDS = ("file_metadata", "heuristic", "marker_scan", "verification", "processing")   # processing: a count recorded while the module ran (2.1, additive)
 MODEL_KEYS = ("name", "version", "weights_sha256", "licence", "evaluation")
 NOT_EVALUATED = "not evaluated"
 STATEMENT = ("This report lists what each module found within its tested scope. A module that found nothing, did not run, "
@@ -48,6 +54,7 @@ class ModuleResult:
     errors: list = field(default_factory=list)     # [{code, message}]
     observations: list = field(default_factory=list)   # [{kind, code, text, value}]: metadata, heuristic flags, marker scans, verifications
     timing_ms: float = 0.0
+    evidence: list = field(default_factory=list)   # [{kind, text, ...}]: intermediate data the module really computed (EVIDENCE_KINDS)
 
     def to_dict(self) -> dict:
         return {k: getattr(self, k) for k in self.__dataclass_fields__}
@@ -62,7 +69,7 @@ def validate_module_result(m: dict) -> list[str]:
     if not isinstance(m, dict):
         return ["module result is not an object"]
     for k in ModuleResult.__dataclass_fields__:
-        if k not in m:
+        if k not in m and k not in OPTIONAL_MODULE_KEYS:
             bad.append(f"missing key {k}")
     if bad:
         return bad
@@ -100,6 +107,23 @@ def validate_module_result(m: dict) -> list[str]:
             bad.append(f"{mid}: a mock result cannot carry a verification observation")
     if not isinstance(m["timing_ms"], (int, float)) or isinstance(m["timing_ms"], bool) or m["timing_ms"] < 0:
         bad.append(f"{mid}: timing_ms must be a non-negative number")
+    ev = m.get("evidence", [])
+    if not isinstance(ev, list):
+        bad.append(f"{mid}: evidence must be a list")
+    else:
+        for e in ev:
+            if not isinstance(e, dict) or e.get("kind") not in EVIDENCE_KINDS or not e.get("text"):
+                bad.append(f"{mid}: bad evidence entry (kind must be one of {EVIDENCE_KINDS}, text required)")
+            elif m["source"] == "mock":
+                bad.append(f"{mid}: a mock result cannot carry evidence")
+            elif m["status"] != "completed":
+                bad.append(f"{mid}: evidence only on a completed result")
+            elif e["kind"] == "frames" and not (isinstance(e.get("frames"), list) and all(
+                    isinstance(f, str) and f.startswith("data:image/jpeg;base64,") for f in e["frames"])):
+                bad.append(f"{mid}: frames evidence must be a list of JPEG data URIs")
+            elif e["kind"] == "offset_curve" and not (isinstance(e.get("offsets"), list) and isinstance(e.get("mean_dist"), list)
+                                                      and len(e["offsets"]) == len(e["mean_dist"])):
+                bad.append(f"{mid}: offset_curve evidence needs offsets and mean_dist of equal length")
     if m["status"] != "completed":
         if m["finding"] is not None or m["score"] is not None:
             bad.append(f"{mid}: finding and score must be null unless completed")
@@ -147,8 +171,8 @@ def validate_report(r: dict) -> list[str]:
     for k in FORBIDDEN_REPORT_KEYS:
         if k in r:
             bad.append(f"report must not carry {k} (no global score or verdict)")
-    if r["schema_version"] != SCHEMA_VERSION:
-        bad.append("schema_version must be '2'")
+    if r["schema_version"] not in ACCEPTED_VERSIONS:
+        bad.append(f"schema_version must be one of {ACCEPTED_VERSIONS}")
     if r["statement"] != STATEMENT:
         bad.append("statement differs from the fixed text")
     ids = []
@@ -192,4 +216,10 @@ def validate_report(r: dict) -> list[str]:
     for c in r["conflicts"]:
         if not (isinstance(c, dict) and c.get("modules") and c.get("note")):
             bad.append(f"bad conflict entry {c}")
+    has_expl = "summary" in r or any(isinstance(m, dict) and "explanation" in m for m in r["modules"])
+    if has_expl and r["schema_version"] != SCHEMA_VERSION:
+        bad.append("explanation and summary are schema 2.1 fields; a version 2 report cannot carry them")
+    elif has_expl:
+        from .explain import check_report_explanations      # explain imports this module; imported here to avoid a cycle
+        bad += check_report_explanations(r)
     return bad

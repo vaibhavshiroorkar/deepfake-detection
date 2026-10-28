@@ -17,18 +17,28 @@ FX = Path(__file__).parent / "fixtures"
 AI = "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia"
 
 
-@pytest.fixture(scope="module")
-def signed(tmp_path_factory):
-    if not (FX / "es256_private.key").exists():      # the upstream public test key is git-ignored (*.key); see fixtures/README.md to fetch it again
-        pytest.skip("es256_private.key not present (git-ignored); fetch it as described in fixtures/README.md")
-    signer = c2pa.Signer.from_info(c2pa.C2paSignerInfo(c2pa.C2paSigningAlg.ES256, (FX / "es256_certs.pem").read_bytes(),
-                                                       (FX / "es256_private.key").read_bytes(), None))
-    manifest = {"claim_generator_info": [{"name": "dfd-test", "version": "1"}],
-                "assertions": [{"label": "c2pa.actions", "data": {"actions": [{"action": "c2pa.created", "digitalSourceType": AI}]}}]}
+MANIFEST = {"claim_generator_info": [{"name": "dfd-test", "version": "1"}],
+            "assertions": [{"label": "c2pa.actions", "data": {"actions": [{"action": "c2pa.created", "digitalSourceType": AI}]}}]}
+
+
+def sign_bytes(pki, data: bytes, mime: str) -> bytes:
+    signer = c2pa.Signer.from_info(c2pa.C2paSignerInfo(c2pa.C2paSigningAlg.ES256, pki["chain"], pki["key"], None))
     out = io.BytesIO()
-    with open(FX / "A.jpg", "rb") as src:
-        c2pa.Builder.from_json(json.dumps(manifest)).sign(signer, "image/jpeg", src, out)
+    c2pa.Builder.from_json(json.dumps(MANIFEST)).sign(signer, mime, io.BytesIO(data), out)
     return out.getvalue()
+
+
+@pytest.fixture(scope="module")
+def signed(pki):
+    return sign_bytes(pki, (FX / "A.jpg").read_bytes(), "image/jpeg")
+
+
+@pytest.fixture
+def anchor_env(pki, tmp_path, monkeypatch):
+    """Point DFD_C2PA_TRUST_ANCHORS at the ephemeral root only (explicit configuration, as in real use)."""
+    f = tmp_path / "anchors.pem"
+    f.write_text(pki["root_pem"], encoding="ascii")
+    monkeypatch.setenv("DFD_C2PA_TRUST_ANCHORS", str(f))
 
 
 def write(tmp_path, name, data):
@@ -49,7 +59,7 @@ def test_signed_file_integrity_ok_but_signer_untrusted(tmp_path, signed):
     p = write(tmp_path, "s.jpg", signed)
     v = V.verify(p)
     assert v["status"] == "verified" and v["validation_state"] == "Valid" and v["trust"] == "untrusted_signer"
-    assert v["signer_trusted"] is False and v["signer"]["issuer"] == "C2PA Test Signing Cert"
+    assert v["signer_trusted"] is False and v["signer"]["common_name"] == "DFD Ephemeral Signer"
     assert v["claim_generator"] == "dfd-test 1" and v["actions"][0]["action"] == "c2pa.created"
     assert v["digital_source_types"] == [AI] and v["ai_generated_declared"] is True
     assert v["library"]["c2pa_python"] and v["library"]["c2pa_sdk"]
@@ -63,13 +73,20 @@ def test_signed_file_integrity_ok_but_signer_untrusted(tmp_path, signed):
     assert "does not prove" in text and "Absence of credentials proves nothing" in text
 
 
-def test_signed_file_with_configured_trust_anchor_is_valid(tmp_path, signed, monkeypatch):
+def test_signed_file_with_configured_trust_anchor_is_valid(tmp_path, signed, anchor_env):
     p = write(tmp_path, "s.jpg", signed)
-    monkeypatch.setenv("DFD_C2PA_TRUST_ANCHORS", str(FX / "es256_certs.pem"))
     assert V.verify(p)["trust"] == "trusted"
     m = run_module(p)
     assert m["finding"] == "credentials_valid"
     assert [o["code"] for o in m["observations"] if o["kind"] == "verification"] == ["C2PA_VALID_TRUSTED"]
+    assert any("does not prove" in x for x in m["limitations"])      # valid never reads as authentic
+
+
+def test_unrelated_anchor_keeps_signer_untrusted(tmp_path, signed, monkeypatch):
+    """Anchors are configured but the signer does not chain to them: still untrusted, never valid."""
+    p = write(tmp_path, "s.jpg", signed)
+    monkeypatch.setenv("DFD_C2PA_TRUST_ANCHORS", str(FX / "es256_certs.pem"))
+    assert run_module(p)["finding"] == "inconclusive"
 
 
 def test_tampered_pixels_are_invalid(tmp_path, signed):
@@ -120,3 +137,45 @@ def test_corrupted_manifest_is_never_valid(tmp_path, signed):
 def test_missing_file_does_not_raise(tmp_path):
     v = V.verify(tmp_path / "nope.jpg")
     assert v["status"] in ("error", "absent", "unsupported")
+
+
+def _make_media(tmp_path, name, args):
+    import shutil
+    import subprocess
+    ff = shutil.which("ffmpeg")
+    if not ff:
+        pytest.skip("ffmpeg not on PATH")
+    p = tmp_path / name
+    subprocess.run([ff, "-loglevel", "error", "-y", *args, str(p)], check=True)
+    return p
+
+
+MEDIA = {
+    "mp4": ("video/mp4", "video", ["-f", "lavfi", "-i", "testsrc=size=160x120:rate=10:duration=1", "-f", "lavfi", "-i",
+                                   "sine=frequency=440:duration=1", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest"], b"mdat"),
+    "wav": ("audio/wav", "audio", ["-f", "lavfi", "-i", "sine=frequency=440:duration=1"], b"data"),
+}
+
+
+@pytest.mark.parametrize("ext", sorted(MEDIA))
+def test_signed_video_and_audio(tmp_path, pki, anchor_env, monkeypatch, ext):
+    mime, kind, args, marker = MEDIA[ext]
+    src = _make_media(tmp_path, f"src.{ext}", args)
+    signed_bytes = sign_bytes(pki, src.read_bytes(), mime)
+    p = write(tmp_path, f"s.{ext}", signed_bytes)
+    # trusted via explicit anchor
+    m = run_module(p, mime)
+    assert m["finding"] == "credentials_valid"
+    # default: no anchors configured -> integrity ok, signer not established
+    monkeypatch.delenv("DFD_C2PA_TRUST_ANCHORS")
+    m = run_module(p, mime)
+    assert m["finding"] == "inconclusive"
+    assert [o["code"] for o in m["observations"] if o["kind"] == "verification"] == ["C2PA_VALID_SIGNER_UNTRUSTED"]
+    assert any(o["code"] == "C2PA_DECLARED_SOURCE_AI" and "not a detection" in o["text"] for o in m["observations"])
+    # tamper one byte of the media payload
+    b = bytearray(signed_bytes)
+    b[b.find(marker, 64) + 100] ^= 0xFF
+    t = write(tmp_path, f"t.{ext}", bytes(b))
+    v = V.verify(t)
+    assert v["validation_state"] == "Invalid", v
+    assert run_module(t, mime)["finding"] == "credentials_invalid"

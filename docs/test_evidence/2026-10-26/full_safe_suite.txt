@@ -1,0 +1,77 @@
+2026-10-26T22:13:37+05:30
+============================= test session starts =============================
+platform win32 -- Python 3.13.15, pytest-9.1.1, pluggy-1.7.0
+tested source state: git HEAD 5af239a9427339890bb63169476de12099fc5f47; tracked files MODIFIED vs HEAD (27 files)
+rootdir: D:\Final Year Project
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 512 items / 13 deselected / 499 selected
+
+tests\data\test_data_builders.py ..............                          [  2%]
+tests\data\test_data_celebdf_pp.py ......                                [  4%]
+tests\data\test_data_dedup.py .....                                      [  5%]
+tests\data\test_data_devx.py ...........                                 [  7%]
+tests\data\test_data_dfd_itw.py ..                                       [  7%]
+tests\data\test_data_leakage.py ...........                              [  9%]
+tests\data\test_data_loaders.py .........                                [ 11%]
+tests\data\test_data_manifest.py ....                                    [ 12%]
+tests\data\test_data_splits.py .......                                   [ 13%]
+tests\data\test_fakeavceleb.py ......                                    [ 15%]
+tests\eval\test_eval_bootstrap.py .........                              [ 16%]
+tests\eval\test_eval_devx_compare.py ..........                          [ 18%]
+tests\eval\test_eval_guard.py .......                                    [ 20%]
+tests\eval\test_eval_metrics.py ..................................       [ 27%]
+tests\eval\test_eval_pipeline.py ....                                    [ 27%]
+tests\eval\test_eval_scorefile.py ......                                 [ 29%]
+tests\eval\test_eval_threshold_calibration.py ....................       [ 33%]
+tests\infer\test_infer_library.py .....................                  [ 37%]
+tests\infer\test_infer_real_adapter.py .................                 [ 40%]
+tests\infer\test_infer_v2_checkpoint.py ..............                   [ 43%]
+tests\platform\test_coordinator_reliability.py ...........               [ 45%]
+tests\platform\test_platform_core.py .........................           [ 50%]
+tests\platform_c2pa\test_c2pa.py ...........                             [ 52%]
+tests\platform_dashboard\test_dashboard.py .................             [ 56%]
+tests\platform_dashboard\test_dashboard_live_ui.py ............          [ 58%]
+tests\platform_genvideo\test_generated_video.py ........................ [ 63%]
+......................                                                   [ 67%]
+tests\platform_lipsync\test_lip_sync.py ......................           [ 72%]
+tests\platform_live\test_live_server.py .........                        [ 74%]
+tests\platform_live_face\test_live_face.py ...s                          [ 74%]
+tests\platform_modules\test_modules.py ........................          [ 79%]
+tests\platform_modules\test_parity.py s                                  [ 79%]
+tests\platform_pipeline\test_pipeline.py ..........                      [ 81%]
+tests\platform_provenance\test_c2pa_unavailable.py ...                   [ 82%]
+tests\platform_provenance\test_provenance.py ......                      [ 83%]
+tests\prep\test_prep_audio.py ....                                       [ 84%]
+tests\prep\test_prep_face.py .....                                       [ 85%]
+tests\prep\test_prep_pipeline.py .....                                   [ 86%]
+tests\prep\test_prep_video.py ............                               [ 88%]
+tests\rppg\test_pulse.py ...........                                     [ 91%]
+tests\sweep\test_sweep_extract.py .....                                  [ 92%]
+tests\sweep\test_sweep_rank.py ........                                  [ 93%]
+tests\web\test_web_app.py ...................                            [ 97%]
+tests\web\test_web_browser.py ............                               [100%]
+
+============================== warnings summary ===============================
+tests\platform_live_face\test_live_face.py:99
+  D:\Final Year Project\tests\platform_live_face\test_live_face.py:99: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests/platform_genvideo/test_generated_video.py::test_unvalidated_head_is_inconclusive_at_any_score[-1000000.0]
+tests/platform_genvideo/test_generated_video.py::test_validated_true_without_approved_hash_is_inconclusive[-1000000.0]
+tests/platform_genvideo/test_generated_video.py::test_installed_head_stays_inconclusive_through_the_full_module_path
+  D:\Final Year Project\src\dfd\platform\genvideo\model.py:24: RuntimeWarning: overflow encountered in exp
+    return 1.0 / (1.0 + np.exp(-z))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+SKIPPED [1] tests\platform_live_face\test_live_face.py:99: set RUN_LIVE_FACE=1 to run the real checkpoint (GPU) on non-sealed FF++/LAV-DF/ASVspoof fixtures
+SKIPPED [1] tests\platform_modules\test_parity.py:23: set RUN_PARITY=1 to run the real detectors
+========= 497 passed, 2 skipped, 13 deselected, 4 warnings in 49.58s ==========
+[mov,mp4,m4a,3gp,3g2,mj2 @ 000002bd3731b400] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 000002bd374ac040] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 000002bd374ac040] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 000002bd374ac040] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 000002bd070df340] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 000002bd07101e00] moov atom not found
+exit=0

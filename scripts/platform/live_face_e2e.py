@@ -102,11 +102,14 @@ def browser_check(base: str, fx: dict) -> dict:
         pg.click("#analyse-btn")
         pg.wait_for_function("() => document.querySelector('#live-status').textContent.includes('Done')", timeout=900000)
         banner, body, stmt = pg.inner_text("#banner"), pg.inner_text("body"), pg.inner_text("#statement")
-        cards = [c.inner_text() for c in pg.locator("article.card").all()]
-        face = next((t for t in cards if "face_video" in t), "")
+        card = pg.locator("article.card[data-module='face_video']")      # redesign (D-076): ids, version and source live under Technical details
+        face_status = card.get_attribute("data-status") if card.count() else None
+        if card.count():
+            card.locator("details.tech-box > summary").click()
+        face = card.inner_text() if card.count() else ""
         # the media_metadata limitation says "does not show it is genuine" (a negation); it is the only allowed use of the word
         low = body.lower().replace(stmt.lower(), "").replace("does not show it is genuine", "")
-        res = {"banner": banner, "live_banner": "LIVE ANALYSIS" in banner, "mock_banner": "MOCK" in banner, "face_card_text": face,
+        res = {"banner": banner, "live_banner": "LIVE ANALYSIS" in banner, "mock_banner": "MOCK" in banner, "face_card_text": face, "face_status": face_status,
                "forbidden_hits": [p for p in FORBIDDEN if re.search(p, low)], "page_errors": errs}
         pg.screenshot(path=str(OUT / "live_face_dashboard.png"), full_page=True)
         b.close()

@@ -1,0 +1,176 @@
+paper/main.tex:119	improved	T	version, a paired difference of +0.1980 [+0.1688, +0.2242], improved by the
+paper/main.tex:123	improved	T	+0.2266], improved and robust. Against the re-run Xception baseline (AUC 0.804
+paper/main.tex:123	robust	T	+0.2266], improved and robust. Against the re-run Xception baseline (AUC 0.8042
+paper/main.tex:125	superior	S	superior by the declared 95\,\% rule; the 98.33\,\% interval
+paper/main.tex:126	superiority	S	[$-0.0011$, +0.0355] contains zero, so superiority is not robust to the
+paper/main.tex:126	robust	N	[$-0.0011$, +0.0355] contains zero, so superiority is not robust to the
+paper/main.tex:140	generalisation	K	deepfake detection, multimodal, generalisation, evaluation protocol,
+paper/main.tex:208	improved	L	increases~\cite{rossler2019faceforensics}. Celeb-DF was built with an improved
+paper/main.tex:218	generalisation	L	\subsection{Visual detectors and generalisation}
+paper/main.tex:228	generalised	L	vision-language model generalised across generators better than trained
+paper/main.tex:462	generalisation	D	generalisation result.
+paper/main.tex:537	confirmed	D	confirmed performance. Each frozen iteration is evaluated once on the
+paper/main.tex:549	robustness	D	95\,\% interval; because there are three tests, a robustness line at the
+paper/main.tex:552	robust	D	is written as not robust to the Bonferroni level. The robustness line does not
+paper/main.tex:552	robustness	D	is written as not robust to the Bonferroni level. The robustness line does not
+paper/main.tex:609	superior	D	zero is reported as not distinguished, and ours is called superior only when
+paper/main.tex:1071	confirmed	D	choose the next step, and they are not confirmed performance. They are the mean
+paper/main.tex:1426	superior	D	with $\delta=0.0100$, and superior if the lower bound is above zero, on the
+paper/main.tex:1428	robustness	D	its declared 95\,\% rule, and the 98.33\,\% robustness interval is printed next
+paper/main.tex:1436	robustness	D	98.33\,\% column is the robustness interval (Bonferroni over three); AUC rows
+paper/main.tex:1457	improved	T	T1 final minus I-0, Celeb-DF family & 7\,650 / 344 & +0.1980 [+0.1688, +0.2242] & [+0.1627, +0.2303] & improved; robust % E-014
+paper/main.tex:1457	robust	T	final minus I-0, Celeb-DF family & 7\,650 / 344 & +0.1980 [+0.1688, +0.2242] & [+0.1627, +0.2303] & improved; robust % E-014
+paper/main.tex:1459	improved	T	T2 final minus I-0, In-the-Wild & 24\,788 / 42 & +0.1633 [+0.1177, +0.2266] & [+0.1085, +0.2481] & improved; robust % E-014
+paper/main.tex:1459	robust	T	T2 final minus I-0, In-the-Wild & 24\,788 / 42 & +0.1633 [+0.1177, +0.2266] & [+0.1085, +0.2481] & improved; robust % E-014
+paper/main.tex:1461	superior	S	T3 final minus baseline, Celeb-DF family & 7\,650 / 344 & +0.0176 [+0.0025, +0.0327] & [$-0.0011$, +0.0355] & superior at 95\,\%, not robust to the Bonferroni level; non-inferior
+paper/main.tex:1461	robust	N	Celeb-DF family & 7\,650 / 344 & +0.0176 [+0.0025, +0.0327] & [$-0.0011$, +0.0355] & superior at 95\,\%, not robust to the Bonferroni level; non-inferior at both % E-014
+paper/main.tex:1470	improved	T	zero, so the video system is improved by the declared rule, and the 98.33\,\%
+paper/main.tex:1473	improved	T	[0.6802, 0.8035]; the difference of T2 is +0.1633 [+0.1177, +0.2266], improved,
+paper/main.tex:1474	robustness	D	with a robustness interval of [+0.1085, +0.2481]. Against the Xception baseli
+paper/main.tex:1477	superior	S	superior by the declared 95\,\% rule. The 98.33\,\% interval is
+paper/main.tex:1478	superiority	S	[$-0.0011$, +0.0355] and contains zero, so superiority is not robust to the
+paper/main.tex:1478	robust	N	[$-0.0011$, +0.0355] and contains zero, so superiority is not robust to the
+paper/main.tex:1481	superior	S	evidence supports is therefore: superior at the 95\,\% level, not robust to the
+paper/main.tex:1481	robust	N	evidence supports is therefore: superior at the 95\,\% level, not robust to the
+paper/main.tex:1577	improve	O	Temperature scaling fitted on validation did not improve the calibration on the
+paper/main.tex:1675	improvement	O	above zero, so the pre-stated hypothesis of improvement is supported. The gain is
+paper/main.tex:1740	generalisable	R	RawNet2 under the protocol of~\cite{pascu2024generalisable}, where the sign of
+paper/main.tex:1745	generalisable	R	encoder~\cite{pascu2024generalisable}) use more speakers, so no gap is computed.
+paper/main.tex:1786	superiority	S	than the video values; the superiority of T3 holds at the 95\,\% level
+paper/main.tex:1819	confirmed	O	confirmed gain. The three confirmatory tests share one bootstrap, so
+paper/main.tex:1820	robustness	W	98.33\,\% line is a robustness check and not a second decision rule.
+paper/main.tex:1869	improved	T	system is improved over the working version on the Celeb-DF family (AUC 0.8218
+paper/main.tex:1873	superior	S	video system is superior by the declared 95\,\% rule (+0.0176 [+0.0025,
+paper/main.tex:1875	superiority	S	superiority is not robust to the Bonferroni level, and non-inferiority
+paper/main.tex:1875	robust	N	superiority is not robust to the Bonferroni level, and non-inferiority with a
+report\ch1_2.py:32	improve	P	urpose is to show a documented path: a simple working version first, then at least seven iterations that each improve "
+report\ch1_2.py:59	improvement	P	"Test remote photoplethysmography, the pulse visible in skin colour, as a candidate improvement and adopt it only if the evidence on the development slice
+report\ch1_2.py:90	improved	L	p("Celeb-DF was built to be harder: 590 real videos of 59 celebrities and 5,639 face-swap videos made with an improved synthesis pipeline <c celebdf>. Nine existing "
+report\ch1_2.py:95	generalisation	L	"videos of 59 identities, and defines three generalisation protocols <c celebdfpp>. A detector trained on FaceForensic
+report\ch1_2.py:112	generalisation	L	B.h2("Visual Detectors and the Generalisation Problem", trace="RESEARCH R-004, R-017, R-018, R-021, R-034
+report\ch1_2.py:135	robust	W	"one used here. Cozzolino et al. obtained robust results with a linear support vector machine on CLIP featur
+report\ch1_2.py:187	improvement	P	"version to a documented improvement, with the hypothesis written before each run and every comp
+report\ch3.py:114	superior	D	B.equation("noninf", r"\text{non-inferior:}\;\; q_{0.025}\!\left(\Delta^{*}\right)>-\delta,\qquad \text{superior:}\;\; q_{0.025}\!\left(\Delta^{*}\right)>0")
+report\ch4.py:33	improved	T	"The sealed run was made once for each frozen iteration: the final face-video and speech systems are improved over the working version at the 95 percent level and at the
+report\ch4.py:33	superior	S	he working version at the 95 percent level and at the 98.33 percent level, and the final face-video system is superior to the re-run baseline "
+report\ch4.py:37	generalise	W	thresholds do not transfer and the data set carries a codec shortcut, that the generated-video head does not generalise to DF26, and "
+report\ch4.py:86	generalisation	D	"generalisation result, audio-visual data with labels for each modality, au
+report\ch4.py:271	improvement	P	B.p("The working version is not an improvement; it is the baseline that everything else is compared with.
+report\ch4.py:315	improve	D	ange within about 0.01; balanced accuracy and ECE change more", "AUC interval includes zero and the other two improve by less than their intervals"],
+report\ch4.py:334	improvement	P	B.p("The pulse is a candidate improvement and not an adopted component. Its success and failure thres
+report\ch4.py:393	confirmed	D	"and they choose the next step; they are never presented as confirmed performance. At the freeze each frozen iteration is evaluat
+report\ch4.py:399	robustness	D	omparison makes the three tests; a Bonferroni interval at the 98.33 percent level is printed beside each as a robustness line. The margin "
+report\ch4_iter.py:214	improvement	D	"Each is called an improvement if the lower bound of the paired 95 percent interval is abo
+report\ch4_iter.py:215	superior	D	"superior if the lower bound is above zero, non-inferior if it is abo
+report\ch4_iter.py:216	robustness	D	ains zero but not −0.0100, worded as not distinguished and non-inferior by the rule. For each of the three, a robustness line is printed beside the declared verdict: the interval a
+report\ch4_iter.py:217	robust	D	does not replace the declared rule; a verdict that the corrected interval does not support is reported as not robust to the Bonferroni level. "
+report\ch4_iter.py:241	superiority	S	"The baseline is one family, Xception at 224 pixels, re-run on the same data, so the superiority at the 95 percent level says nothing about other published
+report\ch4_iter.py:241	superiority	S	uperiority at the 95 percent level says nothing about other published detectors or other input sizes; and the superiority is not robust to the 98.33 percent level.",
+report\ch4_iter.py:241	robust	N	5 percent level says nothing about other published detectors or other input sizes; and the superiority is not robust to the 98.33 percent level.",
+report\ch4_platform.py:124	generalise	W	B.p("The head did not generalise to a held-out benchmark (the section on the experiments aft
+report\ch4_platform.py:316	generalise	W	"this head, trained on this corpus, does not generalise to talking-head video from other generators.")
+report\ch4_platform.py:404	improvement	O	B.p("The hypothesis of improvement is supported: on 21 generators that are not in its training
+report\ch4_results.py:66	confirmed	D	val of 2,000 resamples, and a verdict on this slice reports sign, size and interval and is never presented as confirmed performance. The "
+report\ch4_results.py:79	generalisation	O	"development slice (for DINOv2 small 0.7985 against 0.6933), which is the generalisation gap that the hypothesis predicted. The three candidates tha
+report\ch4_results.py:95	improved	O	"every audio encoder (for HuBERT from 0.3293 to 0.4052), whereas it improved for the OpenAI CLIP on generated images (from 0.0462 to 0.0
+report\ch4_results.py:152	improve	O	"fitted on validation did not improve the calibration on the slice for face video or audio and di
+report\ch4_sealed.py:11	robustness	D	"the 98.33 percent level is printed beside it as a robustness line. In the third, the final face-video system is compared
+report\ch4_sealed.py:12	robustness	D	sealed test sets (AUC and difference with 95 percent group bootstrap intervals; the last two columns give the robustness interval at the 98.33 percent level and the verdict).",
+report\ch4_sealed.py:14	improved	T	r/>[0.8020, 0.8393]", "0.6238<br/>[0.6015, 0.6486]", "+0.1980<br/>[+0.1688, +0.2242]", "[+0.1627, +0.2303]", "improved; robust"],
+report\ch4_sealed.py:14	robust	T	, 0.8393]", "0.6238<br/>[0.6015, 0.6486]", "+0.1980<br/>[+0.1688, +0.2242]", "[+0.1627, +0.2303]", "improved; robust"],
+report\ch4_sealed.py:15	improved	T	r/>[0.8896, 0.9383]", "0.7516<br/>[0.6802, 0.8035]", "+0.1633<br/>[+0.1177, +0.2266]", "[+0.1085, +0.2481]", "improved; robust"],
+report\ch4_sealed.py:15	robust	T	, 0.9383]", "0.7516<br/>[0.6802, 0.8035]", "+0.1633<br/>[+0.1177, +0.2266]", "[+0.1085, +0.2481]", "improved; robust"],
+report\ch4_sealed.py:16	superior	S	r/>[0.8020, 0.8393]", "0.8042<br/>[0.7841, 0.8223]", "+0.0176<br/>[+0.0025, +0.0327]", "[−0.0011, +0.0355]", "superior at 95 percent; not robust at 98.33 percent; non-inferior at
+report\ch4_sealed.py:16	robust	N	2<br/>[0.7841, 0.8223]", "+0.0176<br/>[+0.0025, +0.0327]", "[−0.0011, +0.0355]", "superior at 95 percent; not robust at 98.33 percent; non-inferior at both"]],
+report\ch4_sealed.py:20	improved	T	"so the verdict under the declared rule is <i>improved</i>, and the interval at the 98.33 percent level, [+0.1627,
+report\ch4_sealed.py:21	improved	T	, 0.8035], a difference of +0.1633 [+0.1177, +0.2266] and, at the 98.33 percent level, [+0.1085, +0.2481]: <i>improved</i>, and robust to the correction. The speech intervals are
+report\ch4_sealed.py:21	robust	T	rence of +0.1633 [+0.1177, +0.2266] and, at the 98.33 percent level, [+0.1085, +0.2481]: <i>improved</i>, and robust to the correction. The speech intervals are wide, "
+report\ch4_sealed.py:23	superior	S	+0.0327]. The lower bound is above zero, so by the declared 95 percent rule the final face-video system is <i>superior</i> to the re-run Xception "
+report\ch4_sealed.py:24	robustness	D	"baseline on this set. The robustness interval, [−0.0011, +0.0355], contains zero, so the superio
+report\ch4_sealed.py:24	superiority	S	"baseline on this set. The robustness interval, [−0.0011, +0.0355], contains zero, so the superiority is not robust to the Bonferroni level. The lower bound is a
+report\ch4_sealed.py:24	robust	N	"baseline on this set. The robustness interval, [−0.0011, +0.0355], contains zero, so the superiority is not robust to the Bonferroni level. The lower bound is above −0.0100 a
+report\ch4_sealed.py:25	superior	S	"at both. The wording that the data support is therefore: superior at the 95 percent level, not robust to the 98.33 percent le
+report\ch4_sealed.py:25	robust	N	"at both. The wording that the data support is therefore: superior at the 95 percent level, not robust to the 98.33 percent level, non-inferior at both. The resul
+report\ch5.py:25	improved	T	against 0.6238 [0.6015, 0.6486] for the working version, a difference of +0.1980 [+0.1688, +0.2242], which is improved under the declared rule and also at the 98.33 percent level
+report\ch5.py:27	improved	T	"improved, and robust at the 98.33 percent level ([+0.1085, +0.2481])
+report\ch5.py:27	robust	T	"improved, and robust at the 98.33 percent level ([+0.1085, +0.2481]). Against th
+report\ch5.py:27	superior	S	ption baseline (0.8042 [0.7841, 0.8223]) the final face-video system is higher by +0.0176 [+0.0025, +0.0327]: superior at the "
+report\ch5.py:28	robust	N	"95 percent level, not robust to the 98.33 percent level, whose interval [−0.0011, +0.035
+report\ch5.py:54	improvements	T	"The sealed run gave two improvements over the working version (face video and speech) at both le
+report\ch5.py:54	superiority	S	"The sealed run gave two improvements over the working version (face video and speech) at both levels, and a superiority over the re-run Xception baseline that holds at the 95 perc
+report\ch5.py:54	robust	N	t both levels, and a superiority over the re-run Xception baseline that holds at the 95 percent level, is not robust to the 98.33 percent level and is non-inferior at both; eve
+report\ch5.py:70	superiority	S	families of published detectors and at other input sizes, with more seeds for the margin, because the present superiority rests on one baseline family at 224 pixels and is not robus
+report\ch5.py:70	robust	N	e seeds for the margin, because the present superiority rests on one baseline family at 224 pixels and is not robust to the 98.33 percent level.",
+report\ch5.py:75	robustness	O	tions from mixup in the augmentation lever, and test it on a held-out perturbation slice, before any claim of robustness to compression is made.",
+report\front.py:133	improvements	T	"both are improvements by the declared rule and also at the 98.33 percent level. A
+report\front.py:133	superior	S	98.33 percent level. Against the re-run Xception baseline (0.8042 [0.7841, 0.8223]) the face-video system is superior at the 95 percent level (+0.0176 [+0.0025, +0.0327]), "
+report\refs.py:9	generalizable	R	dfpp": "Y. Li, D. Zhu, X. Cui and S. Lyu, “Celeb-DF++: A large-scale challenging video DeepFake benchmark for generalizable forensics,” arXiv:2507.18015v1, 2025.",
+report\refs.py:15	generalisable	R	"lips": "A. Haliassos, K. Vougioukas, S. Petridis and M. Pantic, “Lips don’t lie: A generalisable and robust approach to face forgery detection,” in Proc. IE
+report\refs.py:15	robust	R	"lips": "A. Haliassos, K. Vougioukas, S. Petridis and M. Pantic, “Lips don’t lie: A generalisable and robust approach to face forgery detection,” in Proc. IEEE/CVF Conf
+report\refs.py:16	improving	R	ty": "S. Dong, J. Wang, R. Ji, J. Liang, H. Fan and Z. Ge, “Implicit identity leakage: The stumbling block to improving deepfake detection generalization,” in Proc. IEEE/CVF Confe
+report\refs.py:16	generalization	R	, J. Liang, H. Fan and Z. Ge, “Implicit identity leakage: The stumbling block to improving deepfake detection generalization,” in Proc. IEEE/CVF Conference on Computer Vision and Patte
+report\refs.py:17	generalizable	R	Jin, K.-Y. Zhang, C. Liu, S. Chen, T. Yao, S. Ding, B. Wu and L. Yuan, “Orthogonal subspace decomposition for generalizable AI-generated image detection,” in Proc. 42nd International
+report\refs.py:21	generalize	R	"ojha": "U. Ojha, Y. Li and Y. J. Lee, “Towards universal fake image detectors that generalize across generative models,” in Proc. IEEE/CVF Conference on
+report\refs.py:30	generalisable	R	"pascu": "O. Pascu, A. Stan, D. Oneata, E. Oneata and H. Cucu, “Towards generalisable and calibrated audio deepfake detection with self-supervise
+report\refs.py:31	generalize	R	ewild": "N. M. Müller, P. Czempin, F. Dieckmann, A. Froghyar and K. Böttinger, “Does audio deepfake detection generalize?,” in Proc. Interspeech, 2022.",
+report\refs.py:53	robust	R	M. Oquab, T. Darcet, T. Moutakanni, H. Vo, M. Szafraniec, V. Khalidov, P. Fernandez et al., “DINOv2: Learning robust visual features without supervision,” Transactions on Machi
+report\refs.py:61	robust	R	"whisper": "A. Radford, J. W. Kim, T. Xu, G. Brockman, C. McLeavey and I. Sutskever, “Robust speech recognition via large-scale weak supervision,” in Pr
+slides/build_slides.py:515	improve	P	("n", "4.  Improve in iterations, each from a written hypothesis with success
+slides/build_slides.py:528	generalised	L	"Frozen features: a linear probe on frozen CLIP features generalised across generators when trained on ProGAN (Ojha et al., 2023
+slides/build_slides.py:542	generalised	L	"A linear probe on frozen CLIP features generalised across generators.",
+slides/build_slides.py:746	improvement	P	"I-0 is the working version and not an improvement: a frozen encoder, a linear head and temperature scaling, c
+slides/build_slides.py:820	improves	O	validation AUC are 1.000, the development AUC is 0.994 on two generator units (0.999 and 0.983), calibration improves (ECE 0.046 to 0.005), and the errors are border artefacts i
+slides/build_slides.py:959	improvement	P	"Remote photoplethysmography is a candidate improvement, not an adopted component (D-006, O-010). "
+slides/build_slides.py:1040	robustness	D	[0.8020, 0.8393] against the working version 0.6238 [0.6015, 0.6486], difference +0.1980 [+0.1688, +0.2242], robustness interval at 98.33 percent [+0.1627, +0.2303]: improved, rob
+slides/build_slides.py:1040	improved	T	015, 0.6486], difference +0.1980 [+0.1688, +0.2242], robustness interval at 98.33 percent [+0.1627, +0.2303]: improved, robust. "
+slides/build_slides.py:1040	robust	T	6], difference +0.1980 [+0.1688, +0.2242], robustness interval at 98.33 percent [+0.1627, +0.2303]: improved, robust. "
+slides/build_slides.py:1041	robustness	D	42 speakers): 0.9148 [0.8896, 0.9383] against 0.7516 [0.6802, 0.8035], difference +0.1633 [+0.1177, +0.2266], robustness interval [+0.1085, +0.2481]: improved, robust. "
+slides/build_slides.py:1041	improved	T	ainst 0.7516 [0.6802, 0.8035], difference +0.1633 [+0.1177, +0.2266], robustness interval [+0.1085, +0.2481]: improved, robust. "
+slides/build_slides.py:1041	robust	T	16 [0.6802, 0.8035], difference +0.1633 [+0.1177, +0.2266], robustness interval [+0.1085, +0.2481]: improved, robust. "
+slides/build_slides.py:1042	superior	S	e at 3e-4 (0.8042 [0.7841, 0.8223]) on the same set, margin 0.0100: difference +0.0176 [+0.0025, +0.0327], so superior by the declared 95 percent rule; the interval at 98.33 perc
+slides/build_slides.py:1042	superiority	S	ior by the declared 95 percent rule; the interval at 98.33 percent, [-0.0011, +0.0355], contains zero, so the superiority is not robust to the Bonferroni level; the lower bound is a
+slides/build_slides.py:1042	robust	N	95 percent rule; the interval at 98.33 percent, [-0.0011, +0.0355], contains zero, so the superiority is not robust to the Bonferroni level; the lower bound is above -0.0100 a
+slides/build_slides.py:1047	improvement	T	["**Video: improvement**\nCeleb-DF family, 7,650 videos", "0.8218\n[0.8020, 0.8393
+slides/build_slides.py:1047	improved	T	"0.8218\n[0.8020, 0.8393]", "0.6238\n[0.6015, 0.6486]", "+0.1980\n[+0.1688, +0.2242]", "[+0.1627, +0.2303]", "improved, robust"],
+slides/build_slides.py:1047	robust	T	0.8020, 0.8393]", "0.6238\n[0.6015, 0.6486]", "+0.1980\n[+0.1688, +0.2242]", "[+0.1627, +0.2303]", "improved, robust"],
+slides/build_slides.py:1048	improvement	T	["**Speech: improvement**\nIn-the-Wild, 24,788 clips", "0.9148\n[0.8896, 0.9383]",
+slides/build_slides.py:1048	improved	T	"0.9148\n[0.8896, 0.9383]", "0.7516\n[0.6802, 0.8035]", "+0.1633\n[+0.1177, +0.2266]", "[+0.1085, +0.2481]", "improved, robust"],
+slides/build_slides.py:1048	robust	T	0.8896, 0.9383]", "0.7516\n[0.6802, 0.8035]", "+0.1633\n[+0.1177, +0.2266]", "[+0.1085, +0.2481]", "improved, robust"],
+slides/build_slides.py:1049	superior	S	"0.8218\n[0.8020, 0.8393]", "0.8042\n[0.7841, 0.8223]", "+0.0176\n[+0.0025, +0.0327]", "[-0.0011, +0.0355]", "superior at 95 percent; not robust at 98.33 percent; non-inferior at
+slides/build_slides.py:1049	robust	N	"0.8042\n[0.7841, 0.8223]", "+0.0176\n[+0.0025, +0.0327]", "[-0.0011, +0.0355]", "superior at 95 percent; not robust at 98.33 percent; non-inferior at both"],
+slides/build_slides.py:1057	improved	T	("bs", "Video and speech: the lower bounds are above zero at both levels, so both are improved and robust.", 16),
+slides/build_slides.py:1057	robust	T	("bs", "Video and speech: the lower bounds are above zero at both levels, so both are improved and robust.", 16),
+slides/build_slides.py:1058	superior	S	("bs", "Baseline: superior at the 95 percent level only; non-inferior at both levels."
+slides/build_slides.py:1385	improvement	O	against 0.7039; paired gain +0.1800 [+0.1643, +0.1959], each seed's interval above zero, so the hypothesis of improvement is supported. "
+slides/build_slides.py:1446	superior	S	d tests (Celeb-DF family: final system 0.8218, Xception 0.8042, paired difference +0.0176 [+0.0025, +0.0327], superior by the declared 95 percent rule but not robust at the Bonfe
+slides/build_slides.py:1446	robust	N	eption 0.8042, paired difference +0.0176 [+0.0025, +0.0327], superior by the declared 95 percent rule but not robust at the Bonferroni level, E-014). "
+slides/build_slides.py:1507	superiority	S	"The baseline is one family, Xception at 224 pixels, so the superiority at the 95 percent level says nothing about other detectors,
+slides/build_slides.py:1507	robust	N	n at 224 pixels, so the superiority at the 95 percent level says nothing about other detectors, and it is not robust at the 98.33 percent level. The margin 0.0100 is the floor
+slides/build_slides.py:1515	superior	S	("b", "One baseline family, Xception at 224 pixels: superior at 95 percent, not robust at 98.33 percent. The margin 0.01
+slides/build_slides.py:1515	robust	N	("b", "One baseline family, Xception at 224 pixels: superior at 95 percent, not robust at 98.33 percent. The margin 0.0100 is a floor from three s
+slides/build_slides.py:1544	robustness	D	eforehand (D-025, D-041, D-066); a 98.33 percent interval (Bonferroni over three) is printed beside each as a robustness line. "
+slides/build_slides.py:1545	improved	T	"Results: video improved by +0.1980 [+0.1688, +0.2242] (robustness interval [+0.1627
+slides/build_slides.py:1545	robustness	D	"Results: video improved by +0.1980 [+0.1688, +0.2242] (robustness interval [+0.1627, +0.2303]); speech improved by +0.1633 [+
+slides/build_slides.py:1545	improved	T	"Results: video improved by +0.1980 [+0.1688, +0.2242] (robustness interval [+0.1627, +0.2303]); speech improved by +0.1633 [+0.1177, +0.2266] (robustness interval [+0.1085
+slides/build_slides.py:1545	robustness	D	0 [+0.1688, +0.2242] (robustness interval [+0.1627, +0.2303]); speech improved by +0.1633 [+0.1177, +0.2266] (robustness interval [+0.1085, +0.2481]); against the baseline +0.0176
+slides/build_slides.py:1545	superior	S	[+0.1177, +0.2266] (robustness interval [+0.1085, +0.2481]); against the baseline +0.0176 [+0.0025, +0.0327], superior at 95 percent, the robustness interval [-0.0011, +0.0355] c
+slides/build_slides.py:1545	robustness	D	ss interval [+0.1085, +0.2481]); against the baseline +0.0176 [+0.0025, +0.0327], superior at 95 percent, the robustness interval [-0.0011, +0.0355] contains zero so it is not robu
+slides/build_slides.py:1545	robust	N	0025, +0.0327], superior at 95 percent, the robustness interval [-0.0011, +0.0355] contains zero so it is not robust to the Bonferroni level, and the system is non-inferior at
+slides/build_slides.py:1555	improved	T	("b", "Video and speech improved over the working version, at both levels.", 16),
+slides/build_slides.py:1556	superior	S	("b", "Superior to the re-run baseline at 95 percent only.", 16),
+slides/build_slides.py:1564	improved	T	["Sealed: final against working version, video", "+0.1980 [+0.1688, +0.2242]; improved, robust"],
+slides/build_slides.py:1564	robust	T	["Sealed: final against working version, video", "+0.1980 [+0.1688, +0.2242]; improved, robust"],
+slides/build_slides.py:1565	improved	T	["Sealed: final against working version, speech", "+0.1633 [+0.1177, +0.2266]; improved, robust"],
+slides/build_slides.py:1565	robust	T	["Sealed: final against working version, speech", "+0.1633 [+0.1177, +0.2266]; improved, robust"],
+slides/build_slides.py:1566	superior	S	["Sealed: final against re-run baseline (margin 0.0100)", "+0.0176 [+0.0025, +0.0327]; superior at 95 percent, not robust at 98.33 percent, non-inferior at
+slides/build_slides.py:1566	robust	N	led: final against re-run baseline (margin 0.0100)", "+0.0176 [+0.0025, +0.0327]; superior at 95 percent, not robust at 98.33 percent, non-inferior at both"],
+slides/build_slides.py:1603	improving	R	"Dong, S. et al. (2023). Implicit identity leakage: the stumbling block to improving deepfake detection generalization. CVPR.",
+slides/build_slides.py:1603	generalization	R	"Dong, S. et al. (2023). Implicit identity leakage: the stumbling block to improving deepfake detection generalization. CVPR.",
+slides/build_slides.py:1613	generalizable	R	"Li, Y. et al. (2025). Celeb-DF++: a large-scale challenging video DeepFake benchmark for generalizable forensics. arXiv:2507.18015.",
+slides/build_slides.py:1615	generalize	R	"Muller, N. M. et al. (2022). Does audio deepfake detection generalize? Interspeech.",
+slides/build_slides.py:1616	generalize	R	"Ojha, U., Li, Y., Lee, Y. J. (2023). Towards universal fake image detectors that generalize across generative models. CVPR.",
+slides/build_slides.py:1683	superior	D	("b", "Superior only when the whole interval is above zero; an interval tha
+slides/build_slides.py:1689	confirmed	D	development slice are exploratory: they report sign, size and interval and they choose the next step, never a confirmed performance (D-041). "
+slides/build_slides.py:1691	robustness	D	hanged; a 98.33 percent interval (Bonferroni over three, from the same resamples) is printed beside each as a robustness line, and a verdict that it does not support is written not
+slides/build_slides.py:1691	robust	D	resamples) is printed beside each as a robustness line, and a verdict that it does not support is written not robust to the Bonferroni level. "
+slides/build_slides.py:1712	robustness	D	slides. Three pre-declared tests; non-inferiority margin 0.0100 from the baseline seed spread; 98.33 percent robustness line.")], "stair_note")

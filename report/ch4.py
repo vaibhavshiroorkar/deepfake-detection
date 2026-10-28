@@ -4,13 +4,14 @@ import ch4_results as R
 import ch4_sealed as SE
 HERE_L = __import__("pathlib").Path(os.path.dirname(os.path.abspath(__file__))) / "_labelled"
 import ch4_iter as IT
+import ch4_platform as PL
 
 
 
 def build(B):
     B.h1("Implementation and Experimentation")
-    B.box("This chapter presents the environment, the data, the shared preprocessing, the evaluation harness, the encoder comparison, the working version, the measured iteration "
-          "ladder, the web application, the test protocol and the sealed-test results. Development-slice results are exploratory; of the sealed-test results only the three declared tests are confirmatory.")
+    B.box("This chapter presents the environment, the data, the preprocessing, the evaluation harness, the encoder comparison, the working version, the iteration ladder, the web "
+          "application, the analysis platform, the software tests, the test protocol, the sealed-test results and the later experiments. Development results are exploratory; of the sealed results only three declared tests are confirmatory.")
     environment(B)
     datasets(B)
     preprocessing(B)
@@ -20,14 +21,21 @@ def build(B):
     ladder(B)
     IT.results(B)
     webapp(B)
+    PL.platform(B)
+    PL.testing(B)
     staircase(B)
     sealed(B)
+    PL.after_freeze(B)
     B.h2("Summary and Outline of the Next Chapter")
     B.p("This chapter described what was built, how it is tested and what the iterations found. The data, the group-disjoint splits, the shared preprocessing, the evaluation harness with its acceptance test, the "
         "design of the encoder comparison, the working version, the iteration ladder, the web application and the staircase test protocol exist and are documented. The encoder comparison, the seven "
         "iterations, the two further face-video iterations 1b and 1c, the pulse positive control and the re-run baseline have exploratory results on the development slice and on validation data, with their intervals and mechanical verdicts. "
         "The sealed run was made once for each frozen iteration: the final face-video and speech systems are improved over the working version at the 95 percent level and at the 98.33 percent level, and the final face-video system is superior to the re-run baseline "
-        "at the 95 percent level, not at the 98.33 percent level, and non-inferior at both. Chapter 5 states the conclusions that the evidence supports and the further work.")
+        "at the 95 percent level, not at the 98.33 percent level, and non-inferior at both. "
+        "After the freeze the detectors were wrapped in an analysis platform that reports one finding per module and no overall score, with a lip-sync module, a Content Credentials check "
+        "and an experimental generated-video module; the software was tested at five levels, kept apart from the experiments. The later experiments found that the frozen system ranks the "
+        "sealed half of FakeAVCeleb well while its thresholds do not transfer and the data set carries a codec shortcut, that the generated-video head does not generalise to DF26, and "
+        "that the lip-sync module is weak evidence. Chapter 5 states the conclusions that the evidence supports and the further work.")
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -265,7 +273,7 @@ def working(B):
         "calibrated by temperature scaling fitted on validation and the checkpoint metadata is checked at load; metrics with three seeds, standard deviation and bootstrap interval exist on "
         "the validation split and on the development slice without any sealed split touched; the page shows a real result with its source marked real and the warnings for no face and "
         "several faces; the visual and the audio score of a video are shown separately; and the tests pass. <ref fig:pipeline> shows the chain from a file to a calibrated score.")
-    B.figure("pipeline", "fig01_pipeline.png", "From a file to a calibrated score. The encoders are frozen, the temperature and the threshold are fixed on validation data, and the scores are probabilities of fake.", 15.5,
+    B.figure("pipeline", "fig01_pipeline.png", "From a file to a calibrated score. The encoders are frozen, the temperature and the threshold are fixed on validation data, and the scores are calibrated on that data only.", 15.5,
              "Three rows of processing blocks for the visual branch of a video, the audio branch and an image, each ending in a score", tag="schematic")
     B.p("A checkpoint is a folder with one metadata file and one head file per task; no pickled object is used, because a pickle executes code when it is loaded. The metadata holds the "
         "checkpoint identifier, the iteration, the commit, the protocol, the seed, the library versions, the manifest and split identifiers and, per task, the encoder (name, revision, "
@@ -340,7 +348,7 @@ def ladder(B):
     B.h3("Integration and freeze (iteration I-8)")
     B.p("I-8 runs no new experiments. It freezes the code, the preprocessing and the checkpoints, tags every frozen iteration in version control, evaluates each frozen iteration once on the "
         "sealed test sets under the final flag, runs the leakage check on the final splits, fills the paper, the report and the slides only from logged experiments, demonstrates the "
-        "system end to end with the source set to real, and deletes the LAV-DF archive by hand. Anything not frozen before the sealed run is reported as not done. The sealed run was made on 25 October 2026 and each frozen iteration was evaluated once; its results are in the section on the sealed-test results. The web page has not been switched to the checkpoint of the frozen system.")
+        "system end to end with the source set to real, and deletes the LAV-DF archive by hand. Anything not frozen before the sealed run is reported as not done. The sealed run was made on 25 October 2026 and each frozen iteration was evaluated once; its results are in the section on the sealed-test results. The local web page was run once with the checkpoint of the frozen system on three training files (an image, a video with audio and an audio file), with the source real and no banner, as a check of the page and not of accuracy; the analysis platform described below calls the frozen system for every file.")
 
 
 def webapp(B):

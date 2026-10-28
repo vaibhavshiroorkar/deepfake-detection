@@ -3,6 +3,7 @@ The slow test (RUN_LIVE_FACE=1) runs the real checkpoint on non-sealed fixtures 
 it is an integration check, not an accuracy experiment. Fixtures are referenced in place and the test skips if they are absent."""
 import json
 import os
+import re
 import sys
 import tempfile
 import time
@@ -118,6 +119,7 @@ def test_real_checkpoint_face_path_end_to_end():
         face_fx = next(f for f in fixtures if f["name"] == "ffpp_fake_video")
         b = E.browser_check(base, face_fx)
         assert b["live_banner"] and not b["mock_banner"] and not b["forbidden_hits"] and not b["page_errors"]
-        assert "COMPLETED" in b["face_card_text"] and "source real" in b["face_card_text"] and "version I-" in b["face_card_text"]
+        assert b["face_status"] == "completed"
+        assert re.search(r"Source\s+real", b["face_card_text"]) and re.search(r"Version\s+I-", b["face_card_text"]), b["face_card_text"][:400]
     finally:
         srv.shutdown()

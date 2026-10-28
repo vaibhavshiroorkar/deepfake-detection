@@ -1,0 +1,129 @@
+{
+ "checkpoint": "I-5-freeze-candidate-20261025-1608",
+ "tolerance": 0.02,
+ "cases": [
+  {
+   "task": "T-V",
+   "sample_id": "ffpp:Deepfakes:084_042",
+   "split": "val",
+   "stored_score": 0.99998,
+   "module_score": 0.99998,
+   "abs_diff": 0.0,
+   "module_status": "completed",
+   "finding": "indicates_manipulation",
+   "passed": true
+  },
+  {
+   "task": "T-V",
+   "sample_id": "ffpp:Deepfakes:091_116",
+   "split": "val",
+   "stored_score": 0.997212,
+   "module_score": 0.997195,
+   "abs_diff": 1.7e-05,
+   "module_status": "completed",
+   "finding": "indicates_manipulation",
+   "passed": true
+  },
+  {
+   "task": "T-V",
+   "sample_id": "ffpp:Deepfakes:104_126",
+   "split": "val",
+   "stored_score": 0.939307,
+   "module_score": 0.939296,
+   "abs_diff": 1.1e-05,
+   "module_status": "completed",
+   "finding": "indicates_manipulation",
+   "passed": true
+  },
+  {
+   "task": "T-V",
+   "sample_id": "ffpp:original:084",
+   "split": "val",
+   "stored_score": 0.204506,
+   "module_score": 0.204589,
+   "abs_diff": 8.3e-05,
+   "module_status": "completed",
+   "finding": "no_indication_within_tested_scope",
+   "passed": true
+  },
+  {
+   "task": "T-V",
+   "sample_id": "ffpp:original:091",
+   "split": "val",
+   "stored_score": 0.002114,
+   "module_score": 0.002112,
+   "abs_diff": 2e-06,
+   "module_status": "completed",
+   "finding": "no_indication_within_tested_scope",
+   "passed": true
+  },
+  {
+   "task": "T-V",
+   "sample_id": "ffpp:original:104",
+   "split": "val",
+   "stored_score": 0.000776,
+   "module_score": 0.000776,
+   "abs_diff": 0.0,
+   "module_status": "completed",
+   "finding": "no_indication_within_tested_scope",
+   "passed": true
+  },
+  {
+   "task": "T-A",
+   "sample_id": "asvspoof2019_la:LA_D_1618135",
+   "split": "val",
+   "stored_score": 0.153276,
+   "module_score": 0.15311,
+   "abs_diff": 0.000166,
+   "module_status": "completed",
+   "finding": "no_indication_within_tested_scope",
+   "passed": true
+  },
+  {
+   "task": "T-A",
+   "sample_id": "asvspoof2019_la:LA_D_1766721",
+   "split": "val",
+   "stored_score": 0.643877,
+   "module_score": 0.645724,
+   "abs_diff": 0.001847,
+   "module_status": "completed",
+   "finding": "no_indication_within_tested_scope",
+   "passed": true
+  },
+  {
+   "task": "T-A",
+   "sample_id": "asvspoof2019_la:LA_D_1837988",
+   "split": "val",
+   "stored_score": 0.098306,
+   "module_score": 0.098999,
+   "abs_diff": 0.000693,
+   "module_status": "completed",
+   "finding": "no_indication_within_tested_scope",
+   "passed": true
+  },
+  {
+   "task": "T-I",
+   "sample_id": "forensynths_progan_val:bicycle/0_real/00467.png",
+   "split": "train",
+   "stored_score": 0.180539,
+   "module_score": 0.17862,
+   "abs_diff": 0.001919,
+   "module_status": "completed",
+   "finding": "no_indication_within_tested_scope",
+   "passed": true
+  },
+  {
+   "task": "T-I",
+   "sample_id": "forensynths_progan_val:bicycle/0_real/16448.png",
+   "split": "train",
+   "stored_score": 0.090306,
+   "module_score": 0.090203,
+   "abs_diff": 0.000103,
+   "module_status": "completed",
+   "finding": "no_indication_within_tested_scope",
+   "passed": true
+  }
+ ],
+ "skipped": [],
+ "passed": true
+}

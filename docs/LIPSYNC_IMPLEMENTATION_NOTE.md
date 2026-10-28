@@ -69,3 +69,10 @@ Section `cross_modal`, source `real`, findings `consistent`, `potential_mismatch
 ## Limitations
 
 The module measures audio-visual temporal agreement of one face track. A mismatch is not proof of manipulation (dubbing, bad muxing, variable frame rate, off-sync recordings). A synchronised fake passes. Tested scope is one clip. The decision rule is a placeholder. Weights licence unresolved. Next steps from the decision note remain open: read the SyncNet paper, preregister the evaluation (LAV-DF within-video comparison, false-positive rate on real videos), choose thresholds on development data only.
+
+## Addendum 2026-10-26 (E-022): behaviour check on controlled cases
+Module version syncnet-v2-port-2. Evidence and numbers: docs/EXPERIMENTS.md E-022 (development set only, LAV-DF train clips, no held-out check). Changes: MIN_CONFIDENCE 1.0 to 3.0; a heuristic speech-likelihood gate (spectral flatness and loudness variation, not a speech detector) gives inconclusive AUDIO_NOT_SPEECH_LIKE; an offset at the +-15 frame search boundary gives inconclusive OFFSET_AT_SEARCH_BOUNDARY. The statements above that say "No speech detector: music or noise passes" and "confidence below 1.0" describe port-1. Weights licence remains not stated. Tests: tests/platform_lipsync, 19 passed.
+
+## Addendum 2026-10-26 (overnight): E-025 and syncnet-v2-port-3
+
+The +-2 frame tolerance was replaced by an asymmetric band of -6 to +2 frames fitted on 230 real clips and validated on 230 disjoint real clips (E-025, D-073): false alarms on real clips 1.3 percent [0.4, 3.8] (3 of 230), against 11.7 percent for +-2 on the same clips. The same band flags none of 160 Wav2Lip-based FakeAVCeleb fakes (E-024 had 85 to 93 percent with +-2), so the offset cue does not separate them from real clips. The module is a measure of audio-visual offset on VoxCeleb2-derived talking heads, not a detector of lip-sync fakes. The SyncNet weights licence remains unresolved.

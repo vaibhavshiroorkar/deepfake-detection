@@ -129,6 +129,11 @@ levels. Two of the five written predictions, both for speech, failed in the
 optimistic direction. The limits of the evidence include one baseline family at
 one input size, 344 groups for video, 42 speakers for speech, a margin set from
 three seeds and a floor, and one sealed run of each frozen iteration.
+After the freeze the detectors were wrapped in a modular analysis platform that
+reports one finding per module and no overall score. On the sealed half of
+FakeAVCeleb the frozen system ranks well (visual AUC 0.9552, audio 0.9263) but
+its thresholds do not transfer and the data set carries a codec shortcut; a
+generated-video head is at chance on DF26 (0.4957), so it stays experimental. % E-015, E-020
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -173,9 +178,12 @@ detectors on a protocol that we define and run ourselves.
         each with a written hypothesis, and a definition of ``comparable with
         a published detector'' as non-inferiority
         (Section~\ref{sec:iters}).
-  \item A local web page that returns a calibrated probability per modality
+  \item A local web page that returns a temperature-scaled score per modality
+        (a probability only for content like the validation split of its task)
         with the warnings that apply, and that never shows a development
-        stand-in as a measurement (Section~\ref{sec:software}).
+        stand-in as a measurement, and a modular analysis platform that reports
+        one finding per module with its tested scope and no overall score
+        (Section~\ref{sec:software}).
 \end{enumerate}
 The encoder sweep, the working version and the iterations are reported on the
 development slices and the validation splits and are exploratory; the
@@ -292,13 +300,17 @@ modality that carries the evidence: an image has a visual score, a standalone
 audio file has an audio score, and a video with an audio track has both,
 shown separately. No combining rule for the two scores of a video is claimed
 (the fusion measured on LAV-DF does not support one, Section~\ref{sec:results}),
-and there is no temporal localisation. Figure~\ref{fig:pipeline} shows the three paths.
+and there is no temporal localisation. Calibrated means that a temperature was
+fitted on the validation split of each task, so $p(x)$ is a probability only for
+content like that split; on other sources it is a score whose meaning the later
+measurements and the per-module wording of the platform state
+(Section~\ref{sec:platform}). Figure~\ref{fig:pipeline} shows the three paths.
 
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=\textwidth]{fig01_pipeline.pdf}
 \caption[Three scoring paths]{Schematic of the three scoring paths. Encoders are frozen, the head is
-linear, and every score is a calibrated probability that the content is fake.
+linear, and every score is temperature-calibrated on the validation split of its task.
 The visual and the audio score of a video are shown side by side, not fused.}
 \label{fig:pipeline}
 \end{figure*}
@@ -860,9 +872,13 @@ with an upload limit of 512\,MB; an uploaded file is deleted after every
 request, also after an aborted upload. The page calls an inference library that
 returns one fixed response structure: a score per modality, a status, warnings,
 errors, a block that describes the model, and a fixed sentence saying what the
-score means, namely a calibrated probability that the content is fake, from a
-model fitted on the training data of the project, valid only for the kinds of
-content in that data, and not proof. The warnings include the case of no face
+score means: in the words of this frozen page, a calibrated probability that the
+content is fake, from a model fitted on the training data of the project, valid
+only for the kinds of content in that data, and not proof. That wording holds
+only for content like the validation split of each task
+(Section~\ref{sec:method}); the frozen page keeps it, its audio score carries a
+warning to read it as a ranking score, and the analysis platform states the
+narrower meaning (Section~\ref{sec:platform}). The warnings include the case of no face
 found and of several faces (the largest is used). The page shows stage progress
 and the per-modality table, and for a video it shows the visual and the audio
 score separately and states that no combining rule is claimed
@@ -891,8 +907,11 @@ recorded hash, and a preprocessing configuration the code cannot apply as
 trained is refused. A version-2 checkpoint was checked against the training-time
 scores on 11 validation items (6 FaceForensics++ videos, 3 ASVspoof files and 2
 ProGAN images): the largest difference of the calibrated score is 0.0019 against
-a tolerance of 0.02. The web page itself has not been switched to the
-checkpoint of the frozen system and still runs the working-version checkpoint, and the unit tests (304) pass on test doubles.
+a tolerance of 0.02, and the unit tests of the format (304) pass on test doubles.
+The web page was run once with the checkpoint of the frozen system on three
+training files (an image, a video with audio and an audio file) and passed its
+page check; the screenshots of Figure~\ref{fig:web} show the working-version
+checkpoint.
 
 \begin{figure*}[!t]
 \centering
@@ -903,6 +922,145 @@ shown separately and the combined verdict is ``undetermined'', (c) an audio file
 the calibration warning. The text inside the screenshots is the page as rendered and is
 not meant to be read at this size.}
 \label{fig:web}
+\end{figure*}
+
+\subsection{Analysis platform}\label{sec:platform}
+% D-069, D-072, D-073, D-074; src/dfd/platform (schema.py, module.py, coordinator.py, pipeline.py, modules/, provenance/)
+After the freeze the frozen detectors were placed, unchanged, inside a modular
+analysis platform (Figure~\ref{fig:platform}). A module declares its section and a
+time limit and implements two functions: an applicability check on a probe of
+the file, which answers applicable, not applicable (the input lacks what the
+module needs) or unsupported (the capability is not installed), and a run that
+returns a module result. A coordinator runs the modules one at a time, because
+the graphics processor is shared; an exception becomes a \emph{failed} entry, a
+module without an answer in time becomes \emph{timed out}, and a result that
+breaks the report contract is replaced by a failed entry. A timed-out thread
+cannot be stopped in Python, so the coordinator sets a cancellation flag,
+discards late results and ignores late writes to the shared cache; a second
+graphics-processor module is \emph{skipped} while an abandoned one still runs.
+Every module appears once in the report (schema version~2.1), in one of three
+sections: authenticity (findings \emph{indicates manipulation}, \emph{no
+indication within the tested scope}, \emph{inconclusive}), cross-modal
+(\emph{consistent}, \emph{potential mismatch}, \emph{inconclusive}) and
+provenance (\emph{credentials valid}, \emph{credentials invalid}, \emph{no
+credentials found}, \emph{inconclusive}). Each entry carries its status, its
+finding, a score only together with a sentence on what it means, the model and
+the evaluation it rests on, its tested scope and its limitations. There is no
+global score: the contract checker rejects a fused score or verdict field, no
+finding means genuine, and a fixed statement says that a module that found
+nothing does not show that the media is authentic. Version~2.1 adds, optionally,
+an explanation per module written on the server by fixed templates from the
+fields of that module's result, each sentence naming the fields it uses; a
+validator rejects numbers absent from the cited fields, missing fields, model
+output from a module that did not run, and an experimental score shown as a
+headline number. The explanations describe the stored result; they do not
+claim to explain how a network reached its score. % D-076; src/dfd/platform/explain.py
+
+Three modules wrap the frozen face-video, image and speech detectors through one
+shared adapter, so a file is scored once; on 11 non-sealed files they agree with
+the stored parity scores within 0.0019. % STATUS platform sprint; data/_results/platform/module_parity.json
+A still image in which a face is found is scored by the face-swap model on the
+face crop, so the generated-image model, trained on ProGAN images, was not applied to portraits; an additional
+experimental module now also passes the whole image to the frozen generated-image
+model through the adapter's own whole-image function and shows that score without
+a finding, leaving the image result unchanged; its limitation text quotes the
+measurement on images with a face (Section~\ref{sec:later}). % D-083, E-028
+A lip-sync module measures the audio-visual offset of one tracked face with a
+port of the public SyncNet reference code; it reports \emph{consistent} when the
+offset lies in a band of $-6$ to $+2$ frames fitted on real clips, otherwise a
+potential mismatch, and \emph{inconclusive} for short, silent, non-speech-like
+or multi-face input or a confidence below 3.0; it never states that media is
+manipulated. % E-022, E-024, E-025, D-073
+A Content Credentials module validates C2PA manifests with the c2pa-python
+library when it is installed; a valid manifest whose signer does not chain to a
+trust anchor configured by the operator is inconclusive, because anyone can sign
+with a self-made certificate, and a valid credential is never read as proof that
+the content is authentic. A generated-video module re-encodes the first 2\,s by
+one fixed recipe, passes 8 frames through frozen DINOv2 small~\cite{oquab2024dinov2}
+and scores the mean class-token embedding with a logistic regression; this is an
+appearance baseline, not the ReStraV method~\cite{interno2025restrav}. Its head
+did not transfer to a held-out benchmark (Section~\ref{sec:later}), so a gate in
+the code allows a finding only for a head file whose hash is in an approval
+table that is empty; the module is always inconclusive and shows its score for
+inspection only. A local dashboard (127.0.0.1 only) opens on an upload panel,
+groups the checks by what they found without any overall score, shows one rounded
+number per check and keeps identifiers, raw scores and thresholds under technical
+details; stand-in scenarios appear only on request and are marked. % D-072, D-074, D-076
+
+Each module result now also carries an \emph{assessment}: a verdict
+label of that module alone, the evidence tier (detector, limited, experimental,
+provenance or context), the score with its kind, a statement on calibration, an
+uncertainty level with its reason and links to the stored results that justify
+the wording. The labels follow the measured error rates, not the score. On the
+sealed FakeAVCeleb half the frozen video threshold had specificity 0.996 and
+sensitivity 0.480, so a face-video flag reads \emph{possible manipulation}, a
+possible sign and not a determination, with high uncertainty, and no flag reads
+\emph{no strong evidence of manipulation detected} with high uncertainty. The
+flag is worded cautiously because that specificity belongs to one sealed set:
+computed afterwards from the stored sealed scores, the frozen threshold flagged
+about 0.11 of the real videos of the Celeb-DF family and 0.14 of those of DFD
+(Section~\ref{sec:limits}), and the face-video check is not described as
+reliable on the strength of one set; the image and speech checks have no comparable evidence for their
+use on other sources (the generated-image model misses 0.7395 of modern generated
+images; audio specificity on FakeAVCeleb was 0.637), so their flags read
+\emph{possible manipulation (weak evidence)} and a low score reads
+\emph{inconclusive} or \emph{no strong evidence}. The layer recomputes the
+comparison of score and threshold and answers \emph{inconclusive}, with the
+reason, for a missing or non-finite score, a missing threshold or a disagreeing
+stored finding. Experimental modules always read \emph{experimental signal
+observed, no reliable verdict available}: none of their heads passed its own
+acceptance test, and the label for generated content exists in the vocabulary
+but no rule can reach it. There is still no report-level verdict, and the
+contract checker still rejects any fused score or verdict field. Scores are
+temperature-scaled on each detector's validation split, so they behave like
+probabilities only for data like that split; the platform therefore calls them
+scores, shows the raw value only under technical details and never as a
+percentage, and calls the outputs of the experimental heads ranking scores. % D-087; src/dfd/platform/verdict.py, verdict_evidence.py; E-015, E-028
+
+An \emph{Evaluation Lab}, a separate page of the dashboard, re-analyses recorded
+score files with the project's own metrics and group bootstrap. It runs no model,
+trains nothing, writes no ledger entry and never reads or writes the approval
+table or any threshold, so a result in the lab is not a product approval. Each
+run record stores the configuration and its hash, the score file's SHA-256 and
+the code state before any metric is computed. A final held-out split is accepted
+only as a re-analysis of an evaluation already in the ledger, with that purpose
+declared and with a score file whose hash equals the ledger entry; thresholds
+come from the validation rows of the same runs or are given with their
+provenance and are never fitted on the evaluated rows; before computing, the lab
+checks for groups shared with training or validation rows (refused on a final
+split), for duplicate samples and, when recorded, for duplicate file hashes
+across splits; two runs are compared only on identical samples. It cannot prove
+that a model's training data excluded the evaluated items when the score file
+does not record them, and every run record says so. As a software check on
+28 October, a re-analysis of the final system on the sealed Celeb-DF family
+reproduced the logged AUC of 0.8218, a first look at a sealed split was refused
+and the ledger was left byte for byte unchanged. % D-088; src/dfd/platform/evallab; docs/TESTING_RECORD.md section 10
+
+The software was tested apart from the experiments. On 28 October 2026, in the
+project environment and after the verdict layer and the Evaluation Lab were
+added, the safe suite gave 710 passed and 2 skipped (the two opt-in tests) with
+the graphics processor hidden and 13 data-dependent tests deselected; the opt-in
+tests on the graphics processor, last run on 27 October and not affected by the
+later changes, gave 5 passed (wrapper parity on 11 non-sealed files, largest
+difference 0.0019 against a tolerance of 0.02); the dashboard, driven in a
+browser on 8 demonstration inputs, finished the six media files with all seven
+modules reported, every report valid and every number shown equal to the stored
+score, and failed the two error cases with the expected codes; and the
+documentation check gave 71 pass, 0 fail. Earlier records not repeated on this state (live checks 60 with 0
+failed, 5 of 5 Content Credentials cases) are history. The run found one defect
+(a failed live analysis left the stand-in report on screen), which was fixed with
+a regression test, and one documented limitation: the speech module has no
+speech check of its own, so a pure tone receives a speech finding. These tests
+show the behaviour of the software, not detection accuracy. % docs/TESTING_RECORD.md sections 2 to 6
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.92\textwidth]{fig10_platform.pdf}
+\caption[Analysis platform]{Structure of the analysis platform. The coordinator runs every
+module; each appears once in the report, in one of three sections, with its status
+and, if it completed, its finding, tested scope and limitations. There is no global
+score.}
+\label{fig:platform}
 \end{figure*}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1429,6 +1587,177 @@ temperature scaling now helps there. For the speech average the development
 error is 0.0692 before and 0.1670 after scaling (validation 0.0417 and 0.0016):
 the audio score keeps its exploratory calibration warning.
 
+\subsection{Experiments after the freeze}\label{sec:later}
+By its own record, each of the following was registered with a hypothesis and
+success and failure lines before its run (Section~\ref{sec:limits} states what
+version control can show), and none changed the frozen system
+(Table~\ref{tab:later}). % E-015, E-018 to E-029
+
+\emph{FakeAVCeleb, sealed half.} FakeAVCeleb~\cite{khalid2022fakeavceleb} was split
+by identity into a development half and a sealed half of 250 identities each, and
+the sealed half (5\,013 clips) was scored once. Visual AUC (real against fake
+video) was 0.9552 [0.9442, 0.9657] and audio AUC 0.9263 [0.9149, 0.9366]; the two
+cross-modality controls stayed inside 0.40 to 0.60 (0.5613 and 0.5011), so all
+four pre-stated criteria were met. The frozen thresholds did not transfer
+(visual sensitivity 0.480 at specificity 0.996; audio specificity 0.637), and
+the visual prediction (0.55 to 0.80) was wrong. On the development half the
+codec alone separates real from fake video (metadata model 0.9985), a common
+re-encode lowers the frozen visual AUC from 0.9732 to 0.8772, and a
+codec-matched control did not lower it further (0.8856 against 0.8763); because
+codec and manipulation method coincide in this data set, the sealed number is
+read as ranking quality on a data set with a codec shortcut. % E-015, E-021, E-023
+
+\emph{Generated video.} The metadata of DeepAction~\cite{bohacek2025deepaction}
+separated real from generated clips perfectly (AUC 1.0000); after a third
+re-encoding recipe the headers carry nothing, but seven pixel statistics still
+reach 0.773 [0.729, 0.817]. Of three candidates trained on the re-encoded clips
+with each generator left out, only the appearance baseline met the selection
+rule (0.8281 [0.7908, 0.8662]); on DF26~\cite{shykula2026df26}, read once and used
+for nothing else, it reached 0.4957 [0.4755, 0.5168] on all clips and 0.4880
+[0.4534, 0.5204] on the pre-registered closed-generator subset. The hypothesis
+of transfer is not supported, which is why the module stays experimental. A
+later diagnostic that fits nothing scored unmodified real videos from two other
+sources with the installed head: 338 of 440 (0.7682 [0.7265, 0.8052]) were above
+its threshold, against 19 of 100 DeepAction real clips scored out of fold, so the
+pre-registered hypothesis of a source confound is supported; which property of
+the sources drives it is not identified. % E-018, E-019, E-020, E-026
+
+\emph{Generated video trained in domain.} Under the licence of DF26, heads may be
+trained on its six open generators. With source-video folds and each of the
+three open families held out in turn, the best of eight pre-declared candidates
+was a logistic regression on the mean CLIP ViT-L/14 embedding of 8 frames: macro
+AUC 0.7453 [0.7174, 0.7710], against 0.4921 for the pixel statistics and 0.4995
+for the installed head. Features of frame-to-frame change did not help (14-frame
+temporal features minus pooled ones: $-0.0404$ [$-0.0650$, $-0.0165$]). In one
+counted look at the four commercial generators (794 clips) the frozen recipe
+reached 0.7548 [0.7189, 0.7885] against 200 scenario-matched real clips (Kling
+3.0 lowest, 0.6483; Wan 2.6 highest, 0.8758). The source confound remains: at its
+balanced threshold the deployable head flags 0.8023 [0.7625, 0.8368] of real
+FF++ and LAV-DF clips, against 0.2841 of DF26 real clips, so the head is not
+installed. % E-027, D-085
+
+\emph{Modern generated images.} The installed generated-image model (a linear
+probe on frozen CLIP ViT-L/14, trained on ProGAN images) was scored without
+any change on 11\,550 images of a test-only subset of
+Community Forensics-Eval~\cite{park2025communityforensics}: 5\,759 images from
+21 generators (commercial services, latent and pixel diffusion models, two GANs)
+and 5\,791 real images. The subset is the set of cheapest shards, chosen by a
+written rule before any image was seen, and eight generators share one pooled
+set of 121 RAISE photographs as their real images. The macro AUC over the 21
+generators is 0.7039 [0.6855, 0.7229] and the pooled false-negative rate at the
+frozen threshold is 0.7395 [0.7300, 0.7500] (pooled AUC 0.7973, false-positive
+rate 0.0418), so the pre-stated line gives \emph{inadequate}. The model separates
+the two GANs (DFGAN 0.9999, GALIP 0.8372) but is at chance on DeciDiffusionV2
+(0.4951), below chance on kandinsky\_2\_2 (0.4145), and misses 71 to 95\,\% of the
+images of every commercial generator. Part of its separation follows the file
+format: 92.8\,\% of the generated images are PNG and 88.1\,\% of the real ones
+JPEG, a format-only score reaches a pooled AUC of 0.9222, the model's AUC on PNG
+real against PNG generated images is 0.6123 [0.5908, 0.6353], and re-encoding 380
+generated PNG images as JPEG (quality 90) lowered the pooled AUC by 0.059
+[0.051, 0.067]. On the 3\,119 images in which the product's face detector finds a
+face, the whole-image model reaches AUC 0.7859 [0.7717, 0.7995] against 0.6020
+[0.5836, 0.6202] for the face-swap path that the product applies to them (paired
+difference +0.1839 [+0.1596, +0.2074]), but it misses 80.6\,\% of the generated
+faces at its threshold, so neither is usable. This is why the whole-image check
+for images with a face is shown as experimental and makes no finding.
+% E-028, D-083
+
+\emph{Retraining on recent generators.} To ask whether the weakness is the
+training data, the same kind of head (frozen CLIP ViT-L/14 features, a linear
+layer) was retrained on 23\,807 images of 125 generators from the training part
+of Community Forensics-Small, with the 31 validation generators and the
+validation real images disjoint from training, three seeds, and the encoder,
+temperature and threshold chosen on validation only (validation AUC 0.9823). The
+frozen heads were then scored once on the same 11\,550 evaluation images, after
+the heads, thresholds and encoder choice were frozen and hashed, and paired against
+the installed head. The macro AUC rose from 0.7039 to 0.8839 (seed mean, SD
+0.0021), a paired gain of +0.1800 [+0.1643, +0.1959] with every seed's interval
+above zero, so the pre-stated hypothesis of improvement is supported. The gain is
+largest on latent-diffusion generators (+0.32), present on commercial generators
+(+0.12), absent on pixel diffusion ($-0.01$), and present on generators with no
+related model in training (+0.17 [+0.15, +0.18]); it also holds with PNG real
+against PNG generated images only (0.8365 against 0.6123), although JPEG
+re-encoding of generated PNG files lowers the pooled AUC by 0.073. But the
+threshold chosen on validation real images (COCO and FFHQ only) does not
+transfer: at it the frozen candidate flags 0.5213 [0.5091, 0.5339] of the real
+evaluation images (0.5885 of LAION photographs, 0.0328 of COCO photographs). It
+therefore fails the pre-stated line for a candidate product check (pooled
+false-positive rate at most 0.10), and the heads stay research artefacts. The
+encoder that validation ranked lower scored higher on the evaluation images
+(macro AUC 0.9142); the rule fixed in advance was applied as written.
+% E-029
+
+\emph{Lip sync.} With a tolerance of 2 frames the frozen module flagged 15.0\,\%
+[8.1, 26.1] of real LAV-DF clips and 13.3\,\% [6.9, 24.2] of real FakeAVCeleb clips
+and 85 to 93\,\% of Wav2Lip clips, almost all at an offset of $-3$ frames. A band
+fitted on 230 real clips ($-6$ to $+2$ frames) flagged 1.3\,\% [0.4, 3.8] of 230
+disjoint real clips and 0 of 160 Wav2Lip clips, so the earlier separation rested
+on a one-frame margin; the module is weak evidence, not a detector. % E-024, E-025
+
+\begin{table}[!t]
+\caption{Experiments after the freeze (AUC with 95\,\% group bootstrap interval).}
+\label{tab:later}
+\centering
+\footnotesize
+\begin{tabular}{@{}p{0.52\columnwidth}p{0.40\columnwidth}@{}}
+\toprule
+Question & Result \\
+\midrule
+FakeAVCeleb sealed half, visual & 0.9552 [0.9442, 0.9657] \\
+FakeAVCeleb sealed half, audio & 0.9263 [0.9149, 0.9366] \\
+Generated-video head, DeepAction (generator left out) & 0.8281 [0.7908, 0.8662] \\
+Same head, DF26 all clips (held out) & 0.4957 [0.4755, 0.5168] \\
+Same head, real FF++ and LAV-DF clips above threshold & 338 of 440, 0.7682 [0.7265, 0.8052] \\
+DF26-trained head, open families held out & 0.7453 [0.7174, 0.7710] \\
+Same recipe, DF26 commercial generators (one look) & 0.7548 [0.7189, 0.7885] \\
+Same head, real FF++ and LAV-DF clips flagged & 0.8023 [0.7625, 0.8368] \\
+Generated-image model, 21 modern generators (macro AUC) & 0.7039 [0.6855, 0.7229] \\
+Same model, missed share of generated images (pooled) & 0.7395 [0.7300, 0.7500] \\
+Face images: whole-image model minus face path (paired AUC) & +0.1839 [+0.1596, +0.2074] \\
+Head retrained on 125 recent generators, same images (macro AUC, seed mean) & 0.8839 [0.8732, 0.8942] \\
+Same head minus the installed head (paired macro AUC) & +0.1800 [+0.1643, +0.1959] \\
+Same head, real images flagged at its validation threshold & 0.5213 [0.5091, 0.5339] \\
+Lip-sync band, false alarms on real clips & 1.3\,\% [0.4, 3.8] \\
+Lip-sync band, Wav2Lip clips flagged & 0 of 160 \\
+\bottomrule
+\end{tabular}
+\end{table}
+% E-015, E-020, E-025, E-027, E-028, E-029
+
+\subsection{Comparison with published results}\label{sec:compare}
+A published number is set against ours only when task, data, protocol and
+metric match; otherwise the comparison is context, and no difference is
+computed (docs/PERFORMANCE\_BENCHMARK.md lists every row). Every row is
+classed as directly comparable (same data and test items, metric, aggregation
+and declared training protocol), same dataset with a different protocol,
+cross-dataset, or context only; only the first class receives a difference. Three comparisons
+qualify or come close. (i) Our re-run Xception baseline against the final video
+model on the same sealed tests (Section~\ref{sec:results}). (ii) Speech on the
+official ASVspoof 2019 LA evaluation set with official training data: the equal
+error rate of the frozen speech system, computed afterwards from the stored
+sealed scores with no model run, is 6.94\,\% [5.95, 7.82] against 1.13\,\% for
+AASIST~\cite{jung2021aasist}, 5.81 points worse, and against 5.9\,\% for
+RawNet2 under the protocol of~\cite{pascu2024generalisable}, where the sign of
+the difference is not established; our system trades in-corpus accuracy for
+transfer. On the 42 sealed In-the-Wild speakers its equal error rate
+is 15.8\,\% [12.7, 18.8]; published values on the full set (33.9\,\% for the
+best model of~\cite{muller2022inthewild}, 7.2\,\% for a frozen 2B-parameter
+encoder~\cite{pascu2024generalisable}) use more speakers, so no gap is computed.
+(iii) Zero-shot DF26: our DeepAction-trained head (AUC 0.4957) lies within the
+range of FF++-trained detectors reported by its authors (pooled AUROC 44.0 to
+69.7, without intervals)~\cite{shykula2026df26}. % E-030, E-020; R-012, R-033, R-081, R-083
+No row of the face-video task is directly comparable: published Celeb-DF v2 and
+DFD values use other test subsets, frame counts or training compression and
+carry no intervals, and DFDC was not used, so those values are context only.
+The experimental heads stay outside the approval table for measured reasons:
+the generated-video head trained on open generators reached 0.7548 on unseen
+closed generators but flagged 0.8023 of unmodified real clips from two other
+sources, and the retrained image head raised the macro AUC to 0.8839 (a ranking
+gain of 0.1800) but flagged 0.5213 of the real evaluation images at its
+validation threshold (Section~\ref{sec:later}). Approving a head would need a
+new registered test with a false-positive line on sources not used for
+calibration. % D-085, D-086; E-027, E-029; docs/PERFORMANCE_BENCHMARK.md section 13
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Limitations}\label{sec:limits}
 \begin{itemize}
@@ -1462,6 +1791,12 @@ the audio score keeps its exploratory calibration warning.
   \item All datasets are research-only, and the weights of two encoders (OpenAI
         CLIP and WavLM) have conditional licences that are accepted here as
         research-only; this restricts reuse of the checkpoints.
+  \item The detector scores are temperature-scaled on validation data and do not
+        behave as probabilities on other sources, and the frozen thresholds do
+        not transfer (on FakeAVCeleb about half of the fake videos were missed);
+        the per-module wording states this uncertainty but does not remove it.
+        The Evaluation Lab checks only what a score file records, so it cannot
+        exclude overlap with training data that the file does not list. % D-087, D-088; E-015
   \item Numbers in published papers come from other protocols, so a comparison
         with a published detector is made only by re-running it on this
         protocol, and quoted numbers are context only.
@@ -1494,6 +1829,25 @@ the audio score keeps its exploratory calibration warning.
   \item A detector trained on one kind of manipulation supports no claim about
         other kinds without a test on them, and no result of the project is
         claimed beyond what its interval supports.
+  \item For the experiments after the freeze, the registration texts entered
+        version control in one commit together with their scripts, so the order
+        of text and run rests on the project's own statements; the record says
+        so and is not rewritten. The re-encoding recipe that passed the header
+        audit was the third tried on the same data and leaves pixel-level cues;
+        in FakeAVCeleb codec and method are fully confounded, so whether the
+        sealed AUC is inflated is not estimated; the lip-sync calibration pools
+        were split by file, not by speaker, on the LAV-DF side; and the SyncNet
+        weights have no stated licence and the FakeAVCeleb request terms are not
+        recorded, which rules out redistribution. % docs/RESEARCH_INTEGRITY.md; E-019, E-023, E-025
+  \item The modern-image experiments use a cost-selected subset of the
+        Community Forensics evaluation set (11\,550 images; 82.5\,\% of the real
+        images are LAION photographs, eight generators share 121 RAISE photographs),
+        real and generated images differ in file format and size, which the controls
+        separate only in part, and the retrained head was trained on about 1\,\% of
+        the published data scale with validation real images from two sources only,
+        so its threshold does not transfer; nothing is said about edited images or
+        images shared through social networks, and no number is compared with the
+        published mean average precision. % E-028, E-029
 \end{itemize}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1521,9 +1875,14 @@ video system is superior by the declared 95\,\% rule (+0.0176 [+0.0025,
 superiority is not robust to the Bonferroni level, and non-inferiority with a
 margin of 0.0100 holds at both. Sealed video values are below the development
 values and sealed speech values above them, and two speech predictions failed
-upward. Everything outside the three tests is exploratory, the web page has not
-been switched to the frozen system, and these results come from one baseline
-family, 344 video groups and 42 speakers. % E-014
+upward. Everything outside the three tests is exploratory, and these results
+come from one baseline family, 344 video groups and 42 speakers. % E-014
+After the freeze, a modular analysis platform reports one finding per module
+with its tested scope and never an overall score. The later experiments add
+limits rather than claims: the frozen system ranks the sealed half of
+FakeAVCeleb well but its thresholds do not transfer and that data set carries a
+codec shortcut, a generated-video head that met its development rule is at
+chance on DF26, and the lip-sync module is weak evidence. % E-015, E-020, E-025
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bibliographystyle{IEEEtran_hyphen}

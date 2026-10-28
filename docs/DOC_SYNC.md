@@ -41,3 +41,34 @@ D-010 (documentation method), D-014 and D-023 (start of writing and of early sta
 ## Identity fields
 
 All three documents use the values of docs/IDENTITY.md; `scripts/check_docs.py` compares them.
+
+## Update of 2026-10-26: analysis platform and the work after the freeze
+
+Slide numbers below are those of the deck as built on 2026-10-26 (52 slides: 1 to 35 main, 36 to 52 backup); the slide numbers in the table above are from the earlier build and are superseded by the deck itself. Report sections are those of the build of 2026-10-26 (Chapter 4 sections 4.10 to 4.15).
+
+| Item (decision or experiment) | Paper | Report | Slides |
+|---|---|---|---|
+| Objectives incl. the platform objective (D-069) | I Introduction (contribution 4) | Ch 1 Objectives (item 7), Problem Statement and Scope | 3 Objectives |
+| Platform: module interface, coordinator, schema v2, no global score (D-069) | VI-A Analysis platform, Figure 6 (fig10_platform) | 4.10 The Analysis Platform (4.10.1, 4.10.2, Figure 12, Tables 30 and 31) | 23 Analysis platform: architecture; 24 Report contract |
+| Wrappers of the frozen detectors, parity on 11 non-sealed files | VI-A | 4.10.3 | 25 Implemented capabilities |
+| Lip-sync module and its validation (D-073; E-022, E-024, E-025) | VI-A; VII-G; VIII | 4.10.4; 4.14.4 | 25; 29 Generated video and lip sync |
+| Content Credentials and metadata (D-069; SETUP section 4) | VI-A | 4.10.5, Table 32 | 25 |
+| Generated-video module, gate (D-071, D-072, D-074; E-018 to E-020) | VI-A; VII-G, Table XII | 4.10.6; 4.14.2; 4.14.3, Table 39 | 25; 29 |
+| Dashboard and demonstration (docs/DEMO.md) | VI-A | 4.10.7 | 26 Demonstration workflow |
+| Software testing, kept apart from evaluation (docs/TESTING_RECORD.md; earlier STATUS records labelled as history); demo-run defect and the speech-check limitation | VI-A (last paragraph) | 4.10.3 (speech limitation); 4.11 Software Testing and Verification, Table 33; 4.14.5 | 27 Testing (engineering verification); 32 |
+| FakeAVCeleb sealed half and follow-ups (D-070; E-015, E-021, E-023) | Abstract; VII-G; VIII | Abstract; 4.14.1, Table 38; Ch 5 | 28 After the freeze: FakeAVCeleb |
+| Integrity and licence limits (RESEARCH_INTEGRITY; SETUP section 7) | VIII (last item) | 4.14.5; Ch 5 bullets and Further Work | 32 Limitations of the later work; 34 Future work |
+| Web page checked with the freeze checkpoint (STATUS 2026-10-25 night) | VI | 4.7 (I-8 paragraph), 4.9 (software paragraph) | 22 Web demo; 31 Limitations |
+| New references R-078 (ReStraV), R-081 (DF26), R-082 (DeepAction) | refs.bib | refs.py | 35 References |
+
+## Update of 2026-10-27: dashboard redesign, explanations and E-026
+
+Deck as built on 2026-10-27: 53 slides. Report build of 2026-10-27: 112 pages. Paper: 29 pages.
+
+| Item (decision or experiment) | Paper | Report | Slides |
+|---|---|---|---|
+| Schema 2.1 and the explanation layer (D-076) | VI-A (schema paragraph) | 4.10.2 heading; 4.10.8 Explanations from the stored result | 23 Analysis platform; 27 Dashboard and explanations |
+| Dashboard redesign (D-076) | VI-A (dashboard sentence) | 4.10.7 Dashboard, Figure 13 (fig11_dashboard) | 26 Demonstration workflow; 27 Dashboard and explanations |
+| Software testing of 2026-10-27 | VI-A (last paragraph) | 4.11, Table of software tests | 28 Testing |
+| E-026 source-confound test (D-078) | VII-G (generated video), Table of later experiments | 4.14.4; 4.14.6 (registration not committed) | 30 Generated video and lip sync |
+| Visible-mark detection excluded (D-077) | not mentioned | not mentioned | not mentioned |

@@ -54,13 +54,17 @@ def post(client, path, name=None):
 
 def test_mock_server_has_no_upload_and_says_so():
     c = serve.create_app().test_client()
-    assert c.get("/api/mode").get_json() == {"live": False, "mock_only": True}
+    m = c.get("/api/mode").get_json()
+    assert {k: m[k] for k in ("live", "mock_only")} == {"live": False, "mock_only": True}
+    assert set(m) == {"live", "mock_only", "accept", "max_bytes"} and set(m["accept"]) == {"image", "video", "audio"}   # redesign: upload panel facts
     assert c.post("/api/analyse").status_code == 404
 
 
 def test_live_mode_flag():
     c = serve.create_app(live=True, modules_factory=factory).test_client()
-    assert c.get("/api/mode").get_json() == {"live": True, "mock_only": False}
+    m = c.get("/api/mode").get_json()
+    assert {k: m[k] for k in ("live", "mock_only")} == {"live": True, "mock_only": False}
+    assert set(m) == {"live", "mock_only", "accept", "max_bytes"} and set(m["accept"]) == {"image", "video", "audio"}   # redesign: upload panel facts
 
 
 def test_upload_to_report_and_file_deleted(live, media):

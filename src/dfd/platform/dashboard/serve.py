@@ -83,7 +83,8 @@ class JobStore:
         except Exception as e:  # noqa: BLE001 - the job reports the failure; nothing is raised into the pool
             code = getattr(e, "code", "PIPELINE_FAILED")
             msg = getattr(e, "message", None) or f"{type(e).__name__}: {str(e)[:200]}"
-            job["error"], job["state"] = {"code": code, "message": msg}, "failed"
+            from dfd.platform.verdict import assess_error      # the same category the page shows (D-087)
+            job["error"], job["state"] = {"code": code, "message": msg, "assessment": assess_error(code)}, "failed"
         finally:
             path.unlink(missing_ok=True)
             job["progress"]["module_id"] = None
@@ -93,7 +94,7 @@ class JobStore:
 
 
 def create_app(live: bool = False, modules_factory: Optional[Callable[[], list]] = None, upload_dir: Optional[Path] = None,
-               max_bytes: int = MAX_BYTES) -> Flask:
+               max_bytes: int = MAX_BYTES, evallab_options: Optional[dict] = None) -> Flask:
     app = Flask(__name__, static_folder=None)
     app.config["MAX_CONTENT_LENGTH"] = max_bytes
     store = JobStore(modules_factory, upload_dir) if live else None
@@ -111,6 +112,17 @@ def create_app(live: bool = False, modules_factory: Optional[Callable[[], list]]
     def css():
         return send_from_directory(HERE, "dashboard.css")
 
+    @app.get("/evallab.js")
+    def evallab_js():
+        return send_from_directory(HERE, "evallab.js")
+
+    @app.get("/evallab.css")
+    def evallab_css():
+        return send_from_directory(HERE, "evallab.css")
+
+    from dfd.platform.evallab import register as register_evallab      # Evaluation Lab backend (D-088): /api/evallab/*
+    app.config["EVALLAB"] = register_evallab(app, **(evallab_options or {}))
+
     @app.get("/api/fixtures")
     def list_fixtures():
         return jsonify(fixture_names())
@@ -123,7 +135,14 @@ def create_app(live: bool = False, modules_factory: Optional[Callable[[], list]]
 
     @app.get("/api/mode")
     def mode():
-        return jsonify({"live": live, "mock_only": not live})
+        from dfd.infer.library import AUDIO_EXT, IMAGE_EXT, VIDEO_EXT      # read-only: the frozen inspector's own whitelist
+        return jsonify({"live": live, "mock_only": not live, "max_bytes": max_bytes,
+                        "accept": {"image": sorted(IMAGE_EXT), "video": sorted(VIDEO_EXT), "audio": sorted(AUDIO_EXT)}})
+
+    @app.get("/api/vocabulary")
+    def vocabulary():
+        from dfd.platform.explain import vocabulary as vocab
+        return jsonify(vocab())
 
     if live:
         @app.post("/api/analyse")

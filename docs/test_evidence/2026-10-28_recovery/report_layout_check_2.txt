@@ -1,0 +1,29 @@
+item                                  template      report     delta  ok
+chapter page: border top                   8.5         8.5       0.0  PASS
+chapter page: border bottom              288.5       288.5       0.0  PASS
+chapter page: border left                  8.5         8.5       0.0  PASS
+chapter page: border right               201.5       201.5       0.0  PASS
+chapter page: chapter title top           21.5        21.5       0.0  PASS
+chapter page: chapter title centre       107.4       107.4       0.0  PASS
+chapter page: box top                     39.6        39.6       0.0  PASS
+chapter page: box bottom                  64.9        64.9       0.0  PASS
+chapter page: box left                    24.7        24.7       0.0  PASS
+chapter page: box right                  185.1       185.1       0.0  PASS
+chapter page: first text line top         72.1        72.5       0.3  PASS
+chapter page: text block left             25.1        25.6       0.5  PASS
+chapter page: text block right           189.8       189.8       0.0  PASS
+chapter page: footer rule top            259.1       259.2       0.2  PASS
+chapter page: footer rule left            24.9        24.9       0.0  PASS
+chapter page: footer rule right          190.3       190.3       0.0  PASS
+front page: border top                     8.5         8.5       0.0  PASS
+front page: border bottom                288.5       288.5       0.0  PASS
+front page: border left                    8.5         8.5       0.0  PASS
+front page: border right                 201.5       201.5       0.0  PASS
+front page: first text line top           21.0        22.5       1.5  PASS
+front page: text block left               25.6        25.4      -0.2  PASS
+front page: text block right             190.2       189.7      -0.5  PASS
+front page: footer rule top              259.1       259.2       0.2  PASS
+front page: footer rule left              24.9        24.9       0.0  PASS
+front page: footer rule right            190.3       190.3       0.0  PASS
+
+26 of 26 rows within 2 mm
