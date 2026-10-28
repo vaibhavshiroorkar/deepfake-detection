@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deepfake Generalization</title>
+  <meta name="description" content="A research demo of why deepfake detectors fail on footage they were not trained on. Runs entirely in your browser.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">Research demo</p>
+      <h1>Deepfake Generalization</h1>
+      <p class="lede">A face model that scores 0.999 ROC AUC on its own test set drops to 0.67 on footage
+        from elsewhere. Try it on a clip and see how it behaves outside the data it knows.</p>
+    </header>
+
+    <section class="panel">
+      <label id="drop" class="drop disabled">
+        <input id="file" type="file" accept="video/*" disabled>
+        <span class="drop-title">Choose a video clip</span>
+        <span class="drop-note">or drop one here. A short clip with one face works best.</span>
+      </label>
+      <p id="status" class="status" role="status">Loading models...</p>
+      <p class="privacy">The video never leaves your device. Everything runs in this tab.</p>
+
+      <ol id="steps" class="steps" hidden>
+        <li data-stage="read"><span class="name">Read frames</span><span class="detail"></span></li>
+        <li data-stage="faces"><span class="name">Find faces</span><span class="detail"></span></li>
+        <li data-stage="score"><span class="name">Score the face track</span><span class="detail"></span></li>
+        <li data-stage="familiarity"><span class="name">Check familiarity</span><span class="detail"></span></li>
+      </ol>
+    </section>
+
+    <section id="result" class="panel" hidden>
+      <div id="verdict" class="verdict">
+        <span id="verdict-label" class="chip"></span>
+        <p id="verdict-text"></p>
+      </div>
+      <p id="raw" class="raw"></p>
+      <div id="faces-wrap" hidden>
+        <h2>The 16 face crops the model saw</h2>
+        <div id="faces" class="faces"></div>
+      </div>
+    </section>
+
+    <section class="panel prose">
+      <h2>How to read the result</h2>
+      <p>The model is EfficientNet-B0 with a GRU over 16 face crops, trained on FakeAVCeleb. It
+        answers "fake" at a score of 0.5 or above.</p>
+      <p>Before it answers, a familiarity check compares the clip with the genuine footage the model
+        was trained on. When the clip looks unlike that footage, the demo withholds the verdict. Most
+        clips from phones, films or the web will be withheld, and that is the expected result.</p>
+      <table>
+        <thead><tr><th>Test set</th><th>ROC AUC</th><th>What it means</th></tr></thead>
+        <tbody>
+          <tr><td>FakeAVCeleb (in-domain)</td><td>0.999</td><td>Near perfect on familiar footage</td></tr>
+          <tr><td>DFDC</td><td>0.76</td><td>Weaker on other actors and cameras</td></tr>
+          <tr><td>Celeb-DF v2</td><td>0.67</td><td>Calls 141 of 155 genuine videos fake</td></tr>
+        </tbody>
+      </table>
+      <p>These are the numbers for this exact model (seed 17). The project's six-model ensemble does
+        a little better on DFDC but is too large to run in a browser. Do not use this page to judge
+        whether a real video is genuine.</p>
+    </section>
+
+    <footer>
+      <a href="https://github.com/vaibhavshiroorkar/deepfake-detection">Code, paper and full results</a>
+      <a href="https://huggingface.co/vaibhavshiroorkar/deepfake-generalization-demo">Model files</a>
+      <span class="credit">Familiarity check built with DINOv3
+        (<a href="https://huggingface.co/vaibhavshiroorkar/deepfake-generalization-demo/blob/main/browser/DINOV3_LICENSE.md">DINOv3 License</a>).
+        Face detection by MTCNN from facenet-pytorch.</span>
+    </footer>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

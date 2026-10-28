@@ -1,5 +1,10 @@
 # Deepfake Generalization
 
+Live demo: [huggingface.co/spaces/vaibhavshiroorkar/deepfake-generalization](https://huggingface.co/spaces/vaibhavshiroorkar/deepfake-generalization).
+It runs the best single face model in your browser, so no video is uploaded.
+Expect it to withhold or get wrong most clips from outside its training data.
+That gap is what this project studies.
+
 This repository tests whether three cue-specific detectors generalize better together than a visual detector alone.
 
 The branches inspect visual artifacts, audio spoofing, and mouth-audio alignment. The final model uses calibrated late fusion. It does not issue a full verdict when required evidence is missing.
@@ -236,8 +241,9 @@ uv run ddf-web --preload
 
 Open `http://127.0.0.1:8000`. The server binds to the local host.
 
-[Public demo hosting](docs/hosting.md) covers the GPU PC setup, temporary HTTPS
-link, isolated model runtime, and start and stop commands.
+[Public demo hosting](docs/hosting.md) covers the in-browser demo, the GPU PC
+setup with a temporary HTTPS link, the isolated model runtime, and the start
+and stop commands.
 
 - **Default model:** the visual ensemble. It averages the logits of the six
   final visual checkpoints in `runs\program-20260906\checkpoints`, EfficientNet-B0

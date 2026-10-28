@@ -18,6 +18,9 @@ number instead of restating it.
 
 - Public demo start, status and stop commands. The demo serves an isolated
   visual-model runtime through a temporary HTTPS tunnel and excludes datasets.
+- An in-browser demo of the best single visual model and the familiarity gate,
+  hosted on a static Hugging Face Space. `hosting/browser/export.py` writes the
+  ONNX models; `pipeline.js` ports the served preprocessing to JavaScript.
 
 ### Fixed
 

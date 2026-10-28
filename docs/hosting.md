@@ -1,5 +1,37 @@
 # Hosting the public demo
 
+There are two ways to host the demo. The browser demo is the permanent public
+link and costs nothing to run. The GPU PC demo serves the full ensemble but
+lasts only while the PC is on.
+
+## Browser demo on a static Hugging Face Space
+
+The demo runs at
+[huggingface.co/spaces/vaibhavshiroorkar/deepfake-generalization](https://huggingface.co/spaces/vaibhavshiroorkar/deepfake-generalization).
+It is a static Space, so there is no server. The visitor's browser downloads
+about 110 MB of ONNX models once and runs everything locally with
+onnxruntime-web, on WebGPU where available and WebAssembly otherwise. Uploaded
+video never leaves the device.
+
+It serves the best single model (`visual-best`) with the familiarity gate. The
+six-model ensemble is too large to download into a browser.
+`hosting/browser/README.md` describes the port and how closely it matches the
+Python results.
+
+The models live in `browser/` of the model repo
+[vaibhavshiroorkar/deepfake-generalization-demo](https://huggingface.co/vaibhavshiroorkar/deepfake-generalization-demo),
+next to the runtime the GPU PC demo below uses. To rebuild them, point
+`DDF_PROJECT_ROOT` at a demo runtime and run:
+
+```powershell
+uv run --with onnx --with onnxruntime --with onnxscript python hosting/browser/export.py out/
+```
+
+Upload `out/` to `browser/` in the model repo. To ship a page change, upload
+the files in `hosting/browser/` except `export.py` to the Space repository.
+
+## GPU PC with a temporary tunnel
+
 The Windows demo uses this PC's GPU and a temporary Cloudflare Tunnel.
 The PC must stay awake. Stopping the tunnel removes public access.
 The tunnel hostname can change after a restart.
