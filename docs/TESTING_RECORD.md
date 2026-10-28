@@ -226,3 +226,18 @@ Found by rendering the deliverables (not by a checker): the text inside the pipe
 | `check_docs.py --numbers` | 68 pass, 3 fail once (provenance stale after the DATA_LOG edit, since reverted); then 71 pass, 0 fail | `check_docs.txt` (the second run) |
 
 Rendered and inspected: paper PDF pages 10, 12 (software paragraph, platform subsection), 20, 21 and the page with Table I of the staircase; report preview pages 3, 5, 41, 69, 70, 71, 88; slides 2, 6, 27, 34 and 35 exported through PowerPoint (read-only open). Slide 34: the table (2.68 in) ends above its card with a clear gap, no overlap or cut text; the 2.46 in figure is the builder's layout budget, so the warning is conservative. Not inspected: the other pages and slides; the stored slide preview PDF is older than the deck and was not regenerated (git-ignored). Not run: tests (no implementation file changed), opt-in GPU tests, the 13 data-dependent tests, the live browser demo.
+
+## 15. Phase B of the deliverables (2026-10-29)
+
+Branch trim/docs. Records commit eb8a4f9. Claim fixes A1 to A10 of deliverables_v2/PHASE_B_FIXLIST.md applied to the v2 paper, report and deck; length cuts B1 to B3 applied. No logged number, threshold, ledger byte or protected path changed.
+
+| Command | Result |
+|---|---|
+| `cd deliverables_v2/research_paper; latexmk -g -pdf main.tex` | 16 PDF pages in the college build: 8 front matter, 8 from title to references (limit 9); 0 undefined references; abstract 250 words |
+| `deliverables_v2/project_report/build_report.py`; `layout_check.py` | 37 PDF pages (28 body, Appendix A), 39 references all cited; layout 26 of 26 |
+| `deliverables_v2/presentation/build_deck_v2.py`; `check_deck_v2.py` | 25 slides (14 main, divider, 10 backup); 428 pass, 0 fail |
+| `deliverables_v2/check_v2.py --write deliverables_v2/check_v2_output.txt` | 0 superior sentences without the D-091 qualifier; author order OK in all three; 713 present; every 3-decimal number in the record except 0.4543 (speech temperature in checkpoint metadata, not a result) |
+| originals: `build_numbers.py`, `check_docs.py --numbers`, `report/layout_check.py`, `slides/check_slides.py` | 71 pass 0 fail; 26 of 26; 955 pass 0 fail (the archive is unchanged) |
+
+Viewed by eye: paper pages 1 to 8 of the paper proper (first, results, last pages, every table and figure); report cover, contents, chapters 3 and 6 to 8, references (agent also viewed the other page types); deck slides 7 and 14 by the main agent, all 25 by the deck agent. A sealed-results table of the paper that overflowed the right margin was fixed. Report text sits about 3 mm nearer the right border than the left because of the template margins (left 25.4 mm, right 19.8 mm, border 8.5 mm); not changed, open question for the user.
+
