@@ -547,6 +547,8 @@ The scripts were written in a session scratch folder by agent E (which could not
 
 Consistency checks of the scripts: for 22 tag and block combinations (I-4: 10 sets; BASE: 5; I-0: 2; I-6: visual, audio, fused; I-5: visual, audio) the recomputed TPR, precision and balanced accuracy equal the stored recall, precision and balanced_accuracy of the JSON reports to four decimals; the E-015 script reproduces the stored AUC, sensitivity and specificity. The post hoc official-list AUC is labelled exploratory: it was not registered before the sealed scores were first read, it changes no model, threshold or choice, and it is a slice of a block already reported in E-014.
 
+Correction 2026-10-28: this section recorded the input hashes but no output hash, and frozen_rates_output.txt was saved with every line cut at 170 characters (only the trailing list of run identifiers is lost). The seed-mean false-positive rates quoted from it (Celeb-DF family 0.1098, DFD 0.1405) are now experiment entry E-032 (post hoc, re-analysis of sealed scores already in the ledger, not confirmatory), which records the script hash, both output hashes and a complete replay of 2026-10-28 (docs/test_evidence/2026-10-28_phase_b/frozen_rates_I4_replay.txt); the replay reproduces every number.
+
 
 ## 13. Conclusions (added 2026-10-27, agent E)
 

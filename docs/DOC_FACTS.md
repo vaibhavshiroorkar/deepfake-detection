@@ -82,6 +82,8 @@ Wording for the sweep in all documents: "ranked on the development slice, explor
 
 All numbers are exploratory (validation and dev_x), mean of 3 seeds, 95 percent group-bootstrap interval (2,000 resamples) unless stated. Verdicts are mechanical evaluations of criteria written before the run. The sealed test staircase and the two confirmatory comparisons are NOT run yet: every cell for them stays `[pending]`. Never write "best", "state of the art", "real-time", "saturated".
 
+Correction 2026-10-28 (record; the sentence above is kept as written): the confirmatory tests are THREE, not two: T1 final video system versus I-0, T2 final speech system versus I-0, T3 final video system versus the re-run Xception baseline (non-inferiority, delta 0.0100), each at the declared 95 percent level, plus a robustness line at the 98.33 percent level (Bonferroni over three). They were fixed by D-062 (b), committed 2026-10-25 at 18:44, before the first sealed read (20:16) and the sealed run (ledger committed 22:16). They were run on 2026-10-25 (E-014). T3 is worded as in D-091: non-inferior at both levels; the declared 95 percent superiority rule was met but does not survive the Bonferroni correction; the baseline ran at 224 px.
+
 **Iteration ladder as measured (order of execution; the lever labels of ITERATIONS.md are replaced by the lever used).**
 
 | Iteration | Lever (task) | Experiment | Validation AUC | dev_x AUC | Verdict |
