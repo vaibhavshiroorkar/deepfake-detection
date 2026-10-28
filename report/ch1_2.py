@@ -38,14 +38,17 @@ def intro(B):
         "separately. <ref tab:scope> lists what is returned for each input.")
     B.table("scope", "Inputs, outputs and claims of the system.",
             ["Input", "What is returned", "What is claimed"],
-            [["Still image", "One visual score. A face crop is scored if a face is found, otherwise the whole image", "A calibrated probability of fake for that kind of image; the path taken is reported"],
+            [["Still image", "One visual score. A face crop is scored if a face is found, otherwise the whole image", "A score calibrated on the validation data of its path (the face-crop path is not calibrated for still images); the path taken is reported"],
              ["Video with an audio track", "A visual score and an audio score, shown side by side", "Each score for its own modality; no combined score is claimed until the combining rule is decided and tested"],
-             ["Video without audio", "A visual score; the audio score is reported as unavailable, with the reason", "A visual probability only"],
-             ["Standalone audio file", "One audio score", "A calibrated probability of fake speech"]],
+             ["Video without audio", "A visual score; the audio score is reported as unavailable, with the reason", "A visual score only"],
+             ["Standalone audio file", "One audio score", "A score for fake speech with an exploratory calibration: a ranking score, not a reliable probability"]],
             [3.4, 6.6, 6.4], ["left", "left", "left"], size=10)
     B.p("The system does not locate a manipulation in time, because temporal labels are not available in every data set. It makes no claim about kinds of content that its training and "
-        "test data do not cover, and it states, in a fixed sentence next to every score, that the score is a calibrated probability from a model fitted on the training data of this project, "
-        "valid only for the kinds of content in that data, and that it is not proof.")
+        "test data do not cover. The frozen web page of the working version states, in a fixed sentence next to every score, that the score is a calibrated probability from a model fitted on the training data of this project, "
+        "valid only for the kinds of content in that data, and that it is not proof. Calibrated here means that a temperature was fitted on the validation split of each task; "
+        "on content unlike that split the number is a score, not a probability, which the later measurements on other sources show and the analysis platform states.")
+    B.p("The analysis platform built after the freeze keeps these scores but presents each one as the finding of a module within its tested scope, adds modules for lip synchronisation, "
+        "Content Credentials and generated video, and gives no single overall probability that the media is fake.")
     B.h2("Objectives", trace="DECISIONS D-003 to D-006, D-016, D-025, D-041")
     B.p("The objectives of the project work are the following.")
     B.numbered([
@@ -55,6 +58,7 @@ def intro(B):
         "Develop the system in iterations, each starting from a written hypothesis, a success criterion and a failure criterion, and keep failed iterations in the record.",
         "Test remote photoplethysmography, the pulse visible in skin colour, as a candidate improvement and adopt it only if the evidence on the development slice supports it.",
         "State “comparable with published detectors” in a checkable way: non-inferior, on the same protocol, to a re-run of a published detector.",
+        "Wrap the frozen detectors in an analysis platform that reports one finding per module with its tested scope and limitations, never a single overall probability that the media is fake, and add further modules (lip synchronisation, Content Credentials, generated video) only with the status that their evidence supports.",
         "Produce the software, an IEEE-format paper, this report and a presentation, all from the same logged evidence.",
     ])
     B.h2("Approach and Constraints", trace="DECISIONS D-007, D-009, D-016, D-017; PLAN; CLAUDE.md section 2")
@@ -71,7 +75,7 @@ def intro(B):
     B.h2("Organisation of the Report and Outline of the Next Chapter")
     B.p("Chapter 2 surveys the literature and ends with the research gap that the objectives address. Chapter 3 gives the mathematical background: the metrics, the group bootstrap, the "
         "paired and non-inferiority comparisons and the argument behind each lever of the iteration ladder. Chapter 4 describes the implementation and the experimental design, from the "
-        "environment and the data to the web application, the test protocol and the sealed-test results. Chapter 5 gives the conclusions and the further work. The references and two appendices follow.")
+        "environment and the data to the web application, the analysis platform, the software tests, the test protocol, the sealed-test results and the experiments after the freeze. Chapter 5 gives the conclusions and the further work. The references and two appendices follow.")
 
 
 def survey(B):

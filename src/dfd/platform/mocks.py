@@ -83,8 +83,10 @@ SCENARIOS: dict[str, tuple[dict, Callable[[], list]]] = {
         _m("speech", "authenticity", _NO, score=0.30, needs="audio"), _m("lip_sync", "cross_modal", "potential_mismatch", needs="both"),
         _m("c2pa", "provenance", "no_credentials_found")]),
     "conflicting_modules": ({}, lambda: [
-        _m("face_video", "authenticity", _HIT, score=0.91, needs="video"), _m("generated_video", "authenticity", _NO, score=0.15, needs="video"),
-        _m("speech", "authenticity", "inconclusive", needs="audio")]),
+        _m("face_video", "authenticity", _HIT, score=0.91, needs="video"), _m("speech", "authenticity", _NO, score=0.2, needs="audio"),
+        # an experimental module never finds "nothing" (the real one is always inconclusive): it cannot be one side of a conflict (D-087)
+        _m("generated_video", "authenticity", "inconclusive", score=0.15, needs="video",
+           warnings=[{"code": "EXPERIMENTAL_UNVALIDATED", "message": "MOCK: experimental research prototype; no finding is made"}])]),
     "no_face": ({"n_faces": 0}, lambda: [
         _m("face_video", "authenticity", "not_applicable", reason="no face found in the sampled frames"),
         _m("generated_video", "authenticity", "inconclusive", needs="video"), _m("speech", "authenticity", _NO, score=0.25, needs="audio"),

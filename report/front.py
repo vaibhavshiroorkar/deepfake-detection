@@ -114,7 +114,7 @@ def acknowledgement(B):
 def abstract(B):
     B.h1("Abstract", kind="front")
     B.p("Published deepfake detectors report high scores on the data they were developed against and markedly lower scores on data from other sources. This project builds, from zero, "
-        "a system that takes an image, a video with its audio track, or a standalone audio clip and returns a calibrated probability that the content is fake, together with a "
+        "a system that takes an image, a video with its audio track, or a standalone audio clip and returns a score that the content is fake, calibrated on validation data only, together with a "
         "separate visual score and audio score so that the user can see which modality carries the evidence. It does not localise a manipulation in time.")
     B.p("The work follows a documented path. A working version uses a frozen pretrained encoder for each task and a linear head, with temperature scaling and a threshold that are fixed "
         "on validation data only. Seven further iterations follow, each starting from a written hypothesis, a success criterion and a failure criterion that precede the run; they "
@@ -133,6 +133,9 @@ def abstract(B):
         "both are improvements by the declared rule and also at the 98.33 percent level. Against the re-run Xception baseline (0.8042 [0.7841, 0.8223]) the face-video system is superior at the 95 percent level (+0.0176 [+0.0025, +0.0327]), "
         "not at the 98.33 percent level, where the interval [−0.0011, +0.0355] contains zero, and non-inferior at both. Two predictions for speech failed upward, and every other sealed number is exploratory. "
         "The comparison rests on one baseline family at 224 pixels, 344 groups and 42 speakers.")
+    B.p("After the freeze the detectors were wrapped in a modular analysis platform that reports one finding per module, each with its tested scope, and never a single overall score; "
+        "it adds a lip-sync module (weak evidence), a Content Credentials check and an experimental generated-video module whose head is at chance on a held-out benchmark (AUC 0.4957). "
+        "On the sealed half of FakeAVCeleb the frozen system ranks well (visual AUC 0.9552, audio 0.9263), but its thresholds do not transfer and the data set carries a codec shortcut.")
     B.p("<b>Keywords:</b> deepfake detection, multimodal, group-disjoint evaluation, frozen encoders, calibration, group bootstrap, non-inferiority, remote photoplethysmography.")
 
 

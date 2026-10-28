@@ -181,6 +181,19 @@ def audible_fraction(wav: np.ndarray, sr: int = 16000) -> float:
     return float((rms > AUDIO_ACTIVE_RMS).mean())
 
 
+def offset_curve_evidence(r, band: tuple, min_confidence: float) -> dict:
+    """The offset search the decision was read from (D5): SyncResult.mean_dist, which the scorer computes and the module used to discard.
+    ``mean_dist[i]`` belongs to offset ``vshift - i`` (scoring.score_track); here offsets run in ascending order. Display only."""
+    n = int(r.vshift)
+    md = np.asarray(r.mean_dist, dtype=np.float64)
+    offsets = list(range(-n, n + 1))
+    return {"kind": "offset_curve", "offsets": offsets, "mean_dist": [round(float(md[n - o]), 4) for o in offsets],
+            "best_offset": int(r.offset_frames), "band": [int(band[0]), int(band[1])], "min_confidence": float(min_confidence),
+            "confidence": round(float(r.confidence), 4),
+            "text": ("Mean SyncNet embedding distance at each candidate audio-visual offset (frames at 25 fps). The lowest point is the best "
+                     "alignment; the shaded band is the range reported as consistent. A timing measure, not a manipulation detector.")}
+
+
 class LipSyncModule:
     module_id = "lip_sync"
     section = "cross_modal"
@@ -321,24 +334,30 @@ class LipSyncModule:
             return self._inconclusive("AUDIO_NOT_SPEECH_LIKE", "A cheap heuristic (spectral flatness and loudness variation; not a speech "
                                       f"detector) finds the audio unlike speech (flatness {sm['flatness_median']}, loudness variation "
                                       f"{sm['rms_cv']}). Lip movement cannot be compared with noise, steady tones or music, so no offset is reported.")
+        # Display only (D5, 2026-10-27): records that the screen above passed, so the report can say so. Changes no decision.
+        screen = [{"kind": "heuristic", "code": "speech_like_screen", "value": True,
+                   "text": "The audio passed the cheap speech-likeness screen (spectral flatness and loudness variation; not a speech detector)"}]
         faces = self._detect_faces(path)
         boxes, info = build_track(faces)
         if boxes is None and info["reason"] == "no_face":
-            return self._not_applicable(f"no face found in at least {MIN_FACE_FRACTION:.0%} of the frames "
-                                        f"({info['frames_with_face']} of {info['n_frames']} frames had one)")
+            res = self._not_applicable(f"no face found in at least {MIN_FACE_FRACTION:.0%} of the frames "
+                                       f"({info['frames_with_face']} of {info['n_frames']} frames had one)")
+            res.observations = screen
+            return res
         if boxes is None:
             return self._inconclusive("SPEAKER_ATTRIBUTION_NOT_ESTABLISHED",
                                       f"Two or more faces appear in {info['frames_with_several']} of {info['n_frames']} frames. This "
-                                      "module scores one face track and cannot tell which person is speaking, so it does not pick one.")
+                                      "module scores one face track and cannot tell which person is speaking, so it does not pick one.",
+                                      observations=list(screen))
         if info["n_frames"] < self.min_seconds * 25:
-            return self._inconclusive("CLIP_TOO_SHORT", f"Only {info['n_frames']} video frames at 25 fps were decoded.")
+            return self._inconclusive("CLIP_TOO_SHORT", f"Only {info['n_frames']} video frames at 25 fps were decoded.", observations=list(screen))
         crops = self._make_crops(path, boxes)
         r = self._score(crops, wav)         # inference errors propagate: the coordinator records the module as failed
         conf, off = float(r.confidence), int(r.offset_frames)
         obs = [{"kind": "heuristic", "code": "av_offset_frames", "text": "AV offset in frames at 25 fps (reference definition: vshift minus argmin)", "value": off},
                {"kind": "heuristic", "code": "sync_min_dist", "text": "Minimum of the mean embedding distance over the shifts", "value": round(float(r.min_dist), 4)},
                {"kind": "heuristic", "code": "sync_confidence", "text": "Median minus minimum of the mean embedding distance (reference confidence)", "value": round(conf, 4)},
-               {"kind": "heuristic", "code": "frames_with_face", "text": "Frames with a detected face / frames analysed", "value": f"{info['frames_with_face']}/{info['n_frames']}"}]
+               {"kind": "heuristic", "code": "frames_with_face", "text": "Frames with a detected face / frames analysed", "value": f"{info['frames_with_face']}/{info['n_frames']}"}] + screen
         score = {"value": round(float(min(max(conf, 0.0), SCORE_DISPLAY_SCALE) / SCORE_DISPLAY_SCALE), 4), "meaning": SCORE_MEANING,
                  "calibrated": False, "threshold": None}
         warns = []
@@ -356,6 +375,7 @@ class LipSyncModule:
                               f"({off * 40} ms), outside the band of {self.offset_band[0]} to {self.offset_band[1]} frames fitted on real clips (E-025). This is not proof of manipulation."})
             res = self._result(status="completed", finding=finding, score=score, units_analysed=r.n_windows, model=self._model_block(),
                                tested_scope=TESTED_SCOPE, limitations=list(LIMITATIONS), warnings=warns, observations=obs)
+        res.evidence = [offset_curve_evidence(r, self.offset_band, self.min_confidence)]
         res.timing_ms = round((time.perf_counter() - t0) * 1000.0, 3)
         return res
 

@@ -1,0 +1,196 @@
+[
+ {
+  "case": "1_face_swap_video_ffpp_val.mp4",
+  "seconds": 3.1,
+  "live_panel": true,
+  "report_visible": true,
+  "banner": "LIVE ANALYSIS\nResults come from the modules listed below; each states its own tested scope and limitations.",
+  "error_box": "",
+  "status_texts": [
+   "Done: 1_face_swap_video_ffpp_val.mp4",
+   "Running: (0 of 7 modules done) for 1_face_swap_video_ffpp_val.mp4",
+   "Running: face_video (0 of 7 modules done) for 1_face_swap_video_ffpp_val.mp4",
+   "Uploading 1_face_swap_video_ffpp_val.mp4 ..."
+  ],
+  "final_status": "Done: 1_face_swap_video_ffpp_val.mp4",
+  "n_cards": 7,
+  "cards": [
+   "face_video | COMPLETED | version I-5-freeze-candidate-20261025-1608 | source real | Model: SigLIP base (google/siglip-base-patch16-224), fully fine-tuned, task T-V | Evaluation: E-005 (fine-tuning; temperature and threshold fitted on the FaceForensics++ validation split); E-014 (sealed test, tag I-4: AUC 0.8218 [0.8020, 0.8393] on the Celeb-DF family, 0.8999 [0.8759, 0.9210] on Celeb-DF v2, 0.9899 [0.9826, 0.9959] on the FaceForensics++ test_in split; tag I-5 on LAV-DF test_in: 0.3226 [0.2953, 0.3490]) | Indicates manipulation",
+   "image_detector | NOT APPLICABLE | version I-5-freeze-candidate-20261025-1608 | source real | Reason: not an image file; video and audio files are handled by other modules | No finding is reported for this status.",
+   "speech | NOT APPLICABLE | version I-5-freeze-candidate-20261025-1608 | source real | Reason: the video has no audio stream | No finding is reported for this status.",
+   "generated_video | EXPERIMENTALCOMPLETED | version E020-C2-seed0 | source real | Model: Appearance baseline: logistic regression on the mean DINOv2-small CLS embedding of 8 frames (NOT the ReStraV trajectory method) | Evaluation: E-020, experimental, NOT validated: DeepAction leave-one-generator-out macro AUC 0.8281 [0.7908, 0.8662] (development); DF26 held-out AUC 0.4957 [0.4755, 0.5168] on all 2691 clips and 0.488 [0.4534, 0.5204] on the closed-generator subset (preregistered H-G1 not supported) | Inconclusive",
+   "lip_sync | NOT APPLICABLE | version syncnet-v2-port-3 | source real | Reason: the video has no audio stream | No finding is reported for this status.",
+   "media_metadata | COMPLETED | version 1 | source real | Inconclusive | No score reported. | Tested scope: Local file inspection with ffprobe and a byte scan; no model is involved. Reports container, stream and tag properties and a few descriptive flags.",
+   "content_credentials | COMPLETED | version 2-c2pa | source real | No credentials found | No score reported. | Units analysed: 5757251"
+  ],
+  "page_errors": []
+ },
+ {
+  "case": "2_original_video_ffpp_val.mp4",
+  "seconds": 3.1,
+  "live_panel": true,
+  "report_visible": true,
+  "banner": "LIVE ANALYSIS\nResults come from the modules listed below; each states its own tested scope and limitations.",
+  "error_box": "",
+  "status_texts": [
+   "Done: 2_original_video_ffpp_val.mp4",
+   "Running: (0 of 7 modules done) for 2_original_video_ffpp_val.mp4",
+   "Running: face_video (0 of 7 modules done) for 2_original_video_ffpp_val.mp4",
+   "Running: media_metadata (5 of 7 modules done) for 2_original_video_ffpp_val.mp4",
+   "Uploading 2_original_video_ffpp_val.mp4 ..."
+  ],
+  "final_status": "Done: 2_original_video_ffpp_val.mp4",
+  "n_cards": 7,
+  "cards": [
+   "face_video | COMPLETED | version I-5-freeze-candidate-20261025-1608 | source real | Model: SigLIP base (google/siglip-base-patch16-224), fully fine-tuned, task T-V | Evaluation: E-005 (fine-tuning; temperature and threshold fitted on the FaceForensics++ validation split); E-014 (sealed test, tag I-4: AUC 0.8218 [0.8020, 0.8393] on the Celeb-DF family, 0.8999 [0.8759, 0.9210] on Celeb-DF v2, 0.9899 [0.9826, 0.9959] on the FaceForensics++ test_in split; tag I-5 on LAV-DF test_in: 0.3226 [0.2953, 0.3490]) | No indication within tested scope",
+   "image_detector | NOT APPLICABLE | version I-5-freeze-candidate-20261025-1608 | source real | Reason: not an image file; video and audio files are handled by other modules | No finding is reported for this status.",
+   "speech | NOT APPLICABLE | version I-5-freeze-candidate-20261025-1608 | source real | Reason: the video has no audio stream | No finding is reported for this status.",
+   "generated_video | EXPERIMENTALCOMPLETED | version E020-C2-seed0 | source real | Model: Appearance baseline: logistic regression on the mean DINOv2-small CLS embedding of 8 frames (NOT the ReStraV trajectory method) | Evaluation: E-020, experimental, NOT validated: DeepAction leave-one-generator-out macro AUC 0.8281 [0.7908, 0.8662] (development); DF26 held-out AUC 0.4957 [0.4755, 0.5168] on all 2691 clips and 0.488 [0.4534, 0.5204] on the closed-generator subset (preregistered H-G1 not supported) | Inconclusive",
+   "lip_sync | NOT APPLICABLE | version syncnet-v2-port-3 | source real | Reason: the video has no audio stream | No finding is reported for this status.",
+   "media_metadata | COMPLETED | version 1 | source real | Inconclusive | No score reported. | Tested scope: Local file inspection with ffprobe and a byte scan; no model is involved. Reports container, stream and tag properties and a few descriptive flags.",
+   "content_credentials | COMPLETED | version 2-c2pa | source real | No credentials found | No score reported. | Units analysed: 4742842"
+  ],
+  "page_errors": []
+ },
+ {
+  "case": "3_talking_head_with_audio_lavdf_train.mp4",
+  "seconds": 1.3,
+  "live_panel": true,
+  "report_visible": true,
+  "banner": "LIVE ANALYSIS\nResults come from the modules listed below; each states its own tested scope and limitations.",
+  "error_box": "",
+  "status_texts": [
+   "Done: 3_talking_head_with_audio_lavdf_train.mp4",
+   "Running: (0 of 7 modules done) for 3_talking_head_with_audio_lavdf_train.mp4",
+   "Uploading 3_talking_head_with_audio_lavdf_train.mp4 ..."
+  ],
+  "final_status": "Done: 3_talking_head_with_audio_lavdf_train.mp4",
+  "n_cards": 7,
+  "cards": [
+   "face_video | COMPLETED | version I-5-freeze-candidate-20261025-1608 | source real | Model: SigLIP base (google/siglip-base-patch16-224), fully fine-tuned, task T-V | Evaluation: E-005 (fine-tuning; temperature and threshold fitted on the FaceForensics++ validation split); E-014 (sealed test, tag I-4: AUC 0.8218 [0.8020, 0.8393] on the Celeb-DF family, 0.8999 [0.8759, 0.9210] on Celeb-DF v2, 0.9899 [0.9826, 0.9959] on the FaceForensics++ test_in split; tag I-5 on LAV-DF test_in: 0.3226 [0.2953, 0.3490]) | No indication within tested scope",
+   "image_detector | NOT APPLICABLE | version I-5-freeze-candidate-20261025-1608 | source real | Reason: not an image file; video and audio files are handled by other modules | No finding is reported for this status.",
+   "speech | COMPLETED | version I-5-freeze-candidate-20261025-1608 | source real | Model: logit mean of HuBERT base, WavLM base+ and Whisper small encoders with linear heads, task T-A | Evaluation: E-007, E-008, E-009 (exploratory development; the calibration is exploratory); E-014 (sealed test, tag I-4: AUC 0.9835 [0.9798, 0.9872] on ASVspoof 2019 LA test_in, 0.9148 [0.8896, 0.9383] on In-the-Wild test_x; tag I-5 on the audio track of LAV-DF videos, test_in, 2,000-video exploratory subset: 0.6462 [0.6188, 0.6723]) | No indication within tested scope",
+   "generated_video | EXPERIMENTALCOMPLETED | version E020-C2-seed0 | source real | Model: Appearance baseline: logistic regression on the mean DINOv2-small CLS embedding of 8 frames (NOT the ReStraV trajectory method) | Evaluation: E-020, experimental, NOT validated: DeepAction leave-one-generator-out macro AUC 0.8281 [0.7908, 0.8662] (development); DF26 held-out AUC 0.4957 [0.4755, 0.5168] on all 2691 clips and 0.488 [0.4534, 0.5204] on the closed-generator subset (preregistered H-G1 not supported) | Inconclusive",
+   "lip_sync | COMPLETED | version syncnet-v2-port-3 | source real | Model: SyncNet v2 (Chung and Zisserman, Oxford VGG) | Evaluation: not evaluated | No mismatch found within tested scope",
+   "media_metadata | COMPLETED | version 1 | source real | Inconclusive | No score reported. | Tested scope: Local file inspection with ffprobe and a byte scan; no model is involved. Reports container, stream and tag properties and a few descriptive flags.",
+   "content_credentials | COMPLETED | version 2-c2pa | source real | No credentials found | No score reported. | Units analysed: 120042"
+  ],
+  "page_errors": []
+ },
+ {
+  "case": "4_speech_audio_asvspoof_dev.flac",
+  "seconds": 1.3,
+  "live_panel": true,
+  "report_visible": true,
+  "banner": "LIVE ANALYSIS\nResults come from the modules listed below; each states its own tested scope and limitations.",
+  "error_box": "",
+  "status_texts": [
+   "Done: 4_speech_audio_asvspoof_dev.flac",
+   "Running: (0 of 7 modules done) for 4_speech_audio_asvspoof_dev.flac",
+   "Uploading 4_speech_audio_asvspoof_dev.flac ..."
+  ],
+  "final_status": "Done: 4_speech_audio_asvspoof_dev.flac",
+  "n_cards": 7,
+  "cards": [
+   "face_video | NOT APPLICABLE | version I-5-freeze-candidate-20261025-1608 | source real | Reason: not a video file; still images are handled by the image detector | No finding is reported for this status.",
+   "image_detector | NOT APPLICABLE | version I-5-freeze-candidate-20261025-1608 | source real | Reason: not an image file; video and audio files are handled by other modules | No finding is reported for this status.",
+   "speech | COMPLETED | version I-5-freeze-candidate-20261025-1608 | source real | Model: logit mean of HuBERT base, WavLM base+ and Whisper small encoders with linear heads, task T-A | Evaluation: E-007, E-008, E-009 (exploratory development; the calibration is exploratory); E-014 (sealed test, tag I-4: AUC 0.9835 [0.9798, 0.9872] on ASVspoof 2019 LA test_in, 0.9148 [0.8896, 0.9383] on In-the-Wild test_x; tag I-5 on the audio track of LAV-DF videos, test_in, 2,000-video exploratory subset: 0.6462 [0.6188, 0.6723]) | No indication within tested scope",
+   "generated_video | NOT APPLICABLE | version E020-C2-seed0 | source real | Reason: not a video file | No finding is reported for this status.",
+   "lip_sync | NOT APPLICABLE | version syncnet-v2-port-3 | source real | Reason: lip synchronisation needs a video with sound; this input is audio | No finding is reported for this status.",
+   "media_metadata | COMPLETED | version 1 | source real | Inconclusive | No score reported. | Tested scope: Local file inspection with ffprobe and a byte scan; no model is involved. Reports container, stream and tag properties and a few descriptive flags.",
+   "content_credentials | COMPLETED | version 2-c2pa | source real | No credentials found | No score reported. | Units analysed: 84834"
+  ],
+  "page_errors": []
+ },
+ {
+  "case": "5_face_image_frame_ffpp_val.png",
+  "seconds": 1.3,
+  "live_panel": true,
+  "report_visible": true,
+  "banner": "LIVE ANALYSIS\nResults come from the modules listed below; each states its own tested scope and limitations.",
+  "error_box": "",
+  "status_texts": [
+   "Done: 5_face_image_frame_ffpp_val.png",
+   "Running: (0 of 7 modules done) for 5_face_image_frame_ffpp_val.png",
+   "Uploading 5_face_image_frame_ffpp_val.png ..."
+  ],
+  "final_status": "Done: 5_face_image_frame_ffpp_val.png",
+  "n_cards": 7,
+  "cards": [
+   "face_video | NOT APPLICABLE | version I-5-freeze-candidate-20261025-1608 | source real | Reason: not a video file; still images are handled by the image detector | No finding is reported for this status.",
+   "image_detector | COMPLETED | version I-5-freeze-candidate-20261025-1608 | source real | Model: SigLIP base (google/siglip-base-patch16-224), fully fine-tuned, task T-V, applied to a face crop of a still image | Evaluation: Scored by the T-V head, which was evaluated on video clips only (E-005 (fine-tuning; temperature and threshold fitted on the FaceForensics++ validation split); E-014 (sealed test, tag I-4: AUC 0.8218 [0.8020, 0.8393] on the Celeb-DF family, 0.8999 [0.8759, 0.9210] on Celeb-DF v2, 0.9899 [0.9826, 0.9959] on the FaceForensics++ test_in split; tag I-5 on LAV-DF test_in: 0.3226 [0.2953, 0.3490])). Not evaluated on still face-swapped photos. | Indicates manipulation",
+   "speech | NOT APPLICABLE | version I-5-freeze-candidate-20261025-1608 | source real | Reason: a still image has no audio | No finding is reported for this status.",
+   "generated_video | NOT APPLICABLE | version E020-C2-seed0 | source real | Reason: not a video file | No finding is reported for this status.",
+   "lip_sync | NOT APPLICABLE | version syncnet-v2-port-3 | source real | Reason: lip synchronisation needs a video with sound; this input is image | No finding is reported for this status.",
+   "media_metadata | COMPLETED | version 1 | source real | Inconclusive | No score reported. | Tested scope: Local file inspection with ffprobe and a byte scan; no model is involved. Reports container, stream and tag properties and a few descriptive flags.",
+   "content_credentials | COMPLETED | version 2-c2pa | source real | No credentials found | No score reported. | Units analysed: 1930658"
+  ],
+  "page_errors": []
+ },
+ {
+  "case": "6_synthetic_no_face_tone_audio.mp4",
+  "seconds": 1.3,
+  "live_panel": true,
+  "report_visible": true,
+  "banner": "LIVE ANALYSIS\nResults come from the modules listed below; each states its own tested scope and limitations.",
+  "error_box": "",
+  "status_texts": [
+   "Done: 6_synthetic_no_face_tone_audio.mp4",
+   "Running: (0 of 7 modules done) for 6_synthetic_no_face_tone_audio.mp4",
+   "Uploading 6_synthetic_no_face_tone_audio.mp4 ..."
+  ],
+  "final_status": "Done: 6_synthetic_no_face_tone_audio.mp4",
+  "n_cards": 7,
+  "cards": [
+   "face_video | NOT APPLICABLE | version I-5-freeze-candidate-20261025-1608 | source real | Reason: no face detected | No finding is reported for this status. | Warnings",
+   "image_detector | NOT APPLICABLE | version I-5-freeze-candidate-20261025-1608 | source real | Reason: not an image file; video and audio files are handled by other modules | No finding is reported for this status.",
+   "speech | COMPLETED | version I-5-freeze-candidate-20261025-1608 | source real | Model: logit mean of HuBERT base, WavLM base+ and Whisper small encoders with linear heads, task T-A | Evaluation: E-007, E-008, E-009 (exploratory development; the calibration is exploratory); E-014 (sealed test, tag I-4: AUC 0.9835 [0.9798, 0.9872] on ASVspoof 2019 LA test_in, 0.9148 [0.8896, 0.9383] on In-the-Wild test_x; tag I-5 on the audio track of LAV-DF videos, test_in, 2,000-video exploratory subset: 0.6462 [0.6188, 0.6723]) | No indication within tested scope",
+   "generated_video | EXPERIMENTALCOMPLETED | version E020-C2-seed0 | source real | Model: Appearance baseline: logistic regression on the mean DINOv2-small CLS embedding of 8 frames (NOT the ReStraV trajectory method) | Evaluation: E-020, experimental, NOT validated: DeepAction leave-one-generator-out macro AUC 0.8281 [0.7908, 0.8662] (development); DF26 held-out AUC 0.4957 [0.4755, 0.5168] on all 2691 clips and 0.488 [0.4534, 0.5204] on the closed-generator subset (preregistered H-G1 not supported) | Inconclusive",
+   "lip_sync | COMPLETED | version syncnet-v2-port-3 | source real | Model: SyncNet v2 (Chung and Zisserman, Oxford VGG) | Evaluation: not evaluated | Inconclusive",
+   "media_metadata | COMPLETED | version 1 | source real | Inconclusive | No score reported. | Tested scope: Local file inspection with ffprobe and a byte scan; no model is involved. Reports container, stream and tag properties and a few descriptive flags.",
+   "content_credentials | COMPLETED | version 2-c2pa | source real | No credentials found | No score reported. | Units analysed: 42142"
+  ],
+  "page_errors": []
+ },
+ {
+  "case": "7_unsupported_notes.txt",
+  "seconds": 0.4,
+  "live_panel": true,
+  "report_visible": false,
+  "banner": "",
+  "error_box": "",
+  "status_texts": [
+   "Failed: 7_unsupported_notes.txt. UNSUPPORTED_MEDIA_TYPE: unsupported file type .txt; accepted: .avi, .bmp, .flac, .jpeg,",
+   "Uploading 7_unsupported_notes.txt ..."
+  ],
+  "final_status": "Failed: 7_unsupported_notes.txt. UNSUPPORTED_MEDIA_TYPE: unsupported file type .txt; accepted: .avi, .bmp, .flac, .jpeg, .jpg, .m4a, .mkv, .mov, .mp3, .mp4, .ogg, .png, .wav, .webm, .webp",
+  "n_cards": 3,
+  "cards": [
+   "face_videoMOCKCompletedversion mock-0 | source mockIndicates manipulationScore: 0.91 (MOCK number)Meaning: MOCK number with no meaning; it is not a measurement.Calibrated: noUnits analysed: 16Tested scope: MOCK: invented by a scenario script; no model ran.LimitationsMOCK: invented by a scenario script; no model ran.Scenario data for dashboard development only.",
+   "generated_videoMOCKCompletedversion mock-0 | source mockNo indication within tested scopeScore: 0.15 (MOCK number)Meaning: MOCK number with no meaning; it is not a measurement.Calibrated: noUnits analysed: 16Tested scope: MOCK: invented by a scenario script; no model ran.LimitationsMOCK: invented by a scenario script; no model ran.Scenario data for dashboard development only.",
+   "speechMOCKCompletedversion mock-0 | source mockInconclusiveNo score reported.Units analysed: 16Tested scope: MOCK: invented by a scenario script; no model ran.LimitationsMOCK: invented by a scenario script; no model ran.Scenario data for dashboard development only."
+  ],
+  "page_errors": []
+ },
+ {
+  "case": "8_corrupt_video.mp4",
+  "seconds": 1.3,
+  "live_panel": true,
+  "report_visible": false,
+  "banner": "",
+  "error_box": "",
+  "status_texts": [
+   "Failed: 8_corrupt_video.mp4. UNREADABLE_FILE: the file could not be read as media: C:\\Users\\admin\\AppData\\Local\\Temp\\dfd",
+   "Running: (0 of 7 modules done) for 8_corrupt_video.mp4",
+   "Uploading 8_corrupt_video.mp4 ..."
+  ],
+  "final_status": "Failed: 8_corrupt_video.mp4. UNREADABLE_FILE: the file could not be read as media: C:\\Users\\admin\\AppData\\Local\\Temp\\dfd_platform_uploads\\tmp687oc_kx.mp4: Invalid data found when processing input",
+  "n_cards": 3,
+  "cards": [
+   "face_videoMOCKCompletedversion mock-0 | source mockIndicates manipulationScore: 0.91 (MOCK number)Meaning: MOCK number with no meaning; it is not a measurement.Calibrated: noUnits analysed: 16Tested scope: MOCK: invented by a scenario script; no model ran.LimitationsMOCK: invented by a scenario script; no model ran.Scenario data for dashboard development only.",
+   "generated_videoMOCKCompletedversion mock-0 | source mockNo indication within tested scopeScore: 0.15 (MOCK number)Meaning: MOCK number with no meaning; it is not a measurement.Calibrated: noUnits analysed: 16Tested scope: MOCK: invented by a scenario script; no model ran.LimitationsMOCK: invented by a scenario script; no model ran.Scenario data for dashboard development only.",
+   "speechMOCKCompletedversion mock-0 | source mockInconclusiveNo score reported.Units analysed: 16Tested scope: MOCK: invented by a scenario script; no model ran.LimitationsMOCK: invented by a scenario script; no model ran.Scenario data for dashboard development only."
+  ],
+  "page_errors": []
+ }
+]

@@ -21,7 +21,11 @@ from ..schema import ModuleResult
 REPO_ROOT = Path(__file__).resolve().parents[4]
 DEFAULT_CHECKPOINT = REPO_ROOT / "checkpoints" / "I-5-freeze-candidate"
 RECORDED_ELSEWHERE = "see docs/DATA_LOG.md"
-SCORE_MEANING_V2 = SCORE_MEANING + " It is the output of one detector module, not an overall verdict on the media."
+# D-087: the frozen v1 text (dfd.infer.schema.SCORE_MEANING, "Calibrated probability that this content is fake") overstates what the score
+# is outside the validation data; the platform states it precisely. The frozen v1 library keeps its own text (protected path).
+SCORE_MEANING_V2 = ("Model output in [0, 1] after temperature scaling fitted on the validation split of the detector's training data. It is "
+                    "calibrated only for content like that validation data; on other sources it is a ranking score and not the probability that "
+                    "this file is fake. It is the output of one detector module, not an overall verdict on the media.")
 SCORE_MEANING_EXPLORATORY = ("Probability of fake from the speech model of this project, with an exploratory calibration: read it as a ranking "
                              "score, not as a reliable probability. It is the output of one detector module, not an overall verdict on the media.")
 INDICATES, NO_INDICATION = "indicates_manipulation", "no_indication_within_tested_scope"

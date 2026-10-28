@@ -224,7 +224,7 @@ def software(B):
         "and normalisation, so it has a new identifier, and the checkpoint of the working version still loads and is scored with its own rule. The format and its refusals are covered by 304 unit tests, which pass. "
         "A candidate checkpoint of the frozen system was built, and a parity check on the graphics processor passed: 11 training or validation items (6 FaceForensics++ videos, 3 ASVspoof files and 2 ProGAN images) "
         "were scored from the stored scores and by the real adapter from the raw files, and the largest absolute difference of the calibrated score was 0.0019 against a tolerance of 0.02. "
-        "The local web page still runs the checkpoint of the working version; it has not been switched to the checkpoint of the frozen system.")
+        "The local web page was later run once with the checkpoint of the frozen system on three training files and passed its page check (source real, no banner); its screenshots in this report show the working-version checkpoint.")
 
 
 def limits(B):
@@ -244,5 +244,5 @@ def limits(B):
         "Iterations 1b and 1c were not tested on the sealed sets, because they are not part of the final system; the sealed staircase, other than the three declared tests, is exploratory.",
         "The two speech predictions failed upward and the sealed video value is below its development value; these differences between development slices and sealed sets were not explained by an experiment.",
         "The sealed LAV-DF subset repeats the development pattern and supports no claim of audio-visual detection.",
-        "The web page has not been switched to the checkpoint of the frozen system, so the page shows the working version.",
+        "The web page was checked with the checkpoint of the frozen system on three training files only; that check shows the page works and says nothing about accuracy.",
     ])

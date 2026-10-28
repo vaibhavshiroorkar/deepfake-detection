@@ -1,0 +1,80 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.15, pytest-9.1.1, pluggy-1.7.0
+tested source state: git HEAD 5af239a9427339890bb63169476de12099fc5f47; tracked files MODIFIED vs HEAD (62 files)
+rootdir: D:\Final Year Project
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 583 items / 13 deselected / 570 selected
+
+tests\data\test_data_builders.py ..............                          [  2%]
+tests\data\test_data_celebdf_pp.py ......                                [  3%]
+tests\data\test_data_dedup.py .....                                      [  4%]
+tests\data\test_data_devx.py ...........                                 [  6%]
+tests\data\test_data_dfd_itw.py ..                                       [  6%]
+tests\data\test_data_leakage.py ...........                              [  8%]
+tests\data\test_data_loaders.py .........                                [ 10%]
+tests\data\test_data_manifest.py ....                                    [ 10%]
+tests\data\test_data_splits.py .......                                   [ 12%]
+tests\data\test_fakeavceleb.py ......                                    [ 13%]
+tests\eval\test_eval_bootstrap.py .........                              [ 14%]
+tests\eval\test_eval_devx_compare.py ..........                          [ 16%]
+tests\eval\test_eval_guard.py .......                                    [ 17%]
+tests\eval\test_eval_metrics.py ..................................       [ 23%]
+tests\eval\test_eval_pipeline.py ....                                    [ 24%]
+tests\eval\test_eval_scorefile.py ......                                 [ 25%]
+tests\eval\test_eval_threshold_calibration.py ....................       [ 28%]
+tests\infer\test_infer_library.py .....................                  [ 32%]
+tests\infer\test_infer_real_adapter.py .................                 [ 35%]
+tests\infer\test_infer_v2_checkpoint.py ..............                   [ 38%]
+tests\platform\test_coordinator_reliability.py ...........               [ 40%]
+tests\platform\test_platform_core.py .........................           [ 44%]
+tests\platform_c2pa\test_c2pa.py ...........                             [ 46%]
+tests\platform_dashboard\test_dashboard.py ....................          [ 49%]
+tests\platform_dashboard\test_dashboard_design.py ........               [ 51%]
+tests\platform_dashboard\test_dashboard_live_ui.py ..................... [ 54%]
+                                                                         [ 54%]
+tests\platform_explain\test_explain.py ................................. [ 60%]
+...........                                                              [ 62%]
+tests\platform_genvideo\test_generated_video.py ........................ [ 66%]
+......................                                                   [ 70%]
+tests\platform_lipsync\test_lip_sync.py ......................           [ 74%]
+tests\platform_live\test_live_server.py .........                        [ 76%]
+tests\platform_live_face\test_live_face.py ...s                          [ 76%]
+tests\platform_modules\test_generated_image.py .......                   [ 78%]
+tests\platform_modules\test_modules.py ........................          [ 82%]
+tests\platform_modules\test_parity.py s                                  [ 82%]
+tests\platform_pipeline\test_pipeline.py ..........                      [ 84%]
+tests\platform_provenance\test_c2pa_unavailable.py ...                   [ 84%]
+tests\platform_provenance\test_provenance.py ......                      [ 85%]
+tests\prep\test_prep_audio.py ....                                       [ 86%]
+tests\prep\test_prep_face.py .....                                       [ 87%]
+tests\prep\test_prep_pipeline.py .....                                   [ 88%]
+tests\prep\test_prep_video.py ............                               [ 90%]
+tests\rppg\test_pulse.py ...........                                     [ 92%]
+tests\sweep\test_sweep_extract.py .....                                  [ 93%]
+tests\sweep\test_sweep_rank.py ........                                  [ 94%]
+tests\web\test_web_app.py ...................                            [ 97%]
+tests\web\test_web_browser.py ............                               [100%]
+
+============================== warnings summary ===============================
+tests\platform_live_face\test_live_face.py:100
+  D:\Final Year Project\tests\platform_live_face\test_live_face.py:100: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests/platform_genvideo/test_generated_video.py::test_unvalidated_head_is_inconclusive_at_any_score[-1000000.0]
+tests/platform_genvideo/test_generated_video.py::test_validated_true_without_approved_hash_is_inconclusive[-1000000.0]
+tests/platform_genvideo/test_generated_video.py::test_installed_head_stays_inconclusive_through_the_full_module_path
+  D:\Final Year Project\src\dfd\platform\genvideo\model.py:24: RuntimeWarning: overflow encountered in exp
+    return 1.0 / (1.0 + np.exp(-z))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+SKIPPED [1] tests\platform_live_face\test_live_face.py:100: set RUN_LIVE_FACE=1 to run the real checkpoint (GPU) on non-sealed FF++/LAV-DF/ASVspoof fixtures
+SKIPPED [1] tests\platform_modules\test_parity.py:23: set RUN_PARITY=1 to run the real detectors
+========= 568 passed, 2 skipped, 13 deselected, 4 warnings in 55.23s ==========
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000021e2bf23ac0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000021e2bf23ac0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000021e2bf23ac0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000021e2bf23ac0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000021e2bf23ac0] moov atom not found
+[mov,mp4,m4a,3gp,3g2,mj2 @ 0000021e2bf23ac0] moov atom not found

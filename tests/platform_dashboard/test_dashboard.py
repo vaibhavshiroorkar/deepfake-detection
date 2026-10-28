@@ -84,7 +84,7 @@ def test_no_em_dash_and_no_external_resources():
         text = (DASH / f).read_text(encoding="utf-8")
         assert "—" not in text and "–" not in text, f
     for f in ("index.html", "dashboard.js", "dashboard.css"):
-        text = (DASH / f).read_text(encoding="utf-8")
+        text = (DASH / f).read_text(encoding="utf-8").replace('"http://www.w3.org/2000/svg"', "")   # the SVG namespace id, never fetched
         assert not re.search(r"https?://", text), f"external URL in {f}"
 
 
@@ -95,16 +95,36 @@ def test_js_uses_textcontent_and_no_html_injection():
         assert bad not in js, bad
 
 
-def test_js_has_all_required_labels_and_sections():
+def test_js_has_required_ui_text_and_no_client_copy_of_the_vocabulary():
+    """D2: finding and status wording lives on the server (/api/vocabulary, explanation); the browser keeps no second copy that could drift."""
     js = (DASH / "dashboard.js").read_text(encoding="utf-8")
-    for s in NEEDED_LABELS + ("Authenticity Analysis", "Cross-Modal Consistency", "Provenance and Supporting Checks",
-                              "MOCK DATA", "MOCK", "Coverage", "Conflicts between modules", "Media routing",
-                              "Tested scope", "Limitations", "Warnings", "Errors", "Calibrated"):
+    for s in ("MOCK DATA", "MOCK", "LIVE ANALYSIS", "EXPERIMENTAL", "How this result was reached", "Technical details", "Tested scope",
+              "Limitations", "Warnings", "Errors", "Calibrated", "Coverage", "/api/vocabulary", "What the checks found"):
         assert s in js, s
+    for label in NEEDED_LABELS:
+        assert label not in js, f"client-side copy of the label {label!r}"
     for st in schema.STATUSES:
-        assert st in js
-    for fnd in sum((list(v) for v in schema.FINDINGS.values()), []):
-        assert fnd in js, fnd       # every finding code has a wording
+        assert st in js                 # the coverage table lists every status
+
+
+def test_vocabulary_route_and_mode_route(client):
+    v = client.get("/api/vocabulary").get_json()
+    assert set(v["statuses"]) == set(schema.STATUSES)
+    assert set(v["findings"]) == {f for fs in schema.FINDINGS.values() for f in fs}
+    for label in NEEDED_LABELS:
+        assert label in v["findings"].values()
+    m = client.get("/api/mode").get_json()
+    from dfd.infer.library import AUDIO_EXT, IMAGE_EXT, VIDEO_EXT
+    assert m["live"] is False and m["accept"] == {"image": sorted(IMAGE_EXT), "video": sorted(VIDEO_EXT), "audio": sorted(AUDIO_EXT)}
+    assert m["max_bytes"] == serve.MAX_BYTES
+
+
+def test_index_is_well_formed_enough():
+    html = (DASH / "index.html").read_text(encoding="utf-8")
+    assert not re.search(r'="[^"]*"(?=[A-Za-z])', html), "attribute without a separating space (UX-6)"
+    for hook in ("analyse-btn", "analyse-file", "live-panel", "live-status", "live-unavailable", "banner", "error", "report", "meta",
+                 "statement", "scenario", "coverage", "summary", "evidence"):
+        assert f'id="{hook}"' in html, hook
 
 
 def test_status_styles_distinct():
@@ -182,8 +202,7 @@ def page_factory():
 def test_browser_renders_every_fixture(page_factory):
     pg = page_factory()
     for n in NAMES:
-        pg.select_option("#scenario", n)
-        pg.wait_for_function("name => document.querySelector('#meta').textContent.includes('mock-' + name)", arg=n)
+        _show_scenario(pg, n)
         assert pg.is_visible("#banner") and "MOCK DATA" in pg.inner_text("#banner")
         rep = _load(n)
         assert pg.locator("article.card").count() == len(rep["modules"])
@@ -239,11 +258,46 @@ def test_browser_negative_finding_wording_and_no_green_check(page_factory):
     pg.close()
 
 
+def _show_scenario(pg, name):
+    """Select a scenario and wait for ITS render. Selecting the empty option first hides the report, so a render left over from the
+    startup auto-load of the first scenario (same name) cannot satisfy the wait and then be replaced while the test reads it."""
+    pg.select_option("#scenario", "")
+    pg.wait_for_function("() => document.querySelector('#report').hidden")
+    pg.select_option("#scenario", name)
+    pg.wait_for_function("name => !document.querySelector('#report').hidden && "
+                         "document.querySelector('#meta').textContent.includes('mock-' + name)", arg=name)
+
+
+def _open_all_details(pg):
+    pg.evaluate("() => document.querySelectorAll('details').forEach(d => { d.open = true; })")
+
+
 def test_browser_shows_observation_kinds_without_calling_markers_verified(page_factory):
     pg = page_factory()
     pg.select_option("#scenario", "provenance_observations")
     pg.wait_for_function("() => document.querySelector('#meta').textContent.includes('provenance_observations')")
+    _open_all_details(pg)                      # observation kinds live under Technical details
     body = pg.inner_text("body")
     assert "Heuristic flag (descriptive only)" in body and "Marker scan (not a verification)" in body
     assert "Verified:" not in body
+    pg.close()
+
+
+def test_browser_shows_the_server_explanation_text_verbatim(page_factory):
+    """Roadmap 6.5 (6): what the card and the "How this result was reached" panel show is the JSON explanation, nothing added."""
+    pg = page_factory()
+    for n in NAMES:
+        _show_scenario(pg, n)
+        _open_all_details(pg)
+        rep = _load(n)
+        for m in rep["modules"]:
+            card = pg.locator(f"article.card[data-module='{m['module_id']}']")
+            text = card.inner_text()
+            e = m["explanation"]
+            assert e["headline"] in text and e["title"] in text, (n, m["module_id"])
+            for sent in e["sentences"]:
+                assert sent["text"] in text, (n, m["module_id"], sent["text"])
+            assert card.get_attribute("data-group") == e["group"]
+        assert pg.inner_text("#summary").startswith("What the checks found")
+        assert rep["summary"]["headline"] in pg.inner_text("#summary")
     pg.close()

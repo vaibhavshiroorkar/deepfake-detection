@@ -27,6 +27,7 @@ REFS = {
     "rawnet2": "H. Tak, J. Patino, M. Todisco, A. Nautsch, N. Evans and A. Larcher, “End-to-end anti-spoofing with RawNet2,” in Proc. IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP), 2021.",
     "w2vspoof": "H. Tak, M. Todisco, X. Wang, J. Jung, J. Yamagishi and N. Evans, “Automatic speaker verification spoofing and deepfake detection using wav2vec 2.0 and data augmentation,” in Proc. Speaker and Language Recognition Workshop (Odyssey), 2022.",
     "asv2021": "J. Yamagishi, X. Wang, M. Todisco, M. Sahidullah, J. Patino, A. Nautsch, X. Liu, K. A. Lee, T. Kinnunen, N. Evans and H. Delgado, “ASVspoof 2021: Accelerating progress in spoofed and deepfake speech detection,” in Proc. ASVspoof 2021 Workshop, 2021.",
+    "pascu": "O. Pascu, A. Stan, D. Oneata, E. Oneata and H. Cucu, “Towards generalisable and calibrated audio deepfake detection with self-supervised representations,” in Proc. Interspeech, 2024, pp. 4828-4832, doi: 10.21437/Interspeech.2024-1302.",
     "inthewild": "N. M. Müller, P. Czempin, F. Dieckmann, A. Froghyar and K. Böttinger, “Does audio deepfake detection generalize?,” in Proc. Interspeech, 2022.",
     # audio-visual
     "fakeav": "H. Khalid, S. Tariq, M. Kim and S. S. Woo, “FakeAVCeleb: A novel audio-video multimodal deepfake dataset,” in Advances in Neural Information Processing Systems (NeurIPS), Datasets and Benchmarks Track, 2021.",
@@ -58,6 +59,11 @@ REFS = {
     "wavlm": "S. Chen, C. Wang, Z. Chen, Y. Wu, S. Liu, Z. Chen et al., “WavLM: Large-scale self-supervised pre-training for full stack speech processing,” IEEE Journal of Selected Topics in Signal Processing, vol. 16, no. 6, pp. 1505-1518, 2022.",
     "hubert": "W.-N. Hsu, B. Bolte, Y.-H. H. Tsai, K. Lakhotia, R. Salakhutdinov and A. Mohamed, “HuBERT: Self-supervised speech representation learning by masked prediction of hidden units,” IEEE/ACM Transactions on Audio, Speech, and Language Processing, vol. 29, pp. 3451-3460, 2021.",
     "whisper": "A. Radford, J. W. Kim, T. Xu, G. Brockman, C. McLeavey and I. Sutskever, “Robust speech recognition via large-scale weak supervision,” in Proc. 40th International Conference on Machine Learning (ICML), PMLR 202, 2023.",
+    # generated video (added 2026-10-26; RESEARCH R-078, R-081, R-082, status PARTIAL for the parts read)
+    "restrav": "C. Internò, R. Geirhos, M. Olhofer, S. Liu, B. Hammer and D. Klindt, “AI-generated video detection via perceptual straightening,” in Advances in Neural Information Processing Systems (NeurIPS), 2025, arXiv:2507.00583.",
+    "df26": "S. Shykula, A. Yermakov, I. Samarskyi, D. Mishkin, J. Cech and A. Mishchuk, “DF26: We cannot tell fake from real anymore,” arXiv:2609.07369v1, 2026 (preprint).",
+    "deepaction": "M. Bohacek and H. Farid, “Human action CLIPs: Detecting AI-generated human motion,” in Workshop on Deepfake Detection, Localization and Interpretability at IJCAI 2025, arXiv:2412.00526.",
+    "commforensics": "J. Park and A. Owens, “Community Forensics: Using thousands of generators to train fake image detectors,” arXiv:2411.04125v2, 2025 (preprint).",
     "yunet": "W. Wu, H. Peng and S. Yu, “YuNet: A tiny millisecond-level face detector,” Machine Intelligence Research, vol. 20, no. 5, pp. 656-665, 2023, doi: 10.1007/s11633-023-1423-y.",
 }
 # the McDuff entry: venue not retrieved, so it is cited by title only and is not used in the text

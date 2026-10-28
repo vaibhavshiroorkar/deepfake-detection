@@ -1,0 +1,169 @@
+127.0.0.1 - - [28/Oct/2026 16:30:48] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:48] "GET /dashboard.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:48] "GET /evallab.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:48] "GET /dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:48] "GET /evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:48] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:48] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:48] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:49] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [28/Oct/2026 16:30:49] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:49] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:49] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:50] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:50] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:51] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+[ WARN:0@3.501] global net_impl_backend.cpp:345 cv::dnn::dnn5_v20260605::Net::Impl::setPreferableTarget Targets are not supported by the new graph engine for now
+127.0.0.1 - - [28/Oct/2026 16:30:51] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:52] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:52] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:52] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:53] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:53] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:54] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:54] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:54] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:55] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:55] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:56] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:56] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:56] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:57] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:57] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:58] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:58] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:58] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:59] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:30:59] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:00] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:00] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:00] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+[transformers] Model config: bos_token_id must be `None` or an integer within the vocabulary (between 0 and 31999), got 49406. This may result in unexpected behavior.
+[transformers] Model config: eos_token_id must be `None` or an integer within the vocabulary (between 0 and 31999), got 49407. This may result in unexpected behavior.
+browser: msedge 156.0.4314.50
+Loading weights:   0%|          | 0/408 [00:00<?, ?it/s]Loading weights:   9%|8         | 35/408 [00:00<00:01, 348.78it/s]127.0.0.1 - - [28/Oct/2026 16:31:01] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+Loading weights:  17%|#7        | 71/408 [00:00<00:00, 342.86it/s]Loading weights:  31%|###1      | 128/408 [00:00<00:00, 443.98it/s]Loading weights:  45%|####5     | 185/408 [00:00<00:00, 492.39it/s]Loading weights: 100%|##########| 408/408 [00:00<00:00, 976.56it/s]
+127.0.0.1 - - [28/Oct/2026 16:31:01] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:02] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+127.0.0.1 - - [28/Oct/2026 16:31:02] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+Loading weights:   0%|          | 0/223 [00:00<?, ?it/s]Loading weights: 100%|##########| 223/223 [00:00<00:00, 3734.94it/s]
+127.0.0.1 - - [28/Oct/2026 16:31:02] "GET /api/jobs/831cb711956e4d2384e312c7d239c60e HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:04] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:04] "GET /dashboard.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:04] "GET /evallab.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:04] "GET /dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:04] "GET /evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:04] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:04] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:04] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:04] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [28/Oct/2026 16:31:04] "GET /api/jobs/7c1e28ad200e43f88b0b14baf6b357e0 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:04] "GET /api/jobs/7c1e28ad200e43f88b0b14baf6b357e0 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:04] "GET /api/jobs/7c1e28ad200e43f88b0b14baf6b357e0 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:05] "GET /api/jobs/7c1e28ad200e43f88b0b14baf6b357e0 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:05] "GET /api/jobs/7c1e28ad200e43f88b0b14baf6b357e0 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:06] "GET /api/jobs/7c1e28ad200e43f88b0b14baf6b357e0 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:06] "GET /api/jobs/7c1e28ad200e43f88b0b14baf6b357e0 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:07] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:07] "GET /dashboard.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:07] "GET /evallab.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:07] "GET /dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:07] "GET /evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:07] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:07] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:07] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:07] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [28/Oct/2026 16:31:07] "GET /api/jobs/6f4af783c02d4058950793ba0f707a1c HTTP/1.1" 200 -
+1_face_swap_video_ffpp_val.mp4: 'Done: 1_face_swap_video_ffpp_val.mp4' 14.1 s, errors=0, valid=True
+2_original_video_ffpp_val.mp4: 'Done: 2_original_video_ffpp_val.mp4' 2.5 s, errors=0, valid=True
+Loading weights:   0%|          | 0/211 [00:00<?, ?it/s]Loading weights: 100%|##########| 211/211 [00:00<00:00, 49991.42it/s]
+127.0.0.1 - - [28/Oct/2026 16:31:08] "GET /api/jobs/6f4af783c02d4058950793ba0f707a1c HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:08] "GET /api/jobs/6f4af783c02d4058950793ba0f707a1c HTTP/1.1" 200 -
+Loading weights:   0%|          | 0/248 [00:00<?, ?it/s]Loading weights: 100%|##########| 248/248 [00:00<00:00, 29190.87it/s]
+127.0.0.1 - - [28/Oct/2026 16:31:08] "GET /api/jobs/6f4af783c02d4058950793ba0f707a1c HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:09] "GET /api/jobs/6f4af783c02d4058950793ba0f707a1c HTTP/1.1" 200 -
+Loading weights:   0%|          | 0/479 [00:00<?, ?it/s]Loading weights:  10%|#         | 50/479 [00:00<00:00, 499.06it/s]127.0.0.1 - - [28/Oct/2026 16:31:09] "GET /api/jobs/6f4af783c02d4058950793ba0f707a1c HTTP/1.1" 200 -
+Loading weights:  21%|##        | 100/479 [00:00<00:00, 447.09it/s]Loading weights:  33%|###2      | 156/479 [00:00<00:00, 487.28it/s]Loading weights:  43%|####3     | 206/479 [00:00<00:00, 417.75it/s]127.0.0.1 - - [28/Oct/2026 16:31:10] "GET /api/jobs/6f4af783c02d4058950793ba0f707a1c HTTP/1.1" 200 -
+Loading weights: 100%|##########| 479/479 [00:00<00:00, 849.72it/s]
+127.0.0.1 - - [28/Oct/2026 16:31:10] "GET /api/jobs/6f4af783c02d4058950793ba0f707a1c HTTP/1.1" 200 -
+[ WARN:5@22.418] global net_impl_backend.cpp:345 cv::dnn::dnn5_v20260605::Net::Impl::setPreferableTarget Targets are not supported by the new graph engine for now
+127.0.0.1 - - [28/Oct/2026 16:31:10] "GET /api/jobs/6f4af783c02d4058950793ba0f707a1c HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:11] "GET /api/jobs/6f4af783c02d4058950793ba0f707a1c HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:11] "GET /api/jobs/6f4af783c02d4058950793ba0f707a1c HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:12] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:12] "GET /dashboard.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:12] "GET /evallab.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:12] "GET /dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:12] "GET /evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:12] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:12] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:12] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:12] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [28/Oct/2026 16:31:12] "GET /api/jobs/bdd100d704bb4eaaa5ed412c13cb3876 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:13] "GET /api/jobs/bdd100d704bb4eaaa5ed412c13cb3876 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:13] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:13] "GET /dashboard.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:13] "GET /evallab.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:13] "GET /dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:13] "GET /evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:13] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:13] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:13] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:13] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [28/Oct/2026 16:31:13] "GET /api/jobs/fa02e7e867914f75b42e7df4066eab47 HTTP/1.1" 200 -
+3_talking_head_with_audio_lavdf_train.mp4: 'Done: 3_talking_head_with_audio_lavdf_train.mp4' 4.2 s, errors=0, valid=True
+4_speech_audio_asvspoof_dev.flac: 'Done: 4_speech_audio_asvspoof_dev.flac' 0.5 s, errors=0, valid=True
+Loading weights:   0%|          | 0/590 [00:00<?, ?it/s]127.0.0.1 - - [28/Oct/2026 16:31:14] "GET /api/jobs/fa02e7e867914f75b42e7df4066eab47 HTTP/1.1" 200 -
+Loading weights:   8%|8         | 49/590 [00:00<00:01, 483.57it/s]Loading weights:  17%|#6        | 98/590 [00:00<00:01, 429.24it/s]Loading weights:  24%|##4       | 142/590 [00:00<00:01, 347.12it/s]127.0.0.1 - - [28/Oct/2026 16:31:14] "GET /api/jobs/fa02e7e867914f75b42e7df4066eab47 HTTP/1.1" 200 -
+Loading weights:  30%|###       | 179/590 [00:00<00:01, 263.91it/s]Loading weights:  35%|###5      | 209/590 [00:00<00:01, 228.54it/s]Loading weights:  40%|###9      | 234/590 [00:00<00:01, 206.89it/s]127.0.0.1 - - [28/Oct/2026 16:31:15] "GET /api/jobs/fa02e7e867914f75b42e7df4066eab47 HTTP/1.1" 200 -
+Loading weights:  43%|####3     | 256/590 [00:01<00:01, 201.04it/s]Loading weights:  47%|####6     | 277/590 [00:01<00:01, 191.09it/s]Loading weights:  52%|#####1    | 306/590 [00:01<00:01, 214.12it/s]Loading weights: 100%|##########| 590/590 [00:01<00:00, 452.95it/s]
+127.0.0.1 - - [28/Oct/2026 16:31:15] "GET /api/jobs/fa02e7e867914f75b42e7df4066eab47 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:16] "GET /api/jobs/fa02e7e867914f75b42e7df4066eab47 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:16] "GET /api/jobs/fa02e7e867914f75b42e7df4066eab47 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:17] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:17] "GET /dashboard.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:17] "GET /evallab.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:17] "GET /dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:17] "GET /evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:17] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:17] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:17] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:17] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [28/Oct/2026 16:31:17] "GET /api/jobs/44936021b9454b74baea1c80a4d976d6 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:17] "GET /api/jobs/44936021b9454b74baea1c80a4d976d6 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:18] "GET /api/jobs/44936021b9454b74baea1c80a4d976d6 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /dashboard.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /evallab.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /api/jobs/a593df04509c49fdb615ddd943fbee8a HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /dashboard.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /evallab.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /api/jobs/29aab90614bc429483c81177d0b8571c HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:19] "GET /api/jobs/29aab90614bc429483c81177d0b8571c HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:20] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:20] "GET /dashboard.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:20] "GET /evallab.css HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:20] "GET /dashboard.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:20] "GET /evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:20] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:20] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [28/Oct/2026 16:31:20] "GET /api/fixtures HTTP/1.1" 200 -
+5_face_image_frame_ffpp_val.png: 'Done: 5_face_image_frame_ffpp_val.png' 2.6 s, errors=0, valid=True
+6_synthetic_no_face_tone_audio.mp4: 'Done: 6_synthetic_no_face_tone_audio.mp4' 0.9 s, errors=0, valid=True
+7_unsupported_notes.txt: 'Unsupported input\nFailed: 7_unsupported_notes.txt. UNSUPPORTED_MEDIA_TYPE: unsupported fil' 0.0 s, errors=0, valid=False
+8_corrupt_video.mp4: 'Unsupported input\nFailed: 8_corrupt_video.mp4. UNREADABLE_FILE: the file could not be read' 0.4 s, errors=0, valid=False
+rows: 8 with page errors or invalid reports: []

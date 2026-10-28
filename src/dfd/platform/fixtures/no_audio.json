@@ -33,7 +33,88 @@
  },
  "modules": [
   {
+   "assessment": {
+    "basis": "threshold_rule",
+    "calibration": {
+     "is_probability": false,
+     "statement": "The scores behind this reading are ranking scores of research models. They were calibrated on in-domain validation data only, so a score of 0.7 does not mean a 70 percent chance, and no probability is given."
+    },
+    "evidence": [
+     {
+      "experiment": "E-015",
+      "id": "E015_visual_specificity",
+      "text": "On the sealed half of FakeAVCeleb the frozen video threshold flagged 0.4 percent of the unmanipulated videos, so a flag was rarely a false alarm there."
+     },
+     {
+      "experiment": "E-015",
+      "id": "E015_visual_sensitivity",
+      "text": "On the sealed half of FakeAVCeleb the frozen video threshold caught 48 percent of the fake videos, so a missed fake is common."
+     }
+    ],
+    "meaning": "The check found nothing within its tested scope. This does not show that the media is unmanipulated.",
+    "mock": true,
+    "not_established": "This reading is not a probability and not proof. A reading of no strong evidence, an inconclusive reading or a failed check does not show that the media is unmanipulated.",
+    "raw": {
+     "score": 0.2,
+     "score_kind": "model_output",
+     "threshold": null
+    },
+    "reasons": [],
+    "tier": "detector",
+    "uncertainty": {
+     "level": "high",
+     "text": "The same head missed about half of the fake videos in a sealed test, so a missing flag is weak."
+    },
+    "verdict": "no_strong_evidence",
+    "verdict_label": "No strong evidence of manipulation detected",
+    "version": "v1",
+    "why": "Invented scenario data, no model ran. The same head missed about half of the fake videos in a sealed test, so a missing flag is weak."
+   },
    "errors": [],
+   "evidence": [],
+   "explanation": {
+    "does_not_mean": "A result from one check does not show how the file was made; other checks can disagree.",
+    "finding_label": "No indication within tested scope",
+    "group": "nothing_found",
+    "group_label": "Nothing found within tested scope",
+    "headline": "MOCK: No indication within tested scope",
+    "key_figure": null,
+    "sentences": [
+     {
+      "kind": "mock",
+      "sources": [
+       "source"
+      ],
+      "text": "Invented scenario data: no model ran, and nothing here is a measurement."
+     },
+     {
+      "kind": "examined",
+      "quoted": true,
+      "sources": [
+       "tested_scope"
+      ],
+      "text": "Scope: MOCK: invented by a scenario script; no model ran."
+     },
+     {
+      "kind": "model_output",
+      "sources": [
+       "score.value"
+      ],
+      "text": "Scripted MOCK score: 0.20. It is not a measurement."
+     },
+     {
+      "kind": "not_established",
+      "sources": [
+       "section"
+      ],
+      "text": "A result from one check does not show how the file was made; other checks can disagree."
+     }
+    ],
+    "status_label": "Completed",
+    "template_id": "generic.completed.no_indication_within_tested_scope.mock.v2",
+    "title": "Face manipulation analysis",
+    "what_it_checks": "Looks for face-swap manipulation in the largest face of a video."
+   },
    "finding": "no_indication_within_tested_scope",
    "limitations": [
     "MOCK: invented by a scenario script; no model ran.",
@@ -60,7 +141,72 @@
    "warnings": []
   },
   {
+   "assessment": {
+    "basis": "none",
+    "calibration": {
+     "is_probability": false,
+     "statement": null
+    },
+    "evidence": [],
+    "meaning": "This check does not run on this kind of file.",
+    "mock": true,
+    "not_established": "This reading is not a probability and not proof. A reading of no strong evidence, an inconclusive reading or a failed check does not show that the media is unmanipulated.",
+    "raw": {
+     "score": null,
+     "score_kind": "none",
+     "threshold": null
+    },
+    "reasons": [
+     "not_applicable"
+    ],
+    "tier": "none",
+    "uncertainty": {
+     "level": "not_assessed",
+     "text": ""
+    },
+    "verdict": "not_applicable",
+    "verdict_label": "Did not apply",
+    "version": "v1",
+    "why": "Invented scenario data, no model ran."
+   },
    "errors": [],
+   "evidence": [],
+   "explanation": {
+    "does_not_mean": "This check gives no information about the file.",
+    "finding_label": null,
+    "group": "not_applicable",
+    "group_label": "Did not apply to this file",
+    "headline": "MOCK: Did not apply to this file",
+    "key_figure": null,
+    "sentences": [
+     {
+      "kind": "mock",
+      "sources": [
+       "source"
+      ],
+      "text": "Invented scenario data: no model ran, and nothing here is a measurement."
+     },
+     {
+      "kind": "observation",
+      "quoted": true,
+      "sources": [
+       "reason"
+      ],
+      "text": "Reason: no audio stream."
+     },
+     {
+      "kind": "not_established",
+      "sources": [
+       "status"
+      ],
+      "text": "No finding is made by this check for this file. The other checks are reported separately and are not affected."
+     }
+    ],
+    "status_label": "Not applicable",
+    "template_id": "generic.not_applicable.v2",
+    "title": "Synthetic speech analysis",
+    "what_it_checks": "Looks for synthetic or converted speech in the first seconds of the audio."
+   },
    "finding": null,
    "limitations": [],
    "model": null,
@@ -79,7 +225,72 @@
    "warnings": []
   },
   {
+   "assessment": {
+    "basis": "none",
+    "calibration": {
+     "is_probability": false,
+     "statement": null
+    },
+    "evidence": [],
+    "meaning": "This check does not run on this kind of file.",
+    "mock": true,
+    "not_established": "This reading is not a probability and not proof. A reading of no strong evidence, an inconclusive reading or a failed check does not show that the media is unmanipulated.",
+    "raw": {
+     "score": null,
+     "score_kind": "none",
+     "threshold": null
+    },
+    "reasons": [
+     "not_applicable"
+    ],
+    "tier": "none",
+    "uncertainty": {
+     "level": "not_assessed",
+     "text": ""
+    },
+    "verdict": "not_applicable",
+    "verdict_label": "Did not apply",
+    "version": "v1",
+    "why": "Invented scenario data, no model ran."
+   },
    "errors": [],
+   "evidence": [],
+   "explanation": {
+    "does_not_mean": "This check gives no information about the file.",
+    "finding_label": null,
+    "group": "not_applicable",
+    "group_label": "Did not apply to this file",
+    "headline": "MOCK: Did not apply to this file",
+    "key_figure": null,
+    "sentences": [
+     {
+      "kind": "mock",
+      "sources": [
+       "source"
+      ],
+      "text": "Invented scenario data: no model ran, and nothing here is a measurement."
+     },
+     {
+      "kind": "observation",
+      "quoted": true,
+      "sources": [
+       "reason"
+      ],
+      "text": "Reason: no audio stream."
+     },
+     {
+      "kind": "not_established",
+      "sources": [
+       "status"
+      ],
+      "text": "No finding is made by this check for this file. The other checks are reported separately and are not affected."
+     }
+    ],
+    "status_label": "Not applicable",
+    "template_id": "generic.not_applicable.v2",
+    "title": "Audio-visual synchronisation",
+    "what_it_checks": "Measures whether the audio and the mouth movements of one face are in step."
+   },
    "finding": null,
    "limitations": [],
    "model": null,
@@ -98,7 +309,70 @@
    "warnings": []
   },
   {
+   "assessment": {
+    "basis": "provenance",
+    "calibration": {
+     "is_probability": false,
+     "statement": null
+    },
+    "evidence": [],
+    "meaning": "A missing credential says nothing about the content.",
+    "mock": true,
+    "not_established": "This reading is not a probability and not proof. A reading of no strong evidence, an inconclusive reading or a failed check does not show that the media is unmanipulated.",
+    "raw": {
+     "score": null,
+     "score_kind": "none",
+     "threshold": null
+    },
+    "reasons": [],
+    "tier": "provenance",
+    "uncertainty": {
+     "level": "not_assessed",
+     "text": "Credentials describe where a file came from, not whether what it shows is true."
+    },
+    "verdict": "no_credentials",
+    "verdict_label": "No content credentials found",
+    "version": "v1",
+    "why": "Invented scenario data, no model ran."
+   },
    "errors": [],
+   "evidence": [],
+   "explanation": {
+    "does_not_mean": "Credentials and metadata describe the file; they do not show whether its content is true.",
+    "finding_label": "No credentials found",
+    "group": "nothing_found",
+    "group_label": "Nothing found within tested scope",
+    "headline": "MOCK: No credentials found",
+    "key_figure": null,
+    "sentences": [
+     {
+      "kind": "mock",
+      "sources": [
+       "source"
+      ],
+      "text": "Invented scenario data: no model ran, and nothing here is a measurement."
+     },
+     {
+      "kind": "examined",
+      "quoted": true,
+      "sources": [
+       "tested_scope"
+      ],
+      "text": "Scope: MOCK: invented by a scenario script; no model ran."
+     },
+     {
+      "kind": "not_established",
+      "sources": [
+       "section"
+      ],
+      "text": "Credentials and metadata describe the file; they do not show whether its content is true."
+     }
+    ],
+    "status_label": "Completed",
+    "template_id": "generic.completed.no_credentials_found.mock.v2",
+    "title": "Content credentials (C2PA)",
+    "what_it_checks": "Looks for embedded C2PA content credentials."
+   },
    "finding": "no_credentials_found",
    "limitations": [
     "MOCK: invented by a scenario script; no model ran.",
@@ -136,7 +410,7 @@
   "width": 640
  },
  "request_id": "mock-no_audio",
- "schema_version": "2",
+ "schema_version": "2.1",
  "sections": {
   "authenticity": [
    "face_video",
@@ -154,5 +428,57 @@
  "status": {
   "processing_time_ms": 0.0,
   "state": "ok"
+ },
+ "summary": {
+  "counts": {
+   "attention": 0,
+   "credential": 0,
+   "did_not_run": 0,
+   "experimental": 0,
+   "inconclusive": 0,
+   "informational": 0,
+   "not_applicable": 2,
+   "nothing_found": 2,
+   "unsupported": 0
+  },
+  "disagreements": [],
+  "groups": [
+   {
+    "id": "nothing_found",
+    "label": "Nothing found within tested scope",
+    "modules": [
+     "face_video",
+     "c2pa"
+    ]
+   },
+   {
+    "id": "not_applicable",
+    "label": "Did not apply to this file",
+    "modules": [
+     "speech",
+     "lip_sync"
+    ]
+   }
+  ],
+  "headline": "2 checks ran on this video. 2 found nothing within their tested scope. 2 did not apply.",
+  "media_facts": [
+   {
+    "label": "Faces",
+    "sources": [
+     "probe.n_faces"
+    ],
+    "text": "Faces stated in the probe: 1.",
+    "value": true
+   },
+   {
+    "label": "Speech",
+    "sources": [
+     "probe.has_audio"
+    ],
+    "text": "Not applicable: the file has no audio stream.",
+    "value": null
+   }
+  ],
+  "no_overall_score": "No overall score or verdict is given: each check reports only on what it examines."
  }
 }

@@ -92,8 +92,11 @@ def browser_generated(base: str, fx: dict, shot: Path) -> dict:
         pg.set_input_files("#analyse-file", str(fx["path"]))
         pg.click("#analyse-btn")
         pg.wait_for_function("() => document.querySelector('#live-status').textContent.includes('Done')", timeout=900000)
-        cards = [c.inner_text() for c in pg.locator("article.card").all()]
-        gv = next((t for t in cards if "generated_video" in t), "")
+        card = pg.locator("article.card[data-module='generated_video']")    # redesign (D-076): open the panels that hold the model text
+        if card.count():
+            for sel in ("details.why-box > summary", "details.tech-box > summary"):
+                card.locator(sel).click()
+        gv = card.inner_text() if card.count() else ""
         pg.screenshot(path=str(shot), full_page=True)
         b.close()
     return {"fixture": fx["name"], "generated_video_card": gv, "page_errors": errs,

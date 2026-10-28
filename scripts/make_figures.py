@@ -104,7 +104,7 @@ FS = 9.5
 
 def fig01():
     fig, ax = canvas(WD, 4.6)
-    ax.text(0.05, 4.25, "threshold fixed on validation data;  encoders frozen;  scores are probabilities of fake", fontsize=9, color=MUTED)
+    ax.text(0.05, 4.25, "threshold fixed on validation data;  encoders frozen;  scores calibrated on that data only", fontsize=9, color=MUTED)
     G, X0, SX, SW = 0.1, 0.05, 5.1, 0.95
 
     def row(y, label, texts, score_text):

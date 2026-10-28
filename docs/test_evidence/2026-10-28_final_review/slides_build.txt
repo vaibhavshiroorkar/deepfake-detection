@@ -1,0 +1,2 @@
+saved D:\Final Year Project\slides\DeepFake_Detection_Presentation.pptx 58 slides
+WARN slide 34: table_197 is 2.68 in tall, limit 2.46 in

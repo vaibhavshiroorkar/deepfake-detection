@@ -1,0 +1,76 @@
+2026-10-26T22:21:06+05:30
+document  check                                               result  detail
+paper     PDF built                                           PASS    30 pages
+paper     internal IDs in visible text                        PASS    none
+paper     reviewer or version phrases                         PASS    none
+paper     em or en dashes                                     PASS    0 found
+paper     e-mail addresses                                    PASS    none
+paper     department wording                                  PASS    ok
+paper     placeholders [pending] (informational)              PASS    0
+paper     identity fields present as in IDENTITY.md           PASS    all present
+paper     student order = report order                        PASS    Vaibhav, Shivansh, Adithya
+paper     cited keys present in refs.bib                      PASS    40 cited
+paper     'venue not verified' in bib                         PASS    
+paper     [pending] lines with an E-xxx comment               PASS    0 of 0
+paper     result-like numbers are in docs/NUMBERS.json        PASS    935 of 935 matched
+paper     class                                               PASS    documentclass IEEEtran
+paper     undefined references or citations                   PASS    0 warnings
+paper     overfull boxes                                      PASS    1
+report    internal IDs in visible text                        PASS    none
+report    reviewer or version phrases                         PASS    none
+report    em or en dashes                                     PASS    0 found
+report    e-mail addresses                                    PASS    none
+report    department wording                                  PASS    ok
+report    placeholders [pending] (informational)              PASS    0
+report    identity fields present as in IDENTITY.md           PASS    all present
+report    student order = report order                        PASS    Vaibhav, Shivansh, Adithya
+report    fonts (only Times New Roman)                        PASS    ok
+report    theme fonts                                         PASS    Times New Roman, Times New Roman
+report    margins left 1.5 in, right 1 in in a section        PASS    5 sections
+report    real fields: TOC / figures / tables / equations     PASS    {'TOC \\\\': 3, 'TOC ': 3, 'SEQ Figure': 13, 'SEQ Table': 41, 'SEQ Equation': 42, 'm:oMath': 586}
+report    [pending] placeholders with E-xxx comments          PASS    0 placeholders, 73 E-xxx in comments
+report    result-like numbers are in docs/NUMBERS.json        PASS    1826 of 1826 matched
+report    citation numbers appear                             PASS    51 distinct [n]
+report    PDF preview exists                                  PASS    111 pages
+report    layout: chapter page: border top                    PASS    template 8.5 mm, report 8.5 mm, delta 0.0 mm
+report    layout: chapter page: border bottom                 PASS    template 288.5 mm, report 288.5 mm, delta 0.0 mm
+report    layout: chapter page: border left                   PASS    template 8.5 mm, report 8.5 mm, delta 0.0 mm
+report    layout: chapter page: border right                  PASS    template 201.5 mm, report 201.5 mm, delta 0.0 mm
+report    layout: chapter page: chapter title top             PASS    template 21.5 mm, report 21.5 mm, delta 0.0 mm
+report    layout: chapter page: chapter title centre          PASS    template 107.4 mm, report 107.4 mm, delta 0.0 mm
+report    layout: chapter page: box top                       PASS    template 39.6 mm, report 39.6 mm, delta 0.0 mm
+report    layout: chapter page: box bottom                    PASS    template 64.9 mm, report 64.9 mm, delta 0.0 mm
+report    layout: chapter page: box left                      PASS    template 24.7 mm, report 24.7 mm, delta 0.0 mm
+report    layout: chapter page: box right                     PASS    template 185.1 mm, report 185.1 mm, delta 0.0 mm
+report    layout: chapter page: first text line top           PASS    template 72.1 mm, report 72.5 mm, delta 0.3 mm
+report    layout: chapter page: text block left               PASS    template 25.1 mm, report 25.6 mm, delta 0.5 mm
+report    layout: chapter page: text block right              PASS    template 189.8 mm, report 189.8 mm, delta 0.0 mm
+report    layout: chapter page: footer rule top               PASS    template 259.1 mm, report 259.2 mm, delta 0.2 mm
+report    layout: chapter page: footer rule left              PASS    template 24.9 mm, report 24.9 mm, delta 0.0 mm
+report    layout: chapter page: footer rule right             PASS    template 190.3 mm, report 190.3 mm, delta 0.0 mm
+report    layout: front page: border top                      PASS    template 8.5 mm, report 8.5 mm, delta 0.0 mm
+report    layout: front page: border bottom                   PASS    template 288.5 mm, report 288.5 mm, delta 0.0 mm
+report    layout: front page: border left                     PASS    template 8.5 mm, report 8.5 mm, delta 0.0 mm
+report    layout: front page: border right                    PASS    template 201.5 mm, report 201.5 mm, delta 0.0 mm
+report    layout: front page: first text line top             PASS    template 21.0 mm, report 22.5 mm, delta 1.5 mm
+report    layout: front page: text block left                 PASS    template 25.6 mm, report 25.4 mm, delta -0.2 mm
+report    layout: front page: text block right                PASS    template 190.2 mm, report 189.7 mm, delta -0.5 mm
+report    layout: front page: footer rule top                 PASS    template 259.1 mm, report 259.2 mm, delta 0.2 mm
+report    layout: front page: footer rule left                PASS    template 24.9 mm, report 24.9 mm, delta 0.0 mm
+report    layout: front page: footer rule right               PASS    template 190.3 mm, report 190.3 mm, delta 0.0 mm
+slides    slide count                                         PASS    52 slides
+slides    internal IDs in visible text                        PASS    none
+slides    reviewer or version phrases                         PASS    none
+slides    em or en dashes                                     PASS    0 found
+slides    e-mail addresses                                    PASS    none
+slides    department wording                                  PASS    ok
+slides    placeholders [pending] (informational)              PASS    0
+slides    identity fields present as in IDENTITY.md           PASS    all present
+slides    student order = report order                        PASS    Vaibhav, Shivansh, Adithya
+slides    speaker notes on every slide                        PASS    all present
+slides    'RESULT' badges                                     PASS    
+slides    result-like numbers are in docs/NUMBERS.json        PASS    874 of 874 matched
+slides    slide checker (bounds, overlaps, grid, font sizes)  PASS    857 of 857 checks pass; first failure none
+
+71 pass, 0 fail
+exit=0

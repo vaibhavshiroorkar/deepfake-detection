@@ -1,0 +1,58 @@
+# Live dashboard API run, 2026-10-26T22:12:28+05:30, server: python -m dfd.platform.dashboard.serve 8002 --live (GPU visible)
+# git HEAD 5af239a9427339890bb63169476de12099fc5f47, tracked files modified vs HEAD: 27
+## 1_face_swap_video_ffpp_val.mp4: state=done wall=2.6s error=None
+   report status=ok media=video conflicts=0
+   - face_video           completed       finding=indicates_manipulation              score=0.99998   thr=0.6138830927259571 cal=True  warn=[] reason=
+   - image_detector       not_applicable  finding=None                                score=None      thr=None      cal=None  warn=[] reason=not an image file; video and audio files are handled by other modules
+   - speech               not_applicable  finding=None                                score=None      thr=None      cal=None  warn=[] reason=the video has no audio stream
+   - lip_sync             not_applicable  finding=None                                score=None      thr=None      cal=None  warn=[] reason=the video has no audio stream
+   - generated_video      completed       finding=inconclusive                        score=1.2e-05   thr=None      cal=False warn=[EXPERIMENTAL_UNVALIDATED] reason=
+   - media_metadata       completed       finding=inconclusive                        score=None      thr=None      cal=None  warn=[NO_CREATION_TIME,ENCODER_TAG] reason=
+   - content_credentials  completed       finding=no_credentials_found                score=None      thr=None      cal=None  warn=[] reason=
+## 2_original_video_ffpp_val.mp4: state=done wall=2.6s error=None
+   report status=ok media=video conflicts=0
+   - face_video           completed       finding=no_indication_within_tested_scope   score=0.204589  thr=0.6138830927259571 cal=True  warn=[] reason=
+   - image_detector       not_applicable  finding=None                                score=None      thr=None      cal=None  warn=[] reason=not an image file; video and audio files are handled by other modules
+   - speech               not_applicable  finding=None                                score=None      thr=None      cal=None  warn=[] reason=the video has no audio stream
+   - lip_sync             not_applicable  finding=None                                score=None      thr=None      cal=None  warn=[] reason=the video has no audio stream
+   - generated_video      completed       finding=inconclusive                        score=1.8e-05   thr=None      cal=False warn=[EXPERIMENTAL_UNVALIDATED] reason=
+   - media_metadata       completed       finding=inconclusive                        score=None      thr=None      cal=None  warn=[NO_CREATION_TIME,ENCODER_TAG] reason=
+   - content_credentials  completed       finding=no_credentials_found                score=None      thr=None      cal=None  warn=[] reason=
+## 3_talking_head_with_audio_lavdf_train.mp4: state=done wall=1.1s error=None
+   report status=ok media=video conflicts=0
+   - face_video           completed       finding=no_indication_within_tested_scope   score=0.322558  thr=0.6138830927259571 cal=True  warn=[] reason=
+   - image_detector       not_applicable  finding=None                                score=None      thr=None      cal=None  warn=[] reason=not an image file; video and audio files are handled by other modules
+   - speech               completed       finding=no_indication_within_tested_scope   score=0.297249  thr=0.6954489212423093 cal=False warn=[AUDIO_CALIBRATION_EXPLORATORY] reason=
+   - lip_sync             completed       finding=consistent                          score=0.3656    thr=None      cal=False warn=[] reason=
+   - generated_video      completed       finding=inconclusive                        score=1.0       thr=None      cal=False warn=[EXPERIMENTAL_UNVALIDATED] reason=
+   - media_metadata       completed       finding=inconclusive                        score=None      thr=None      cal=None  warn=[NO_CREATION_TIME,ENCODER_TAG] reason=
+   - content_credentials  completed       finding=no_credentials_found                score=None      thr=None      cal=None  warn=[] reason=
+## 4_speech_audio_asvspoof_dev.flac: state=done wall=0.5s error=None
+   report status=ok media=audio conflicts=0
+   - face_video           not_applicable  finding=None                                score=None      thr=None      cal=None  warn=[] reason=not a video file; still images are handled by the image detector
+   - image_detector       not_applicable  finding=None                                score=None      thr=None      cal=None  warn=[] reason=not an image file; video and audio files are handled by other modules
+   - speech               completed       finding=no_indication_within_tested_scope   score=0.15311   thr=0.6954489212423093 cal=False warn=[AUDIO_CALIBRATION_EXPLORATORY] reason=
+   - lip_sync             not_applicable  finding=None                                score=None      thr=None      cal=None  warn=[] reason=lip synchronisation needs a video with sound; this input is audio
+   - generated_video      not_applicable  finding=None                                score=None      thr=None      cal=None  warn=[] reason=not a video file
+   - media_metadata       completed       finding=inconclusive                        score=None      thr=None      cal=None  warn=[NO_CREATION_TIME] reason=
+   - content_credentials  completed       finding=no_credentials_found                score=None      thr=None      cal=None  warn=[] reason=
+## 5_face_image_frame_ffpp_val.png: state=done wall=0.5s error=None
+   report status=ok media=image conflicts=0
+   - face_video           not_applicable  finding=None                                score=None      thr=None      cal=None  warn=[] reason=not a video file; still images are handled by the image detector
+   - image_detector       completed       finding=indicates_manipulation              score=0.999983  thr=0.6138830927259571 cal=False warn=[] reason=
+   - speech               not_applicable  finding=None                                score=None      thr=None      cal=None  warn=[] reason=a still image has no audio
+   - lip_sync             not_applicable  finding=None                                score=None      thr=None      cal=None  warn=[] reason=lip synchronisation needs a video with sound; this input is image
+   - generated_video      not_applicable  finding=None                                score=None      thr=None      cal=None  warn=[] reason=not a video file
+   - media_metadata       completed       finding=inconclusive                        score=None      thr=None      cal=None  warn=[NO_CREATION_TIME] reason=
+   - content_credentials  completed       finding=no_credentials_found                score=None      thr=None      cal=None  warn=[] reason=
+## 6_synthetic_no_face_tone_audio.mp4: state=done wall=0.5s error=None
+   report status=ok media=video conflicts=0
+   - face_video           not_applicable  finding=None                                score=None      thr=None      cal=None  warn=[NO_FACE_DETECTED] reason=no face detected
+   - image_detector       not_applicable  finding=None                                score=None      thr=None      cal=None  warn=[] reason=not an image file; video and audio files are handled by other modules
+   - speech               completed       finding=no_indication_within_tested_scope   score=0.0       thr=0.6954489212423093 cal=False warn=[AUDIO_CALIBRATION_EXPLORATORY] reason=
+   - lip_sync             completed       finding=inconclusive                        score=None      thr=None      cal=None  warn=[AUDIO_NOT_SPEECH_LIKE] reason=
+   - generated_video      completed       finding=inconclusive                        score=1.0       thr=None      cal=False warn=[EXPERIMENTAL_UNVALIDATED] reason=
+   - media_metadata       completed       finding=inconclusive                        score=None      thr=None      cal=None  warn=[NO_CREATION_TIME,ENCODER_TAG] reason=
+   - content_credentials  completed       finding=no_credentials_found                score=None      thr=None      cal=None  warn=[] reason=
+## 7_unsupported_notes.txt: state=failed wall=0.0s error={'code': 'UNSUPPORTED_MEDIA_TYPE', 'message': 'unsupported file type .txt; accepted: .avi, .bmp, .flac, .jpeg, .jpg, .m4a, .mkv, .mov, .mp3, .mp4, .ogg, .png, .wav, .webm, .webp'}
+## 8_corrupt_video.mp4: state=failed wall=0.5s error={'code': 'UNREADABLE_FILE', 'message': 'the file could not be read as media: C:\\Users\\admin\\AppData\\Local\\Temp\\dfd_platform_uploads\\tmpmtpxf220.mp4: Invalid data found when processing input'}

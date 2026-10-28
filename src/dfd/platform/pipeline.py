@@ -40,9 +40,11 @@ def planned_modules() -> list:
 
 def default_modules() -> list:
     from .modules import build_default_modules
+    from .modules.generated_image import GeneratedImageModule
     from .modules.generated_video import GeneratedVideoModule
     from .modules.lip_sync import build_lip_sync_module
-    return build_default_modules() + [build_lip_sync_module(), GeneratedVideoModule()] + planned_modules() + build_provenance_modules()
+    return (build_default_modules() + [GeneratedImageModule(), build_lip_sync_module(), GeneratedVideoModule()] + planned_modules()
+            + build_provenance_modules())
 
 
 def analyse_file(path: str | Path, filename: Optional[str] = None, modules: Optional[list] = None,

@@ -89,7 +89,8 @@ def test_planned_modules_and_default_registry():
     from dfd.platform.pipeline import default_modules
     assert planned_modules() == []
     ids = [m.module_id for m in default_modules()]
-    assert ids == ["face_video", "image_detector", "speech", "lip_sync", "generated_video", "media_metadata", "content_credentials"]
+    assert ids == ["face_video", "image_detector", "speech", "generated_image", "lip_sync", "generated_video", "media_metadata",
+                   "content_credentials"]
 
 
 def test_generated_video_registered_and_unsupported_without_head(media, tmp_path):

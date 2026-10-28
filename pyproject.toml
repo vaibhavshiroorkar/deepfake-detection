@@ -30,6 +30,9 @@ dev = [
     "playwright>=1.64.1",
     "requests>=2.34",
     "cryptography>=50.0",
+    "lxml>=5.0",
+    "python-docx>=1.1",
+    "python-pptx>=1.0",
     "pytest>=9.1.1",
     "scikit-learn>=1.9.1",
 ]

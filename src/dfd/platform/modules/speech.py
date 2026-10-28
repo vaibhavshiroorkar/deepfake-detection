@@ -37,7 +37,9 @@ class SpeechModule(AdapterModule):
                   "reliable probability.",
                   "Trained on ASVspoof 2019 LA speech; the sealed result on another source is lower (In-the-Wild test_x, E-014).",
                   "The audio track of a video was scored on LAV-DF at a sealed AUC of 0.6462 [0.6188, 0.6723] (E-014, tag I-5, 2,000-video "
-                  "exploratory subset), so the score is weak evidence on videos of that kind."]
+                  "exploratory subset), so the score is weak evidence on videos of that kind.",
+                  "The module does not check whether the audio contains speech: any sound is scored, and on non-speech audio (for "
+                  "example a steady tone) it still reports a finding, which then carries no information (D-075)."]
         return self._result(
             status="completed", finding=finding_for(s.score, thr),
             score={"value": s.score, "meaning": SCORE_MEANING_EXPLORATORY, "calibrated": False, "threshold": thr},

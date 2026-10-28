@@ -54,6 +54,35 @@ def _sha256(p: Path) -> str:
     return h.hexdigest()
 
 
+THUMB_PX = 112
+# Measured property of the installed E-020 head (E-026, 2026-10-27, development data only). Text only: no score, finding or gate depends on it.
+SOURCE_CONFOUND_LIMITATION = ("Real videos also receive high scores: on unmodified real clips from other sources (E-026), 338 of 440 scored above "
+                              "the head's threshold (FaceForensics++ originals 72 of 140, LAV-DF real clips 266 of 300), against 19 of 100 "
+                              "DeepAction real clips out of fold.")
+
+
+def model_input_frames(frames14: np.ndarray) -> dict:
+    """The 8 frames the encoder actually received (``features.PICK`` of the 14 canonical frames), as small JPEG thumbnails (D6).
+    Display only: produced after the score, from the same array, so it cannot change the score."""
+    import base64
+
+    import cv2
+    from ..genvideo.features import PICK
+    thumbs, times = [], []
+    for i in PICK:
+        bgr = cv2.cvtColor(np.ascontiguousarray(frames14[int(i)]), cv2.COLOR_RGB2BGR)
+        ok, buf = cv2.imencode(".jpg", cv2.resize(bgr, (THUMB_PX, THUMB_PX), interpolation=cv2.INTER_AREA), [cv2.IMWRITE_JPEG_QUALITY, 80])
+        if not ok:
+            raise ValueError("thumbnail encoding failed")
+        thumbs.append("data:image/jpeg;base64," + base64.b64encode(buf.tobytes()).decode("ascii"))
+        times.append(round(int(i) / canonical.FPS, 2))
+    return {"kind": "frames", "frames": thumbs, "times_s": times, "size_px": canonical.SIZE, "n_frames": len(thumbs),
+            "n_decoded": int(frames14.shape[0]),
+            "text": (f"The {len(thumbs)} frames this model analysed: the first {canonical.WINDOW_S:.1f} s of the video, re-encoded at "
+                     f"{canonical.FPS} fps and centre-cropped to {canonical.SIZE} x {canonical.SIZE} px (shown smaller). They are the model's "
+                     "input, not evidence of manipulation; anything outside the crop was not seen.")}
+
+
 class GeneratedVideoModule:
     module_id = "generated_video"
     section = "authenticity"
@@ -140,7 +169,7 @@ class GeneratedVideoModule:
             raise ValueError("the head produced a non-finite score")
         validated, why_not = self._validation_state(head, score)
         enc_rev = runner.revision or "unknown"
-        return ModuleResult(
+        res = ModuleResult(
             module_id=self.module_id, version=str(meta.get("head_id", "unknown")), section=self.section, source=self.source, status="completed",
             finding=(INDICATES if score >= head.threshold else NO_INDICATION) if validated else "inconclusive",
             score={"value": round(score, 6), "meaning": str(meta.get("score_meaning", DEFAULT_SCORE_MEANING)), "calibrated": False,
@@ -158,4 +187,10 @@ class GeneratedVideoModule:
             limitations=list(meta.get("limitations", [])) + [
                 "Only the first 2.0 s of the clip is analysed, after a canonical re-encode (7 fps, 224 px); the rest of the file is not seen.",
                 "Face-independent: it does not detect face swaps or lip-sync edits and is not a substitute for those modules.",
-                "No indication does not mean the video is camera-captured."])
+                "No indication does not mean the video is camera-captured.",
+                SOURCE_CONFOUND_LIMITATION])
+        try:
+            res.evidence = [model_input_frames(frames)]
+        except Exception:  # noqa: BLE001 - a thumbnail problem must not cost the score; the strip is display only
+            res.evidence = []
+        return res

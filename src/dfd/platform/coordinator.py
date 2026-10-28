@@ -25,7 +25,7 @@ import time
 from collections.abc import MutableMapping
 from typing import Callable, Optional
 
-from . import schema
+from . import explain, schema
 from .module import APPLICABLE, UNSUPPORTED, Context, DetectorModule, Probe
 from .schema import ModuleResult
 
@@ -204,7 +204,7 @@ def build_report(probe: Probe, request_id: str, results: list[ModuleResult], deg
     srcs = {r.source for r in results}
     n_ok = len(cov["completed"])
     n_bad = sum(len(cov[s]) for s in ("failed", "timed_out", "unsupported")) + (len(cov["skipped"]) if degraded else 0)
-    return {
+    report = {
         "schema_version": schema.SCHEMA_VERSION,
         "request_id": request_id,
         "input": {"filename": probe.filename, "media_type": probe.media_type, "mime_type": probe.mime_type,
@@ -218,3 +218,4 @@ def build_report(probe: Probe, request_id: str, results: list[ModuleResult], deg
         "status": {"state": "failed" if n_ok == 0 else ("partial" if n_bad else "ok"), "processing_time_ms": 0.0},
         "statement": schema.STATEMENT,
     }
+    return explain.attach(report)      # schema 2.1: deterministic explanations and a counting summary, built from the fields above

@@ -1,1 +1,50 @@
-[]
+[
+ {
+  "value": "1.13",
+  "id": "R-012",
+  "where": "Table 1 (pooled EER, mean of 3 seeds), re-checked 2026-10-27 per docs/PERFORMANCE_BENCHMARK.md",
+  "what": "AASIST EER percent, ASVspoof 2019 LA eval"
+ },
+ {
+  "value": "7.2",
+  "id": "R-083",
+  "where": "Table 2",
+  "what": "Pascu et al. frozen XLS-R 2B plus logistic regression, In-the-Wild EER percent"
+ },
+ {
+  "value": "0.5",
+  "id": "R-083",
+  "where": "Table 2",
+  "what": "Pascu et al. ASVspoof 2019 LA EER percent"
+ },
+ {
+  "value": "33.9",
+  "id": "R-033",
+  "where": "Section 5.2",
+  "what": "Muller et al. best In-the-Wild EER percent (RawNet2)"
+ },
+ {
+  "value": "69.7",
+  "id": "R-081",
+  "where": "Table 5",
+  "what": "DF26 zero-shot pooled AUROC, GenD-PE (best FF++-trained detector)"
+ },
+ {
+  "value": "44.0",
+  "id": "R-081",
+  "where": "Table 5",
+  "what": "DF26 zero-shot pooled AUROC, Effort"
+ },
+ {
+  "value": "48.3",
+  "id": "R-081",
+  "where": "Table 3",
+  "what": "DF26 closed-source AUROC, PwTF-DVD"
+ },
+ {
+  "value": "70.5",
+  "id": "R-081",
+  "where": "Table 3",
+  "what": "DF26 open-source AUROC, PwTF-DVD"
+ }
+]
