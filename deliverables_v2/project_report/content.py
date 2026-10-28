@@ -7,7 +7,7 @@ from refs import REFS
 def build(B):
     # section 1: cover
     front.cover(B)
-    B.end_section({"left": 2160, "right": 1440})
+    B.end_section({"left": 1800, "right": 1800})  # D-092: cover centred between the borders (text width unchanged, 8307 twips)
     # section 2: certificate to abstract (roman numbers restart)
     front.certificate(B)
     front.declaration(B)

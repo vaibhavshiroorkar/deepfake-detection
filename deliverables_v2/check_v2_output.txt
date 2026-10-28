@@ -5,20 +5,20 @@
 -- paper
    superior                     5
       > (3) 0.0100) to an Xception baseline re-run at 224 px; the declared Sealed confirmatory results for face video and speech, with 95 % superiority rule was met (+0.0176 [+0.0025, +0.0327]) but the negative results that limit them.
-      > For T3, with L that lower bound, the declared superiority rule scores computed by the inference code from raw files agree is L > 0 and non-inferiority is within 0.0019 (tolerance 0.02).
-      > The audio head is the both levels (margin 0.0100); the declared 95 % superiority only one with evidence above chance inside produced videos rule was met but does not survive the Bonferroni correction (0.8574 on validation).
-      > AUC, 95 percent interval 0.9 originals 0.8 Test 95 % (declared) 98.33 % Reading 0.7 T1 video, +0.1980 [+0.1688, [+0.1627, improved by the declared final minus +0.2242] +0.2303] rule; holds at 98.33 % 0.6 0.52 I-0 T2 speech, +0.1633 [+0.1177, [+0.1085, improved
-      > while its 95 % superiority does not survive the Bonferroni correction.
+      > The declared superiority rule, L > 0 at the 95 % level, is a stricter claim than non-inferiority and is read B.
+      > From the working version to the frozen system (exploratory) both levels (margin 0.0100); the declared 95 % superiority rule was met but does not survive the Bonferroni correction Table III follows each change from the limitation that (98.33 % interval [-0.0011
+      > Test 95 % (declared) 98.33 % Reading T1 video, +0.1980 [+0.1688, [+0.1627, improved by the declared final minus +0.2242] +0.2303] rule; holds at 98.33 % I-0 T2 speech, +0.1633 [+0.1177, [+0.1085, improved by the declared final minus +0.2266] +0.2481] rule; hol
+      > Yin, "FakeCatcher: Detection of synthetic while its 95 % superiority does not survive the Bonferroni portrait videos using biological signals," IEEE Transactions on Pattern Analysis and Machine Intelligence, 2020, early access.
    superiority                  5
       > (3) 0.0100) to an Xception baseline re-run at 224 px; the declared Sealed confirmatory results for face video and speech, with 95 % superiority rule was met (+0.0176 [+0.0025, +0.0327]) but the negative results that limit them.
-      > For T3, with L that lower bound, the declared superiority rule scores computed by the inference code from raw files agree is L > 0 and non-inferiority is within 0.0019 (tolerance 0.02).
-      > The audio head is the both levels (margin 0.0100); the declared 95 % superiority only one with evidence above chance inside produced videos rule was met but does not survive the Bonferroni correction (0.8574 on validation).
-      > AUC, 95 percent interval 0.9 originals 0.8 Test 95 % (declared) 98.33 % Reading 0.7 T1 video, +0.1980 [+0.1688, [+0.1627, improved by the declared final minus +0.2242] +0.2303] rule; holds at 98.33 % 0.6 0.52 I-0 T2 speech, +0.1633 [+0.1177, [+0.1085, improved
-      > while its 95 % superiority does not survive the Bonferroni correction.
+      > The declared superiority rule, L > 0 at the 95 % level, is a stricter claim than non-inferiority and is read B.
+      > From the working version to the frozen system (exploratory) both levels (margin 0.0100); the declared 95 % superiority rule was met but does not survive the Bonferroni correction Table III follows each change from the limitation that (98.33 % interval [-0.0011
+      > Test 95 % (declared) 98.33 % Reading T1 video, +0.1980 [+0.1688, [+0.1627, improved by the declared final minus +0.2242] +0.2303] rule; holds at 98.33 % I-0 T2 speech, +0.1633 [+0.1177, [+0.1085, improved by the declared final minus +0.2266] +0.2481] rule; hol
+      > Yin, "FakeCatcher: Detection of synthetic while its 95 % superiority does not survive the Bonferroni portrait videos using biological signals," IEEE Transactions on Pattern Analysis and Machine Intelligence, 2020, early access.
    robust                       3
-      > robustness check beside the 95 % decision rule; Bonferroni control holds under any dependence between the three tests, IV.
-      > Moutakanni et al., "DINOv2: Learning robust visual features without supervision," Transactions on Machine Learning Research, 2024.
-      > Sutskever, "Robust speech recognition via large-scale weak super- vision," in Proc.
+      > The final system (fine-tuned SigLIP for video, the frozen It was declared as a robustness check beside the 95 % decision CLIP probe for images, the three-encoder speech average) was rule; Bonferroni control holds under any dependence between frozen and read on
+      > Moutakanni et al., "DINOv2: Learning robust [1] B.
+      > Sutskever, "Robust speech recognition via large-scale weak super- Computer Vision and Pattern Recognition (CVPR), 2023, pp.
    0\.99(?!\d)                  3
       > Sealed set Items / groups I-0 Final system Xception Role Celeb-DF family 7 650 / 344 0.6238 [0.6015, 0.6486] 0.8218 [0.8020, 0.8393] 0.8042 [0.7841, 0.8223] T1, T3 Celeb-DF v2 test part 4 801 / 344 0.6322 [0.6018, 0.6658] 0.8999 [0.8759, 0.9210] 0.8527 [0.8237
       > Sealed set Items / groups I-0 Final system Xception Role Celeb-DF family 7 650 / 344 0.6238 [0.6015, 0.6486] 0.8218 [0.8020, 0.8393] 0.8042 [0.7841, 0.8223] T1, T3 Celeb-DF v2 test part 4 801 / 344 0.6322 [0.6018, 0.6658] 0.8999 [0.8759, 0.9210] 0.8527 [0.8237
@@ -126,6 +126,6 @@
 
 == (4) decimals with 3 or more places must be in the record
    paper       distinct 3+ decimal tokens 259; not found in the record: 0 []
-   report      distinct 3+ decimal tokens 275; not found in the record: 1 ['0.4543']
+   report      distinct 3+ decimal tokens 275; not found in the record: 0 []
    deck        distinct 3+ decimal tokens 198; not found in the record: 0 []
    deck_notes  distinct 3+ decimal tokens 108; not found in the record: 0 []

@@ -92,6 +92,7 @@ NS = {
 NSDECL = " ".join('xmlns:%s="%s"' % kv for kv in NS.items())
 M = "{%s}" % NS["m"]
 TEXTW = 9333  # twips, text width of the template (11907 - 1440 - 1134)
+SIDE = 1287   # twips, equal left and right margin of the v2 body: (11907 - TEXTW) / 2, so the text block is centred between the page borders (D-092)
 
 
 
@@ -362,15 +363,15 @@ class Builder:
             self.counters["ch"] += 1
             self.counters["tab_ch"] = 0
             inner = run("Chapter %d" % self.counters["ch"]) + "<w:r><w:br/></w:r>" + run(title)
-            ppr = ""
+            ppr = '<w:ind w:left="130"/>'   # D-092: keeps the chapter title within 2 mm of the template after the margins were centred
         elif kind == "appendix":
             self.counters["app"] += 1
             letter = chr(64 + self.counters["app"])
             inner = run("Appendix %s" % letter) + "<w:r><w:br/></w:r>" + run(title)
-            ppr = '<w:numPr><w:ilvl w:val="0"/><w:numId w:val="0"/></w:numPr>'
+            ppr = '<w:numPr><w:ilvl w:val="0"/><w:numId w:val="0"/></w:numPr><w:ind w:left="130"/>'
         else:
             inner = run(title)
-            ppr = '<w:numPr><w:ilvl w:val="0"/><w:numId w:val="0"/></w:numPr>'
+            ppr = '<w:numPr><w:ilvl w:val="0"/><w:numId w:val="0"/></w:numPr><w:ind w:left="130"/>'
         el = self.emit(X(self.para_xml("Heading1", inner, ppr)))
         self.trace(el, trace)
         return el
@@ -398,7 +399,7 @@ class Builder:
         self.shape_id += 1
         rp = '<w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/><w:b/><w:sz w:val="32"/><w:szCs w:val="32"/></w:rPr>'
         inner, _ = self.inline(text, False, True, 12)
-        shape = ('<w:r>%s<w:pict><v:shape id="_x0000_s%d" type="#_x0000_t202" style="position:absolute;left:0;text-align:left;margin-left:-1.7pt;'
+        shape = ('<w:r>%s<w:pict><v:shape id="_x0000_s%d" type="#_x0000_t202" style="position:absolute;left:0;text-align:left;margin-left:5.95pt;'
                  'margin-top:.7pt;width:454.65pt;height:71.4pt;z-index:251655168;mso-width-relative:margin;mso-height-relative:margin" strokecolor="#%s" strokeweight=".75pt">'
                  '<v:textbox><w:txbxContent><w:p><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:jc w:val="both"/></w:pPr>%s</w:p></w:txbxContent></v:textbox></v:shape></w:pict></w:r>'
                  % (rp, self.shape_id, MAROON, inner))
@@ -575,7 +576,7 @@ class Builder:
         self.emit(X('<w:p><w:r><w:br w:type="page"/></w:r></w:p>'))
 
     # ---- sections
-    def sectpr(self, left=1440, right=1134, num=None, title_pg=False):
+    def sectpr(self, left=SIDE, right=SIDE, num=None, title_pg=False):
         pg = '<w:pgNumType %s/>' % num if num else ""
         return ('<w:sectPr><w:pgSz w:w="11907" w:h="16840" w:code="9"/>'
                 '<w:pgMar w:top="1134" w:right="%d" w:bottom="709" w:left="%d" w:header="720" w:footer="720" w:gutter="0"/>'
@@ -585,7 +586,7 @@ class Builder:
 
     def end_section(self, cfg):
         """Closes the current section (the section properties travel in a one-point paragraph)."""
-        sp = self.sectpr(cfg.get("left", 1440), cfg.get("right", 1134), cfg.get("num"), cfg.get("title_pg", False))
+        sp = self.sectpr(cfg.get("left", SIDE), cfg.get("right", SIDE), cfg.get("num"), cfg.get("title_pg", False))
         p_ = X('<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/><w:rPr><w:sz w:val="2"/></w:rPr>%s</w:pPr></w:p>' % sp)
         self.emit(p_)
         self.sections.append(cfg)
@@ -593,7 +594,7 @@ class Builder:
     def finish_sections(self, final_cfg):
         """Replaces the body-level section properties by the last section's and creates headers and footers."""
         self.sections.append(final_cfg)
-        new = X(self.sectpr(final_cfg.get("left", 1440), final_cfg.get("right", 1134), final_cfg.get("num"), final_cfg.get("title_pg", False)))
+        new = X(self.sectpr(final_cfg.get("left", SIDE), final_cfg.get("right", SIDE), final_cfg.get("num"), final_cfg.get("title_pg", False)))
         self.sect.addprevious(new)
         self.body.remove(self.sect)
         self.sect = new
@@ -605,8 +606,8 @@ class Builder:
             if not with_text:
                 return ['<w:p><w:pPr><w:pStyle w:val="Footer"/></w:pPr></w:p>']
             para = ('<w:p><w:pPr><w:pStyle w:val="Footer"/><w:pBdr><w:top w:val="thinThickSmallGap" w:sz="24" w:space="1" w:color="%s"/></w:pBdr>' % MAROON + ''
-                    '<w:tabs><w:tab w:val="clear" w:pos="4680"/><w:tab w:val="clear" w:pos="9360"/><w:tab w:val="right" w:pos="9027"/></w:tabs>'
-                    '<w:spacing w:before="%d" w:after="%d"/><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/></w:rPr></w:pPr>'
+                    '<w:tabs><w:tab w:val="clear" w:pos="4680"/><w:tab w:val="clear" w:pos="9360"/><w:tab w:val="right" w:pos="9078"/></w:tabs>'
+                    '<w:spacing w:before="%d" w:after="%d"/><w:ind w:left="51" w:right="-51"/><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/></w:rPr></w:pPr>'
                     '<w:r>%s<w:t xml:space="preserve">%s</w:t></w:r>%s</w:p>' % (FOOT_BEFORE, FOOT_AFTER, rp, esc(FOOTER_TEXT), field("PAGE \\* MERGEFORMAT", "1", True, 10.5)))
             return [para, '<w:p><w:pPr><w:pStyle w:val="Footer"/></w:pPr></w:p>']
 

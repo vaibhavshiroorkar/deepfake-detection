@@ -4,77 +4,118 @@ Last updated: 2026-10-24 (Session 1) (Session 0)
 
 A bank of questions an examiner may ask, grouped by theme. Each question is linked to the decision (D or O), experiment (E) or paper (R) that will answer it. Answers marked "pending evidence" stay that way until the evidence exists; nothing here is a prepared claim. Section 8 holds standard mathematical definitions, which do not depend on experiments, with the source used.
 
+## 0. Final answers (added 2026-10-29; logged numbers only, each with its E-entry or decision)
+
+The tables of sections 1 to 7 below were written before the experiments; their "pending evidence" cells are answered here, in the same numbering. Numbers are copied from docs/EXPERIMENTS.md; intervals are 95 percent group-bootstrap intervals. Development-slice values are exploratory.
+
+- 1.1 Why this backbone and not others? A: A measured sweep, then a written rule: candidates are ranked by development AUC, the tie set holds every candidate whose paired interval against the leader includes zero, and the cheapest member wins (E-001 to E-003). Face video: the tie set was DINOv2 small and base, SigLIP base and both CLIP ViT-L/14; DINOv2 small was chosen for the working version (0.6933 [0.6639, 0.7314]; leader CLIP OpenAI 0.7464 [0.6721, 0.8306]). The final video encoder, SigLIP base, was chosen on validation among three encoders and three learning rates (E-005).
+- 1.2 Why not build our own network? A: A small network from scratch was run as a reference and excluded from the ranking (E-003; it scored 0.246 on the speech development slice). Building one would add a model with no pretrained knowledge and no evidence that it could beat the encoders.
+- 1.3 What did other models score and how were they trained? A: Only one published family is run on our protocol: Xception, re-run with our recipe (E-013b, T3 in E-014). Published numbers are context: in DeepfakeBench every detector is trained on FaceForensics++ c23 and a plain Xception reaches an average AUC of 0.9450 within-domain and 0.7718 cross-domain (R-017).
+- 1.4 Could the other models have been trained better? A: Possibly. The Xception baseline used the same recipe as ours and a learning rate of 3e-4 chosen on validation at the edge of its grid; this is a stated limit of T3, together with the 224 px input (E-013b, D-091).
+- 1.5 How much compute does the chosen model need? A: Base-size encoders only. Extraction cost per 1,000 inputs: DINOv2 small 0.94 s, SigLIP base 1.44 s, CLIP ViT-L/14 4.45 s, HuBERT base 2.04 s, WavLM base plus 2.53 s, Whisper small encoder 11.53 s (E-001). Fine-tuning SigLIP base at 1e-5 for 1,800 steps with batch 32 fits the 12 GB card (E-005).
+- 2.1 Why this fine-tuning method? A: Full fine-tuning of the base-size encoder: the frozen feature underfitted (training AUC 0.8367, E-004). The gain over the frozen probe of the same encoder is +0.1700 [+0.1228, +0.2114] (E-005, exploratory, 15 identities). Low-rank adaptation of a larger encoder is future work.
+- 2.2 Why this loss function? A: A class-balanced binary cross-entropy for every head, because the classes are imbalanced in several sets (for example 744 real against 6,906 fake videos in the sealed family, E-014). Heads are linear and trained with AdamW, three seeds (D-024 and the preprocessing record).
+- 2.3 How sensitive is the result to the learning rate and the seed? A: Higher fine-tuning rates collapsed (sensitivity runs 0.40 to 0.47 AUC, E-005). The seed standard deviation of the baseline is 0.0003 on validation and 0.0020 on the development slice; it defines the non-inferiority margin of 0.0100 together with the floor (E-013b, D-066). Every headline uses three seeds.
+- 3.1 Why this split? A: Group-disjoint by source identity (person, speaker, generator unit); a dataset family counts as one source (D-045).
+- 3.2 How do you know there is no leakage? A: A script checks disjointness including a content-hash de-duplication; it passes on 80,803 image files and 41,739 Celeb-DF, In-the-Wild and DFD files (V-002, E-014). It checks the splits we made; it cannot see training data that a score file does not record (D-088).
+- 3.4 Why is the test set used only once? A: A guarded command refuses a sealed split unless the run is flagged final, writes a ledger entry with the score-file hash and refuses a second read without a logged reason; the freeze produced 74 ledger entries and no repeat (E-014). The ledger SHA-256 is recorded in docs/STATUS.md.
+- 3.8 Could identities appear in both training and test for the audio-visual sets? A: FakeAVCeleb was split by identity (250 identities in each half, E-015). The LAV-DF test set has 1,736 groups for 2,000 videos (E-014). No separate check against the VoxCeleb2 source lists is in the record, so none is claimed.
+- 4.1 Why this metric? A: ROC-AUC, the probability that a random fake scores above a random real sample (ties count half): it uses only ranks, so it does not depend on the threshold or on the class balance (definition in section 8). EER, balanced accuracy and ECE are secondary.
+- 4.3 Why not 0.5 as the threshold? A: Scores are not calibrated off the validation split and the classes are imbalanced, so the threshold is the value that maximises balanced accuracy on the calibrated validation scores and is then fixed (D-024). It does not transfer: 0.480 sensitivity on FakeAVCeleb, false-alarm rate 0.1098 and 0.1405 on the real videos of the Celeb-DF family and DFD (E-015, E-032).
+- 4.4 Is the model calibrated? A: Only on validation data. Temperature scaling made calibration worse on the development slice (ECE 0.2048 to 0.2217 for video, 0.3293 to 0.4052 for speech, E-004), so a score is a probability only for content like the validation split and otherwise a ranking (D-087).
+- 4.5 How wide is the uncertainty? A: Intervals come from 2,000 group-bootstrap resamples; with 15 identities, 12 speakers and 2 generator units they are wide (for example 0.6100 [0.5434, 0.7256] for speech, E-003), which is why every verdict on them is exploratory.
+- 5.1 What does the system claim for an image, a video and an audio file separately? A: One result per module with its tested scope; a video with sound gets a visual and an audio result side by side. No fusion, no overall score, no localisation (D-087, E-014).
+- 5.2 Why this fusion strategy? A: None is claimed. A fused score trained on LAV-DF reached 0.9935 on validation, but its visual part separates the data set's produced videos from its originals and is at chance within produced videos (0.5070 on validation, 0.5032 on the sealed subset), so no audio-visual detection is claimed (E-010 to E-012, E-014).
+- 5.3 What happens when a modality is missing? A: The module reports not applicable; a video without an audio track gets no speech result (platform contract, D-069).
+- 6.2 What did rPPG show on our data? A: The signal check on 432 real clips exceeded the shuffled control in 0.301 [0.260, 0.346] of the clips, 0.6 was required; it failed (E-006). A positive control recovered an injected 1.2 Hz sinusoid of relative green amplitude 0.008 in 0.873 of the clips, so the pipeline can see a clean signal (M-005).
+- 6.3 Why was rPPG not adopted? A: Its pre-written success line failed (E-006); a pulse check that cannot recover a signal from these compressed videos cannot be a detector.
+- 6.4 Could an attacker defeat a pulse check? A: Literature says yes (R-008, R-010); our own test of that was not run.
+- 7.1 What are the limits of the system? A: Small slices (15 identities, 12 speakers, 2 generator units); one sealed run and one baseline family at 224 px; part of the speech gain removes a shortcut; thresholds do not transfer; dataset artefacts (codec, file format, production cue); research-only data and weights (paper section VII, report chapter 9).
+- 7.2 What does the system not detect? A: Images from modern generators (miss rate 0.7395 [0.7300, 0.7500], E-028), generated video (0.4957 [0.4755, 0.5168] on DF26 without DF26 training, E-019 and E-020), audio-visual manipulation (E-011, E-012), edited images and social-media recompression (not tested).
+- 7.3 Is there demographic bias? A: No demographic subgroup evaluation was run, so none is claimed; this is a stated limit.
+- 7.4 What went wrong during the project and what was corrected? A: See docs/STATUS.md "Mistakes and corrections". The latest: the protocol text said two confirmatory tests while D-062 (b) had fixed three (corrected 2026-10-28), T3 was worded as superior without the Bonferroni qualifier (D-091), and the post hoc rates had no E-entry (E-032).
+- 7.5 Why is "comparable with published detectors" a fair claim? A: In the narrow sense only: the final video system is non-inferior (margin 0.0100) to the one published network family we re-ran with the same data, split, recipe and metric (T3, E-014, D-091). No other published number is on a common protocol, so none is ranked.
+- 7.6 What would you do with more time or compute? A: Score the frozen system on the official Celeb-DF v2 test list beside the baseline, adapt a larger encoder with low-rank adapters, calibrate a threshold on diverse real sources, and run the Gemini study once its blockers are resolved (paper conclusion, D-007).
+- Why frozen encoders first? A: They give the cheapest end-to-end version in which every later change can be measured; the diagnostics then said what to change: video underfit (training AUC 0.8367), speech collapsed outside its corpus (validation 0.9942, development 0.6100) (E-004).
+- Why the cheapest encoder in the tie set? A: A tie means the data cannot separate the candidates, so the cheaper one is as good as the evidence shows; the rule was written before the sweep (E-001 to E-003).
+- Why group-disjoint splits? A: Detectors trained on FaceForensics++ can learn its identities (Dong et al. in docs/RESEARCH.md), and one source video or speaker in two splits inflates AUC; so no group is on two sides of a split (D-045).
+- What can and cannot 15 identities, 12 speakers and 2 generator units show? A: They can rank candidates and reject an iteration whose interval excludes the success line; they cannot show gains below about +0.09 for speech or give narrow intervals, so every development verdict is exploratory and only the three declared tests on sealed data are confirmatory (E-005 to E-009, E-014).
+- Why does LAV-DF give no audio-visual claim? A: See 5.2: the visual part separates produced videos from originals and is at chance within produced videos; the audio head alone has evidence above chance there (0.8574 on validation, 0.8480 on the sealed subset).
+- Why do the FakeAVCeleb thresholds not transfer? A: The frozen thresholds were chosen on FaceForensics++ validation; on the sealed FakeAVCeleb half the visual sensitivity is 0.480 at specificity 0.996 and the audio specificity is 0.637, and codec metadata alone separates the classes at 0.9985 on the development half, so the AUCs (0.9552 and 0.9263) meet their criteria without being evidence of detection quality (E-015, E-021, E-023).
+- What does the platform claim and not claim? A: Eight modules, each with a label, a tested scope and an uncertainty; no overall score or verdict, scores are never the probability that a file is fake, experimental heads never give a finding and the approval table is empty; the face-video flag reads "Possible manipulation" with high uncertainty (D-087, E-028, E-029, E-032).
+- Where does 0.4543 come from? A: It is the speech temperature stored in the frozen checkpoint metadata and in the freeze evaluation record (fit I-4-audio-s0, D-092); a calibration parameter, not a result.
+
 ## 1. Models and backbones
 
 | # | Question | Answered by | Answer |
 |---|---|---|---|
-| 1.1 | Why this backbone and not others? | O-007, Stage 4 comparison table | pending evidence |
-| 1.2 | Why not build our own network? | O-007 (a small network from scratch is included as a reference), R-017 | pending evidence |
-| 1.3 | What did other models score and how were they trained? | R-001 to R-004, R-011, R-017; our re-runs under D-005 | partly available in RESEARCH.md; our own comparison pending evidence |
-| 1.4 | Could the other models have been trained better? | R-017 (recipe matters), our cost-axis study | pending evidence |
-| 1.5 | How much compute does the chosen model need? | Cost axes in DECISIONS.md, EXPERIMENTS.md | pending evidence |
+| 1.1 | Why this backbone and not others? | O-007, Stage 4 comparison table | answered in section 0 (2026-10-29) |
+| 1.2 | Why not build our own network? | O-007 (a small network from scratch is included as a reference), R-017 | answered in section 0 (2026-10-29) |
+| 1.3 | What did other models score and how were they trained? | R-001 to R-004, R-011, R-017; our re-runs under D-005 | partly available in RESEARCH.md; our own comparison answered in section 0 (2026-10-29) |
+| 1.4 | Could the other models have been trained better? | R-017 (recipe matters), our cost-axis study | answered in section 0 (2026-10-29) |
+| 1.5 | How much compute does the chosen model need? | Cost axes in DECISIONS.md, EXPERIMENTS.md | answered in section 0 (2026-10-29) |
 
 ## 2. Training, fine-tuning and loss
 
 | # | Question | Answered by | Answer |
 |---|---|---|---|
-| 2.1 | Why this fine-tuning method? | O-008, R-018, R-011 | pending evidence |
-| 2.2 | Why this loss function? | Not yet an open decision; to be added when the MVP design (O-006) fixes it | pending evidence |
-| 2.3 | How sensitive is the result to the learning rate and the random seed? | Comparison rules, R-012 (seed variance example) | pending evidence |
-| 2.4 | Why mixed precision? | ENV-DESKTOP-GPU sizing probe (memory and speed measured) | The probe showed about 34 percent less peak memory and about 42 percent less time per step for a tiny network; whether it affects accuracy for the real model is pending evidence |
+| 2.1 | Why this fine-tuning method? | O-008, R-018, R-011 | answered in section 0 (2026-10-29) |
+| 2.2 | Why this loss function? | Not yet an open decision; to be added when the MVP design (O-006) fixes it | answered in section 0 (2026-10-29) |
+| 2.3 | How sensitive is the result to the learning rate and the random seed? | Comparison rules, R-012 (seed variance example) | answered in section 0 (2026-10-29) |
+| 2.4 | Why mixed precision? | ENV-DESKTOP-GPU sizing probe (memory and speed measured) | The probe showed about 34 percent less peak memory and about 42 percent less time per step for a tiny network; whether it affects accuracy for the real model is answered in section 0 (2026-10-29) |
 
 ## 3. Data, splits and leakage
 
 | # | Question | Answered by | Answer |
 |---|---|---|---|
-| 3.1 | Why this split? | O-004 | pending evidence |
-| 3.2 | How do you know there is no leakage? | O-004, the leakage check script (not yet written), DATA_LOG.md | pending evidence |
-| 3.3 | Why these datasets and what are their licences and biases? | D-021, D-020, DATA_LOG.md, R-002, R-014 | Selection rule is on record: a dataset is kept only if it serves a numbered requirement (D-021). Licence terms are in DATA_LOG.md. Bias analysis is pending evidence |
-| 3.4 | Why is the test set only used once? | DECISIONS.md rule on frozen choices | The rule is stated in DECISIONS.md; its application is pending evidence |
-| 3.5 | What is the difference between in-dataset and cross-dataset results and why does it matter? | RESEARCH.md notes, R-017 | Available: in R-017 the mean AUC of strong detectors is above 0.93 within FF++ and about 0.77 to 0.79 across datasets. Our own numbers are pending evidence |
-| 3.6 | Why FaceForensics++ as the shared training set? | D-021, R-017 | The usual protocol in the literature trains on FF++ c23 and tests on other datasets (R-017), so our numbers can be set beside published ones (D-005). Whether it worked here is pending evidence |
+| 3.1 | Why this split? | O-004 | answered in section 0 (2026-10-29) |
+| 3.2 | How do you know there is no leakage? | O-004, the leakage check script, DATA_LOG.md | answered in section 0 (2026-10-29) |
+| 3.3 | Why these datasets and what are their licences and biases? | D-021, D-020, DATA_LOG.md, R-002, R-014 | Selection rule is on record: a dataset is kept only if it serves a numbered requirement (D-021). Licence terms are in DATA_LOG.md. Bias analysis is answered in section 0 (2026-10-29) |
+| 3.4 | Why is the test set only used once? | DECISIONS.md rule on frozen choices | The rule is stated in DECISIONS.md; its application is answered in section 0 (2026-10-29) |
+| 3.5 | What is the difference between in-dataset and cross-dataset results and why does it matter? | RESEARCH.md notes, R-017 | Available: in R-017 the mean AUC of strong detectors is above 0.93 within FF++ and about 0.77 to 0.79 across datasets. Our own numbers are answered in section 0 (2026-10-29) |
+| 3.6 | Why FaceForensics++ as the shared training set? | D-021, R-017 | The usual protocol in the literature trains on FF++ c23 and tests on other datasets (R-017), so our numbers can be set beside published ones (D-005). Whether it worked here is answered in section 0 (2026-10-29) |
 | 3.7 | Why did you drop datasets such as OpenForensics, ASVspoof 5, GenImage or DFDC? | D-021 keep, drop or defer table | Each was dropped or deferred because no numbered requirement needed it, or because of size or an unverified access route; the one-line reasons are in DATA_LOG.md |
-| 3.8 | Two of your audio-visual datasets take real videos from VoxCeleb2. Could identities appear in both training and test? | D-012, D-021, the leakage-check script (not yet written) | pending evidence: the identity overlap between LAV-DF and FakeAVCeleb is to be checked before any dataset-disjoint claim |
-| 3.9 | Your generated-image training set is only 8,000 images. Is that enough and is it comparable with the literature? | D-021 consequences, R-011 | It is far smaller than the 720,000 images of R-011, so that paper's table is not reproduced; adequacy is pending evidence (a training-size comparison would answer it) |
+| 3.8 | Two of your audio-visual datasets take real videos from VoxCeleb2. Could identities appear in both training and test? | D-012, D-021, the leakage-check script | answered in section 0 (2026-10-29): the identity overlap between LAV-DF and FakeAVCeleb is to be checked before any dataset-disjoint claim |
+| 3.9 | Your generated-image training set is only 8,000 images. Is that enough and is it comparable with the literature? | D-021 consequences, R-011 | It is far smaller than the 720,000 images of R-011, so that paper's table is not reproduced; adequacy is answered in section 0 (2026-10-29) (a training-size comparison would answer it) |
 | 3.10 | Can you show example frames in the paper? | D-020, DATA_LOG.md rule 4 | Celeb-DF and FakeAVCeleb forbid publishing derived data; what may be shown is to be settled before drafting figures |
 
 ## 4. Metrics, threshold and calibration
 
 | # | Question | Answered by | Answer |
 |---|---|---|---|
-| 4.1 | Why this metric, and what are its mathematical definitions? | O-005, section 8 below | Definitions in section 8; the choice is pending evidence |
+| 4.1 | Why this metric, and what are its mathematical definitions? | O-005, section 8 below | Definitions in section 8; the choice is answered in section 0 (2026-10-29) |
 | 4.2 | What do ROC-AUC, EER, ECE, the Brier score and a bootstrap interval measure, and how are they computed? | Section 8 below | See section 8 |
-| 4.3 | Why 0.5 as the threshold? | O-005, R-011 (threshold tuning), R-003 (log loss near 0.69) | pending evidence (a 0.5 threshold is justified only if scores are calibrated and the classes are balanced) |
-| 4.4 | Is the model calibrated? | O-005, R-016 | pending evidence |
-| 4.5 | How wide is the uncertainty on your reported numbers? | Comparison rules, bootstrap procedure fixed in Stage 2 | pending evidence |
+| 4.3 | Why 0.5 as the threshold? | O-005, R-011 (threshold tuning), R-003 (log loss near 0.69) | answered in section 0 (2026-10-29) (a 0.5 threshold is justified only if scores are calibrated and the classes are balanced) |
+| 4.4 | Is the model calibrated? | O-005, R-016 | answered in section 0 (2026-10-29) |
+| 4.5 | How wide is the uncertainty on your reported numbers? | Comparison rules, bootstrap procedure fixed in Stage 2 | answered in section 0 (2026-10-29) |
 
 ## 5. Modalities and fusion
 
 | # | Question | Answered by | Answer |
 |---|---|---|---|
-| 5.1 | What does the system claim for an image, a video and an audio file separately? | O-001, O-002 | pending evidence |
-| 5.2 | Why this fusion strategy? | O-009, R-014, R-015 | pending evidence |
-| 5.3 | What happens when a modality is missing? | O-009 | pending evidence |
+| 5.1 | What does the system claim for an image, a video and an audio file separately? | O-001, O-002 | answered in section 0 (2026-10-29) |
+| 5.2 | Why this fusion strategy? | O-009, R-014, R-015 | answered in section 0 (2026-10-29) |
+| 5.3 | What happens when a modality is missing? | O-009 | answered in section 0 (2026-10-29) |
 
 ## 6. rPPG
 
 | # | Question | Answered by | Answer |
 |---|---|---|---|
 | 6.1 | Why consider rPPG at all? | D-006, R-005 | The idea comes from FakeCatcher (R-005): the claim that fake faces do not carry a consistent pulse. Whether this holds for modern fakes is the subject of the feasibility test |
-| 6.2 | What did rPPG show on our data? | O-010, Stage 6 experiments | pending evidence |
-| 6.3 | Why was rPPG adopted or not adopted? | D-006 and the Stage 6 decision | pending evidence |
-| 6.4 | Could an attacker defeat a pulse check? | R-008, R-010 | Literature: modern face swaps can carry a plausible pulse (R-008) and pulse signals can be forged deliberately (R-010). Our own test is pending evidence |
+| 6.2 | What did rPPG show on our data? | O-010, Stage 6 experiments | answered in section 0 (2026-10-29) |
+| 6.3 | Why was rPPG adopted or not adopted? | D-006 and the Stage 6 decision | answered in section 0 (2026-10-29) |
+| 6.4 | Could an attacker defeat a pulse check? | R-008, R-010 | Literature: modern face swaps can carry a plausible pulse (R-008) and pulse signals can be forged deliberately (R-010). Our own test is answered in section 0 (2026-10-29) |
 
 ## 7. Limits and process
 
 | # | Question | Answered by | Answer |
 |---|---|---|---|
-| 7.1 | What are the limits of the system? | Stage 7 report, all experiments | pending evidence |
-| 7.2 | What does the system not detect? | O-002 and the held-out generator tests | pending evidence |
-| 7.3 | Is there demographic bias? | Subgroup evaluation, R-009 (skin tone caveat), R-014 (ethnicity balance) | pending evidence |
-| 7.4 | What went wrong during the project and what was corrected? | STATUS.md, Mistakes and corrections | Session 0 entries exist; later sessions pending |
-| 7.5 | Why is "comparable with published detectors" a fair claim? | D-005 and how comparability is defined in Stage 0 and 2 | pending evidence |
-| 7.6 | What would you do with more time or compute? | D-007, final report | pending evidence |
+| 7.1 | What are the limits of the system? | Stage 7 report, all experiments | answered in section 0 (2026-10-29) |
+| 7.2 | What does the system not detect? | O-002 and the held-out generator tests | answered in section 0 (2026-10-29) |
+| 7.3 | Is there demographic bias? | Subgroup evaluation, R-009 (skin tone caveat), R-014 (ethnicity balance) | answered in section 0 (2026-10-29) |
+| 7.4 | What went wrong during the project and what was corrected? | STATUS.md, Mistakes and corrections | Session 0 entries exist; later corrections are listed in STATUS.md and answered in section 0 (2026-10-29) |
+| 7.5 | Why is "comparable with published detectors" a fair claim? | D-005 and how comparability is defined in Stage 0 and 2 | answered in section 0 (2026-10-29) |
+| 7.6 | What would you do with more time or compute? | D-007, final report | answered in section 0 (2026-10-29) |
 
 ## 8. Standard definitions (background, not experiment-dependent)
 

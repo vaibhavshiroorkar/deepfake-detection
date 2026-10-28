@@ -202,14 +202,14 @@ scope and no overall score; its design, wording rules and software tests (713
 passed, 2 skipped (opt-in GPU tests), 13 deselected (data-dependent tests)) are in
 the technical report.
 
-\begin{figure}[!t]
+\begin{figure*}[!t]
 \centering
-\includegraphics[width=0.96\columnwidth]{fig01_pipeline.pdf}
+\includegraphics[width=0.8\textwidth]{fig01_pipeline.pdf}
 \caption[Three scoring paths]{The three scoring paths of the first version.
 Encoders are frozen, heads are linear, each score is temperature-scaled on the
 validation split of its task. Visual and audio scores are not fused.}
 \label{fig:pipeline}
-\end{figure}
+\end{figure*}
 
 \subsection{Preprocessing, head, calibration and threshold}
 One shared package prepares inputs for training, evaluation and inference. A video
@@ -356,13 +356,14 @@ Only three tests are confirmatory, declared and committed before the first seale
 read: T1, final minus I-0 on the sealed Celeb-DF family (video); T2, the same on
 sealed In-the-Wild (speech); T3, final video system minus a re-run Xception
 baseline on the Celeb-DF family. T1 and T2 read ``improved'' if the lower bound of
-the paired 95\,\% interval is above zero. For T3, with $L$ that lower bound, the
-declared superiority rule is $L>0$ and non-inferiority is
+the paired 95\,\% interval is above zero. For T3, with $L$ that lower bound, non-inferiority is
 \begin{equation}
 L>-\delta,\qquad \delta=0.0100,
 \end{equation}
 where $\delta$ was set before the sealed read as twice the larger seed standard
-deviation of the baseline with a floor of 0.01; the floor decides. Each test also
+deviation of the baseline with a floor of 0.01; the floor decides. The declared
+superiority rule, $L>0$ at the 95\,\% level, is a stricter claim than non-inferiority
+and is read together with the Bonferroni line below. Each test also
 prints a 98.33\,\% line (Bonferroni over three, same bootstrap draws). It was
 declared as a robustness check beside the 95\,\% decision rule; Bonferroni control
 holds under any dependence between the three tests, so a reader who wants

@@ -94,8 +94,8 @@
   \vspace*{0.6cm}\noindent{\collegefont\collegesize{4}\bfseries\color{collegemaroon}#1\par}\vspace{26pt}}
 \newcommand{\collegecentredheading}[1]{% centred maroon heading (Certificate, Declaration)
   \begin{center}\collegefont\collegesize{4}\bfseries\color{collegemaroon}#1\end{center}\vspace{18pt}}
-% Reference margins for the front matter only: left 2.54 cm, right 2 cm, no header.
-\newcommand{\collegefrontgeometry}{\newgeometry{left=2.54cm,right=2cm,top=1.9cm,bottom=3cm,nohead}}
+% Front matter only, no header. D-092 (2026-10-29): equal left and right margins (2.27 cm, the template text width 16.46 cm kept), so the text block is centred between the page borders; the template itself uses 2.54 cm and 2 cm.
+\newcommand{\collegefrontgeometry}{\newgeometry{left=2.27cm,right=2.27cm,top=1.9cm,bottom=3cm,nohead}}
 \newcommand{\collegeinstitutionheader}{%
   \begin{center}\collegefont\bfseries
   {\collegesize{3}\color{collegebrown}Somaiya Vidyavihar University\par}\vspace{14pt}

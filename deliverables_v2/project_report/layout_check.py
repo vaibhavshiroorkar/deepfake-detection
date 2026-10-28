@@ -8,7 +8,14 @@ correspond are compared feature by feature, in millimetres, with a tolerance of 
   front page     template page 3 (a plain justified text page with the footer) against the certificate page of the report:
                  page border, first text line, text-block edges, footer rule
 
-run() returns a list of tuples (item, template_mm, report_mm, delta_mm, ok); running the file prints the table.
+Text-block edges (D-092, 2026-10-29): the v2 report centres the text block between the page borders (equal left and right margin,
+same text width as the template). The template block sits 4.9 mm closer to the right border than to the left, which read as a right-shifted
+page. The rows "text block left" and "text block right" therefore compare against the centred reference (the template text width placed
+symmetrically between the template's own page borders), and a row "text block gap left minus right" checks that the two gaps to the border are
+equal (reference 0). Every other row, the border, chapter title, chapter box, first text line and footer rule rows, still compares against
+the template itself with the unchanged tolerance of 2 mm.
+
+run() returns a list of tuples (item, reference_mm, report_mm, delta_mm, ok); running the file prints the table.
 Needs: Microsoft Word (for the template PDF, made once), pdftoppm and pdftotext on PATH, PIL and numpy.
 """
 import os
@@ -159,8 +166,16 @@ def run():
     for name, tp, rp, kind, items in pairs:
         ft = features(_raster(tpl, tp), kind)
         fr_ = features(_raster(REPORT_PDF, rp), kind)
-        for it in items:
-            a, b = ft[it], fr_[it]
+        # D-092: reference for the text-block edges = the template text width, centred between the template's own borders
+        width_t = ft["text block right"] - ft["text block left"]
+        centred_left = ft["border left"] + ((ft["border right"] - ft["border left"]) - width_t) / 2
+        ref = dict(ft)
+        ref["text block left"] = centred_left
+        ref["text block right"] = centred_left + width_t
+        fr_["text block gap left minus right"] = (fr_["text block left"] - fr_["border left"]) - (fr_["border right"] - fr_["text block right"])
+        ref["text block gap left minus right"] = 0.0
+        for it in items + ["text block gap left minus right"]:
+            a, b = ref[it], fr_[it]
             d = b - a
             out.append(("%s: %s" % (name, it), round(a, 1), round(b, 1), round(d, 1), abs(d) <= TOL))
     return out
@@ -169,7 +184,7 @@ def run():
 if __name__ == "__main__":
     rows = run()
     w = max(len(r[0]) for r in rows)
-    print("%s  %10s  %10s  %8s  %s" % ("item".ljust(w), "template", "report", "delta", "ok"))
+    print("%s  %10s  %10s  %8s  %s" % ("item".ljust(w), "reference", "report", "delta", "ok"))
     for it, a, b, d, ok in rows:
         print("%s  %10.1f  %10.1f  %8.1f  %s" % (it.ljust(w), a, b, d, "PASS" if ok else "FAIL"))
     bad = [r for r in rows if not r[4]]
