@@ -1,16 +1,5 @@
 # Problem and research question
 
-## Learning goals
-
-After this chapter, you should be able to classify the attack types, state RQ1
-through RQ5, and explain what a positive or negative fusion result means.
-
-## Required background
-
-You need only the idea that a classifier maps an input to a score. Read the
-[research design](../research-design.md) and [data card](../data-card.md) beside
-this chapter.
-
 ## Problem definition
 
 Real talking-head media has authentic video and authentic audio. A face swap
@@ -170,34 +159,6 @@ A negative fusion finding is valid evidence. It means the planned comparison
 did not show a reliable gain under the stated data, metric, and uncertainty.
 It does not prove that multimodal fusion can never help. The result should be
 reported with its confidence interval, coverage, and protocol limits.
-
-### Exercises
-
-1. Classify one example of each manipulation type and name the correct branch
-   label.
-2. Rewrite RQ1 as variables, controls, and a measurable outcome.
-3. List two shortcuts that source-disjoint splitting does not remove.
-4. Explain why deleting abstained clips can inflate reported performance.
-
-## Viva questions
-
-1. Why is benchmark accuracy alone weak evidence of generalization?
-   Expected answer: accuracy can reward identity, codec, silence, or method
-   shortcuts. It also hides class balance, coverage, and uncertainty.
-2. Why does the project use cue-specific branches?
-   Expected answer: each branch receives the label its input can support.
-   Visual uses `video_fake`, audio uses `audio_fake`, and sync learns temporal
-   correspondence rather than the global clip label.
-3. What result would support `H1`, and what uncertainty is needed?
-   Expected answer: use the frozen higher-is-better metric and paired source
-   bootstrap rule. The planned evidence is a fusion-minus-visual interval that
-   satisfies the frozen positive decision rule, such as lying above zero.
-4. Why can a negative result still be a contribution?
-   Expected answer: it is controlled evidence that the tested fusion did not
-   show a reliable gain under this protocol. It does not rule out all fusion.
-5. What claim is outside the intended use?
-   Expected answer: the score cannot prove authorship, identity, intent, or
-   real-world truth, and it must not make an automated enforcement decision.
 
 ## Sources
 

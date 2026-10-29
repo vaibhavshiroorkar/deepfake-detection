@@ -5,13 +5,6 @@ Experiment metrics belong in the experiment tracker and in
 [findings](docs/research/findings.md), not this file; entries cite a finding
 number instead of restating it.
 
-## Update rules
-
-- Add current work under `Unreleased`.
-- Record changes that affect behavior, data, models, evaluation, or users.
-- Do not record routine experiment runs or daily progress.
-- Move entries into a dated version when the project creates a release tag.
-
 ## Unreleased
 
 ### Added
@@ -21,99 +14,6 @@ number instead of restating it.
 - An in-browser demo of the best single visual model and the familiarity gate,
   hosted on a static Hugging Face Space. `hosting/browser/export.py` writes the
   ONNX models; `pipeline.js` ports the served preprocessing to JavaScript.
-
-### Fixed
-
-- Preserve explicit zero-start windows, initialize silent-media audio counts,
-  retain dataset identities, and keep pilot evaluation distributions intact.
-- Split cross-fitting into training, inner validation and untouched outer holdout.
-  Record checkpoint-selection sources and reject contaminated OOF exports.
-- Bind audio masks to checkpoint metadata. Preserve reused audio normalization
-  across evaluation, feature export and serving.
-- Restore recorded stream architectures, add temporal positions for new streams,
-  and bind deep fusion to its exact serving checkpoints.
-- Refuse partial dashboard checkpoint loads, invalidate replaced-media caches,
-  preserve request identity in the web app, and bound incoming upload streams.
-- Retain coverage reports when abstention leaves fewer than two scored classes.
-- Keep optional model imports inside the cache and prediction handlers. Resolve
-  training-history type annotations without importing Torch for CLI help.
-- Bind research-stage reuse to configuration and artifact digests. Propagate
-  child failures and retain historical evidence while corrected runs are pending.
-- Mark affected research claims as requiring reruns. Extend CI to research
-  scripts, browser behavior, base installs and Python 3.11 through 3.13.
-
-### Removed
-
-- The detector benchmark package (`benchmarks/`), its `ddf detector sample`,
-  `validate-annotations`, `run` and `compare` commands, its MLflow logger, its
-  tests and its CI smoke. It needed 625 human-reviewed frames that nobody was
-  going to review. `ddf detector fetch-yunet` stays. ROADMAP Phase 2 records the
-  decision.
-- The dashboard's Evidence gate and everything only it used: the gate page, the
-  video input, preprocessing, visual model and prediction sections, `runtime`,
-  `state`, `workflow`, `view_model`, `lib/locked`, and the visual-only
-  `VisualPredictionEngine` with its loader. The web app is now the only path that
-  issues a verdict.
-- `dashboard/lib/cross_modal.py` (its numpy reference formulas moved into
-  `tests/test_cross_attention.py`), `data/download.py` and the `tqdm`
-  dependency, `views/timeline.sliding_window_starts`,
-  `experiments/scopes.is_generalization`, and the unused scripts
-  `supervise_run.ps1`, `watch_run.ps1`, `make_run_configs.py`, `probe_stream.py`
-  and `score_branches_folder.py`.
-- `docs/superpowers/` (dated plans and specs) and `.github/workflows/test.yml`,
-  which duplicated `ci.yml` with fewer checks.
-
-### Changed
-
-- `cli.py` is now the `cli/` package: one module per command group, each owning
-  its handlers and its part of the parser. `build_parser`, `main` and
-  `python -m deepfake_detection.cli` are unchanged.
-- Every trainer selects its checkpoint on validation ROC-AUC through one
-  `training/selection.BestEpoch`. The binary branch, sync and stream-fusion
-  trainers still selected on loss, which is how a never-fine-tuned ConvNeXt
-  checkpoint shipped (F29). The sync branch selects on misalignment AUC and logs
-  offset accuracy separately (F31).
-- Checkpoints record their `architecture`, and `branches/registry.py` rebuilds a
-  branch from its checkpoint. `features export` and `predict` used to build
-  EfficientNet whatever the file held.
-- Core code no longer imports the dashboard: `paths.py` and `media_kind.py` moved
-  into the package root (`DDF_PROJECT_ROOT` overrides the root) and clip
-  playback moved to `views/playback.py`.
-- One `digest.file_sha256` replaces six copies, one `data/cache_index.py`
-  replaces the CLI's reader and writer and nine script copies, and
-  `evaluation/branch_report.py` holds the report `ddf evaluate branch` writes.
-- `pandas` and `joblib` are declared core dependencies; both were imported and
-  arrived only through other packages.
-- The web app's pages share one design system: a sidebar in place of the tab
-  bar, a three-step check page whose result stays in view, colour, type, spacing
-  and radius tokens in one block of `app.css`, no inline styles, and the admin
-  page on the same stylesheet. Asset links carry a version so browsers fetch the
-  new files.
-- `ddf train stream --stream emotion` builds the emotion stream through its own
-  builder. Both streams used the lip-sync builder; for the default encoders the
-  two build the same model, so earlier checkpoints load and score as before.
-
-### Fixed
-
-- Frozen probe encoders apply their own input statistics. Perception Encoder
-  and CLIP were fed ImageNet-normalised pixels, so `A-encoder-comparison` and
-  the DF26 headline were measured on mis-scaled inputs (F33). Feature files now
-  record the normalisation.
-- The web app reports a familiarity gate that cannot load instead of silently
-  skipping it, compares the admin token as bytes so a non-ASCII token is a 401
-  rather than a 500, refuses an oversized upload from its declared length before
-  the body is read, and caches sample playback.
-- Test fixtures seeded from `hash()` of a string, which changes per process,
-  made one training test flaky. They use `zlib.crc32`.
-- `run_corruption_eval.py` loads checkpoints through the registry instead of a
-  bare `torch.load`.
-- `fusion/stream_loading.py` rebuilt the cross-modal streams without reading
-  their encoder from the history file; it now does.
-- `.gitattributes` keeps shell scripts at LF line ends; Windows checkouts gave
-  them CRLF, which bash on Linux and WSL rejects.
-
-### Added
-
 - `scripts/codec_shortcut_check.py` and F35: the served visual models read the
   video codec, not only the face.
 - Visual training augmentation (`training/augment.py`): random JPEG, H.264 and
@@ -144,6 +44,97 @@ number instead of restating it.
   without fitting every subset.
 - `python_speech_features` as a dev dependency, the reference the AV-HuBERT
   filterbank test checks against.
+
+### Changed
+
+- `cli.py` is now the `cli/` package: one module per command group, each owning
+  its handlers and its part of the parser. `build_parser`, `main` and
+  `python -m deepfake_detection.cli` are unchanged.
+- Every trainer selects its checkpoint on validation ROC-AUC through one
+  `training/selection.BestEpoch`. The binary branch, sync and stream-fusion
+  trainers still selected on loss, which is how a never-fine-tuned ConvNeXt
+  checkpoint shipped (F29). The sync branch selects on misalignment AUC and logs
+  offset accuracy separately (F31).
+- Checkpoints record their `architecture`, and `branches/registry.py` rebuilds a
+  branch from its checkpoint. `features export` and `predict` used to build
+  EfficientNet whatever the file held.
+- Core code no longer imports the dashboard: `paths.py` and `media_kind.py` moved
+  into the package root (`DDF_PROJECT_ROOT` overrides the root) and clip
+  playback moved to `views/playback.py`.
+- One `digest.file_sha256` replaces six copies, one `data/cache_index.py`
+  replaces the CLI's reader and writer and nine script copies, and
+  `evaluation/branch_report.py` holds the report `ddf evaluate branch` writes.
+- `pandas` and `joblib` are declared core dependencies; both were imported and
+  arrived only through other packages.
+- The web app's pages share one design system: a sidebar in place of the tab
+  bar, a three-step check page whose result stays in view, colour, type, spacing
+  and radius tokens in one block of `app.css`, no inline styles, and the admin
+  page on the same stylesheet. Asset links carry a version so browsers fetch the
+  new files.
+- `ddf train stream --stream emotion` builds the emotion stream through its own
+  builder. Both streams used the lip-sync builder; for the default encoders the
+  two build the same model, so earlier checkpoints load and score as before.
+- `LICENSE.md` states the code terms (all rights reserved) and `CITATION.cff`
+  is complete. The handbook drops its learning path chapter and its study
+  sections (learning goals, exercises and viva questions). `docs/handoff.md` is
+  titled Project status.
+
+### Fixed
+
+- Preserve explicit zero-start windows, initialize silent-media audio counts,
+  retain dataset identities, and keep pilot evaluation distributions intact.
+- Split cross-fitting into training, inner validation and untouched outer holdout.
+  Record checkpoint-selection sources and reject contaminated OOF exports.
+- Bind audio masks to checkpoint metadata. Preserve reused audio normalization
+  across evaluation, feature export and serving.
+- Restore recorded stream architectures, add temporal positions for new streams,
+  and bind deep fusion to its exact serving checkpoints.
+- Refuse partial dashboard checkpoint loads, invalidate replaced-media caches,
+  preserve request identity in the web app, and bound incoming upload streams.
+- Retain coverage reports when abstention leaves fewer than two scored classes.
+- Keep optional model imports inside the cache and prediction handlers. Resolve
+  training-history type annotations without importing Torch for CLI help.
+- Bind research-stage reuse to configuration and artifact digests. Propagate
+  child failures and retain historical evidence while corrected runs are pending.
+- Mark affected research claims as requiring reruns. Extend CI to research
+  scripts, browser behavior, base installs and Python 3.11 through 3.13.
+- Frozen probe encoders apply their own input statistics. Perception Encoder
+  and CLIP were fed ImageNet-normalised pixels, so `A-encoder-comparison` and
+  the DF26 headline were measured on mis-scaled inputs (F33). Feature files now
+  record the normalisation.
+- The web app reports a familiarity gate that cannot load instead of silently
+  skipping it, compares the admin token as bytes so a non-ASCII token is a 401
+  rather than a 500, refuses an oversized upload from its declared length before
+  the body is read, and caches sample playback.
+- Test fixtures seeded from `hash()` of a string, which changes per process,
+  made one training test flaky. They use `zlib.crc32`.
+- `run_corruption_eval.py` loads checkpoints through the registry instead of a
+  bare `torch.load`.
+- `fusion/stream_loading.py` rebuilt the cross-modal streams without reading
+  their encoder from the history file; it now does.
+- `.gitattributes` keeps shell scripts at LF line ends; Windows checkouts gave
+  them CRLF, which bash on Linux and WSL rejects.
+
+### Removed
+
+- The detector benchmark package (`benchmarks/`), its `ddf detector sample`,
+  `validate-annotations`, `run` and `compare` commands, its MLflow logger, its
+  tests and its CI smoke. It needed 625 human-reviewed frames that nobody was
+  going to review. `ddf detector fetch-yunet` stays. ROADMAP Phase 2 records the
+  decision.
+- The dashboard's Evidence gate and everything only it used: the gate page, the
+  video input, preprocessing, visual model and prediction sections, `runtime`,
+  `state`, `workflow`, `view_model`, `lib/locked`, and the visual-only
+  `VisualPredictionEngine` with its loader. The web app is now the only path that
+  issues a verdict.
+- `dashboard/lib/cross_modal.py` (its numpy reference formulas moved into
+  `tests/test_cross_attention.py`), `data/download.py` and the `tqdm`
+  dependency, `views/timeline.sliding_window_starts`,
+  `experiments/scopes.is_generalization`, and the unused scripts
+  `supervise_run.ps1`, `watch_run.ps1`, `make_run_configs.py`, `probe_stream.py`
+  and `score_branches_folder.py`.
+- `docs/superpowers/` (dated plans and specs) and `.github/workflows/test.yml`,
+  which duplicated `ci.yml` with fewer checks.
 
 ### Earlier unreleased work
 

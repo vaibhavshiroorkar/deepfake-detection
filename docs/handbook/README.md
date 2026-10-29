@@ -1,8 +1,7 @@
-# Learning handbook
+# Handbook
 
-Start with the learning path, then read the chapters in order.
+How the platform works, one stage per chapter. Read them in order.
 
-- [00: Learning path](00-learning-path.md)
 - [01: Problem and research question](01-problem-and-research-question.md)
 - [02: Deep learning foundations](02-deep-learning-foundations.md)
 - [03: Audio-video foundations](03-audio-video-foundations.md)

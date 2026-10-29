@@ -3,22 +3,6 @@
 **Current status:** The Wav2Vec2 Base plus learned attention pooling path is
 implemented. Valid-length attention masks and candidate comparisons are not.
 
-## Learning goals
-
-After this chapter, you should be able to:
-
-1. Trace a waveform through Wav2Vec2, projection, attention, and classification.
-2. Calculate attention weights and a pooled embedding by hand.
-3. State the exact audio target and checkpoint contract.
-4. Explain why missing padding masks can leak clip duration.
-
-## Required background
-
-Read [deep learning foundations](02-deep-learning-foundations.md),
-[audio-video foundations](03-audio-video-foundations.md), and the
-[preprocessing pipeline](05-preprocessing-pipeline.md). You need sampling,
-waveforms, softmax, binary logits, transfer learning, and cached view shapes.
-
 ## Cue and hypothesis
 
 The cue is evidence that an audio track was synthesized or manipulated.
@@ -216,36 +200,6 @@ and a `missing_audio` blocker; it does not isolate the audio branch from sync.
    the audio logit, embedding, quality fields, and checkpoint hash.
 7. [`LateFusion`](../../src/deepfake_detection/fusion/late.py) calibrates the
    raw audio logit before combining it with other evidence.
-
-## Exercises
-
-1. For `[8,64000]` input, an encoder output width `D = 768`, `U = 199`, and
-   `P = 256`, write every later tensor shape.
-2. Recalculate the worked example for scores `(log(3), 0, 0)`.
-3. Explain why `clip_fake` is wrong for a fake-video, real-audio clip.
-4. Write pseudocode for masked attention using a `[B,U]` Boolean mask.
-5. Design a test that proves padding length cannot change a valid clip score.
-6. State the evidence needed before replacing Wav2Vec2 with WavLM.
-
-## Viva questions
-
-1. What does Wav2Vec2 return to this branch?
-   Expected answer: contextual temporal tokens with shape `[B,U,D]`.
-2. Why project tokens before pooling?
-   Expected answer: projection gives the attention and classifier a controlled
-   branch width `P`, currently 256.
-3. What does the attention softmax do?
-   Expected answer: it converts one learned score per token into nonnegative
-   weights that sum to 1 over time.
-4. What is the current masking gap?
-   Expected answer: valid lengths are not stored or passed, so encoder and
-   pooling attention can use padded positions.
-5. What enters fusion?
-   Expected answer: the raw audio clip logit, plus separately stored quality
-   values. The branch embedding is stored but not used by current fusion.
-6. Is AASIST the selected model?
-   Expected answer: no. It is a planned controlled candidate with no project
-   result.
 
 ## Sources
 

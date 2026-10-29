@@ -1,16 +1,5 @@
 # Data and leakage
 
-## Learning goals
-
-After this chapter, you should be able to validate a manifest row, select the
-right label for each branch, audit identity overlap, and explain method
-holdout.
-
-## Required background
-
-You should know CSV rows, Python data classes, sets, and train, validation, and
-test partitions. Read the [data card](../data-card.md) first.
-
 ## Manifest contract
 
 `ClipRecord` is the normalized unit of data. Every field has one role:
@@ -200,34 +189,6 @@ Run:
 ```powershell
 uv run pytest tests\test_manifest.py tests\test_protocols.py -v
 ```
-
-## Exercises
-
-1. Build four fixture rows, one for each manipulation type. State every label.
-2. Add two clips for one source and verify they stay in one partition.
-3. Add a cross-partition target and inspect the identity-strict subset.
-4. Reorder split rows and confirm the hash stays fixed. Move one row and confirm
-   it changes.
-5. Explain why balancing test rows would change the reported deployment mix.
-
-## Viva questions
-
-1. Why does the visual branch not use `clip_fake`?
-   Expected answer: `clip_fake` is true for fake audio with real video. Using it
-   would label authentic visual evidence as fake. Visual uses `video_fake`.
-2. What does source-disjoint mean, and what does it leave unresolved?
-   Expected answer: each source identity belongs to exactly one partition. A
-   target identity can still cross partitions, and other shortcuts can remain.
-3. Why are target identities treated in a separate stress subset?
-   Expected answer: isolating both source and target roles across the full
-   connected identity graph would remove much of the data and method coverage.
-4. Why must validation exclude a held-out method?
-   Expected answer: model or threshold choices made on that method would tune
-   to the attack claimed as unseen, even if training excluded it.
-5. What does the split hash prove, and what does it not prove?
-   Expected answer: it fingerprints partition, clip, source, and target
-   assignments independent of row order. It does not prove label correctness,
-   media uniqueness, demographic quality, or absence of all leakage.
 
 ## Sources
 

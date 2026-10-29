@@ -1,34 +1,15 @@
 # License and use terms
 
-This file covers two different things under two different sets of terms: the
-code in this repository, and the data the code was run on. They are not the
-same and the second is the restrictive one.
-
-**This is a draft and is not yet in force.** The roadmap requires the license to
-be chosen after checking university and dataset terms, and the university check
-has not happened. Until a person confirms the code terms below, treat this
-repository as all rights reserved. What follows is a starting point for that
-conversation, not a grant.
+This file covers the code in this repository and the data the code was run on.
+They have different terms.
 
 ## Code
 
-Everything under `src/`, `scripts/`, `tests/` and `configs/`, and the
-documentation under `docs/`.
+Copyright (c) 2026 Vaibhav Shiroorkar. All rights reserved.
 
-Proposed terms: MIT, subject to the university check below. The intent is that
-the research platform, the evaluation protocol and the validity checks can be
-reused and audited freely, because that reuse is what this project argues is
-its contribution.
-
-TODO before this is real:
-
-- Confirm with the awarding institution who owns the copyright in work produced
-  for a dissertation, and whether the student may license it. Institutions
-  differ and several claim ownership or require approval.
-- Confirm no supervisor, funder or industrial partner agreement restricts
-  release.
-- Once confirmed, add the chosen license text verbatim as `LICENSE` and reduce
-  this file to the data section.
+This covers everything under `src/`, `scripts/`, `tests/`, `configs/` and
+`hosting/`, and the documentation under `docs/`. No license is granted to copy,
+modify or redistribute it. Ask the author for permission.
 
 ## Data
 

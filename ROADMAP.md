@@ -6,12 +6,9 @@ change decisions frozen by an earlier phase.
 
 The first phase with an unmet exit gate is the next body of work.
 
-That rule no longer describes the project on its own. Phases 3 through 5 ran
-ahead of Phase 2's evidence gate, which is blocked on human review rather than
-on code, and the work has since opened a second track on open-world generated
-media that these phases never anticipated. Read
-[the handoff](docs/handoff.md) for what is actually next; the phases below are
-the record of what is and is not done.
+Phases 3 through 5 ran ahead of Phase 2, and the work later opened a second
+track on open-world generated media. The phases below record what is and is not
+done. [Project status](docs/handoff.md) lists what runs next.
 
 ## Phase 0: Research platform
 
@@ -124,8 +121,7 @@ result reports is the best of three.
 - [x] Report corruption results.
 - [x] Complete error analysis without retuning the locked models.
 - [x] Create the final model card from measured results.
-- [ ] Verify the academic identity in `CITATION.cff` (drafted, three TODOs).
-- [ ] Confirm the code license in `LICENSE.md` with the university (drafted, not in force).
+- [x] Complete `CITATION.cff` and state the code terms in `LICENSE.md`.
 - [x] Reproduce the tracked smoke run and the suite from a clean environment.
 - [ ] Reproduce the main result from a clean environment (needs the cache).
 

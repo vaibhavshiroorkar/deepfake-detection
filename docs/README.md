@@ -3,16 +3,15 @@
 ## Start here
 
 - [Project overview](../README.md)
-- [Project handoff](handoff.md): what is measured, what is next.
+- [Project status](handoff.md): what is measured, what is next.
 - [Findings](research/findings.md): every claim the measurements support, by
   F-number. Other documents cite these numbers rather than restate them.
-- [Obstacles](obstacles.md): traps to read before touching an area.
+- [Obstacles](obstacles.md): known traps by area.
 
-## Learning handbook
+## Handbook
 
-Start with the [handbook index](handbook/README.md):
+One chapter per pipeline stage, from the [handbook index](handbook/README.md):
 
-- [Learning path](handbook/00-learning-path.md)
 - [Problem and research question](handbook/01-problem-and-research-question.md)
 - [Deep learning foundations](handbook/02-deep-learning-foundations.md)
 - [Audio-video foundations](handbook/03-audio-video-foundations.md)
@@ -52,8 +51,3 @@ Start with the [handbook index](handbook/README.md):
 - [Roadmap](../ROADMAP.md)
 - [Changelog](../CHANGELOG.md)
 - [ADR-001: Local MLflow tracking](decisions/ADR-001-local-mlflow.md)
-
-## Update rules
-
-Keep links limited to existing files. Update the CLI reference generated block
-whenever the parser changes, then run `uv run ddf-docs`.

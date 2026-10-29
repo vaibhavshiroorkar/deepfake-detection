@@ -5,21 +5,6 @@ quality features, strict missing-branch rejection, provenance validation,
 balanced-accuracy threshold selection, and inference abstention are
 implemented. Model comparison results are planned research.
 
-## Learning goals
-
-After this chapter, you should be able to:
-
-1. Explain why fusion training requires source-grouped out-of-fold predictions.
-2. Derive per-branch calibration and logistic late fusion.
-3. Trace feature records through assembly, fitting, artifacts, and scoring.
-4. Separate probability calibration, decision thresholds, and abstention.
-
-## Required background
-
-Read [data and leakage](04-data-and-leakage.md), all three branch chapters,
-and [model selection](../model-selection.md). You need logits, sigmoid,
-cross-validation, source-disjoint splits, hashes, and quality gates.
-
 ## Why late fusion
 
 The three branches learn different targets and produce scores on different
@@ -305,41 +290,6 @@ before fusion.
 7. [`PredictionEngine.predict()`](../../src/deepfake_detection/inference/predictor.py)
    computes current branch logits, abstains on blockers, or applies fusion and
    the separately supplied threshold.
-
-## Exercises
-
-1. Build three source-grouped folds for six sources. Show that every source is
-   held out once.
-2. Convert probabilities `0.2`, `0.5`, and `0.9` to log-odds.
-3. Recalculate the worked fusion example after setting `audio_clipped = 1`.
-4. Explain why calibrating in-sample branch scores does not remove leakage.
-5. Design a table that reports accuracy, coverage, and abstention together.
-6. State which hashes belong to a feature row and which belong directly to a
-   fusion artifact.
-
-## Viva questions
-
-1. Why require out-of-fold branch predictions?
-   Expected answer: each meta-training score must come from a checkpoint that
-   did not train on that clip's source, or fusion can learn training leakage.
-2. What is Platt scaling here?
-   Expected answer: one logistic regression per branch maps its raw logit to a
-   calibrated probability, then fusion uses the calibrated log-odds.
-3. What are the current quality features?
-   Expected answer: face coverage, audio-clipped indicator, and audio-video
-   duration difference.
-4. What happens when sync evidence is missing?
-   Expected answer: strict training assembly rejects the row, and inference
-   returns indeterminate with no fused probability.
-5. Is a 0.5 threshold part of calibration?
-   Expected answer: no. Calibration estimates probability. Threshold selection
-   is a separate validation decision.
-6. Does the MLP currently beat logistic fusion?
-   Expected answer: unknown. It is an implemented ablation with no claimed
-   project result.
-7. What does `FusionArtifact` validate?
-   Expected answer: the split hash and preprocessing hash used by the fitted
-   fusion model.
 
 ## Sources
 

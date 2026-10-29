@@ -1,4 +1,4 @@
-# Project handoff
+# Project status
 
 ## Current state
 
@@ -195,12 +195,13 @@ them from a checkout where those are present.
 
 ## Local MLflow
 
-Use the primary checkout when its database and artifact root are present:
+Run from the checkout that holds `mlflow.db` and `mlartifacts`:
 
 ```powershell
+$researchRoot = (Get-Location).Path.Replace('\', '/')
 .\.venv\Scripts\mlflow.exe server `
-  --backend-store-uri sqlite:///C:/Users/vaibh/Documents/GitHub/deepfake-generalization/mlflow.db `
-  --default-artifact-root file:///C:/Users/vaibh/Documents/GitHub/deepfake-generalization/mlartifacts `
+  --backend-store-uri "sqlite:///$researchRoot/mlflow.db" `
+  --default-artifact-root "file:///$researchRoot/mlartifacts" `
   --host 127.0.0.1 `
   --port 5000
 ```

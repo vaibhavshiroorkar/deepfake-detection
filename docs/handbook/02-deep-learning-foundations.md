@@ -1,17 +1,5 @@
 # Deep learning foundations
 
-## Learning goals
-
-After this chapter, you should be able to trace branch tensor shapes, compute a
-two-sample binary loss, explain gradient accumulation, and distinguish frozen
-from trainable parameters.
-
-## Required background
-
-You should know Python lists and basic arithmetic. No calculus is assumed. This
-chapter defines the algebra, probability, and gradient notation before using
-it.
-
 ## Tensors and shapes
 
 A tensor is an array with a shape and data type. The first dimension in this
@@ -293,33 +281,6 @@ checks freezing and early stopping. Run:
 uv run pytest tests\test_branches.py tests\test_training.py `
   tests\test_training_recipes.py -v
 ```
-
-## Exercises
-
-1. Recalculate the worked loss for `z = [0, 1]` and `y = [1, 0]`.
-2. Write the visual shape after flattening when `B = 3`.
-3. Find the optimizer step count for seven batches accumulated in groups of
-   three.
-4. Set up a two-batch fixture and observe which epoch `best_epoch` records.
-
-## Viva questions
-
-1. Why does the loss accept logits rather than probabilities?
-   Expected answer: the stable logits form avoids overflow, underflow, and
-   taking the logarithm of a rounded zero.
-2. What does `token_count` mean for visual and audio branches?
-   Expected answer: it records the number of temporal feature positions. For
-   visual it is the frame count. For audio it is the encoder token count.
-3. How is gradient accumulation different from adding losses without scaling?
-   Expected answer: each loss is divided by its actual group size before
-   backpropagation. This preserves a mean gradient, including the final short
-   group, before one optimizer step.
-4. Why freeze a pretrained backbone?
-   Expected answer: new layers can learn first without immediately changing
-   useful pretrained features. Later unfreezing permits controlled adaptation.
-5. Why is automatic mixed precision described as planned?
-   Expected answer: the current loop uses neither autocast nor gradient
-   scaling. Documentation must not describe future behavior as implemented.
 
 ## Sources
 

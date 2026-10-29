@@ -4,22 +4,6 @@
 implemented. Candidate comparisons are planned research and have no project
 results yet.
 
-## Learning goals
-
-After this chapter, you should be able to:
-
-1. State which visual cue and label this branch learns.
-2. Trace every tensor axis from a face clip to one clip logit.
-3. Explain why ImageNet transfer learning and temporal aggregation are useful.
-4. Separate the current baseline from planned model comparisons.
-
-## Required background
-
-Read [deep learning foundations](02-deep-learning-foundations.md),
-[audio-video foundations](03-audio-video-foundations.md), and the
-[preprocessing pipeline](05-preprocessing-pipeline.md). You need tensors,
-binary logits, transfer learning, video frames, face crops, and cache hashes.
-
 ## Cue and hypothesis
 
 The cue is visual evidence inside a tracked face. Examples include blending
@@ -216,38 +200,6 @@ second case is indeterminate, has no fused probability, and names
    the visual logit, embedding, quality fields, and checkpoint hash.
 7. [`LateFusion`](../../src/deepfake_detection/fusion/late.py) calibrates the
    raw visual logit before combining it with other evidence.
-
-## Exercises
-
-1. Trace `[4,16,3,224,224]` through a backbone with `D = 1280` and a GRU with
-   `K = 256`. Write every intermediate shape.
-2. Explain why using `clip_fake` would give the visual branch a wrong target
-   for a real-video, fake-audio clip.
-3. Replace final-state selection on paper with mean pooling. State one benefit
-   and one loss.
-4. Design a fair EfficientNet-B0 versus ConvNeXt-Tiny comparison without using
-   final-test results.
-5. List three shortcuts that source-disjoint splitting does not remove.
-
-## Viva questions
-
-1. What does this branch predict?
-   Expected answer: a raw logit for the cue-specific `video_fake` target.
-2. Why flatten batch and time before EfficientNet?
-   Expected answer: the image backbone accepts four-axis image batches, so all
-   frames share one backbone call before the time axis is restored.
-3. Why use a GRU?
-   Expected answer: it aggregates ordered frame features while keeping the
-   baseline smaller than a full video transformer.
-4. What enters fusion?
-   Expected answer: the raw visual clip logit. Fusion calibrates it and adds
-   audio, sync, and quality features.
-5. Is ConvNeXt-Tiny better here?
-   Expected answer: unknown. Its comparison is planned and must use controlled
-   source-grouped validation evidence.
-6. What does the checkpoint hash protect?
-   Expected answer: it identifies the exact saved branch artifact attached to
-   each feature row. Split and preprocessing hashes protect other provenance.
 
 ## Sources
 

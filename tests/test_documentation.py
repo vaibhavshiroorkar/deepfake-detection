@@ -73,18 +73,11 @@ def assert_markdown_headings(
 
 
 FOUNDATION_CHAPTERS = {
-    "docs/handbook/00-learning-path.md": (
-        "Who this is for",
-        "Reading order",
-        "How to study each chapter",
-        "Learning checks",
-    ),
     "docs/handbook/01-problem-and-research-question.md": (
         "Problem definition",
         "Research questions",
         "Contribution",
         "Limits",
-        "Viva questions",
         "Sources",
     ),
     "docs/handbook/02-deep-learning-foundations.md": (
@@ -94,8 +87,6 @@ FOUNDATION_CHAPTERS = {
         "Optimization and regularization",
         "Transfer learning",
         "Worked example",
-        "Exercises",
-        "Viva questions",
         "Sources",
     ),
     "docs/handbook/03-audio-video-foundations.md": (
@@ -104,8 +95,6 @@ FOUNDATION_CHAPTERS = {
         "Timestamps and synchronization",
         "Codecs and shortcuts",
         "Worked timeline",
-        "Exercises",
-        "Viva questions",
         "Sources",
     ),
     "docs/handbook/04-data-and-leakage.md": (
@@ -116,8 +105,6 @@ FOUNDATION_CHAPTERS = {
         "Method holdout",
         "Project code path",
         "Failure cases",
-        "Exercises",
-        "Viva questions",
         "Sources",
     ),
 }
@@ -140,8 +127,6 @@ PREPROCESSING_HEADINGS = (
     "Current limitations",
     "Project code path",
     "Failure cases",
-    "Exercises",
-    "Viva questions",
     "Sources",
 )
 
@@ -164,8 +149,6 @@ MODEL_CHAPTERS = {
         "Candidate comparison",
         "Current limitations",
         "Project code path",
-        "Exercises",
-        "Viva questions",
         "Sources",
     ),
     "docs/handbook/07-audio-branch.md": (
@@ -178,8 +161,6 @@ MODEL_CHAPTERS = {
         "Candidate comparison",
         "Current limitations",
         "Project code path",
-        "Exercises",
-        "Viva questions",
         "Sources",
     ),
     "docs/handbook/08-sync-branch.md": (
@@ -192,8 +173,6 @@ MODEL_CHAPTERS = {
         "Candidate comparison",
         "Current limitations",
         "Project code path",
-        "Exercises",
-        "Viva questions",
         "Sources",
     ),
     "docs/handbook/09-fusion-and-calibration.md": (
@@ -205,8 +184,6 @@ MODEL_CHAPTERS = {
         "Ablations",
         "Current limitations",
         "Project code path",
-        "Exercises",
-        "Viva questions",
         "Sources",
     ),
 }

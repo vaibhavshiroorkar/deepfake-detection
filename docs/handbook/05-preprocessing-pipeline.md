@@ -1,18 +1,5 @@
 # Preprocessing pipeline
 
-## Learning goals
-
-After this chapter, you should be able to trace one `ClipRecord` into cached
-visual, audio, mouth, and synchronization views. You should also be able to
-calculate every default tensor shape, explain the quality blockers, and tell
-implemented behavior from planned detector research.
-
-## Required background
-
-You need basic Python, arrays, paths, and arithmetic with seconds. Read
-[Audio-video foundations](03-audio-video-foundations.md) for timestamps and
-[Data and leakage](04-data-and-leakage.md) for the `ClipRecord` contract.
-
 ## Pipeline overview
 
 The cache command follows this implemented path:
@@ -453,54 +440,6 @@ Run the focused pipeline set:
 ```powershell
 uv run pytest tests\test_preprocessor.py tests\test_tracking.py tests\test_face_detector.py tests\test_media_decoder.py tests\test_views.py tests\test_quality.py tests\test_clip_cache.py tests\test_cache_build.py tests\test_sync_objective.py tests\test_sync_dataset.py -v
 ```
-
-## Exercises
-
-1. For a ten-second clip with two seconds of leading silence, calculate all 16
-   visual timestamps.
-2. Change `sync_seconds` to 1.5 in a local `ViewConfig`. Calculate the mouth and
-   sync-audio shapes without running the code. Then verify them in a test.
-3. Draw two equal-length tracks across three frames. Explain why the result is
-   unstable even when both tracks have full coverage.
-4. Use a constant waveform shorter than four seconds. Predict its normalized
-   content and padded values.
-5. List the exact inputs that change the config hash and clip fingerprint.
-6. Design a training-only reviewed sample for MTCNN and YuNet. State which
-   measurements would reject a faster but less reliable detector.
-
-## Viva questions
-
-1. Why do visual and sync sampling share one `ViewConfig`?
-   Expected answer: it fixes time, shape, detector, and crop choices under one
-   hash so cached views can be compared and reproduced.
-2. Why are visual timestamps placed at interval midpoints?
-   Expected answer: midpoints spread samples uniformly while keeping the first
-   and last requests inside the valid content interval.
-3. Why does the pipeline keep a 2.64-second sync context?
-   Expected answer: it supplies real audio for a centered two-second window at
-   every planned offset from -320 to 320 ms without padding cues.
-4. What makes a track stable?
-   Expected answer: primary coverage is at least 0.80 and its length is at
-   least 1.25 times the second track's length.
-5. What happens when no stable face exists?
-   Expected answer: visual and mouth views are absent. Quality blocks full
-   fusion. The pipeline does not substitute the full frame.
-6. How is the current mouth crop found?
-   Expected answer: it takes the lower 48 percent of the face box, expands it
-   with a 10 percent square margin, and resizes it to 112 by 112.
-7. Why normalize valid audio before leaving padding at zero?
-   Expected answer: including padding in the statistics would make content
-   values depend on clip length and could expose a padding shortcut.
-8. Does `audio_clipped` block fusion?
-   Expected answer: no. It is recorded, but it is not in
-   `full_fusion_blockers()`.
-9. What is the difference between the two hashes?
-   Expected answer: the config hash identifies code version and all view
-   settings. The clip fingerprint also includes dataset, leading silence, and
-   complete media content.
-10. Has YuNet or landmark alignment improved this project?
-    Expected answer: no result exists. Both are planned controlled comparisons,
-    and MTCNN with box-relative crops is the only implemented path.
 
 ## Sources
 

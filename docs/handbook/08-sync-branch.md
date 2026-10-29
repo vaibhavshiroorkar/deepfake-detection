@@ -4,23 +4,6 @@
 eight-class objective, contrastive term, and anomaly logit are implemented.
 SyncNet-style and AV-HuBERT comparisons are planned.
 
-## Learning goals
-
-After this chapter, you should be able to:
-
-1. Build all seven offset classes and the cross-identity mismatch class.
-2. Trace mouth frames and audio samples to time-aligned token sequences.
-3. Derive the offset, contrastive, and anomaly equations.
-4. Explain why temporal tokens must remain separate until alignment is scored.
-
-## Required background
-
-Read [deep learning foundations](02-deep-learning-foundations.md),
-[audio-video foundations](03-audio-video-foundations.md), the
-[preprocessing pipeline](05-preprocessing-pipeline.md), and the first two model
-chapters. You need cosine similarity, softmax cross-entropy, Transformers,
-sampling, and shared timestamps.
-
 ## Cue and hypothesis
 
 The cue is correspondence between visible mouth motion and speech audio. A
@@ -273,40 +256,6 @@ sync anomaly logit, embedding, or checkpoint hash.
    records checkpoint and provenance metadata.
 9. [`export_features()`](../../src/deepfake_detection/fusion/export.py) writes
    the anomaly logit, pooled embedding, quality fields, and checkpoint hash.
-
-## Exercises
-
-1. Convert every signed offset to samples at 16 kHz.
-2. For a 42,240-sample context and 32,000-sample output, calculate the centered
-   start and the start for +320 ms.
-3. Trace a `[4,50,3,112,112]` video and `[4,32000]` waveform through the worked
-   architecture.
-4. Explain why a cross-identity pair is not equivalent to a shifted same-clip
-   pair.
-5. Design a negative-pair audit for language, channel, and background shortcuts.
-6. Explain what information is lost if each modality is pooled before cosine
-   similarity.
-
-## Viva questions
-
-1. How many current classes exist?
-   Expected answer: eight, seven signed offsets including zero and one
-   cross-identity mismatch class.
-2. What is class 3?
-   Expected answer: the zero-millisecond aligned class.
-3. Why cache wider audio context?
-   Expected answer: every shifted crop uses real samples, so padding edges
-   cannot reveal the offset class.
-4. Why keep temporal tokens?
-   Expected answer: per-time audio and mouth evidence must be compared before
-   any clip summary can express alignment.
-5. What enters fusion?
-   Expected answer: log-sum-exp over all non-aligned class logits minus the
-   aligned logit.
-6. Does the primary sync dataset use fake clips?
-   Expected answer: no. It builds offsets and mismatches from authentic clips.
-7. Has AV-HuBERT improved this project?
-   Expected answer: unknown. That comparison is planned and unimplemented.
 
 ## Sources
 

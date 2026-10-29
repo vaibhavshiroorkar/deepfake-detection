@@ -1,37 +1,39 @@
 # Deepfake Generalization
 
 Live demo: [huggingface.co/spaces/vaibhavshiroorkar/deepfake-generalization](https://huggingface.co/spaces/vaibhavshiroorkar/deepfake-generalization).
-It runs the best single face model in your browser, so no video is uploaded.
-Expect it to withhold or get wrong most clips from outside its training data.
+It runs the best single face model in your browser, so your video never leaves your device.
+Expect it to withhold a verdict, or get it wrong, on most clips from outside its training data.
 That gap is what this project studies.
 
-This repository tests whether three cue-specific detectors generalize better together than a visual detector alone.
+The project tests whether three cue-specific detectors generalize better together than a visual detector alone.
+The branches inspect visual artifacts, audio spoofing, and mouth-audio alignment.
+Calibrated late fusion combines them, and the model withholds a verdict when required evidence is missing.
 
-The branches inspect visual artifacts, audio spoofing, and mouth-audio alignment. The final model uses calibrated late fusion. It does not issue a full verdict when required evidence is missing.
+A second track asks whether a frozen encoder with a linear probe can detect a video generator it has never seen.
 
-A second track asks whether a frozen encoder with a linear probe can detect a video generator it has never seen. The historical DF26 Perception Encoder score of 0.7527 used the wrong input normalization. Corrected performance is unknown.
+## Results
 
-Historical fusion comparisons found no cross-corpus gain. Their fold checkpoints used outer-holdout labels for epoch selection, so the conclusion requires a nested cross-fitting rerun. The [paper draft](docs/research/paper.md) reports both tracks, and every number in it resolves to a row in [result traceability](docs/research/result-traceability.md). The [handoff](docs/handoff.md) is the shortest route to the current state.
+A face model that scores 0.999 ROC AUC on its own test set drops to 0.67 on Celeb-DF.
+Historical fusion comparisons found no cross-corpus gain. Their fold checkpoints used outer-holdout labels for epoch selection, so that conclusion needs a nested cross-fitting rerun.
+The historical DF26 Perception Encoder score of 0.7527 used the wrong input normalization, so corrected performance is unknown.
 
-## Project documents
+The [findings](docs/research/findings.md) hold every measured claim. The [paper draft](docs/research/paper.md) reports both tracks, and every number in it resolves to a row in [result traceability](docs/research/result-traceability.md). The [project status](docs/handoff.md) lists what is measured and what runs next.
+
+## Documents
 
 - [Research design](docs/research-design.md): question, protocol, ablations, and exit criteria.
 - [Data card](docs/data-card.md): data contract, split policy, risks, and handling rules.
-- [Roadmap](ROADMAP.md): implementation order and phase gates.
+- [Roadmap](ROADMAP.md): research phases and what each one settled.
 - [Model selection](docs/model-selection.md): controlled component comparisons and selection rules.
 - [Reproducibility](docs/reproducibility.md): required run metadata and local tracking.
-- [License and use terms](LICENSE.md): a draft, not yet in force; the data terms are the binding part.
+- [License and use terms](LICENSE.md): code terms, and the terms of each dataset.
 - [Contributions](docs/research/contributions.md): what is new here, and what is already published.
 - [Model card](docs/model-card.md): what the system is, what it measures, and why it should not be deployed.
 - [Threat model](docs/threat-model.md): supported threats, failure modes, and claim limits.
 - [Dashboard](docs/dashboard.md): the two halves of the dashboard and how state crosses pages.
 - [Web app](#web-app): the user-facing upload page, its admin settings, and the PDF report.
-- [Obstacles](docs/obstacles.md): constraints and traps to read before touching an area.
+- [Obstacles](docs/obstacles.md): known traps by area, and how each was resolved.
 - [Changelog](CHANGELOG.md): material software and protocol changes.
-
-Read the research design before changing the model or evaluation protocol. Read
-the data card before adding a dataset. Update the changelog with each material
-change.
 
 ## Quick start
 
