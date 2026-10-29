@@ -44,3 +44,18 @@ Document Template/
 
 # renders of the deliverables for visual inspection (not committed)
 **/_render/
+**/_render2/
+**/_oldrender/
+
+# v2 deliverables build outputs (rebuilt from sources; main.pdf stays tracked; added 2026-10-29, D-093)
+deliverables_v2/research_paper/*.aux
+deliverables_v2/research_paper/*.bbl
+deliverables_v2/research_paper/*.blg
+deliverables_v2/research_paper/*.fdb_latexmk
+deliverables_v2/research_paper/*.fls
+deliverables_v2/research_paper/*.log
+deliverables_v2/research_paper/*.lof
+deliverables_v2/research_paper/*.lot
+deliverables_v2/research_paper/*.out
+deliverables_v2/research_paper/*.toc
+deliverables_v2/presentation/_charts/

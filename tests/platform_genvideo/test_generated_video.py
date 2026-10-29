@@ -11,7 +11,7 @@ import pytest
 
 from dfd.platform.coordinator import Coordinator
 from dfd.platform.genvideo import canonical
-from dfd.platform.genvideo.features import FEATURE_NAMES, PICK, DinoRunner, trajectory_features
+from dfd.platform.genvideo.features import FEATURE_NAMES, PICK, WEIGHT_LOG, DinoRunner, trajectory_features
 from dfd.platform.genvideo.model import load_head, save_head
 from dfd.platform.module import Context, Probe
 from dfd.platform.modules.generated_video import GeneratedVideoModule
@@ -164,7 +164,9 @@ def test_real_dinov2_path_on_synthetic_clip(synthetic_clip, tmp_path):
     try:
         runner = DinoRunner(device="cpu")
         feats = runner.features(canonical.read_frames(_canon(synthetic_clip, tmp_path)))
-    except (RuntimeError, StopIteration) as e:
+    except (RuntimeError, StopIteration, FileNotFoundError) as e:
+        if isinstance(e, FileNotFoundError) and WEIGHT_LOG.exists():
+            raise  # only the missing weight record (a fresh clone) is a skip; a missing ffmpeg or model file still fails
         pytest.skip(f"DINOv2-small weights not available: {e}")
     assert feats["restrav21"].shape == (21,) and np.isfinite(feats["restrav21"]).all()
     assert feats["restrav21"][0] > 0 and feats["cls_all"].shape == (8, 384)

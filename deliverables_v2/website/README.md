@@ -3,7 +3,7 @@
 A redesigned, isolated front end for the platform dashboard. It reuses the existing backend unchanged: `serve_v2.py` builds the app with
 `dfd.platform.dashboard.serve.create_app` (same /api routes, same live mode, same 512 MB limit and job queue, same Evaluation Lab backend) and
 replaces only the static-page routes. Nothing under `src/`, `scripts/`, `tests/`, `docs/`, `data/`, `ledger/`, `paper/`, `report/`, `slides/`
-or `assets/` was edited. Nothing here was committed or pushed.
+or `assets/` was edited. (Correction 2026-10-29: this folder was committed in 69de794 and merged into main as db38f98; the screenshots under test_evidence/ stay local and are not in git.)
 
 ## Start
 

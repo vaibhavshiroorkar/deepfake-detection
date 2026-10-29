@@ -1,5 +1,7 @@
 # DEMO: running the live dashboard for the evaluation
 
+> Final demonstration (note added 2026-10-29): use the v2 website, `PYTHONPATH=src .venv/Scripts/python.exe deliverables_v2/website/serve_v2.py 8012 --live`, then open http://127.0.0.1:8012/ (Evaluation Lab at http://127.0.0.1:8012/#lab), as in submission/README.md. It is built on the same backend and API as the dashboard below (`dfd.platform.dashboard.serve.create_app`), so sections 1, 2 and 6 apply with port 8012. Sections 3 to 5 describe the original dashboard as checked on 2026-10-27, before the per-module verdict labels of D-087; the v2 page shows the D-087 labels (with its addendum), so its wording differs from the tables below. The original dashboard is kept unchanged and still runs on port 8002.
+
 Checked on 2026-10-26 on the development machine (Windows 10, RTX 5070, `.venv` with Python 3.13.15) and again on 2026-10-27 after the dashboard redesign (D-076); sections 3 to 5 quote the 2026-10-27 browser run (`docs/test_evidence/2026-10-27_redesign/`), the earlier API outputs stay in `docs/test_evidence/2026-10-26/`. They show that the software runs end to end. They are NOT evidence of detector accuracy: accuracy is reported only by the logged experiments in `docs/EXPERIMENTS.md`.
 
 ## 1. What must be present
@@ -131,3 +133,5 @@ Points to say while showing it:
 ## 7. The older single-score page (frozen v1, optional)
 
 The frozen submission page still runs: `PYTHONPATH=src .venv/Scripts/python.exe -m dfd.web --adapter real --checkpoint checkpoints/I-5-freeze-candidate --port 8001`, then open `http://127.0.0.1:8001/`. Without `--checkpoint` it refuses to start (by design: there is no default checkpoint and no fallback to the mock). On 2026-10-26 it answered `/api/analyse` for files 3, 5 and 4 with `inference_source: real` and no errors. The platform dashboard (section 3) is the one to demonstrate; the v1 page is kept unchanged as the frozen submission path.
+
+Do not demonstrate this page (note added 2026-10-29). Its text ("returns a calibrated probability that the content is fake" in src/dfd/web/templates/index.html, "Probability of fake:" in src/dfd/web/static/app.js) predates D-087 and is superseded: the scores are ranking scores at a fixed decision line, not probabilities that a file is fake. The frozen v1 code is protected and kept unchanged, so the correction is recorded here and not in the page.

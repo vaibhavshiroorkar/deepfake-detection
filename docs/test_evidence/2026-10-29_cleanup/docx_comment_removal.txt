@@ -1,0 +1,14 @@
+DOCX comment removal check, 2026-10-29 (D-093). original = submission copy before the change (identical to deliverables_v2/project_report DOCX, SHA-256 a6ec8478...d360); stripped = new submission copy (SHA-256 a3ed1d68...f999).
+--- strip_docx_comments.py
+comment references 36 runs removed 36 range starts 36 range ends 36 parts dropped ['word/comments.xml', 'word/commentsExtended.xml', 'word/commentsIds.xml'] rels 3 content types 3
+rerun output byte-identical to the stripped copy
+--- compare_docx.py
+paragraphs 1022 1022 identical: True
+inline images 6 6 tables 24 24 sections 4 4
+w:t runs 1247 1247 identical: True w:p count 1013 1013
+parts only in original: ['word/comments.xml', 'word/commentsExtended.xml', 'word/commentsIds.xml']
+parts only in stripped: []
+identical parts 27 changed parts ['[Content_Types].xml', 'word/_rels/document.xml.rels', 'word/document.xml']
+comment markup in stripped document.xml: 0
+document.xml equals original minus anchors: True bytes removed 3750
+docx.Document comments in stripped: 0

@@ -1,0 +1,131 @@
+== files: paper=True report=True docx=True deck=True
+== deck: 25 slides; core: Multimodal Deepfake Detection for Images, Video and Audio || Shivansh Gupta, Vaibhav Shiroorkar, Adithya Jithesh || subject='Final year project presentation' keywords=''
+
+== (1) term hits per document (count; sentences listed for the terms that matter)
+-- paper
+   superior                     5
+      > (3) 0.0100) to an Xception baseline re-run at 224 px; the declared Sealed confirmatory results for face video and speech, with 95 % superiority rule was met (+0.0176 [+0.0025, +0.0327]) but the negative results that limit them.
+      > The declared superiority rule, L > 0 at the 95 % level, is a stricter claim than non-inferiority and is read B.
+      > From the working version to the frozen system (exploratory) both levels (margin 0.0100); the declared 95 % superiority rule was met but does not survive the Bonferroni correction Table III follows each change from the limitation that (98.33 % interval [-0.0011
+      > Test 95 % (declared) 98.33 % Reading T1 video, +0.1980 [+0.1688, [+0.1627, improved by the declared final minus +0.2242] +0.2303] rule; holds at 98.33 % I-0 T2 speech, +0.1633 [+0.1177, [+0.1085, improved by the declared final minus +0.2266] +0.2481] rule; hol
+      > Yin, "FakeCatcher: Detection of synthetic while its 95 % superiority does not survive the Bonferroni portrait videos using biological signals," IEEE Transactions on Pattern Analysis and Machine Intelligence, 2020, early access.
+   superiority                  5
+      > (3) 0.0100) to an Xception baseline re-run at 224 px; the declared Sealed confirmatory results for face video and speech, with 95 % superiority rule was met (+0.0176 [+0.0025, +0.0327]) but the negative results that limit them.
+      > The declared superiority rule, L > 0 at the 95 % level, is a stricter claim than non-inferiority and is read B.
+      > From the working version to the frozen system (exploratory) both levels (margin 0.0100); the declared 95 % superiority rule was met but does not survive the Bonferroni correction Table III follows each change from the limitation that (98.33 % interval [-0.0011
+      > Test 95 % (declared) 98.33 % Reading T1 video, +0.1980 [+0.1688, [+0.1627, improved by the declared final minus +0.2242] +0.2303] rule; holds at 98.33 % I-0 T2 speech, +0.1633 [+0.1177, [+0.1085, improved by the declared final minus +0.2266] +0.2481] rule; hol
+      > Yin, "FakeCatcher: Detection of synthetic while its 95 % superiority does not survive the Bonferroni portrait videos using biological signals," IEEE Transactions on Pattern Analysis and Machine Intelligence, 2020, early access.
+   robust                       3
+      > The final system (fine-tuned SigLIP for video, the frozen It was declared as a robustness check beside the 95 % decision CLIP probe for images, the three-encoder speech average) was rule; Bonferroni control holds under any dependence between frozen and read on
+      > Moutakanni et al., "DINOv2: Learning robust [1] B.
+      > Sutskever, "Robust speech recognition via large-scale weak super- Computer Vision and Pattern Recognition (CVPR), 2023, pp.
+   0\.99(?!\d)                  3
+      > Sealed set Items / groups I-0 Final system Xception Role Celeb-DF family 7 650 / 344 0.6238 [0.6015, 0.6486] 0.8218 [0.8020, 0.8393] 0.8042 [0.7841, 0.8223] T1, T3 Celeb-DF v2 test part 4 801 / 344 0.6322 [0.6018, 0.6658] 0.8999 [0.8759, 0.9210] 0.8527 [0.8237
+      > Sealed set Items / groups I-0 Final system Xception Role Celeb-DF family 7 650 / 344 0.6238 [0.6015, 0.6486] 0.8218 [0.8020, 0.8393] 0.8042 [0.7841, 0.8223] T1, T3 Celeb-DF v2 test part 4 801 / 344 0.6322 [0.6018, 0.6658] 0.8999 [0.8759, 0.9210] 0.8527 [0.8237
+      > Sealed set Items / groups I-0 Final system Xception Role Celeb-DF family 7 650 / 344 0.6238 [0.6015, 0.6486] 0.8218 [0.8020, 0.8393] 0.8042 [0.7841, 0.8223] T1, T3 Celeb-DF v2 test part 4 801 / 344 0.6322 [0.6018, 0.6658] 0.8999 [0.8759, 0.9210] 0.8527 [0.8237
+-- report
+   superior                     7
+      > Against a re-run Xception baseline the final video system is non-inferior at both levels (margin 0.0100; difference +0.0176 [+0.0025, +0.0327]); the declared 95 percent superiority rule was met but does not survive the Bonferroni correction (98.33 percent inte
+      > T3 compares the final face-video system with the re-run Xception baseline on the Celeb-DF family: it is non-inferior if the lower bound is above minus the margin, and a declared superiority rule asks for a lower bound above zero at the 95 percent level.
+      > Approach Status Reason SigLIP base, fully fine-tuned (face retained Largest measured gain over the frozen probe of the same video) encoder; non-inferior to the re-run Xception at both levels (superiority rule met at 95 percent, not after Bonferroni) Frozen CLI
+      > Test Difference [95 percent] 98.33 percent Verdict interval T1 face video: final minus I-0, Celeb-DF +0.1980 [+0.1688, [+0.1627, +0.2303] improved, robust family +0.2242] [+0.1085, +0.2481] improved, robust T2 speech: final minus I-0, In-the-Wild +0.1633 [+0.1
+      > Test Difference [95 percent] 98.33 percent Verdict interval T1 face video: final minus I-0, Celeb-DF +0.1980 [+0.1688, [+0.1627, +0.2303] improved, robust family +0.2242] [+0.1085, +0.2481] improved, robust T2 speech: final minus I-0, In-the-Wild +0.1633 [+0.1
+      > T3 uses one baseline family at one input size (224 px), with the baseline learning rate at the grid edge; the system is non-inferior at both levels, and the superiority rule is met at the 95 percent level only, not after Bonferroni.
+      > Against a re-run Xception baseline the face-video system is non-inferior at both levels (margin 0.0100); the declared 95 percent superiority rule was met but does not survive the Bonferroni correction (98.33 percent interval [-0.0011, +0.0355]), and the baseli
+   superiority                  7
+      > Against a re-run Xception baseline the final video system is non-inferior at both levels (margin 0.0100; difference +0.0176 [+0.0025, +0.0327]); the declared 95 percent superiority rule was met but does not survive the Bonferroni correction (98.33 percent inte
+      > T3 compares the final face-video system with the re-run Xception baseline on the Celeb-DF family: it is non-inferior if the lower bound is above minus the margin, and a declared superiority rule asks for a lower bound above zero at the 95 percent level.
+      > Approach Status Reason SigLIP base, fully fine-tuned (face retained Largest measured gain over the frozen probe of the same video) encoder; non-inferior to the re-run Xception at both levels (superiority rule met at 95 percent, not after Bonferroni) Frozen CLI
+      > Test Difference [95 percent] 98.33 percent Verdict interval T1 face video: final minus I-0, Celeb-DF +0.1980 [+0.1688, [+0.1627, +0.2303] improved, robust family +0.2242] [+0.1085, +0.2481] improved, robust T2 speech: final minus I-0, In-the-Wild +0.1633 [+0.1
+      > Test Difference [95 percent] 98.33 percent Verdict interval T1 face video: final minus I-0, Celeb-DF +0.1980 [+0.1688, [+0.1627, +0.2303] improved, robust family +0.2242] [+0.1085, +0.2481] improved, robust T2 speech: final minus I-0, In-the-Wild +0.1633 [+0.1
+      > T3 uses one baseline family at one input size (224 px), with the baseline learning rate at the grid edge; the system is non-inferior at both levels, and the superiority rule is met at the 95 percent level only, not after Bonferroni.
+      > Against a re-run Xception baseline the face-video system is non-inferior at both levels (margin 0.0100); the declared 95 percent superiority rule was met but does not survive the Bonferroni correction (98.33 percent interval [-0.0011, +0.0355]), and the baseli
+   robust                       7
+      > Claimed (on the stated data, with intervals) Not claimed A reproducible group-disjoint protocol with sealed tests Audio-visual detection or a fused verdict (the LAV-DF and a logged guard fusion rests on a production-pipeline cue) Face-video and speech detector
+      > The 98.33 percent line was declared as a robustness check beside the 95 percent decision rule; Bonferroni control holds under any dependence between the three tests, so a reader who wants family-wise control should read the 98.33 percent column.
+      > 7.2 Confirmatory Tests Table 13 gives the three tests declared before the sealed run, with the paired differences, the 95 percent intervals and the 98.33 percent robustness line.
+      > Test Difference [95 percent] 98.33 percent Verdict interval T1 face video: final minus I-0, Celeb-DF +0.1980 [+0.1688, [+0.1627, +0.2303] improved, robust family +0.2242] [+0.1085, +0.2481] improved, robust T2 speech: final minus I-0, In-the-Wild +0.1633 [+0.1
+      > Test Difference [95 percent] 98.33 percent Verdict interval T1 face video: final minus I-0, Celeb-DF +0.1980 [+0.1688, [+0.1627, +0.2303] improved, robust family +0.2242] [+0.1085, +0.2481] improved, robust T2 speech: final minus I-0, In-the-Wild +0.1633 [+0.1
+      > Sutskever, "Robust speech recognition via large-scale weak supervision," in Proc.
+      > Fernandez et al., "DINOv2: Learning robust visual features without supervision," Transactions on Machine Learning Research, 2024.
+   confirmed                    1
+      > Step Previous Limitation Change Result Interpretation Remaining version found limitation 7 image and 4 Video: DINOv2 Frozen self- Encoder sweep none No evidence speech encoders, small 0.6933 [0.6639, supervised and 15 identities, for an encoder frozen, ranked 
+   calibrated probability       1
+      > The frozen version-1 page, kept unchanged as history, showed one label per file (Likely fake, Likely real or Undetermined) and the sentence "Calibrated probability that this content is fake".
+   Likely                       2
+      > The frozen version-1 page, kept unchanged as history, showed one label per file (Likely fake, Likely real or Undetermined) and the sentence "Calibrated probability that this content is fake".
+      > The frozen version-1 page, kept unchanged as history, showed one label per file (Likely fake, Likely real or Undetermined) and the sentence "Calibrated probability that this content is fake".
+-- report_docx_xml
+   superior                     7
+      > Against a re-run Xception baseline the final video system is non-inferior at both levels (margin 0.0100; difference +0.0176 [+0.0025, +0.0327]); the declared 95 percent superiority rule was met but does not survive the Bonferroni correction (98.33 percent inte
+      > T3 compares the final face-video system with the re-run Xception baseline on the Celeb-DF family: it is non-inferior if the lower bound is above minus the margin, and a declared superiority rule ask s for a lower bound above zero at the 95 percent level.
+      > Approach Status Reason SigLIP base, fully fine-tuned (face video) retained Largest measured gain over the frozen probe of the same encoder; non-inferior to the re-run Xception at both levels (superiority rule met at 95 percent, not after Bonferroni) Frozen CLI
+      > Test Difference [95 percent] 98.33 percent interval Verdict T1 face video: final minus I-0, Celeb-DF family +0.1980 [+0.1688, +0.2242] [+0.1627, +0.2303] improved, robust T2 speech: final minus I-0, In-the-Wild +0.1633 [+0.1177, +0.2266] [+0.1085, +0.2481] imp
+      > Test Difference [95 percent] 98.33 percent interval Verdict T1 face video: final minus I-0, Celeb-DF family +0.1980 [+0.1688, +0.2242] [+0.1627, +0.2303] improved, robust T2 speech: final minus I-0, In-the-Wild +0.1633 [+0.1177, +0.2266] [+0.1085, +0.2481] imp
+      > T3 uses one baseline family at one input size (224 px), with the baseline learning rate at the grid edge; the system is non-inferior at both levels, and the superiority rule is met at the 95 percent level only, not after Bonferroni.
+      > Against a re-run Xception basel ine the face-video system is non-inferior at both levels (margin 0.0100); the declared 95 percent superiority rule was met but does not survive the Bonferroni correction (98.33 percent interval [-0.0011, +0.0355]), and the basel
+   superiority                  7
+      > Against a re-run Xception baseline the final video system is non-inferior at both levels (margin 0.0100; difference +0.0176 [+0.0025, +0.0327]); the declared 95 percent superiority rule was met but does not survive the Bonferroni correction (98.33 percent inte
+      > T3 compares the final face-video system with the re-run Xception baseline on the Celeb-DF family: it is non-inferior if the lower bound is above minus the margin, and a declared superiority rule ask s for a lower bound above zero at the 95 percent level.
+      > Approach Status Reason SigLIP base, fully fine-tuned (face video) retained Largest measured gain over the frozen probe of the same encoder; non-inferior to the re-run Xception at both levels (superiority rule met at 95 percent, not after Bonferroni) Frozen CLI
+      > Test Difference [95 percent] 98.33 percent interval Verdict T1 face video: final minus I-0, Celeb-DF family +0.1980 [+0.1688, +0.2242] [+0.1627, +0.2303] improved, robust T2 speech: final minus I-0, In-the-Wild +0.1633 [+0.1177, +0.2266] [+0.1085, +0.2481] imp
+      > Test Difference [95 percent] 98.33 percent interval Verdict T1 face video: final minus I-0, Celeb-DF family +0.1980 [+0.1688, +0.2242] [+0.1627, +0.2303] improved, robust T2 speech: final minus I-0, In-the-Wild +0.1633 [+0.1177, +0.2266] [+0.1085, +0.2481] imp
+      > T3 uses one baseline family at one input size (224 px), with the baseline learning rate at the grid edge; the system is non-inferior at both levels, and the superiority rule is met at the 95 percent level only, not after Bonferroni.
+      > Against a re-run Xception basel ine the face-video system is non-inferior at both levels (margin 0.0100); the declared 95 percent superiority rule was met but does not survive the Bonferroni correction (98.33 percent interval [-0.0011, +0.0355]), and the basel
+   robust                       7
+      > Claimed (on the stated data, with intervals) Not claimed A reproducible group-disjoint protocol with sealed tests and a logged guard Audio-visual detection or a fused verdict (the LAV-DF fusion rests on a production-pipeline cue) Face-video and speech detector
+      > The 98.33 percent line was declared as a robustness check beside the 95 percent decision rule; Bonferroni control holds under any dependence between the three tests, so a reader who wants family-wise control should read the 98.33 percent column.
+      > Confirmatory Tests Table 13 gives the three tests declared before the sealed run, with the paired differences, the 95 percent intervals and the 98.33 percent robustness line.
+      > Test Difference [95 percent] 98.33 percent interval Verdict T1 face video: final minus I-0, Celeb-DF family +0.1980 [+0.1688, +0.2242] [+0.1627, +0.2303] improved, robust T2 speech: final minus I-0, In-the-Wild +0.1633 [+0.1177, +0.2266] [+0.1085, +0.2481] imp
+      > Test Difference [95 percent] 98.33 percent interval Verdict T1 face video: final minus I-0, Celeb-DF family +0.1980 [+0.1688, +0.2242] [+0.1627, +0.2303] improved, robust T2 speech: final minus I-0, In-the-Wild +0.1633 [+0.1177, +0.2266] [+0.1085, +0.2481] imp
+      > Sutskever, “Robust speech recognition via large-scale weak supervision,” in Proc.
+      > Fernandez et al., “DINOv2: Learning robust visual features without supervision,” Transactions on Machine Learning Research, 2024.
+   confirmed                    1
+      > Step Previous version Limitation found Change Result Interpretation Remaining limitation Encoder sweep none No evidence for an encoder choice 7 image and 4 speech encoders, frozen, ranked under the cost rule Video: DINOv2 small 0.6933 [0.6639, 0.7314] wins the
+   calibrated probability       1
+      > The frozen version-1 page, kept unchanged as history, showed one label per file (Likely fake, Likely real or Undetermined) and the sentence “Calibrated probability that this content is fake”.
+   Likely                       2
+      > The frozen version-1 page, kept unchanged as history, showed one label per file (Likely fake, Likely real or Undetermined) and the sentence “Calibrated probability that this content is fake”.
+      > The frozen version-1 page, kept unchanged as history, showed one label per file (Likely fake, Likely real or Undetermined) and the sentence “Calibrated probability that this content is fake”.
+-- deck
+   superior                     4
+      > Sealed tests T1 to T3 Electronics and Computer Engineering 7 T1 and T2 improved by the declared rule; T3 is non-inferior, not superior after Bonferroni.
+      > The 95% superiority rule was met but does not survive Bonferroni (98.33% interval [-0.0011, +0.0355]).
+      > Non-inferior to a re-run Xception (margin 0.0100); the 95% superiority rule was met but does not survive Bonferroni; baseline at 224 px.
+      > Superiority needs the whole interval above zero; for T3 it holds at 95% but not after Bonferroni.
+   superiority                  3
+      > The 95% superiority rule was met but does not survive Bonferroni (98.33% interval [-0.0011, +0.0355]).
+      > Non-inferior to a re-run Xception (margin 0.0100); the 95% superiority rule was met but does not survive Bonferroni; baseline at 224 px.
+      > Superiority needs the whole interval above zero; for T3 it holds at 95% but not after Bonferroni.
+   \b304\b                      1
+      > B3 Encoders and sweep Electronics and Computer Engineering 18 Task | Tie set with the leader | Selected, development AUC | Leader Face video, 15 identities | DINOv2 small and base, SigLIP base, both CLIP ViT-L/14 | DINOv2 small 0.6933 [0.6639, 0.7314] | CLIP V
+-- deck_notes
+   superior                     4
+      > The wording that must be used is: non-inferior at both levels (margin 0.0100); the declared 95 percent superiority rule was met but does not survive the Bonferroni correction (98.33 percent interval [-0.0011, +0.0355]); the baseline ran at 224 px.
+      > Mention superiority only together with the Bonferroni qualifier.
+      > It is non-inferior to a re-run Xception baseline with a margin of 0.0100; the declared 95 percent superiority rule was met (+0.0176 [+0.0025, +0.0327]) but does not survive the Bonferroni correction, and the baseline ran at 224 px.
+      > Superiority needs the whole interval above zero; for T3 this holds at 95 percent but not after Bonferroni.
+   superiority                  4
+      > The wording that must be used is: non-inferior at both levels (margin 0.0100); the declared 95 percent superiority rule was met but does not survive the Bonferroni correction (98.33 percent interval [-0.0011, +0.0355]); the baseline ran at 224 px.
+      > Mention superiority only together with the Bonferroni qualifier.
+      > It is non-inferior to a re-run Xception baseline with a margin of 0.0100; the declared 95 percent superiority rule was met (+0.0176 [+0.0025, +0.0327]) but does not survive the Bonferroni correction, and the baseline ran at 224 px.
+      > Superiority needs the whole interval above zero; for T3 this holds at 95 percent but not after Bonferroni.
+   robust                       1
+      > The 98.33 percent line was declared as a robustness check beside the 95 percent decision rule; Bonferroni control holds under any dependence between the three tests, so a reader who wants family-wise control should read that column.
+
+== (2) every sentence with superior/superiority must carry the D-091 qualifier
+   sentences without qualifier: 0
+
+== (3) identity, title, test counts
+   paper   author order first positions [494, 554, 573] -> OK
+   paper   713 present: True; 'Group-Disjoint Protocol': False; 'Aditya ' (wrong spelling): False
+   report  author order first positions [375, 398, 417] -> OK
+   report  713 present: True; 'Group-Disjoint Protocol': False; 'Aditya ' (wrong spelling): False
+   deck    author order first positions [190, 226, 266] -> OK
+   deck    713 present: True; 'Group-Disjoint Protocol': False; 'Aditya ' (wrong spelling): False
+
+== (4) decimals with 3 or more places must be in the record
+   paper       distinct 3+ decimal tokens 259; not found in the record: 0 []
+   report      distinct 3+ decimal tokens 275; not found in the record: 0 []
+   deck        distinct 3+ decimal tokens 198; not found in the record: 0 []
+   deck_notes  distinct 3+ decimal tokens 108; not found in the record: 0 []

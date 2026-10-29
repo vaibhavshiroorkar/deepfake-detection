@@ -1,5 +1,7 @@
 # HANDOVER: Phase B of the deliverables work (paused 2026-10-28, about 21:20 IST, session limit)
 
+> SUPERSEDED 2026-10-29. Phase B is complete (commits eb8a4f9, 69de794 and f5998a2 on trim/docs, merged into main as db38f98). This file is kept unchanged below as the historical hand-over prompt; do not paste it into a new session. The ledger SHA-256 on the "Protected" line below was a hash of the working-tree bytes at the time; docs/STATUS.md, Mistakes and corrections (2026-10-29), explains why the file now hashes differently although its content is unchanged.
+
 This file is a ready-to-paste PROMPT for a new Claude Code session, followed by the facts it needs. Paste everything from "PROMPT START" to "PROMPT END". Preferred model: Sonnet 5.5, high effort (the user asked for this on 2026-10-28; use the same for any subagent).
 
 ---------------------------------------------------------------- PROMPT START

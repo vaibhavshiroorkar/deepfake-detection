@@ -10,13 +10,13 @@ Authors (in this order): Shivansh Gupta (16014023052), Vaibhav Shiroorkar (16014
 | Multimodal_Deepfake_Detection_Project_Report.pdf | The technical report (37 pages: 8 front matter and 29 body, references and Appendix A) |
 | Multimodal_Deepfake_Detection_Presentation.pdf | The presentation: 14 main slides, a backup divider and 10 backup slides (25 in all); speaker notes are in the .pptx |
 | sources/paper/ | LaTeX source of the paper with figures, bibliography, the college style and the class files (build: `latexmk -g -pdf -interaction=nonstopmode main.tex`, run twice) |
-| sources/report/ | The report as a Word document |
+| sources/report/ | The report as a Word document (the internal evidence-trace comments of the working copy were removed from this copy on 2026-10-29; text and layout are unchanged, D-093) |
 | sources/slides/ | The presentation as a PowerPoint file, with speaker notes |
-| records/ | Copies of DECISIONS.md, EXPERIMENTS.md, STATUS.md and PROTOCOL.md (the project record behind every number). In EXPERIMENTS.md the rows that name single files of Celeb-DF, Celeb-DF++ or FakeAVCeleb are replaced by a marker, because the terms of those data sets forbid distributing derived data |
+| records/ | Copies of DECISIONS.md, EXPERIMENTS.md, STATUS.md and PROTOCOL.md (the project record behind every number), copied from docs/ at the final commit on 2026-10-29. In EXPERIMENTS.md the rows that name single files of Celeb-DF, Celeb-DF++ or FakeAVCeleb are replaced by a marker, because the terms of those data sets forbid distributing derived data |
 | REHEARSAL.md | One sentence, one number and the likely question for each of the 14 main slides, and a three-minute demo order |
-| MANIFEST.txt | SHA-256 of every file in this folder |
+| MANIFEST.txt | SHA-256 and size of every file in this folder. Text files (.md, .tex, .bib, .bst, .cls, .txt) are hashed with LF line endings, as git stores them, so the values match a checkout on any system; to check one on Windows, convert CRLF to LF first. PDF, Word, PowerPoint and image files are hashed as they are |
 
-Not included, on purpose: any data set, frame, crop or per-video score of Celeb-DF, Celeb-DF++ or FakeAVCeleb, and any model weight (some weights are research-only). The software itself (the detectors, the platform and the website) is in the project repository, on the branch `main` after the merge (tag `submission-v2`) or on `trim/docs`.
+Not included, on purpose: any data set, frame, crop or per-video score of Celeb-DF, Celeb-DF++ or FakeAVCeleb, and any model weight (some weights are research-only). The software itself (the detectors, the platform and the website) is in the project repository https://github.com/Shivansh-gupta-2005/deepfake-detection, branch `main`, tag `submission-final`. The repository is private, because some records name files of data sets whose terms forbid redistribution; access can be requested from the authors.
 
 ## Start the website with the real checkpoint (from the repository root)
 
