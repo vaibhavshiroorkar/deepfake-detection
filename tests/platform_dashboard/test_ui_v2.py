@@ -567,3 +567,346 @@ def test_focus_is_visible_on_nav_and_buttons(make_page):
     pg.keyboard.press("Enter")
     pg.wait_for_selector("#lab-h")
     assert pg.is_visible("#view-lab")
+
+
+# ---------------------------------------------------------------- deliverables_v2 website: guided "Evaluate a dataset" flow
+
+WEB = ROOT / "deliverables_v2" / "website" / "static"
+BANNER = "Experimental evaluation output. Evaluating a model on a dataset does not approve it for deployment."
+
+
+def test_website_lab_js_guided_flow_static_checks():
+    js = (WEB / "evallab.js").read_text(encoding="utf-8")
+    assert chr(0x2014) not in js and chr(0x2014) not in (WEB / "app.css").read_text(encoding="utf-8")
+    assert "/api/evallab/groups" in js and "/api/evallab/group-runs" in js and "confirm_full" in js
+    low = js.lower()
+    for pat in (r"overall verdict", r"combined verdict", r"final verdict", r"overall score:", r"approved"):
+        assert not re.search(pat, low), pat
+    assert "innerHTML" not in js
+
+
+def _group(gid, title, kind, n_fake, n_real, units, desc, missing=0):
+    return {"id": gid, "title": title, "kind": kind, "description": desc, "overlap": "nested: contains every smaller group", "group_unit": "source video",
+            "n_samples": n_fake + n_real, "n_fake": n_fake, "n_real": n_real, "n_groups": units, "n_declared": n_fake + n_real + missing,
+            "n_missing_scores": missing}
+
+
+GROUPS = {"datasets": [
+    {"dataset": "dsA", "title": "Dataset A, face-video head", "experiment": "E-033", "iteration": "E-033", "modality": "visual", "head": "T-V", "split": "post_x",
+     "status": "experimental evaluation output: it is not an approval for deployment and does not change any product verdict",
+     "score_file_id": "sfA", "score_file": "data/_evallab/imports/posteval/A.csv", "threshold": {"value": 0.6139, "provenance": "fixed at the checkpoint of E-033"},
+     "score_kind": "ranking score of the head", "eligibility": "videos never read before the freeze", "caveats": ["caveat one about reuse"], "provenance": {},
+     "groups": [_group("G1", "Small sample", "general", 87, 103, 60, "A small nested sample for a quick look.", missing=2),
+                _group("G2", "Hard cases", "diagnostic", 40, 20, 15, "Only the hard cases.")],
+     "full": {"id": "FULL", "kind": "full", "title": "Whole pool", "n_samples": 5000, "n_fake": 2500, "n_real": 2500, "n_groups": 900,
+              "warning": "This takes a long time on one GPU.", "estimate": "About twenty minutes."}},
+    {"dataset": "dsB", "title": "Dataset B, audio head", "experiment": "E-040", "iteration": "E-040", "modality": "audio", "head": "T-A", "split": "post_x",
+     "status": "experimental evaluation output: not an approval", "threshold": {"value": 0.5, "provenance": "p"}, "caveats": [],
+     "groups": [_group("G1", "B only group", "general", 5, 5, 4, "Group of dataset B.")], "full": None}], "skipped": [], "dirs": []}
+
+
+def _group_record(rid="run-g", dataset="dsA", group="G1", state="done", progress=None):
+    def m(e, lo, hi):
+        return {"estimate": e, "low": lo, "high": hi}
+    rec = _record(rid, split="post_x")
+    rec["state"] = state
+    if progress:
+        rec["progress"] = progress
+    rec["config"].update({"dataset": dataset, "split": "post_x", "purpose": "post_freeze_evaluation"})
+    rec["threshold"] = {"value": 0.6139, "source": "fixed", "provenance": "fixed at the checkpoint of E-033"}
+    rec["data"].update({"n_samples": 190, "n_fake": 87, "n_real": 103, "n_groups": 60, "class_balance": 0.519, "group_missing_scores": 2,
+                        "warnings": ["group warning: few videos"]})
+    rec["metrics"].update({"f1": m(0.7311, 0.65, 0.8), "precision": m(0.6911, 0.6, 0.77), "accuracy": m(0.7511, 0.7, 0.8), "fpr": m(0.12, 0.08, 0.17),
+                           "fnr": m(0.3, 0.2, 0.4), "recall": m(0.7, 0.55, 0.82), "specificity": m(0.88, 0.8, 0.94)})
+    rec["eval_group"] = {"dataset": dataset, "id": group, "title": "Small sample", "kind": "general", "description": "A small nested sample.",
+                         "overlap": "nested", "group_unit": "source video", "n_declared": 192, "experiment": "E-033", "groups_file": "groups/A.json",
+                         "groups_sha256": "ef" * 32, "descriptor": "descriptor-text", "provenance": {"k": "v"}, "caveats": ["eval caveat"], "score_kind": "ranking"}
+    rec["protocol"] = {"n_boot": 2000, "seed": 20261027}
+    return rec
+
+
+@pytest.fixture(scope="module")
+def env_v2(env):
+    browser, _ = env
+    spec = importlib.util.spec_from_file_location("serve_v2_for_tests", ROOT / "deliverables_v2" / "website" / "serve_v2.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    from werkzeug.serving import make_server
+    srv = make_server("127.0.0.1", 0, mod.build_app(), threaded=True)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    yield browser, f"http://127.0.0.1:{srv.server_port}"
+    srv.shutdown()
+
+
+def _mock_groups(pg, cfg):
+    calls = pg.lab_calls
+    post = cfg.get("post", (202, {"id": "run-g"}))
+
+    def handler(route):
+        req = route.request
+        path = req.url.split("/api/evallab", 1)[1].split("?")[0]
+        body = req.post_data_json if req.method == "POST" and req.post_data else None
+        calls.append((req.method, path, body))
+        if path == "/groups":
+            return route.fulfill(json=cfg.get("groups", GROUPS))
+        if path == "/recommended":
+            st, payload = cfg.get("recommended", (200, RECO))
+            return route.fulfill(status=st, json=payload)
+        if path == "/group-runs" and req.method == "POST":
+            return route.fulfill(status=post[0], json=post[1])
+        if path.startswith("/runs/"):
+            seq = cfg.get("records", {}).get(path.split("/")[2])
+            rec = seq.pop(0) if isinstance(seq, list) and len(seq) > 1 else (seq[0] if seq else None)
+            return route.fulfill(json=rec) if rec else route.fulfill(status=404, json={"error": {"code": "NOT_FOUND", "message": "no such run"}})
+        if path == "/catalogue":
+            return route.fulfill(json=CAT)
+        if path == "/runs":
+            return route.fulfill(json=[])
+        return route.fulfill(status=404, json={"error": {"code": "NOT_FOUND", "message": path}})
+    pg.route("**/api/evallab/**", handler)
+
+
+@pytest.fixture()
+def v2_page(env_v2):
+    browser, base = env_v2
+    pages = []
+
+    def make(cfg=None, width=1280):
+        pg = browser.new_page(viewport={"width": width, "height": 900})
+        pages.append(pg)
+        pg.lab_calls = []
+        _mock_groups(pg, cfg or {})
+        pg.goto(base + "/?poll_interval_ms=100&lab_poll_ms=100")
+        pg.click("#nav-lab")
+        pg.wait_for_selector("#ev-dataset, #ev-empty")
+        return pg
+
+    yield make
+    for p in pages:
+        p.close()
+
+
+def test_website_dataset_dropdown_lists_datasets_and_shows_only_its_groups(v2_page):
+    pg = v2_page()
+    assert pg.locator("#ev-dataset option").all_inner_texts() == ["Choose a dataset ...", "Face video: Dataset A, face-video head",
+                                                                   "Speech / audio: Dataset B, audio head"]
+    assert pg.locator("#ev-groups").count() == 0
+    pg.select_option("#ev-dataset", "dsA")
+    assert pg.locator("#ev-groups .ev-group").count() == 2
+    assert "B only group" not in pg.inner_text("#ev-area")
+    t = pg.inner_text("#ev-summary")
+    assert "E-033" in t and "T-V" in t and "post_x" in t and "previously unread data" in t and "videos never read before the freeze" in t and "caveat one" in t
+    assert "not an approval for deployment" in pg.inner_text("#ev-status-banner")
+    pg.select_option("#ev-dataset", "dsB")
+    assert pg.locator("#ev-groups .ev-group").count() == 1 and "B only group" in pg.inner_text("#ev-groups")
+    assert "Small sample" not in pg.inner_text("#ev-groups")
+    assert pg.locator("#ev-full").count() == 0
+
+
+def test_website_group_cards_show_counts_before_any_run_and_nothing_posts(v2_page):
+    pg = v2_page()
+    pg.select_option("#ev-dataset", "dsA")
+    g1 = pg.inner_text("#ev-groups .ev-group[data-group=G1]")
+    assert "A small nested sample" in g1 and "190 samples: 103 real, 87 fake" in g1 and "60 source videos" in g1 and "nested" in g1 and "General" in g1
+    assert "2 declared sample(s) have no stored score" in g1
+    g2 = pg.inner_text("#ev-groups .ev-group[data-group=G2]")
+    assert "Diagnostic" in g2 and "no stored score" not in g2
+    assert pg.is_disabled("#ev-run-btn")
+    pg.locator("#ev-groups .ev-group[data-group=G1]").click()
+    assert pg.is_enabled("#ev-run-btn")
+    assert [c for c in pg.lab_calls if c[0] == "POST"] == []
+
+
+def test_website_run_posts_dataset_and_group_only_and_shows_results(v2_page):
+    running = dict(_group_record(), state="running", progress={"stage": "bootstrap", "done": 5, "total": 20})
+    pg = v2_page({"records": {"run-g": [running, _group_record()]}})
+    pg.select_option("#ev-dataset", "dsA")
+    pg.locator("#ev-groups .ev-group[data-group=G1]").click()
+    pg.click("#ev-run-btn")
+    pg.wait_for_selector("#ev-out [role=progressbar]")
+    assert "bootstrap (5 of 20)" in pg.inner_text("#ev-progress")
+    pg.wait_for_selector("#ev-headline")
+    posts = [c for c in pg.lab_calls if c[0] == "POST"]
+    assert posts == [("POST", "/group-runs", {"dataset": "dsA", "group": "G1"})]
+    tiles = {k: pg.inner_text(f"#ev-headline [data-metric={k}]") for k in ("auc", "f1", "precision", "recall", "specificity", "accuracy")}
+    assert "0.8123" in tiles["auc"] and "[0.7623, 0.8523]" in tiles["auc"] and "95% interval" in tiles["auc"]
+    assert "0.7311" in tiles["f1"] and "0.6911" in tiles["precision"] and "0.7000" in tiles["recall"] and "0.8800" in tiles["specificity"]
+    assert "[0.8000, 0.9400]" in tiles["specificity"] and "51.9% fake" in tiles["accuracy"]
+    r = pg.inner_text("#ev-results")
+    assert BANNER in r and "fixed at the checkpoint of E-033" in r and "0.6139" in r and "190" in r and "E-033" in r and "post_x" in r
+    # progressive disclosure: details are closed until opened
+    assert not pg.locator("#ev-more").evaluate("d => d.open") and not pg.is_visible("#ev-more table")
+    pg.locator("#ev-more > summary").click()
+    assert "0.3000" in pg.inner_text("#ev-more") and "Balanced accuracy" in pg.inner_text("#ev-more")
+    pg.locator("#ev-cr > summary").click()
+    assert pg.locator("#ev-cr td[data-cell=tp] b").inner_text() == "21" and pg.locator("#ev-cr svg polyline").count() == 1
+    pg.locator("#ev-warnings > summary").click()
+    assert "group warning: few videos" in pg.inner_text("#ev-warnings")
+    pg.locator("#ev-prov > summary").click()
+    p = pg.inner_text("#ev-prov")
+    assert "ef" * 32 in p and "groups/A.json" in p and "descriptor-text" in p and "deadbeef" in p and "2000" in p
+    assert pg.eval_on_selector_all("#ev-export a", "els => els.map(a => a.getAttribute('href'))") == [
+        "/api/evallab/runs/run-g/export?format=json", "/api/evallab/runs/run-g/export?format=md"]
+    for bad in ("approved", "verdict", "overall score"):
+        assert bad not in pg.inner_text("#ev-results").lower()
+
+
+def test_website_whole_pool_needs_confirmation_and_sends_confirm_full(v2_page):
+    pg = v2_page({"records": {"run-g": [_group_record(group="FULL")]}})
+    pg.select_option("#ev-dataset", "dsA")
+    assert pg.locator("#ev-groups .ev-group[data-group=FULL]").count() == 0 and pg.locator("#ev-groups input:checked").count() == 0
+    pg.click("#ev-full-btn")
+    t = pg.inner_text("#ev-full-confirm")
+    assert "5000" in t and "This takes a long time on one GPU." in t and "About twenty minutes." in t
+    assert [c for c in pg.lab_calls if c[0] == "POST"] == []
+    pg.click("#ev-full-cancel-btn")
+    assert pg.locator("#ev-full-confirm").count() == 0 and [c for c in pg.lab_calls if c[0] == "POST"] == []
+    pg.click("#ev-full-btn")
+    pg.click("#ev-full-confirm-btn")
+    pg.wait_for_selector("#ev-headline")
+    assert [c for c in pg.lab_calls if c[0] == "POST"] == [("POST", "/group-runs", {"dataset": "dsA", "group": "FULL", "confirm_full": True})]
+
+
+def test_website_api_error_is_shown_and_run_can_be_retried(v2_page):
+    pg = v2_page({"post": (404, {"error": {"code": "UNKNOWN_GROUP", "message": "no such group in this dataset"}})})
+    pg.select_option("#ev-dataset", "dsA")
+    pg.locator("#ev-groups .ev-group[data-group=G2]").click()
+    pg.click("#ev-run-btn")
+    pg.wait_for_selector("#ev-error")
+    t = pg.inner_text("#ev-error")
+    assert "UNKNOWN_GROUP" in t and "no such group in this dataset" in t
+    assert pg.is_enabled("#ev-run-btn") and pg.locator("#ev-results").count() == 0
+
+
+def test_website_empty_groups_state_and_advanced_section_remain(v2_page):
+    pg = v2_page({"groups": {"datasets": [], "skipped": [], "dirs": []}})
+    assert "No evaluation groups are installed" in pg.inner_text("#ev-empty")
+    adv = pg.locator("#lab-advanced")
+    assert adv.count() == 1 and not adv.evaluate("d => d.open")
+    assert "Advanced: re-analyse stored score files" in pg.inner_text("#lab-advanced > summary")
+    pg.locator("#lab-advanced > summary").click()
+    pg.wait_for_selector("#lab-files")
+    assert pg.locator("#lab-blocks .pick").count() == 3
+    assert [c for c in pg.lab_calls if c[0] == "POST"] == []
+
+
+def test_website_guided_flow_has_no_horizontal_scroll_at_390(v2_page):
+    pg = v2_page({"records": {"run-g": [_group_record()]}}, width=390)
+    over = "() => document.documentElement.scrollWidth - document.documentElement.clientWidth"
+    pg.select_option("#ev-dataset", "dsA")
+    pg.locator("#ev-groups .ev-group[data-group=G1]").click()
+    pg.click("#ev-full-btn")
+    assert pg.evaluate(over) <= 0
+    pg.click("#ev-run-btn")
+    pg.wait_for_selector("#ev-headline")
+    pg.evaluate("() => document.querySelectorAll('#ev-results details').forEach(d => { d.open = true; })")
+    assert pg.evaluate(over) <= 0
+
+
+# ---------------------------------------------------------------- recommended demonstrations (2026-10-31)
+
+def _reco(rid, section, modality, label, kind, auc, n_real, n_fake, lab=None, seed0=None):
+    def m(e, lo=None, hi=None, derived=False):
+        out = {"estimate": e, "low": lo, "high": hi}
+        if derived:
+            out["derived"] = True
+        return out
+    sealed = kind == "stored_sealed"
+    return {"id": rid, "section": section, "modality": modality, "modality_label": label, "task": "T-X", "title": "Title " + rid,
+            "setting": "Setting " + rid, "why": "Why " + rid, "caveats": ["Caveat " + rid], "lab": lab, "kind": kind,
+            "kind_text": "Kind text " + rid, "source_file": "data/x/" + rid + ".json", "source_sha256": "cd" * 32, "primary_metric": "auc",
+            "available": True, "n_real": n_real, "n_fake": n_fake, "n_samples": n_real + n_fake, "n_groups": 40, "seed0_auc": seed0,
+            "n_seeds": 3 if sealed else 1, "interval": "95 percent group bootstrap, 2000 resamples", "experiment": "E-900", "block": rid + " block",
+            "threshold": {"values": {"s0": 0.61} if sealed else None, "provenance": "threshold provenance " + rid},
+            "derived_note": "derived note" if sealed else None, "lab_run_id": None if sealed else "run-x",
+            "metrics": {"auc": m(auc, auc - 0.02, auc + 0.02), "balanced_accuracy": m(0.8111, 0.79, 0.83), "recall": m(0.7222, 0.7, 0.74),
+                        "precision": m(0.9333, 0.92, 0.95), "specificity": m(0.9001, derived=sealed), "f1": m(0.8123, derived=sealed),
+                        "fpr": m(0.0999, derived=sealed), "accuracy": m(0.7555, derived=sealed), "eer": m(0.2, 0.18, 0.22)}}
+
+
+RECO = {"status": "Experimental research results: test banner.", "note": "Footer note.", "modalities": {},
+        "not_shown": [{"title": "Shortcut set", "reason": "explained by a shortcut"}],
+        "entries": [_reco("r1", "recommended", "speech", "Speech / audio", "stored_sealed", 0.9148, 300, 200, seed0=0.9167),
+                    _reco("r2", "recommended", "face_video", "Face video", "stored_sealed", 0.8999, 100, 400),
+                    _reco("r3", "recommended", "speech", "Speech / audio", "stored_post_freeze", 0.6447, 103, 87, lab={"dataset": "dsA", "group": "G1"}),
+                    _reco("o1", "other", "image", "Image", "stored_sealed", 0.9354, 50, 50),
+                    _reco("l1", "limitation", "face_video", "Face video", "stored_post_freeze", 0.3803, 20, 20, lab={"dataset": "dsA", "group": "G2"})]}
+
+
+def test_website_recommended_cards_show_counts_metrics_and_kind_before_the_dataset_list(v2_page):
+    pg = v2_page()
+    pg.wait_for_selector("#reco-recommended .reco-card")
+    order = pg.evaluate("() => [...document.querySelectorAll('#lab-reco, #lab-guided, #lab-advanced')].map(e => e.id)")
+    assert order == ["lab-reco", "lab-guided", "lab-advanced"]
+    assert pg.locator("#reco-recommended .reco-card").count() == 3 and pg.locator("#reco-limitations .reco-card").count() == 1
+    c = pg.inner_text("[data-reco=r1]")
+    assert "Speech / audio" in c and "Stored result (sealed test, E-014)" in c and "Setting r1" in c and "Why r1" in c
+    assert "300 real · 200 fake · 500 total · 40 independent groups" in c
+    assert "0.9148" in c and "[0.8948, 0.9348]" in c and "mean of 3 seeds" in c and "Product checkpoint (seed 0): 0.9167" in c
+    assert "Balanced accuracy 0.8111" in c and "Recall 0.7222" in c and "Specificity 0.9001" in c
+    assert "Stored result (post-freeze)" in pg.inner_text("[data-reco=r3]")
+    assert pg.locator("[data-reco=r1] [data-action=lab]").count() == 0 and pg.locator("[data-reco=r3] [data-action=lab]").count() == 1
+    assert "test banner" in pg.inner_text("#reco-status-banner")
+    legend = pg.inner_text("#reco-legend")
+    assert "Stored evaluation result" in legend and "Lab evaluation" in legend and "model is not run again" in legend and "Experimental" in legend
+    assert not pg.locator("#reco-more").evaluate("d => d.open")
+    pg.locator("#reco-more > summary").click()
+    assert pg.locator("#reco-other .reco-card").count() == 1 and "explained by a shortcut" in pg.inner_text("#reco-notshown")
+    # opening the lab and reading recommendations never starts or reads an evaluation run
+    assert [c for c in pg.lab_calls if c[0] == "POST" or c[1].startswith("/runs/")] == []
+
+
+def test_website_recommended_filter_by_modality(v2_page):
+    pg = v2_page()
+    pg.wait_for_selector("#reco-filter")
+    assert pg.locator("#reco-filter [data-filter]").all_inner_texts() == ["All (5)", "Face video (2)", "Speech / audio (2)", "Image (1)"]
+    pg.click("#reco-filter [data-filter=speech]")
+    assert pg.get_attribute("#reco-filter [data-filter=speech]", "aria-pressed") == "true"
+    assert pg.eval_on_selector_all("#lab-reco [data-reco]", "els => els.map(e => e.getAttribute('data-reco'))") == ["r1", "r3"]
+    assert "No listed limitation for this modality." in pg.inner_text("#reco-limitations")
+    pg.click("#reco-filter [data-filter=all]")
+    assert pg.locator("#lab-reco [data-reco]").count() == 5
+
+
+def test_website_show_stored_result_lists_logged_and_derived_metrics(v2_page):
+    pg = v2_page()
+    pg.wait_for_selector("[data-reco=r1] [data-action=show]")
+    assert pg.locator("#reco-detail-r1").count() == 0
+    pg.click("[data-reco=r1] [data-action=show]")
+    d = pg.inner_text("#reco-detail-r1")
+    assert "Kind text r1" in d and "derived note" in d and "threshold provenance r1" in d and "cd" * 32 in d and "data/x/r1.json" in d and "s0 0.6100" in d
+    assert "derived (see note)" in pg.inner_text("#reco-detail-r1 tr[data-metric=specificity]")
+    assert "no interval" in pg.inner_text("#reco-detail-r1 tr[data-metric=f1]")
+    assert "[0.7000, 0.7400]" in pg.inner_text("#reco-detail-r1 tr[data-metric=recall]")
+    assert "40.0% fake" in pg.inner_text("#reco-detail-r1 tr[data-metric=accuracy]")
+    assert pg.get_attribute("[data-reco=r1] [data-action=show]", "aria-expanded") == "true"
+    pg.click("[data-reco=r1] [data-action=show]")
+    assert pg.locator("#reco-detail-r1").count() == 0
+    assert [c for c in pg.lab_calls if c[0] == "POST"] == []
+
+
+def test_website_open_in_lab_preselects_the_group_without_running(v2_page):
+    pg = v2_page()
+    pg.wait_for_selector("[data-reco=r3] [data-action=lab]")
+    pg.click("[data-reco=r3] [data-action=lab]")
+    assert pg.input_value("#ev-dataset") == "dsA"
+    assert pg.is_checked("#ev-groups .ev-group[data-group=G1] input") and pg.is_enabled("#ev-run-btn")
+    assert "190 samples: 103 real, 87 fake" in pg.inner_text("#ev-groups .ev-group[data-group=G1]")
+    assert [c for c in pg.lab_calls if c[0] == "POST"] == []
+
+
+def test_website_recommended_error_does_not_block_the_guided_flow(v2_page):
+    pg = v2_page({"recommended": (500, {"error": {"code": "BROKEN", "message": "results unreadable"}})})
+    pg.wait_for_selector("#reco-load-error")
+    assert "could not be loaded" in pg.inner_text("#reco-load-error")
+    pg.select_option("#ev-dataset", "dsA")
+    assert pg.locator("#ev-groups .ev-group").count() == 2
+
+
+@pytest.mark.parametrize("width", [390, 1280])
+def test_website_recommended_has_no_horizontal_scroll(v2_page, width):
+    pg = v2_page(width=width)
+    pg.wait_for_selector("[data-reco=r1] [data-action=show]")
+    pg.click("[data-reco=r1] [data-action=show]")
+    pg.evaluate("() => document.querySelectorAll('#lab-reco details').forEach(d => { d.open = true; })")
+    assert pg.evaluate("() => document.documentElement.scrollWidth - document.documentElement.clientWidth") <= 0

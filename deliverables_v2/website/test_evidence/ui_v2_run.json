@@ -1,0 +1,2055 @@
+{
+ "run_at": "2026-10-28 20:40:35 +0530",
+ "base": "http://127.0.0.1:8012",
+ "browser": "msedge 156.0.4314.50",
+ "seconds": 26.7,
+ "problems": [],
+ "console": {
+  "landing_1366": [],
+  "1366:5_face_image_frame_ffpp_val.png": [],
+  "1366:1_face_swap_video_ffpp_val.mp4": [],
+  "1366:3_talking_head_with_audio_lavdf_train.mp4": [],
+  "1366:4_speech_audio_asvspoof_dev.flac": [],
+  "1366:6_synthetic_no_face_tone_audio.mp4": [],
+  "1366:7_unsupported_notes.txt": [],
+  "1366:8_corrupt_video.mp4": [],
+  "lab_about_1366": [],
+  "progress_stub_1366": [],
+  "mock_1366": [],
+  "landing_390": [],
+  "390:5_face_image_frame_ffpp_val.png": [],
+  "390:1_face_swap_video_ffpp_val.mp4": [],
+  "390:3_talking_head_with_audio_lavdf_train.mp4": [],
+  "390:4_speech_audio_asvspoof_dev.flac": [],
+  "390:6_synthetic_no_face_tone_audio.mp4": [],
+  "390:7_unsupported_notes.txt": [],
+  "390:8_corrupt_video.mp4": [],
+  "lab_about_390": [],
+  "progress_stub_390": [],
+  "mock_390": []
+ },
+ "runs": [
+  {
+   "kind": "landing",
+   "viewport": "1366",
+   "title": "Media Analysis",
+   "pill": "Live analysis",
+   "accept_text": "Images: BMP, JPEG, JPG, PNG, WEBP. Video: AVI, MKV, MOV, MP4, WEBM. Audio: FLAC, M4A, MP3, OGG, WAV. Up to 512.0 MB per file.",
+   "nav": [
+    "Analyse a file",
+    "Evaluation Lab",
+    "About the checks"
+   ],
+   "selector_options": [
+    "Detect from the file",
+    "Image",
+    "Video",
+    "Audio"
+   ],
+   "overflow": false,
+   "report_visible": false,
+   "accept_attr_auto": ".bmp,.jpeg,.jpg,.png,.webp,.avi,.mkv,.mov,.mp4,.webm,.flac,.m4a,.mp3,.ogg,.wav",
+   "accept_attr_video": ".avi,.mkv,.mov,.mp4,.webm",
+   "type_note_video": "Checks that can run on a video: Face manipulation analysis; Synthetic speech analysis; Audio-visual synchronisation; AI-generated video (experimental research); File information; Content credentials (C2PA). A check that needs something the file lacks, such as a face or a sound track, will say it did not apply. This choice only filters the file picker; the file is sent unchanged.",
+   "mismatch_text": "This looks like an image, but you chose video. Change the choice above, or choose another file.",
+   "analyse_disabled_on_mismatch": true,
+   "analyse_enabled_after_matching_choice": true,
+   "will_run_image": "These checks will try to run on this image:\n\nImage analysis\nAI-generated image, whole image (experimental)\nFile information\nContent credentials (C2PA)"
+  },
+  {
+   "kind": "upload",
+   "viewport": "1366",
+   "file": "5_face_image_frame_ffpp_val.png",
+   "selector_choice": "image",
+   "analyse_enabled": true,
+   "file_card_text": "5_face_image_frame_ffpp_val.png\n\nImage, 1.8 MB\n\nAnalyse this file\nChoose another file",
+   "will_run": "These checks will try to run on this image:\n\nImage analysis\nAI-generated image, whole image (experimental)\nFile information\nContent credentials (C2PA)",
+   "preview_elements": 1,
+   "seconds": 0.4,
+   "request_form_fields": [
+    {
+     "url": "/api/analyse",
+     "method": "POST",
+     "keys": [
+      "file"
+     ]
+    }
+   ],
+   "progress_status_seen": [
+    "Uploading\n5_face_image_frame_ffpp_val.png"
+   ],
+   "report_seen": true,
+   "overflow": false,
+   "banner": "LIVE ANALYSIS\nResults come from the checks listed below; each states its own tes",
+   "summary": "What the checks found\n\n4 checks ran on this image. 1 check found a point that merits attention; 1 found nothing within its tested scope; 1 described the file; 1 is experimental and makes no finding. 4",
+   "checks": {
+    "forbidden_report_keys_present": [],
+    "validate_report": [],
+    "calibration_is_probability_values": [
+     "False"
+    ],
+    "chart_counts_page": {
+     "attention": 1,
+     "nothing_found": 1,
+     "informational": 1,
+     "experimental": 1,
+     "not_applicable": 4
+    },
+    "chart_counts_report": {
+     "not_applicable": 4,
+     "attention": 1,
+     "experimental": 1,
+     "informational": 1,
+     "nothing_found": 1
+    },
+    "text_checks": {
+     "percent_sign_with_number": [],
+     "probability_sentences": [
+      "It is not a probability, a score or an overall verdict.",
+      "Model output, not a probability",
+      "A bar position is not a chance of being fake.",
+      "No single probability that the media is fake is given.",
+      "This reading is not a probability and not proof.",
+      "They were calibrated on in-domain validation data only, so a score of 0.7 does not mean a 70 percent chance, and no probability is given."
+     ],
+     "probability_sentences_without_negation": [],
+     "overall_wording_without_negation": []
+    },
+    "cards": [
+     {
+      "module": "face_video",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "image_detector",
+      "status": "completed",
+      "finding": "indicates_manipulation",
+      "group": "attention",
+      "label": "Possible manipulation (weak evidence)",
+      "tier": "limited",
+      "uncertainty": "High uncertainty",
+      "face_bar": "Model output, not a probability: 1.00. Decision line 0.61.",
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "speech",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "generated_image",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "experimental",
+      "label": "Experimental signal observed, no reliable verdict available",
+      "tier": "experimental",
+      "uncertainty": "High uncertainty",
+      "face_bar": null,
+      "tech_bar": "Experimental ranking score, no finding: 0.02.",
+      "curve": false
+     },
+     {
+      "module": "lip_sync",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "generated_video",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "media_metadata",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "informational",
+      "label": "Information only",
+      "tier": "context",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "content_credentials",
+      "status": "completed",
+      "finding": "no_credentials_found",
+      "group": "nothing_found",
+      "label": "No content credentials found",
+      "tier": "provenance",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     }
+    ]
+   },
+   "expand_collapse": {
+    "How this was reached": {
+     "opened": true,
+     "closed_again": true
+    },
+    "Technical details": {
+     "opened": true,
+     "closed_again": true
+    }
+   },
+   "report_kept_after_navigation": true
+  },
+  {
+   "kind": "upload",
+   "viewport": "1366",
+   "file": "1_face_swap_video_ffpp_val.mp4",
+   "selector_choice": "video",
+   "analyse_enabled": true,
+   "file_card_text": "1_face_swap_video_ffpp_val.mp4\n\nVideo, 5.5 MB\n\nAnalyse this file\nChoose another file",
+   "will_run": "These checks will try to run on this video:\n\nFace manipulation analysis\nSynthetic speech analysis\nAudio-visual synchronisation\nAI-generated video (experimental research)\nFile information\nContent credentials (C2PA)",
+   "preview_elements": 1,
+   "seconds": 2.5,
+   "request_form_fields": [
+    {
+     "url": "/api/analyse",
+     "method": "POST",
+     "keys": [
+      "file"
+     ]
+    }
+   ],
+   "progress_status_seen": [
+    "Uploading\n1_face_swap_video_ffpp_val.mp4"
+   ],
+   "report_seen": true,
+   "overflow": false,
+   "banner": "LIVE ANALYSIS\nResults come from the checks listed below; each states its own tes",
+   "summary": "What the checks found\n\n4 checks ran on this video. 1 check found a point that merits attention; 1 found nothing within its tested scope; 1 described the file; 1 is experimental and makes no finding. 4",
+   "checks": {
+    "forbidden_report_keys_present": [],
+    "validate_report": [],
+    "calibration_is_probability_values": [
+     "False"
+    ],
+    "chart_counts_page": {
+     "attention": 1,
+     "nothing_found": 1,
+     "informational": 1,
+     "experimental": 1,
+     "not_applicable": 4
+    },
+    "chart_counts_report": {
+     "attention": 1,
+     "not_applicable": 4,
+     "experimental": 1,
+     "informational": 1,
+     "nothing_found": 1
+    },
+    "text_checks": {
+     "percent_sign_with_number": [],
+     "probability_sentences": [
+      "It is not a probability, a score or an overall verdict.",
+      "Model output, not a probability",
+      "A bar position is not a chance of being fake.",
+      "No single probability that the media is fake is given.",
+      "This reading is not a probability and not proof.",
+      "They were calibrated on in-domain validation data only, so a score of 0.7 does not mean a 70 percent chance, and no probability is given."
+     ],
+     "probability_sentences_without_negation": [],
+     "overall_wording_without_negation": []
+    },
+    "cards": [
+     {
+      "module": "face_video",
+      "status": "completed",
+      "finding": "indicates_manipulation",
+      "group": "attention",
+      "label": "Possible manipulation",
+      "tier": "detector",
+      "uncertainty": "High uncertainty",
+      "face_bar": "Model output, not a probability: 1.00. Decision line 0.61.",
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "image_detector",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "speech",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "generated_image",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "lip_sync",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "generated_video",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "experimental",
+      "label": "Experimental signal observed, no reliable verdict available",
+      "tier": "experimental",
+      "uncertainty": "High uncertainty",
+      "face_bar": null,
+      "tech_bar": "Experimental ranking score, no finding: 0.00.",
+      "curve": false
+     },
+     {
+      "module": "media_metadata",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "informational",
+      "label": "Information only",
+      "tier": "context",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "content_credentials",
+      "status": "completed",
+      "finding": "no_credentials_found",
+      "group": "nothing_found",
+      "label": "No content credentials found",
+      "tier": "provenance",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     }
+    ]
+   },
+   "expand_collapse": {
+    "How this was reached": {
+     "opened": true,
+     "closed_again": true
+    },
+    "Technical details": {
+     "opened": true,
+     "closed_again": true
+    }
+   },
+   "report_kept_after_navigation": true
+  },
+  {
+   "kind": "upload",
+   "viewport": "1366",
+   "file": "3_talking_head_with_audio_lavdf_train.mp4",
+   "selector_choice": "video",
+   "analyse_enabled": true,
+   "file_card_text": "3_talking_head_with_audio_lavdf_train.mp4\n\nVideo, 117.2 KB\n\nAnalyse this file\nChoose another file",
+   "will_run": "These checks will try to run on this video:\n\nFace manipulation analysis\nSynthetic speech analysis\nAudio-visual synchronisation\nAI-generated video (experimental research)\nFile information\nContent credentials (C2PA)",
+   "preview_elements": 1,
+   "seconds": 1.2,
+   "request_form_fields": [
+    {
+     "url": "/api/analyse",
+     "method": "POST",
+     "keys": [
+      "file"
+     ]
+    }
+   ],
+   "progress_status_seen": [
+    "Starting the checks\n0 of 8 checks done"
+   ],
+   "report_seen": true,
+   "overflow": false,
+   "banner": "LIVE ANALYSIS\nResults come from the checks listed below; each states its own tes",
+   "summary": "What the checks found\n\n6 checks ran on this video. 4 found nothing within their tested scope; 1 described the file; 1 is experimental and makes no finding. 2 did not apply.\n\nFaces\nA face was found in ",
+   "checks": {
+    "forbidden_report_keys_present": [],
+    "validate_report": [],
+    "calibration_is_probability_values": [
+     "False"
+    ],
+    "chart_counts_page": {
+     "nothing_found": 4,
+     "informational": 1,
+     "experimental": 1,
+     "not_applicable": 2
+    },
+    "chart_counts_report": {
+     "nothing_found": 4,
+     "not_applicable": 2,
+     "experimental": 1,
+     "informational": 1
+    },
+    "text_checks": {
+     "percent_sign_with_number": [],
+     "probability_sentences": [
+      "It is not a probability, a score or an overall verdict.",
+      "Model output, not a probability",
+      "A bar position is not a chance of being fake.",
+      "Model output, not a probability",
+      "A bar position is not a chance of being fake.",
+      "No single probability that the media is fake is given.",
+      "This reading is not a probability and not proof.",
+      "They were calibrated on in-domain validation data only, so a score of 0.7 does not mean a 70 percent chance, and no probability is given."
+     ],
+     "probability_sentences_without_negation": [],
+     "overall_wording_without_negation": []
+    },
+    "cards": [
+     {
+      "module": "face_video",
+      "status": "completed",
+      "finding": "no_indication_within_tested_scope",
+      "group": "nothing_found",
+      "label": "No strong evidence of manipulation detected",
+      "tier": "detector",
+      "uncertainty": "High uncertainty",
+      "face_bar": "Model output, not a probability: 0.32. Decision line 0.61.",
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "image_detector",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "speech",
+      "status": "completed",
+      "finding": "no_indication_within_tested_scope",
+      "group": "nothing_found",
+      "label": "No strong evidence of manipulation detected",
+      "tier": "limited",
+      "uncertainty": "Moderate uncertainty",
+      "face_bar": "Model output, not a probability: 0.30. Decision line 0.70.",
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "generated_image",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "lip_sync",
+      "status": "completed",
+      "finding": "consistent",
+      "group": "nothing_found",
+      "label": "No audio-visual mismatch found",
+      "tier": "limited",
+      "uncertainty": "High uncertainty",
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": true
+     },
+     {
+      "module": "generated_video",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "experimental",
+      "label": "Experimental signal observed, no reliable verdict available",
+      "tier": "experimental",
+      "uncertainty": "High uncertainty",
+      "face_bar": null,
+      "tech_bar": "Experimental ranking score, no finding: 1.00.",
+      "curve": false
+     },
+     {
+      "module": "media_metadata",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "informational",
+      "label": "Information only",
+      "tier": "context",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "content_credentials",
+      "status": "completed",
+      "finding": "no_credentials_found",
+      "group": "nothing_found",
+      "label": "No content credentials found",
+      "tier": "provenance",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     }
+    ],
+    "band": [
+     -6,
+     2
+    ]
+   },
+   "expand_collapse": {
+    "How this was reached": {
+     "opened": true,
+     "closed_again": true
+    },
+    "Technical details": {
+     "opened": true,
+     "closed_again": true
+    }
+   },
+   "report_kept_after_navigation": true
+  },
+  {
+   "kind": "upload",
+   "viewport": "1366",
+   "file": "4_speech_audio_asvspoof_dev.flac",
+   "selector_choice": "audio",
+   "analyse_enabled": true,
+   "file_card_text": "4_speech_audio_asvspoof_dev.flac\n\nAudio, 82.8 KB\n\nAnalyse this file\nChoose another file",
+   "will_run": "These checks will try to run on this audio file:\n\nSynthetic speech analysis\nFile information\nContent credentials (C2PA)",
+   "preview_elements": 1,
+   "seconds": 0.4,
+   "request_form_fields": [
+    {
+     "url": "/api/analyse",
+     "method": "POST",
+     "keys": [
+      "file"
+     ]
+    }
+   ],
+   "progress_status_seen": [
+    "Starting the checks\n0 of 8 checks done"
+   ],
+   "report_seen": true,
+   "overflow": false,
+   "banner": "LIVE ANALYSIS\nResults come from the checks listed below; each states its own tes",
+   "summary": "What the checks found\n\n3 checks ran on this audio file. 2 found nothing within their tested scope; 1 described the file. 5 did not apply.\n\nFaces\nNot applicable: an audio file has no pictures.\n\nSpeech\n",
+   "checks": {
+    "forbidden_report_keys_present": [],
+    "validate_report": [],
+    "calibration_is_probability_values": [
+     "False"
+    ],
+    "chart_counts_page": {
+     "nothing_found": 2,
+     "informational": 1,
+     "not_applicable": 5
+    },
+    "chart_counts_report": {
+     "not_applicable": 5,
+     "nothing_found": 2,
+     "informational": 1
+    },
+    "text_checks": {
+     "percent_sign_with_number": [],
+     "probability_sentences": [
+      "It is not a probability, a score or an overall verdict.",
+      "Model output, not a probability",
+      "A bar position is not a chance of being fake.",
+      "No single probability that the media is fake is given.",
+      "This reading is not a probability and not proof.",
+      "They were calibrated on in-domain validation data only, so a score of 0.7 does not mean a 70 percent chance, and no probability is given."
+     ],
+     "probability_sentences_without_negation": [],
+     "overall_wording_without_negation": []
+    },
+    "cards": [
+     {
+      "module": "face_video",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "image_detector",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "speech",
+      "status": "completed",
+      "finding": "no_indication_within_tested_scope",
+      "group": "nothing_found",
+      "label": "No strong evidence of manipulation detected",
+      "tier": "limited",
+      "uncertainty": "Moderate uncertainty",
+      "face_bar": "Model output, not a probability: 0.15. Decision line 0.70.",
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "generated_image",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "lip_sync",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "generated_video",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "media_metadata",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "informational",
+      "label": "Information only",
+      "tier": "context",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "content_credentials",
+      "status": "completed",
+      "finding": "no_credentials_found",
+      "group": "nothing_found",
+      "label": "No content credentials found",
+      "tier": "provenance",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     }
+    ]
+   },
+   "expand_collapse": {
+    "How this was reached": {
+     "opened": true,
+     "closed_again": true
+    },
+    "Technical details": {
+     "opened": true,
+     "closed_again": true
+    }
+   },
+   "report_kept_after_navigation": true
+  },
+  {
+   "kind": "upload",
+   "viewport": "1366",
+   "file": "6_synthetic_no_face_tone_audio.mp4",
+   "selector_choice": "auto",
+   "analyse_enabled": true,
+   "file_card_text": "6_synthetic_no_face_tone_audio.mp4\n\nVideo, 41.2 KB\n\nAnalyse this file\nChoose another file",
+   "will_run": "These checks will try to run on this video:\n\nFace manipulation analysis\nSynthetic speech analysis\nAudio-visual synchronisation\nAI-generated video (experimental research)\nFile information\nContent credentials (C2PA)",
+   "preview_elements": 1,
+   "seconds": 0.4,
+   "request_form_fields": [
+    {
+     "url": "/api/analyse",
+     "method": "POST",
+     "keys": [
+      "file"
+     ]
+    }
+   ],
+   "progress_status_seen": [
+    "Starting the checks\n0 of 8 checks done"
+   ],
+   "report_seen": true,
+   "overflow": false,
+   "banner": "LIVE ANALYSIS\nResults come from the checks listed below; each states its own tes",
+   "summary": "What the checks found\n\n5 checks ran on this video. 2 found nothing within their tested scope; 1 was inconclusive; 1 described the file; 1 is experimental and makes no finding. 3 did not apply.\n\nFaces\n",
+   "checks": {
+    "forbidden_report_keys_present": [],
+    "validate_report": [],
+    "calibration_is_probability_values": [
+     "False"
+    ],
+    "chart_counts_page": {
+     "nothing_found": 2,
+     "inconclusive": 1,
+     "informational": 1,
+     "experimental": 1,
+     "not_applicable": 3
+    },
+    "chart_counts_report": {
+     "not_applicable": 3,
+     "nothing_found": 2,
+     "inconclusive": 1,
+     "experimental": 1,
+     "informational": 1
+    },
+    "text_checks": {
+     "percent_sign_with_number": [],
+     "probability_sentences": [
+      "It is not a probability, a score or an overall verdict.",
+      "Model output, not a probability",
+      "A bar position is not a chance of being fake.",
+      "No single probability that the media is fake is given.",
+      "This reading is not a probability and not proof.",
+      "They were calibrated on in-domain validation data only, so a score of 0.7 does not mean a 70 percent chance, and no probability is given."
+     ],
+     "probability_sentences_without_negation": [],
+     "overall_wording_without_negation": []
+    },
+    "cards": [
+     {
+      "module": "face_video",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "image_detector",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "speech",
+      "status": "completed",
+      "finding": "no_indication_within_tested_scope",
+      "group": "nothing_found",
+      "label": "No strong evidence of manipulation detected",
+      "tier": "limited",
+      "uncertainty": "Moderate uncertainty",
+      "face_bar": "Model output, not a probability: 0.00. Decision line 0.70.",
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "generated_image",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "lip_sync",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "inconclusive",
+      "label": "Inconclusive",
+      "tier": "limited",
+      "uncertainty": "High uncertainty",
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "generated_video",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "experimental",
+      "label": "Experimental signal observed, no reliable verdict available",
+      "tier": "experimental",
+      "uncertainty": "High uncertainty",
+      "face_bar": null,
+      "tech_bar": "Experimental ranking score, no finding: 1.00.",
+      "curve": false
+     },
+     {
+      "module": "media_metadata",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "informational",
+      "label": "Information only",
+      "tier": "context",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "content_credentials",
+      "status": "completed",
+      "finding": "no_credentials_found",
+      "group": "nothing_found",
+      "label": "No content credentials found",
+      "tier": "provenance",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     }
+    ]
+   },
+   "expand_collapse": {
+    "How this was reached": {
+     "opened": true,
+     "closed_again": true
+    },
+    "Technical details": {
+     "opened": true,
+     "closed_again": true
+    }
+   },
+   "report_kept_after_navigation": true
+  },
+  {
+   "kind": "upload",
+   "viewport": "1366",
+   "file": "7_unsupported_notes.txt",
+   "selector_choice": "auto",
+   "analyse_enabled": true,
+   "file_card_text": "No preview\n\n7_unsupported_notes.txt\n\nFile, 23 B. This file type is not in the supported list, so the server is expected to refuse it.\n\nAnalyse this file\nChoose another file",
+   "will_run": null,
+   "preview_elements": 0,
+   "seconds": 0.0,
+   "request_form_fields": [
+    {
+     "url": "/api/analyse",
+     "method": "POST",
+     "keys": [
+      "file"
+     ]
+    }
+   ],
+   "progress_status_seen": [
+    "The analysis did not finish"
+   ],
+   "error_text": "Unsupported input\n\nFailed. UNSUPPORTED_MEDIA_TYPE: unsupported file type .txt; accepted: .avi, .bmp, .flac, .jpeg, .jpg, .m4a, .mkv, .mov, .mp3, .mp4, .ogg, .png, .wav, .webm, .webp\n\nThis kind of file is not supported.",
+   "error_verdict": "unsupported_input",
+   "report_visible": false,
+   "overflow": false,
+   "back_to_upload": true
+  },
+  {
+   "kind": "upload",
+   "viewport": "1366",
+   "file": "8_corrupt_video.mp4",
+   "selector_choice": "video",
+   "analyse_enabled": true,
+   "file_card_text": "8_corrupt_video.mp4\n\nVideo, 1.9 KB\n\nAnalyse this file\nChoose another file",
+   "will_run": "These checks will try to run on this video:\n\nFace manipulation analysis\nSynthetic speech analysis\nAudio-visual synchronisation\nAI-generated video (experimental research)\nFile information\nContent credentials (C2PA)",
+   "preview_elements": 1,
+   "seconds": 0.4,
+   "request_form_fields": [
+    {
+     "url": "/api/analyse",
+     "method": "POST",
+     "keys": [
+      "file"
+     ]
+    }
+   ],
+   "progress_status_seen": [
+    "Starting the checks\n0 of 8 checks done"
+   ],
+   "error_text": "Unsupported input\n\nFailed. UNREADABLE_FILE: the file could not be read as media: C:\\Users\\admin\\AppData\\Local\\Temp\\dfd_platform_uploads\\tmp56am53po.mp4: Invalid data found when processing input\n\nThe file could not be read; it may be damaged.",
+   "error_verdict": "unsupported_input",
+   "report_visible": false,
+   "overflow": false,
+   "back_to_upload": true
+  },
+  {
+   "kind": "lab_about",
+   "viewport": "1366",
+   "lab_visible": true,
+   "lab_hero": "RESEARCH TOOL\n\nEvaluation Lab\n\nRe-analyse the recorded scores of a model with the project's own metrics. Pick a score file and one block of it, review the setti",
+   "lab_has_catalogue": 15,
+   "lab_form_shown": true,
+   "lab_overflow": false,
+   "about_rows": 8,
+   "about_overflow": false,
+   "back_on_analyse": true,
+   "direct_link_lab": true
+  },
+  {
+   "kind": "progress_stub",
+   "viewport": "1366",
+   "status": "Running: AI-generated video (experimental research)\n5 of 8 checks done",
+   "steps": [
+    "Face manipulation analysis\nDONE",
+    "Audio-visual synchronisation\nDONE",
+    "AI-generated video (experimental research)\nRUNNING"
+   ],
+   "meter_now": "5",
+   "meter_max": "8",
+   "overflow": false
+  },
+  {
+   "kind": "mock",
+   "viewport": "1366",
+   "scenarios": [
+    "conflicting_modules",
+    "module_failure",
+    "module_timeout",
+    "multiple_speakers",
+    "no_audio",
+    "no_face",
+    "provenance_inconclusive",
+    "provenance_observations",
+    "unsupported_input",
+    "video_manipulation_indicated",
+    "video_nothing_found"
+   ],
+   "conflicting_modules": {
+    "banner": "MOCK DATA: every result below is invented scenario data. No model ran. Nothing here is a measurement.",
+    "banner_visible": true,
+    "overflow": false,
+    "checks": {
+     "chart_counts_page": {
+      "attention": 1,
+      "nothing_found": 1,
+      "experimental": 1
+     },
+     "chart_counts_report": {
+      "attention": 1,
+      "nothing_found": 1,
+      "experimental": 1
+     },
+     "forbidden_report_keys_present": []
+    }
+   },
+   "video_manipulation_indicated": {
+    "banner": "MOCK DATA: every result below is invented scenario data. No model ran. Nothing here is a measurement.",
+    "banner_visible": true,
+    "overflow": false,
+    "checks": {
+     "chart_counts_page": {
+      "attention": 2,
+      "nothing_found": 2
+     },
+     "chart_counts_report": {
+      "attention": 2,
+      "nothing_found": 2
+     },
+     "forbidden_report_keys_present": []
+    }
+   },
+   "again_returns_to_upload": true
+  },
+  {
+   "kind": "landing",
+   "viewport": "390",
+   "title": "Media Analysis",
+   "pill": "Live analysis",
+   "accept_text": "Images: BMP, JPEG, JPG, PNG, WEBP. Video: AVI, MKV, MOV, MP4, WEBM. Audio: FLAC, M4A, MP3, OGG, WAV. Up to 512.0 MB per file.",
+   "nav": [
+    "Analyse a file",
+    "Evaluation Lab",
+    "About the checks"
+   ],
+   "selector_options": [
+    "Detect from the file",
+    "Image",
+    "Video",
+    "Audio"
+   ],
+   "overflow": false,
+   "report_visible": false,
+   "accept_attr_auto": ".bmp,.jpeg,.jpg,.png,.webp,.avi,.mkv,.mov,.mp4,.webm,.flac,.m4a,.mp3,.ogg,.wav",
+   "accept_attr_video": ".avi,.mkv,.mov,.mp4,.webm",
+   "type_note_video": "Checks that can run on a video: Face manipulation analysis; Synthetic speech analysis; Audio-visual synchronisation; AI-generated video (experimental research); File information; Content credentials (C2PA). A check that needs something the file lacks, such as a face or a sound track, will say it did not apply. This choice only filters the file picker; the file is sent unchanged.",
+   "mismatch_text": "This looks like an image, but you chose video. Change the choice above, or choose another file.",
+   "analyse_disabled_on_mismatch": true,
+   "analyse_enabled_after_matching_choice": true,
+   "will_run_image": "These checks will try to run on this image:\n\nImage analysis\nAI-generated image, whole image (experimental)\nFile information\nContent credentials (C2PA)"
+  },
+  {
+   "kind": "upload",
+   "viewport": "390",
+   "file": "5_face_image_frame_ffpp_val.png",
+   "selector_choice": "image",
+   "analyse_enabled": true,
+   "file_card_text": "5_face_image_frame_ffpp_val.png\n\nImage, 1.8 MB\n\nAnalyse this file\nChoose another file",
+   "will_run": "These checks will try to run on this image:\n\nImage analysis\nAI-generated image, whole image (experimental)\nFile information\nContent credentials (C2PA)",
+   "preview_elements": 1,
+   "seconds": 0.4,
+   "request_form_fields": [
+    {
+     "url": "/api/analyse",
+     "method": "POST",
+     "keys": [
+      "file"
+     ]
+    }
+   ],
+   "progress_status_seen": [
+    "Uploading\n5_face_image_frame_ffpp_val.png"
+   ],
+   "report_seen": true,
+   "overflow": false,
+   "banner": "LIVE ANALYSIS\nResults come from the checks listed below; each states its own tes",
+   "summary": "What the checks found\n\n4 checks ran on this image. 1 check found a point that merits attention; 1 found nothing within its tested scope; 1 described the file; 1 is experimental and makes no finding. 4",
+   "checks": {
+    "forbidden_report_keys_present": [],
+    "validate_report": [],
+    "calibration_is_probability_values": [
+     "False"
+    ],
+    "chart_counts_page": {
+     "attention": 1,
+     "nothing_found": 1,
+     "informational": 1,
+     "experimental": 1,
+     "not_applicable": 4
+    },
+    "chart_counts_report": {
+     "not_applicable": 4,
+     "attention": 1,
+     "experimental": 1,
+     "informational": 1,
+     "nothing_found": 1
+    },
+    "text_checks": {
+     "percent_sign_with_number": [],
+     "probability_sentences": [
+      "It is not a probability, a score or an overall verdict.",
+      "Model output, not a probability",
+      "A bar position is not a chance of being fake.",
+      "No single probability that the media is fake is given.",
+      "This reading is not a probability and not proof.",
+      "They were calibrated on in-domain validation data only, so a score of 0.7 does not mean a 70 percent chance, and no probability is given."
+     ],
+     "probability_sentences_without_negation": [],
+     "overall_wording_without_negation": []
+    },
+    "cards": [
+     {
+      "module": "face_video",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "image_detector",
+      "status": "completed",
+      "finding": "indicates_manipulation",
+      "group": "attention",
+      "label": "Possible manipulation (weak evidence)",
+      "tier": "limited",
+      "uncertainty": "High uncertainty",
+      "face_bar": "Model output, not a probability: 1.00. Decision line 0.61.",
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "speech",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "generated_image",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "experimental",
+      "label": "Experimental signal observed, no reliable verdict available",
+      "tier": "experimental",
+      "uncertainty": "High uncertainty",
+      "face_bar": null,
+      "tech_bar": "Experimental ranking score, no finding: 0.02.",
+      "curve": false
+     },
+     {
+      "module": "lip_sync",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "generated_video",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "media_metadata",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "informational",
+      "label": "Information only",
+      "tier": "context",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "content_credentials",
+      "status": "completed",
+      "finding": "no_credentials_found",
+      "group": "nothing_found",
+      "label": "No content credentials found",
+      "tier": "provenance",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     }
+    ]
+   },
+   "expand_collapse": {
+    "How this was reached": {
+     "opened": true,
+     "closed_again": true
+    },
+    "Technical details": {
+     "opened": true,
+     "closed_again": true
+    }
+   },
+   "report_kept_after_navigation": true
+  },
+  {
+   "kind": "upload",
+   "viewport": "390",
+   "file": "1_face_swap_video_ffpp_val.mp4",
+   "selector_choice": "video",
+   "analyse_enabled": true,
+   "file_card_text": "1_face_swap_video_ffpp_val.mp4\n\nVideo, 5.5 MB\n\nAnalyse this file\nChoose another file",
+   "will_run": "These checks will try to run on this video:\n\nFace manipulation analysis\nSynthetic speech analysis\nAudio-visual synchronisation\nAI-generated video (experimental research)\nFile information\nContent credentials (C2PA)",
+   "preview_elements": 1,
+   "seconds": 2.5,
+   "request_form_fields": [
+    {
+     "url": "/api/analyse",
+     "method": "POST",
+     "keys": [
+      "file"
+     ]
+    }
+   ],
+   "progress_status_seen": [
+    "Uploading\n1_face_swap_video_ffpp_val.mp4"
+   ],
+   "report_seen": true,
+   "overflow": false,
+   "banner": "LIVE ANALYSIS\nResults come from the checks listed below; each states its own tes",
+   "summary": "What the checks found\n\n4 checks ran on this video. 1 check found a point that merits attention; 1 found nothing within its tested scope; 1 described the file; 1 is experimental and makes no finding. 4",
+   "checks": {
+    "forbidden_report_keys_present": [],
+    "validate_report": [],
+    "calibration_is_probability_values": [
+     "False"
+    ],
+    "chart_counts_page": {
+     "attention": 1,
+     "nothing_found": 1,
+     "informational": 1,
+     "experimental": 1,
+     "not_applicable": 4
+    },
+    "chart_counts_report": {
+     "attention": 1,
+     "not_applicable": 4,
+     "experimental": 1,
+     "informational": 1,
+     "nothing_found": 1
+    },
+    "text_checks": {
+     "percent_sign_with_number": [],
+     "probability_sentences": [
+      "It is not a probability, a score or an overall verdict.",
+      "Model output, not a probability",
+      "A bar position is not a chance of being fake.",
+      "No single probability that the media is fake is given.",
+      "This reading is not a probability and not proof.",
+      "They were calibrated on in-domain validation data only, so a score of 0.7 does not mean a 70 percent chance, and no probability is given."
+     ],
+     "probability_sentences_without_negation": [],
+     "overall_wording_without_negation": []
+    },
+    "cards": [
+     {
+      "module": "face_video",
+      "status": "completed",
+      "finding": "indicates_manipulation",
+      "group": "attention",
+      "label": "Possible manipulation",
+      "tier": "detector",
+      "uncertainty": "High uncertainty",
+      "face_bar": "Model output, not a probability: 1.00. Decision line 0.61.",
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "image_detector",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "speech",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "generated_image",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "lip_sync",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "generated_video",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "experimental",
+      "label": "Experimental signal observed, no reliable verdict available",
+      "tier": "experimental",
+      "uncertainty": "High uncertainty",
+      "face_bar": null,
+      "tech_bar": "Experimental ranking score, no finding: 0.00.",
+      "curve": false
+     },
+     {
+      "module": "media_metadata",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "informational",
+      "label": "Information only",
+      "tier": "context",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "content_credentials",
+      "status": "completed",
+      "finding": "no_credentials_found",
+      "group": "nothing_found",
+      "label": "No content credentials found",
+      "tier": "provenance",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     }
+    ]
+   },
+   "expand_collapse": {
+    "How this was reached": {
+     "opened": true,
+     "closed_again": true
+    },
+    "Technical details": {
+     "opened": true,
+     "closed_again": true
+    }
+   },
+   "report_kept_after_navigation": true
+  },
+  {
+   "kind": "upload",
+   "viewport": "390",
+   "file": "3_talking_head_with_audio_lavdf_train.mp4",
+   "selector_choice": "video",
+   "analyse_enabled": true,
+   "file_card_text": "3_talking_head_with_audio_lavdf_train.mp4\n\nVideo, 117.2 KB\n\nAnalyse this file\nChoose another file",
+   "will_run": "These checks will try to run on this video:\n\nFace manipulation analysis\nSynthetic speech analysis\nAudio-visual synchronisation\nAI-generated video (experimental research)\nFile information\nContent credentials (C2PA)",
+   "preview_elements": 1,
+   "seconds": 1.2,
+   "request_form_fields": [
+    {
+     "url": "/api/analyse",
+     "method": "POST",
+     "keys": [
+      "file"
+     ]
+    }
+   ],
+   "progress_status_seen": [
+    "Starting the checks\n0 of 8 checks done"
+   ],
+   "report_seen": true,
+   "overflow": false,
+   "banner": "LIVE ANALYSIS\nResults come from the checks listed below; each states its own tes",
+   "summary": "What the checks found\n\n6 checks ran on this video. 4 found nothing within their tested scope; 1 described the file; 1 is experimental and makes no finding. 2 did not apply.\n\nFaces\nA face was found in ",
+   "checks": {
+    "forbidden_report_keys_present": [],
+    "validate_report": [],
+    "calibration_is_probability_values": [
+     "False"
+    ],
+    "chart_counts_page": {
+     "nothing_found": 4,
+     "informational": 1,
+     "experimental": 1,
+     "not_applicable": 2
+    },
+    "chart_counts_report": {
+     "nothing_found": 4,
+     "not_applicable": 2,
+     "experimental": 1,
+     "informational": 1
+    },
+    "text_checks": {
+     "percent_sign_with_number": [],
+     "probability_sentences": [
+      "It is not a probability, a score or an overall verdict.",
+      "Model output, not a probability",
+      "A bar position is not a chance of being fake.",
+      "Model output, not a probability",
+      "A bar position is not a chance of being fake.",
+      "No single probability that the media is fake is given.",
+      "This reading is not a probability and not proof.",
+      "They were calibrated on in-domain validation data only, so a score of 0.7 does not mean a 70 percent chance, and no probability is given."
+     ],
+     "probability_sentences_without_negation": [],
+     "overall_wording_without_negation": []
+    },
+    "cards": [
+     {
+      "module": "face_video",
+      "status": "completed",
+      "finding": "no_indication_within_tested_scope",
+      "group": "nothing_found",
+      "label": "No strong evidence of manipulation detected",
+      "tier": "detector",
+      "uncertainty": "High uncertainty",
+      "face_bar": "Model output, not a probability: 0.32. Decision line 0.61.",
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "image_detector",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "speech",
+      "status": "completed",
+      "finding": "no_indication_within_tested_scope",
+      "group": "nothing_found",
+      "label": "No strong evidence of manipulation detected",
+      "tier": "limited",
+      "uncertainty": "Moderate uncertainty",
+      "face_bar": "Model output, not a probability: 0.30. Decision line 0.70.",
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "generated_image",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "lip_sync",
+      "status": "completed",
+      "finding": "consistent",
+      "group": "nothing_found",
+      "label": "No audio-visual mismatch found",
+      "tier": "limited",
+      "uncertainty": "High uncertainty",
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": true
+     },
+     {
+      "module": "generated_video",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "experimental",
+      "label": "Experimental signal observed, no reliable verdict available",
+      "tier": "experimental",
+      "uncertainty": "High uncertainty",
+      "face_bar": null,
+      "tech_bar": "Experimental ranking score, no finding: 1.00.",
+      "curve": false
+     },
+     {
+      "module": "media_metadata",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "informational",
+      "label": "Information only",
+      "tier": "context",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "content_credentials",
+      "status": "completed",
+      "finding": "no_credentials_found",
+      "group": "nothing_found",
+      "label": "No content credentials found",
+      "tier": "provenance",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     }
+    ],
+    "band": [
+     -6,
+     2
+    ]
+   },
+   "expand_collapse": {
+    "How this was reached": {
+     "opened": true,
+     "closed_again": true
+    },
+    "Technical details": {
+     "opened": true,
+     "closed_again": true
+    }
+   },
+   "report_kept_after_navigation": true
+  },
+  {
+   "kind": "upload",
+   "viewport": "390",
+   "file": "4_speech_audio_asvspoof_dev.flac",
+   "selector_choice": "audio",
+   "analyse_enabled": true,
+   "file_card_text": "4_speech_audio_asvspoof_dev.flac\n\nAudio, 82.8 KB\n\nAnalyse this file\nChoose another file",
+   "will_run": "These checks will try to run on this audio file:\n\nSynthetic speech analysis\nFile information\nContent credentials (C2PA)",
+   "preview_elements": 1,
+   "seconds": 0.4,
+   "request_form_fields": [
+    {
+     "url": "/api/analyse",
+     "method": "POST",
+     "keys": [
+      "file"
+     ]
+    }
+   ],
+   "progress_status_seen": [
+    "Starting the checks\n0 of 8 checks done"
+   ],
+   "report_seen": true,
+   "overflow": false,
+   "banner": "LIVE ANALYSIS\nResults come from the checks listed below; each states its own tes",
+   "summary": "What the checks found\n\n3 checks ran on this audio file. 2 found nothing within their tested scope; 1 described the file. 5 did not apply.\n\nFaces\nNot applicable: an audio file has no pictures.\n\nSpeech\n",
+   "checks": {
+    "forbidden_report_keys_present": [],
+    "validate_report": [],
+    "calibration_is_probability_values": [
+     "False"
+    ],
+    "chart_counts_page": {
+     "nothing_found": 2,
+     "informational": 1,
+     "not_applicable": 5
+    },
+    "chart_counts_report": {
+     "not_applicable": 5,
+     "nothing_found": 2,
+     "informational": 1
+    },
+    "text_checks": {
+     "percent_sign_with_number": [],
+     "probability_sentences": [
+      "It is not a probability, a score or an overall verdict.",
+      "Model output, not a probability",
+      "A bar position is not a chance of being fake.",
+      "No single probability that the media is fake is given.",
+      "This reading is not a probability and not proof.",
+      "They were calibrated on in-domain validation data only, so a score of 0.7 does not mean a 70 percent chance, and no probability is given."
+     ],
+     "probability_sentences_without_negation": [],
+     "overall_wording_without_negation": []
+    },
+    "cards": [
+     {
+      "module": "face_video",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "image_detector",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "speech",
+      "status": "completed",
+      "finding": "no_indication_within_tested_scope",
+      "group": "nothing_found",
+      "label": "No strong evidence of manipulation detected",
+      "tier": "limited",
+      "uncertainty": "Moderate uncertainty",
+      "face_bar": "Model output, not a probability: 0.15. Decision line 0.70.",
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "generated_image",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "lip_sync",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "generated_video",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "media_metadata",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "informational",
+      "label": "Information only",
+      "tier": "context",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "content_credentials",
+      "status": "completed",
+      "finding": "no_credentials_found",
+      "group": "nothing_found",
+      "label": "No content credentials found",
+      "tier": "provenance",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     }
+    ]
+   },
+   "expand_collapse": {
+    "How this was reached": {
+     "opened": true,
+     "closed_again": true
+    },
+    "Technical details": {
+     "opened": true,
+     "closed_again": true
+    }
+   },
+   "report_kept_after_navigation": true
+  },
+  {
+   "kind": "upload",
+   "viewport": "390",
+   "file": "6_synthetic_no_face_tone_audio.mp4",
+   "selector_choice": "auto",
+   "analyse_enabled": true,
+   "file_card_text": "6_synthetic_no_face_tone_audio.mp4\n\nVideo, 41.2 KB\n\nAnalyse this file\nChoose another file",
+   "will_run": "These checks will try to run on this video:\n\nFace manipulation analysis\nSynthetic speech analysis\nAudio-visual synchronisation\nAI-generated video (experimental research)\nFile information\nContent credentials (C2PA)",
+   "preview_elements": 1,
+   "seconds": 0.4,
+   "request_form_fields": [
+    {
+     "url": "/api/analyse",
+     "method": "POST",
+     "keys": [
+      "file"
+     ]
+    }
+   ],
+   "progress_status_seen": [
+    "Starting the checks\n0 of 8 checks done"
+   ],
+   "report_seen": true,
+   "overflow": false,
+   "banner": "LIVE ANALYSIS\nResults come from the checks listed below; each states its own tes",
+   "summary": "What the checks found\n\n5 checks ran on this video. 2 found nothing within their tested scope; 1 was inconclusive; 1 described the file; 1 is experimental and makes no finding. 3 did not apply.\n\nFaces\n",
+   "checks": {
+    "forbidden_report_keys_present": [],
+    "validate_report": [],
+    "calibration_is_probability_values": [
+     "False"
+    ],
+    "chart_counts_page": {
+     "nothing_found": 2,
+     "inconclusive": 1,
+     "informational": 1,
+     "experimental": 1,
+     "not_applicable": 3
+    },
+    "chart_counts_report": {
+     "not_applicable": 3,
+     "nothing_found": 2,
+     "inconclusive": 1,
+     "experimental": 1,
+     "informational": 1
+    },
+    "text_checks": {
+     "percent_sign_with_number": [],
+     "probability_sentences": [
+      "It is not a probability, a score or an overall verdict.",
+      "Model output, not a probability",
+      "A bar position is not a chance of being fake.",
+      "No single probability that the media is fake is given.",
+      "This reading is not a probability and not proof.",
+      "They were calibrated on in-domain validation data only, so a score of 0.7 does not mean a 70 percent chance, and no probability is given."
+     ],
+     "probability_sentences_without_negation": [],
+     "overall_wording_without_negation": []
+    },
+    "cards": [
+     {
+      "module": "face_video",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "image_detector",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "speech",
+      "status": "completed",
+      "finding": "no_indication_within_tested_scope",
+      "group": "nothing_found",
+      "label": "No strong evidence of manipulation detected",
+      "tier": "limited",
+      "uncertainty": "Moderate uncertainty",
+      "face_bar": "Model output, not a probability: 0.00. Decision line 0.70.",
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "generated_image",
+      "status": "not_applicable",
+      "finding": null,
+      "group": "not_applicable",
+      "label": "Did not apply",
+      "tier": "none",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "lip_sync",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "inconclusive",
+      "label": "Inconclusive",
+      "tier": "limited",
+      "uncertainty": "High uncertainty",
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "generated_video",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "experimental",
+      "label": "Experimental signal observed, no reliable verdict available",
+      "tier": "experimental",
+      "uncertainty": "High uncertainty",
+      "face_bar": null,
+      "tech_bar": "Experimental ranking score, no finding: 1.00.",
+      "curve": false
+     },
+     {
+      "module": "media_metadata",
+      "status": "completed",
+      "finding": "inconclusive",
+      "group": "informational",
+      "label": "Information only",
+      "tier": "context",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     },
+     {
+      "module": "content_credentials",
+      "status": "completed",
+      "finding": "no_credentials_found",
+      "group": "nothing_found",
+      "label": "No content credentials found",
+      "tier": "provenance",
+      "uncertainty": null,
+      "face_bar": null,
+      "tech_bar": null,
+      "curve": false
+     }
+    ]
+   },
+   "expand_collapse": {
+    "How this was reached": {
+     "opened": true,
+     "closed_again": true
+    },
+    "Technical details": {
+     "opened": true,
+     "closed_again": true
+    }
+   },
+   "report_kept_after_navigation": true
+  },
+  {
+   "kind": "upload",
+   "viewport": "390",
+   "file": "7_unsupported_notes.txt",
+   "selector_choice": "auto",
+   "analyse_enabled": true,
+   "file_card_text": "No preview\n\n7_unsupported_notes.txt\n\nFile, 23 B. This file type is not in the supported list, so the server is expected to refuse it.\n\nAnalyse this file\nChoose another file",
+   "will_run": null,
+   "preview_elements": 0,
+   "seconds": 0.0,
+   "request_form_fields": [
+    {
+     "url": "/api/analyse",
+     "method": "POST",
+     "keys": [
+      "file"
+     ]
+    }
+   ],
+   "progress_status_seen": [
+    "The analysis did not finish"
+   ],
+   "error_text": "Unsupported input\n\nFailed. UNSUPPORTED_MEDIA_TYPE: unsupported file type .txt; accepted: .avi, .bmp, .flac, .jpeg, .jpg, .m4a, .mkv, .mov, .mp3, .mp4, .ogg, .png, .wav, .webm, .webp\n\nThis kind of file is not supported.",
+   "error_verdict": "unsupported_input",
+   "report_visible": false,
+   "overflow": false,
+   "back_to_upload": true
+  },
+  {
+   "kind": "upload",
+   "viewport": "390",
+   "file": "8_corrupt_video.mp4",
+   "selector_choice": "video",
+   "analyse_enabled": true,
+   "file_card_text": "8_corrupt_video.mp4\n\nVideo, 1.9 KB\n\nAnalyse this file\nChoose another file",
+   "will_run": "These checks will try to run on this video:\n\nFace manipulation analysis\nSynthetic speech analysis\nAudio-visual synchronisation\nAI-generated video (experimental research)\nFile information\nContent credentials (C2PA)",
+   "preview_elements": 1,
+   "seconds": 0.4,
+   "request_form_fields": [
+    {
+     "url": "/api/analyse",
+     "method": "POST",
+     "keys": [
+      "file"
+     ]
+    }
+   ],
+   "progress_status_seen": [
+    "Starting the checks\n0 of 8 checks done"
+   ],
+   "error_text": "Unsupported input\n\nFailed. UNREADABLE_FILE: the file could not be read as media: C:\\Users\\admin\\AppData\\Local\\Temp\\dfd_platform_uploads\\tmpdzjopwaz.mp4: Invalid data found when processing input\n\nThe file could not be read; it may be damaged.",
+   "error_verdict": "unsupported_input",
+   "report_visible": false,
+   "overflow": false,
+   "back_to_upload": true
+  },
+  {
+   "kind": "lab_about",
+   "viewport": "390",
+   "lab_visible": true,
+   "lab_hero": "RESEARCH TOOL\n\nEvaluation Lab\n\nRe-analyse the recorded scores of a model with the project's own metrics. Pick a score file and one block of it, review the setti",
+   "lab_has_catalogue": 15,
+   "lab_form_shown": true,
+   "lab_overflow": false,
+   "about_rows": 8,
+   "about_overflow": false,
+   "back_on_analyse": true,
+   "direct_link_lab": true
+  },
+  {
+   "kind": "progress_stub",
+   "viewport": "390",
+   "status": "Running: AI-generated video (experimental research)\n5 of 8 checks done",
+   "steps": [
+    "Face manipulation analysis\nDONE",
+    "Audio-visual synchronisation\nDONE",
+    "AI-generated video (experimental research)\nRUNNING"
+   ],
+   "meter_now": "5",
+   "meter_max": "8",
+   "overflow": false
+  },
+  {
+   "kind": "mock",
+   "viewport": "390",
+   "scenarios": [
+    "conflicting_modules",
+    "module_failure",
+    "module_timeout",
+    "multiple_speakers",
+    "no_audio",
+    "no_face",
+    "provenance_inconclusive",
+    "provenance_observations",
+    "unsupported_input",
+    "video_manipulation_indicated",
+    "video_nothing_found"
+   ],
+   "conflicting_modules": {
+    "banner": "MOCK DATA: every result below is invented scenario data. No model ran. Nothing here is a measurement.",
+    "banner_visible": true,
+    "overflow": false,
+    "checks": {
+     "chart_counts_page": {
+      "attention": 1,
+      "nothing_found": 1,
+      "experimental": 1
+     },
+     "chart_counts_report": {
+      "attention": 1,
+      "nothing_found": 1,
+      "experimental": 1
+     },
+     "forbidden_report_keys_present": []
+    }
+   },
+   "video_manipulation_indicated": {
+    "banner": "MOCK DATA: every result below is invented scenario data. No model ran. Nothing here is a measurement.",
+    "banner_visible": true,
+    "overflow": false,
+    "checks": {
+     "chart_counts_page": {
+      "attention": 2,
+      "nothing_found": 2
+     },
+     "chart_counts_report": {
+      "attention": 2,
+      "nothing_found": 2
+     },
+     "forbidden_report_keys_present": []
+    }
+   },
+   "again_returns_to_upload": true
+  }
+ ]
+}

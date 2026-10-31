@@ -17,10 +17,10 @@ from dfd.eval.guard import GuardError, check_compare_guard
 from dfd.eval.ledger import read_ledger
 from dfd.eval.metrics import OneClassError, make_evaluator, roc_auc
 from dfd.eval.run import _block_rows
-from dfd.eval.scorefile import DEV_SPLITS, FINAL_SPLITS, ScoreFileError
+from dfd.eval.scorefile import DEV_SPLITS, FINAL_SPLITS, POST_SPLITS, ScoreFileError
 from dfd.eval.threshold import choose_threshold_max_balanced_accuracy
 
-from .common import BREAKDOWN_COLUMNS, METRICS, ROLES, LabError
+from .common import BREAKDOWN_COLUMNS, METRICS, POST_FREEZE_STATUS, ROLES, LabError
 
 ROC_MAX_POINTS = 200
 EXAMPLES = 5
@@ -206,7 +206,8 @@ def breakdown_table(cfg, extras, block_ids, y, scores_per_run, thresholds):
 
 # ------------------------------------------------------------------------ the run
 
-def compute(cfg: dict, table, extras: dict, *, ledger_path, frozen_sha256: str, progress=lambda *a: None) -> dict:
+def compute(cfg: dict, table, extras: dict, *, ledger_path, frozen_sha256: str, progress=lambda *a: None,
+            group_ids=None) -> dict:
     """Run the analysis for a validated config. Returns the result fields of the run record, or raises Refused."""
     progress("checks", 0, 6)
     if table.sha256 != frozen_sha256:
@@ -225,6 +226,16 @@ def compute(cfg: dict, table, extras: dict, *, ledger_path, frozen_sha256: str, 
 
     entries = check_final_guard(cfg, sub, frozen_sha256, ledger_path)        # rule (a)
     progress("checks", 1, 6)
+
+    group_missing = 0
+    if group_ids is not None:                                                  # evaluation group: after the guard (a sealed split needs its ledger entry)
+        if cfg["split"] in FINAL_SPLITS and not entries:
+            raise Refused("GROUP_ON_FINAL", "evaluation groups on a final (sealed) split need the logged final evaluation")
+        in_block = (sub.dataset == cfg["dataset"]) & (sub.split == cfg["split"])
+        keep = np.isin(sub.sample_id, np.asarray(group_ids, dtype=object))
+        present = set(map(str, sub.sample_id[in_block & keep]))
+        group_missing = len(set(group_ids) - present)
+        sub = sub.select(~in_block | keep)
 
     try:
         rows = _block_rows(sub, run_ids, cfg["dataset"], cfg["split"])
@@ -310,6 +321,11 @@ def compute(cfg: dict, table, extras: dict, *, ledger_path, frozen_sha256: str, 
         warnings.append("training split: scores on data the model was fitted on are optimistic")
     if cfg["split"] in FINAL_SPLITS:
         warnings.append("final held-out split: this is a re-analysis of a logged evaluation, not a new held-out look")
+    if cfg["split"] in POST_SPLITS:
+        warnings.append("post-freeze evaluation: " + POST_FREEZE_STATUS)
+    if group_missing:
+        warnings.append(f"{group_missing} sample(s) of the evaluation group have no stored score for this head "
+                        "(for example no face found or no audio) and are not counted")
     if cfg["threshold_source"] == "fixed":
         warnings.append("fixed threshold: its provenance text is recorded as given and was not verified by the lab")
     if cfg["purpose"] == "validation" and cfg["split"] != "val":
@@ -342,7 +358,7 @@ def compute(cfg: dict, table, extras: dict, *, ledger_path, frozen_sha256: str, 
                                       else "mean of the per-run thresholds (each run is evaluated at its own)")},
         "data": {"n_samples": n, "n_fake": n_fake, "n_real": n_real, "n_groups": int(rs.n_groups),
                  "class_balance": {"fake_fraction": frac, "real_fraction": 1 - frac},
-                 "skipped": [], "warnings": warnings, "leakage": leak,
+                 "skipped": [], "warnings": warnings, "leakage": leak, "group_missing_scores": group_missing,
                  "run_ids": run_ids, "seeds": seeds},
         "metrics": metrics,
         "protocol": {"n_boot": cfg["n_boot"], "level": bs.LEVEL, "seed": cfg["seed"], "n_redrawn": int(rs.n_redrawn),

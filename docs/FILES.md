@@ -1,6 +1,8 @@
 # FILES
 
-Last updated: 2026-10-29 (final clean-up on main, D-093: status cells brought up to date, superseded archive marked, unlisted tracked files added at the end)
+Last updated: 2026-10-31 (post-freeze benchmark and Evaluation Lab groups, D-094: new rows at the end)
+(Superseded 2026-10-31) Last updated: 2026-10-30 (final-submission preparation: four new docs listed at the end)
+(Superseded 2026-10-30) Last updated: 2026-10-29 (final clean-up on main, D-093: status cells brought up to date, superseded archive marked, unlisted tracked files added at the end)
 (Superseded 2026-10-29) Last updated: 2026-10-25 (Session 2)
 
 One row per file or folder. Status is `exists`, `planned` or `missing`. A `planned` row appears only when a decision in DECISIONS.md covers it. This file is updated whenever files change.
@@ -190,3 +192,49 @@ One row per file or folder. Status is `exists`, `planned` or `missing`. A `plann
 | deliverables_v2/check_v2_output.txt | Saved output of deliverables_v2/check_v2.py | Evidence for the v2 deliverables check | exists |
 | docs/test_evidence/2026-10-29_cleanup/ | Logs of the final clean-up checks: safe suite, check_docs with both pdftotext builds, check_v2 with both, deck checker, v2 report layout, DOCX comment removal | Evidence for docs/TESTING_RECORD.md section 17 (D-093) | exists |
 | Deck rebuild limit | deliverables_v2/presentation/build_deck_v2.py needs `Document Template/` (not in git, D-037) and one local screenshot; the built deck is tracked | A clone cannot rebuild the deck (docs/SETUP.md section 9) | noted |
+
+## Final-submission preparation (added 2026-10-30)
+
+| Path | What it contains | What it contributes to the project | Status |
+|---|---|---|---|
+| docs/GROUND_TRUTH_INVENTORY.md | Status of every component and claim, verified from code; protected state; code-versus-docs discrepancies | Phase 0 ground truth for the viva and the deliverables | exists |
+| docs/PROJECT_MASTER_LEARNING_GUIDE.md | Learning guide: overview, phases, concepts, architecture diagrams, modules, results, rebuild tutorial, alternatives, glossary, formulas, viva questions | Teaching and viva preparation for the three members | exists |
+| docs/FINAL_SUBMISSION_AUDIT.md | Audit of submission/ against Tasks 28 to 31, remaining actions, fastest legitimate path | Submission checklist | exists |
+| docs/FINAL_DEMO_RUNBOOK.md | Setup, launch, script, evidence commands, recovery, shot list and MP4 checklist for the final demo | Task 31 | exists |
+| docs/TEAM_WORK_ALLOCATION.md | Verified contributions, approved ownership, study plans | Task 28 contributions; viva | planned (after the members' interview and approval) |
+| docs/LITERATURE_BENCHMARK_COMPARISON.md | Comparison of the face-video detector with published detectors on FF++, Celeb-DF v2, Celeb-DF++, DFD; tiers A to C, ranking outcome, gap analysis | Viva and report evidence for "how do we compare" (2026-10-30) | exists |
+| docs/LITERATURE_BENCHMARK_SUMMARY.md | Short version for the report and viva | same | exists |
+| docs/LITERATURE_BENCHMARK_EVIDENCE.md | One row per external number: source, table, metric, protocol, tier, verification status; search record | Audit trail of the comparison | exists |
+| docs/LITERATURE_BENCHMARK_REFERENCES.bib | 21 BibTeX entries checked against arXiv PDFs and Crossref; missing DOIs stated | Citations (log in RESEARCH.md before citing) | exists |
+
+| submission/final/*_SUBMIT.* | Final Task 28 to 30 files (2026-10-30): report PDF and DOCX, IEEE paper PDF with source in paper_source/, presentation PPTX and PDF. Contribution tables added; college logo and red styling kept (only the paper is plain); Appendix B on A4 portrait. | Upload set for Classroom Tasks 28 to 30; see SUBMIT_CHECKLIST.md |
+
+## Post-freeze benchmark and Evaluation Lab groups (added 2026-10-31, D-094)
+
+| Path | What it contains | What it contributes to the project | Status |
+|---|---|---|---|
+| docs/RESEARCH_EVALUATION_AUDIT.md | Repository state, model and checkpoint table, dataset-role and eligibility matrix, protected artefacts, unused candidate data, protocol, discrepancies | Phases 1 to 3 of the 2026-10-31 task; viva evidence for "which data did what" | exists |
+| docs/POST_FREEZE_EVALUATION_PROTOCOL.md | Answers to the twelve methodology questions (datasets, sizes, groups, leakage, duplicates, metrics, intervals, limitations, tiers), written before any result | Viva methodology explanation | exists |
+| docs/POST_FREEZE_BENCHMARK_COMPARISON.md | Published-versus-our-model table with tiers, sources, experiment ids, interpretation | Viva comparison | exists |
+| docs/VIVA_BENCHMARK_BRIEFING.md | One-page briefing of the comparisons and caveats | Viva | exists |
+| scripts/posteval/ | build_manifests.py (frozen manifests and groups), prereg.py (preregistration hash), score_e033.py and score_e034.py (product adapter, one sample at a time), download_e034.py (verified shard download into a new folder), evaluate.py (duplicate checks, Lab score files and descriptors, results through the Lab) | E-033, E-034 | exists |
+| src/dfd/platform/evallab/groups.py | Registry of evaluation-group descriptors (*.lab.json); counts per group; refuses sealed splits and changed groups files | Lab dataset and group selection (D-094) | exists |
+| src/dfd/platform/evallab/showcase.py | Recommended demonstrations: curated entries whose numbers are read at request time from the logged E-014 report (data/_final/eval/I-4.json) and the E-033 and E-034 results.json, with source SHA-256; served read-only at GET /api/evallab/recommended | Presentation view of logged results (D-095) | exists |
+| tests/platform_evallab/test_evallab_showcase.py | 4 tests: per-seed derivations, read-only endpoint, entry rules (sealed blocks never runnable), every displayed AUROC and count equals the logged file | Tests for D-095 | exists |
+| deliverables_v2/website/test_evidence/2026-10-31_reco/ | Screenshots of the recommended demonstrations at 1,366 and 390 px against the real API | Evidence for TESTING_RECORD section 20 | exists |
+| tests/platform_evallab/test_evallab_groups.py | 16 tests: filtering, counts, guided runs, fixed threshold, full-pool confirmation, invalid requests, changed groups file, sealed-split refusals, unchanged advanced runs | Tests for D-094 | exists |
+| docs/test_evidence/2026-10-31_posteval/ | Logs of the safe suite, Lab and UI tests, protected-file hash comparison and browser check of 2026-10-31 | docs/TESTING_RECORD.md section 18 | exists |
+| data/_manifests/posteval/, data/_results/posteval/, data/cf_eval_e034/, data/_evallab/imports/posteval/ (git-ignored) | Frozen manifests and groups, preregistration records, predictions, duplicate checks, results, protected-file hashes; downloaded E-034 shards; Lab score files and descriptors | E-033, E-034 | exists (local only) |
+| docs/PROPOSED_DELIVERABLE_INSERTIONS.md | Draft, not applied: what of E-033, E-034 and the comparison is eligible for the paper, report and slides, with wording guards | Decision support for the team (2026-10-31 continuation) | exists |
+| docs/test_evidence/2026-10-31_continuation/ | Logs of the continuation audit: Lab HTTP check, live browser check and screenshots, safe suite, protected-file hashes | docs/TESTING_RECORD.md section 19 | exists |
+| scripts/posteval/posthoc_e034_paired.py | E-034 post hoc (not preregistered) per-generator AP with each generator's own paired reals | E-034 secondary, labelled post hoc | exists |
+| scripts/posteval/build_sealed_groups.py | Builds the five re-analysis groups per sealed E-014 block (In-the-Wild, Celeb-DF v2, CNN) from ids and labels only, plus their Lab descriptors | D-096 | exists |
+| data/_manifests/sealed_reanalysis/e014_sealed.groups.json | Frozen groups of the E-014 re-analysis (git-ignored, sha256 in D-096) | D-096 | exists (local) |
+| data/_evallab/imports/sealed/ | Lab descriptors E-014_TA, E-014_TV, E-014_TI (git-ignored) | D-096 | exists (local) |
+| scripts/platform/make_demo_set.py | Copies 23 demo files, one per manipulation type plus real files, from non-sealed splits into data/_demo_inputs/demo_set/ with a manifest | D-096 | exists |
+| docs/DEMO_SELECTION.md | Q&A: how demo inputs, evaluation groups and decision lines were chosen | D-096 | exists |
+| deliverables_v2/website/test_evidence/2026-10-31_sealed_groups/ | Browser check screenshots and JSON of the sealed re-analysis groups | TESTING_RECORD section 21 | exists |
+| deliverables_v2/website/test_evidence/2026-10-31_simple_view/ | Live browser check of the simple report view (D-097): screenshots and JSON | TESTING_RECORD section 22 | exists |
+| deliverables_v2/website/test_evidence/2026-10-31_report_preview/ | Live browser check of the analysed file shown in the report (D-098): screenshots and JSON | TESTING_RECORD section 23 | exists |
+| docs/TEAMMATE_HANDOFF.md | What a teammate gets from git, from the two Drive bundles, and what they rebuild or download themselves | D-099 | exists |
+| _drive_upload/ | Local Drive bundles and their SHA-256 manifests (git-ignored) | D-099 | exists (local) |

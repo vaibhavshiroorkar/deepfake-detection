@@ -6,7 +6,10 @@ Extra columns are ignored.
 
 Checks: required columns present; no empty text field; seed is an integer;
 modality in {visual, audio, image, fused}; split in {train, val, test_in,
-test_x, dev_x}; label 0 or 1; score finite and in [0, 1]; logit finite when given.
+test_x, dev_x, post_x}; label 0 or 1; score finite and in [0, 1]; logit finite when given.
+post_x (D-094) marks a post-freeze evaluation of a frozen checkpoint on data that was
+never read before, run once as its own preregistered experiment; it is not a sealed
+split of the freeze and is not in the ledger.
 Each run_id has one iteration and one seed. Rows that repeat
 (run_id, modality, dataset, split, sample_id) are frame rows: they are
 aggregated to one clip row with score = mean of the per-frame scores
@@ -29,9 +32,10 @@ from .calibration import logit as _logit, sigmoid
 REQUIRED = ("run_id", "iteration", "seed", "modality", "dataset", "split",
             "sample_id", "group_id", "label", "score")
 MODALITIES = ("visual", "audio", "image", "fused")
-SPLITS = ("train", "val", "test_in", "test_x", "dev_x")
+SPLITS = ("train", "val", "test_in", "test_x", "dev_x", "post_x")
 FINAL_SPLITS = ("test_in", "test_x")  # guarded and logged
 DEV_SPLITS = ("dev_x",)  # development slices (D-035): not final, may be evaluated repeatedly
+POST_SPLITS = ("post_x",)  # post-freeze evaluations (D-094): one preregistered scoring run, stored scores re-analysed
 TEXT = ("run_id", "iteration", "modality", "dataset", "split", "sample_id", "group_id")
 
 

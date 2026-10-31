@@ -1,6 +1,7 @@
 # PLAN
 
-Last updated: 2026-10-25 (Session 3: I-1 to I-7 and the baseline have logged runs; the freeze is not run)
+Last updated: 2026-10-31 (state verified against the repository: freeze, post-freeze experiments E-015 to E-034, submission set and the 2026-10-31 benchmark work; see the section "Verified state on 2026-10-31" at the end; the day-by-day schedule below is the historical plan and is not edited)
+(Superseded 2026-10-31) Last updated: 2026-10-25 (Session 3: I-1 to I-7 and the baseline have logged runs; the freeze is not run)
 
 This plan lists the stages of the project, the question each stage must answer, the day-by-day schedule to the submission date and where each output is recorded. A stage is marked done only when its output exists in the repository and the decisions it needed are logged in DECISIONS.md.
 
@@ -13,9 +14,9 @@ This plan lists the stages of the project, the question each stage must answer, 
 | 2 | Metrics, splits, seeds, threshold policy, fixed before any model exists | Evaluation protocol and acceptance test | done: docs/PROTOCOL.md; acceptance A1 to A8 pass (V-001 and V-002) |
 | 3 | The simplest end-to-end MVP | Baseline v0 with results | done on Sun 2026-10-25, ahead of the Mon 2026-10-26 plan: I-0 working version, checkpoint I-0-mvp, parity PASS, page checked on the real checkpoint, E-004, tag iter-0-mvp |
 | 4 | Other models in the same harness, so the final choice has evidence | Comparison table with accuracy, cost, ease of fine-tuning | sweep E-001 to E-003 final (D-049); ease of fine-tuning measured in E-005 for the video task |
-| 5 | Seven experimental iterations I-1 to I-7 after the MVP, each from a written hypothesis and the diagnostic battery; I-8 is integration and freeze | One experiment note per iteration; ladder in docs/ITERATIONS.md (Decided, D-041) | done for the exploratory runs on 2026-10-25 (E-005 to E-012, verdicts in the slot table); the sealed staircase is the freeze step and is not run |
+| 5 | Seven experimental iterations I-1 to I-7 after the MVP, each from a written hypothesis and the diagnostic battery; I-8 is integration and freeze | One experiment note per iteration; ladder in docs/ITERATIONS.md (Decided, D-041) | done for the exploratory runs on 2026-10-25 (E-005 to E-012, verdicts in the slot table); update 2026-10-31: the sealed staircase ran at the freeze on 2026-10-25 (E-014, D-067, ledger, tags iter-0-mvp to iter-4 and base) |
 | 6 | Whether and where remote heart-rate (rPPG) evidence enters | Feasibility test, then a decision; it is iteration I-7 with its thresholds written in docs/ITERATIONS.md (frozen by D-041) | done: S-1 failed (E-006, D-052), rPPG signal not recoverable from these data, no separation or fusion experiment run |
-| 7 | Paper (IEEE, LaTeX), technical report, presentation | Documents assembled from the logs | scaffolds built and committed (D-014); no results |
+| 7 | Paper (IEEE, LaTeX), technical report, presentation | Documents assembled from the logs | scaffolds built and committed (D-014); no results. Update 2026-10-31: deliverables v2 built and merged (D-089, D-090, tag submission-v2); final submission files built on 2026-10-30 in submission/final/ (tag submission-final marks the D-093 commit); the 2026-10-31 benchmark findings are not in them (decision pending) |
 
 ## Deadline and constraints
 
@@ -81,3 +82,28 @@ The slots follow the order in which levers were triggered (D-056 item 4): the le
 5. The decisions O-007 to O-009 each need the user's input or an autonomous decision tagged for review (CLAUDE.md rule 10).
 6. Neither FF++ nor Celeb-DF v2 has an audio stream (0 of 20 and 0 of 250 videos probed; the FF++ README says only the source video without audio was downloaded; measurement M-001 in EXPERIMENTS.md). DFD and the other datasets were not probed. The only data in the plan that carries audio inside video, with labels for it, is LAV-DF (access granted 2026-10-24, download queued behind the encoder weights, 25.6 GB) and FakeAVCeleb (waiting for the owners' approval).
 7. What the audio-visual claim would be if neither LAV-DF nor FakeAVCeleb is on the machine and verified by Tuesday 2026-10-27: the project could not train or evaluate any model on audio and video together, because no labelled data for it would exist here. The honest claim would then be: the visual path is evaluated on video frames (FF++ trained, Celeb-DF dev and test), the audio path on standalone speech (ASVspoof 2019 trained, In-the-Wild dev and test), and the interface can score the audio track of a video with the audio model and show the two scores side by side, but the combination of the two for a video is an untested demonstration with no measured accuracy, and no sentence in any document may claim audio-visual detection performance or a validated fusion rule (CLAUDE.md rule 8). Amendment 2026-10-25 (D-051): LAV-DF is on the machine, so in-dataset audio-visual evaluation is possible, but the audio head is near chance outside its training corpus (In-the-Wild dev_x AUC 0.61 [0.54, 0.73] with 12 speakers; trivial recording features reverse sign between ASVspoof and In-the-Wild, M-004). The branch of this fallback text that applies is therefore: the audio score of a video is shown beside the visual score with the warning AUDIO_CALIBRATION_EXPLORATORY, and no sentence claims audio-visual detection performance or a validated fusion rule until the I-6 pre-check (the frozen heads scored on LAV-DF validation, audio lower bound above 0.55) and the fusion are logged. If only LAV-DF arrives, audio-visual results are in-dataset only (its identity-independent test split) and are reported that way, with no cross-dataset audio-visual claim. If both arrive, the cross-dataset audio-visual test is LAV-DF training against FakeAVCeleb, after the identity-overlap check of D-012 (both take real videos from VoxCeleb2).
+
+## Verified state on 2026-10-31
+
+Checked against the repository on 2026-10-31 (continuation session); each line names its evidence.
+
+| Item | State | Evidence |
+|---|---|---|
+| Freeze and confirmatory tests T1 to T3 | done 2026-10-25, each frozen iteration read once | E-014, D-067, D-068, D-091, ledger/final_ledger.jsonl (76 entries, 0 repeats), tags iter-0-mvp to iter-4, base |
+| Extra sealed set FakeAVCeleb | done once | E-015 |
+| Post-freeze research E-016 to E-032 | logged (exploratory, audits, platform modules; E-031 proposed only, not run) | docs/EXPERIMENTS.md |
+| Product platform (per-module verdicts, Evaluation Lab, v2 website) | implemented and tested; no fused or report-level score; APPROVED_HEADS = {} | D-087, D-088, docs/TESTING_RECORD.md |
+| Submission set | built 2026-10-30 in submission/final/ (frozen; not edited after) | docs/STATUS.md, tag submission-final |
+| Post-freeze evaluations on unread data | E-033 (LAV-DF, 18,383 clips) and E-034 (Community Forensics-Eval, 7,209 images) preregistered, run once, logged, independently re-verified on 2026-10-31 | D-094, docs/EXPERIMENTS.md E-033 and E-034 with their independent-check lines |
+| Published-benchmark comparison | written with tiers; every number traced to the two-agent evidence trail; every cited paper registered | docs/POST_FREEZE_BENCHMARK_COMPARISON.md, docs/LITERATURE_BENCHMARK_EVIDENCE.md, docs/RESEARCH.md (R-087 to R-095) |
+| Evaluation Lab dataset and group selection | implemented, tested through the API (17 groups equal the stored results) and in a browser (1,366 and 390 px) | docs/TESTING_RECORD.md sections 18 and 19 |
+| Audio-visual fusion | investigated (E-010 to E-012), not adopted (D-059); remains the planned final integration milestone; the product keeps separate audio and visual results | D-059, D-087 |
+
+Genuine blockers and open decisions (owner: the user):
+
+1. Whether the 2026-10-31 comparisons and E-033/E-034 enter the submitted paper, report or slides; a draft change list is in docs/PROPOSED_DELIVERABLE_INSERTIONS.md. submission/final/ is not edited without that decision.
+2. Review of D-094 and E-033/E-034 (tagged decided autonomously - needs user review).
+3. Items carried from 2026-10-30: the Phase 2 member interview and work allocation (docs/TEAM_WORK_ALLOCATION.md, planned), then the human actions of docs/FINAL_SUBMISSION_AUDIT.md section 5.
+4. Licensing questions parked by D-092 (E-029 heads, SyncNet weights, FakeAVCeleb form terms).
+
+Next steps that need no new decision: none of the experimental work remains open. Possible later experiments (each would need its own preregistration and, where data must be downloaded, the user's go-ahead): RAISE-paired Community Forensics generators; the four undownloaded ForenSynths generators; a perceptual near-duplicate check for E-033 and E-034; the audio-visual integration milestone.

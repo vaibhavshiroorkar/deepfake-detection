@@ -1,0 +1,118 @@
+{
+ "1366_21_fake_video_only_lavdf_train": {
+  "sections": 1,
+  "section_titles": [
+   "Results of the checks\n(4)"
+  ],
+  "cards": [
+   "face_video",
+   "speech",
+   "media_metadata",
+   "generated_video"
+  ],
+  "headline": "4 checks ran on this video. 1 check found a point that merits attention; 1 found nothing within its tested scope; 1 described the file; 1 is experimental and makes no finding.",
+  "legend": [
+   "Merits attention\n1",
+   "Nothing found within tested scope\n1",
+   "File information\n1",
+   "Experimental, no finding made\n1"
+  ],
+  "overflow": 0
+ },
+ "1366_02_fake_deepfakes_faceswap_ffpp": {
+  "sections": 1,
+  "section_titles": [
+   "Results of the checks\n(4)"
+  ],
+  "cards": [
+   "face_video",
+   "speech",
+   "media_metadata",
+   "generated_video"
+  ],
+  "headline": "3 checks ran on this video. 1 check found a point that merits attention; 1 described the file; 1 is experimental and makes no finding. 1 did not apply.",
+  "legend": [
+   "Merits attention\n1",
+   "File information\n1",
+   "Experimental, no finding made\n1",
+   "Did not apply to this file\n1"
+  ],
+  "overflow": 0
+ },
+ "1366_16_fake_progan_val": {
+  "sections": 1,
+  "section_titles": [
+   "Results of the checks\n(4)"
+  ],
+  "cards": [
+   "face_video",
+   "speech",
+   "media_metadata",
+   "generated_video"
+  ],
+  "headline": "1 check ran on this image. 1 described the file. 3 did not apply.",
+  "legend": [
+   "File information\n1",
+   "Did not apply to this file\n3"
+  ],
+  "overflow": 0
+ },
+ "390_21_fake_video_only_lavdf_train": {
+  "sections": 1,
+  "section_titles": [
+   "Results of the checks\n(4)"
+  ],
+  "cards": [
+   "face_video",
+   "speech",
+   "media_metadata",
+   "generated_video"
+  ],
+  "headline": "4 checks ran on this video. 1 check found a point that merits attention; 1 found nothing within its tested scope; 1 described the file; 1 is experimental and makes no finding.",
+  "legend": [
+   "Merits attention\n1",
+   "Nothing found within tested scope\n1",
+   "File information\n1",
+   "Experimental, no finding made\n1"
+  ],
+  "overflow": 0
+ },
+ "390_02_fake_deepfakes_faceswap_ffpp": {
+  "sections": 1,
+  "section_titles": [
+   "Results of the checks\n(4)"
+  ],
+  "cards": [
+   "face_video",
+   "speech",
+   "media_metadata",
+   "generated_video"
+  ],
+  "headline": "3 checks ran on this video. 1 check found a point that merits attention; 1 described the file; 1 is experimental and makes no finding. 1 did not apply.",
+  "legend": [
+   "Merits attention\n1",
+   "File information\n1",
+   "Experimental, no finding made\n1",
+   "Did not apply to this file\n1"
+  ],
+  "overflow": 0
+ },
+ "390_16_fake_progan_val": {
+  "sections": 1,
+  "section_titles": [
+   "Results of the checks\n(4)"
+  ],
+  "cards": [
+   "face_video",
+   "speech",
+   "media_metadata",
+   "generated_video"
+  ],
+  "headline": "1 check ran on this image. 1 described the file. 3 did not apply.",
+  "legend": [
+   "File information\n1",
+   "Did not apply to this file\n3"
+  ],
+  "overflow": 0
+ }
+}

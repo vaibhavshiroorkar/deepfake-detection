@@ -280,3 +280,60 @@ Branch main (from 7a61675), D-093. No experiment run, no number, threshold, ledg
 | Protected and sealed files | 339 files under data/_final, src/ and checkpoints/ plus the ledger hashed before the switch to main and after the work: identical |
 
 Not run: the opt-in GPU tests, the original dashboard and the v2 website in a browser (no code they serve changed), a rebuild of the report or the deck.
+## 18. Post-freeze evaluations and Evaluation Lab groups (2026-10-31, D-094)
+
+Logs in docs/test_evidence/2026-10-31_posteval/. Environment ENV-DESKTOP-GPU (Windows 10 19045, Python 3.13.15, torch 2.14.1+cu130, RTX 5070 12,227 MiB).
+
+| Check | Command | Result | Log |
+|---|---|---|---|
+| Safe suite (CPU, 13 data-dependent items deselected as in section 2) | `CUDA_VISIBLE_DEVICES=-1 .venv/Scripts/python.exe -m pytest tests -p no:cacheprovider -rs` with the deselect list | 737 passed, 2 skipped (the two opt-in GPU tests), 13 deselected, exit 0 (713 before; +16 group tests, +8 v2 website lab tests) | full_safe_suite.txt |
+| Lab and dashboard tests (after the last front-end edit: 34 of test_ui_v2.py re-run, 34 passed) | `CUDA_VISIBLE_DEVICES=-1 .venv/Scripts/python.exe -m pytest tests/platform_dashboard tests/platform_evallab -q -p no:cacheprovider -rs` | 160 passed | lab_and_ui_tests.txt |
+| Live browser check of the redesigned lab on the real E-033 and E-034 score files (Edge through Playwright, server deliverables_v2/website/serve_v2.py on port 8013, mock mode for analysis) | scratchpad script, results copied here | 34 of 34 checks passed at 1,366 px and 390 px: dropdown lists the three datasets; no POST on open or on selection; advanced section collapsed; no horizontal scroll; the whole pool is not a group card and needs a second click; the headline AUROC equals results.json for T-V G2 (0.3715), T-I G5 (0.5693) and T-A FULL (0.6458); experimental banner and threshold provenance on every result; no "overall score" or "approved for" text | lab_live_check.txt, screens/ |
+| Protected artefacts unchanged | SHA-256 of every file under ledger/, data/_final, checkpoints/, data/_results/modern/e028, data/_results/e015, data/cf_eval/_meta at 01:32:13 and at 02:20:02 (+0530) | 332 files, identical (diff empty); ledger 76 entries; APPROVED_HEADS = {}; no tracked file under src/dfd/infer, src/dfd/web, ledger, checkpoints, paper, report, slides changed | protected_diff.txt; data/_results/posteval/protected_before.sha256 and protected_after.sha256 |
+| Preregistration hashes | re-derived from docs/EXPERIMENTS.md after the results were appended | E-033 5a6d0077...743f and E-034 b8817c16...054b both re-derive | (inline) |
+| Reproducibility of stored predictions | score_e033.py reproduce (20 clips), score_e034.py reproduce (50 images) | largest absolute difference 0.0 for both (tolerance 0.02) | data/_results/posteval/E-03x/reproducibility.json |
+| Traceability of the comparison document | script comparing every E-033 and E-034 interval string in docs/POST_FREEZE_BENCHMARK_COMPARISON.md with results.json; derived F1 recomputed from the stored rates | 19 of 19 found; 6 derived F1 values equal | (inline) |
+
+Not run: the opt-in GPU tests (RUN_PARITY, RUN_LIVE_FACE; they rewrite data/_results/platform), scripts/check_docs.py (the deliverables were not changed), the 13 data-dependent tests.
+## 19. Continuation audit of E-033, E-034 and the Evaluation Lab (2026-10-31)
+
+Read-only verification of the previous session's claims; nothing rescored or retrained. Logs in docs/test_evidence/2026-10-31_continuation/.
+
+| Check | Result | Log |
+|---|---|---|
+| Independent recomputation of E-033 and E-034 (scikit-learn AUROC, own threshold metrics and own group bootstrap, scratchpad script) | 88 of 88 checks passed. Preregistration hashes re-derive and each RESULT follows its end line. Checkpoint hashes and thresholds match. Pool, exclusions, labels, groups and seeded memberships reconcile with the source metadata. All 17 group results equal results.json to 1e-9. Bootstrap intervals agree within 0.007. A follow-up check (11 of 11) covered the E-034 group rules, exclusion of the duplicates, single scoring passes and the secondary analyses | (inline; script in the session scratchpad) |
+| Evaluation Lab over HTTP on the real score files (server serve_v2.py, port 8013, stopped afterwards) | 98 of 98 checks passed. All 17 groups (five per dataset, plus FULL for the two LAV-DF heads) reproduce every stored metric and interval exactly, use the checkpoint threshold (source fixed) and read the descriptor's score file. Listed counts equal the stored results. Refusals: FULL without confirmation, a client threshold, an unknown group or dataset, FULL on CF-Eval | lab_api_check.txt |
+| Live browser check (Edge through Playwright, 1,366 and 390 px) | 34 of 34 checks passed (same checks as section 18) | lab_live_check.txt, screens/ |
+| Safe suite, run fresh | 737 passed, 2 skipped (opt-in GPU tests), 13 deselected, exit 0. Six "moov atom not found" stderr lines after the summary come from OpenCV's FFmpeg reader on the junk .mp4 files that tests/prep writes on purpose (unchanged since 2026-10-24); no test failed | full_safe_suite.txt |
+| Protected artefacts | 332 files identical to the baseline data/_results/posteval/protected_before.sha256 (its own SHA-256 934a31ae...b0ee equals the value recorded in section 18); ledger 76 entries, no git diff; APPROVED_HEADS = {}; FORBIDDEN_REPORT_KEYS unchanged; no diff in src/dfd/platform/schema.py, verdict.py, modules/, src/dfd/infer, src/dfd/web | protected_now.sha256, protected_diff.txt (empty) |
+| Literature trace | every published number of docs/POST_FREEZE_BENCHMARK_COMPARISON.md occurs in docs/LITERATURE_BENCHMARK_EVIDENCE.md; all 13 cited papers are registered (GenD added as R-088 after a Crossref check) | (inline) |
+
+Not run: the opt-in GPU tests; scripts/check_docs.py (the deliverables were not changed); the 13 data-dependent tests.
+
+## 20. Recommended demonstrations in the Evaluation Lab (2026-10-31, D-095)
+
+| Check | Result | Log |
+|---|---|---|
+| Backend tests tests/platform_evallab (new test_evallab_showcase.py: per-seed derivations against hand computation, read-only endpoint leaves the tree unchanged and creates no run, every displayed AUROC and count equals the logged file) | 77 passed | (inline) |
+| Browser tests tests/platform_dashboard (mocked API; 7 new tests: cards, counts and kind labels before the dataset list, modality filter, stored-result detail with derived labels, "Open in Lab evaluation" preselects without a POST, load error does not block the guided flow, no horizontal scroll at 390 and 1,280 px; dropdown labels now carry the modality) | 94 passed together with the evallab tests (171) | (inline) |
+| Live browser check against the real API (serve_v2.py mock mode, port 8016; Chromium through Playwright, 1,366 and 390 px) | all 14 entries show the logged AUROC and real, fake and total counts; LAV-DF T-A G4 preselected by the button; 0 POST requests; horizontal overflow 0 at both widths | deliverables_v2/website/test_evidence/2026-10-31_reco/ |
+| Safe suite, run fresh (13 data-dependent tests deselected as in section 2) | 748 passed, 2 skipped, 13 deselected, exit 0 (737 before plus the 11 new tests) | (inline) |
+| Protected artefacts | 332 of 332 files identical to data/_results/posteval/protected_before.sha256 | (inline) |
+
+## 21. Sealed re-analysis groups and the demo set (2026-10-31, D-096)
+
+- Unit and API tests: tests/platform_evallab and tests/platform_dashboard, 175 passed. New: a sealed_reanalysis group runs as final_reanalysis with val_fit thresholds and ledger entries; the same descriptor without a ledger entry is refused (FINAL_GUARD); a sealed descriptor without the declaration is still refused; two datasets in one score file are counted separately (regression for the cache bug in STATUS.md).
+- Reproduction check (real data, synchronous lab): G4 of In-the-Wild, Celeb-DF v2 and CNN gave AUROC 0.9148, 0.8999, 0.9316, balanced accuracy 0.8422, 0.8037, 0.8102, recall 0.8560, 0.7172, 0.6562, precision 0.7272, 0.9727, 0.9514, equal to data/_final/eval/I-4.json to four decimals. Run times: In-the-Wild G4 115 s, CNN G4 103 s, Celeb-DF G4 4 s, small groups 1 to 2 s after the file is cached.
+- Browser check against the real server (mock mode, real Lab API), deliverables_v2/website/test_evidence/2026-10-31_sealed_groups/: all six datasets listed with modality prefixes; the Celeb-DF card preselects G4; group counts shown as in the groups file; Celeb-DF G1 run finished with the sealed re-analysis banner; horizontal overflow 0 at 1,366 and 390 px.
+- Demo set: 23 files written, none skipped; every pool resolved through select_records(final=False).
+- Full suite: `pytest -q` 765 passed, 2 skipped (this run did not deselect the 13 data-dependent tests). Afterwards, 332 of 332 files listed in data/_results/posteval/protected_before.sha256 were still identical; no diff in src/dfd/platform/verdict.py, schema.py, modules/, src/dfd/infer, src/dfd/web or ledger/.
+
+## 22. Simple report view (2026-10-31, D-097)
+
+- tests/platform_dashboard: 94 passed.
+- Live browser check (server --live, Chromium, 1,366 and 390 px), deliverables_v2/website/test_evidence/2026-10-31_simple_view/: uploads of demo files 21 (LAV-DF video edit), 02 (FF++ Deepfakes) and 16 (ProGAN image). Each report had one section with the cards face_video, speech, media_metadata, generated_video in that order; the headline and the outcome chart counted these four only; horizontal overflow 0 at both widths.
+
+## 23. Analysed file kept visible in the report (2026-10-31, D-098)
+
+- tests/platform_dashboard: 94 passed.
+- Live browser check (server --live, Chromium, 1,366 and 390 px), deliverables_v2/website/test_evidence/2026-10-31_report_preview/: demo files 02 (video), 09 (FLAC audio), 16 (PNG image). In all 6 cases the report showed the file (video and audio with controls, media loaded, 420 px wide on desktop, full width on phone), horizontal overflow 0; after "Analyse another file" no preview element remained in the report.

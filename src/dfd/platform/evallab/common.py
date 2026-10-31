@@ -21,11 +21,20 @@ ROLES = {
     "dev_x": "development slice (repeatable, not final)",
     "test_in": "final held-out (sealed)",
     "test_x": "final held-out (sealed)",
+    "post_x": "post-freeze evaluation on previously unread data (own preregistered experiment, not sealed)",
 }
 
 METRICS = ("auc", "eer", "precision", "recall", "specificity", "fpr", "fnr", "f1", "accuracy",
            "balanced_accuracy")
-PURPOSES = ("development", "validation", "final_reanalysis")
+PURPOSES = ("development", "validation", "final_reanalysis", "post_freeze_evaluation")
+GROUP_DIRS = ("data/_evallab/imports",)  # where evaluation-group descriptors (*.lab.json) are looked for
+ENV_GROUP_DIRS = "DFD_EVALLAB_GROUP_DIRS"
+FULL_GROUP = "FULL"  # the whole eligible pool: an explicit action, never a default
+POST_FREEZE_STATUS = ("experimental evaluation output: a frozen checkpoint measured on previously unread data; "
+                      "it is not an approval for deployment and does not change any product verdict")
+SEALED_REANALYSIS_STATUS = ("stored sealed-test scores re-analysed: the frozen checkpoint was scored once on this sealed split at the "
+                            "freeze (E-014); nothing is scored again, metrics are recomputed from the logged scores on a predeclared "
+                            "group. It is not a new held-out test, not an approval, and does not change any product verdict")
 THRESHOLD_SOURCES = ("val_fit", "fixed")
 BREAKDOWN_COLUMNS = ("generator", "source")
 HASH_COLUMNS = ("sha256", "file_hash")

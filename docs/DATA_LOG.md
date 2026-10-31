@@ -365,3 +365,11 @@ Owner: W1-I (image research agent, D-081). Licences and revisions: rows I6 and I
 - Format note (from the index, not a measurement of any detector): Eval fakes are PNG except Firefly (JPEG), while Eval reals are JPEG (LAION, COCO, ImageNet), TIFF (RAISE) or PNG (FFHQ, some LAION). A detector can therefore separate many Eval cells by compression history alone; E-028 and E-029 report a format-matched analysis.
 - The two test downloads of Small shards 78 and 117 (2026-10-27 14:35, rate check) are part of I6-S.
 
+## Post-freeze evaluation data of 2026-10-31 (E-033, E-034, D-094; logged before any sample was scored)
+
+Downloading or listing data authorises nothing by itself; each use is the preregistered experiment named here.
+
+| Use | Dataset, revision and licence | Selection (frozen file and SHA-256) | Local path | Counts | Hashes and checks |
+|---|---|---|---|---|---|
+| E-033 (product heads T-V and T-A, post_x) | LAV-DF, revision c9158b3b9ad7f05eca712da18b8722d79d7f4d8e, already on disk (rows above); CC BY-NC 4.0 and the VoxCeleb2 terms | official test split minus the 2,000 sealed clips of lavdf_subset-e9d12decaf1f and the 5,717 clips sharing a source with them; data/_manifests/posteval/e033_lavdf.manifest.csv, exclusions.csv, groups.json (7a4c6614a96b3f6f68da3e6d569e49ed57908c974d01e7927048ca29cc217544) | data/lavdf/LAV-DF/test (read only) | 18,383 clips, 5,170 source groups (real 5,170; video_fake 4,451; audio_fake 4,381; both_fake 4,381) | exact-duplicate check by SHA-256 against 16,000 earlier LAV-DF clips: 0 duplicates (data/_results/posteval/E-033/duplicates.json) |
+| E-034 (product head T-I, post_x) | CommunityForensics-Eval, revision 7d4a74a88d2cac93b513c0853bf92c260eaceea0 (row I7 above); CC BY-NC-SA 4.0, research use, no image in any document | 58 of the 202 unread shards without RAISE-paired rows, seeded selection; data/_manifests/posteval/e034_cfeval.shards.json (9207aba0d61b88d00fc66493170d348214311b9676278b0709a947ef06d92ab6) | data/cf_eval_e034/shards/data (new folder; the E-028 folder data/cf_eval is not written) | 5.19 GB; expected 4,586 generated and 2,696 real images, 12 generators | each shard checked against the Hub LFS SHA-256 and size of data/cf_eval/_meta/shards.json by scripts/posteval/download_e034.py; log data/cf_eval_e034/_meta/download_log.jsonl |

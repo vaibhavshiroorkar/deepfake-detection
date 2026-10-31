@@ -68,6 +68,19 @@
     return v && v.title ? v.title : str(m.module_id);
   }
   function moduleName(id) { var v = VOCAB.modules[id]; return v && v.title ? v.title : str(id); }
+
+  /* ---------------- simple view (D-097) ----------------
+     The page shows only these checks, together in one section, in this order. Every other check still runs on the server and stays
+     in the downloaded JSON and in "Technical details for the whole report"; nothing is removed. Set SIMPLE_VIEW to false to show
+     every check again, grouped by outcome as before. */
+  var SIMPLE_VIEW = true;
+  var SHOWN_MODULES = ["face_video", "speech", "media_metadata", "generated_video"];
+  function isShown(id) { return !SIMPLE_VIEW || SHOWN_MODULES.indexOf(id) >= 0; }
+  function shownModules(r) {
+    var ms = (Array.isArray(r.modules) ? r.modules : []).filter(function (m) { return isShown(m.module_id); });
+    if (SIMPLE_VIEW) ms.sort(function (a, b) { return SHOWN_MODULES.indexOf(a.module_id) - SHOWN_MODULES.indexOf(b.module_id); });
+    return ms;
+  }
   function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
 
   /* ---------------- icons: one shape per group, so meaning never rests on colour alone ---------------- */
@@ -169,6 +182,18 @@
     });
     return ul;
   }
+  /* The uploaded file, played from the browser's local copy (nothing is fetched again). Shown only when the report is for the
+     file chosen in this page, so a demo scenario never shows another file. */
+  function reportPreview(filename) {
+    if (!previewUrl || !previewKind || str(filename) !== previewName) return null;
+    var box = el("div", "ov-preview");
+    var m = previewKind === "image" ? el("img") : el(previewKind === "video" ? "video" : "audio");
+    if (previewKind === "image") m.alt = "The analysed image";
+    else { m.controls = true; m.preload = "metadata"; m.setAttribute("aria-label", "The analysed " + (previewKind === "video" ? "video" : "audio")); }
+    m.src = previewUrl;
+    box.appendChild(m);
+    return box;
+  }
   function renderMeta(r) {
     var s = $("meta"); clear(s);
     var inp = r.input, p = r.probe, st = r.status;
@@ -179,6 +204,8 @@
     h.id = "overview-h";
     left.appendChild(h);
     head.appendChild(left);
+    var pm = reportPreview(inp.filename);
+    if (pm) head.appendChild(pm);
     s.appendChild(head);
     var kind = { video: "Video", image: "Image", audio: "Audio" }[p.media_type] || str(p.media_type);
     var streams = p.media_type === "video" ? (p.has_audio === true ? "Picture and sound" : (p.has_audio === false ? "Picture only, no sound" : "")) : "";
@@ -187,12 +214,12 @@
       ["Dimensions", (p.width && p.height) ? p.width + " x " + p.height + " px" : ""], ["Streams", streams],
       ["Size", bytes(inp.size_bytes)], ["Analysis", stateText(st.state)]
     ]));
-    var cov = r.coverage, cnt = function (k) { return Array.isArray(cov[k]) ? cov[k].length : 0; };
+    var cov = r.coverage, cnt = function (k) { return Array.isArray(cov[k]) ? cov[k].filter(function (i) { return isShown(isObj(i) ? i.module_id : ""); }).length : 0; };
     if (st.state === "failed") {
       s.appendChild(el("p", "state-note failed", "No check completed, so nothing was analysed. This is not a statement about the file."));
     } else if (st.state === "partial") {
       var n = cnt("failed") + cnt("timed_out") + cnt("unsupported");
-      var note = el("p", "state-note partial", n + " of " + r.modules.length + " checks did not complete (" + cnt("failed") + " failed, " +
+      var note = el("p", "state-note partial", n + " of " + shownModules(r).length + " checks did not complete (" + cnt("failed") + " failed, " +
         cnt("timed_out") + " timed out, " + cnt("unsupported") + " not available). The results below cover the other checks only.");
       note.id = "partial-note";
       s.appendChild(note);
@@ -216,9 +243,13 @@
   }
   /* The same grouping the original page uses: the server's summary.groups when present, otherwise the group of each module result. */
   function groupsOf(r) {
-    if (isObj(r.summary) && Array.isArray(r.summary.groups)) return r.summary.groups;
+    if (isObj(r.summary) && Array.isArray(r.summary.groups)) {
+      return r.summary.groups.map(function (g) {
+        return { id: g.id, label: g.label, modules: (Array.isArray(g.modules) ? g.modules : []).filter(isShown) };
+      }).filter(function (g) { return g.modules.length; });
+    }
     var by = {};
-    r.modules.forEach(function (m) { var g = groupOf(m); (by[g] = by[g] || []).push(m.module_id); });
+    shownModules(r).forEach(function (m) { var g = groupOf(m); (by[g] = by[g] || []).push(m.module_id); });
     var label = { inconclusive: "Results", not_applicable: "Did not apply to this file", unsupported: "Not available", did_not_run: "Did not complete" };
     return GROUP_ORDER.filter(function (g) { return by[g]; }).map(function (g) { return { id: g, label: label[g] || g, modules: by[g] }; });
   }
@@ -306,7 +337,7 @@
       s.appendChild(el("p", "empty", "This report was produced in an older format without a written summary. Each check is listed below."));
       return;
     }
-    s.appendChild(el("p", "summary-head", sm.headline));
+    s.appendChild(el("p", "summary-head", SIMPLE_VIEW ? shownHeadline(r) : sm.headline));
     if (Array.isArray(sm.media_facts) && sm.media_facts.length) {
       var mf = el("div", "media-facts");
       sm.media_facts.forEach(function (f) {
@@ -320,10 +351,36 @@
     if (sm.no_overall_score) s.appendChild(el("p", "no-score", sm.no_overall_score));
   }
 
+  function plural(n, one, many) { return n + " " + (n === 1 ? one : many); }
+  /* Mirror of explain.summarise for the checks this page shows. */
+  function shownHeadline(r) {
+    var c = {};
+    shownModules(r).forEach(function (m) { var g = groupOf(m); c[g] = (c[g] || 0) + 1; });
+    var n = function (g) { return c[g] || 0; };
+    var kind = { video: "video", image: "image", audio: "audio file" }[isObj(r.probe) ? r.probe.media_type : ""] || "file";
+    var parts = [];
+    if (n("attention")) parts.push(plural(n("attention"), "check found a point that merits attention", "checks found points that merit attention"));
+    if (n("nothing_found")) parts.push(plural(n("nothing_found"), "found nothing within its tested scope", "found nothing within their tested scope"));
+    if (n("credential")) parts.push(plural(n("credential"), "verified a content credential", "verified content credentials"));
+    if (n("inconclusive")) parts.push(plural(n("inconclusive"), "was inconclusive", "were inconclusive"));
+    if (n("informational")) parts.push(plural(n("informational"), "described the file", "described the file"));
+    if (n("experimental")) parts.push(plural(n("experimental"), "is experimental and makes no finding", "are experimental and make no finding"));
+    var ran = shownModules(r).length - n("not_applicable") - n("unsupported") - n("did_not_run");
+    var head = plural(ran, "check", "checks") + " ran on this " + kind + ".";
+    if (parts.length) head += " " + cap(parts.join("; ")) + ".";
+    var tail = [];
+    if (n("not_applicable")) tail.push(plural(n("not_applicable"), "did not apply", "did not apply"));
+    if (n("unsupported")) tail.push(plural(n("unsupported"), "was not available", "were not available"));
+    if (n("did_not_run")) tail.push(plural(n("did_not_run"), "did not complete", "did not complete"));
+    if (tail.length) head += " " + cap(tail.join(", ")) + ".";
+    return head;
+  }
+
   function renderConflicts(r) {
     var s = $("conflicts"); clear(s);
     var list = isObj(r.summary) && Array.isArray(r.summary.disagreements) ? r.summary.disagreements
       : (Array.isArray(r.conflicts) ? r.conflicts.map(function (c) { return { modules: c.modules, text: c.note }; }) : []);
+    list = list.filter(function (x) { return !Array.isArray(x.modules) || x.modules.every(isShown); });   /* only disagreements among the shown checks */
     s.hidden = !list.length;
     if (!list.length) return;
     s.appendChild(el("h2", "h3", "Checks that point in different directions"));
@@ -664,6 +721,21 @@
   /* ---------------- C. results grouped by meaning ---------------- */
   function renderEvidence(r) {
     var host = $("evidence"); clear(host);
+    if (SIMPLE_VIEW) {
+      var ms = shownModules(r);
+      var one = el("section", "group g-all wide");
+      one.id = "group-all";
+      var oh = el("h2", "group-h");
+      oh.appendChild(el("span", null, "Results of the checks"));
+      oh.appendChild(el("span", "count", "(" + ms.length + ")"));
+      one.appendChild(oh);
+      var oc = el("div", "cards");
+      ms.forEach(function (m) { oc.appendChild(renderCard(m)); });
+      one.appendChild(oc);
+      if (ms.length) host.appendChild(one);
+      else host.appendChild(el("p", "empty", "No checks are listed in this report."));
+      return;
+    }
     var byId = {};
     r.modules.forEach(function (m) { byId[m.module_id] = m; });
     groupsOf(r).forEach(function (g) {
@@ -784,7 +856,7 @@
   var POLL_INTERVAL_MS = qnum("poll_interval_ms", 1000);
   var POLL_TIMEOUT_MS = qnum("poll_timeout_ms", 600000);
   var pollToken = 0;
-  var previewUrl = null;
+  var previewUrl = null, previewKind = "", previewName = "";   /* kept so the report can show the analysed file again */
   var seenSteps = [];
 
   function setLive(kind, text, detail) {
@@ -865,7 +937,7 @@
   }
   function renderSteps(p) {
     var ol = $("steps");
-    if (p.module_id && seenSteps.indexOf(p.module_id) < 0) seenSteps.push(p.module_id);
+    if (p.module_id && isShown(p.module_id) && seenSteps.indexOf(p.module_id) < 0) seenSteps.push(p.module_id);
     clear(ol);
     seenSteps.forEach(function (id) {
       var running = id === p.module_id;
@@ -908,7 +980,7 @@
       }
       var p = isObj(j.progress) ? j.progress : {};
       if (j.state === "running") {
-        setProgressStatus("running", p.module_id ? "Running: " + moduleName(p.module_id) : "Starting the checks",
+        setProgressStatus("running", p.module_id && isShown(p.module_id) ? "Running: " + moduleName(p.module_id) : (p.module_id ? "Running the checks" : "Starting the checks"),
           num(p.total) && p.total > 0 ? str(p.completed) + " of " + str(p.total) + " checks done" : "");
         setMeter(num(p.completed) ? p.completed : 0, p.total);
         renderSteps(p);
@@ -959,7 +1031,7 @@
     return ["image", "video", "audio"].filter(function (k) { return Array.isArray(a[k]) && a[k].indexOf(e) >= 0; })[0] || "";
   }
   function kindWord(k) { return k === "audio" ? "audio file" : k; }
-  function moduleIds() { return Array.isArray(VOCAB.module_order) ? VOCAB.module_order : Object.keys(VOCAB.modules || {}); }
+  function moduleIds() { return (Array.isArray(VOCAB.module_order) ? VOCAB.module_order : Object.keys(VOCAB.modules || {})).filter(isShown); }
   function checksFor(kind) {
     return moduleIds().filter(function (k) {
       var v = VOCAB.modules[k];
@@ -1009,6 +1081,9 @@
   function showFile(f) {
     var dz = $("dropzone"), pv = $("preview");
     if (previewUrl) { try { URL.revokeObjectURL(previewUrl); } catch (e) { /* ignore */ } previewUrl = null; }
+    previewKind = ""; previewName = "";
+    var oldPv = document.querySelector("#meta .ov-preview");
+    if (oldPv && oldPv.parentNode) oldPv.parentNode.removeChild(oldPv);   /* its URL was just revoked */
     clear(pv);
     if (!f) { dz.setAttribute("data-state", "empty"); $("file-card").hidden = true; willRun(""); checkMismatch(); return; }
     dz.setAttribute("data-state", "file");
@@ -1025,6 +1100,7 @@
     try {
       if (kind && window.URL && URL.createObjectURL) {
         previewUrl = URL.createObjectURL(f);
+        previewKind = kind; previewName = f.name;
         var m = kind === "image" ? el("img") : el(kind === "video" ? "video" : "audio");
         if (kind === "image") m.alt = "Preview of the chosen image";
         else { m.controls = true; m.preload = "metadata"; if (kind === "video") m.muted = true; }

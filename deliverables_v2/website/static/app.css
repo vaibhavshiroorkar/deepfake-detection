@@ -517,3 +517,63 @@ legend{font-weight:700;font-size:.875rem;padding:0 var(--s2)}
   .panel,.card{box-shadow:none;break-inside:avoid}
   details{display:block} details>summary{display:none} details>*{display:block!important}
 }
+
+/* Evaluation Lab: guided "Evaluate a dataset" flow (additive, scoped to lab classes) */
+.lab-banner{background:var(--exp-bg);color:var(--exp-fg);border:1px dashed var(--exp-fg);border-radius:var(--r-card);padding:var(--s3) var(--s4);font-weight:600;font-size:.9375rem}
+.lab-advanced>summary{cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center}
+.lab-advanced>summary:focus-visible{outline:3px solid var(--accent-text);outline-offset:2px}
+.lab-adv-body{display:grid;gap:var(--s4);margin-top:var(--s3)}
+.ev-area{display:grid;gap:var(--s4)}
+.ev-out{display:grid;gap:var(--s4)}
+.ev-groups .pick-sub{overflow-wrap:anywhere}
+.ev-kind-general{background:var(--none-bg);color:var(--none-fg);border:1px solid var(--none-fg)}
+.ev-kind-diagnostic{background:var(--warn-bg);color:var(--warn-fg);border:1px solid var(--warn-fg)}
+.ev-full{border-top:1px dashed var(--control-border);padding-top:var(--s3);display:grid;gap:var(--s2);justify-items:start}
+.ev-confirm{display:flex;flex-wrap:wrap;gap:var(--s2);align-items:center;background:var(--warn-bg);border-radius:var(--r-card);padding:var(--s3) var(--s4)}
+.ev-confirm p{flex:1 1 100%;margin:0}
+.ev-results{display:grid;gap:var(--s4)}
+.ev-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));gap:var(--s3)}
+.ev-tile{display:grid;gap:2px;background:var(--card-2);border-radius:var(--r-card);padding:var(--s3) var(--s4);min-width:0}
+.ev-tile-name{font-size:.8125rem;font-weight:600;color:var(--text-2)}
+.ev-tile-val{font-family:var(--serif);font-size:1.5rem}
+.ev-tile-int,.ev-tile-note{font-size:.8125rem;color:var(--muted)}
+.ev-more,.ev-cr,.ev-warnings,.ev-prov{border-top:1px solid var(--border);padding-top:var(--s2)}
+.ev-results summary{cursor:pointer;font-weight:600;min-height:32px}
+/* ---- recommended demonstrations (logged results, displayed as logged) ---- */
+.lab-reco .lab-body{display:grid;gap:var(--s4)}
+.reco-legend{grid-template-columns:repeat(3,minmax(0,1fr))}
+.reco-filter{display:flex;flex-wrap:wrap;gap:var(--s2)}
+.reco-chip{padding:0 var(--s4)}
+.reco-chip.on{background:var(--primary);color:var(--primary-ink);border-color:var(--primary)}
+.reco-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:var(--s3)}
+.reco-card{display:grid;gap:var(--s2);align-content:start;border:1px solid var(--border);border-radius:var(--r-card);background:var(--card);padding:var(--s4);min-width:0}
+.reco-card.reco-limitation{border-style:dashed;border-color:var(--warn-fg)}
+.reco-card p{margin:0}
+.reco-title{font-size:1.0625rem;margin:0;overflow-wrap:anywhere}
+.reco-setting{font-size:.875rem;font-weight:600;color:var(--accent-text)}
+.reco-counts,.reco-line{font-size:.8125rem;color:var(--text-2)}
+.reco-why{font-size:.875rem;line-height:1.5}
+.reco-primary{display:grid;gap:2px;background:var(--card-2);border-radius:var(--r-card);padding:var(--s3) var(--s4)}
+.reco-mod{background:var(--primary-soft);color:var(--text);border:1px solid var(--control-border)}
+.reco-kind{background:var(--exp-bg);color:var(--exp-fg);border:1px solid var(--exp-fg)}
+.reco-task{background:var(--none-bg);color:var(--none-fg);border:1px solid var(--none-fg)}
+.reco-actions{display:flex;flex-wrap:wrap;gap:var(--s2)}
+.reco-detail{display:grid;gap:var(--s2);border-top:1px solid var(--border);padding-top:var(--s3);min-width:0}
+.reco-detail .lab-kv dd{overflow-wrap:anywhere}
+.reco-caveats summary,.reco-more>summary{cursor:pointer;font-weight:600;min-height:32px}
+.reco-more{display:grid;gap:var(--s3);border-top:1px solid var(--border);padding-top:var(--s3)}
+.reco-notshown{margin:0;padding-left:var(--s5);font-size:.875rem;line-height:1.5;color:var(--text-2)}
+#lab-guided{scroll-margin-top:96px}
+@media (max-width:720px){.reco-legend{grid-template-columns:1fr}.reco-actions .btn{flex:1 1 100%}}
+.reco-detail th[scope=row]{white-space:normal}
+.reco-note{display:block;font-size:.75rem;font-weight:400;color:var(--muted)}
+.reco-detail .lab-t{width:100%;table-layout:fixed}
+.reco-detail .lab-t th,.reco-detail .lab-t td{white-space:normal;overflow-wrap:anywhere}
+.reco-detail .lab-t thead th:nth-child(1){width:44%}
+.reco-detail .lab-t thead th:nth-child(2){width:22%}
+/* analysed file shown again in the report (D-098) */
+.ov-preview{width:min(100%,420px);border-radius:var(--r-card);overflow:hidden;background:var(--none-bg)}
+.ov-preview img,.ov-preview video{display:block;width:100%;max-height:300px;object-fit:contain;background:#000}
+.ov-preview audio{display:block;width:100%}
+@media (max-width:640px){.ov-preview{width:100%}}
+@media print{.ov-preview video,.ov-preview audio{display:none}}

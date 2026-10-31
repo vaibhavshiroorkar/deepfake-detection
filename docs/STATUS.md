@@ -1,6 +1,18 @@
 # STATUS
 
-Last updated: 2026-10-29 (final clean-up on main after the audit, D-093: stale README, STATUS, FILES, DEMO and hand-over text marked or corrected, the Imagen 3 format-only AUC recorded under E-028, the ledger hash basis explained below, submission records and manifest regenerated with LF text hashing, Word comments removed from the submitted DOCX copy; docs/TESTING_RECORD.md section 17; nothing running).
+Last updated: 2026-10-31 02:55 IST (continuation session: the previous session's E-033, E-034, Evaluation Lab and benchmark claims were verified read only and hold; wording and citation-register corrections made; PLAN.md brought up to date; handoff section "Handoff of 2026-10-31 (continuation)" at the end; nothing committed, pushed or tagged; nothing running).
+
+NEXT STEP (2026-10-31, continuation): the user decides (1) whether any item of docs/PROPOSED_DELIVERABLE_INSERTIONS.md enters the submitted paper, report or slides (submission/final/ stays unchanged until then) and (2) reviews D-094 and E-033/E-034; independently of that, the items carried from 2026-10-30 remain: finish the Phase 2 member interview and work allocation, then the human actions of docs/FINAL_SUBMISSION_AUDIT.md section 5. No safe autonomous work is left in the benchmarking workstream.
+
+(Superseded 2026-10-31 continuation) Last updated: 2026-10-31 (post-freeze benchmark and Evaluation Lab task: audit docs/RESEARCH_EVALUATION_AUDIT.md; E-033 (LAV-DF, 18,383 unread clips) and E-034 (Community Forensics-Eval, 7,209 unread images) preregistered, run and logged; D-094 (split post_x, Lab evaluation groups); literature verified by two agents and registered (RESEARCH.md, LITERATURE_BENCHMARK_EVIDENCE.md section 6); comparison docs/POST_FREEZE_BENCHMARK_COMPARISON.md; viva docs/VIVA_BENCHMARK_BRIEFING.md; Lab redesigned; safe suite 737 passed; nothing committed, pushed or tagged; no sealed split read; protected files hash-identical).
+
+(Superseded 2026-10-31 continuation) NEXT STEP (2026-10-31): the user reviews D-094 and E-033/E-034 (all tagged decided autonomously - needs user review) and decides whether the new comparisons enter the submitted paper, report or slides (they are not cited there yet); the open items of 2026-10-30 remain: the Phase 2 member interview and work allocation, then the human actions of docs/FINAL_SUBMISSION_AUDIT.md section 5. Nothing is running.
+
+(Superseded 2026-10-31) Last updated: 2026-10-30 (final-submission preparation, Phases 0, 1, 3 and 5 of the user's master task: read-only reconstruction written to docs/GROUND_TRUTH_INVENTORY.md, docs/PROJECT_MASTER_LEARNING_GUIDE.md, docs/FINAL_SUBMISSION_AUDIT.md and docs/FINAL_DEMO_RUNBOOK.md; nothing in submission/, src/, checkpoints/, data/ or ledger/ changed; nothing committed; no model, server or test run; Phase 2 interview of the three members started).
+
+(Superseded 2026-10-31) NEXT STEP (2026-10-30): finish the Phase 2 interview of all three members (one question at a time), then the members approve the work allocation; only then write docs/TEAM_WORK_ALLOCATION.md, the contribution section and slide, and carry out the human actions listed in docs/FINAL_SUBMISSION_AUDIT.md section 5 (signatures, DOI, MP4 with docs/FINAL_DEMO_RUNBOOK.md, 40-paper review, repository access). Submission day is today.
+
+(Superseded 2026-10-30) Last updated: 2026-10-29 (final clean-up on main after the audit, D-093: stale README, STATUS, FILES, DEMO and hand-over text marked or corrected, the Imagen 3 format-only AUC recorded under E-028, the ledger hash basis explained below, submission records and manifest regenerated with LF text hashing, Word comments removed from the submitted DOCX copy; docs/TESTING_RECORD.md section 17; nothing running).
 (Superseded 2026-10-29 final clean-up) Last updated: 2026-10-29 (merged into main as db38f98 on the user's answer; tag submission-v2; submission/ built; nothing running).
 (Superseded 2026-10-29 merge) Last updated: 2026-10-29 (final pass on branch trim/docs: margins centred, full render review, website live test, submission/ built; the merge into main is NOT done, see NEXT STEP; commits eb8a4f9, 69de794, f5998a2 and the submission commit; docs/TESTING_RECORD.md section 16).
 (Superseded 2026-10-29 final pass) Last updated: 2026-10-29 (Phase B of the deliverables done on branch trim/docs: records commit eb8a4f9, deliverables commit and push follow; paper 8 PDF pages, report 37 pages, deck 14 main plus 10 backup slides; claim fixes A1 to A10 applied; see docs/TESTING_RECORD.md section 15).
@@ -13,7 +25,7 @@ Last updated: 2026-10-29 (final clean-up on main after the audit, D-093: stale R
 (Superseded 2026-10-28) Last updated: 2026-10-27 22:00 IST (session 3 of 2026-10-27; branch feat/generated-video-sprint, HEAD 5af239a; ALL work since 5af239a is UNCOMMITTED; nothing committed, pushed or merged; no background process or agent is running).
 (Superseded 2026-10-27 22:00) Last updated: 2026-10-27 15:50 IST (session 2 of 2026-10-27, paused by the user because the session's token budget was running out; branch feat/generated-video-sprint, HEAD 5af239a; ALL work since 5af239a is UNCOMMITTED; nothing committed, pushed or merged; no background process or agent is running).
 
-NEXT STEP (2026-10-29, after the final clean-up): the user decides on the GitHub access of the co-authors and examiners (D-093, pending), then reads submission/README.md and rehearses with submission/REHEARSAL.md and docs/VIVA_PREP.md section 0; submit on Fri 30 Oct. Nothing is running; no experiment is incomplete; licensing questions are parked by the user's decision (D-092).
+(Superseded 2026-10-30) NEXT STEP (2026-10-29, after the final clean-up): the user decides on the GitHub access of the co-authors and examiners (D-093, pending), then reads submission/README.md and rehearses with submission/REHEARSAL.md and docs/VIVA_PREP.md section 0; submit on Fri 30 Oct. Nothing is running; no experiment is incomplete; licensing questions are parked by the user's decision (D-092).
 (Superseded 2026-10-29 final clean-up) NEXT STEP (2026-10-29, after the merge): the user reads submission/README.md and rehearses with submission/REHEARSAL.md and docs/VIVA_PREP.md section 0; submit on Fri 30 Oct. Nothing is running; no experiment is incomplete; licensing questions are parked by the user's decision (D-092).
 (Superseded 2026-10-29 merge) NEXT STEP (2026-10-29, final pass): the user decides how to merge trim/docs into main. main (cf84b99) is behind trim/docs by the commits of feat/generated-video-sprint (0704b3a, 5af239a, f417011), which changed the original paper/, report/, slides/ and src/dfd/platform/dashboard/ (29 files) relative to main; a merge therefore changes archive files, so it was not done (stop condition of the 2026-10-29 instructions). Options: merge as is (originals as on trim/docs), or merge and restore those 29 paths to main's older versions (the old dashboard may not fit the new backend and tests). After the answer: merge, run the safe suite and the checkers on main, tag submission-v2, push main and the tag. submission/ is built and pushed on trim/docs.
 (Superseded 2026-10-29 final pass) NEXT STEP (2026-10-29): the user reviews deliverables_v2/ (paper, report, deck, website) and answers the open questions of the Phase B report (report page margins, website port, deck titles, Gemini coverage, D-084 to D-091 review, licences); then merge trim/docs into main only on the user's instruction. Nothing is running; no experiment is incomplete.
@@ -138,6 +150,11 @@ Historical section (written 2026-10-24 and 2026-10-25, kept as written; note add
 6. (resolved 2026-10-25, D-046: not committed, rebuilt from source) The submission needs the PDF form of the deliverables? The previews are ignored by git; say if they should be committed.
 
 ## Mistakes and corrections
+- 2026-10-31 (continuation audit, citation register): GenD (WACV 2026), cited in docs/POST_FREEZE_BENCHMARK_COMPARISON.md row 1 and docs/LITERATURE_BENCHMARK_COMPARISON.md, and seven further face-forgery papers of the latter (FTCN, RealForensics, AltFreezing, UCF, LAA-Net, TALL, DFD-FCG) had no docs/RESEARCH.md entry (rule 6). Registered as R-088 to R-095 (PARTIAL, from the 2026-10-30 two-workstream verification, bibliographic data checked against Crossref); R-021 notes that its Table 2 values come from the same verification. None of these papers is cited in a submitted deliverable.
+- 2026-10-31 (continuation audit, wording): the comparison and the viva briefing written earlier the same night stated the E-034 PNG-only drop causally ("file format does much of the work", "follows file format"). Reworded as an observed association; the PNG-only group also differs in content and real sources. No number changed.
+- 2026-10-31 (E-033 result insertion): the script that appended the E-033 RESULT searched for the end-marker text "- Result: (to be appended below after the run)" as a substring; the E-033 Status line quotes that text, so the result was first spliced into the middle of the Status line. The preregistration hash check (data/_results/posteval/E-033/prereg.json) failed, the splice was removed and the result re-inserted after the whole end LINE; both E-033 and E-034 block hashes then re-derived. No number or hypothesis changed and nothing read the misplaced text in between.
+- 2026-10-31 (E-034 secondary design): the preregistered secondary analysis (per-generator AP against all G4 reals) was a poor design for the comparison with the Community Forensics Table 2 mAP, because AP depends on the class ratio of each cell; it is reported as registered, with a labelled post-hoc paired analysis that shows the same scores give mean AP 0.34 or 0.77. The comparison uses AUROC instead (docs/POST_FREEZE_BENCHMARK_COMPARISON.md row 9).
+- 2026-10-31 (finding, no change): Community Forensics-Eval contains byte-identical images across shards; the 11,550 E-028 rows hold 11,472 distinct images. E-028 is a frozen record and is not recomputed; E-034 excluded its 73 duplicates.
 - 2026-10-29 (final clean-up, ledger hash basis): the SHA-256 `0f60d7eb7e241d461f4ecf15d4be3717797fdaff5bdd1fa7144f907534ea52d4` quoted for ledger/final_ledger.jsonl in E-032, docs/TESTING_RECORD.md sections 12 to 14 and deliverables_v2/HANDOVER_PHASE_B.md was a hash of the working-tree bytes, not of the committed content. The working copy then had lines 1 to 75 ending in CRLF and line 76 ending in LF; rebuilding exactly that byte form from the committed blob reproduces `0f60d7eb...52d4`. On 2026-10-29 at 04:52:20 (file time) git's line-ending conversion on this Windows checkout (`core.autocrlf=true` from the system configuration, no .gitattributes) rewrote the working copy to all CRLF, which hashes to `47e166a76b8abb68f11d59961ee1040bc166bc22d0b61c60dab810abdc29b006`. The ledger content did not change: the git blob is `32ae3585b9c1accf4f510f65f9669f3ca6e4a069` in every commit since 0704b3a (2026-10-26), all 76 entries are the same, and no sealed file under data/_final changed. Correction: the canonical reference from now on is the blob id above, or the SHA-256 of the LF bytes stored by git, `65fe2f47dc73e11ee70e60d91fd01bddb3b8e5f590cad92255006ccd505567c3`. The older citations are left as written because they record what was measured at the time. A .gitattributes rule is deferred until after submission (D-093).
 - 2026-10-29 (final clean-up, dash check depends on the PDF text tool): the em and en dash check of scripts/check_docs.py reads PDFs with whichever pdftotext comes first on the PATH. The xpdf 4.00 of Git Bash, used for the earlier records, writes Latin-1 by default and drops en dashes; with the MiKTeX poppler 24.04 (first on the PATH in PowerShell) the check finds one en dash in the archive paper PDF (paper/main.pdf, a reference page range). The archive is not submitted and stays unchanged (D-090); the three submitted PDFs and the v2 PDFs have none with either tool (docs/TESTING_RECORD.md section 17). No result affected.
 - 2026-10-29 (final clean-up, unlogged number): the Imagen 3 format-only AUC 0.9731, cited in the v2 paper, the v2 deck and deliverables_v2/CONTENT_MAP.md, was read from data/_results/modern/e028/e028_results.json but was never written into docs/EXPERIMENTS.md; the number-provenance check passed only because an unrelated E-016 value rounds to it. Correction: an addendum under E-028 records the value, its source file hash and its meaning (no new run). No deliverable number changed.
@@ -288,3 +305,85 @@ Fresh results for this stage (terminal output of that session; these runs were n
 - Fresh verification (docs/TESTING_RECORD.md, logs in docs/test_evidence/2026-10-26/): safe suite 497 passed, 2 skipped, 13 deselected; opt-in GPU tests 5 passed (wrapper parity 11 files, largest difference 0.0019); documentation check 71 pass, 0 fail in `.venv`; `uv lock --check` exit 0.
 - Deliverables: report, slides and paper updated by a document subagent with the platform, testing and the experiments after the freeze (its summary: report 109 pages, 52 slides, paper 29 pages); the refresh of their test counts to docs/TESTING_RECORD.md is in progress at the time of writing.
 - Still open: user review of D-069 to D-075; commit; fresh-clone run; the 13 data-dependent tests; licence questions (SyncNet weights, FakeAVCeleb terms).
+
+## 2026-10-30 late: Task 28 to 30 final files
+- Built submission/final/Project_Report_SUBMIT (Chapter 11 contribution tables from the team's 22-task allocation, Appendix B 40-paper table on A4 portrait, logo and red removed), IEEE_Research_Paper_SUBMIT.pdf (plain IEEEtran, Author Contributions table, 9 pages), Project_Presentation_SUBMIT (two contribution slides, college logo and red styling kept (only the paper is plain)). Earlier drafts moved to submission/final/superseded_drafts/. Contributions are as stated by Shivansh; Vaibhav and Adithya have not confirmed them.
+- NEXT STEP: record the Task 31 MP4, resolve the Zenodo DOI mismatch (record 23594605 is the Task 24 paper), then confirm contributions with Vaibhav and Adithya.
+- 2026-10-30 23:4x: task allocation changed (tasks 3, 8, 10, 11, 15, 19) and applied to report Chapter 11, slides 16 and 17, Task 31 PDF.
+
+## 2026-10-31: post-freeze benchmark and Evaluation Lab groups (D-094)
+- Audit: docs/RESEARCH_EVALUATION_AUDIT.md (model table, dataset-role matrix, eligibility). Only two pools were unread and eligible: LAV-DF test clips outside the sealed subset and Community Forensics-Eval shards outside E-028.
+- E-033 and E-034 preregistered (hash 01:20:02 +0530), scored with the product adapter, 0 failures; results through the Lab: T-V LAV-DF G4 AUROC 0.3803, T-A 0.6447, T-I CF-Eval G4 0.7909 (PNG only 0.5693); all hypotheses resolved as SUPPORTED or OBSERVED; one prediction wrong (T-V FPR).
+- Lab: dataset dropdown, five groups per dataset with counts, guided runs with the checkpoint threshold, whole pool behind a confirmation, experimental banner, advanced flow kept; backend src/dfd/platform/evallab/groups.py and two endpoints.
+- Tests: safe suite 737 passed, 2 skipped, 13 deselected; Lab and dashboard 160 passed; live browser check 34 of 34 (docs/TESTING_RECORD.md section 18).
+- Unresolved: RAISE-paired CF generators, 4 undownloaded ForenSynths generators, WildDeepfake, ASVspoof 2021 not run; Celeb-DF++ outside the test list, FakeAVCeleb unassigned fakes and a product-weight read of the sealed LAV-DF subset blocked (audit section 5); DATA_LOG row G2 (DF26 "not used") still stale.
+
+## Handoff of 2026-10-31 (continuation)
+
+Repository: branch main, HEAD e27de9a (unchanged since 2026-10-29); all work since is uncommitted. No commit, push, merge, tag, reset, rebase or stash was made in either 2026-10-31 session. No background process or server is running.
+
+Verified complete (read-only checks on 2026-10-31, docs/TESTING_RECORD.md section 19):
+- E-033 and E-034: the preregistrations re-derive, the inputs reconcile, the checkpoint and thresholds are as documented, there was one scoring pass each, and every group metric was reproduced by an independent implementation; independent-check lines are appended to both entries.
+- Evaluation Lab groups: 98 of 98 HTTP checks and 34 of 34 browser checks passed. All 17 groups equal the stored results; there is no fused score; APPROVED_HEADS = {}.
+- Literature comparison: every published number traces to the evidence trail and every cited paper is registered.
+- PLAN.md was updated with a verified-state section.
+
+Reported earlier and still unverified: nothing material. The opt-in GPU tests and scripts/check_docs.py were not run because the deliverables were not changed.
+
+Most recent tests, all run in the continuation session:
+- Safe suite: 737 passed, 2 skipped, 13 deselected, exit 0.
+- Lab HTTP check: 98 of 98.
+- Browser check: 34 of 34.
+- Protected files: 332 identical to data/_results/posteval/protected_before.sha256.
+
+Remaining authorised work, in priority order:
+1. Nothing further in the benchmarking workstream without a decision.
+2. If the team accepts insertions: apply them in deliverables_v2/ with its build scripts, run check_docs.py and the deck and report checkers, then regenerate the submission records and manifest (D-093) and copy to submission/final/ only on the user's instruction.
+3. Optional later experiments, each needing its own preregistration and, for downloads, the user's go-ahead: RAISE-paired Community Forensics generators; the four ForenSynths generators not yet downloaded; a perceptual near-duplicate check; the audio-visual integration milestone.
+
+Files that must not be changed:
+- submission/final/ and submission/ (frozen set)
+- ledger/final_ledger.jsonl
+- data/_final/
+- checkpoints/
+- data/_results/modern/e028 and data/_results/e015
+- data/cf_eval/
+- the preregistered E-033 and E-034 blocks (their SHA-256 values are in data/_results/posteval/E-03x/prereg.json)
+- data/_manifests/posteval/
+- data/_results/posteval/E-03x/ outputs
+- APPROVED_HEADS and FORBIDDEN_REPORT_KEYS
+- src/dfd/infer and src/dfd/web
+- paper/, report/ and slides/ (archive)
+
+Decisions requiring the user's review:
+- the insertion list
+- D-094 and the autonomous parts of E-033 and E-034 (dataset choice, group sizes, the post_x split name, the 5 GB download budget)
+- the 2026-10-30 open items (member interview, Task 31 MP4, Zenodo DOI mismatch, contribution confirmations)
+- the licensing questions parked by D-092
+- whether to commit the 2026-10-30 and 2026-10-31 work, and in which groups
+
+Next concrete action: the user reads docs/VIVA_BENCHMARK_BRIEFING.md and docs/PROPOSED_DELIVERABLE_INSERTIONS.md, then answers the insertion question.
+
+
+## 2026-10-31 (presentation day): recommended demonstrations in the Evaluation Lab (D-095)
+
+- Done: the Lab now opens with "Recommended demonstrations" above the dataset list: logged results read from data/_final/eval/I-4.json and the E-033 and E-034 results.json (nothing rescored, no sealed split reopened), with modality filter, counts, AUROC with interval, seed-0 AUROC, caveats, a stored-result detail and, for post-freeze groups, a button that preselects the group in the guided flow. Weak LAV-DF T-V and Community Forensics PNG-only results are shown as limitations; I-6 and FakeAVCeleb are listed as not used, with reasons. Dataset dropdown labels carry the modality. Tests: docs/TESTING_RECORD.md section 20. Nothing committed.
+- NEXT STEP: the user reviews D-095 and, for the presentation, starts the site with `PYTHONPATH=src .venv/Scripts/python.exe deliverables_v2/website/serve_v2.py 8012 --live` and opens http://127.0.0.1:8012/#lab.
+
+## 2026-10-31 (presentation day, later): sealed re-analysis groups, demo set, DEMO_SELECTION.md (D-096)
+
+- Done: In-the-Wild, Celeb-DF v2 and ForenSynths CNN (E-014 sealed blocks) are in the Lab's guided dataset list with five groups each (re-analysis of the stored scores, ledger-guarded, per-seed validation thresholds; G4 reproduces E-014 to four decimals). The recommended cards for them now open their G4. A 23-file demo set covering every manipulation type plus real files is built by scripts/platform/make_demo_set.py into data/_demo_inputs/demo_set/. docs/DEMO_SELECTION.md explains inputs, groups and decision lines as Q&A. Tests: docs/TESTING_RECORD.md section 21. Nothing committed.
+- Mistakes and corrections: the first browser check showed 0 samples for the CNN groups. The group registry cached present rows per score file only, and the three sealed datasets share I-4.csv. Fixed by keying the cache by dataset, split and runs; regression test added. The groups file was regenerated once before any use, to fix unit names.
+- Not done: the "Withheld" familiarity-gate output in the user's first screenshot does not exist in this repository and its numbers (distance 8.33, limit 6.72, "nine times in ten") are not from any experiment here; it needs a preregistered experiment before it can be built.
+- NEXT STEP: the user reviews D-096 and decides about the familiarity gate; for the presentation start the site with `PYTHONPATH=src .venv/Scripts/python.exe deliverables_v2/website/serve_v2.py 8012 --live` and use files from data/_demo_inputs/demo_set/.
+
+## 2026-10-31 (presentation day, later): simple report view (D-097)
+
+- Done: the Analyse page shows only face manipulation, synthetic speech, file information and the experimental AI-generated video check, in one section; the other checks still run and stay in the JSON and the whole-report technical details. Switch back with SIMPLE_VIEW = false in deliverables_v2/website/static/app.js. Tests: TESTING_RECORD section 22. Nothing committed.
+- NEXT STEP: the user reviews D-097 (especially that "gemini experimental" meant the AI-generated video check, and that images now show no detector card).
+- Later the same day (D-098): the analysed file now stays visible (image, playable video or audio) in the report's "File analysed" panel. Tests: TESTING_RECORD section 23. Nothing committed.
+
+## 2026-10-31 (later): hand-over to a teammate (D-099)
+
+- Done: the uncommitted 2026-10-31 work is committed on branch handoff/2026-10-31 and pushed; two Drive bundles with SHA-256 manifests are built in _drive_upload/ (git-ignored); docs/TEAMMATE_HANDOFF.md says what is in git, on Drive, and what the teammate rebuilds. The Drive upload itself was not done by the assistant: the Google Drive connector is not authorised in this session.
+- NEXT STEP: the user limits the Drive folder to the team's accounts, uploads the two zips from _drive_upload/, and merges handoff/2026-10-31 into main (or asks the assistant to).

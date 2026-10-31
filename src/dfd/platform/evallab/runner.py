@@ -18,7 +18,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from dfd.eval.ledger import DEFAULT_LEDGER
-from dfd.eval.scorefile import FINAL_SPLITS, MODALITIES, SPLITS, ScoreFileError
+from dfd.eval.scorefile import FINAL_SPLITS, MODALITIES, POST_SPLITS, SPLITS, ScoreFileError
 
 from . import analysis
 from .catalogue import Catalogue
@@ -28,7 +28,7 @@ from .store import RunStore
 from .tables import TableCache, read_extras
 
 CONFIG_KEYS = ("score_file_id", "iteration", "modality", "dataset", "split", "run_ids", "threshold_source", "threshold",
-               "threshold_provenance", "n_boot", "seed", "label", "purpose", "breakdown_column")
+               "threshold_provenance", "n_boot", "seed", "label", "purpose", "breakdown_column", "eval_group")
 
 
 def _bad(msg: str, code: str = "INVALID_CONFIG"):
@@ -112,11 +112,17 @@ def validate_config(raw, entry: dict) -> dict:
         _bad(f"purpose must be one of {list(PURPOSES)}")
     if purpose == "final_reanalysis" and cfg["split"] not in FINAL_SPLITS:
         _bad("purpose 'final_reanalysis' applies only to the final splits test_in and test_x")
+    if (purpose == "post_freeze_evaluation") != (cfg["split"] in POST_SPLITS):
+        _bad("purpose 'post_freeze_evaluation' goes with the post-freeze split post_x, and only with it")
     cfg["purpose"] = purpose
     bc = raw.get("breakdown_column")
     if bc is not None and bc not in BREAKDOWN_COLUMNS:
         _bad(f"breakdown_column must be one of {list(BREAKDOWN_COLUMNS)}")
     cfg["breakdown_column"] = bc
+    eg = raw.get("eval_group")
+    if eg is not None and (not isinstance(eg, str) or not eg.strip()):
+        _bad("eval_group must be a group id string")
+    cfg["eval_group"] = eg.strip() if eg else None
     return cfg
 
 
@@ -147,8 +153,8 @@ def _now() -> str:
 
 class Runner:
     def __init__(self, catalogue: Catalogue, store: RunStore, tables: TableCache, ledger_path=DEFAULT_LEDGER,
-                 root: Path = REPO_ROOT, synchronous: bool = False):
-        self.catalogue, self.store, self.tables = catalogue, store, tables
+                 root: Path = REPO_ROOT, synchronous: bool = False, groups=None):
+        self.catalogue, self.store, self.tables, self.groups = catalogue, store, tables, groups
         self.ledger_path, self.root, self.synchronous = ledger_path, Path(root), synchronous
         self._pool = None
         self._lock = threading.Lock()
@@ -159,6 +165,7 @@ class Runner:
             _bad("the request body must be a JSON object")
         entry = self.catalogue.find(_str(raw, "score_file_id"))
         cfg = validate_config(raw, entry)
+        group = self._freeze_group(cfg, entry)
         rid = _dt.datetime.now(_dt.timezone.utc).strftime("%Y%m%dT%H%M%S") + "-" + uuid.uuid4().hex[:8]
         rec = {
             "id": rid, "created": _now(), "started": None, "finished": None, "state": "queued",
@@ -172,6 +179,7 @@ class Runner:
                           and cfg["threshold_source"] == "val_fit"},
             "data": None, "metrics": None, "confusion": None, "roc": None, "breakdown": None, "protocol": None,
             "runtime_s": None, "error": None,
+            "eval_group": group,
             "environment": code_state(self.root),
             "limitations": "see export; the lab re-analyses stored scores and cannot verify training-data exclusion "
                            "beyond what the score file records",
@@ -185,6 +193,43 @@ class Runner:
                     self._pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="evallab")
             self._pool.submit(self._execute, rid)
         return self.store.get(rid)
+
+    def _freeze_group(self, cfg: dict, entry: dict):
+        """Resolve cfg['eval_group'] against the registry and record what identifies it (part of the config hash)."""
+        gid = cfg.get("eval_group")
+        if gid is None:
+            return None
+        if self.groups is None:
+            _bad("this lab has no evaluation-group registry", "UNKNOWN_DATASET")
+        if cfg["split"] in FINAL_SPLITS:                # only a declared re-analysis of stored sealed scores (D-096)
+            try:
+                ent, g = self.groups.resolve(cfg["dataset"], gid)
+            except LabError:
+                ent = None
+            if ent is None or ent["desc"].get("sealed_reanalysis") is not True or cfg["purpose"] != "final_reanalysis":
+                _bad("evaluation groups on a final (sealed) split exist only as a declared re-analysis of the stored scores",
+                     "GROUP_ON_FINAL")
+        ent, g = self.groups.resolve(cfg["dataset"], gid)
+        if ent["score_file_id"] != cfg["score_file_id"]:
+            _bad(f"group {gid!r} of {cfg['dataset']!r} belongs to score file {ent['score_path']}, not to {entry['path']}")
+        if cfg["split"] != ent["desc"]["split"] or cfg["iteration"] != ent["desc"]["iteration"]:
+            _bad("the run's split or iteration does not match the evaluation-group descriptor")
+        cfg["eval_group_sha256"] = ent["groups_sha256"]
+        return {"dataset": cfg["dataset"], "id": gid, "title": g.get("title"), "kind": g.get("kind"),
+                "description": g.get("description"), "overlap": g.get("overlap"), "group_unit": g.get("group_unit"),
+                "n_declared": len(g.get("sample_ids") or []), "experiment": ent["desc"]["experiment"],
+                "groups_file": ent["groups_path"], "groups_sha256": ent["groups_sha256"], "descriptor": ent["descriptor"],
+                "provenance": ent["desc"].get("provenance", {}), "caveats": ent["desc"].get("caveats", []),
+                "score_kind": ent["desc"].get("score_kind")}
+
+    def _group_ids(self, cfg: dict):
+        gid = cfg.get("eval_group")
+        if gid is None:
+            return None
+        ent, g = self.groups.resolve(cfg["dataset"], gid)
+        if ent["groups_sha256"] != cfg.get("eval_group_sha256"):
+            raise analysis.Refused("GROUPS_CHANGED", "the groups file changed after the configuration was frozen")
+        return list(g.get("sample_ids") or [])
 
     def _update(self, rid: str, **kw) -> dict:
         rec = self.store.get(rid)
@@ -205,8 +250,9 @@ class Runner:
             progress("reading", 0, 6)
             table = self.tables.get(self.abs_path(rec))
             extras = read_extras(self.abs_path(rec), cfg["run_ids"], cfg["modality"])
+            group_ids = self._group_ids(cfg)
             out = analysis.compute(cfg, table, extras, ledger_path=self.ledger_path,
-                                   frozen_sha256=rec["score_file"]["sha256"], progress=progress)
+                                   frozen_sha256=rec["score_file"]["sha256"], progress=progress, group_ids=group_ids)
             self._update(rid, state="done", finished=_now(), runtime_s=round(time.monotonic() - t0, 3), **out)
         except analysis.Refused as e:
             self._update(rid, state="refused", finished=_now(), runtime_s=round(time.monotonic() - t0, 3),

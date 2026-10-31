@@ -23,6 +23,8 @@
   };
   var root = null, built = false;
   var S = { cat: null, fileId: null, blockKey: null, run: null, runs: [], token: 0, busy: false };
+  var G = { data: null, ds: "", group: "", confirmFull: false, token: 0, busy: false, run: null };
+  var R = { data: null, filter: "all", open: "" };
 
   function el(tag, cls, text) {
     var e = document.createElement(tag);
@@ -94,7 +96,7 @@
     var h = el("h1", null, "Evaluation Lab");
     h.id = "lab-h";
     hero.appendChild(h);
-    hero.appendChild(el("p", "lede", "Re-analyse the recorded scores of a model with the project's own metrics. Pick a score file and one block of it, review the settings, run, and read the result with its uncertainty."));
+    hero.appendChild(el("p", "lede", "Start with the recommended demonstrations: logged results of the project's detectors, with sample counts and limitations. To evaluate yourself, choose a dataset and one evaluation group of it, run, and read the result with its uncertainty. The lab re-analyses recorded scores; it never runs a model."));
     var how = el("ul", "lab-explain");
     [["What data", "Score files recorded by earlier evaluations: one row per sample with its label, group and score. Nothing is uploaded and no model is run."],
      ["Is it unseen?", "Each block shows its role. Development and validation blocks may have been used to tune a model; only a final held-out block is sealed, and the lab opens it only to re-analyse an evaluation that is already logged."],
@@ -102,13 +104,39 @@
      ["What it cannot tell you", "A score file may not record what the model was trained on, so the lab checks only what the file records (groups, splits, hashes). A good number here is not an approval of any model."]
     ].forEach(function (x) {
       var li = el("li");
-      li.appendChild(el("b", null, x[0] + ". "));
+      li.appendChild(el("b", null, x[0] + (/[?.!]$/.test(x[0]) ? " " : ". ")));
       li.appendChild(document.createTextNode(x[1]));
       how.appendChild(li);
     });
     hero.appendChild(how);
     root.appendChild(hero);
 
+    var reco = el("section", "panel lab-section lab-reco");
+    reco.id = "lab-reco";
+    reco.setAttribute("aria-labelledby", "lab-reco-h");
+    var rh = el("h2", null, "Recommended demonstrations");
+    rh.id = "lab-reco-h";
+    reco.appendChild(rh);
+    reco.appendChild(el("div", "lab-body"));
+    root.appendChild(reco);
+
+    var guided = el("section", "panel lab-section lab-guided");
+    guided.id = "lab-guided";
+    guided.setAttribute("aria-labelledby", "lab-guided-h");
+    var gh = el("h2", null, "Evaluate a dataset");
+    gh.id = "lab-guided-h";
+    guided.appendChild(gh);
+    guided.appendChild(el("div", "lab-body"));
+    root.appendChild(guided);
+
+    var adv = el("details", "panel lab-advanced");
+    adv.id = "lab-advanced";
+    adv.appendChild(el("summary", null, "Advanced: re-analyse stored score files"));
+    var advBody = el("div", "lab-adv-body");
+    adv.appendChild(advBody);
+    root.appendChild(adv);
+    var savedRoot = root;
+    root = advBody;
     var steps = el("ol", "lab-stepper");
     steps.id = "lab-stepper";
     steps.setAttribute("aria-label", "Evaluation steps");
@@ -132,6 +160,7 @@
     });
     ["lab-config", "lab-run", "lab-results", "lab-compare"].forEach(function (id) { $(id).hidden = true; });
     $("lab-run").hidden = true;
+    root = savedRoot;
     built = true;
   }
   function body(id) { return $(id).querySelector(".lab-body"); }
@@ -736,10 +765,575 @@
     }).catch(function (e) { clear(box); box.appendChild(el("p", "empty", "The list of earlier runs could not be loaded: " + (e && e.message ? e.message : "request failed"))); });
   }
 
+  /* ---------------- guided flow: evaluate a dataset (post-freeze evaluation groups) ----------------
+     Reads GET /api/evallab/groups and starts runs with POST /api/evallab/group-runs. Nothing is started by opening the lab or by choosing a
+     dataset or a group; a run starts only from the "Run evaluation on this group" button, or from the confirmed whole-pool action. */
+  var STATUS_FALLBACK = "Experimental evaluation output. Evaluating a model on a dataset does not approve it for deployment.";
+  var SPLIT_TEXT = { post_x: "post-freeze evaluation on previously unread data",
+    test_x: "sealed cross-dataset test, read once at the freeze (E-014); stored scores re-analysed, nothing scored again",
+    test_in: "sealed in-domain test, read once at the freeze (E-014); stored scores re-analysed, nothing scored again" };
+  var SEALED_RESULT = "Stored sealed-test scores re-analysed: the frozen checkpoint scored this sealed split once, at the freeze (E-014). Nothing was scored again now; the metrics were recomputed from those logged scores for the chosen group. This is not a new held-out test and not an approval.";
+  function thrText(th) {
+    if (!isObj(th)) return "";
+    if (num(th.value)) return th.value.toFixed(4);
+    if (th.source === "val_fit") return "one per seed, fitted on validation (D-024)";
+    return "";
+  }
+  var HEADLINE = [["auc", "AUROC"], ["f1", "F1"], ["precision", "Precision"], ["recall", "Recall (sensitivity)"], ["specificity", "Specificity"], ["accuracy", "Accuracy"]];
+  var MORE = [["eer", "EER"], ["fpr", "False positive rate"], ["fnr", "False negative rate"], ["balanced_accuracy", "Balanced accuracy"]];
+  var GROUP_MODALITY = { visual: "Face video", audio: "Speech / audio", image: "Image" };
+
+  function gbody() { return body("lab-guided"); }
+  function curDataset() { return G.data && G.data.datasets.filter(function (d) { return d.dataset === G.ds; })[0] || null; }
+  function pct(x) { return num(x) ? (100 * x).toFixed(1) + "%" : ""; }
+  function plural(n, one, many) { return n + " " + (n === 1 ? one : many); }
+  function noteBanner(text, id) {
+    var b = el("div", "lab-banner", text);
+    if (id) b.id = id;
+    b.setAttribute("role", "note");
+    return b;
+  }
+  function loadGroups() {
+    var b = gbody();
+    clear(b);
+    b.appendChild(el("p", "lab-loading", "Looking for evaluation datasets ..."));
+    return api("GET", "/api/evallab/groups").then(function (x) {
+      clear(b);
+      if (!x.ok || !isObj(x.j)) {
+        var box = el("div", "error-box");
+        box.id = "ev-load-error";
+        box.setAttribute("role", "alert");
+        box.appendChild(el("strong", null, "The evaluation datasets could not be loaded. "));
+        box.appendChild(document.createTextNode(errMsg(x)));
+        b.appendChild(box);
+        var again = el("button", "btn", "Try again");
+        again.type = "button";
+        again.addEventListener("click", loadGroups);
+        b.appendChild(again);
+        return;
+      }
+      G.data = x.j;
+      if (!Array.isArray(G.data.datasets)) G.data.datasets = [];
+      renderGuided();
+    }).catch(function (e) {
+      clear(b);
+      var box = el("div", "error-box", "The Evaluation Lab API could not be reached: " + (e && e.message ? e.message : "request failed"));
+      box.setAttribute("role", "alert");
+      b.appendChild(box);
+    });
+  }
+  function renderGuided() {
+    var b = gbody();
+    clear(b);
+    var ds = G.data.datasets;
+    if (!ds.length) {
+      var em = el("div", "lab-empty");
+      em.id = "ev-empty";
+      em.appendChild(el("h3", null, "No evaluation groups are installed"));
+      em.appendChild(el("p", null, "No post-freeze evaluation groups were found on this computer, so there is nothing to evaluate here and no example data is invented. The advanced section below can still re-analyse stored score files."));
+      b.appendChild(em);
+      return;
+    }
+    b.appendChild(el("p", "lab-hint", "Choose a dataset, then one evaluation group of it. Nothing runs until you press the run button."));
+    var sel = el("select");
+    sel.id = "ev-dataset";
+    var ph = el("option", null, "Choose a dataset ...");
+    ph.value = "";
+    sel.appendChild(ph);
+    ds.forEach(function (d) {
+      var mod = GROUP_MODALITY[d.modality];
+      var o = el("option", null, (mod ? mod + ": " : "") + (str(d.title) || str(d.dataset)));
+      o.value = str(d.dataset); sel.appendChild(o);
+    });
+    sel.value = G.ds && curDataset() ? G.ds : "";
+    sel.addEventListener("change", function () {
+      G.ds = sel.value; G.group = ""; G.confirmFull = false; G.token++; G.busy = false; G.run = null;
+      renderDataset();
+    });
+    b.appendChild(field("Dataset", sel, "Each dataset comes with evaluation groups that were fixed before any score was read.", "ev-dataset"));
+    var area = el("div", "ev-area");
+    area.id = "ev-area";
+    b.appendChild(area);
+    var out = el("div", "ev-out");
+    out.id = "ev-out";
+    out.setAttribute("aria-live", "polite");
+    b.appendChild(out);
+    renderDataset();
+  }
+  function groupCard(d, g) {
+    var on = G.group === g.id;
+    var lab = el("label", "pick ev-group" + (on ? " on" : ""));
+    lab.setAttribute("data-group", str(g.id));
+    var r = el("input");
+    r.type = "radio"; r.name = "ev-group"; r.value = str(g.id); r.checked = on;
+    r.addEventListener("change", function () { G.group = str(g.id); G.confirmFull = false; renderDataset(); });
+    var t = el("span", "pick-body");
+    var top = el("span", "pick-top");
+    top.appendChild(el("b", "pick-title", str(g.id) + ": " + str(g.title)));
+    top.appendChild(el("span", "role-badge ev-kind ev-kind-" + (g.kind === "diagnostic" ? "diagnostic" : "general"), g.kind === "diagnostic" ? "Diagnostic" : "General"));
+    t.appendChild(top);
+    if (g.description) t.appendChild(el("span", "pick-sub ev-desc", g.description));
+    t.appendChild(el("span", "pick-sub ev-counts", g.n_samples + " samples: " + g.n_real + " real, " + g.n_fake + " fake"));
+    if (num(g.n_groups)) t.appendChild(el("span", "pick-sub ev-units", "Independent groups: " + plural(g.n_groups, str(g.group_unit) || "group", (str(g.group_unit) || "group") + "s")));
+    if (g.overlap) t.appendChild(el("span", "pick-sub ev-overlap", "Overlap: " + g.overlap));
+    if (num(g.n_missing_scores) && g.n_missing_scores > 0) t.appendChild(el("span", "pick-sub ev-missing", g.n_missing_scores + " declared sample(s) have no stored score and are left out."));
+    lab.appendChild(r);
+    lab.appendChild(t);
+    return lab;
+  }
+  function renderDataset() {
+    var area = $("ev-area");
+    clear(area);
+    var out = $("ev-out");
+    if (out) clear(out);
+    var d = curDataset();
+    if (!d) return;
+    area.appendChild(noteBanner(str(d.status) || STATUS_FALLBACK, "ev-status-banner"));
+    var th = isObj(d.threshold) ? d.threshold : {};
+    var sum = el("div", "lab-summary");
+    sum.id = "ev-summary";
+    sum.appendChild(el("h3", null, str(d.title)));
+    sum.appendChild(kv([["Experiment", d.experiment], ["Head", d.head], ["Modality", d.modality],
+      ["Split", str(d.split) + (SPLIT_TEXT[d.split] ? ": " + SPLIT_TEXT[d.split] : "")], ["Eligibility", d.eligibility],
+      [d.sealed_reanalysis ? "Threshold" : "Fixed threshold", thrText(th)], ["Threshold provenance", th.provenance], ["Score kind", d.score_kind]]));
+    if (Array.isArray(d.caveats) && d.caveats.length) {
+      var cv = el("details", "lab-caveats");
+      cv.open = true;
+      cv.appendChild(el("summary", null, "Caveats (" + d.caveats.length + ")"));
+      var cu = el("ul");
+      d.caveats.forEach(function (c) { cu.appendChild(el("li", null, c)); });
+      cv.appendChild(cu);
+      sum.appendChild(cv);
+    }
+    area.appendChild(sum);
+    area.appendChild(el("h3", "lab-sub", "Evaluation groups"));
+    var list = el("div", "lab-blocks ev-groups");
+    list.id = "ev-groups";
+    list.setAttribute("role", "radiogroup");
+    list.setAttribute("aria-label", "Evaluation groups");
+    (Array.isArray(d.groups) ? d.groups : []).forEach(function (g) { list.appendChild(groupCard(d, g)); });
+    if (!list.children.length) list.appendChild(el("p", "empty", "This dataset lists no evaluation groups."));
+    area.appendChild(list);
+    var go = el("button", "btn primary", "Run evaluation on this group");
+    go.type = "button"; go.id = "ev-run-btn";
+    go.disabled = !G.group || G.busy;
+    go.addEventListener("click", function () { startGroupRun(G.group, false); });
+    area.appendChild(go);
+    if (isObj(d.full)) renderFull(area, d);
+  }
+  function renderFull(area, d) {
+    var f = d.full;
+    var box = el("div", "ev-full");
+    box.id = "ev-full";
+    box.appendChild(el("h3", "lab-sub", "Whole eligible pool"));
+    box.appendChild(el("p", "lab-hint", "Secondary action. The whole pool is not an evaluation group and is never chosen by default."));
+    if (!G.confirmFull) {
+      var open = el("button", "btn", "Evaluate the whole eligible pool");
+      open.type = "button"; open.id = "ev-full-btn";
+      open.disabled = G.busy;
+      open.addEventListener("click", function () { G.confirmFull = true; renderDataset(); var c = $("ev-full-confirm-btn"); if (c) c.focus(); });
+      box.appendChild(open);
+    } else {
+      var cf = el("div", "ev-confirm");
+      cf.id = "ev-full-confirm";
+      cf.setAttribute("role", "group");
+      cf.setAttribute("aria-label", "Confirm the whole-pool evaluation");
+      cf.appendChild(el("p", null, "This evaluates all " + str(f.n_samples) + " samples (" + str(f.n_real) + " real, " + str(f.n_fake) + " fake)."));
+      if (f.warning) cf.appendChild(el("p", "ev-full-warning", f.warning));
+      if (f.estimate) cf.appendChild(el("p", "ev-full-estimate", f.estimate));
+      var yes = el("button", "btn primary", "Confirm and evaluate the whole pool");
+      yes.type = "button"; yes.id = "ev-full-confirm-btn";
+      yes.disabled = G.busy;
+      yes.addEventListener("click", function () { startGroupRun("FULL", true); });
+      var no = el("button", "btn", "Cancel");
+      no.type = "button"; no.id = "ev-full-cancel-btn";
+      no.addEventListener("click", function () { G.confirmFull = false; renderDataset(); });
+      cf.appendChild(yes); cf.appendChild(no);
+      box.appendChild(cf);
+    }
+    area.appendChild(box);
+  }
+  function evButtons(disabled) {
+    var go = $("ev-run-btn"); if (go) go.disabled = disabled || !G.group;
+    ["ev-full-btn", "ev-full-confirm-btn"].forEach(function (id) { var b = $(id); if (b) b.disabled = disabled; });
+  }
+  function evFail(err) {
+    G.busy = false;
+    var out = $("ev-out"); clear(out);
+    var box = el("div", "error-box");
+    box.id = "ev-error";
+    box.setAttribute("role", "alert");
+    box.appendChild(el("strong", null, "The evaluation did not complete. "));
+    box.appendChild(document.createTextNode(str(err.code) + ": " + str(err.message)));
+    out.appendChild(box);
+    evButtons(false);
+  }
+  function startGroupRun(group, full) {
+    if (G.busy || !G.ds || !group) return;
+    G.busy = true;
+    var token = ++G.token;
+    evButtons(true);
+    var out = $("ev-out"); clear(out);
+    var st = el("div", "lab-status"); st.id = "ev-progress"; st.setAttribute("role", "status");
+    st.textContent = "Submitting the evaluation ...";
+    out.appendChild(st);
+    var payload = { dataset: G.ds, group: group };
+    if (full) payload.confirm_full = true;
+    api("POST", "/api/evallab/group-runs", payload).then(function (x) {
+      if (token !== G.token) return;
+      var rec = isObj(x.j) ? x.j : null;
+      var id = rec && (rec.id || rec.run_id);
+      if (rec && rec.state === "refused") { evFail(isObj(rec.error) ? rec.error : { code: "REFUSED", message: "The lab refused this evaluation." }); return; }
+      if (!x.ok || !id) { evFail(isObj(x.j) && isObj(x.j.error) ? x.j.error : { code: "HTTP_" + x.status, message: "The server did not accept the evaluation." }); return; }
+      gpoll(str(id), token);
+    }).catch(function (e) { if (token === G.token) evFail({ code: "NETWORK", message: e && e.message ? e.message : "request failed" }); });
+  }
+  function gpoll(id, token) {
+    if (token !== G.token) return;
+    api("GET", "/api/evallab/runs/" + encodeURIComponent(id)).then(function (x) {
+      if (token !== G.token) return;
+      if (!x.ok || !isObj(x.j)) { evFail({ code: "HTTP_" + x.status, message: "Could not read the run." }); return; }
+      var r = x.j;
+      if (r.state === "done") { G.busy = false; G.run = r; renderGroupResults(r); return; }
+      if (r.state === "failed" || r.state === "refused") { evFail(isObj(r.error) ? r.error : { code: "FAILED", message: "The evaluation failed without details." }); return; }
+      var out = $("ev-out"); clear(out);
+      var p = isObj(r.progress) ? r.progress : {};
+      var st = el("div", "lab-status"); st.id = "ev-progress"; st.setAttribute("role", "status");
+      st.textContent = (r.state === "queued" ? "Queued" : "Running") + (p.stage ? ": " + p.stage : "") + (num(p.total) && p.total > 0 ? " (" + p.done + " of " + p.total + ")" : "");
+      out.appendChild(st);
+      if (num(p.total) && p.total > 0) {
+        var bar = el("div", "lab-bar"); bar.setAttribute("role", "progressbar"); bar.setAttribute("aria-valuemin", "0");
+        bar.setAttribute("aria-valuemax", String(p.total)); bar.setAttribute("aria-valuenow", String(p.done || 0));
+        bar.setAttribute("aria-label", "Evaluation progress");
+        var fill = el("span"); fill.style.width = Math.max(0, Math.min(100, 100 * (p.done || 0) / p.total)) + "%";
+        bar.appendChild(fill); out.appendChild(bar);
+      }
+      setTimeout(function () { gpoll(id, token); }, POLL_MS);
+    }).catch(function (e) { if (token === G.token) evFail({ code: "NETWORK", message: e && e.message ? e.message : "request failed" }); });
+  }
+  function stripIds(node) {
+    if (node.removeAttribute) node.removeAttribute("id");
+    Array.prototype.forEach.call(node.querySelectorAll ? node.querySelectorAll("[id]") : [], function (n) { n.removeAttribute("id"); });
+    return node;
+  }
+  function headlineTile(r, key, label) {
+    var m = isObj(r.metrics) ? r.metrics[key] : null;
+    var t = el("div", "ev-tile");
+    t.setAttribute("data-metric", key);
+    t.appendChild(el("span", "ev-tile-name", label));
+    t.appendChild(el("b", "ev-tile-val", isObj(m) ? f4(m.estimate) : "not defined"));
+    t.appendChild(el("span", "ev-tile-int", isObj(m) ? "95% interval " + interval(m) : "no interval"));
+    return t;
+  }
+  function renderGroupResults(r) {
+    var out = $("ev-out"); clear(out);
+    var cfg = isObj(r.config) ? r.config : {};
+    var eg = isObj(r.eval_group) ? r.eval_group : {};
+    var d = isObj(r.data) ? r.data : {};
+    var th = isObj(r.threshold) ? r.threshold : {};
+    var ds = curDataset();
+    var done = el("p", "lab-status done", "Finished: run " + str(r.id) + ".");
+    done.id = "ev-done";
+    done.setAttribute("role", "status");
+    out.appendChild(done);
+    var box = el("div", "ev-results");
+    box.id = "ev-results";
+    var sealedRun = cfg.purpose === "final_reanalysis";
+    box.appendChild(noteBanner(sealedRun ? SEALED_RESULT : STATUS_FALLBACK, "ev-result-banner"));
+    box.appendChild(el("h3", null, "Result: " + str(eg.title || (ds && ds.title) || cfg.dataset) + (eg.id ? " (" + str(eg.id) + ")" : "")));
+    var tiles = el("div", "ev-tiles");
+    tiles.id = "ev-headline";
+    HEADLINE.forEach(function (h) {
+      var t = headlineTile(r, h[0], h[1]);
+      if (h[0] === "accuracy") {
+        var share = num(d.class_balance) ? d.class_balance : (d.n_samples ? d.n_fake / d.n_samples : null);
+        if (num(share)) t.appendChild(el("span", "ev-tile-note", "class balance: " + pct(share) + " fake"));
+      }
+      tiles.appendChild(t);
+    });
+    box.appendChild(tiles);
+    box.appendChild(kv([["Samples", d.n_samples], ["Real", d.n_real], ["Fake", d.n_fake],
+      ["Independent groups", d.n_groups !== undefined && d.n_groups !== null ? d.n_groups + (eg.group_unit ? " (" + eg.group_unit + ")" : "") : ""],
+      ["Threshold", num(th.value) ? th.value.toFixed(4) + " (" + str(th.source) + ")" : (th.source === "val_fit" ? "one per seed, fitted on validation (val_fit)" : "")], ["Threshold provenance", th.provenance],
+      ["Experiment", eg.experiment || (ds && ds.experiment)], ["Dataset", cfg.dataset], ["Split", cfg.split]]));
+    box.appendChild(el("p", "lab-hint ev-scorekind", (sealedRun
+      ? "Mean over the three frozen seeds, each judged at its own threshold fitted on the validation split before the sealed split was read (the rule E-014 used); nothing was tuned on these samples."
+      : "These are ranking scores judged at one fixed threshold taken from the checkpoint; the threshold was not tuned on these samples.") + (eg.score_kind ? " Score kind: " + eg.score_kind : "")));
+
+    var more = el("details", "ev-more");
+    more.id = "ev-more";
+    more.appendChild(el("summary", null, "More metrics"));
+    var mt = el("table", "lab-t");
+    mt.appendChild(el("caption", null, "Further metrics with 95% bootstrap intervals (whole groups resampled)"));
+    var hr = el("tr");
+    ["Metric", "Estimate", "Interval"].forEach(function (c) { var h = el("th", null, c); h.scope = "col"; hr.appendChild(h); });
+    var mh = el("thead"); mh.appendChild(hr); mt.appendChild(mh);
+    var mb = el("tbody");
+    MORE.forEach(function (k) {
+      var m = isObj(r.metrics) ? r.metrics[k[0]] : null;
+      var tr = el("tr"); tr.setAttribute("data-metric", k[0]);
+      var h = el("th", null, k[1]); h.scope = "row"; tr.appendChild(h);
+      tr.appendChild(el("td", "num", isObj(m) ? f4(m.estimate) : "not defined"));
+      tr.appendChild(el("td", "num", isObj(m) ? interval(m) : "no interval"));
+      mb.appendChild(tr);
+    });
+    mt.appendChild(mb);
+    var mw = el("div", "lab-scroll"); mw.appendChild(mt);
+    more.appendChild(mw);
+    box.appendChild(more);
+
+    var cr = el("details", "ev-cr");
+    cr.id = "ev-cr";
+    cr.appendChild(el("summary", null, "Confusion matrix and ROC"));
+    var two = el("div", "lab-two");
+    var l = el("div");
+    if (isObj(r.confusion)) l.appendChild(stripIds(confusion(r.confusion))); else l.appendChild(el("p", "empty", "No confusion matrix is stored."));
+    two.appendChild(l);
+    var rr = el("div"); rr.appendChild(stripIds(rocPlot(r))); two.appendChild(rr);
+    cr.appendChild(two);
+    box.appendChild(cr);
+
+    var wr = Array.isArray(d.warnings) ? d.warnings : [];
+    var wd = el("details", "ev-warnings");
+    wd.id = "ev-warnings";
+    wd.appendChild(el("summary", null, "Warnings (" + wr.length + ")"));
+    if (wr.length) { var wu = el("ul"); wr.forEach(function (w) { wu.appendChild(el("li", null, isObj(w) ? (str(w.code) + ": " + str(w.message)) : w)); }); wd.appendChild(wu); }
+    else wd.appendChild(el("p", "empty", "No warnings were recorded."));
+    box.appendChild(wd);
+
+    var pv = el("details", "ev-prov");
+    pv.id = "ev-prov";
+    pv.appendChild(el("summary", null, "Provenance and configuration"));
+    var pr = isObj(r.protocol) ? r.protocol : {};
+    pv.appendChild(kv([["Group", str(eg.id) + (eg.title ? ": " + eg.title : "")], ["Kind", eg.kind], ["Description", eg.description], ["Overlap", eg.overlap],
+      ["Group unit", eg.group_unit], ["Declared samples", eg.n_declared], ["Declared samples without a score", d.group_missing_scores],
+      ["Groups file", eg.groups_file, "mono"], ["Groups file SHA-256", eg.groups_sha256, "mono"], ["Descriptor", eg.descriptor, "mono"],
+      ["Score file", isObj(r.score_file) ? r.score_file.path : "", "mono"], ["Score file SHA-256", isObj(r.score_file) ? r.score_file.sha256 : "", "mono"],
+      ["Configuration SHA-256", r.config_sha256, "mono"], ["Purpose", cfg.purpose], ["Bootstrap resamples", num(pr.n_boot) ? pr.n_boot : cfg.n_boot],
+      ["Bootstrap seed", num(pr.seed) ? pr.seed : cfg.seed], ["Code version", isObj(r.environment) ? r.environment.git_head : "", "mono"],
+      ["Created", r.created], ["Finished", r.finished]]));
+    if (Array.isArray(eg.caveats) && eg.caveats.length) {
+      pv.appendChild(el("h4", "sec-h", "Caveats"));
+      var cu = el("ul"); eg.caveats.forEach(function (c) { cu.appendChild(el("li", null, c)); }); pv.appendChild(cu);
+    }
+    if (isObj(eg.provenance)) { pv.appendChild(el("h4", "sec-h", "Provenance record")); pv.appendChild(el("pre", "lab-pre mono", JSON.stringify(eg.provenance, null, 1))); }
+    box.appendChild(pv);
+
+    var ex = el("div", "lab-export");
+    ex.id = "ev-export";
+    ex.appendChild(el("span", "lab-exl", "Export this run:"));
+    [["json", "JSON (full record)"], ["md", "Markdown report"]].forEach(function (f) {
+      var a = el("a", "btn", f[1]);
+      a.href = "/api/evallab/runs/" + encodeURIComponent(str(r.id)) + "/export?format=" + f[0];
+      a.setAttribute("download", "");
+      a.setAttribute("data-format", f[0]);
+      ex.appendChild(a);
+    });
+    box.appendChild(ex);
+    out.appendChild(box);
+    evButtons(false);
+  }
+
+  /* ---------------- recommended demonstrations (logged results, displayed as logged) ----------------
+     Reads GET /api/evallab/recommended. Nothing is run or recomputed: the numbers come from the logged result files.
+     "Open in Lab evaluation" only preselects an evaluation group in the guided flow; the run still needs its button. */
+  var RECO_FILTERS = [["all", "All"], ["face_video", "Face video"], ["speech", "Speech / audio"], ["image", "Image"]];
+  var RECO_METRICS = [["auc", "AUROC"], ["balanced_accuracy", "Balanced accuracy"], ["precision", "Precision"], ["recall", "Recall (sensitivity)"],
+    ["specificity", "Specificity"], ["fpr", "False positive rate"], ["f1", "F1"], ["accuracy", "Accuracy"], ["eer", "EER"], ["fnr", "False negative rate"]];
+  var KIND_BADGE = { stored_sealed: "Stored result (sealed test, E-014)", stored_post_freeze: "Stored result (post-freeze)" };
+
+  function rbody() { return body("lab-reco"); }
+  function loadRecommended() {
+    var b = rbody();
+    clear(b);
+    b.appendChild(el("p", "lab-loading", "Reading the logged results ..."));
+    return api("GET", "/api/evallab/recommended").then(function (x) {
+      clear(b);
+      if (!x.ok || !isObj(x.j) || !Array.isArray(x.j.entries)) {
+        var box = el("div", "error-box");
+        box.id = "reco-load-error";
+        box.setAttribute("role", "alert");
+        box.appendChild(el("strong", null, "The recommended demonstrations could not be loaded. "));
+        box.appendChild(document.createTextNode(errMsg(x)));
+        b.appendChild(box);
+        return;
+      }
+      R.data = x.j;
+      renderRecommended();
+    }).catch(function (e) {
+      clear(b);
+      var box = el("div", "error-box", "The Evaluation Lab API could not be reached: " + (e && e.message ? e.message : "request failed"));
+      box.setAttribute("role", "alert");
+      b.appendChild(box);
+    });
+  }
+  function recoLegend() {
+    var ul = el("ul", "lab-explain reco-legend");
+    ul.id = "reco-legend";
+    [["Stored evaluation result", "A logged result, read from its result file and shown as logged. Nothing is recomputed and no sealed split is reopened."],
+     ["Lab evaluation", "In the guided section below, a post-freeze group, or a predeclared group of the stored sealed-test scores, can be re-analysed: metrics are recomputed now from the stored scores. The detector model is not run again; live model inference happens only on the Analyse page for an uploaded file."],
+     ["Experimental", "Every number here is a research measurement. None approves a model for the product, and none changes a verdict."]
+    ].forEach(function (x) { var li = el("li"); li.appendChild(el("b", null, x[0] + ". ")); li.appendChild(document.createTextNode(x[1])); ul.appendChild(li); });
+    return ul;
+  }
+  function recoFilterBar() {
+    var bar = el("div", "reco-filter");
+    bar.id = "reco-filter";
+    bar.setAttribute("role", "group");
+    bar.setAttribute("aria-label", "Filter by modality");
+    RECO_FILTERS.forEach(function (f) {
+      var n = f[0] === "all" ? R.data.entries.length : R.data.entries.filter(function (e) { return e.modality === f[0]; }).length;
+      var bt = el("button", "btn reco-chip" + (R.filter === f[0] ? " on" : ""), f[1] + " (" + n + ")");
+      bt.type = "button";
+      bt.setAttribute("data-filter", f[0]);
+      bt.setAttribute("aria-pressed", R.filter === f[0] ? "true" : "false");
+      bt.addEventListener("click", function () { R.filter = f[0]; renderRecommended(); var nb = document.querySelector('#reco-filter [data-filter="' + f[0] + '"]'); if (nb) nb.focus(); });
+      bar.appendChild(bt);
+    });
+    return bar;
+  }
+  function recoMetricLine(e) {
+    var m = isObj(e.metrics) ? e.metrics : {};
+    return ["balanced_accuracy", "recall", "specificity"].map(function (k) {
+      var lbl = { balanced_accuracy: "Balanced accuracy", recall: "Recall", specificity: "Specificity" }[k];
+      return lbl + " " + (isObj(m[k]) ? f4(m[k].estimate) : "not logged");
+    }).join(" · ");
+  }
+  function recoDetail(e) {
+    var d = el("div", "reco-detail");
+    d.id = "reco-detail-" + e.id;
+    d.appendChild(el("p", "lab-hint", str(e.kind_text)));
+    var t = el("table", "lab-t");
+    t.appendChild(el("caption", null, "Logged metrics, " + str(e.interval) + (e.n_seeds > 1 ? "; mean over " + e.n_seeds + " seeds" : "")));
+    var hr = el("tr");
+    ["Metric", "Estimate", "95% CI"].forEach(function (c) { var h = el("th", null, c); h.scope = "col"; hr.appendChild(h); });
+    var th = el("thead"); th.appendChild(hr); t.appendChild(th);
+    var tb = el("tbody");
+    RECO_METRICS.forEach(function (k) {
+      var m = isObj(e.metrics) ? e.metrics[k[0]] : null;
+      if (!isObj(m)) return;
+      var tr = el("tr"); tr.setAttribute("data-metric", k[0]);
+      var notes = [];
+      if (m.derived) notes.push("derived (see note)");
+      if (k[0] === "accuracy" && num(e.n_samples) && e.n_samples > 0) notes.push("class balance " + pct(e.n_fake / e.n_samples) + " fake");
+      var h = el("th", null, k[1]); h.scope = "row";
+      if (notes.length) h.appendChild(el("span", "reco-note", notes.join("; ")));
+      tr.appendChild(h);
+      tr.appendChild(el("td", "num", f4(m.estimate)));
+      tr.appendChild(el("td", "num", interval(m)));
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb);
+    var w = el("div", "lab-scroll"); w.appendChild(t); d.appendChild(w);
+    if (e.derived_note) d.appendChild(el("p", "lab-hint", e.derived_note));
+    var thr = isObj(e.threshold) ? e.threshold : {};
+    var thrVals = isObj(thr.values) ? Object.keys(thr.values).map(function (k) { return k + " " + f4(thr.values[k]); }).join("; ") : "";
+    d.appendChild(kv([["Experiment", e.experiment], ["Block or group", e.block, "mono"], ["Threshold provenance", thr.provenance],
+      ["Per-seed thresholds", thrVals, "mono"], ["Lab run id of the logged result", e.lab_run_id, "mono"],
+      ["Source file", e.source_file, "mono"], ["Source file SHA-256", e.source_sha256, "mono"]]));
+    return d;
+  }
+  function recoCard(e) {
+    var c = el("article", "reco-card reco-" + str(e.section));
+    c.setAttribute("data-reco", str(e.id));
+    c.setAttribute("data-modality", str(e.modality));
+    var top = el("div", "pick-top");
+    top.appendChild(el("span", "role-badge reco-mod", str(e.modality_label)));
+    top.appendChild(el("span", "role-badge reco-kind", KIND_BADGE[e.kind] || str(e.kind)));
+    if (e.task) top.appendChild(el("span", "role-badge reco-task", "Head " + str(e.task)));
+    c.appendChild(top);
+    c.appendChild(el("h4", "reco-title", str(e.title)));
+    c.appendChild(el("p", "reco-setting", str(e.setting)));
+    if (!e.available) {
+      c.appendChild(el("p", "lab-unavail", "Not available on this computer: " + str(e.reason)));
+      return c;
+    }
+    c.appendChild(el("p", "reco-counts", e.n_real + " real · " + e.n_fake + " fake · " + e.n_samples + " total" + (num(e.n_groups) ? " · " + e.n_groups + " independent groups" : "")));
+    var m = isObj(e.metrics) ? e.metrics : {};
+    var pm = m[e.primary_metric || "auc"];
+    var p = el("div", "reco-primary");
+    p.appendChild(el("span", "ev-tile-name", "AUROC (threshold-free ranking)"));
+    p.appendChild(el("b", "ev-tile-val", isObj(pm) ? f4(pm.estimate) : "not logged"));
+    p.appendChild(el("span", "ev-tile-int", isObj(pm) ? "95% interval " + interval(pm) + (e.n_seeds > 1 ? ", mean of " + e.n_seeds + " seeds" : "") : ""));
+    if (num(e.seed0_auc)) p.appendChild(el("span", "ev-tile-int", "Product checkpoint (seed 0): " + f4(e.seed0_auc)));
+    c.appendChild(p);
+    c.appendChild(el("p", "reco-line", recoMetricLine(e)));
+    c.appendChild(el("p", "reco-why", str(e.why)));
+    if (Array.isArray(e.caveats) && e.caveats.length) {
+      var cv = el("details", "lab-caveats reco-caveats");
+      cv.appendChild(el("summary", null, "Limitations and caveats (" + e.caveats.length + ")"));
+      var cu = el("ul"); e.caveats.forEach(function (x) { cu.appendChild(el("li", null, x)); }); cv.appendChild(cu);
+      c.appendChild(cv);
+    }
+    var acts = el("div", "reco-actions");
+    var on = R.open === e.id;
+    var sb = el("button", "btn", on ? "Hide stored result" : "Show stored result");
+    sb.type = "button";
+    sb.setAttribute("aria-expanded", on ? "true" : "false");
+    sb.setAttribute("aria-controls", "reco-detail-" + e.id);
+    sb.setAttribute("data-action", "show");
+    sb.addEventListener("click", function () { R.open = on ? "" : e.id; renderRecommended(); var nb = document.querySelector('[data-reco="' + e.id + '"] [data-action="show"]'); if (nb) nb.focus(); });
+    acts.appendChild(sb);
+    if (isObj(e.lab)) {
+      var lb = el("button", "btn", "Open in Lab evaluation");
+      lb.type = "button";
+      lb.setAttribute("data-action", "lab");
+      lb.addEventListener("click", function () { openInLab(e.lab); });
+      acts.appendChild(lb);
+    }
+    c.appendChild(acts);
+    if (on) c.appendChild(recoDetail(e));
+    return c;
+  }
+  function recoGrid(entries, id, emptyText) {
+    var g = el("div", "reco-grid");
+    g.id = id;
+    entries.forEach(function (e) { g.appendChild(recoCard(e)); });
+    if (!entries.length) g.appendChild(el("p", "empty", emptyText));
+    return g;
+  }
+  function renderRecommended() {
+    var b = rbody();
+    clear(b);
+    var all = R.data.entries.filter(function (e) { return R.filter === "all" || e.modality === R.filter; });
+    var sec = function (s) { return all.filter(function (e) { return e.section === s; }); };
+    b.appendChild(noteBanner(str(R.data.status) || STATUS_FALLBACK, "reco-status-banner"));
+    b.appendChild(el("p", "lab-hint", "The best-supported results of the project's detectors, each with its setting, sample counts and limitations. They show where the detectors work; they are not representative of every kind of deepfake. Weak results are listed too."));
+    b.appendChild(recoLegend());
+    b.appendChild(recoFilterBar());
+    b.appendChild(el("h3", "lab-sub", "Recommended"));
+    b.appendChild(recoGrid(sec("recommended"), "reco-recommended", "No recommended demonstration for this modality."));
+    b.appendChild(el("h3", "lab-sub", "Known limitations (show these too)"));
+    b.appendChild(recoGrid(sec("limitation"), "reco-limitations", "No listed limitation for this modality."));
+    var more = el("details", "reco-more");
+    more.id = "reco-more";
+    if (R.open && sec("other").some(function (e) { return e.id === R.open; })) more.open = true;
+    more.appendChild(el("summary", null, "All other stored results (" + sec("other").length + ")"));
+    more.appendChild(recoGrid(sec("other"), "reco-other", "No other stored result for this modality."));
+    var ns = Array.isArray(R.data.not_shown) ? R.data.not_shown : [];
+    if (ns.length) {
+      more.appendChild(el("h4", "sec-h", "Not used as demonstrations, and why"));
+      var nu = el("ul", "reco-notshown");
+      nu.id = "reco-notshown";
+      ns.forEach(function (x) { var li = el("li"); li.appendChild(el("b", null, str(x.title) + ". ")); li.appendChild(document.createTextNode(str(x.reason))); nu.appendChild(li); });
+      more.appendChild(nu);
+    }
+    b.appendChild(more);
+    if (R.data.note) b.appendChild(el("p", "lab-hint", R.data.note));
+  }
+  function openInLab(target) {
+    G.ds = str(target.dataset); G.group = str(target.group); G.confirmFull = false; G.token++; G.busy = false; G.run = null;
+    if (G.data) renderGuided();
+    var sec = $("lab-guided");
+    if (sec && sec.scrollIntoView) sec.scrollIntoView({ block: "start" });
+    var s = $("ev-dataset");
+    if (s) s.focus();
+  }
+
   function open(host) {
     root = host || root || $("lab-root");
-    if (!built) { build(); loadCatalogue(); }
-    else if (!S.cat) loadCatalogue();
+    if (!built) { build(); loadRecommended(); loadGroups(); loadCatalogue(); }
+    else { if (!R.data) loadRecommended(); if (!G.data) loadGroups(); if (!S.cat) loadCatalogue(); }
     var h = $("lab-h");
     if (h) { h.setAttribute("tabindex", "-1"); }
   }
