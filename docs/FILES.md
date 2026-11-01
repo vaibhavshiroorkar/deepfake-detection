@@ -238,3 +238,13 @@ One row per file or folder. Status is `exists`, `planned` or `missing`. A `plann
 | deliverables_v2/website/test_evidence/2026-10-31_report_preview/ | Live browser check of the analysed file shown in the report (D-098): screenshots and JSON | TESTING_RECORD section 23 | exists |
 | docs/TEAMMATE_HANDOFF.md | What a teammate gets from git, from the two Drive bundles, and what they rebuild or download themselves | D-099 | exists |
 | _drive_upload/ | Local Drive bundles and their SHA-256 manifests (git-ignored) | D-099 | exists (local) |
+
+## Audio-visual module, branch av-module (added 2026-10-31, D-100)
+
+| Path | What it contains | What it contributes to the project | Status |
+|---|---|---|---|
+| src/dfd/av/avhubert.py | AV-HuBERT encoder in plain torch (Base and Large), log filterbank features, strict loader for the released pretraining checkpoints, early exit at a chosen layer | Encoder of the audio-visual task T-AV (D-100) | exists |
+| src/dfd/av/mouth.py | 25 fps frames and 16 kHz audio of one window by ffmpeg; MediaPipe landmark poses, smoothed similarity transform, 96 px grey mouth crop, 88 px normalised lips | Input preparation of T-AV | exists |
+| src/dfd/av/sync.py | Zero-shot lip-audio agreement: per-frame cosine of the lips-only and audio-only passes, best mean over small shifts | Baseline I-8a of T-AV | exists |
+| tests/av/test_avhubert.py | 7 tests: strict load of the released key layout, single-modality passes, feature rate, gain invariance, Large shapes, early exit (one test needs python_speech_features and is skipped without it) | Tests for D-100 | exists |
+| data/_bundles/ (not in git) | The SHA-256 manifests of the two Drive bundles of D-099, kept after their files were moved into place | Provenance of checkpoints/ and data/_* on this machine | exists |
