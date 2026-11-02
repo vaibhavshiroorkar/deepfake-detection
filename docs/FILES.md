@@ -251,3 +251,8 @@ One row per file or folder. Status is `exists`, `planned` or `missing`. A `plann
 | scripts/av/build_lavdf_windows.py | LAV-DF 2 s windows for T-AV: forged and genuine window per sampled fake file, one window per sampled original; writes data/_manifests/av_lavdf_windows.manifest.csv and split av_lavdf_windows-8c8203b7d252 | Data of E-035 and the later T-AV iterations | exists |
 | scripts/av/prereg.py | Ordering record (block SHA-256 and time) of a preregistered T-AV block into data/_results/av/<E>/prereg.json | Hypothesis-before-run evidence (CLAUDE.md rule 2) | exists |
 | scripts/av/e035.py | E-035 runner: part A crop and model check on train windows, part B shuffled-audio control then I-8a on val | E-035 | exists |
+| src/dfd/av/features.py | Worker-side window preparation (decode, MediaPipe, crops) and the three frozen AV-HuBERT passes (fused, lips only, audio only) cached as float16 | Features of E-036 | exists |
+| src/dfd/av/heads.py | AlignmentHead (I-8b, real-only frame pairing) and WindowHead (I-8c, attention-pooled supervised head) | Models of E-036 | exists |
+| scripts/av/extract_features.py | Feature cache for train and val (test_in only with --final), resumable, with the shuffled-audio fused pass for val | E-036 | exists |
+| scripts/av/e036.py | E-036 training of three seeds per head and the val evaluation with controls and paired differences against I-8a | E-036 | exists |
+| tests/av/test_heads.py | 4 tests: feature stacking, logit shapes, attention sensitivity, alignment learning on synthetic pairs | Tests for E-036 | exists |
