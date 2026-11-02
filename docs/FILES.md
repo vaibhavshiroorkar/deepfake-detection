@@ -248,3 +248,6 @@ One row per file or folder. Status is `exists`, `planned` or `missing`. A `plann
 | src/dfd/av/sync.py | Zero-shot lip-audio agreement: per-frame cosine of the lips-only and audio-only passes, best mean over small shifts | Baseline I-8a of T-AV | exists |
 | tests/av/test_avhubert.py | 7 tests: strict load of the released key layout, single-modality passes, feature rate, gain invariance, Large shapes, early exit (one test needs python_speech_features and is skipped without it) | Tests for D-100 | exists |
 | data/_bundles/ (not in git) | The SHA-256 manifests of the two Drive bundles of D-099, kept after their files were moved into place | Provenance of checkpoints/ and data/_* on this machine | exists |
+| scripts/av/build_lavdf_windows.py | LAV-DF 2 s windows for T-AV: forged and genuine window per sampled fake file, one window per sampled original; writes data/_manifests/av_lavdf_windows.manifest.csv and split av_lavdf_windows-8c8203b7d252 | Data of E-035 and the later T-AV iterations | exists |
+| scripts/av/prereg.py | Ordering record (block SHA-256 and time) of a preregistered T-AV block into data/_results/av/<E>/prereg.json | Hypothesis-before-run evidence (CLAUDE.md rule 2) | exists |
+| scripts/av/e035.py | E-035 runner: part A crop and model check on train windows, part B shuffled-audio control then I-8a on val | E-035 | exists |
