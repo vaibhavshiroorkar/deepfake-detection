@@ -10,12 +10,22 @@ shortcut to learn. That makes it the cleanest test of whether lip-sync carries
 signal across corpora (F26, F30 found the trained sync models did not).
 
 Each partition is reported whole, with an identity-clustered interval, and
-FakeAVCeleb test also per manipulation type, because the types make opposite
-predictions. A cloned voice over genuine video should disagree with the lips.
-Wav2Lip regenerates the lips from the fake audio, so its two streams should
-agree, and a sync score should miss it.
+per manipulation type, because the types make opposite predictions. A cloned
+voice over genuine video should disagree with the lips. Wav2Lip regenerates the
+lips from the fake audio, so its two streams should agree, and a sync score
+should miss it.
+
+AV-HuBERT was pretrained on VoxCeleb2 and LRS3. FakeAVCeleb and LAV-DF are
+built from VoxCeleb2, so their genuine speakers may be in its pretraining data.
+It never saw a label, but DFDC is the only partition here it cannot have seen.
+
+`lavdf-blind` cuts its window where it would for an unlabelled upload, so it
+usually misses LAV-DF's short forgery. `lavdf-matched` places the window on the
+forgery and scores it against an untouched window of the same file.
 
     uv run python scripts/avhubert_sync_score.py
+    uv run python scripts/avhubert_sync_score.py --partitions lavdf-blind lavdf-matched \
+        --output runs/lavdf-eval-20261031/evaluation/avhubert-sync-score.json
 """
 
 from __future__ import annotations
@@ -27,13 +37,29 @@ from pathlib import Path
 import numpy as np
 
 PROGRAM = Path("runs/program-20260906")
+LAVDF = Path("runs/lavdf-eval-20261031")
+# Name: manifest, dataset, cache index, cache root.
 PARTITIONS = {
-    "in-domain-test": (PROGRAM / "split" / "test-sync-usable.csv", "FakeAVCeleb"),
-    "dfdc": (PROGRAM / "split" / "dfdc-sync.csv", "DFDC"),
+    "in-domain-test": (
+        PROGRAM / "split" / "test-sync-usable.csv", "FakeAVCeleb",
+        PROGRAM / "cache-index.csv", PROGRAM / "cache",
+    ),
+    "dfdc": (
+        PROGRAM / "split" / "dfdc-sync.csv", "DFDC",
+        PROGRAM / "cache-index.csv", PROGRAM / "cache",
+    ),
+    "lavdf-blind": (
+        LAVDF / "blind.csv", "LAV-DF", LAVDF / "cache-index-blind.csv", LAVDF / "cache",
+    ),
+    "lavdf-matched": (
+        LAVDF / "matched.csv", "LAV-DF", LAVDF / "cache-index-matched.csv", LAVDF / "cache",
+    ),
 }
 
 
-def _scores(manifest: Path, dataset: str, device: str, batch: int):
+def _scores(
+    manifest: Path, dataset: str, cache_index: Path, cache_root: Path, device: str, batch: int
+):
     import torch
     import torch.nn.functional as F
 
@@ -44,8 +70,8 @@ def _scores(manifest: Path, dataset: str, device: str, batch: int):
     from deepfake_detection.views.cache_store import CacheStore
 
     records = load_manifest(manifest, dataset=dataset).records
-    index = read_cache_index(PROGRAM / "cache-index.csv")
-    store = CacheStore(PROGRAM / "cache")
+    index = read_cache_index(cache_index)
+    store = CacheStore(cache_root)
     encoder = AVHubertPairEncoder(checkpoint=str(AVHUBERT_CHECKPOINT)).to(device)
     rows, videos, audios = [], [], []
 
@@ -128,12 +154,21 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         default=Path("runs/encoders-20261022/evaluation/avhubert-sync-score.json"),
     )
+    parser.add_argument(
+        "--partitions",
+        nargs="+",
+        choices=tuple(PARTITIONS),
+        default=("in-domain-test", "dfdc"),
+    )
     arguments = parser.parse_args(argv)
 
     report: dict[str, dict] = {}
-    for name, (manifest, dataset) in PARTITIONS.items():
+    for name in arguments.partitions:
+        manifest, dataset, cache_index, cache_root = PARTITIONS[name]
         print(f"{name}: {manifest}", flush=True)
-        rows = _scores(manifest, dataset, arguments.device, arguments.batch)
+        rows = _scores(
+            manifest, dataset, cache_index, cache_root, arguments.device, arguments.batch
+        )
         entry = _interval(rows, arguments.samples, arguments.seed)
         print(
             f"  {name:30} {entry['roc_auc']:.4f} "

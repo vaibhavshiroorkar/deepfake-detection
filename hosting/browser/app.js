@@ -67,6 +67,10 @@ async function openVideo(file) {
   video.preload = "auto";
   video.src = URL.createObjectURL(file);
   await once(video, "loadedmetadata");
+  // Chrome reads the metadata of an MPEG-4 Part 2 file but decodes no picture.
+  if (video.videoWidth === 0) {
+    throw new Error("This browser cannot decode that video's format. Phone clips (H.264 MP4) work; older MPEG-4 Part 2 files need converting first.");
+  }
   // Recorded WebM often reports an infinite duration until the end is read.
   if (!Number.isFinite(video.duration)) {
     video.currentTime = 1e9;
@@ -174,31 +178,48 @@ function showFaces(crops) {
   $("faces-wrap").hidden = crops.length === 0;
 }
 
+function certainty(probability) {
+  const margin = Math.abs(probability - THRESHOLD);
+  if (margin >= 0.4) return "very sure";
+  if (margin >= 0.25) return "fairly sure";
+  if (margin >= 0.1) return "only leaning that way";
+  return "unsure, since the score is close to the line";
+}
+
 function showResult({ score, stable, coverage, familiarity }) {
   const verdict = $("verdict");
-  const familiar = familiarity.familiar;
+  const found = `A face was found in ${Math.round(coverage * 100)} percent of the sampled frames.`;
+  const lines = [];
   let label;
   let kind;
-  let text;
   if (!stable || !score) {
     kind = "held";
     label = "No steady face";
-    text = `The face detector did not find one face across most of the clip (found in ${Math.round(coverage * 100)} percent of sampled frames). The model needs a single, steady face.`;
-  } else if (!familiar) {
-    kind = "held";
-    label = "Withheld";
-    text = `This clip sits ${familiarity.distance.toFixed(1)} from the genuine footage the model was trained on, past the ${familiarity.threshold.toFixed(1)} that ${familiarity.reference} clips stay within. On footage this unfamiliar the detector calls genuine video fake about nine times in ten, so it gives no verdict.`;
+    lines.push(`${found} The model needs one steady face across most of the clip, so it could not score this one.`);
+    $("meter").hidden = true;
   } else {
     const fake = score.probability >= THRESHOLD;
     kind = fake ? "fake" : "real";
-    label = fake ? "Looks fake" : "Looks real";
-    text = `The clip looks like the training footage (distance ${familiarity.distance.toFixed(1)}, limit ${familiarity.threshold.toFixed(1)}), so the model answers. That still only means it resembles FakeAVCeleb, not that the answer is right.`;
+    label = fake ? "Fake" : "Real";
+    const percent = Math.round(score.probability * 100);
+    lines.push(`The model gives this clip a fake score of ${percent} out of 100, so it calls it ${fake ? "fake" : "real"}. It is ${certainty(score.probability)}: 50 or more means fake, and the further from 50, the surer it is.`);
+    lines.push(found);
+    lines.push(familiarity.familiar
+      ? "The footage looks like the clips the model was trained on, which is where it is most reliable."
+      : `The footage looks unlike the training clips (distance ${familiarity.distance.toFixed(1)}, training clips stay under ${familiarity.threshold.toFixed(1)}). On footage like this the model often calls real videos fake, so read a fake verdict here with caution.`);
+    $("meter").hidden = false;
+    $("meter-fill").style.width = `${percent}%`;
+    $("meter").dataset.kind = kind;
   }
   verdict.dataset.kind = kind;
   $("verdict-label").textContent = label;
-  $("verdict-text").textContent = text;
+  $("verdict-text").replaceChildren(...lines.map((line) => {
+    const p = document.createElement("p");
+    p.textContent = line;
+    return p;
+  }));
   $("raw").textContent = score
-    ? `Model score: ${score.probability.toFixed(3)} (fake at ${THRESHOLD} or above). Familiarity distance: ${familiarity.distance.toFixed(2)}, limit ${familiarity.threshold.toFixed(2)}.`
+    ? `Raw score: ${score.probability.toFixed(3)} (fake at ${THRESHOLD} or above). Familiarity distance: ${familiarity.distance.toFixed(2)}, limit ${familiarity.threshold.toFixed(2)}.`
     : `Familiarity distance: ${familiarity.distance.toFixed(2)}, limit ${familiarity.threshold.toFixed(2)}.`;
   $("result").hidden = false;
   setStatus("Done. Pick another clip to run again.");

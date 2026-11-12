@@ -39,7 +39,11 @@
     <section id="result" class="panel" hidden>
       <div id="verdict" class="verdict">
         <span id="verdict-label" class="chip"></span>
-        <p id="verdict-text"></p>
+        <div id="meter" class="meter" hidden>
+          <div class="meter-track"><span id="meter-fill" class="meter-fill"></span><span class="meter-mark"></span></div>
+          <div class="meter-scale"><span>Real</span><span>50</span><span>Fake</span></div>
+        </div>
+        <div id="verdict-text" class="verdict-text"></div>
       </div>
       <p id="raw" class="raw"></p>
       <div id="faces-wrap" hidden>
@@ -52,9 +56,9 @@
       <h2>How to read the result</h2>
       <p>The model is EfficientNet-B0 with a GRU over 16 face crops, trained on FakeAVCeleb. It
         answers "fake" at a score of 0.5 or above.</p>
-      <p>Before it answers, a familiarity check compares the clip with the genuine footage the model
-        was trained on. When the clip looks unlike that footage, the demo withholds the verdict. Most
-        clips from phones, films or the web will be withheld, and that is the expected result.</p>
+      <p>A familiarity check also compares the clip with the genuine footage the model was trained
+        on. Most clips from phones, films or the web look unlike it. On those the model often calls
+        real video fake, so the result says when the footage is unfamiliar.</p>
       <table>
         <thead><tr><th>Test set</th><th>ROC AUC</th><th>What it means</th></tr></thead>
         <tbody>

@@ -129,6 +129,15 @@ h2 { font-size: 1.15rem; margin-bottom: 12px; }
 .verdict[data-kind="real"] .chip { color: var(--real); background: var(--real-soft); }
 .verdict[data-kind="fake"] .chip { color: var(--fake); background: var(--fake-soft); }
 .verdict[data-kind="held"] .chip { color: var(--held); background: var(--held-soft); }
+.verdict-text { display: grid; gap: 6px; }
+
+.meter { display: grid; gap: 4px; max-width: 420px; }
+.meter[hidden] { display: none; }
+.meter-track { position: relative; height: 10px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); overflow: hidden; }
+.meter-fill { position: absolute; inset: 0 auto 0 0; width: 0; background: var(--real); }
+.meter[data-kind="fake"] .meter-fill { background: var(--fake); }
+.meter-mark { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: var(--ink-2); }
+.meter-scale { display: flex; justify-content: space-between; color: var(--ink-2); font-size: 0.8125rem; }
 
 .raw { color: var(--ink-2); font-size: 0.9rem; font-variant-numeric: tabular-nums; margin: 14px 0 0; }
 

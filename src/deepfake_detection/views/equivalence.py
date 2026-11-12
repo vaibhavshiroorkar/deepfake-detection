@@ -32,7 +32,7 @@ VERIFIED_EQUIVALENT: tuple[frozenset[str], ...] = (frozenset({PROGRAM_V1, STREAM
 
 EVIDENCE = {
     frozenset({PROGRAM_V1, STREAMS_V1}): (
-        "runs/cache-equivalence.json: 60 clips spread across the 1,099 shared "
+        "runs/cache-equivalence.json: 60 clips spread across the 1,121 shared "
         "between runs/streams-20260905/cache and runs/lavdf-av-20260914/cache, "
         "all five arrays identical, no missing arrays. The settings differ only "
         "in code_version, streams-v1 against program-v1."

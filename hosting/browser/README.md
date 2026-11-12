@@ -17,7 +17,7 @@ The video never leaves the visitor's device.
 It mirrors the served Python path: 16 uniformly sampled frames, MTCNN face
 detection, the greedy IoU face track, a 0.2-margin square crop, then
 EfficientNet-B0 with a GRU. A familiarity check embeds three 32-frame windows
-with DINOv3 and withholds the verdict when the clip sits too far from the
+with DINOv3 and says when the clip sits too far from the
 genuine training footage.
 
 ## Files
