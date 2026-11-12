@@ -1,0 +1,62 @@
+{
+ "1366_02_fake_deepfakes_faceswap_ffpp": {
+  "preview": {
+   "tag": "VIDEO",
+   "loaded": true,
+   "controls": true,
+   "width": 420
+  },
+  "overflow": 0,
+  "after_reset_preview_in_report": 0
+ },
+ "1366_09_fake_tts_A01_asvspoof": {
+  "preview": {
+   "tag": "AUDIO",
+   "loaded": true,
+   "controls": true,
+   "width": 420
+  },
+  "overflow": 0,
+  "after_reset_preview_in_report": 0
+ },
+ "1366_16_fake_progan_val": {
+  "preview": {
+   "tag": "IMG",
+   "loaded": true,
+   "controls": false,
+   "width": 420
+  },
+  "overflow": 0,
+  "after_reset_preview_in_report": 0
+ },
+ "390_02_fake_deepfakes_faceswap_ffpp": {
+  "preview": {
+   "tag": "VIDEO",
+   "loaded": true,
+   "controls": true,
+   "width": 324
+  },
+  "overflow": 0,
+  "after_reset_preview_in_report": 0
+ },
+ "390_09_fake_tts_A01_asvspoof": {
+  "preview": {
+   "tag": "AUDIO",
+   "loaded": true,
+   "controls": true,
+   "width": 324
+  },
+  "overflow": 0,
+  "after_reset_preview_in_report": 0
+ },
+ "390_16_fake_progan_val": {
+  "preview": {
+   "tag": "IMG",
+   "loaded": true,
+   "controls": false,
+   "width": 324
+  },
+  "overflow": 0,
+  "after_reset_preview_in_report": 0
+ }
+}

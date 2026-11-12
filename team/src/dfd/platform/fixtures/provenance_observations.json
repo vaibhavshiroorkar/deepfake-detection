@@ -1,0 +1,301 @@
+{
+ "conflicts": [],
+ "coverage": {
+  "completed": [
+   {
+    "module_id": "media_metadata"
+   },
+   {
+    "module_id": "content_credentials"
+   }
+  ],
+  "failed": [],
+  "not_applicable": [],
+  "skipped": [],
+  "timed_out": [],
+  "unsupported": []
+ },
+ "input": {
+  "filename": "mock_clip.mp4",
+  "media_type": "video",
+  "mime_type": "video/mp4",
+  "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "size_bytes": 1000000
+ },
+ "modules": [
+  {
+   "assessment": {
+    "basis": "none",
+    "calibration": {
+     "is_probability": false,
+     "statement": null
+    },
+    "evidence": [],
+    "meaning": "Facts about the file; not evidence either way.",
+    "mock": true,
+    "not_established": "This reading is not a probability and not proof. A reading of no strong evidence, an inconclusive reading or a failed check does not show that the media is unmanipulated.",
+    "raw": {
+     "score": null,
+     "score_kind": "none",
+     "threshold": null
+    },
+    "reasons": [],
+    "tier": "context",
+    "uncertainty": {
+     "level": "not_assessed",
+     "text": ""
+    },
+    "verdict": "information",
+    "verdict_label": "Information only",
+    "version": "v1",
+    "why": "Invented scenario data, no model ran."
+   },
+   "errors": [],
+   "evidence": [],
+   "explanation": {
+    "does_not_mean": "Credentials and metadata describe the file; they do not show whether its content is true.",
+    "finding_label": "Information only",
+    "group": "informational",
+    "group_label": "File information",
+    "headline": "MOCK: Inconclusive",
+    "key_figure": null,
+    "sentences": [
+     {
+      "kind": "mock",
+      "sources": [
+       "source"
+      ],
+      "text": "Invented scenario data: no model ran, and nothing here is a measurement."
+     },
+     {
+      "kind": "examined",
+      "quoted": true,
+      "sources": [
+       "tested_scope"
+      ],
+      "text": "Scope: MOCK: invented by a scenario script; no model ran."
+     },
+     {
+      "kind": "not_established",
+      "sources": [
+       "section"
+      ],
+      "text": "Credentials and metadata describe the file; they do not show whether its content is true."
+     }
+    ],
+    "status_label": "Completed",
+    "template_id": "generic.completed.inconclusive.mock.v2",
+    "title": "File information",
+    "what_it_checks": "Reads the container, streams and tags of the file."
+   },
+   "finding": "inconclusive",
+   "limitations": [
+    "MOCK: invented by a scenario script; no model ran.",
+    "Scenario data for dashboard development only."
+   ],
+   "model": null,
+   "module_id": "media_metadata",
+   "observations": [
+    {
+     "code": "CONTAINER",
+     "kind": "file_metadata",
+     "text": "MOCK: container mov,mp4",
+     "value": null
+    },
+    {
+     "code": "NO_CREATION_TIME",
+     "kind": "heuristic",
+     "text": "MOCK: no creation time tag; says little",
+     "value": null
+    }
+   ],
+   "reason": null,
+   "score": null,
+   "section": "provenance",
+   "segments": [],
+   "source": "mock",
+   "status": "completed",
+   "tested_scope": "MOCK: invented by a scenario script; no model ran.",
+   "timing_ms": 0.0,
+   "units_analysed": 16,
+   "version": "mock-0",
+   "warnings": []
+  },
+  {
+   "assessment": {
+    "basis": "provenance",
+    "calibration": {
+     "is_probability": false,
+     "statement": null
+    },
+    "evidence": [],
+    "meaning": "The result does not support a verdict.",
+    "mock": true,
+    "not_established": "This reading is not a probability and not proof. A reading of no strong evidence, an inconclusive reading or a failed check does not show that the media is unmanipulated.",
+    "raw": {
+     "score": null,
+     "score_kind": "none",
+     "threshold": null
+    },
+    "reasons": [],
+    "tier": "provenance",
+    "uncertainty": {
+     "level": "not_assessed",
+     "text": "Credentials describe where a file came from, not whether what it shows is true."
+    },
+    "verdict": "inconclusive",
+    "verdict_label": "Inconclusive",
+    "version": "v1",
+    "why": "Invented scenario data, no model ran."
+   },
+   "errors": [],
+   "evidence": [],
+   "explanation": {
+    "does_not_mean": "Credentials and metadata describe the file; they do not show whether its content is true.",
+    "finding_label": "Inconclusive",
+    "group": "inconclusive",
+    "group_label": "Inconclusive",
+    "headline": "MOCK: Inconclusive",
+    "key_figure": null,
+    "sentences": [
+     {
+      "kind": "mock",
+      "sources": [
+       "source"
+      ],
+      "text": "Invented scenario data: no model ran, and nothing here is a measurement."
+     },
+     {
+      "kind": "examined",
+      "quoted": true,
+      "sources": [
+       "tested_scope"
+      ],
+      "text": "Scope: MOCK: invented by a scenario script; no model ran."
+     },
+     {
+      "kind": "not_established",
+      "sources": [
+       "section"
+      ],
+      "text": "Credentials and metadata describe the file; they do not show whether its content is true."
+     }
+    ],
+    "status_label": "Completed",
+    "template_id": "generic.completed.inconclusive.mock.v2",
+    "title": "Content credentials (C2PA)",
+    "what_it_checks": "Looks for embedded C2PA content credentials and checks them."
+   },
+   "finding": "inconclusive",
+   "limitations": [
+    "MOCK: invented by a scenario script; no model ran.",
+    "Scenario data for dashboard development only."
+   ],
+   "model": null,
+   "module_id": "content_credentials",
+   "observations": [
+    {
+     "code": "C2PA_MARKER_PRESENT",
+     "kind": "marker_scan",
+     "text": "MOCK: marker bytes found, nothing verified",
+     "value": [
+      "c2pa",
+      "jumb"
+     ]
+    }
+   ],
+   "reason": null,
+   "score": null,
+   "section": "provenance",
+   "segments": [],
+   "source": "mock",
+   "status": "completed",
+   "tested_scope": "MOCK: invented by a scenario script; no model ran.",
+   "timing_ms": 0.0,
+   "units_analysed": 16,
+   "version": "mock-0",
+   "warnings": []
+  }
+ ],
+ "probe": {
+  "container": "mov,mp4",
+  "duration_s": 8.0,
+  "filename": "mock_clip.mp4",
+  "has_audio": true,
+  "has_video": true,
+  "height": 360,
+  "media_type": "video",
+  "mime_type": "video/mp4",
+  "n_faces": 1,
+  "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "size_bytes": 1000000,
+  "speech_detected": true,
+  "width": 640
+ },
+ "request_id": "mock-provenance_observations",
+ "schema_version": "2.1",
+ "sections": {
+  "authenticity": [],
+  "cross_modal": [],
+  "provenance": [
+   "media_metadata",
+   "content_credentials"
+  ]
+ },
+ "source_summary": "mock",
+ "statement": "This report lists what each module found within its tested scope. A module that found nothing, did not run, was unsupported or was inconclusive does not show that the media is authentic. No single probability that the media is fake is given.",
+ "status": {
+  "processing_time_ms": 0.0,
+  "state": "ok"
+ },
+ "summary": {
+  "counts": {
+   "attention": 0,
+   "credential": 0,
+   "did_not_run": 0,
+   "experimental": 0,
+   "inconclusive": 1,
+   "informational": 1,
+   "not_applicable": 0,
+   "nothing_found": 0,
+   "unsupported": 0
+  },
+  "disagreements": [],
+  "groups": [
+   {
+    "id": "inconclusive",
+    "label": "Inconclusive",
+    "modules": [
+     "content_credentials"
+    ]
+   },
+   {
+    "id": "informational",
+    "label": "File information",
+    "modules": [
+     "media_metadata"
+    ]
+   }
+  ],
+  "headline": "2 checks ran on this video. 1 was inconclusive; 1 described the file.",
+  "media_facts": [
+   {
+    "label": "Faces",
+    "sources": [
+     "probe.n_faces"
+    ],
+    "text": "Faces stated in the probe: 1.",
+    "value": true
+   },
+   {
+    "label": "Speech",
+    "sources": [
+     "probe.speech_detected"
+    ],
+    "text": "Speech stated in the probe: yes.",
+    "value": true
+   }
+  ],
+  "no_overall_score": "No overall score or verdict is given: each check reports only on what it examines."
+ }
+}

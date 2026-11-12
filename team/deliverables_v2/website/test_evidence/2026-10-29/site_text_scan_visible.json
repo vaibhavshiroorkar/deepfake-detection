@@ -1,0 +1,176 @@
+{
+ "5_face_image_frame_ffpp_val.png": {
+  "cards": [
+   {
+    "m": "image_detector",
+    "label": "Possible manipulation (weak evidence)",
+    "unc": "High uncertainty",
+    "tier": "limited"
+   },
+   {
+    "m": "content_credentials",
+    "label": "No content credentials found",
+    "unc": null,
+    "tier": "provenance"
+   },
+   {
+    "m": "media_metadata",
+    "label": "Information only",
+    "unc": null,
+    "tier": "context"
+   },
+   {
+    "m": "generated_image",
+    "label": "Experimental signal observed, no reliable verdict available",
+    "unc": "High uncertainty",
+    "tier": "experimental"
+   },
+   {
+    "m": "face_video",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   },
+   {
+    "m": "speech",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   },
+   {
+    "m": "lip_sync",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   },
+   {
+    "m": "generated_video",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   }
+  ],
+  "hits": {
+   "overall": [
+    "y outcome. It is not a probability, a score or an overall verdict.  What the checks found  4 checks ran on this ima",
+    "h Not applicable: a still image has no audio.  No overall score or verdict is given: each check reports only on w"
+   ]
+  }
+ },
+ "3_talking_head_with_audio_lavdf_train.mp4": {
+  "cards": [
+   {
+    "m": "face_video",
+    "label": "No strong evidence of manipulation detected",
+    "unc": "High uncertainty",
+    "tier": "detector"
+   },
+   {
+    "m": "speech",
+    "label": "No strong evidence of manipulation detected",
+    "unc": "Moderate uncertainty",
+    "tier": "limited"
+   },
+   {
+    "m": "lip_sync",
+    "label": "No audio-visual mismatch found",
+    "unc": "High uncertainty",
+    "tier": "limited"
+   },
+   {
+    "m": "content_credentials",
+    "label": "No content credentials found",
+    "unc": null,
+    "tier": "provenance"
+   },
+   {
+    "m": "media_metadata",
+    "label": "Information only",
+    "unc": null,
+    "tier": "context"
+   },
+   {
+    "m": "generated_video",
+    "label": "Experimental signal observed, no reliable verdict available",
+    "unc": "High uncertainty",
+    "tier": "experimental"
+   },
+   {
+    "m": "image_detector",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   },
+   {
+    "m": "generated_image",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   }
+  ],
+  "hits": {
+   "overall": [
+    "y outcome. It is not a probability, a score or an overall verdict.  What the checks found  6 checks ran on this vid",
+    "ynchronisation check (not a speech detector).  No overall score or verdict is given: each check reports only on w"
+   ]
+  }
+ },
+ "4_speech_audio_asvspoof_dev.flac": {
+  "cards": [
+   {
+    "m": "speech",
+    "label": "No strong evidence of manipulation detected",
+    "unc": "Moderate uncertainty",
+    "tier": "limited"
+   },
+   {
+    "m": "content_credentials",
+    "label": "No content credentials found",
+    "unc": null,
+    "tier": "provenance"
+   },
+   {
+    "m": "media_metadata",
+    "label": "Information only",
+    "unc": null,
+    "tier": "context"
+   },
+   {
+    "m": "face_video",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   },
+   {
+    "m": "image_detector",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   },
+   {
+    "m": "generated_image",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   },
+   {
+    "m": "lip_sync",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   },
+   {
+    "m": "generated_video",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   }
+  ],
+  "hits": {
+   "overall": [
+    "y outcome. It is not a probability, a score or an overall verdict.  What the checks found  3 checks ran on this aud",
+    "t, but that does not mean it contains speech.  No overall score or verdict is given: each check reports only on w"
+   ]
+  }
+ }
+}

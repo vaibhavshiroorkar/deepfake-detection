@@ -1,0 +1,38 @@
+[
+ {
+  "value": "90.3",
+  "formula": "100 * 6906 / 7650",
+  "id": "D-045",
+  "what": "share of fake videos in the pooled Celeb-DF test, percent"
+ },
+ {
+  "value": "91.6",
+  "formula": "100 * 1582 / 1728",
+  "id": "D-051",
+  "what": "share of fake clips in the T-V development slice, percent"
+ },
+ {
+  "value": "80.0",
+  "formula": "100 * 2880 / 3600",
+  "id": "E-004",
+  "what": "share of fake clips in the FF++ training split, percent"
+ },
+ {
+  "value": "5.81",
+  "formula": "6.94 - 1.13",
+  "id": "E-030",
+  "what": "I-4 EER minus AASIST EER on ASVspoof 2019 LA eval, percentage points"
+ },
+ {
+  "value": "6.94",
+  "formula": "100 * 0.0694",
+  "id": "E-030",
+  "what": "I-4 EER on ASVspoof 2019 LA eval, percent"
+ },
+ {
+  "value": "15.8",
+  "formula": "100 * 0.1578",
+  "id": "E-030",
+  "what": "I-4 EER on In-the-Wild sealed speakers, percent"
+ }
+]

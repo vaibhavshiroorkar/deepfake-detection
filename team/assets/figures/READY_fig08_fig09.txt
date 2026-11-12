@@ -1,0 +1,2 @@
+fig08_ladder_results and fig09_lavdf_cells written 2026-10-25; fig03_ladder is now a table (7.0 x about 3.9 in)
+fig08_ladder_results relabelled (SigLIP base) 2026-10-25 later; fig09 unchanged

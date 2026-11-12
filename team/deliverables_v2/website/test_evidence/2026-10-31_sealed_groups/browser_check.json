@@ -1,0 +1,67 @@
+{
+ "options_1366": [
+  "Choose a dataset ...",
+  "Speech / audio: LAV-DF test, unread part: speech head (T-A)",
+  "Face video: LAV-DF test, unread part: face-video head (T-V)",
+  "Image: Community Forensics-Eval, unread shards: generated-image head (T-I)",
+  "Speech / audio: In-the-Wild speech deepfakes (sealed test, E-014): speech head (T-A)",
+  "Image: ForenSynths CNN-generated images, 6 unseen generators (sealed test, E-014): image head (T-I)",
+  "Face video: Celeb-DF v2 face swaps (sealed test, E-014): face-video head (T-V)"
+ ],
+ "preselect_1366": {
+  "ds": "celebdf_v2",
+  "g4": true,
+  "groups": [
+   "G1: Small sample",
+   "G2: Medium sample",
+   "G3: Large sample",
+   "G4: Whole sealed test set (the E-014 block)",
+   "G5: Diagnostic: same-source reals only (YouTube-real left out)"
+  ],
+  "banner": "stored sealed-test scores re-analysed: the frozen checkpoint was scored once on this sealed split at the freeze (E-014); nothing is scored again, metrics are recomputed from the logged scores on a predeclared group. It is not a new held-out test, not an approval, and does not change any product verdict",
+  "summary": "Celeb-DF v2 face swaps (sealed test, E-014): face-video head (T-V)\nExperiment\nE-014\nHead\nT-V\nModality\nvisual\nSplit\ntest_x: sealed cross-dataset test, read once at the freeze (E-014); stored scores re-analysed, nothing scored again\nEligibility\ncross-dataset: the face-video head was trained and calibrated on FaceForensics++ only; Celeb-DF v2 was never used for training, tuning or selection. The sealed part is identity-disjoint from the development slice.\nThreshold\none per seed, fitted on validation (D-024)\nThreshold provenance\nper-seed threshold of maximum balanced accuracy on the validation rows of the same runs (D-024), fitted at the freeze before the sealed split was read; the rule E-014 used; not tuned on this data\nScore kind\nscore of the frozen I-4 seed runs exactly as logged at the freeze in data/_final/scores/I-4.csv; on a dataset the model was not trained on it is a ranking score, "
+ },
+ "result": {
+  "banner": "Stored sealed-test scores re-analysed: the frozen checkpoint scored this sealed split once, at the freeze (E-014). Nothing was scored again now; the metrics were recomputed from those logged scores for the chosen group. This is not a new held-out test and not an approval.",
+  "headline": "AUROC\n0.8945\n95% interval [0.8329, 0.9474]\nF1\n0.7499\n95% interval [0.6466, 0.8368]\nPrecision\n0.8683\n95% interval [0.7504, 0.9571]\nRecall (sensitivity)\n0.6600\n95% interval [0.5362, 0.7826]\nSpecificity\n0.9000\n95% interval [0.8133, 0.9691]\nAccuracy\n0.7800\n95% interval [0.7021, 0.8527]\nclass balance: 50.0% fake",
+  "hint": "Mean over the three frozen seeds, each judged at its own threshold fitted on the validation split before the sealed split was read (the rule E-014 used); nothing was tuned on these samples. Score kind: score of the frozen I-4 seed runs exactly as logged at the freeze in data/_final/scores/I-4.csv; on a dataset the model was not trained on it is a ranking score, not a calibrated probability"
+ },
+ "groups_in_the_wild": [
+  "G1: Small sample\nGeneral\nThe first 100 real and the first 100 fake items of the seeded order (seed 20261031, separate order per class).\n200 samples: 100 real, 100 fake\nIndependent groups: 27 speakers\nOverlap: nested: contains every smaller group",
+  "G2: Medium sample\nGeneral\nThe first 500 real and the first 500 fake items of the seeded order (seed 20261031, separate order per class).\n1000 samples: 500 real, 500 fake\nIndependent groups: 40 speakers\nOverlap: nested: contains every smaller group",
+  "G3: Large sample\nGeneral\nThe first 2000 real and the first 2000 fake items of the seeded order (seed 20261031, separate order per class).\n4000 samples: 2000 real, 2000 fake\nIndependent groups: 42 speakers\nOverlap: nested: contains every smaller group",
+  "G4: Whole sealed test set (the E-014 block)\nGeneral\nEvery item of the sealed block, exactly the rows E-014 reported (classes not balanced; the share is shown).\n24788 samples: 16159 real, 8629 fake\nIndependent groups: 42 speakers\nOverlap: contains every group",
+  "G5: Diagnostic: balanced within each speaker\nDiagnostic\nEvery speaker with both real and fake recordings, with the same number of each (first in the seeded order). Inside this group a speaker's identity carries no information about the label, so it tests whether the head separates real from fake speech of the same person rather than one speaker from another.\n14332 samples: 7166 real, 7166 fake\nIndependent groups: 42 speakers\nOverlap: overlaps G1 to G4"
+ ],
+ "groups_forensynths_cnn_subset": [
+  "G1: Small sample\nGeneral\nThe first 100 real and the first 100 fake items of the seeded order (seed 20261031, separate order per class).\n200 samples: 100 real, 100 fake\nIndependent groups: 16 generator groups\nOverlap: nested: contains every smaller group",
+  "G2: Medium sample\nGeneral\nThe first 500 real and the first 500 fake items of the seeded order (seed 20261031, separate order per class).\n1000 samples: 500 real, 500 fake\nIndependent groups: 16 generator groups\nOverlap: nested: contains every smaller group",
+  "G3: Large sample\nGeneral\nThe first 2000 real and the first 2000 fake items of the seeded order (seed 20261031, separate order per class).\n4000 samples: 2000 real, 2000 fake\nIndependent groups: 16 generator groups\nOverlap: nested: contains every smaller group",
+  "G4: Whole sealed test set (the E-014 block)\nGeneral\nEvery item of the sealed block, exactly the rows E-014 reported (classes not balanced; the share is shown).\n48805 samples: 23807 real, 24998 fake\nIndependent groups: 16 generator groups\nOverlap: contains every group",
+  "G5: Diagnostic: image-to-image generators only\nDiagnostic\nCycleGAN, GauGAN and Deepfake with their own real images. These generators transform or condition on a real input, so the fakes keep the layout of real photographs; it tests whether detection holds when the fake is built from a real image rather than drawn from noise.\n18047 samples: 9028 real, 9019 fake\nIndependent groups: 8 generator groups\nOverlap: overlaps G1 to G4"
+ ],
+ "overflow_1366": 0,
+ "options_390": [
+  "Choose a dataset ...",
+  "Speech / audio: LAV-DF test, unread part: speech head (T-A)",
+  "Face video: LAV-DF test, unread part: face-video head (T-V)",
+  "Image: Community Forensics-Eval, unread shards: generated-image head (T-I)",
+  "Speech / audio: In-the-Wild speech deepfakes (sealed test, E-014): speech head (T-A)",
+  "Image: ForenSynths CNN-generated images, 6 unseen generators (sealed test, E-014): image head (T-I)",
+  "Face video: Celeb-DF v2 face swaps (sealed test, E-014): face-video head (T-V)"
+ ],
+ "preselect_390": {
+  "ds": "celebdf_v2",
+  "g4": true,
+  "groups": [
+   "G1: Small sample",
+   "G2: Medium sample",
+   "G3: Large sample",
+   "G4: Whole sealed test set (the E-014 block)",
+   "G5: Diagnostic: same-source reals only (YouTube-real left out)"
+  ],
+  "banner": "stored sealed-test scores re-analysed: the frozen checkpoint was scored once on this sealed split at the freeze (E-014); nothing is scored again, metrics are recomputed from the logged scores on a predeclared group. It is not a new held-out test, not an approval, and does not change any product verdict",
+  "summary": "Celeb-DF v2 face swaps (sealed test, E-014): face-video head (T-V)\nExperiment\nE-014\nHead\nT-V\nModality\nvisual\nSplit\ntest_x: sealed cross-dataset test, read once at the freeze (E-014); stored scores re-analysed, nothing scored again\nEligibility\ncross-dataset: the face-video head was trained and calibrated on FaceForensics++ only; Celeb-DF v2 was never used for training, tuning or selection. The sealed part is identity-disjoint from the development slice.\nThreshold\none per seed, fitted on validation (D-024)\nThreshold provenance\nper-seed threshold of maximum balanced accuracy on the validation rows of the same runs (D-024), fitted at the freeze before the sealed split was read; the rule E-014 used; not tuned on this data\nScore kind\nscore of the frozen I-4 seed runs exactly as logged at the freeze in data/_final/scores/I-4.csv; on a dataset the model was not trained on it is a ranking score, "
+ },
+ "overflow_390": 0
+}

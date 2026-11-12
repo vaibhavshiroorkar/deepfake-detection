@@ -1,0 +1,430 @@
+﻿deck      PASS  slide size 16:9, 12192000 x 6858000
+deck      PASS  slide count: 14 main + 1 backup divider + at most 10 backup (15 to 25 in all)
+deck      PASS  slide 15 is the backup divider (title 'Backup slides'), no earlier slide is
+deck      PASS  backup slides after the divider are at most 10
+slide 1   PASS  body shapes inside the content area
+slide 1   PASS  no body shape in the footer band
+slide 1   PASS  title box above the content area
+slide 1   PASS  no overlapping shapes
+slide 1   PASS  title does not overlap the body
+slide 1   PASS  left edges on the 12-column grid
+slide 1   PASS  leftmost diagram or picture starts at the left margin
+slide 1   PASS  text fits its shape; tables end above the footer band
+slide 1   PASS  every run has an explicit size of at least 12 pt
+slide 1   PASS  body text at least 16 pt
+slide 1   PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 1   PASS  footer text is the department line and the slide number is present
+slide 1   PASS  speaker notes present (3 or more sentences)
+slide 1   PASS  no dashes in the notes
+slide 1   PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 1   PASS  [pending] only in the one style (italic, dark red)
+slide 1   PASS  picture pic_1 has alt text
+slide 1   PASS  picture pic_2 has alt text
+slide 2   PASS  body shapes inside the content area
+slide 2   PASS  no body shape in the footer band
+slide 2   PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 2   PASS  no overlapping shapes
+slide 2   PASS  title does not overlap the body
+slide 2   PASS  left edges on the 12-column grid
+slide 2   PASS  leftmost diagram or picture starts at the left margin
+slide 2   PASS  text fits its shape; tables end above the footer band
+slide 2   PASS  every run has an explicit size of at least 12 pt
+slide 2   PASS  body text at least 16 pt
+slide 2   PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 2   PASS  title text clear of both logos
+slide 2   PASS  footer text is the department line and the slide number is present
+slide 2   PASS  speaker notes present (3 or more sentences)
+slide 2   PASS  no dashes in the notes
+slide 2   PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 2   PASS  [pending] only in the one style (italic, dark red)
+slide 3   PASS  body shapes inside the content area
+slide 3   PASS  no body shape in the footer band
+slide 3   PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 3   PASS  no overlapping shapes
+slide 3   PASS  title does not overlap the body
+slide 3   PASS  left edges on the 12-column grid
+slide 3   PASS  leftmost diagram or picture starts at the left margin
+slide 3   PASS  text fits its shape; tables end above the footer band
+slide 3   PASS  every run has an explicit size of at least 12 pt
+slide 3   PASS  body text at least 16 pt
+slide 3   PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 3   PASS  title text clear of both logos
+slide 3   PASS  footer text is the department line and the slide number is present
+slide 3   PASS  speaker notes present (3 or more sentences)
+slide 3   PASS  no dashes in the notes
+slide 3   PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 3   PASS  [pending] only in the one style (italic, dark red)
+slide 4   PASS  body shapes inside the content area
+slide 4   PASS  no body shape in the footer band
+slide 4   PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 4   PASS  no overlapping shapes
+slide 4   PASS  title does not overlap the body
+slide 4   PASS  left edges on the 12-column grid
+slide 4   PASS  leftmost diagram or picture starts at the left margin
+slide 4   PASS  text fits its shape; tables end above the footer band
+slide 4   PASS  every run has an explicit size of at least 12 pt
+slide 4   PASS  body text at least 16 pt
+slide 4   PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 4   PASS  title text clear of both logos
+slide 4   PASS  footer text is the department line and the slide number is present
+slide 4   PASS  speaker notes present (3 or more sentences)
+slide 4   PASS  no dashes in the notes
+slide 4   PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 4   PASS  [pending] only in the one style (italic, dark red)
+slide 5   PASS  body shapes inside the content area
+slide 5   PASS  no body shape in the footer band
+slide 5   PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 5   PASS  no overlapping shapes
+slide 5   PASS  title does not overlap the body
+slide 5   PASS  left edges on the 12-column grid
+slide 5   PASS  text fits its shape; tables end above the footer band
+slide 5   PASS  every run has an explicit size of at least 12 pt
+slide 5   PASS  body text at least 16 pt
+slide 5   PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 5   PASS  title text clear of both logos
+slide 5   PASS  footer text is the department line and the slide number is present
+slide 5   PASS  speaker notes present (3 or more sentences)
+slide 5   PASS  no dashes in the notes
+slide 5   PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 5   PASS  [pending] only in the one style (italic, dark red)
+slide 6   PASS  body shapes inside the content area
+slide 6   PASS  no body shape in the footer band
+slide 6   PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 6   PASS  no overlapping shapes
+slide 6   PASS  title does not overlap the body
+slide 6   PASS  left edges on the 12-column grid
+slide 6   PASS  leftmost diagram or picture starts at the left margin
+slide 6   PASS  text fits its shape; tables end above the footer band
+slide 6   PASS  every run has an explicit size of at least 12 pt
+slide 6   PASS  body text at least 16 pt
+slide 6   PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 6   PASS  title text clear of both logos
+slide 6   PASS  footer text is the department line and the slide number is present
+slide 6   PASS  speaker notes present (3 or more sentences)
+slide 6   PASS  no dashes in the notes
+slide 6   PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 6   PASS  [pending] only in the one style (italic, dark red)
+slide 6   PASS  picture pic_46 has alt text
+slide 7   PASS  body shapes inside the content area
+slide 7   PASS  no body shape in the footer band
+slide 7   PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 7   PASS  no overlapping shapes
+slide 7   PASS  title does not overlap the body
+slide 7   PASS  left edges on the 12-column grid
+slide 7   PASS  text fits its shape; tables end above the footer band
+slide 7   PASS  every run has an explicit size of at least 12 pt
+slide 7   PASS  body text at least 16 pt
+slide 7   PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 7   PASS  title text clear of both logos
+slide 7   PASS  footer text is the department line and the slide number is present
+slide 7   PASS  speaker notes present (3 or more sentences)
+slide 7   PASS  no dashes in the notes
+slide 7   PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 7   PASS  [pending] only in the one style (italic, dark red)
+slide 8   PASS  body shapes inside the content area
+slide 8   PASS  no body shape in the footer band
+slide 8   PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 8   PASS  no overlapping shapes
+slide 8   PASS  title does not overlap the body
+slide 8   PASS  left edges on the 12-column grid
+slide 8   PASS  text fits its shape; tables end above the footer band
+slide 8   PASS  every run has an explicit size of at least 12 pt
+slide 8   PASS  body text at least 16 pt
+slide 8   PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 8   PASS  title text clear of both logos
+slide 8   PASS  footer text is the department line and the slide number is present
+slide 8   PASS  speaker notes present (3 or more sentences)
+slide 8   PASS  no dashes in the notes
+slide 8   PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 8   PASS  [pending] only in the one style (italic, dark red)
+slide 9   PASS  body shapes inside the content area
+slide 9   PASS  no body shape in the footer band
+slide 9   PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 9   PASS  no overlapping shapes
+slide 9   PASS  title does not overlap the body
+slide 9   PASS  left edges on the 12-column grid
+slide 9   PASS  leftmost diagram or picture starts at the left margin
+slide 9   PASS  text fits its shape; tables end above the footer band
+slide 9   PASS  every run has an explicit size of at least 12 pt
+slide 9   PASS  body text at least 16 pt
+slide 9   PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 9   PASS  title text clear of both logos
+slide 9   PASS  footer text is the department line and the slide number is present
+slide 9   PASS  speaker notes present (3 or more sentences)
+slide 9   PASS  no dashes in the notes
+slide 9   PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 9   PASS  [pending] only in the one style (italic, dark red)
+slide 9   PASS  picture pic_57 has alt text
+slide 10  PASS  body shapes inside the content area
+slide 10  PASS  no body shape in the footer band
+slide 10  PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 10  PASS  no overlapping shapes
+slide 10  PASS  title does not overlap the body
+slide 10  PASS  left edges on the 12-column grid
+slide 10  PASS  leftmost diagram or picture starts at the left margin
+slide 10  PASS  text fits its shape; tables end above the footer band
+slide 10  PASS  every run has an explicit size of at least 12 pt
+slide 10  PASS  body text at least 16 pt
+slide 10  PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 10  PASS  title text clear of both logos
+slide 10  PASS  footer text is the department line and the slide number is present
+slide 10  PASS  speaker notes present (3 or more sentences)
+slide 10  PASS  no dashes in the notes
+slide 10  PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 10  PASS  [pending] only in the one style (italic, dark red)
+slide 10  PASS  picture pic_61 has alt text
+slide 11  PASS  body shapes inside the content area
+slide 11  PASS  no body shape in the footer band
+slide 11  PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 11  PASS  no overlapping shapes
+slide 11  PASS  title does not overlap the body
+slide 11  PASS  left edges on the 12-column grid
+slide 11  PASS  leftmost diagram or picture starts at the left margin
+slide 11  PASS  text fits its shape; tables end above the footer band
+slide 11  PASS  every run has an explicit size of at least 12 pt
+slide 11  PASS  body text at least 16 pt
+slide 11  PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 11  PASS  title text clear of both logos
+slide 11  PASS  footer text is the department line and the slide number is present
+slide 11  PASS  speaker notes present (3 or more sentences)
+slide 11  PASS  no dashes in the notes
+slide 11  PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 11  PASS  [pending] only in the one style (italic, dark red)
+slide 11  PASS  picture pic_64 has alt text
+slide 11  PASS  picture pic_65 has alt text
+slide 12  PASS  body shapes inside the content area
+slide 12  PASS  no body shape in the footer band
+slide 12  PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 12  PASS  no overlapping shapes
+slide 12  PASS  title does not overlap the body
+slide 12  PASS  left edges on the 12-column grid
+slide 12  PASS  text fits its shape; tables end above the footer band
+slide 12  PASS  every run has an explicit size of at least 12 pt
+slide 12  PASS  body text at least 16 pt
+slide 12  PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 12  PASS  title text clear of both logos
+slide 12  PASS  footer text is the department line and the slide number is present
+slide 12  PASS  speaker notes present (3 or more sentences)
+slide 12  PASS  no dashes in the notes
+slide 12  PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 12  PASS  [pending] only in the one style (italic, dark red)
+slide 13  PASS  body shapes inside the content area
+slide 13  PASS  no body shape in the footer band
+slide 13  PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 13  PASS  no overlapping shapes
+slide 13  PASS  title does not overlap the body
+slide 13  PASS  left edges on the 12-column grid
+slide 13  PASS  text fits its shape; tables end above the footer band
+slide 13  PASS  every run has an explicit size of at least 12 pt
+slide 13  PASS  body text at least 16 pt
+slide 13  PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 13  PASS  title text clear of both logos
+slide 13  PASS  footer text is the department line and the slide number is present
+slide 13  PASS  speaker notes present (3 or more sentences)
+slide 13  PASS  no dashes in the notes
+slide 13  PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 13  PASS  [pending] only in the one style (italic, dark red)
+slide 14  PASS  body shapes inside the content area
+slide 14  PASS  no body shape in the footer band
+slide 14  PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 14  PASS  no overlapping shapes
+slide 14  PASS  title does not overlap the body
+slide 14  PASS  left edges on the 12-column grid
+slide 14  PASS  text fits its shape; tables end above the footer band
+slide 14  PASS  every run has an explicit size of at least 12 pt
+slide 14  PASS  body text at least 16 pt
+slide 14  PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 14  PASS  title text clear of both logos
+slide 14  PASS  footer text is the department line and the slide number is present
+slide 14  PASS  speaker notes present (3 or more sentences)
+slide 14  PASS  no dashes in the notes
+slide 14  PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 14  PASS  [pending] only in the one style (italic, dark red)
+slide 15  PASS  body shapes inside the content area
+slide 15  PASS  no body shape in the footer band
+slide 15  PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 15  PASS  no overlapping shapes
+slide 15  PASS  title does not overlap the body
+slide 15  PASS  left edges on the 12-column grid
+slide 15  PASS  text fits its shape; tables end above the footer band
+slide 15  PASS  every run has an explicit size of at least 12 pt
+slide 15  PASS  body text at least 16 pt
+slide 15  PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 15  PASS  title text clear of both logos
+slide 15  PASS  footer text is the department line and the slide number is present
+slide 15  PASS  speaker notes present (3 or more sentences)
+slide 15  PASS  no dashes in the notes
+slide 15  PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 15  PASS  [pending] only in the one style (italic, dark red)
+slide 16  PASS  body shapes inside the content area
+slide 16  PASS  no body shape in the footer band
+slide 16  PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 16  PASS  no overlapping shapes
+slide 16  PASS  title does not overlap the body
+slide 16  PASS  left edges on the 12-column grid
+slide 16  PASS  leftmost diagram or picture starts at the left margin
+slide 16  PASS  text fits its shape; tables end above the footer band
+slide 16  PASS  every run has an explicit size of at least 12 pt
+slide 16  PASS  body text at least 16 pt
+slide 16  PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 16  PASS  title text clear of both logos
+slide 16  PASS  footer text is the department line and the slide number is present
+slide 16  PASS  speaker notes present (3 or more sentences)
+slide 16  PASS  no dashes in the notes
+slide 16  PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 16  PASS  [pending] only in the one style (italic, dark red)
+slide 17  PASS  body shapes inside the content area
+slide 17  PASS  no body shape in the footer band
+slide 17  PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 17  PASS  no overlapping shapes
+slide 17  PASS  title does not overlap the body
+slide 17  PASS  left edges on the 12-column grid
+slide 17  PASS  text fits its shape; tables end above the footer band
+slide 17  PASS  every run has an explicit size of at least 12 pt
+slide 17  PASS  body text at least 16 pt
+slide 17  PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 17  PASS  title text clear of both logos
+slide 17  PASS  footer text is the department line and the slide number is present
+slide 17  PASS  speaker notes present (3 or more sentences)
+slide 17  PASS  no dashes in the notes
+slide 17  PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 17  PASS  [pending] only in the one style (italic, dark red)
+slide 18  PASS  body shapes inside the content area
+slide 18  PASS  no body shape in the footer band
+slide 18  PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 18  PASS  no overlapping shapes
+slide 18  PASS  title does not overlap the body
+slide 18  PASS  left edges on the 12-column grid
+slide 18  PASS  text fits its shape; tables end above the footer band
+slide 18  PASS  every run has an explicit size of at least 12 pt
+slide 18  PASS  body text at least 16 pt
+slide 18  PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 18  PASS  title text clear of both logos
+slide 18  PASS  footer text is the department line and the slide number is present
+slide 18  PASS  speaker notes present (3 or more sentences)
+slide 18  PASS  no dashes in the notes
+slide 18  PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 18  PASS  [pending] only in the one style (italic, dark red)
+slide 19  PASS  body shapes inside the content area
+slide 19  PASS  no body shape in the footer band
+slide 19  PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 19  PASS  no overlapping shapes
+slide 19  PASS  title does not overlap the body
+slide 19  PASS  left edges on the 12-column grid
+slide 19  PASS  text fits its shape; tables end above the footer band
+slide 19  PASS  every run has an explicit size of at least 12 pt
+slide 19  PASS  body text at least 16 pt
+slide 19  PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 19  PASS  title text clear of both logos
+slide 19  PASS  footer text is the department line and the slide number is present
+slide 19  PASS  speaker notes present (3 or more sentences)
+slide 19  PASS  no dashes in the notes
+slide 19  PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 19  PASS  [pending] only in the one style (italic, dark red)
+slide 20  PASS  body shapes inside the content area
+slide 20  PASS  no body shape in the footer band
+slide 20  PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 20  PASS  no overlapping shapes
+slide 20  PASS  title does not overlap the body
+slide 20  PASS  left edges on the 12-column grid
+slide 20  PASS  text fits its shape; tables end above the footer band
+slide 20  PASS  every run has an explicit size of at least 12 pt
+slide 20  PASS  body text at least 16 pt
+slide 20  PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 20  PASS  title text clear of both logos
+slide 20  PASS  footer text is the department line and the slide number is present
+slide 20  PASS  speaker notes present (3 or more sentences)
+slide 20  PASS  no dashes in the notes
+slide 20  PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 20  PASS  [pending] only in the one style (italic, dark red)
+slide 21  PASS  body shapes inside the content area
+slide 21  PASS  no body shape in the footer band
+slide 21  PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 21  PASS  no overlapping shapes
+slide 21  PASS  title does not overlap the body
+slide 21  PASS  left edges on the 12-column grid
+slide 21  PASS  text fits its shape; tables end above the footer band
+slide 21  PASS  every run has an explicit size of at least 12 pt
+slide 21  PASS  body text at least 16 pt
+slide 21  PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 21  PASS  title text clear of both logos
+slide 21  PASS  footer text is the department line and the slide number is present
+slide 21  PASS  speaker notes present (3 or more sentences)
+slide 21  PASS  no dashes in the notes
+slide 21  PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 21  PASS  [pending] only in the one style (italic, dark red)
+slide 22  PASS  body shapes inside the content area
+slide 22  PASS  no body shape in the footer band
+slide 22  PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 22  PASS  no overlapping shapes
+slide 22  PASS  title does not overlap the body
+slide 22  PASS  left edges on the 12-column grid
+slide 22  PASS  text fits its shape; tables end above the footer band
+slide 22  PASS  every run has an explicit size of at least 12 pt
+slide 22  PASS  body text at least 16 pt
+slide 22  PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 22  PASS  title text clear of both logos
+slide 22  PASS  footer text is the department line and the slide number is present
+slide 22  PASS  speaker notes present (3 or more sentences)
+slide 22  PASS  no dashes in the notes
+slide 22  PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 22  PASS  [pending] only in the one style (italic, dark red)
+slide 23  PASS  body shapes inside the content area
+slide 23  PASS  no body shape in the footer band
+slide 23  PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 23  PASS  no overlapping shapes
+slide 23  PASS  title does not overlap the body
+slide 23  PASS  left edges on the 12-column grid
+slide 23  PASS  text fits its shape; tables end above the footer band
+slide 23  PASS  every run has an explicit size of at least 12 pt
+slide 23  PASS  body text at least 16 pt
+slide 23  PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 23  PASS  title text clear of both logos
+slide 23  PASS  footer text is the department line and the slide number is present
+slide 23  PASS  speaker notes present (3 or more sentences)
+slide 23  PASS  no dashes in the notes
+slide 23  PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 23  PASS  [pending] only in the one style (italic, dark red)
+slide 24  PASS  body shapes inside the content area
+slide 24  PASS  no body shape in the footer band
+slide 24  PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 24  PASS  no overlapping shapes
+slide 24  PASS  title does not overlap the body
+slide 24  PASS  left edges on the 12-column grid
+slide 24  PASS  text fits its shape; tables end above the footer band
+slide 24  PASS  every run has an explicit size of at least 12 pt
+slide 24  PASS  body text at least 16 pt
+slide 24  PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 24  PASS  title text clear of both logos
+slide 24  PASS  footer text is the department line and the slide number is present
+slide 24  PASS  speaker notes present (3 or more sentences)
+slide 24  PASS  no dashes in the notes
+slide 24  PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 24  PASS  [pending] only in the one style (italic, dark red)
+slide 25  PASS  body shapes inside the content area
+slide 25  PASS  no body shape in the footer band
+slide 25  PASS  title box at the reference position (x 737,846, w 10,716,308) and above the content area
+slide 25  PASS  no overlapping shapes
+slide 25  PASS  title does not overlap the body
+slide 25  PASS  left edges on the 12-column grid
+slide 25  PASS  leftmost diagram or picture starts at the left margin
+slide 25  PASS  text fits its shape; tables end above the footer band
+slide 25  PASS  every run has an explicit size of at least 12 pt
+slide 25  PASS  body text at least 16 pt
+slide 25  PASS  title size as in the reference deck (32 pt; 24 pt on the title slide)
+slide 25  PASS  title text clear of both logos
+slide 25  PASS  footer text is the department line and the slide number is present
+slide 25  PASS  speaker notes present (3 or more sentences)
+slide 25  PASS  no dashes in the notes
+slide 25  PASS  no IDs, dashes, reviewer or forbidden phrases in visible text
+slide 25  PASS  [pending] only in the one style (italic, dark red)
+slide 25  PASS  picture pic_108 has alt text
+slide 25  PASS  picture pic_110 has alt text
+deck      PASS  identity: names in the v2 order (Shivansh Gupta, Vaibhav Shiroorkar, Adithya Jithesh)
+deck      PASS  core properties: author order and title, no subtitle
+deck      PASS  identity: school and university lines on slide 1
+deck      PASS  identity: roll numbers, guide and designation
+deck      PASS  identity: department wording
+deck      PASS  placeholder count (informational): 0
+
+428 pass, 0 fail

@@ -1,0 +1,34 @@
+PASS 1366px: dropdown lists the three datasets
+PASS 1366px: no POST on open or on dataset selection
+PASS 1366px: advanced section collapsed by default
+PASS 1366px: no horizontal scroll (0)
+PASS 1366px lavdf_unread_tv: FULL is not offered as a group card (['G1', 'G2', 'G3', 'G4', 'G5'])
+PASS 1366px lavdf_unread_tv G2: headline AUROC shows 0.3715
+PASS 1366px lavdf_unread_tv G2: experimental banner on results
+PASS 1366px lavdf_unread_tv G2: threshold provenance shown
+PASS 1366px lavdf_unread_tv G2: no 'overall score' in results
+PASS 1366px lavdf_unread_tv G2: no 'approved for' in results
+PASS 1366px cfeval_unread_ti: FULL is not offered as a group card (['G1', 'G2', 'G3', 'G4', 'G5'])
+PASS 1366px cfeval_unread_ti G5: headline AUROC shows 0.5693
+PASS 1366px cfeval_unread_ti G5: experimental banner on results
+PASS 1366px cfeval_unread_ti G5: threshold provenance shown
+PASS 1366px cfeval_unread_ti G5: no 'overall score' in results
+PASS 1366px cfeval_unread_ti G5: no 'approved for' in results
+PASS full pool: the first click only opens the confirmation
+PASS full pool: AUROC shows 0.6458
+PASS 390px: dropdown lists the three datasets
+PASS 390px: no POST on open or on dataset selection
+PASS 390px: advanced section collapsed by default
+PASS 390px: no horizontal scroll (0)
+PASS 390px lavdf_unread_tv: FULL is not offered as a group card (['G1', 'G2', 'G3', 'G4', 'G5'])
+PASS 390px lavdf_unread_tv G2: headline AUROC shows 0.3715
+PASS 390px lavdf_unread_tv G2: experimental banner on results
+PASS 390px lavdf_unread_tv G2: threshold provenance shown
+PASS 390px lavdf_unread_tv G2: no 'overall score' in results
+PASS 390px lavdf_unread_tv G2: no 'approved for' in results
+PASS 390px cfeval_unread_ti: FULL is not offered as a group card (['G1', 'G2', 'G3', 'G4', 'G5'])
+PASS 390px cfeval_unread_ti G5: headline AUROC shows 0.5693
+PASS 390px cfeval_unread_ti G5: experimental banner on results
+PASS 390px cfeval_unread_ti G5: threshold provenance shown
+PASS 390px cfeval_unread_ti G5: no 'overall score' in results
+PASS 390px cfeval_unread_ti G5: no 'approved for' in results

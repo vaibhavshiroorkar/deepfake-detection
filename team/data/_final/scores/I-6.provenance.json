@@ -1,0 +1,169 @@
+{
+ "iteration": "I-6",
+ "base_iteration": "I-6",
+ "task": "all",
+ "mode": "final",
+ "limit": null,
+ "date": "2026-10-25 21:59:19",
+ "git_commit": "5f43d48",
+ "seconds": 471,
+ "score_file": "data\\_final\\scores\\I-6.csv",
+ "score_file_sha256": "d60ef3b09c15ec38fb7d3e8edad80fe01949d512150828d892835d8a28d0eba1",
+ "files_used_sha256": {
+  "checkpoints\\I-6\\IMG-17_lavdf_s0\\weights.pt": "a48af11d8930b0fbc18b09cd1f9af4cf1f9cb8c4d78a695068ad94b9cbd6738a",
+  "checkpoints\\I-6\\IMG-17_lavdf_s1\\weights.pt": "a89d016942e89d6e887d9874891222ea2a91296737847a342d39a96b21373488",
+  "checkpoints\\I-6\\IMG-17_lavdf_s2\\weights.pt": "ce7cfd9eb2274c5fc0a69fbeeb1718d06f019e3c5913b9a1743354cf5cdc172a",
+  "data\\_results\\I-6\\audio_head_AU-8_s0.npz": "e1c0328b26165c153a31b42faeaad8103eccbd6fd4dcc4528ef3523722734f39",
+  "data\\_results\\I-6\\audio_head_AU-8_s1.npz": "ebe0c5d1a13065e50ae95ca456888d6b1a80bf1e1be758eecfa5cbf3c1614b0f",
+  "data\\_results\\I-6\\audio_head_AU-8_s2.npz": "9d3764bd63cbc83e76e1e20daed7e41f109998dacbd8a64b610e61d3707a8cf9",
+  "data\\_results\\I-6\\audio_head_AU-4_s0.npz": "fc6ccd891b417b8a776ab4f59fc7c87775d3a6fbdbb45ba9070c2e5fd2af30c9",
+  "data\\_results\\I-6\\audio_head_AU-4_s1.npz": "7bf7f914ca40fae19d812362eec2f70aa1cb7c3d92fcebe8bffe57a5c91e9445",
+  "data\\_results\\I-6\\audio_head_AU-4_s2.npz": "7121df03c55ebedb83cdc1c6512375efccd7072c8546e9febb8bbdecc5b99d18",
+  "data\\_results\\I-6\\audio_head_AU-6_s0.npz": "1303d7fb4a6d6bdbedc160510eeeadcb59bae1e0f5d5998ffdcd0f99221d8e7a",
+  "data\\_results\\I-6\\audio_head_AU-6_s1.npz": "00a692980a0f124df6f08189a66036d0128310b48d4554d76ea48b366225bf90",
+  "data\\_results\\I-6\\audio_head_AU-6_s2.npz": "8e00946e7b2113b9497a740535b95d4d053468671a5c1210953e952f86cf1f64"
+ },
+ "split_files": {
+  "ffpp": [
+   "data/_splits/ffpp-037e2976fade.csv",
+   "037e2976fade063f5d748ad107c687dbdf0ca87c63ab9a32003b6dad8760aa55"
+  ],
+  "celebdf_v2": [
+   "data/_splits/celebdf_v2-82a3a70594e9.csv",
+   "82a3a70594e9ce087d29e5ca523582dd1de87b07929992703a772dfc1011eba7"
+  ],
+  "dfd": [
+   "data/_splits/dfd-f5ff5576814a.csv",
+   "f5ff5576814ad1b4d22d2082987372cd3e82b3da1ab474daf89424eb8b66e829"
+  ],
+  "celebdf_pp": [
+   "data/_splits/celebdf_pp-3f9df077b9eb.csv",
+   "3f9df077b9eb59de040da14da06713ef5ee2a1e52c3a576d3e5037e8de6338ef"
+  ],
+  "forensynths_progan_val": [
+   "data/_splits/progan_val-b42dc9619141.csv",
+   "b42dc9619141f734fde2a0b6295193f4c2bd051e88b3a390aaa8eedd7e3e9367"
+  ],
+  "forensynths_progan_test": [
+   "data/_splits/progan_test-7720c87f1b53.csv",
+   "7720c87f1b53a8755d7ca934dcf516135c3235dec4401f16c8d59822a8326499"
+  ],
+  "forensynths_cnn_subset": [
+   "data/_splits/cnn_subset-4e973bc4da0f.csv",
+   "4e973bc4da0f1d58083e08083ce0a3069c2e0c1e59914e03ff6eac15ef317eed"
+  ],
+  "diffusion_test": [
+   "data/_splits/diffusion_test-67dd057f5042.csv",
+   "67dd057f5042557e268a7434bba9233cbb4a6ff2b2cc8dd4b69c64140bbd873d"
+  ],
+  "asvspoof2019_la": [
+   "data/_splits/asvspoof2019_la-875bf337c379.csv",
+   "875bf337c379aa7e017043712d987e94159a74a85cb343c84a68d970a2d8f662"
+  ],
+  "in_the_wild": [
+   "data/_splits/in_the_wild-5cf2ea54a724.csv",
+   "5cf2ea54a724bae83e8a4ad275bcfa40b0a560264cfec49a9455779374355ee1"
+  ],
+  "lavdf": [
+   "data/_splits/lavdf_subset-e9d12decaf1f.csv",
+   "e9d12decaf1f862ea4a2c4ca83c386f6fefa95a0229c21d29e7fe734182a850b"
+  ]
+ },
+ "counts": {
+  "visual|lavdf|val|s0": {
+   "rows": 2000,
+   "listed": 2000,
+   "no_score": 0
+  },
+  "audio|lavdf|val|s0": {
+   "rows": 2000,
+   "listed": 2000,
+   "no_score": 0
+  },
+  "fused|lavdf|val|s0": {
+   "rows": 2000,
+   "listed": 2000,
+   "no_score": 0
+  },
+  "visual|lavdf|test_in|s0": {
+   "rows": 2000,
+   "listed": 2000,
+   "no_score": 0
+  },
+  "audio|lavdf|test_in|s0": {
+   "rows": 2000,
+   "listed": 2000,
+   "no_score": 0
+  },
+  "fused|lavdf|test_in|s0": {
+   "rows": 2000,
+   "listed": 2000,
+   "no_score": 0
+  },
+  "visual|lavdf|val|s1": {
+   "rows": 2000,
+   "listed": 2000,
+   "no_score": 0
+  },
+  "audio|lavdf|val|s1": {
+   "rows": 2000,
+   "listed": 2000,
+   "no_score": 0
+  },
+  "fused|lavdf|val|s1": {
+   "rows": 2000,
+   "listed": 2000,
+   "no_score": 0
+  },
+  "visual|lavdf|test_in|s1": {
+   "rows": 2000,
+   "listed": 2000,
+   "no_score": 0
+  },
+  "audio|lavdf|test_in|s1": {
+   "rows": 2000,
+   "listed": 2000,
+   "no_score": 0
+  },
+  "fused|lavdf|test_in|s1": {
+   "rows": 2000,
+   "listed": 2000,
+   "no_score": 0
+  },
+  "visual|lavdf|val|s2": {
+   "rows": 2000,
+   "listed": 2000,
+   "no_score": 0
+  },
+  "audio|lavdf|val|s2": {
+   "rows": 2000,
+   "listed": 2000,
+   "no_score": 0
+  },
+  "fused|lavdf|val|s2": {
+   "rows": 2000,
+   "listed": 2000,
+   "no_score": 0
+  },
+  "visual|lavdf|test_in|s2": {
+   "rows": 2000,
+   "listed": 2000,
+   "no_score": 0
+  },
+  "audio|lavdf|test_in|s2": {
+   "rows": 2000,
+   "listed": 2000,
+   "no_score": 0
+  },
+  "fused|lavdf|test_in|s2": {
+   "rows": 2000,
+   "listed": 2000,
+   "no_score": 0
+  }
+ },
+ "notes": [
+  "fusion seed 0: Tv 0.8590, Ta 0.9385, logistic regression intercept +2.9514, visual weight 4.2271, audio weight 0.7720",
+  "fusion seed 1: Tv 0.8383, Ta 0.9467, logistic regression intercept +2.9427, visual weight 4.6385, audio weight 0.7176",
+  "fusion seed 2: Tv 0.8812, Ta 0.9523, logistic regression intercept +2.9421, visual weight 3.8805, audio weight 0.7447"
+ ]
+}

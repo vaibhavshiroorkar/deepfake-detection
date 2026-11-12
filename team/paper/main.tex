@@ -1,0 +1,1891 @@
+% =============================================================================
+% Multimodal deepfake detection: IEEE conference-format paper.
+% Class: IEEEtran, [conference] option (two-column, 10 pt). Overleaf compatible:
+% relative paths only (figures are copied into paper/figures), only packages
+% shipped with TeX Live and MiKTeX.
+% Build: latexmk -pdf main.tex   (BibTeX, IEEEtran.bst, refs.bib)
+%
+% Rules in force (CLAUDE.md):
+%   - A number is written only if it is a design value of the protocol, a count
+%     of the data, or a number quoted from a cited paper with its own protocol
+%     named. Every measured result shows the placeholder with the experiment ID in a
+%     LaTeX comment on the same source line.
+%   - Only papers in docs/RESEARCH.md (READ or PARTIAL) and the sources listed
+%     in paper/NEW_REFERENCES.md are cited.
+%   - No "real-time", "state of the art" or "better than X" without a
+%     head-to-head run on the same protocol.
+%   - No em-dashes or en-dashes.
+% =============================================================================
+% ---------------------------------------------------------------------
+% SWITCH. \collegestyletrue  = IEEEtran paper + college cover, front matter, border, footer, colours.
+%         \collegestylefalse = plain IEEEtran conference paper (no front matter, border or colours).
+% All college-style code lives in college-style.tex and is loaded only when the switch is true.
+% ---------------------------------------------------------------------
+\newif\ifcollegestyle
+\collegestyletrue
+%\collegestylefalse
+
+\ifcollegestyle
+  \documentclass[conference,a4paper]{IEEEtran_nodash}
+\else
+  \documentclass[conference]{IEEEtran_nodash}
+\fi
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\usepackage{graphicx}
+% project rule: no dashes; the cite package would join ranges with an en dash
+\makeatletter\def\citedash {\hbox{-}}\makeatother
+\usepackage{cite}
+\usepackage[hidelinks,hypertexnames=false,pdftitle={Multimodal Deepfake Detection for Images, Video and Audio: A Hypothesis-Driven Study Under a Group-Disjoint Protocol},pdfauthor={Vaibhav Shiroorkar, Shivansh Gupta, Adithya Jithesh}]{hyperref}
+
+\graphicspath{{figures/}}
+
+% Title: ONE definition, used by the cover, the certificate and the paper title block.
+\newcommand{\papertitle}{Multimodal Deepfake Detection for Images, Video and Audio}
+\newcommand{\papersubtitle}{A Hypothesis-Driven Study Under a Group-Disjoint Protocol}
+% Hook that college-style.tex redefines; in plain mode it does nothing.
+\newcommand{\collegetitlecolour}[1]{#1}
+\ifcollegestyle
+  \input{college-style}
+\fi
+
+\newcommand{\sigmoid}{\sigma}
+\newcommand{\spl}[1]{\texttt{#1}}
+
+\hyphenation{Cele-b-DF Face-Foren-sics wav-LM}
+
+\begin{document}
+
+\title{\collegetitlecolour{\papertitle: \papersubtitle}}
+
+\author{%
+\IEEEauthorblockN{\begin{tabular}{@{}*{3}{>{\centering\arraybackslash}p{0.3\textwidth}}@{}}
+Vaibhav Shiroorkar & Shivansh Gupta & Adithya Jithesh
+\end{tabular}}
+\IEEEauthorblockA{Department of Electronics and Computer Engineering\\
+K. J. Somaiya School of Engineering, Somaiya Vidyavihar University\\
+Vidyavihar, Mumbai - 400 077}
+\IEEEauthorblockN{Dr. Tejashree Phatak (Guide)}
+\IEEEauthorblockA{Assistant Professor}}
+
+\ifcollegestyle
+  \collegefrontmatter   % cover, certificate, declaration, acknowledgements, contents, lists, abbreviations
+  \collegestartpaper    % clear page, restore the IEEEtran layout, arabic page numbers from 1
+\fi
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{abstract}
+Face swaps, generated images and cloned voices are now easy to produce, and
+published detectors are usually compared under different protocols, which makes
+their reported numbers hard to read side by side. We describe a detector for
+images, videos and the audio of videos, built as a documented path: a simple
+working version first, then seven experimental iterations, each started from a
+written hypothesis whose success and failure thresholds are fixed before the
+run. The working version uses one frozen pretrained encoder per task, a linear
+head, temperature scaling and a validation-chosen threshold. For a video, the
+visual score and the audio score are shown separately and no fused claim is
+made. The encoder of each task is chosen by a measured sweep: candidates are
+ranked on a development slice with a paired group bootstrap, and the cheapest
+candidate among those not distinguishable from the leader wins. Splits are
+group-disjoint, where a group is the source video together with the person
+identity. Development slices rank and tune; the sealed
+test sets are touched once per frozen iteration by a guarded, logged
+command. ``Comparable with a published detector'' is defined as non-inferiority
+on a paired group-bootstrap interval with a margin fixed beforehand.
+Exploratory results on the development slices: fine-tuning the image encoder
+raised the AUC on Celeb-DF v2 identities from 0.693 [0.664, 0.731] to
+0.910 [0.878, 0.939], while an Xception network re-run with the same recipe
+reached 0.872 [0.836, 0.908]; two further video levers (matched augmentation
+with mixup, and an average of three fine-tuned encoders) did not enter the
+final system; three changes on the speech side (silence
+trimming with peak normalisation, noisy, compressed and reverberant copies of
+the training clips, and an average of three encoders) raised the AUC on
+In-the-Wild speakers from 0.610 to 0.813, with wide intervals from 12 speakers.
+On LAV-DF, a fused score trained in the same dataset reaches an AUC of 0.99, but
+a control shows that the visual head separates the dataset's original videos
+from its produced ones and is at chance (0.507) within the produced videos, so
+no audio-visual detection claim is made; the pulse signal check failed.
+Each frozen iteration was then read once on the sealed test sets, and three
+confirmatory tests were declared beforehand. On the sealed Celeb-DF family test
+(7\,650 videos, 344 groups) the final video system reaches an AUC of
+0.8218 [0.8020, 0.8393] against 0.6238 [0.6015, 0.6486] for the working
+version, a paired difference of +0.1980 [+0.1688, +0.2242], improved by the
+declared rule and also at the 98.33\,\% level. On the sealed In-the-Wild test
+(24\,788 clips, 42 speakers) the final speech system reaches 0.9148 [0.8896,
+0.9383] against 0.7516 [0.6802, 0.8035], a difference of +0.1633 [+0.1177,
++0.2266], improved and robust. Against the re-run Xception baseline (AUC 0.8042
+[0.7841, 0.8223]) the final video system is higher by +0.0176 [+0.0025, +0.0327],
+superior by the declared 95\,\% rule; the 98.33\,\% interval
+[$-0.0011$, +0.0355] contains zero, so superiority is not robust to the
+Bonferroni level, while non-inferiority with a margin of 0.0100 holds at both
+levels. Two of the five written predictions, both for speech, failed in the
+optimistic direction. The limits of the evidence include one baseline family at
+one input size, 344 groups for video, 42 speakers for speech, a margin set from
+three seeds and a floor, and one sealed run of each frozen iteration.
+After the freeze the detectors were wrapped in a modular analysis platform that
+reports one finding per module and no overall score. On the sealed half of
+FakeAVCeleb the frozen system ranks well (visual AUC 0.9552, audio 0.9263) but
+its thresholds do not transfer and the data set carries a codec shortcut; a
+generated-video head is at chance on DF26 (0.4957), so it stays experimental. % E-015, E-020
+\end{abstract}
+
+\begin{IEEEkeywords}
+deepfake detection, multimodal, generalisation, evaluation protocol,
+calibration, frozen encoders, group bootstrap
+\end{IEEEkeywords}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}\label{sec:intro}
+
+Face swaps, talking-face synthesis, generated images and cloned voices can now
+be produced with consumer hardware and off-the-shelf
+software~\cite{dolhansky2020dfdc}. A detector that is to be useful has to
+accept an image, a video, or the audio of a video, and it has to say how sure
+it is. The literature supplies many detectors and datasets, but the numbers
+reported for them are measured under different protocols. In one benchmark, in
+which every detector was trained on FaceForensics++ (c23) and scored by
+frame-level AUC, a plain Xception network reached an average AUC of 0.9450 over six within-domain test sets and 0.7718 over eight cross-domain test sets~\cite{yan2023deepfakebench}. % verified in arXiv:2307.01426v2, PDF page 6, Table 3, row "Naive Xception": columns Avg. within domain 0.9450 and Avg. cross domain 0.7718; their protocol (DLIB faces at 256 px, 32 frames per video), not ours. R-017
+The size of that gap shows why a single in-dataset number says little about
+behaviour on new material, and why the headline here is always a dataset that
+was never used in training.
+
+This work treats the path to a result as part of the result. We build the
+simplest end-to-end detector first, then run a fixed number of iterations,
+each with a hypothesis, a success criterion and a failure criterion written
+before the run. Failed iterations stay in the record. The aim is not the
+best model in the world, but results that can be compared with published
+detectors on a protocol that we define and run ourselves.
+
+\paragraph*{Contributions}
+\begin{enumerate}
+  \item A written evaluation protocol: group-disjoint splits, a development
+        slice for ranking that is separate from the sealed test sets, a
+        guarded and logged single evaluation of each frozen iteration (the
+        staircase), and paired group-bootstrap statistics
+        (Section~\ref{sec:protocol}).
+  \item A selection rule for frozen encoders that prefers the cheapest
+        candidate when the evidence does not separate it from the leader, with
+        a cost record next to accuracy (Sections~\ref{sec:method}
+        and~\ref{sec:protocol}).
+  \item A ladder of one working version and seven experimental iterations,
+        each with a written hypothesis, and a definition of ``comparable with
+        a published detector'' as non-inferiority
+        (Section~\ref{sec:iters}).
+  \item A local web page that returns a temperature-scaled score per modality
+        (a probability only for content like the validation split of its task)
+        with the warnings that apply, and that never shows a development
+        stand-in as a measurement, and a modular analysis platform that reports
+        one finding per module with its tested scope and no overall score
+        (Section~\ref{sec:software}).
+\end{enumerate}
+The encoder sweep, the working version and the iterations are reported on the
+development slices and the validation splits and are exploratory; the
+sealed-test results and the three confirmatory tests are given separately
+(Section~\ref{sec:results}), and a result is stated only after its experiment
+is logged.
+
+The rest of the paper is organised as follows. Section~\ref{sec:related}
+reviews related work, Section~\ref{sec:method} describes the method,
+Section~\ref{sec:protocol} the protocol, Section~\ref{sec:iters} the iteration
+plan, Section~\ref{sec:software} the software, Section~\ref{sec:results} the
+results, and Sections~\ref{sec:limits} and~\ref{sec:concl} the limits and the
+conclusion.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Related Work}\label{sec:related}
+
+\subsection{Datasets for face forgery}
+FaceForensics++ provides real videos manipulated with four methods at several
+compression levels, with a fixed split and a hidden-test benchmark, and it
+reports that detectors lose accuracy as compression
+increases~\cite{rossler2019faceforensics}. Celeb-DF was built with an improved
+synthesis pipeline to remove visible artefacts, and the authors found it the
+hardest of the datasets they compared when existing detectors were run on
+it~\cite{li2020celebdf}; Celeb-DF++ adds 21 newer generation methods to it, among them face-swap,
+reenactment and talking-face generators~\cite{li2025celebdfpp}. The DFDC dataset contributes a large
+collection of videos from consenting actors, with held-out subjects and a test
+set that includes content from outside the dataset; its analysis of the
+challenge entries reports weak performance on that outside
+content~\cite{dolhansky2020dfdc}.
+
+\subsection{Visual detectors and generalisation}
+Face X-ray predicts the blending boundary between a pasted face and its
+background and is trained on self-made blended images, so that no fakes from a
+particular generator are required~\cite{li2020facexray}. DeepfakeBench puts
+many detectors in one codebase with one preprocessing and metric pipeline, and
+observes that plain backbones come close to more elaborate methods under shared
+settings~\cite{yan2023deepfakebench}. Detectors trained on FaceForensics++ can
+learn the identities in it, which is one reason why splits must keep identities
+apart~\cite{dong2023implicit}. For still images in general, a linear or
+nearest-neighbour classifier on the frozen features of a pretrained
+vision-language model generalised across generators better than trained
+baselines in the authors' own tests~\cite{ojha2024universal}, and a linear
+classifier on CLIP features, trained on few examples from one generator, was
+evaluated on many generators~\cite{cozzolino2024raising}. The protocol of
+training on ProGAN images and testing on other generators comes
+from a study of CNN-generated images~\cite{wang2020cnnspot}. Work on transfer learning for image
+classification relates accuracy on a source task to accuracy after transfer,
+with caveats that depend on the regularisers used~\cite{kornblith2019better};
+whether this carries over to forensic detection is a question we measure.
+
+\subsection{Physiological signals}
+FakeCatcher derives photoplethysmography-like signals from facial regions and
+classifies them, with high in-dataset accuracy on the generators of its
+time~\cite{ciftci2020fakecatcher}; a follow-up uses the same kind of signal to
+identify which generator produced a fake~\cite{ciftci2020hearts}.
+DeepFakesON-Phys fine-tunes a heart-rate estimation network as a detector, with
+one model per database and identity-disjoint development and test
+sets~\cite{hernandez2020deepfakeson}. Later work is more cautious. A study with
+its own recordings reports that a heart-rate signal can be recovered from
+high-quality face swaps and can follow the driving
+video~\cite{seibold2025heart}. An independent reproduction of DeepFakesON-Phys
+on talking-face fakes, under an identity-disjoint split, reported a much lower
+AUC than the original paper's in-dataset figure~\cite{harraq2026physio}. Pulse
+signals can also be edited on purpose, which makes a pulse-based check open to
+attack~\cite{lin2023ppg}. For the pulse signal itself we use a projection-based
+method~\cite{wang2017pos}. These results are why remote photoplethysmography
+(rPPG) is a hypothesis to test here and not a component to adopt.
+
+\subsection{Audio and audio-visual detection}
+ASVspoof~2019 is the standard public database of synthesised, converted and
+replayed speech, with attacks in the evaluation set that are absent from
+training~\cite{wang2020asvspoof}. AASIST is a compact model on the raw waveform
+that applies graph attention over spectral and temporal nodes, and its authors
+report variation across seeds~\cite{jung2021aasist}. Replacing the front end of
+such a model by a pretrained wav2vec~2.0 network lowered the equal error rate
+on ASVspoof~2021 in the authors' own experiments~\cite{tak2022wav2vecspoof}.
+Models trained on ASVspoof~2019 were found to degrade strongly on
+the In-the-Wild recordings~\cite{muller2022inthewild}. For videos,
+FakeAVCeleb provides visual and cloned-voice manipulations, and its baselines
+show that naive combinations of unimodal detectors can perform
+poorly~\cite{khalid2022fakeavceleb}; LAV-DF edits words in the transcript and
+regenerates audio and video only for the changed segments, with per-file
+labels for the two modalities and an identity-independent
+split~\cite{cai2022lavdf}; and a two-stream audio-visual network that scores the
+dissonance between the streams can localise manipulated
+segments~\cite{chugh2021notmade}.
+
+\subsection{Frozen encoders, adapters and calibration}
+Our candidates are generic pretrained encoders: supervised convolutional
+networks~\cite{chollet2017xception,tan2019efficientnet}, self-supervised
+vision transformers~\cite{oquab2024dinov2}, and encoders trained with image and
+text~\cite{radford2021clip,zhai2023siglip}; for speech, self-supervised
+encoders~\cite{baevski2020wav2vec2,hsu2021hubert,chen2022wavlm} and a
+weakly supervised recogniser~\cite{radford2023whisper}. Low-rank
+adapters train a small number of added parameters instead of the whole
+network~\cite{hu2022lora}. Modern neural networks are often poorly
+calibrated, and temperature scaling, a single parameter fitted on validation
+data, is an effective correction on the tasks its authors
+studied~\cite{guo2017calibration}. We use their definitions of expected
+calibration error and temperature scaling, and fit any such correction on
+validation data only.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Method}\label{sec:method}
+
+\subsection{Problem and output}
+Let $x$ denote an image, a video or an audio clip and $y\in\{0,1\}$ its label,
+with $y=1$ for manipulated content. Manipulated means a swapped, re-enacted or
+audio-driven face, a fully generated image (GAN or diffusion), synthesised or
+converted speech, or audio and video manipulated separately. The system returns
+the calibrated probability $p(x)$ that the content is fake and names the
+modality that carries the evidence: an image has a visual score, a standalone
+audio file has an audio score, and a video with an audio track has both,
+shown separately. No combining rule for the two scores of a video is claimed
+(the fusion measured on LAV-DF does not support one, Section~\ref{sec:results}),
+and there is no temporal localisation. Calibrated means that a temperature was
+fitted on the validation split of each task, so $p(x)$ is a probability only for
+content like that split; on other sources it is a score whose meaning the later
+measurements and the per-module wording of the platform state
+(Section~\ref{sec:platform}). Figure~\ref{fig:pipeline} shows the three paths.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig01_pipeline.pdf}
+\caption[Three scoring paths]{Schematic of the three scoring paths. Encoders are frozen, the head is
+linear, and every score is temperature-calibrated on the validation split of its task.
+The visual and the audio score of a video are shown side by side, not fused.}
+\label{fig:pipeline}
+\end{figure*}
+
+\subsection{Preprocessing}
+One shared package prepares the inputs for training, evaluation and
+inference, and a hash of its configuration is stored in every checkpoint and
+checked at load. For a video it takes 16 uniformly spaced frames and runs the
+YuNet face detector~\cite{wu2023yunet}; the largest face is enlarged by a factor
+of 1.3 and cropped to $224\times224$ pixels, and the crop goes through a JPEG
+round trip at quality 95. Frames without a face are left out of the clip score
+and reported; a clip with no face at all returns a warning. For an image, a
+face crop is used if a face is found, and otherwise the whole image is
+processed by the rule of the encoder itself, so that a whole-image score is
+never read as a face score. For audio, the first 64\,600 samples at 16\,kHz are
+used (shorter clips are repeat-padded); the Whisper encoder receives its fixed
+30-second window with the clip first, and only the frames of the clip are
+pooled. From the first speech iteration (I-2) on, the leading and trailing samples
+whose absolute value is at most 0.005 of full scale are removed and the clip is
+divided by its peak before the window is cut (a clip that is silent throughout
+is left unchanged).
+
+\subsection{Frozen encoder and linear head}
+For each of three tasks, the face-frame task (T-V), the generated-image task
+(T-I) and the speech task (T-A), the working version fixes one pretrained
+encoder $\phi$ and trains only a linear head. The feature $\phi(x)$ is the
+standard pooled embedding of the encoder: the global-average-pooled map for
+convolutional networks, the class token for DINOv2, the image embedding for the
+CLIP-type encoders, the attention-pooled output for SigLIP, and, for audio, the
+mean and standard deviation over time of the last hidden layer. Features are
+extracted once and stored in half precision. The head computes
+$z=\mathbf{w}^{\top}\tilde{\phi}(x)+b$ on features standardised with the
+training mean and standard deviation, and is trained with a class-balanced
+binary cross-entropy (FaceForensics++ has four fakes per real video, and
+ASVspoof about nine spoofed utterances per bona fide one), AdamW with learning
+rate $10^{-3}$ and weight decay $10^{-4}$, batches of 1\,024, at most 200
+epochs and early stopping on the validation AUC with patience 10. The seed
+changes the initialisation and the batch order, and three seeds are run for
+every candidate. No other hyperparameter is tuned in the working version. The sweep of
+Section~\ref{sec:results} selected DINOv2 small for the face frames, the OpenAI
+CLIP ViT-L/14 for generated images and HuBERT base for speech.
+
+\subsection{Clip score, calibration and threshold}
+For a video with a set $F$ of frames that contain a face, the clip probability
+is the mean of the frame probabilities,
+\begin{equation}
+\bar p(x)=\frac{1}{|F|}\sum_{f\in F}\sigmoid(z_f),
+\end{equation}
+a deliberately simple rule; alternatives are iteration hypotheses, not part of
+the protocol. Temperature scaling then gives the reported probability,
+\begin{equation}
+p(x)=\sigmoid\!\left(\frac{\ell(\bar p(x))}{T}\right),\qquad
+T=\arg\min_{T>0}\ \mathrm{NLL}_{\mathrm{val}},
+\end{equation}
+with $\ell(q)=\ln\frac{q}{1-q}$ on probabilities clipped away from 0 and 1
+and $T$ fitted on the validation split of the training dataset only. The
+decision threshold maximises the balanced accuracy on the same validation
+split, taken from the midpoints between adjacent distinct validation scores
+(the one closest to 0.5 among equal maxima), and is then fixed for every other
+dataset. Accuracy at a fixed threshold of 0.5 is reported only as a reference.
+
+\subsection{Candidate encoders}
+Table~\ref{tab:cands} lists the shortlist, chosen for different families
+(supervised, self-supervised, language-supervised, trained from scratch) from
+candidates whose weights and licences were checked at their source. DINOv3 was
+left out on purpose because its access needs a manual gate and an
+acknowledgement duty. Two ViT-L/14 CLIP models are included, one trained by
+OpenAI and one on LAION-2B, so that the data can be separated from the
+architecture. A small network trained from scratch on the same split, with a
+fixed budget, is reported as a reference for the value of pretraining and is
+excluded from the selection.
+
+\begin{table}[!t]
+\centering
+\caption[Shortlisted frozen encoders per task]{Shortlisted frozen encoders per task. Dim. is the feature dimension of the
+stored feature; for audio it is twice the hidden size (mean and standard
+deviation over time).}
+\label{tab:cands}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}L{4.4cm} L{2.5cm} r@{}}
+\toprule
+Encoder & Family & Dim. \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Images: face frames (T-V) and generated images (T-I)}}\\
+EfficientNet-B4~\cite{tan2019efficientnet} & supervised CNN & 1\,792 \\
+Xception~\cite{chollet2017xception} & supervised CNN & 2\,048 \\
+DINOv2 small~\cite{oquab2024dinov2} & self-supervised & 384 \\
+DINOv2 base~\cite{oquab2024dinov2} & self-supervised & 768 \\
+CLIP ViT-L/14, OpenAI~\cite{radford2021clip} & image-text & 768 \\
+CLIP ViT-L/14, LAION-2B~\cite{radford2021clip} & image-text & 768 \\
+SigLIP base~\cite{zhai2023siglip} & image-text & 768 \\
+Small CNN (scratch) & reference & none \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Speech audio (T-A)}}\\
+wav2vec 2.0 base~\cite{baevski2020wav2vec2} & contrastive SSL & 1\,536 \\
+WavLM base plus~\cite{chen2022wavlm} & masked prediction & 1\,536 \\
+HuBERT base~\cite{hsu2021hubert} & masked prediction & 1\,536 \\
+Whisper small encoder~\cite{radford2023whisper} & weak supervision & 1\,536 \\
+Small log-mel CNN (scratch) & reference & none \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Cost record}
+For every candidate the sweep records the number of parameters, the FLOPs of
+one forward pass at the input size used, the peak memory, and the extraction
+time per 1\,000 inputs, both for the model alone and end to end including
+decoding. The end-to-end time is the cost used by the selection rule
+(Section~\ref{sec:stats}).
+
+\subsection{Pulse evidence (candidate component)}
+Whether remote photoplethysmography enters the system is decided by an
+experiment, not assumed. A projection-based pulse method~\cite{wang2017pos}
+turns the mean skin colour of contiguous frames into one pulse signal, and
+the spectral peak in the band 0.7 to 3\,Hz and its signal-to-noise ratio are
+compared with a control built from the same clips with time-shuffled frames
+(Sections~\ref{sec:iters} and~\ref{sec:results}). The 16-frame sampling of the main pipeline cannot
+carry a pulse, so this branch reads contiguous frames at the native frame
+rate.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Experimental Protocol}\label{sec:protocol}
+
+\subsection{Setup}
+All work runs on one machine: Windows~10~Pro, one NVIDIA GeForce RTX~5070
+with 12\,GB of memory (11\,GiB usable), an AMD Ryzen~9 7900X with 12 cores,
+31\,GB of RAM, Python 3.13.15, PyTorch 2.14.1 with CUDA 13.0 wheels and driver
+595.79. Every experiment is planned inside the memory of this card.
+
+\subsection{Data and splits}
+The group is the unit that may sit on one side of a split only: the source
+video together with the person identity where metadata exists, and the source
+video alone otherwise. Everything that shares a source or an identity shares a
+group. A dataset family counts as one source: Celeb-DF v2 and Celeb-DF++ are one
+family, and a family used in training is never a cross-dataset test. The splits
+are:
+\begin{itemize}
+  \item \spl{train}: training data;
+  \item \spl{val}: held out from the training dataset and group-disjoint from
+        it, used for the threshold, the temperature and early stopping;
+  \item \spl{dev\_x}: the development slice, carved out of a cross-dataset
+        source by a seeded draw over groups and removed from the test set of
+        that source; it ranks candidates and tunes hyperparameters, never
+        gives a headline, and may be evaluated repeatedly;
+  \item \spl{test\_in}: the in-dataset test, group-disjoint from \spl{train}
+        and \spl{val}, reported but not the headline;
+  \item \spl{test\_x}: a dataset never used in training, the headline
+        generalisation result.
+\end{itemize}
+\spl{test\_in} and \spl{test\_x} are sealed. Figure~\ref{fig:splits} shows the
+layout and Table~\ref{tab:data} the assignment per task. All datasets are
+research-only. Celeb-DF, Celeb-DF++ and FakeAVCeleb forbid publishing derived
+data, so no frame, crop or per-video score of them appears in any document of
+the project. A script proves that no group is on two sides of a split, including
+a check by content hash that no file appears in two splits.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig02_splits.pdf}
+\caption[Group-disjoint splits]{Schematic of the group-disjoint splits. The development slice
+(\spl{dev\_x}) and the sealed tests share no group, identity or file content
+with each other or with the training dataset.}
+\label{fig:splits}
+\end{figure*}
+
+\begin{table*}[!t]
+\centering
+\caption[Data per task]{Data per task. A group is the source video with its person identity
+(video), the speaker (audio) or the LSUN class and generator unit (images).}
+\label{tab:data}
+\small
+\begin{tabular}{@{}L{1.9cm} L{3.7cm} L{2.9cm} L{3.0cm} L{4.6cm}@{}}
+\toprule
+Task & \spl{train} & \spl{val} & Development slice & Sealed tests \\
+\midrule
+Face frames, T-V &
+FaceForensics++ c23, official train split (1\,000 originals and 4\,000
+manipulated videos in all; 720 originals in train) &
+FaceForensics++ official validation split &
+Celeb-DF v2: 15 of 59 identity groups &
+\spl{test\_x}: the other Celeb-DF v2 groups, Celeb-DF++ (test videos of 21
+new generators) and DFD; \spl{test\_in}: FaceForensics++ official test split \\
+Generated images, T-I &
+ProGAN validation set (20 LSUN classes, 8\,000 images): 14 classes &
+the other 6 classes &
+2 of the 7 CNN-synthesis generator units &
+\spl{test\_x}: the other units and a diffusion test set; \spl{test\_in}: the
+ProGAN test set \\
+Speech, T-A &
+ASVspoof 2019 LA, train partition &
+ASVspoof 2019 LA, development partition &
+In-the-Wild: 12 of 54 speakers &
+\spl{test\_x}: the other In-the-Wild speakers; \spl{test\_in}: ASVspoof 2019 LA
+evaluation partition \\
+Audio-visual fusion &
+LAV-DF official train (identity-independent split) &
+LAV-DF official validation &
+none &
+LAV-DF official test split \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Celeb-DF++ de-duplication and test balance}
+Celeb-DF++ is one family with Celeb-DF v2, so two rules apply. First, its
+samples whose target identity or celebrity source identity is one of the 15
+development identities are excluded from the sealed test set (2\,079 samples),
+and they are not used as development data either. Second, 150 real videos of
+Celeb-DF++ that are byte-identical to Celeb-DF v2 videos are counted once, under
+the group of Celeb-DF v2. The sealed Celeb-DF++ test set then holds 2\,849 fake
+videos and no real video, in 44 identity groups, so an AUC on it is computed
+against the real videos of Celeb-DF v2. The pooled family test set holds 744
+real and 6\,906 fake videos, which is strongly imbalanced toward fakes, so
+balanced accuracy and the threshold carry more noise than the AUC. Since the
+independent units are the 344 groups of the family set (44 identity groups and
+300 real YouTube videos), and not the videos, the intervals stay wide whatever
+the number of videos.
+
+\subsection{Sealed tests and the staircase}
+Rankings, hyperparameter choices and iteration verdicts that rest on the
+development slice or on the validation split are exploratory: they report sign,
+size and interval and choose the next step, and they are never presented as
+confirmed performance. Each frozen iteration is evaluated once on the sealed
+test sets, in a staircase of one test result per iteration
+(Figure~\ref{fig:staircase}). A guard in the evaluation code refuses any
+sealed split unless the run is flagged final and carries an iteration tag, and
+a ledger records the date, iteration, dataset, split, run identifiers and score
+file hash of every final evaluation. A second final evaluation of the same
+iteration and dataset is refused unless a reason is given, and a repeat is
+listed as a correction. The confirmatory claims are exactly three tests, declared
+before any final run, all paired group-bootstrap comparisons on sealed data: the
+final system against the working version on the Celeb-DF family (video, T1) and
+on In-the-Wild (speech, T2), and the final system against a re-run published
+baseline on the Celeb-DF family (T3). The declared rule of each test uses the
+95\,\% interval; because there are three tests, a robustness line at the
+98.33\,\% level (Bonferroni over three, from the same bootstrap resamples) is
+printed next to each, and a declared verdict that this interval does not support
+is written as not robust to the Bonferroni level. The robustness line does not
+replace the declared rule. Every other comparison in the paper is labelled
+exploratory.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig04_staircase.pdf}
+\caption[Staircase of sealed evaluations]{Schematic of the staircase. Each frozen iteration is evaluated once
+on the sealed test sets and the result is written to the ledger. The
+confirmatory tests compare the final system with the working version (two
+tests, video and speech) and with a re-run published baseline (one test).}
+\label{fig:staircase}
+\end{figure*}
+
+\subsection{Metrics and statistics}\label{sec:stats}
+The headline metric is the ROC-AUC on a dataset never used in training,
+\begin{equation}
+\mathrm{AUC}=P(S_1>S_0)+\tfrac12 P(S_1=S_0),
+\end{equation}
+where $S_1$ and $S_0$ are the scores of a random fake and a random real
+sample. It does not depend on the threshold or on the class balance. Also
+reported are the equal error rate, the balanced accuracy at the
+validation-chosen threshold, the log loss, the Brier score and the expected
+calibration error with 15 equal-width bins (top-label version),
+\begin{equation}
+\mathrm{ECE}=\sum_{b=1}^{15}\frac{n_b}{n}\,\bigl|\mathrm{acc}_b-\mathrm{conf}_b\bigr|,
+\end{equation}
+before and after temperature scaling~\cite{guo2017calibration}. For standalone
+audio on ASVspoof~2019 the equal error rate is also reported, for comparison
+with the literature.
+
+Uncertainty is a 95\,\% percentile interval from 2\,000 bootstrap resamples
+with a fixed base seed. The resampling unit is the group, never the frame or the
+clip: groups are drawn with replacement and all samples of a drawn group are
+kept; a resample with one class only is drawn again. With several seeds, the
+metric is computed per seed for every resample and averaged over the seeds, and
+the standard deviation over seeds of the point estimate is reported next to the
+interval. Comparisons are paired: both candidates are scored on the same
+resampled groups and the interval is that of the difference.
+
+The \emph{tie set} of a ranking is every candidate whose paired 95\,\%
+interval of the AUC difference against the leader includes zero. The cheapest
+candidate in the tie set wins, where cheaper means the lower end-to-end
+extraction time per 1\,000 inputs and, if equal, fewer parameters (``cheapest
+wins''). The from-scratch reference is reported and excluded. A sign-flip
+permutation test over groups is run as a sensitivity check, not as a second
+rule. If the lower interval bound of the best candidate is 0.55 or below, the
+sweep is declared inconclusive for that task.
+
+``Comparable with a published detector'' means non-inferior. With $\Delta$ the
+difference of the AUCs (ours minus the re-run baseline) and $L$ the lower end of
+its paired 95\,\% group-bootstrap interval,
+\begin{equation}
+\text{non-inferior}\iff L>-\delta,
+\end{equation}
+where the margin $\delta$ is stated before the final comparison and chosen from
+the measured seed-to-seed spread of the baseline. An interval that only contains
+zero is reported as not distinguished, and ours is called superior only when
+the whole interval is above zero. The baseline is a published detector family
+re-run on the same data, split, budget and metric; numbers quoted from papers
+are context only, with their own protocol named. The baseline is an Xception
+network with ImageNet weights, fine-tuned on the same FaceForensics++ frames
+with the recipe and budget of the fine-tuning iteration. The margin was fixed
+before any sealed split was read as twice the larger of the baseline's seed
+standard deviations of the AUC on the validation split and on the development
+slice, with a floor of 0.01. The first pass of the baseline (learning rate
+$10^{-4}$, seed standard deviations 0.0010 and 0.0072) gave $\delta=0.0143$.
+That rate was the edge of its grid, so the grid was extended once, to
+$3\times10^{-4}$, before any sealed read; the new rate was selected on
+validation, and with its seed standard deviations (0.0003 and 0.0020) the rule
+gives the floor, $\delta=0.0100$, which the comparison with the baseline uses. % E-013 E-013b
+
+\subsection{Seed policy and fine-tuning budget}
+The head of every candidate in the sweep is trained with three seeds. The
+fine-tuning iteration has a smaller budget that follows from measured step times
+on the 12\,GB card. It covers the face-frame task first; the three best
+encoders that fit are fine-tuned at the learning rates $10^{-5}$,
+$3\times10^{-5}$ and $10^{-4}$, one seed each, with the same 1\,800 optimiser
+steps (one pass over the training frames), AdamW with a cosine schedule and
+5\,\% warm-up, weight decay 0.05, mixed precision and an effective batch of 32.
+Each run has a time cap of 10 minutes of training. An encoder enters only if its
+peak memory at batch 32 is at most 10\,GiB and one budget takes at most 10
+minutes; the two large CLIP models do not fit on this card and stay frozen. Two
+further seeds are run for the best learning rate of the best encoder only. The
+other two tasks keep their frozen heads in that iteration. The encoder is
+chosen on the validation split only, with the cheapest-wins rule, so that the
+development slice that judges the iteration does not select its encoder.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Iterations}\label{sec:iters}
+
+The working version (I-0) is followed by seven experimental iterations (I-1 to
+I-7) and a last slot for integration and freeze (I-8) that runs no experiment
+(Figure~\ref{fig:ladder}). The levers of I-1 to I-6 come from six families:
+fine-tuning depth (linear probe, last blocks, low-rank adapters or full
+fine-tuning), frame aggregation (mean, top-$k$ mean or learned pooling), loss
+and class weighting, augmentation matched to test perturbations together with
+regularisation, combining encoders, and late fusion across modalities with
+per-modality calibration. The slot a family takes is chosen after the
+diagnostic battery of the previous iteration, and the primary candidate of a
+slot is a planning guess that is replaced without penalty when the battery
+points elsewhere; a lever whose trigger is not met is not run to fill a slot.
+The battery is the same after every iteration: AUC per
+dataset and per generator with intervals, the gap between training and
+validation, the gap between validation and the development slice, the
+calibration curve with ECE and Brier score before and after temperature
+scaling, score histograms, splits by compression level, face size and number of
+faces, the 20 worst errors reviewed by eye, and the seed variance.
+
+The battery of the working version pointed to the first levers. The video task showed a bias signature (training AUC
+0.8367, validation 0.7985) and was fine-tuned first (I-1). The speech task showed
+a gap of 0.384 between validation and development AUC and a sign reversal of
+recording-condition features between corpora, which led to silence trimming and
+peak normalisation (I-2), to nuisance augmentation of the training clips (I-3)
+and, because the three tied encoders had weakly correlated scores, to an average
+of three encoders (I-4). Frame aggregation and loss weighting were not run:
+after I-1 the mean of the frame probabilities was within 0.005 of the median,
+the top-3 mean and the maximum (frame-level AUC 0.852, clip mean 0.921 on the
+development slice)
+and the calibration error after temperature scaling was small (0.033), so
+their triggers were not met. Low-rank adapters~\cite{hu2022lora} were the
+cheaper alternative to full fine-tuning and were not needed, because full
+fine-tuning fit the card.
+
+Because the headline task had only one video iteration, two further video
+iterations were run before the sealed run, each with a written hypothesis, an
+equation and success and failure lines fixed beforehand. I-1b applies the
+augmentation lever to the fine-tuned video encoder: blur, a down-and-up resize
+and JPEG re-encoding of the training crops, followed by mixup. I-1c applies the
+averaging lever: the mean of the logits of three fine-tuned encoders. A lever
+enters the final system only if the lower bound of its paired development-slice
+difference to I-1 is above zero and its validation AUC does not fall by more
+than 0.0079, the half-width of the interval of the I-1 validation AUC. Both were
+run on request although their triggers were not met to the letter: the
+validation-to-development gap after I-1 was 0.0803 against about 0.10 for I-1b,
+and the score correlation of the three encoders was 0.89 to 0.91 against below
+0.8 for I-1c. % E-016 E-017
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig03_ladder.pdf}
+\caption[Iteration ladder]{The measured iteration ladder. Each lever was chosen after the diagnostic
+battery of the previous step; the verdicts are mechanical evaluations of the
+criteria written before the run and are exploratory. The sealed-test
+evaluation of the frozen iterations is in Table~\ref{tab:final}.}
+\label{fig:ladder}
+\end{figure*}
+
+Every slot follows one template: observation (numbers from the battery),
+diagnosis (bias, variance, shift, calibration, aggregation or missing signal),
+mathematical hypothesis, change, prediction (sign and rough size), result and
+verdict. The hypothesis, the prediction and the failure line are written before
+the run, in the experiment log, and are not edited afterwards. The fine-tuning
+iteration rests on the nesting of the hypothesis classes: the linear probe
+$\{x\mapsto\sigma(w^{\top}\phi_{\theta_0}(x)+b)\}$ is contained in the
+fine-tuned class $\{x\mapsto\sigma(w^{\top}\phi_{\theta}(x)+b)\}$, so the minimum
+training risk cannot rise, whereas validation and development AUC may fall if
+the larger class fits identity-specific cues. The augmentation iteration
+replaces the empirical risk by $\min_\theta\,\mathbb{E}_{(x,y)}\mathbb{E}_{t\sim\mathcal T}
+L(f_\theta(t(x)),y)$ over a family $\mathcal T$ of nuisance transforms. The
+averaging iteration uses that, for $m$ scores of equal variance $\sigma^2$ and
+mean pairwise correlation $\bar\rho$, the variance of their mean is
+$\sigma^2(\bar\rho+(1-\bar\rho)/m)$, while the bias is the mean of the biases.
+For the fusion iteration the fused label is fake if either modality is fake,
+and the fused log-odds are the sum of the per-modality log-odds minus the prior
+log-odds under conditional independence, compared with a logistic regression on
+the two log-odds. Table~\ref{tab:iters} gives the written hypotheses,
+thresholds and measured outcomes.
+
+\begin{table*}[!t]
+\centering
+\caption[Iteration slots]{Iterations. Hypotheses and thresholds were written before any run; the outcomes
+are exploratory (validation split and development slice) and the verdicts are
+mechanical. The sealed-test evaluation is in Tables~\ref{tab:final}
+and~\ref{tab:stair}.}
+\label{tab:iters}
+\small
+\begin{tabular}{@{}l L{2.4cm} L{7.1cm} L{3.8cm}@{}}
+\toprule
+Slot & Lever & Written hypothesis, success threshold and failure line & Outcome \\
+\midrule
+I-0 &
+Frozen encoder per task, linear head, temperature scaling &
+\textbf{T-V.} At least one self-supervised or language-supervised encoder
+reaches a higher development AUC on unseen Celeb-DF v2 identities than the best
+supervised ImageNet CNN. Success: the paired 95\,\% interval of the difference
+lies above zero and the lower bound of the best candidate is above 0.60.
+Failure: the interval includes zero (not supported; the cost rule decides), or
+the lower bound is 0.55 or below (inconclusive).
+\textbf{T-I.} A CLIP-type encoder beats every supervised CNN on the two held-out
+generator units. Success: interval above zero and lower bound above 0.65.
+Failure as for T-V.
+\textbf{T-A.} A self-supervised speech encoder (wav2vec 2.0 or WavLM) beats both
+the Whisper encoder and the from-scratch reference on unseen In-the-Wild
+speakers. Success: both intervals above zero and lower bound above 0.60.
+Failure as for T-V. &
+T-V and T-I: criteria met; T-A: inconclusive (exploratory, development slice) % E-001 E-002 E-003
+\\
+\addlinespace[3pt]
+I-1 & Full fine-tuning of the video encoder &
+Fine-tuning all encoder weights lifts the training-subset AUC to at least 0.90
+(the probe underfits) and the validation and development AUC above those of the
+probe of the same encoder. Success: the lower bounds of both paired differences
+are above zero and the training-subset AUC is at least 0.90. Failure: a
+validation gain with a development interval that includes zero (capacity went
+into source-specific cues). &
+Supported. SigLIP base, learning rate $10^{-5}$: validation 0.9899 [0.9809,
+0.9967] against 0.8767 for its probe; development 0.9096 [0.8776, 0.9388]
+against 0.7396, gain +0.1700 [+0.1228, +0.2114]; training subset 0.9994. % E-005
+\\
+\addlinespace[3pt]
+I-1b & Video: augmentation matched to compression, blur and resize, with mixup &
+Training on perturbed crops and mixed pairs makes the fine-tuned encoder
+insensitive to compression, blur and resolution differences between
+FaceForensics++ and Celeb-DF. Enters if the lower bound of the paired development
+gain over I-1 is above zero and the validation change is not below $-0.0079$.
+Failure: either line not met. &
+Does not enter. Validation 0.9705 [0.9618, 0.9795], development 0.9315 [0.9055,
+0.9548]; against I-1 the paired difference is $-0.0194$ [$-0.0251$, $-0.0129$] on
+validation and +0.0219 [+0.0090, +0.0382] on the development slice: a trade-off,
+with mixup and perturbations not separated. % E-016
+\\
+\addlinespace[3pt]
+I-1c & Video: mean logit of three fine-tuned encoders &
+Averaging scores of tied encoders lowers variance by the factor of the
+correlation formula above. Same entry lines as I-1b. &
+Does not enter. Validation 0.9903, development 0.9192 [0.8948, 0.9457]; paired
+difference to I-1 +0.0004 [$-0.0011$, +0.0023] on validation and +0.0096
+[$-0.0020$, +0.0231] on the development slice. % E-017
+\\
+\addlinespace[3pt]
+I-2 & Speech: trim silence, normalise the peak &
+Removing leading and trailing silence and the level before the 4-second window
+is cut removes recording cues that reverse between corpora. Success: a
+manipulation check passes (single-feature AUC intervals of leading silence,
+RMS energy and duration include 0.5 on ASVspoof development), the lower bound of
+the paired development gain over I-0 is above zero, and the validation AUC falls
+by at most 0.02. Failure: the development interval includes zero or the
+validation AUC falls by more. &
+Supported. Development 0.6723 [0.6126, 0.7584], gain +0.0623 [+0.0114,
++0.1048]; validation 0.9889 (change -0.0054). RMS energy keeps AUC 0.135 [0.054,
+0.382] on In-the-Wild, so a level-related cue remains. % E-007
+\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{table*}[!t]
+\centering
+\caption[Iteration slots, continued]{Iterations, continued: I-3 to I-7.}
+\label{tab:iters2}
+\small
+\begin{tabular}{@{}l L{2.4cm} L{7.1cm} L{3.8cm}@{}}
+\toprule
+Slot & Lever & Written hypothesis, success threshold and failure line & Outcome \\
+\midrule
+I-3 & Speech: noise, low-pass, reverberation and MP3 copies of the training clips &
+The head trained on the original and three augmented copies of every training
+clip relies on cues that survive the transforms. Precondition: the I-2 head
+loses at least 0.01 AUC on an augmented validation copy. Success: the lower
+bound of the paired development gain over the I-2 head is above zero and the
+validation AUC falls by at most 0.02. &
+Supported. Development 0.7455 [0.7052, 0.8121], gain +0.0732 [+0.0122,
++0.1225]; validation 0.9869 (change -0.0020); on the augmented validation copy
+the I-2 head falls to 0.6569 and the new head to 0.9436. % E-008
+\\
+\addlinespace[3pt]
+I-4 & Speech: mean logit of three encoders &
+Three tied encoders with weakly correlated scores give a lower variance of
+the mean. Success: the lower bound of the paired development gain over the
+single HuBERT head is above zero and the validation AUC falls by at most 0.02. &
+Supported. Development 0.8130 [0.7523, 0.8808], gain +0.0675 [+0.0300,
++0.0929]; validation 0.9964 [0.9943, 0.9982]; mean pairwise score correlation
+0.534 on the development slice. % E-009
+\\
+\addlinespace[3pt]
+I-5 & Pre-check of the frozen heads on LAV-DF, then fusion &
+A head whose lower AUC bound against its own modality label on LAV-DF
+validation is 0.55 or below is near chance; fusion is run only if both heads pass. &
+Not tested. Visual 0.3838 [0.3599, 0.4079] (below chance), audio 0.6476
+[0.6244, 0.6701]. % E-010
+\\
+\addlinespace[3pt]
+I-6 & Heads trained on LAV-DF, then late fusion &
+Heads fitted on the target data pass the pre-check and the fusion gains over the
+better single head. Success: both lower bounds above 0.55 and the lower bound of
+the fusion gain above zero. &
+Mechanically supported, with a control that limits it (Section~\ref{sec:results}).
+Visual 0.7491, audio 0.8604, fusion 0.9935 [0.9905, 0.9962]. A visual head trained
+on produced videos only was not supported (0.5169 [0.4945, 0.5392]). % E-011 E-012
+\\
+\addlinespace[3pt]
+I-7 & rPPG experiment &
+\textbf{Signal check S-1} on contiguous frames: it passes if at least 60\,\% of
+real clips have a spectral peak SNR above the 95th percentile of a pooled
+time-shuffled control (at least 10 shuffles per clip) and, if pulse ground truth
+is obtained, the mean absolute heart-rate error is at most 8 bpm. If it fails,
+the slot reports exactly that the pulse is not recoverable from these data, and
+no further experiment is run. If it passes, separation, added value and
+controls follow, with thresholds written beforehand. &
+S-1 fails: 130 of 432 real clips (0.301 [0.260, 0.346]) are above the control
+threshold, 0.6 was required. The pulse is not recoverable from these data and
+nothing further was run. A positive control with an injected sinusoid followed
+(Section~\ref{sec:results}). % E-006 M-005
+\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The prior expectation for I-7 was that S-1 would pass only partially, because
+most videos are compressed and compression attenuates the pulse; it did not
+pass. Whatever the outcome, a slot is reported, and an iteration that is not
+finished by the end of the planned working week is reported as not run and not
+left out silently.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Software}\label{sec:software}
+
+The software is a local web page served by Flask on the loopback address only,
+with an upload limit of 512\,MB; an uploaded file is deleted after every
+request, also after an aborted upload. The page calls an inference library that
+returns one fixed response structure: a score per modality, a status, warnings,
+errors, a block that describes the model, and a fixed sentence saying what the
+score means: in the words of this frozen page, a calibrated probability that the
+content is fake, from a model fitted on the training data of the project, valid
+only for the kinds of content in that data, and not proof. That wording holds
+only for content like the validation split of each task
+(Section~\ref{sec:method}); the frozen page keeps it, its audio score carries a
+warning to read it as a ranking score, and the analysis platform states the
+narrower meaning (Section~\ref{sec:platform}). The warnings include the case of no face
+found and of several faces (the largest is used). The page shows stage progress
+and the per-modality table, and for a video it shows the visual and the audio
+score separately and states that no combining rule is claimed
+(Figure~\ref{fig:web}).
+
+A checkpoint is a folder with one metadata file in plain text (encoder
+identifier, revision, feature dimension, head file and its hash, preprocessing
+identifier, temperature, threshold, training data, library versions, split
+identifiers, seed and git commit) and one array file with the head, with no
+serialised code. The real adapter refuses to run without a checkpoint whose
+metadata and preprocessing identifier match what is in use, checks the hash of
+the head and that the encoder weights on disk are the verified ones, and never
+invents a score: a missing audio head gives an audio modality marked
+unavailable with its reason. A development stand-in exists for building the
+page; it always reports its source as mock and the page then shows a visible
+banner, so that a stand-in output is never taken for a measurement. The
+screenshots in Figure~\ref{fig:web} were taken against the real working-version
+checkpoint, on items of the training data, and show no banner; the audio
+result carries the warning about the exploratory calibration of audio scores.
+
+The checkpoint format has a second version for the system after the iterations:
+a fine-tuned image encoder with its linear head for the face and video path, an
+average of the logits of three speech encoders for audio after the trim and
+normalise step, and the unchanged image head; every file of the folder has a
+recorded hash, and a preprocessing configuration the code cannot apply as
+trained is refused. A version-2 checkpoint was checked against the training-time
+scores on 11 validation items (6 FaceForensics++ videos, 3 ASVspoof files and 2
+ProGAN images): the largest difference of the calibrated score is 0.0019 against
+a tolerance of 0.02, and the unit tests of the format (304) pass on test doubles.
+The web page was run once with the checkpoint of the frozen system on three
+training files (an image, a video with audio and an audio file) and passed its
+page check; the screenshots of Figure~\ref{fig:web} show the working-version
+checkpoint.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig07_web_real.pdf}
+\caption[Local web page with the real checkpoint]{The local web page with the real working-version checkpoint on training items:
+(a) an image result, (b) a video with audio, where the visual and audio scores are
+shown separately and the combined verdict is ``undetermined'', (c) an audio file with
+the calibration warning. The text inside the screenshots is the page as rendered and is
+not meant to be read at this size.}
+\label{fig:web}
+\end{figure*}
+
+\subsection{Analysis platform}\label{sec:platform}
+% D-069, D-072, D-073, D-074; src/dfd/platform (schema.py, module.py, coordinator.py, pipeline.py, modules/, provenance/)
+After the freeze the frozen detectors were placed, unchanged, inside a modular
+analysis platform (Figure~\ref{fig:platform}). A module declares its section and a
+time limit and implements two functions: an applicability check on a probe of
+the file, which answers applicable, not applicable (the input lacks what the
+module needs) or unsupported (the capability is not installed), and a run that
+returns a module result. A coordinator runs the modules one at a time, because
+the graphics processor is shared; an exception becomes a \emph{failed} entry, a
+module without an answer in time becomes \emph{timed out}, and a result that
+breaks the report contract is replaced by a failed entry. A timed-out thread
+cannot be stopped in Python, so the coordinator sets a cancellation flag,
+discards late results and ignores late writes to the shared cache; a second
+graphics-processor module is \emph{skipped} while an abandoned one still runs.
+Every module appears once in the report (schema version~2.1), in one of three
+sections: authenticity (findings \emph{indicates manipulation}, \emph{no
+indication within the tested scope}, \emph{inconclusive}), cross-modal
+(\emph{consistent}, \emph{potential mismatch}, \emph{inconclusive}) and
+provenance (\emph{credentials valid}, \emph{credentials invalid}, \emph{no
+credentials found}, \emph{inconclusive}). Each entry carries its status, its
+finding, a score only together with a sentence on what it means, the model and
+the evaluation it rests on, its tested scope and its limitations. There is no
+global score: the contract checker rejects a fused score or verdict field, no
+finding means genuine, and a fixed statement says that a module that found
+nothing does not show that the media is authentic. Version~2.1 adds, optionally,
+an explanation per module written on the server by fixed templates from the
+fields of that module's result, each sentence naming the fields it uses; a
+validator rejects numbers absent from the cited fields, missing fields, model
+output from a module that did not run, and an experimental score shown as a
+headline number. The explanations describe the stored result; they do not
+claim to explain how a network reached its score. % D-076; src/dfd/platform/explain.py
+
+Three modules wrap the frozen face-video, image and speech detectors through one
+shared adapter, so a file is scored once; on 11 non-sealed files they agree with
+the stored parity scores within 0.0019. % STATUS platform sprint; data/_results/platform/module_parity.json
+A still image in which a face is found is scored by the face-swap model on the
+face crop, so the generated-image model, trained on ProGAN images, was not applied to portraits; an additional
+experimental module now also passes the whole image to the frozen generated-image
+model through the adapter's own whole-image function and shows that score without
+a finding, leaving the image result unchanged; its limitation text quotes the
+measurement on images with a face (Section~\ref{sec:later}). % D-083, E-028
+A lip-sync module measures the audio-visual offset of one tracked face with a
+port of the public SyncNet reference code; it reports \emph{consistent} when the
+offset lies in a band of $-6$ to $+2$ frames fitted on real clips, otherwise a
+potential mismatch, and \emph{inconclusive} for short, silent, non-speech-like
+or multi-face input or a confidence below 3.0; it never states that media is
+manipulated. % E-022, E-024, E-025, D-073
+A Content Credentials module validates C2PA manifests with the c2pa-python
+library when it is installed; a valid manifest whose signer does not chain to a
+trust anchor configured by the operator is inconclusive, because anyone can sign
+with a self-made certificate, and a valid credential is never read as proof that
+the content is authentic. A generated-video module re-encodes the first 2\,s by
+one fixed recipe, passes 8 frames through frozen DINOv2 small~\cite{oquab2024dinov2}
+and scores the mean class-token embedding with a logistic regression; this is an
+appearance baseline, not the ReStraV method~\cite{interno2025restrav}. Its head
+did not transfer to a held-out benchmark (Section~\ref{sec:later}), so a gate in
+the code allows a finding only for a head file whose hash is in an approval
+table that is empty; the module is always inconclusive and shows its score for
+inspection only. A local dashboard (127.0.0.1 only) opens on an upload panel,
+groups the checks by what they found without any overall score, shows one rounded
+number per check and keeps identifiers, raw scores and thresholds under technical
+details; stand-in scenarios appear only on request and are marked. % D-072, D-074, D-076
+
+Each module result now also carries an \emph{assessment}: a verdict
+label of that module alone, the evidence tier (detector, limited, experimental,
+provenance or context), the score with its kind, a statement on calibration, an
+uncertainty level with its reason and links to the stored results that justify
+the wording. The labels follow the measured error rates, not the score. On the
+sealed FakeAVCeleb half the frozen video threshold had specificity 0.996 and
+sensitivity 0.480, so a face-video flag reads \emph{possible manipulation}, a
+possible sign and not a determination, with high uncertainty, and no flag reads
+\emph{no strong evidence of manipulation detected} with high uncertainty. The
+flag is worded cautiously because that specificity belongs to one sealed set:
+computed afterwards from the stored sealed scores, the frozen threshold flagged
+about 0.11 of the real videos of the Celeb-DF family and 0.14 of those of DFD
+(Section~\ref{sec:limits}), and the face-video check is not described as
+reliable on the strength of one set; the image and speech checks have no comparable evidence for their
+use on other sources (the generated-image model misses 0.7395 of modern generated
+images; audio specificity on FakeAVCeleb was 0.637), so their flags read
+\emph{possible manipulation (weak evidence)} and a low score reads
+\emph{inconclusive} or \emph{no strong evidence}. The layer recomputes the
+comparison of score and threshold and answers \emph{inconclusive}, with the
+reason, for a missing or non-finite score, a missing threshold or a disagreeing
+stored finding. Experimental modules always read \emph{experimental signal
+observed, no reliable verdict available}: none of their heads passed its own
+acceptance test, and the label for generated content exists in the vocabulary
+but no rule can reach it. There is still no report-level verdict, and the
+contract checker still rejects any fused score or verdict field. Scores are
+temperature-scaled on each detector's validation split, so they behave like
+probabilities only for data like that split; the platform therefore calls them
+scores, shows the raw value only under technical details and never as a
+percentage, and calls the outputs of the experimental heads ranking scores. % D-087; src/dfd/platform/verdict.py, verdict_evidence.py; E-015, E-028
+
+An \emph{Evaluation Lab}, a separate page of the dashboard, re-analyses recorded
+score files with the project's own metrics and group bootstrap. It runs no model,
+trains nothing, writes no ledger entry and never reads or writes the approval
+table or any threshold, so a result in the lab is not a product approval. Each
+run record stores the configuration and its hash, the score file's SHA-256 and
+the code state before any metric is computed. A final held-out split is accepted
+only as a re-analysis of an evaluation already in the ledger, with that purpose
+declared and with a score file whose hash equals the ledger entry; thresholds
+come from the validation rows of the same runs or are given with their
+provenance and are never fitted on the evaluated rows; before computing, the lab
+checks for groups shared with training or validation rows (refused on a final
+split), for duplicate samples and, when recorded, for duplicate file hashes
+across splits; two runs are compared only on identical samples. It cannot prove
+that a model's training data excluded the evaluated items when the score file
+does not record them, and every run record says so. As a software check on
+28 October, a re-analysis of the final system on the sealed Celeb-DF family
+reproduced the logged AUC of 0.8218, a first look at a sealed split was refused
+and the ledger was left byte for byte unchanged. % D-088; src/dfd/platform/evallab; docs/TESTING_RECORD.md section 10
+
+The software was tested apart from the experiments. On 28 October 2026, in the
+project environment and after the verdict layer and the Evaluation Lab were
+added, the safe suite gave 710 passed and 2 skipped (the two opt-in tests) with
+the graphics processor hidden and 13 data-dependent tests deselected; the opt-in
+tests on the graphics processor, last run on 27 October and not affected by the
+later changes, gave 5 passed (wrapper parity on 11 non-sealed files, largest
+difference 0.0019 against a tolerance of 0.02); the dashboard, driven in a
+browser on 8 demonstration inputs, finished the six media files with all seven
+modules reported, every report valid and every number shown equal to the stored
+score, and failed the two error cases with the expected codes; and the
+documentation check gave 71 pass, 0 fail. Earlier records not repeated on this state (live checks 60 with 0
+failed, 5 of 5 Content Credentials cases) are history. The run found one defect
+(a failed live analysis left the stand-in report on screen), which was fixed with
+a regression test, and one documented limitation: the speech module has no
+speech check of its own, so a pure tone receives a speech finding. These tests
+show the behaviour of the software, not detection accuracy. % docs/TESTING_RECORD.md sections 2 to 6
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.92\textwidth]{fig10_platform.pdf}
+\caption[Analysis platform]{Structure of the analysis platform. The coordinator runs every
+module; each appears once in the report, in one of three sections, with its status
+and, if it completed, its finding, tested scope and limitations. There is no global
+score.}
+\label{fig:platform}
+\end{figure*}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Results}\label{sec:results}
+
+All numbers in this section that come from the development slices are
+exploratory: they report sign, size and interval, they rank candidates and
+choose the next step, and they are not confirmed performance. They are the mean
+AUC over three head seeds with the 95\,\% group-bootstrap interval. The verdicts
+are mechanical evaluations of criteria that were written before the run. The
+sealed-test results are in the subsection on the staircase and the confirmatory tests: each frozen
+iteration was read once, over seeds 0 to 2, at clip or image level, with a
+group bootstrap of 2\,000 resamples; only the three confirmatory tests T1 to T3
+are confirmatory, and every other sealed number is exploratory.
+
+\subsection{Encoder sweep (exploratory, development slice)}
+Table~\ref{tab:sweep} gives the ranking of every candidate. On the face-frame
+task (development slice: 1\,728 Celeb-DF v2 clips from 15 identity groups) the
+leader is the OpenAI CLIP ViT-L/14, and five candidates, the two CLIP models,
+SigLIP and both DINOv2 sizes, form the tie set; the cost rule selects DINOv2
+small, at 0.943~s per 1\,000 inputs end to end and 22.1 million parameters.
+EfficientNet-B4 and Xception lie outside the tie set by the bootstrap
+(differences -0.099 and -0.130 against the leader), although the
+permutation check for EfficientNet-B4 does not reach 0.05 (p = 0.110; for
+Xception p = 0.007). The best non-CNN candidate minus the best supervised CNN is
++0.0994 with interval [+0.0228, +0.1723], so the hypothesis of the
+face-frame task is supported on this slice. The reference network trained from
+scratch reaches 0.5166 [0.5033, 0.5324] and is excluded from the selection.
+
+On the generated-image task the development slice holds 5\,998 images but only
+two generator units, so the interval is not interpretable as a population
+interval and the permutation test cannot reach 0.05. The OpenAI CLIP
+ViT-L/14 leads and is the only member of its tie set (the next candidate is
+0.037 lower, interval -0.204 to -0.001), so it is selected without the cost
+rule; the scratch reference gives 0.5500 [0.5080, 0.5735]. Both CLIP models
+(OpenAI and LAION-2B) reach 1.0000 on the validation split, which therefore
+cannot separate them; on the development slice the leader (0.9935) is
+separated from every other candidate by the paired bootstrap, on two generator
+units only, so the basis of that separation is narrow. The per-generator
+values are part of the diagnostic battery.
+
+On the speech task the development slice holds 6\,991 In-the-Wild clips from 12
+speakers. Three candidates (Whisper small, WavLM base plus, HuBERT base) are
+tied, and the cost rule selects HuBERT base. The verdict is inconclusive: the
+best lower bound (0.5338) is at or below the 0.55 line fixed beforehand, so
+frozen speech features did not transfer reliably to In-the-Wild recordings
+although the validation AUC is 0.99 or higher for every encoder. The scratch
+reference is 0.2458 [0.0706, 0.4404], with 0.22 to 0.29 per seed. Values below
+0.5 mean a sign-flipped shortcut and not a worse model: a check of trivial
+recording features shows that the leading silence separates the classes with
+AUC 0.375 [0.299, 0.453] on ASVspoof development and 0.719 [0.425, 0.933] on
+In-the-Wild, and the RMS energy with 0.594 [0.537, 0.649] and 0.248
+[0.073, 0.546], so cues of the recording condition change sign between the two
+corpora (in sign, not established in size: with 12 speakers both In-the-Wild
+intervals include 0.5). The face-frame reference (0.5166) is at chance on the
+development slice, and the speech reference is below it.
+
+\begin{table*}[!t]
+\centering
+\caption[Encoder sweep on the development slice]{Encoder sweep on the development slice (exploratory): mean AUC over
+three seeds with the 95\,\% group-bootstrap interval, validation AUC, and
+membership of the tie set against the leader. The cost rule selects the cheapest
+member of each tie set (marked by an asterisk). Reference rows are trained from
+scratch and are excluded from the selection.}
+\label{tab:sweep}
+\small
+\begin{tabular}{@{}l L{4.6cm} c c c@{}}
+\toprule
+Task & Encoder & Dev. AUC [95\,\%] & Val. AUC & Tie set \\
+\midrule
+T-V, 15 groups & CLIP ViT-L/14, OpenAI & 0.7464 [0.6721, 0.8306] & 0.9046 & yes \\
+ & SigLIP base & 0.7396 [0.7031, 0.7832] & 0.8767 & yes \\
+ & CLIP ViT-L/14, LAION-2B & 0.7331 [0.6764, 0.7966] & 0.8635 & yes \\
+ & DINOv2 small & 0.6933 [0.6639, 0.7314] & 0.7985 & yes* \\
+ & DINOv2 base & 0.6745 [0.6323, 0.7239] & 0.8170 & yes \\
+ & EfficientNet-B4 & 0.6471 [0.5967, 0.6987] & 0.7478 & no \\
+ & Xception & 0.6162 [0.5744, 0.6633] & 0.7184 & no \\
+ & Scratch reference & 0.5166 [0.5033, 0.5324] & & \\
+\midrule
+T-I, 2 groups & CLIP ViT-L/14, OpenAI & 0.9935 [0.9803, 0.9982] & 1.0000 & yes* \\
+ & CLIP ViT-L/14, LAION-2B & 0.9563 [0.7760, 0.9975] & 1.0000 & no \\
+ & DINOv2 base & 0.9023 [0.8496, 0.9316] & 0.9899 & no \\
+ & SigLIP base & 0.8657 [0.7591, 0.9166] & 0.9975 & no \\
+ & DINOv2 small & 0.8340 [0.7401, 0.8823] & 0.9685 & no \\
+ & EfficientNet-B4 & 0.6688 [0.6238, 0.7137] & 0.8990 & no \\
+ & Xception & 0.6380 [0.4912, 0.7115] & 0.8140 & no \\
+ & Scratch reference & 0.5500 [0.5080, 0.5735] & & \\
+\midrule
+T-A, 12 groups & Whisper small encoder & 0.6380 [0.5338, 0.7700] & 0.9995 & yes \\
+ & WavLM base plus & 0.6334 [0.5291, 0.7714] & 0.9924 & yes \\
+ & HuBERT base & 0.6100 [0.5434, 0.7256] & 0.9942 & yes* \\
+ & wav2vec 2.0 base & 0.4975 [0.3451, 0.7092] & 0.9965 & no \\
+ & Scratch reference & 0.2458 [0.0706, 0.4404] & & \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Working version on the development slice (exploratory)}
+The working version freezes the three selected encoders, trains the linear head
+and fits temperature and threshold on the validation split of each task.
+Table~\ref{tab:mvp} gives its results. The path from a file through the web page
+to a calibrated result works on one image, one video with audio and one audio
+file, which are training items, so that check says nothing about accuracy; the
+scores computed from the stored features and by the inference code from the
+raw file agree to within 0.0019 on seven training items. The gap between
+validation and development AUC is 0.105 on the face frames, 0.007 on the
+generated images and 0.384 on speech. Seed variation is a third or less of the
+bootstrap half-width for all three tasks, so the sampling of identities and
+speakers, and not training noise, limits the intervals. The weakest
+manipulations on the validation split of FaceForensics++ are NeuralTextures
+(0.697) and FaceSwap (0.778).
+
+\begin{table*}[!t]
+\centering
+\caption[Working version (I-0) on the development slice]{Working version (I-0), exploratory: AUC with the 95\,\% group-bootstrap interval on the
+training, validation and development splits, equal error rate (EER) on the
+development slice, and the expected calibration error (ECE) on the development
+slice before and after temperature scaling (TS) fitted on validation.}
+\label{tab:mvp}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}l L{2.6cm} c c c c c@{}}
+\toprule
+Task & Encoder & Train AUC & Validation AUC & Dev. AUC & Dev. EER & Dev. ECE, before / after TS \\
+\midrule
+T-V & DINOv2 small & 0.8367 [0.8267, 0.8475] & 0.7985 [0.7731, 0.8269] & 0.6933 [0.6639, 0.7314] & 0.3582 & 0.2048 / 0.2217 \\
+T-I & CLIP ViT-L/14, OpenAI & 1.0000 [1.0000, 1.0000] & 1.0000 [1.0000, 1.0000] & 0.9935 [0.9803, 0.9982] & 0.0401 & 0.0462 / 0.0050 \\
+T-A & HuBERT base & 0.9997 [0.9996, 0.9999] & 0.9942 [0.9910, 0.9967] & 0.6100 [0.5434, 0.7256] & 0.4183 & 0.3293 / 0.4052 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Iterations I-1 to I-4, I-1b and I-1c (exploratory)}
+Table~\ref{tab:ladderres} and Figure~\ref{fig:ladderres} give the measured
+steps. \emph{Fine-tuning (I-1).} Nine stage-1 runs (three encoders, three
+learning rates, one seed) trained all encoder weights for 1\,800 steps. The
+learning rate $10^{-5}$ was best for every encoder (validation AUC 0.9869 for
+DINOv2 small, 0.9893 for SigLIP base, 0.9918 for DINOv2 base); the higher rates
+collapsed to near chance for most encoders (for example 0.5186 for SigLIP base at
+$10^{-4}$), a learning-rate sensitivity of 0.40 to 0.47 AUC. Selection on the
+validation split only gave a tie set of DINOv2 base and SigLIP base, and the
+cheaper SigLIP base was taken. Its three seeds reach validation AUC 0.9893,
+0.9896 and 0.9908 and development AUC 0.9210, 0.9166 and 0.8912. The gain over
+the probe of the same encoder is +0.1132 [+0.0948, +0.1299] on validation and
++0.1700 [+0.1228, +0.2114] on the development slice; the training-subset AUC
+rises from 0.9245 to 0.9994, so the bias is resolved, and the validation minus
+development gap falls from 0.105 to 0.080. On the validation split the
+manipulations are separated with AUC 1.000 (Deepfakes), 0.991 (Face2Face), 0.999
+(FaceSwap) and 0.969 (NeuralTextures). One run (DINOv2 base at $10^{-4}$) stopped
+at step 1\,750 on a data-loader error and was repeated once with the same
+configuration; its result is a collapsed run (0.5583) like the other high-rate
+runs. The prediction written beforehand (gains of +0.02 to +0.05 on validation
+and at most +0.03 on the development slice) was too small; the verdict is not
+affected.
+
+\emph{Speech (I-2 to I-4).} Trimming and peak normalisation passed its
+manipulation check and raised the development AUC from 0.6100 to 0.6723 while
+the validation AUC fell by 0.0054; the RMS energy kept a reversed single-feature
+AUC of 0.135 [0.054, 0.382] on In-the-Wild, so a level-related cue remained.
+Adding three augmented copies of every training clip (noise at 5 to 30\,dB,
+a low-pass between 3.4 and 7\,kHz, synthetic reverberation, an MP3 round trip at
+24 to 128\,kbit/s, ranges fixed before the run) raised the development AUC to
+0.7455 and cut the AUC that the head loses on an augmented validation copy
+from 0.332 to 0.043. Averaging the logits of HuBERT base, WavLM base plus and the
+Whisper small encoder raised it to 0.8130; the members alone reach 0.7455, 0.7823
+and 0.7526, their mean pairwise score correlation is 0.534 on the development
+slice, and the average costs three encoder passes (the Whisper encoder
+processes 64 clips per second against 237 for HuBERT). Every speech interval is
+wide because the slice has 12 speakers, and a true gain below about +0.09 could
+not be shown there.
+
+\emph{Two further video levers (I-1b and I-1c).} Both are exploratory
+(validation and development slice only) and are compared with the three I-1
+seeds. With augmentation and mixup (I-1b) the validation AUC is 0.9705 [0.9618,
+0.9795] and the development AUC 0.9315 [0.9055, 0.9548]; the paired difference
+to I-1 is $-0.0194$ [$-0.0251$, $-0.0129$] on validation and +0.0219 [+0.0090,
++0.0382] on the development slice. The development gain has a lower bound above
+zero but the validation fall exceeds the allowance of 0.0079, so I-1b does not
+enter. It is a trade-off, in-dataset validation down and the unseen identities
+up, with the validation-to-development gap falling from 0.0803 to 0.0390; the
+effects of mixup and of the perturbations are not separated, and nothing is
+known about perturbation types not trained on. The mean of the logits of the
+three fine-tuned encoders (I-1c) reaches 0.9903 on validation and 0.9192 [0.8948,
+0.9457] on the development slice, differences to I-1 of +0.0004 [$-0.0011$,
++0.0023] and +0.0096 [$-0.0020$, +0.0231]; the interval includes zero, so I-1c
+does not enter, in line with the high correlation of the members. A two-member
+average looked at afterwards had a development lower bound of +0.0009 but was
+not the declared candidate and does not change the verdict. The final system
+stays as defined before these runs. % E-016 E-017
+
+\begin{table}[!t]
+\centering
+\caption[Measured iteration results]{Measured results of the iterations on the validation split and the
+development slice (exploratory; mean over three seeds, 95\,\% group-bootstrap
+interval). The Xception row is the re-run baseline at its selected learning
+rate, not an iteration.}
+\label{tab:ladderres}
+\scriptsize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{@{}L{2.6cm} c c@{}}
+\toprule
+Step & Validation AUC & Development AUC \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Face frames: validation FaceForensics++, development Celeb-DF v2 (15 groups)}}\\
+I-0 DINOv2 small probe & 0.7985 [0.7731, 0.8269] & 0.6933 [0.6639, 0.7314] \\
+SigLIP base probe & 0.8767 [0.8582, 0.8966] & 0.7396 [0.7031, 0.7832] \\
+I-1 SigLIP base, fine-tuned & 0.9899 [0.9809, 0.9967] & 0.9096 [0.8776, 0.9388] \\
+I-1b augmentation, mixup & 0.9705 [0.9618, 0.9795] & 0.9315 [0.9055, 0.9548] \\ % E-016
+I-1c three encoders & 0.9903 [0.9823, 0.9968] & 0.9192 [0.8948, 0.9457] \\ % E-017
+Xception, fine-tuned & 0.9912 [0.9849, 0.9963] & 0.8716 [0.8364, 0.9076] \\ % E-013b
+\midrule
+\multicolumn{3}{@{}l}{\textit{Speech: validation ASVspoof dev, development In-the-Wild (12 speakers)}}\\
+I-0 HuBERT base probe & 0.9942 [0.9910, 0.9967] & 0.6100 [0.5434, 0.7256] \\
+I-2 trim, normalise & 0.9889 [0.9831, 0.9933] & 0.6723 [0.6126, 0.7584] \\
+I-3 plus augmentation & 0.9869 [0.9818, 0.9911] & 0.7455 [0.7052, 0.8121] \\
+I-4 three encoders & 0.9964 [0.9943, 0.9982] & 0.8130 [0.7523, 0.8808] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig08_ladder_results.pdf}
+\caption[Development-slice AUC along the ladder]{Development-slice AUC with the 95\,\% group-bootstrap interval along
+the measured ladder (exploratory). The widths follow from 15 identities (video)
+and 12 speakers (speech). The video panel includes the two extra levers and the
+baseline at its selected learning rate.}
+\label{fig:ladderres}
+\end{figure*}
+
+\paragraph*{Re-run baseline (exploratory).}
+An Xception network with ImageNet weights, fine-tuned on the same
+FaceForensics++ frames with the recipe and budget of the fine-tuning iteration,
+was first run at three learning rates. The first pass selected $10^{-4}$, the
+largest of the three, with a validation AUC still rising (0.9646, 0.9809,
+0.9883), and reached 0.9872 [0.9784, 0.9942] on validation (seed standard
+deviation 0.0010) and 0.8750 [0.8435, 0.9089] on the development slice (0.0072).
+A baseline tuned only up to the edge of its grid might be weaker than it could
+be, which would favour our system, so the grid was extended by one step,
+$3\times10^{-4}$, before any sealed read. That rate was selected on validation
+alone (seed 0: 0.9909 against 0.9883) and gives, over three seeds, a validation
+AUC of 0.9912 [0.9849, 0.9963] (seed standard deviation 0.0003) and a
+development AUC of 0.8716 [0.8364, 0.9076] (0.0020). Against the first pass the
+paired difference is +0.0040 [+0.0009, +0.0077] on validation and $-0.0034$
+[$-0.0167$, +0.0094] on the development slice, so the edge of the grid hid a
+slightly better in-dataset rate and the development value did not move beyond
+its interval. The rate $3\times10^{-4}$ is the new edge of the grid; no further
+rate was run, so a better rate cannot be excluded. The fine-tuned SigLIP base
+minus this baseline is $-0.0013$ [$-0.0063$, +0.0033] on validation and +0.0380
+[+0.0172, +0.0592] on the development slice, so on this exploratory slice the
+SigLIP model is higher, with an interval that excludes zero. Xception minus the
+working-version probe is +0.1783 [+0.1296, +0.2140] on the development slice:
+most of the gain of the fine-tuning iteration over the working version comes
+from fine-tuning, which the data suggest and one encoder pair cannot establish.
+The sealed comparison with the baseline uses the margin $\delta=0.0100$
+(Section~\ref{sec:stats}). % E-013 E-013b
+
+\subsection{Audio-visual evidence on LAV-DF (exploratory)}
+LAV-DF changes the video and the audio of a clip independently, so it has a
+label per modality. A fixed stratified subset of the official splits is used
+(500 videos for each of four cells, real, video fake only, audio fake only and
+both, in each of the train, validation and sealed test splits, groups by source
+video); the sealed test split is not scored. The pre-check of the frozen heads
+failed (Table~\ref{tab:lavdf}): the visual head trained on FaceForensics++ has an
+AUC of 0.3838 [0.3599, 0.4079] against the video label, below chance, and it
+scores videos whose frames are untouched (audio fakes) as more real than the
+real originals, so it does not respond to the visual manipulation; the audio
+heads reach 0.6476 [0.6244, 0.6701]. Fusion was therefore not tested. With
+heads trained on 10\,000 LAV-DF videos (source-disjoint from the validation and
+fusion-fit subsets), the visual head reaches 0.7491 [0.7280, 0.7697] against the
+video label, the audio head 0.8604 [0.8435, 0.8769] against the audio label, and
+a logistic regression on the two calibrated log-odds reaches 0.9935
+[0.9905, 0.9962] against the fused label, higher than the better single head by
++0.0023 [+0.0009, +0.0040]. By the written criteria that is a mechanical
+success.
+
+A control, run after seeing this result and labelled as post hoc, limits what the
+number means (Figure~\ref{fig:lavdfcells}). The visual head separates the real
+originals from the audio-only fakes, whose frames are not modified, with AUC
+0.9912 [0.9864, 0.9951]; within the produced videos only (video fakes against
+audio-only fakes) its AUC against the video label is 0.5070 [0.4771, 0.5361],
+which is chance. A visual head trained on the produced videos only, so that the
+production pipeline cannot be used, reaches 0.5169 [0.4945, 0.5392] within the
+produced videos (not supported): a visual manipulation signal is not recoverable
+by this recipe on this subset. The audio head, in contrast, is a manipulation
+detector: within the produced videos its AUC against the audio label is 0.8574
+[0.8394, 0.8752]. The fused AUC on LAV-DF is therefore an in-dataset result
+driven by a production-pipeline cue of the visual head, and no audio-visual
+deepfake detection is claimed. In the system, the audio-visual mode shows the
+two unimodal scores with a warning and no fused verdict.
+
+\begin{table}[!t]
+\centering
+\caption[LAV-DF pre-check and in-dataset heads]{LAV-DF validation subset (2\,000 videos): AUC against each head's own
+modality label with the 95\,\% group-bootstrap interval, for the frozen heads
+trained on other data and for the heads trained on LAV-DF (exploratory).}
+\label{tab:lavdf}
+\footnotesize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{@{}l c c@{}}
+\toprule
+Head & Frozen, other data & On LAV-DF \\
+\midrule
+Visual & 0.3838 [0.3599, 0.4079] & 0.7491 [0.7280, 0.7697] \\
+Audio & 0.6476 [0.6244, 0.6701] & 0.8604 [0.8435, 0.8769] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig09_lavdf_cells.pdf}
+\caption[LAV-DF per-cell AUC and control]{LAV-DF validation, heads trained on LAV-DF: AUC of each head
+for each kind of fake against the real originals, and within the produced
+videos only (post-hoc control). The visual head is high against the originals
+for every fake, including audio-only fakes with unmodified frames, and at chance
+within the produced videos.}
+\label{fig:lavdfcells}
+\end{figure*}
+
+\paragraph*{Pulse signal check (exploratory).}
+The signal check S-1 used 432 real clips of FaceForensics++, Celeb-DF v2 and
+LAV-DF (up to 150 per dataset, 10\,s of contiguous frames at the native rate).
+The 95th percentile of the pooled time-shuffled control is 1.118\,dB; 130 of the
+432 clips (0.301 [0.260, 0.346]) exceed it, per dataset 0.280, 0.288 and 0.333,
+and the required fraction was 0.6. The check fails, so the pulse signal is not
+recoverable from these data and no separation or fusion experiment was run.
+The check has no pulse ground truth, so it says that this extractor does not
+recover a pulse from these compressed videos, not that no pulse exists.
+
+A positive control tested whether that extractor could recover a pulse at all.
+The same 432 clips went through the unchanged check after a known 1.2\,Hz
+sinusoid was added to the skin pixels at eight relative amplitudes of the green
+channel, from 0.0005 to 0.032. With no sinusoid the control reproduces the
+original fraction (0.301). With the primary signature (a colour-selective
+modulation whose channel weights are an implementer's choice) the smallest tested
+amplitude recovered in at least 60\,\% of the clips is 0.008 (377 of 432, 0.873
+[0.838, 0.901]); at 0.004 it is 0.546, and with a green-only modulation the
+smallest such amplitude is 0.004 (0.789). So the pipeline is sensitive to a clean
+sinusoid of that size. The control does not show that a real pulse exists in
+these videos, what its amplitude or form is, that it survives H.264 compression
+(the sinusoid was added after decoding), or anything about forgeries; a constant
+frequency and amplitude is also easier to recover than a real pulse. The verdict
+of the check stands. % M-005
+
+\subsection{Staircase and confirmatory tests}
+The sealed run was made once the system was frozen. Each frozen iteration (the
+working version I-0, the iterations I-1 to I-4, the re-run Xception baseline and
+the LAV-DF heads) was evaluated once on the sealed sets, with three head seeds
+(0 to 2), at clip or image level, and a group bootstrap of 2\,000 resamples; the
+ledger holds 74 entries and no evaluation was repeated. % E-014
+What was fixed beforehand: the final system is
+the configuration after the last supported lever of each task (fine-tuned SigLIP
+base for face frames, the CLIP probe for generated images, and the
+three-encoder average with trim, normalise and augmentation for speech); neither
+I-1b nor I-1c is part of it, and the LAV-DF fusion is not part of the
+confirmatory claims and was evaluated once as exploratory evidence. The first
+test (T1) asks whether the lower bound of the paired difference to the working
+version is above zero on the sealed Celeb-DF family test (video), and the second
+(T2) asks the same on the sealed In-the-Wild test (speech); there is no image
+test, because the image head is the same in both. The third (T3) asks whether the
+final video system is non-inferior to the Xception baseline at $3\times10^{-4}$,
+with $\delta=0.0100$, and superior if the lower bound is above zero, on the
+sealed Celeb-DF family test. Each test is decided by
+its declared 95\,\% rule, and the 98.33\,\% robustness interval is printed next
+to it. Table~\ref{tab:final} gives the result.
+
+\begin{table*}[!t]
+\centering
+\caption[Sealed-test AUC and the three confirmatory tests]{Sealed-test AUC of the working version (I-0), the final system and the
+Xception baseline, and the paired differences of the three confirmatory tests
+(T1 to T3). For a test row the 95\,\% column is the declared rule and the
+98.33\,\% column is the robustness interval (Bonferroni over three); AUC rows
+have a 95\,\% group-bootstrap interval only. The Celeb-DF family set mixes the
+test part of Celeb-DF v2 and the Celeb-DF++ fakes against the Celeb-DF v2 real
+videos.}
+\label{tab:final}
+\small
+\begin{tabular}{@{}L{4.1cm} L{2.2cm} L{3.7cm} L{2.6cm} L{3.4cm}@{}}
+\toprule
+Row & Videos or clips / groups & 95\,\% & 98.33\,\% & Verdict \\
+\midrule
+I-0, sealed Celeb-DF family & 7\,650 / 344 & 0.6238 [0.6015, 0.6486] & n/a & n/a % E-014
+\\
+Final system, same set & 7\,650 / 344 & 0.8218 [0.8020, 0.8393] & n/a & n/a % E-014
+\\
+Xception baseline, same set & 7\,650 / 344 & 0.8042 [0.7841, 0.8223] & n/a & n/a % E-014
+\\
+I-0, sealed In-the-Wild & 24\,788 / 42 & 0.7516 [0.6802, 0.8035] & n/a & n/a % E-014
+\\
+Final system, same set & 24\,788 / 42 & 0.9148 [0.8896, 0.9383] & n/a & n/a % E-014
+\\
+\midrule
+T1 final minus I-0, Celeb-DF family & 7\,650 / 344 & +0.1980 [+0.1688, +0.2242] & [+0.1627, +0.2303] & improved; robust % E-014
+\\
+T2 final minus I-0, In-the-Wild & 24\,788 / 42 & +0.1633 [+0.1177, +0.2266] & [+0.1085, +0.2481] & improved; robust % E-014
+\\
+T3 final minus baseline, Celeb-DF family & 7\,650 / 344 & +0.0176 [+0.0025, +0.0327] & [$-0.0011$, +0.0355] & superior at 95\,\%, not robust to the Bonferroni level; non-inferior at both % E-014
+\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+On the sealed Celeb-DF family test the final video system reaches an AUC of
+0.8218 [0.8020, 0.8393] and the working version 0.6238 [0.6015, 0.6486]; the
+paired difference of T1 is +0.1980 [+0.1688, +0.2242], with a lower bound above
+zero, so the video system is improved by the declared rule, and the 98.33\,\%
+interval [+0.1627, +0.2303] agrees. On the sealed In-the-Wild test the final
+speech system reaches 0.9148 [0.8896, 0.9383] and the working version 0.7516
+[0.6802, 0.8035]; the difference of T2 is +0.1633 [+0.1177, +0.2266], improved,
+with a robustness interval of [+0.1085, +0.2481]. Against the Xception baseline
+at $3\times10^{-4}$ (0.8042 [0.7841, 0.8223]) the difference of T3 is +0.0176
+[+0.0025, +0.0327]: the lower bound is above zero, so the final video system is
+superior by the declared 95\,\% rule. The 98.33\,\% interval is
+[$-0.0011$, +0.0355] and contains zero, so superiority is not robust to the
+Bonferroni level. The lower bound of that interval is above $-\delta$, so the
+system is non-inferior to the baseline at both levels. The wording that the
+evidence supports is therefore: superior at the 95\,\% level, not robust to the
+Bonferroni level, non-inferior at both, and nothing beyond that. The baseline is
+one network family at 224 pixels, so T3 does not speak for other published
+detectors. % E-014
+
+Of the five written predictions, three were inside their ranges: the final video
+system between 0.75 and 0.92, the working version between 0.60 and 0.75, and the
+difference to the baseline between $-0.03$ and +0.05. The two speech
+predictions failed in the optimistic direction: the final speech system was
+predicted between 0.60 and 0.85 and was found at 0.9148, and the working
+version was predicted between 0.50 and 0.70 and was found at 0.7516. The sealed
+video values are below the development values (final system 0.8218 against
+0.9096 on the development slice, baseline 0.8042 against 0.8716), and the sealed
+speech values are above them (0.9148 against 0.8130, working version 0.7516
+against 0.6100); the order of the steps is kept in both. % E-014
+
+\begin{table*}[!t]
+\centering
+\caption[Exploratory sealed staircase]{Exploratory staircase on the sealed sets: AUC per frozen iteration
+(point estimates over three seeds; the intervals of the sealed log are not
+repeated here) and, for video, the Xception baseline. The video model does not
+change after I-1, the image head is the same in all iterations, and the speech
+scores change from I-2 on. Outside T1 to T3 nothing in this table is a
+confirmatory claim.}
+\label{tab:stair}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}l r c c c c c c@{}}
+\toprule
+Task and sealed set & Items / groups & I-0 & I-1 & I-2 & I-3 & I-4 & Xception \\
+\midrule
+Video, Celeb-DF family & 7\,650 / 344 & 0.6238 & 0.8218 & 0.8218 & 0.8218 & 0.8218 & 0.8042 \\
+Video, Celeb-DF v2 test only & 4\,801 / 344 & 0.6322 & 0.8999 & 0.8999 & 0.8999 & 0.8999 & 0.8527 \\
+Video, DFD & 3\,431 / 28 & 0.5927 & 0.8797 & 0.8797 & 0.8797 & 0.8797 & 0.8847 \\
+Video, FF++ test (in-dataset) & 700 / 70 & 0.7946 & 0.9899 & 0.9899 & 0.9899 & 0.9899 & 0.9895 \\
+\midrule
+Speech, In-the-Wild & 24\,788 / 42 & 0.7516 & 0.7516 & 0.8125 & 0.8672 & 0.9148 & n/a \\
+Speech, ASVspoof 2019 test (in-dataset) & 71\,237 / 67 & 0.9684 & 0.9684 & 0.9632 & 0.9541 & 0.9835 & n/a \\
+\midrule
+Images, ProGAN test (in-dataset) & 8\,000 / 20 & 1.0000 & 1.0000 & 1.0000 & 1.0000 & 1.0000 & n/a \\
+Images, CNN-synthesis subset & 48\,805 / 16 & 0.9316 & 0.9316 & 0.9316 & 0.9316 & 0.9316 & n/a \\
+Images, diffusion test & 10\,000 / 10 & 0.9354 & 0.9354 & 0.9354 & 0.9354 & 0.9354 & n/a \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The exploratory staircase (Table~\ref{tab:stair}) shows where the change comes
+from. The video gain appears at I-1 (fine-tuning) and the later iterations did
+not change the video model, so the video columns after I-1 repeat. The pooled
+family set is a mixture: the Celeb-DF v2 test part alone gives 0.8999 for the
+fine-tuned model, and the Celeb-DF++ fakes against the Celeb-DF v2 real videos
+give 0.7105, so the family value of 0.8218 lies between them. The
+in-dataset FaceForensics++ test is near ceiling (0.9899). On DFD the
+fine-tuned model is at 0.8797 and the baseline at 0.8847, a difference that is
+small against the interval of either. For speech the steps follow the order seen on the
+development slice: In-the-Wild rises from 0.7516 at I-0 to 0.8125 (I-2), 0.8672
+(I-3) and 0.9148 (I-4). On the in-dataset ASVspoof test the value falls slightly
+at I-2 and I-3 (0.9632, 0.9541) and is 0.9835 at I-4. The image head is
+unchanged across the iterations, with 1.0000 on the ProGAN test, 0.9316 on the
+CNN-synthesis subset and 0.9354 on the diffusion test. All of this is
+exploratory. % E-014
+
+\begin{table}[!t]
+\centering
+\caption[Sealed LAV-DF subset]{Sealed LAV-DF subset (2\,000 videos, 1\,736 groups; 1\,500 videos
+within the produced ones): AUC of each head against three label schemes: the fused label (fake if
+either modality is fake), the head's own modality label, and the own label within
+the produced videos only (exploratory). Frozen heads are the FaceForensics++ visual head and the speech
+average; the LAV-DF heads are trained on LAV-DF; the last row is a visual head
+trained on the produced videos only.}
+\label{tab:lavdfsealed}
+\footnotesize
+\setlength{\tabcolsep}{2pt}
+\begin{tabular}{@{}l c c c@{}}
+\toprule
+Head & Fused & Own & Own, produced \\
+\midrule
+Visual, frozen (I-5) & 0.3226 & 0.4044 & 0.4890 \\
+Audio, frozen (I-5) & 0.6462 & 0.6646 & 0.6386 \\
+Visual, LAV-DF (I-6) & 0.9921 & 0.7477 & 0.5032 \\
+Audio, LAV-DF (I-6) & 0.7344 & 0.8491 & 0.8480 \\
+Fused, LAV-DF (I-6) & 0.9945 & n/a & n/a \\
+Visual, produced only (I-6b) & 0.5216 & 0.5243 & 0.5203 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+On the sealed LAV-DF subset the development pattern repeats (Table~\ref{tab:lavdfsealed}).
+The frozen visual head is below chance against the fused label (0.3226), the
+visual head trained on LAV-DF separates the produced videos from the originals
+(0.9921, fused 0.9945), and it is at chance within the produced videos (0.5032),
+as is the head trained on produced videos only (0.5203). The audio head detects
+the audio manipulation within the produced videos (0.8480). The sealed subset
+therefore gives no audio-visual detection claim. % E-014
+
+\subsection{Calibration and per-generator behaviour}
+Temperature scaling fitted on validation did not improve the calibration on the
+development slice for the face frames (ECE 0.2048 to 0.2217) or for speech
+(0.3293 to 0.4052), and it did for the generated images (0.0462 to 0.0050); all
+three fitted temperatures are below 1, so the validation scores are sharpened and
+the development scores are then over-confident. The audio score therefore
+carries an exploratory calibration warning in the web page. These are
+exploratory observations on the development slice. After fine-tuning, the
+calibration error of the video head on the development slice is 0.0522 before
+and 0.0331 after temperature scaling (validation 0.0261 and 0.0174), so
+temperature scaling now helps there. For the speech average the development
+error is 0.0692 before and 0.1670 after scaling (validation 0.0417 and 0.0016):
+the audio score keeps its exploratory calibration warning.
+
+\subsection{Experiments after the freeze}\label{sec:later}
+By its own record, each of the following was registered with a hypothesis and
+success and failure lines before its run (Section~\ref{sec:limits} states what
+version control can show), and none changed the frozen system
+(Table~\ref{tab:later}). % E-015, E-018 to E-029
+
+\emph{FakeAVCeleb, sealed half.} FakeAVCeleb~\cite{khalid2022fakeavceleb} was split
+by identity into a development half and a sealed half of 250 identities each, and
+the sealed half (5\,013 clips) was scored once. Visual AUC (real against fake
+video) was 0.9552 [0.9442, 0.9657] and audio AUC 0.9263 [0.9149, 0.9366]; the two
+cross-modality controls stayed inside 0.40 to 0.60 (0.5613 and 0.5011), so all
+four pre-stated criteria were met. The frozen thresholds did not transfer
+(visual sensitivity 0.480 at specificity 0.996; audio specificity 0.637), and
+the visual prediction (0.55 to 0.80) was wrong. On the development half the
+codec alone separates real from fake video (metadata model 0.9985), a common
+re-encode lowers the frozen visual AUC from 0.9732 to 0.8772, and a
+codec-matched control did not lower it further (0.8856 against 0.8763); because
+codec and manipulation method coincide in this data set, the sealed number is
+read as ranking quality on a data set with a codec shortcut. % E-015, E-021, E-023
+
+\emph{Generated video.} The metadata of DeepAction~\cite{bohacek2025deepaction}
+separated real from generated clips perfectly (AUC 1.0000); after a third
+re-encoding recipe the headers carry nothing, but seven pixel statistics still
+reach 0.773 [0.729, 0.817]. Of three candidates trained on the re-encoded clips
+with each generator left out, only the appearance baseline met the selection
+rule (0.8281 [0.7908, 0.8662]); on DF26~\cite{shykula2026df26}, read once and used
+for nothing else, it reached 0.4957 [0.4755, 0.5168] on all clips and 0.4880
+[0.4534, 0.5204] on the pre-registered closed-generator subset. The hypothesis
+of transfer is not supported, which is why the module stays experimental. A
+later diagnostic that fits nothing scored unmodified real videos from two other
+sources with the installed head: 338 of 440 (0.7682 [0.7265, 0.8052]) were above
+its threshold, against 19 of 100 DeepAction real clips scored out of fold, so the
+pre-registered hypothesis of a source confound is supported; which property of
+the sources drives it is not identified. % E-018, E-019, E-020, E-026
+
+\emph{Generated video trained in domain.} Under the licence of DF26, heads may be
+trained on its six open generators. With source-video folds and each of the
+three open families held out in turn, the best of eight pre-declared candidates
+was a logistic regression on the mean CLIP ViT-L/14 embedding of 8 frames: macro
+AUC 0.7453 [0.7174, 0.7710], against 0.4921 for the pixel statistics and 0.4995
+for the installed head. Features of frame-to-frame change did not help (14-frame
+temporal features minus pooled ones: $-0.0404$ [$-0.0650$, $-0.0165$]). In one
+counted look at the four commercial generators (794 clips) the frozen recipe
+reached 0.7548 [0.7189, 0.7885] against 200 scenario-matched real clips (Kling
+3.0 lowest, 0.6483; Wan 2.6 highest, 0.8758). The source confound remains: at its
+balanced threshold the deployable head flags 0.8023 [0.7625, 0.8368] of real
+FF++ and LAV-DF clips, against 0.2841 of DF26 real clips, so the head is not
+installed. % E-027, D-085
+
+\emph{Modern generated images.} The installed generated-image model (a linear
+probe on frozen CLIP ViT-L/14, trained on ProGAN images) was scored without
+any change on 11\,550 images of a test-only subset of
+Community Forensics-Eval~\cite{park2025communityforensics}: 5\,759 images from
+21 generators (commercial services, latent and pixel diffusion models, two GANs)
+and 5\,791 real images. The subset is the set of cheapest shards, chosen by a
+written rule before any image was seen, and eight generators share one pooled
+set of 121 RAISE photographs as their real images. The macro AUC over the 21
+generators is 0.7039 [0.6855, 0.7229] and the pooled false-negative rate at the
+frozen threshold is 0.7395 [0.7300, 0.7500] (pooled AUC 0.7973, false-positive
+rate 0.0418), so the pre-stated line gives \emph{inadequate}. The model separates
+the two GANs (DFGAN 0.9999, GALIP 0.8372) but is at chance on DeciDiffusionV2
+(0.4951), below chance on kandinsky\_2\_2 (0.4145), and misses 71 to 95\,\% of the
+images of every commercial generator. Part of its separation follows the file
+format: 92.8\,\% of the generated images are PNG and 88.1\,\% of the real ones
+JPEG, a format-only score reaches a pooled AUC of 0.9222, the model's AUC on PNG
+real against PNG generated images is 0.6123 [0.5908, 0.6353], and re-encoding 380
+generated PNG images as JPEG (quality 90) lowered the pooled AUC by 0.059
+[0.051, 0.067]. On the 3\,119 images in which the product's face detector finds a
+face, the whole-image model reaches AUC 0.7859 [0.7717, 0.7995] against 0.6020
+[0.5836, 0.6202] for the face-swap path that the product applies to them (paired
+difference +0.1839 [+0.1596, +0.2074]), but it misses 80.6\,\% of the generated
+faces at its threshold, so neither is usable. This is why the whole-image check
+for images with a face is shown as experimental and makes no finding.
+% E-028, D-083
+
+\emph{Retraining on recent generators.} To ask whether the weakness is the
+training data, the same kind of head (frozen CLIP ViT-L/14 features, a linear
+layer) was retrained on 23\,807 images of 125 generators from the training part
+of Community Forensics-Small, with the 31 validation generators and the
+validation real images disjoint from training, three seeds, and the encoder,
+temperature and threshold chosen on validation only (validation AUC 0.9823). The
+frozen heads were then scored once on the same 11\,550 evaluation images, after
+the heads, thresholds and encoder choice were frozen and hashed, and paired against
+the installed head. The macro AUC rose from 0.7039 to 0.8839 (seed mean, SD
+0.0021), a paired gain of +0.1800 [+0.1643, +0.1959] with every seed's interval
+above zero, so the pre-stated hypothesis of improvement is supported. The gain is
+largest on latent-diffusion generators (+0.32), present on commercial generators
+(+0.12), absent on pixel diffusion ($-0.01$), and present on generators with no
+related model in training (+0.17 [+0.15, +0.18]); it also holds with PNG real
+against PNG generated images only (0.8365 against 0.6123), although JPEG
+re-encoding of generated PNG files lowers the pooled AUC by 0.073. But the
+threshold chosen on validation real images (COCO and FFHQ only) does not
+transfer: at it the frozen candidate flags 0.5213 [0.5091, 0.5339] of the real
+evaluation images (0.5885 of LAION photographs, 0.0328 of COCO photographs). It
+therefore fails the pre-stated line for a candidate product check (pooled
+false-positive rate at most 0.10), and the heads stay research artefacts. The
+encoder that validation ranked lower scored higher on the evaluation images
+(macro AUC 0.9142); the rule fixed in advance was applied as written.
+% E-029
+
+\emph{Lip sync.} With a tolerance of 2 frames the frozen module flagged 15.0\,\%
+[8.1, 26.1] of real LAV-DF clips and 13.3\,\% [6.9, 24.2] of real FakeAVCeleb clips
+and 85 to 93\,\% of Wav2Lip clips, almost all at an offset of $-3$ frames. A band
+fitted on 230 real clips ($-6$ to $+2$ frames) flagged 1.3\,\% [0.4, 3.8] of 230
+disjoint real clips and 0 of 160 Wav2Lip clips, so the earlier separation rested
+on a one-frame margin; the module is weak evidence, not a detector. % E-024, E-025
+
+\begin{table}[!t]
+\caption{Experiments after the freeze (AUC with 95\,\% group bootstrap interval).}
+\label{tab:later}
+\centering
+\footnotesize
+\begin{tabular}{@{}p{0.52\columnwidth}p{0.40\columnwidth}@{}}
+\toprule
+Question & Result \\
+\midrule
+FakeAVCeleb sealed half, visual & 0.9552 [0.9442, 0.9657] \\
+FakeAVCeleb sealed half, audio & 0.9263 [0.9149, 0.9366] \\
+Generated-video head, DeepAction (generator left out) & 0.8281 [0.7908, 0.8662] \\
+Same head, DF26 all clips (held out) & 0.4957 [0.4755, 0.5168] \\
+Same head, real FF++ and LAV-DF clips above threshold & 338 of 440, 0.7682 [0.7265, 0.8052] \\
+DF26-trained head, open families held out & 0.7453 [0.7174, 0.7710] \\
+Same recipe, DF26 commercial generators (one look) & 0.7548 [0.7189, 0.7885] \\
+Same head, real FF++ and LAV-DF clips flagged & 0.8023 [0.7625, 0.8368] \\
+Generated-image model, 21 modern generators (macro AUC) & 0.7039 [0.6855, 0.7229] \\
+Same model, missed share of generated images (pooled) & 0.7395 [0.7300, 0.7500] \\
+Face images: whole-image model minus face path (paired AUC) & +0.1839 [+0.1596, +0.2074] \\
+Head retrained on 125 recent generators, same images (macro AUC, seed mean) & 0.8839 [0.8732, 0.8942] \\
+Same head minus the installed head (paired macro AUC) & +0.1800 [+0.1643, +0.1959] \\
+Same head, real images flagged at its validation threshold & 0.5213 [0.5091, 0.5339] \\
+Lip-sync band, false alarms on real clips & 1.3\,\% [0.4, 3.8] \\
+Lip-sync band, Wav2Lip clips flagged & 0 of 160 \\
+\bottomrule
+\end{tabular}
+\end{table}
+% E-015, E-020, E-025, E-027, E-028, E-029
+
+\subsection{Comparison with published results}\label{sec:compare}
+A published number is set against ours only when task, data, protocol and
+metric match; otherwise the comparison is context, and no difference is
+computed (docs/PERFORMANCE\_BENCHMARK.md lists every row). Every row is
+classed as directly comparable (same data and test items, metric, aggregation
+and declared training protocol), same dataset with a different protocol,
+cross-dataset, or context only; only the first class receives a difference. Three comparisons
+qualify or come close. (i) Our re-run Xception baseline against the final video
+model on the same sealed tests (Section~\ref{sec:results}). (ii) Speech on the
+official ASVspoof 2019 LA evaluation set with official training data: the equal
+error rate of the frozen speech system, computed afterwards from the stored
+sealed scores with no model run, is 6.94\,\% [5.95, 7.82] against 1.13\,\% for
+AASIST~\cite{jung2021aasist}, 5.81 points worse, and against 5.9\,\% for
+RawNet2 under the protocol of~\cite{pascu2024generalisable}, where the sign of
+the difference is not established; our system trades in-corpus accuracy for
+transfer. On the 42 sealed In-the-Wild speakers its equal error rate
+is 15.8\,\% [12.7, 18.8]; published values on the full set (33.9\,\% for the
+best model of~\cite{muller2022inthewild}, 7.2\,\% for a frozen 2B-parameter
+encoder~\cite{pascu2024generalisable}) use more speakers, so no gap is computed.
+(iii) Zero-shot DF26: our DeepAction-trained head (AUC 0.4957) lies within the
+range of FF++-trained detectors reported by its authors (pooled AUROC 44.0 to
+69.7, without intervals)~\cite{shykula2026df26}. % E-030, E-020; R-012, R-033, R-081, R-083
+No row of the face-video task is directly comparable: published Celeb-DF v2 and
+DFD values use other test subsets, frame counts or training compression and
+carry no intervals, and DFDC was not used, so those values are context only.
+The experimental heads stay outside the approval table for measured reasons:
+the generated-video head trained on open generators reached 0.7548 on unseen
+closed generators but flagged 0.8023 of unmodified real clips from two other
+sources, and the retrained image head raised the macro AUC to 0.8839 (a ranking
+gain of 0.1800) but flagged 0.5213 of the real evaluation images at its
+validation threshold (Section~\ref{sec:later}). Approving a head would need a
+new registered test with a false-positive line on sources not used for
+calibration. % D-085, D-086; E-027, E-029; docs/PERFORMANCE_BENCHMARK.md section 13
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Limitations}\label{sec:limits}
+\begin{itemize}
+  \item The development slices are small (15 identity groups, 12 speakers and
+        2 generator units), so the intervals are wide and ties are likely; the
+        cost rule will then decide often. Every iteration verdict rests on them
+        or on a validation split and is exploratory.
+  \item On the generated-image task the development slice has only two
+        generator units, so its interval is not interpretable as a population
+        interval; on the speech task the sweep verdict is inconclusive and the
+        audio score is poorly calibrated under shift.
+  \item The sealed Celeb-DF family test has 344 groups (44 identity groups and
+        300 real YouTube videos) and is strongly imbalanced toward fakes (744
+        real videos against 6\,906 fake), and it mixes the test part of
+        Celeb-DF v2 with Celeb-DF++ fakes, so its intervals stay wide and its
+        AUC is a mixture of two sources. The sealed speech test has 42 speakers,
+        and its intervals are governed by them.
+  \item What the sealed run does not show: the baseline is one network family at
+        one input size (224 pixels), so T3 says nothing about other detectors;
+        the margin $\delta=0.0100$ rests on three seeds and a floor; I-1b and
+        I-1c have no sealed test; every sealed number is one run of a frozen
+        iteration, repeated only by a logged reason, so run-to-run variation of
+        training is shown by the three head seeds and not by independent
+        retraining of the whole system; two of the five written predictions
+        failed upward for speech, so the speech values are less well predicted
+        than the video values; the superiority of T3 holds at the 95\,\% level
+        only; and every sealed number outside T1 to T3 is exploratory.
+  \item Frozen features may be inadequate for fine face-forgery artefacts; the
+        sweep can show that but not repair it, and fine-tuning is limited to
+        what fits one 12\,GB card.
+  \item All datasets are research-only, and the weights of two encoders (OpenAI
+        CLIP and WavLM) have conditional licences that are accepted here as
+        research-only; this restricts reuse of the checkpoints.
+  \item The detector scores are temperature-scaled on validation data and do not
+        behave as probabilities on other sources, and the frozen thresholds do
+        not transfer (on FakeAVCeleb about half of the fake videos were missed);
+        the per-module wording states this uncertainty but does not remove it.
+        The Evaluation Lab checks only what a score file records, so it cannot
+        exclude overlap with training data that the file does not list. % D-087, D-088; E-015
+  \item Numbers in published papers come from other protocols, so a comparison
+        with a published detector is made only by re-running it on this
+        protocol, and quoted numbers are context only.
+  \item The video datasets used for the visual task carry no audio stream in
+        the samples that were probed; audio evidence for videos therefore comes
+        from speech datasets and the fusion step only from LAV-DF, whose fakes
+        come from one speech synthesiser and one lip-sync generator. The fused
+        LAV-DF result is in-dataset and driven by a production-pipeline cue of
+        the visual head; no audio-visual detection is claimed.
+  \item The Xception baseline chose the largest learning rate of its grid
+        again after one extension step ($3\times10^{-4}$), so a better rate may
+        exist; one baseline run (seed 2) was repeated after a data-loader error with the same
+        recipe; the margin $\delta$ rests on three seeds and is now set by its
+        floor, not by the seed spread.
+  \item I-1b and I-1c were run on request with their triggers not met to the
+        letter, are exploratory on 15 identities, and did not enter. In I-1b
+        mixup and the perturbations are not separated, the perturbations are
+        generic and not matched to a measured property of Celeb-DF, and the
+        result is a trade-off (development up, validation down), not a
+        confirmed gain. The three confirmatory tests share one bootstrap, so the
+        98.33\,\% line is a robustness check and not a second decision rule.
+  \item The pulse check found no recoverable signal in 432 real clips. It has no
+        pulse ground truth, so it does not show that no pulse exists, and
+        different extractors or uncompressed video could differ. The positive
+        control shows sensitivity to a clean injected sinusoid only, not to a
+        real pulse or to one that has passed through compression.
+  \item The speech gains are measured on 12 speakers, so only a gain above about
+        +0.09 could be shown by a single comparison; the audio score keeps an
+        exploratory calibration.
+  \item A detector trained on one kind of manipulation supports no claim about
+        other kinds without a test on them, and no result of the project is
+        claimed beyond what its interval supports.
+  \item For the experiments after the freeze, the registration texts entered
+        version control in one commit together with their scripts, so the order
+        of text and run rests on the project's own statements; the record says
+        so and is not rewritten. The re-encoding recipe that passed the header
+        audit was the third tried on the same data and leaves pixel-level cues;
+        in FakeAVCeleb codec and method are fully confounded, so whether the
+        sealed AUC is inflated is not estimated; the lip-sync calibration pools
+        were split by file, not by speaker, on the LAV-DF side; and the SyncNet
+        weights have no stated licence and the FakeAVCeleb request terms are not
+        recorded, which rules out redistribution. % docs/RESEARCH_INTEGRITY.md; E-019, E-023, E-025
+  \item The modern-image experiments use a cost-selected subset of the
+        Community Forensics evaluation set (11\,550 images; 82.5\,\% of the real
+        images are LAION photographs, eight generators share 121 RAISE photographs),
+        real and generated images differ in file format and size, which the controls
+        separate only in part, and the retrained head was trained on about 1\,\% of
+        the published data scale with validation real images from two sources only,
+        so its threshold does not transfer; nothing is said about edited images or
+        images shared through social networks, and no number is compared with the
+        published mean average precision. % E-028, E-029
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conclusion}\label{sec:concl}
+This paper fixes a protocol before the confirmatory results exist: group-disjoint
+splits, a development slice separate from sealed tests that are touched once per
+frozen iteration, paired group-bootstrap statistics with a cheapest-wins rule,
+and a non-inferiority definition of ``comparable''. Within that protocol, on the
+development slices and exploratory, fine-tuning the image encoder raised the AUC
+on unseen Celeb-DF v2 identities from 0.693 to 0.910, a re-run Xception
+reached 0.872, two further video levers (I-1b, I-1c) did not enter the final
+system, and three speech-side changes raised the AUC on In-the-Wild
+speakers from 0.610 to 0.813 with wide intervals. What the evidence does not
+support is as important: the visual head trained on FaceForensics++ is below
+chance on LAV-DF, the fused LAV-DF result comes from a production-pipeline cue
+of the visual head and not from a visual manipulation signal, and the pulse
+signal check failed, so no audio-visual detection and no pulse evidence is
+claimed. On the sealed tests, read once per frozen iteration, the final video
+system is improved over the working version on the Celeb-DF family (AUC 0.8218
+against 0.6238, difference +0.1980 [+0.1688, +0.2242]) and the final speech
+system on In-the-Wild (0.9148 against 0.7516, +0.1633 [+0.1177, +0.2266]), both
+also at the 98.33\,\% level. Against the re-run Xception baseline (0.8042) the
+video system is superior by the declared 95\,\% rule (+0.0176 [+0.0025,
++0.0327]), but the 98.33\,\% interval [$-0.0011$, +0.0355] contains zero, so
+superiority is not robust to the Bonferroni level, and non-inferiority with a
+margin of 0.0100 holds at both. Sealed video values are below the development
+values and sealed speech values above them, and two speech predictions failed
+upward. Everything outside the three tests is exploratory, and these results
+come from one baseline family, 344 video groups and 42 speakers. % E-014
+After the freeze, a modular analysis platform reports one finding per module
+with its tested scope and never an overall score. The later experiments add
+limits rather than claims: the frozen system ranks the sealed half of
+FakeAVCeleb well but its thresholds do not transfer and that data set carries a
+codec shortcut, a generated-video head that met its development rule is at
+chance on DF26, and the lip-sync module is weak evidence. % E-015, E-020, E-025
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliographystyle{IEEEtran_hyphen}
+\bibliography{refs}
+
+\end{document}

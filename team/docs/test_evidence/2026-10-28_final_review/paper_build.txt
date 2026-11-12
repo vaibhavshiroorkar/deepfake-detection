@@ -1,0 +1,491 @@
+Rc files read (in order):
+  NONE
+Latexmk: This is Latexmk, John Collins, 9 March 2026. Version 4.88.
+Force everything to be remade.
+Latexmk: applying rule 'bibtex main'...
+Rule 'bibtex main':  Reasons for rerun
+Category 'other':
+  Rerun of 'bibtex main' forced or previously required:
+    Reason or flag: 'go_mode'
+
+------------
+Run number 1 of rule 'bibtex main'
+------------
+------------
+Running 'bibtex  "main.aux"'
+------------
+This is BibTeX, Version 0.99e (MiKTeX 26.5)
+The top-level auxiliary file: main.aux
+The style file: IEEEtran_hyphen.bst
+Database file #1: refs.bib
+-- IEEEtran.bst version 1.14 (2015/08/26) by Michael Shell.
+-- http://www.michaelshell.org/tex/ieeetran/bibtex/
+-- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
+
+Done.
+Latexmk: applying rule 'pdflatex'...
+Rule 'pdflatex':  Reasons for rerun
+Category 'other':
+  Rerun of 'pdflatex' forced or previously required:
+    Reason or flag: 'go_mode'
+
+------------
+Run number 1 of rule 'pdflatex'
+------------
+------------
+Running 'pdflatex  -interaction=nonstopmode -recorder  "main.tex"'
+------------
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.5) (preloaded format=pdflatex.fmt)
+ restricted \write18 enabled.
+entering extended mode
+(main.tex
+LaTeX2e <2026-06-01>
+L3 programming layer <2026-09-09>
+(IEEEtran_nodash.cls
+Document Class: IEEEtran_nodash 2015/08/26 V1.8b by Michael Shell
+-- See the "IEEEtran_HOWTO" manual for usage information.
+-- http://www.michaelshell.org/tex/ieeetran/
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ot1ptm.fd)
+-- Using 210mm x 297mm (a4) paper.
+-- Using PDF output.
+-- This is a 10 point document.
+) (C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/base\fontenc.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\t1ptm.fd))
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/base\inputenc.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsmath.sty
+For additional information on amsmath, use the `?' option.
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amstext.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsgen.sty))
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsbsy.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsopn.sty))
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\amssymb.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\amsfonts.sty))
+ (C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/booktabs\booktabs.sty)
+ (C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/tools\array.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphicx.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/graphics\keyval.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphics.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/graphics\trig.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\graphics.c
+fg)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/graphics-def\pdftex.def
+))) (C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/cite\cite.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hyperref.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/iftex\iftex.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/kvsetkeys\kvsetkeys.sty
+)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/kvdefinekeys\kvdefine
+keys.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/pdfescape\pdfescape.s
+ty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/ltxcmds\ltxcmds.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/pdftexcmds\pdftexcmds
+.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/infwarerr\infwarerr.s
+ty)))
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/hycolor\hycolor.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\nameref.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/refcount\refcount.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/gettitlestring\gettit
+lestring.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/kvoptions\kvoptions.sty
+)))
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/etoolbox\etoolbox.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\stringenc.s
+ty) (C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\pd1enc.def
+) (C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/intcalc\intcalc.sty
+) (C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\puenc.def)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/url\url.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/bitset\bitset.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/bigintcalc\bigintcalc
+.sty)))
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hpdftex.def
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/rerunfilecheck\rerunfil
+echeck.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/uniquecounter\uniquec
+ounter.sty))) (college-style.tex
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/eso-pic\eso-pic.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\xcolor.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\color.cfg)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/graphics\mathcolor.ltx)
+))
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/iftex\ifvtex.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.cfg))
+)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/l3kernel\l3backend-pdft
+ex.def) (main.aux)
+-- Lines per column: 56 (exact).
+
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mk
+ii
+[Loading MPS to PDF converter (version 2006.09.02).]
+)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-b
+ase.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/00miktex\epstopdf-sys.c
+fg)) (main.out) (main.out)
+*geometry* driver: auto-detecting
+*geometry* detected driver: pdftex
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd)
+[1{C:/Users/admin/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/ad
+min/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc} <./figures/somai
+ya_vidyavihar_logo.jpg>]
+
+Package hyperref Warning: bookmark level for unknown frontmatter defaults to 0.
+
+
+[1] [2] [3] (main.toc) [4] (main.lof) [5] (main.lot) [6] [7]
+Underfull \vbox (badness 10000) has occurred while \output is active [1]
+Underfull \hbox (badness 3407) in paragraph at lines 239--255
+[]\T1/ptm/m/n/10 FakeCatcher de-rives photoplethysmography-like sig-nals
+[2] [3]
+
+LaTeX Warning: Text page 4 contains only floats.
+
+
+Overfull \vbox (4.24503pt too high) has occurred while \output is active
+[4 <./figures/fig01_pipeline.pdf>]
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\t1pcr.fd)
+Underfull \hbox (badness 4168) in paragraph at lines 459--461
+[]\T1/pcr/m/n/10 test_in\T1/ptm/m/n/10 : the in-dataset test, group-disjoint fr
+om
+[5]
+Underfull \vbox (badness 10000) has occurred while \output is active
+Underfull \vbox (badness 10000) has occurred while \output is active [6 <./figu
+res/fig02_splits.pdf>] [7 <./figures/fig04_staircase.pdf>] [8]
+Underfull \vbox (badness 10000) has occurred while \output is active [9 <./figu
+res/fig03_ladder.pdf>]
+Underfull \vbox (badness 10000) has occurred while \output is active
+Underfull \vbox (badness 10000) has occurred while \output is active [10]
+Underfull \vbox (badness 10000) has occurred while \output is active
+Underfull \vbox (badness 10000) has occurred while \output is active [11]
+Underfull \vbox (badness 1748) has occurred while \output is active
+Underfull \vbox (badness 1748) has occurred while \output is active [12 <./figu
+res/fig07_web_real.pdf>] [13]
+Underfull \vbox (badness 10000) has occurred while \output is active
+Underfull \vbox (badness 10000) has occurred while \output is active [14 <./fig
+ures/fig10_platform.pdf>] [15]
+
+LaTeX Warning: Text page 16 contains only floats.
+
+
+Underfull \vbox (badness 10000) has occurred while \output is active [16 <./fig
+ures/fig08_ladder_results.pdf>] [17]
+Underfull \vbox (badness 10000) has occurred while \output is active [18 <./fig
+ures/fig09_lavdf_cells.pdf>]
+Underfull \vbox (badness 2096) has occurred while \output is active [19]
+Underfull \hbox (badness 10000) in paragraph at lines 1708--1708
+[]|\T1/ptm/m/n/8 Generated-video head, Deep-Action
+
+Underfull \hbox (badness 4819) in paragraph at lines 1714--1714
+[]|\T1/ptm/m/n/8 Generated-image model, 21 mod-ern
+
+Underfull \hbox (badness 2401) in paragraph at lines 1728--1760
+[]\T1/ptm/m/n/10 A pub-lished num-ber is set against ours only when
+
+Underfull \hbox (badness 4765) in paragraph at lines 1728--1760
+\T1/ptm/m/n/10 task, data, pro-to-col and met-ric match; oth-er-wise the
+
+Underfull \hbox (badness 2707) in paragraph at lines 1728--1760
+\T1/ptm/m/n/10 com-par-i-son is con-text, and no dif-fer-ence is com-puted
+[20]
+Underfull \vbox (badness 10000) has occurred while \output is active [21]
+(main.bbl [22]
+Underfull \hbox (badness 3019) in paragraph at lines 95--98
+[]\T1/ptm/m/n/8 J. Hernandez-Ortega, R. Tolosana, J. Fier-rez, and A. Morales,
+)
+
+** Conference Paper **
+Before submitting the final camera ready copy, remember to:
+
+ 1. Manually equalize the lengths of two columns on the last page
+ of your paper;
+
+ 2. Ensure that any PostScript and/or PDF output post-processing
+ uses only Type 1 fonts and that every step in the generation
+ process uses the appropriate paper size.
+
+[23] (main.aux)
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+ )
+(see the transcript file for additional information)<C:/Users/admin/AppData/Loc
+al/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx10.pfb><C:/Users/admin/Ap
+pData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users
+/admin/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb>
+<C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cm
+mi7.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfon
+ts/cm/cmmi9.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type1/publi
+c/amsfonts/cm/cmr10.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/typ
+e1/public/amsfonts/cm/cmr5.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fo
+nts/type1/public/amsfonts/cm/cmr6.pfb><C:/Users/admin/AppData/Local/Programs/Mi
+KTeX/fonts/type1/public/amsfonts/cm/cmr7.pfb><C:/Users/admin/AppData/Local/Prog
+rams/MiKTeX/fonts/type1/public/amsfonts/cm/cmr9.pfb><C:/Users/admin/AppData/Loc
+al/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/admin/Ap
+pData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy6.pfb><C:/Users/
+admin/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C
+:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy
+9.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts
+/symbols/msbm10.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type1/u
+rw/courier/ucrr8a.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type1
+/urw/times/utmb8a.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type1
+/urw/times/utmbi8a.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type
+1/urw/times/utmr8a.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type
+1/urw/times/utmri8a.pfb>
+Output written on main.pdf (31 pages, 894537 bytes).
+Transcript written on main.log.
+Latexmk: Getting log file 'main.log'
+Latexmk: Examining 'main.fls'
+Latexmk: Examining 'main.log'
+Latexmk: Found input bbl file 'main.bbl'
+Latexmk: References changed.
+Latexmk: Log file says output to 'main.pdf'
+Latexmk: Using bibtex to make bibliography file(s).
+  ===Source file 'main.bbl' for 'pdflatex'
+Latexmk: Found bibliography file(s):
+  ./refs.bib
+Latexmk: applying rule 'bibtex main'...
+Rule 'bibtex main':  Reasons for rerun
+Changed files or newly in use/created:
+  main.aux
+
+------------
+Run number 2 of rule 'bibtex main'
+------------
+------------
+Running 'bibtex  "main.aux"'
+------------
+This is BibTeX, Version 0.99e (MiKTeX 26.5)
+The top-level auxiliary file: main.aux
+The style file: IEEEtran_hyphen.bst
+Database file #1: refs.bib
+-- IEEEtran.bst version 1.14 (2015/08/26) by Michael Shell.
+-- http://www.michaelshell.org/tex/ieeetran/bibtex/
+-- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
+
+Done.
+Latexmk: applying rule 'pdflatex'...
+Rule 'pdflatex':  Reasons for rerun
+Changed files or newly in use/created:
+  main.aux
+  main.lot
+  main.toc
+
+------------
+Run number 2 of rule 'pdflatex'
+------------
+------------
+Running 'pdflatex  -interaction=nonstopmode -recorder  "main.tex"'
+------------
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.5) (preloaded format=pdflatex.fmt)
+ restricted \write18 enabled.
+entering extended mode
+(main.tex
+LaTeX2e <2026-06-01>
+L3 programming layer <2026-09-09>
+(IEEEtran_nodash.cls
+Document Class: IEEEtran_nodash 2015/08/26 V1.8b by Michael Shell
+-- See the "IEEEtran_HOWTO" manual for usage information.
+-- http://www.michaelshell.org/tex/ieeetran/
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\ot1ptm.fd)
+-- Using 210mm x 297mm (a4) paper.
+-- Using PDF output.
+-- This is a 10 point document.
+) (C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/base\fontenc.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\t1ptm.fd))
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/base\inputenc.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsmath.sty
+For additional information on amsmath, use the `?' option.
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amstext.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsgen.sty))
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsbsy.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsopn.sty))
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\amssymb.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\amsfonts.sty))
+ (C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/booktabs\booktabs.sty)
+ (C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/tools\array.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphicx.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/graphics\keyval.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphics.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/graphics\trig.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\graphics.c
+fg)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/graphics-def\pdftex.def
+))) (C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/cite\cite.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hyperref.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/iftex\iftex.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/kvsetkeys\kvsetkeys.sty
+)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/kvdefinekeys\kvdefine
+keys.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/pdfescape\pdfescape.s
+ty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/ltxcmds\ltxcmds.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/pdftexcmds\pdftexcmds
+.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/infwarerr\infwarerr.s
+ty)))
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/hycolor\hycolor.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\nameref.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/refcount\refcount.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/gettitlestring\gettit
+lestring.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/kvoptions\kvoptions.sty
+)))
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/etoolbox\etoolbox.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\stringenc.s
+ty) (C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\pd1enc.def
+) (C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/intcalc\intcalc.sty
+) (C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\puenc.def)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/url\url.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/bitset\bitset.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/bigintcalc\bigintcalc
+.sty)))
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hpdftex.def
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/rerunfilecheck\rerunfil
+echeck.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/uniquecounter\uniquec
+ounter.sty))) (college-style.tex
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/eso-pic\eso-pic.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\xcolor.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\color.cfg)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/graphics\mathcolor.ltx)
+))
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/generic/iftex\ifvtex.sty)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.cfg))
+)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/l3kernel\l3backend-pdft
+ex.def) (main.aux)
+-- Lines per column: 56 (exact).
+
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mk
+ii
+[Loading MPS to PDF converter (version 2006.09.02).]
+)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-b
+ase.sty
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/00miktex\epstopdf-sys.c
+fg)) (main.out) (main.out)
+*geometry* driver: auto-detecting
+*geometry* detected driver: pdftex
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd)
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd)
+[1{C:/Users/admin/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Users/ad
+min/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc} <./figures/somai
+ya_vidyavihar_logo.jpg>]
+
+Package hyperref Warning: bookmark level for unknown frontmatter defaults to 0.
+
+
+[1] [2] [3] (main.toc) [4] (main.lof) [5] (main.lot) [6] [7]
+Underfull \vbox (badness 10000) has occurred while \output is active [1]
+Underfull \hbox (badness 3407) in paragraph at lines 239--255
+[]\T1/ptm/m/n/10 FakeCatcher de-rives photoplethysmography-like sig-nals
+[2] [3]
+
+LaTeX Warning: Text page 4 contains only floats.
+
+
+Overfull \vbox (4.24503pt too high) has occurred while \output is active
+[4 <./figures/fig01_pipeline.pdf>]
+(C:\Users\admin\AppData\Local\Programs\MiKTeX\tex/latex/psnfss\t1pcr.fd)
+Underfull \hbox (badness 4168) in paragraph at lines 459--461
+[]\T1/pcr/m/n/10 test_in\T1/ptm/m/n/10 : the in-dataset test, group-disjoint fr
+om
+[5]
+Underfull \vbox (badness 10000) has occurred while \output is active
+Underfull \vbox (badness 10000) has occurred while \output is active [6 <./figu
+res/fig02_splits.pdf>] [7 <./figures/fig04_staircase.pdf>] [8]
+Underfull \vbox (badness 10000) has occurred while \output is active [9 <./figu
+res/fig03_ladder.pdf>]
+Underfull \vbox (badness 10000) has occurred while \output is active
+Underfull \vbox (badness 10000) has occurred while \output is active [10]
+Underfull \vbox (badness 10000) has occurred while \output is active
+Underfull \vbox (badness 10000) has occurred while \output is active [11]
+Underfull \vbox (badness 1748) has occurred while \output is active
+Underfull \vbox (badness 1748) has occurred while \output is active [12 <./figu
+res/fig07_web_real.pdf>] [13]
+Underfull \vbox (badness 10000) has occurred while \output is active
+Underfull \vbox (badness 10000) has occurred while \output is active [14 <./fig
+ures/fig10_platform.pdf>] [15]
+
+LaTeX Warning: Text page 16 contains only floats.
+
+
+Underfull \vbox (badness 10000) has occurred while \output is active [16 <./fig
+ures/fig08_ladder_results.pdf>] [17]
+Underfull \vbox (badness 10000) has occurred while \output is active [18 <./fig
+ures/fig09_lavdf_cells.pdf>]
+Underfull \vbox (badness 2096) has occurred while \output is active [19]
+Underfull \hbox (badness 10000) in paragraph at lines 1708--1708
+[]|\T1/ptm/m/n/8 Generated-video head, Deep-Action
+
+Underfull \hbox (badness 4819) in paragraph at lines 1714--1714
+[]|\T1/ptm/m/n/8 Generated-image model, 21 mod-ern
+
+Underfull \hbox (badness 2401) in paragraph at lines 1728--1760
+[]\T1/ptm/m/n/10 A pub-lished num-ber is set against ours only when
+
+Underfull \hbox (badness 4765) in paragraph at lines 1728--1760
+\T1/ptm/m/n/10 task, data, pro-to-col and met-ric match; oth-er-wise the
+
+Underfull \hbox (badness 2707) in paragraph at lines 1728--1760
+\T1/ptm/m/n/10 com-par-i-son is con-text, and no dif-fer-ence is com-puted
+[20]
+Underfull \vbox (badness 10000) has occurred while \output is active [21]
+(main.bbl [22]
+Underfull \hbox (badness 3019) in paragraph at lines 95--98
+[]\T1/ptm/m/n/8 J. Hernandez-Ortega, R. Tolosana, J. Fier-rez, and A. Morales,
+)
+
+** Conference Paper **
+Before submitting the final camera ready copy, remember to:
+
+ 1. Manually equalize the lengths of two columns on the last page
+ of your paper;
+
+ 2. Ensure that any PostScript and/or PDF output post-processing
+ uses only Type 1 fonts and that every step in the generation
+ process uses the appropriate paper size.
+
+[23] (main.aux) )
+(see the transcript file for additional information)<C:/Users/admin/AppData/Loc
+al/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx10.pfb><C:/Users/admin/Ap
+pData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users
+/admin/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb>
+<C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cm
+mi7.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfon
+ts/cm/cmmi9.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type1/publi
+c/amsfonts/cm/cmr10.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/typ
+e1/public/amsfonts/cm/cmr5.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fo
+nts/type1/public/amsfonts/cm/cmr6.pfb><C:/Users/admin/AppData/Local/Programs/Mi
+KTeX/fonts/type1/public/amsfonts/cm/cmr7.pfb><C:/Users/admin/AppData/Local/Prog
+rams/MiKTeX/fonts/type1/public/amsfonts/cm/cmr9.pfb><C:/Users/admin/AppData/Loc
+al/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/admin/Ap
+pData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy6.pfb><C:/Users/
+admin/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C
+:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy
+9.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts
+/symbols/msbm10.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type1/u
+rw/courier/ucrr8a.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type1
+/urw/times/utmb8a.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type1
+/urw/times/utmbi8a.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type
+1/urw/times/utmr8a.pfb><C:/Users/admin/AppData/Local/Programs/MiKTeX/fonts/type
+1/urw/times/utmri8a.pfb>
+Output written on main.pdf (31 pages, 894535 bytes).
+Transcript written on main.log.
+Latexmk: Getting log file 'main.log'
+Latexmk: Examining 'main.fls'
+Latexmk: Examining 'main.log'
+Latexmk: Found input bbl file 'main.bbl'
+Latexmk: Log file says output to 'main.pdf'
+Latexmk: Using bibtex to make bibliography file(s).
+  ===Source file 'main.bbl' for 'pdflatex'
+Latexmk: Found bibliography file(s):
+  ./refs.bib
+Latexmk: All targets (main.pdf) are up-to-date
+

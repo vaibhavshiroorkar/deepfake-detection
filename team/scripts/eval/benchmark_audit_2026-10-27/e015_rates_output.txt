@@ -1,0 +1,3 @@
+predictions sha256 ac58b9f83e3b5874e7dc724e60b6969c67489c9910d0381d588b330b527cc9e5
+visual (real video 0 vs fake video 1) n=5013 fake=4513 real=500 AUC=0.9552 TP 2168 FN 2345 FP 2 TN 498 TPR=0.4804 FPR=0.0040 precision=0.9991 accuracy=0.5318
+audio (real audio 0 vs fake audio 1) n=5013 fake=2288 real=2725 AUC=0.9263 TP 2200 FN 88 FP 990 TN 1735 TPR=0.9615 FPR=0.3633 precision=0.6897 accuracy=0.7850

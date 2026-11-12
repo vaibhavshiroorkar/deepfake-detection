@@ -1,0 +1,12 @@
+\contentsline {table}{\numberline {I}{\ignorespaces Shortlisted frozen encoders per task}}{4}{table.22}%
+\contentsline {table}{\numberline {II}{\ignorespaces Data per task}}{6}{table.29}%
+\contentsline {table}{\numberline {III}{\ignorespaces Iteration slots}}{10}{table.40}%
+\contentsline {table}{\numberline {IV}{\ignorespaces Iteration slots, continued}}{11}{table.41}%
+\contentsline {table}{\numberline {V}{\ignorespaces Encoder sweep on the development slice}}{14}{table.48}%
+\contentsline {table}{\numberline {VI}{\ignorespaces Working version (I-0) on the development slice}}{16}{table.50}%
+\contentsline {table}{\numberline {VII}{\ignorespaces Measured iteration results}}{16}{table.52}%
+\contentsline {table}{\numberline {VIII}{\ignorespaces LAV-DF pre-check and in-dataset heads}}{17}{table.56}%
+\contentsline {table}{\numberline {IX}{\ignorespaces Sealed-test AUC and the three confirmatory tests}}{18}{table.60}%
+\contentsline {table}{\numberline {X}{\ignorespaces Exploratory sealed staircase}}{19}{table.61}%
+\contentsline {table}{\numberline {XI}{\ignorespaces Sealed LAV-DF subset}}{19}{table.62}%
+\contentsline {table}{\numberline {XII}{\ignorespaces Experiments after the freeze (AUC with 95\,\% group bootstrap interval).}}{21}{table.65}%

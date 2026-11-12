@@ -1,0 +1,783 @@
+{
+ "meta": {
+  "run_at": "2026-10-27 21:20:30 +0530",
+  "browser": "msedge",
+  "git": {
+   "head": "5af239a9427339890bb63169476de12099fc5f47",
+   "changed_or_untracked_entries": 88
+  },
+  "server": "dfd.platform.dashboard.serve.create_app(live=True), in-process, loopback",
+  "total_s": 22.3,
+  "python": "3.13.15"
+ },
+ "rows": [
+  {
+   "file": "1_face_swap_video_ffpp_val.mp4",
+   "report_visible_at_load": false,
+   "preview_elements": 1,
+   "seconds": 10.3,
+   "status_line": "Done: 1_face_swap_video_ffpp_val.mp4",
+   "report_visible": true,
+   "page_errors": [],
+   "schema_version": "2.1",
+   "validate_report": [],
+   "summary_headline": "4 checks ran on this video. 1 check found a point that merits attention; 1 found nothing within its tested scope; 1 described the file; 1 is experimental and makes no finding. 4 did not apply.",
+   "media_facts": [
+    "A face was found in 16 sampled frames (face manipulation analysis).",
+    "Not applicable: the file has no audio stream."
+   ],
+   "modules": [
+    {
+     "module_id": "face_video",
+     "status": "completed",
+     "finding": "indicates_manipulation",
+     "group": "attention",
+     "headline": "Signs of face manipulation were found in the sampled frames",
+     "score_raw": 0.99998,
+     "threshold_raw": 0.6138830927259571,
+     "key_figure_shown": "Score: 1.00 (decision line 0.61)",
+     "key_figure_matches_json": true,
+     "card_group_attr": "attention",
+     "evidence": []
+    },
+    {
+     "module_id": "image_detector",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "speech",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "generated_image",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "lip_sync",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "generated_video",
+     "status": "completed",
+     "finding": "inconclusive",
+     "group": "experimental",
+     "headline": "Experimental research output: no finding is made",
+     "score_raw": 1.2e-05,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "experimental",
+     "evidence": [
+      "frames"
+     ]
+    },
+    {
+     "module_id": "media_metadata",
+     "status": "completed",
+     "finding": "inconclusive",
+     "group": "informational",
+     "headline": "File information was read. It describes the file and is not evidence either way",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "informational",
+     "evidence": []
+    },
+    {
+     "module_id": "content_credentials",
+     "status": "completed",
+     "finding": "no_credentials_found",
+     "group": "nothing_found",
+     "headline": "No content credentials were found in the file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "nothing_found",
+     "evidence": []
+    }
+   ],
+   "horizontal_overflow_at_390px": false
+  },
+  {
+   "file": "2_original_video_ffpp_val.mp4",
+   "report_visible_at_load": false,
+   "preview_elements": 1,
+   "seconds": 2.1,
+   "status_line": "Done: 2_original_video_ffpp_val.mp4",
+   "report_visible": true,
+   "page_errors": [],
+   "schema_version": "2.1",
+   "validate_report": [],
+   "summary_headline": "4 checks ran on this video. 2 found nothing within their tested scope; 1 described the file; 1 is experimental and makes no finding. 4 did not apply.",
+   "media_facts": [
+    "A face was found in 16 sampled frames (face manipulation analysis).",
+    "Not applicable: the file has no audio stream."
+   ],
+   "modules": [
+    {
+     "module_id": "face_video",
+     "status": "completed",
+     "finding": "no_indication_within_tested_scope",
+     "group": "nothing_found",
+     "headline": "No indication of face manipulation was found within the model's tested scope",
+     "score_raw": 0.204589,
+     "threshold_raw": 0.6138830927259571,
+     "key_figure_shown": "Score: 0.20 (decision line 0.61)",
+     "key_figure_matches_json": true,
+     "card_group_attr": "nothing_found",
+     "evidence": []
+    },
+    {
+     "module_id": "image_detector",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "speech",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "generated_image",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "lip_sync",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "generated_video",
+     "status": "completed",
+     "finding": "inconclusive",
+     "group": "experimental",
+     "headline": "Experimental research output: no finding is made",
+     "score_raw": 1.8e-05,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "experimental",
+     "evidence": [
+      "frames"
+     ]
+    },
+    {
+     "module_id": "media_metadata",
+     "status": "completed",
+     "finding": "inconclusive",
+     "group": "informational",
+     "headline": "File information was read. It describes the file and is not evidence either way",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "informational",
+     "evidence": []
+    },
+    {
+     "module_id": "content_credentials",
+     "status": "completed",
+     "finding": "no_credentials_found",
+     "group": "nothing_found",
+     "headline": "No content credentials were found in the file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "nothing_found",
+     "evidence": []
+    }
+   ],
+   "horizontal_overflow_at_390px": false
+  },
+  {
+   "file": "3_talking_head_with_audio_lavdf_train.mp4",
+   "report_visible_at_load": false,
+   "preview_elements": 1,
+   "seconds": 2.6,
+   "status_line": "Done: 3_talking_head_with_audio_lavdf_train.mp4",
+   "report_visible": true,
+   "page_errors": [],
+   "schema_version": "2.1",
+   "validate_report": [],
+   "summary_headline": "6 checks ran on this video. 4 found nothing within their tested scope; 1 described the file; 1 is experimental and makes no finding. 2 did not apply.",
+   "media_facts": [
+    "A face was found in 16 sampled frames (face manipulation analysis).",
+    "Speech-like by a simple heuristic screen in the synchronisation check (not a speech detector)."
+   ],
+   "modules": [
+    {
+     "module_id": "face_video",
+     "status": "completed",
+     "finding": "no_indication_within_tested_scope",
+     "group": "nothing_found",
+     "headline": "No indication of face manipulation was found within the model's tested scope",
+     "score_raw": 0.322558,
+     "threshold_raw": 0.6138830927259571,
+     "key_figure_shown": "Score: 0.32 (decision line 0.61)",
+     "key_figure_matches_json": true,
+     "card_group_attr": "nothing_found",
+     "evidence": []
+    },
+    {
+     "module_id": "image_detector",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "speech",
+     "status": "completed",
+     "finding": "no_indication_within_tested_scope",
+     "group": "nothing_found",
+     "headline": "No indication of synthetic or converted speech was found within the model's tested scope",
+     "score_raw": 0.297249,
+     "threshold_raw": 0.6954489212423093,
+     "key_figure_shown": "Score: 0.30 (decision line 0.70)",
+     "key_figure_matches_json": true,
+     "card_group_attr": "nothing_found",
+     "evidence": []
+    },
+    {
+     "module_id": "generated_image",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "lip_sync",
+     "status": "completed",
+     "finding": "consistent",
+     "group": "nothing_found",
+     "headline": "No audio-visual timing mismatch was found within the analysed segment",
+     "score_raw": 0.3656,
+     "threshold_raw": null,
+     "key_figure_shown": "Best audio-visual offset: 0 frames",
+     "key_figure_matches_json": null,
+     "card_group_attr": "nothing_found",
+     "evidence": [
+      "offset_curve"
+     ]
+    },
+    {
+     "module_id": "generated_video",
+     "status": "completed",
+     "finding": "inconclusive",
+     "group": "experimental",
+     "headline": "Experimental research output: no finding is made",
+     "score_raw": 1.0,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "experimental",
+     "evidence": [
+      "frames"
+     ]
+    },
+    {
+     "module_id": "media_metadata",
+     "status": "completed",
+     "finding": "inconclusive",
+     "group": "informational",
+     "headline": "File information was read. It describes the file and is not evidence either way",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "informational",
+     "evidence": []
+    },
+    {
+     "module_id": "content_credentials",
+     "status": "completed",
+     "finding": "no_credentials_found",
+     "group": "nothing_found",
+     "headline": "No content credentials were found in the file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "nothing_found",
+     "evidence": []
+    }
+   ],
+   "horizontal_overflow_at_390px": false
+  },
+  {
+   "file": "4_speech_audio_asvspoof_dev.flac",
+   "report_visible_at_load": false,
+   "preview_elements": 1,
+   "seconds": 0.4,
+   "status_line": "Done: 4_speech_audio_asvspoof_dev.flac",
+   "report_visible": true,
+   "page_errors": [],
+   "schema_version": "2.1",
+   "validate_report": [],
+   "summary_headline": "3 checks ran on this audio file. 2 found nothing within their tested scope; 1 described the file. 5 did not apply.",
+   "media_facts": [
+    "Not applicable: an audio file has no pictures.",
+    "Not established: no check that screens for speech ran on this file. An audio stream is present, but that does not mean it contains speech."
+   ],
+   "modules": [
+    {
+     "module_id": "face_video",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "image_detector",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "speech",
+     "status": "completed",
+     "finding": "no_indication_within_tested_scope",
+     "group": "nothing_found",
+     "headline": "No indication of synthetic or converted speech was found within the model's tested scope",
+     "score_raw": 0.15311,
+     "threshold_raw": 0.6954489212423093,
+     "key_figure_shown": "Score: 0.15 (decision line 0.70)",
+     "key_figure_matches_json": true,
+     "card_group_attr": "nothing_found",
+     "evidence": []
+    },
+    {
+     "module_id": "generated_image",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "lip_sync",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "generated_video",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "media_metadata",
+     "status": "completed",
+     "finding": "inconclusive",
+     "group": "informational",
+     "headline": "File information was read. It describes the file and is not evidence either way",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "informational",
+     "evidence": []
+    },
+    {
+     "module_id": "content_credentials",
+     "status": "completed",
+     "finding": "no_credentials_found",
+     "group": "nothing_found",
+     "headline": "No content credentials were found in the file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "nothing_found",
+     "evidence": []
+    }
+   ],
+   "horizontal_overflow_at_390px": false
+  },
+  {
+   "file": "5_face_image_frame_ffpp_val.png",
+   "report_visible_at_load": false,
+   "preview_elements": 1,
+   "seconds": 1.3,
+   "status_line": "Done: 5_face_image_frame_ffpp_val.png",
+   "report_visible": true,
+   "page_errors": [],
+   "schema_version": "2.1",
+   "validate_report": [],
+   "summary_headline": "4 checks ran on this image. 1 check found a point that merits attention; 1 found nothing within its tested scope; 1 described the file; 1 is experimental and makes no finding. 4 did not apply.",
+   "media_facts": [
+    "A face was found in the image (image analysis).",
+    "Not applicable: a still image has no audio."
+   ],
+   "modules": [
+    {
+     "module_id": "face_video",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "image_detector",
+     "status": "completed",
+     "finding": "indicates_manipulation",
+     "group": "attention",
+     "headline": "Signs of face manipulation were found in the face in this image",
+     "score_raw": 0.999983,
+     "threshold_raw": 0.6138830927259571,
+     "key_figure_shown": "Score: 1.00 (decision line 0.61)",
+     "key_figure_matches_json": true,
+     "card_group_attr": "attention",
+     "evidence": []
+    },
+    {
+     "module_id": "speech",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "generated_image",
+     "status": "completed",
+     "finding": "inconclusive",
+     "group": "experimental",
+     "headline": "Experimental research output: the whole image was also checked by the generated-image model; no finding is made",
+     "score_raw": 0.020518,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "experimental",
+     "evidence": []
+    },
+    {
+     "module_id": "lip_sync",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "generated_video",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "media_metadata",
+     "status": "completed",
+     "finding": "inconclusive",
+     "group": "informational",
+     "headline": "File information was read. It describes the file and is not evidence either way",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "informational",
+     "evidence": []
+    },
+    {
+     "module_id": "content_credentials",
+     "status": "completed",
+     "finding": "no_credentials_found",
+     "group": "nothing_found",
+     "headline": "No content credentials were found in the file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "nothing_found",
+     "evidence": []
+    }
+   ],
+   "horizontal_overflow_at_390px": false
+  },
+  {
+   "file": "6_synthetic_no_face_tone_audio.mp4",
+   "report_visible_at_load": false,
+   "preview_elements": 1,
+   "seconds": 0.5,
+   "status_line": "Done: 6_synthetic_no_face_tone_audio.mp4",
+   "report_visible": true,
+   "page_errors": [],
+   "schema_version": "2.1",
+   "validate_report": [],
+   "summary_headline": "5 checks ran on this video. 2 found nothing within their tested scope; 1 was inconclusive; 1 described the file; 1 is experimental and makes no finding. 3 did not apply.",
+   "media_facts": [
+    "No face was found in the sampled frames (face manipulation analysis).",
+    "Not speech-like by a simple heuristic screen in the synchronisation check (not a speech detector)."
+   ],
+   "modules": [
+    {
+     "module_id": "face_video",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "image_detector",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "speech",
+     "status": "completed",
+     "finding": "no_indication_within_tested_scope",
+     "group": "nothing_found",
+     "headline": "No indication of synthetic or converted speech was found within the model's tested scope",
+     "score_raw": 0.0,
+     "threshold_raw": 0.6954489212423093,
+     "key_figure_shown": "Score: 0.00 (decision line 0.70)",
+     "key_figure_matches_json": true,
+     "card_group_attr": "nothing_found",
+     "evidence": []
+    },
+    {
+     "module_id": "generated_image",
+     "status": "not_applicable",
+     "finding": null,
+     "group": "not_applicable",
+     "headline": "Did not apply to this file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "not_applicable",
+     "evidence": []
+    },
+    {
+     "module_id": "lip_sync",
+     "status": "completed",
+     "finding": "inconclusive",
+     "group": "inconclusive",
+     "headline": "The timing check could not reach a conclusion",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "inconclusive",
+     "evidence": []
+    },
+    {
+     "module_id": "generated_video",
+     "status": "completed",
+     "finding": "inconclusive",
+     "group": "experimental",
+     "headline": "Experimental research output: no finding is made",
+     "score_raw": 1.0,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "experimental",
+     "evidence": [
+      "frames"
+     ]
+    },
+    {
+     "module_id": "media_metadata",
+     "status": "completed",
+     "finding": "inconclusive",
+     "group": "informational",
+     "headline": "File information was read. It describes the file and is not evidence either way",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "informational",
+     "evidence": []
+    },
+    {
+     "module_id": "content_credentials",
+     "status": "completed",
+     "finding": "no_credentials_found",
+     "group": "nothing_found",
+     "headline": "No content credentials were found in the file",
+     "score_raw": null,
+     "threshold_raw": null,
+     "key_figure_shown": null,
+     "key_figure_matches_json": true,
+     "card_group_attr": "nothing_found",
+     "evidence": []
+    }
+   ],
+   "horizontal_overflow_at_390px": false
+  },
+  {
+   "file": "7_unsupported_notes.txt",
+   "report_visible_at_load": false,
+   "preview_elements": 0,
+   "seconds": 0.0,
+   "status_line": "Failed: 7_unsupported_notes.txt. UNSUPPORTED_MEDIA_TYPE: unsupported file type .txt; accepted: .avi, .bmp, .flac, .jpeg, .jpg, .m4a, .mkv, .mov, .mp3, .mp4, .ogg, .png, .wav, .webm, .webp\nThis kind of file is not supported.",
+   "report_visible": false,
+   "page_errors": [],
+   "horizontal_overflow_at_390px": false
+  },
+  {
+   "file": "8_corrupt_video.mp4",
+   "report_visible_at_load": false,
+   "preview_elements": 1,
+   "seconds": 0.4,
+   "status_line": "Failed: 8_corrupt_video.mp4. UNREADABLE_FILE: the file could not be read as media: C:\\Users\\admin\\AppData\\Local\\Temp\\dfd_platform_uploads\\tmpo0n062zn.mp4: Invalid data found when processing input\nThe file could not be read; it may be damaged.",
+   "report_visible": false,
+   "page_errors": [],
+   "horizontal_overflow_at_390px": false
+  }
+ ]
+}

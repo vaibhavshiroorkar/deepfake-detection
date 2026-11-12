@@ -1,0 +1,92 @@
+{
+ "schema": "dfd-eval-compare/1",
+ "created": "2026-10-25",
+ "block": {
+  "modality": "visual",
+  "dataset": "celebdf_family",
+  "split": "test_x",
+  "role": "final, cross-dataset (headline)",
+  "development": false,
+  "n_samples": 7650,
+  "n_groups": 344
+ },
+ "metric": "auc",
+ "protocol": {
+  "n_boot": 2000,
+  "level": 0.95,
+  "seed": 20261024,
+  "rule": "same resampled groups for A and B; difference A - B per resample; several seeds: metric per seed per resample, averaged"
+ },
+ "a": {
+  "run_ids": [
+   "I-4-visual-s0",
+   "I-4-visual-s1",
+   "I-4-visual-s2"
+  ],
+  "seeds": [
+   0,
+   1,
+   2
+  ],
+  "iterations": [
+   "I-4"
+  ],
+  "score_file_sha256": "e0c78a8cd1b1f19a23cb3e82cdffba65979cfb4c368e75527c6eea09c79f383f",
+  "estimate": 0.8217832631123319,
+  "low": 0.8019834429553142,
+  "high": 0.839282847109134,
+  "se": 0.00978989468378905,
+  "seed_sd": 0.008168076098883963,
+  "n_nan": 0,
+  "per_seed": [
+   0.8148516639730451,
+   0.8307882112795792,
+   0.8197099140843711
+  ]
+ },
+ "b": {
+  "run_ids": [
+   "I-0-visual-s0",
+   "I-0-visual-s1",
+   "I-0-visual-s2"
+  ],
+  "seeds": [
+   0,
+   1,
+   2
+  ],
+  "iterations": [
+   "I-0"
+  ],
+  "score_file_sha256": "edc0b554b905e6147668d5d10d109adb34e030967c83ef4e94eafb68a70c0487",
+  "estimate": 0.6238148908486413,
+  "low": 0.6015430781674772,
+  "high": 0.6485919838596833,
+  "se": 0.01218385505520055,
+  "seed_sd": 0.012767860405803522,
+  "n_nan": 0,
+  "per_seed": [
+   0.6090982907180603,
+   0.631937729853112,
+   0.6304086519747516
+  ]
+ },
+ "difference": {
+  "estimate": 0.19796837226369057,
+  "low": 0.1688310685604446,
+  "high": 0.22424869504044861,
+  "se": 0.014235432673694542,
+  "seed_sd": null,
+  "n_nan": 0,
+  "contains_zero": false
+ },
+ "robustness": [
+  {
+   "level": 0.9833333333333333,
+   "low": 0.1626792927219231,
+   "high": 0.23028567287384916,
+   "n_replicates": 2000,
+   "contains_zero": false
+  }
+ ]
+}

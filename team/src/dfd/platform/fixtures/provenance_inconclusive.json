@@ -1,0 +1,302 @@
+{
+ "conflicts": [],
+ "coverage": {
+  "completed": [
+   {
+    "module_id": "face_video"
+   },
+   {
+    "module_id": "c2pa"
+   }
+  ],
+  "failed": [],
+  "not_applicable": [],
+  "skipped": [],
+  "timed_out": [],
+  "unsupported": []
+ },
+ "input": {
+  "filename": "mock_clip.mp4",
+  "media_type": "video",
+  "mime_type": "video/mp4",
+  "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "size_bytes": 1000000
+ },
+ "modules": [
+  {
+   "assessment": {
+    "basis": "threshold_rule",
+    "calibration": {
+     "is_probability": false,
+     "statement": "The scores behind this reading are ranking scores of research models. They were calibrated on in-domain validation data only, so a score of 0.7 does not mean a 70 percent chance, and no probability is given."
+    },
+    "evidence": [
+     {
+      "experiment": "E-015",
+      "id": "E015_visual_specificity",
+      "text": "On the sealed half of FakeAVCeleb the frozen video threshold flagged 0.4 percent of the unmanipulated videos, so a flag was rarely a false alarm there."
+     },
+     {
+      "experiment": "E-015",
+      "id": "E015_visual_sensitivity",
+      "text": "On the sealed half of FakeAVCeleb the frozen video threshold caught 48 percent of the fake videos, so a missed fake is common."
+     }
+    ],
+    "meaning": "The check found nothing within its tested scope. This does not show that the media is unmanipulated.",
+    "mock": true,
+    "not_established": "This reading is not a probability and not proof. A reading of no strong evidence, an inconclusive reading or a failed check does not show that the media is unmanipulated.",
+    "raw": {
+     "score": 0.1,
+     "score_kind": "model_output",
+     "threshold": null
+    },
+    "reasons": [],
+    "tier": "detector",
+    "uncertainty": {
+     "level": "high",
+     "text": "The same head missed about half of the fake videos in a sealed test, so a missing flag is weak."
+    },
+    "verdict": "no_strong_evidence",
+    "verdict_label": "No strong evidence of manipulation detected",
+    "version": "v1",
+    "why": "Invented scenario data, no model ran. The same head missed about half of the fake videos in a sealed test, so a missing flag is weak."
+   },
+   "errors": [],
+   "evidence": [],
+   "explanation": {
+    "does_not_mean": "A result from one check does not show how the file was made; other checks can disagree.",
+    "finding_label": "No indication within tested scope",
+    "group": "nothing_found",
+    "group_label": "Nothing found within tested scope",
+    "headline": "MOCK: No indication within tested scope",
+    "key_figure": null,
+    "sentences": [
+     {
+      "kind": "mock",
+      "sources": [
+       "source"
+      ],
+      "text": "Invented scenario data: no model ran, and nothing here is a measurement."
+     },
+     {
+      "kind": "examined",
+      "quoted": true,
+      "sources": [
+       "tested_scope"
+      ],
+      "text": "Scope: MOCK: invented by a scenario script; no model ran."
+     },
+     {
+      "kind": "model_output",
+      "sources": [
+       "score.value"
+      ],
+      "text": "Scripted MOCK score: 0.10. It is not a measurement."
+     },
+     {
+      "kind": "not_established",
+      "sources": [
+       "section"
+      ],
+      "text": "A result from one check does not show how the file was made; other checks can disagree."
+     }
+    ],
+    "status_label": "Completed",
+    "template_id": "generic.completed.no_indication_within_tested_scope.mock.v2",
+    "title": "Face manipulation analysis",
+    "what_it_checks": "Looks for face-swap manipulation in the largest face of a video."
+   },
+   "finding": "no_indication_within_tested_scope",
+   "limitations": [
+    "MOCK: invented by a scenario script; no model ran.",
+    "Scenario data for dashboard development only."
+   ],
+   "model": null,
+   "module_id": "face_video",
+   "observations": [],
+   "reason": null,
+   "score": {
+    "calibrated": false,
+    "meaning": "MOCK number with no meaning; it is not a measurement.",
+    "threshold": null,
+    "value": 0.1
+   },
+   "section": "authenticity",
+   "segments": [],
+   "source": "mock",
+   "status": "completed",
+   "tested_scope": "MOCK: invented by a scenario script; no model ran.",
+   "timing_ms": 0.0,
+   "units_analysed": 16,
+   "version": "mock-0",
+   "warnings": []
+  },
+  {
+   "assessment": {
+    "basis": "provenance",
+    "calibration": {
+     "is_probability": false,
+     "statement": null
+    },
+    "evidence": [],
+    "meaning": "The result does not support a verdict.",
+    "mock": true,
+    "not_established": "This reading is not a probability and not proof. A reading of no strong evidence, an inconclusive reading or a failed check does not show that the media is unmanipulated.",
+    "raw": {
+     "score": null,
+     "score_kind": "none",
+     "threshold": null
+    },
+    "reasons": [],
+    "tier": "provenance",
+    "uncertainty": {
+     "level": "not_assessed",
+     "text": "Credentials describe where a file came from, not whether what it shows is true."
+    },
+    "verdict": "inconclusive",
+    "verdict_label": "Inconclusive",
+    "version": "v1",
+    "why": "Invented scenario data, no model ran."
+   },
+   "errors": [],
+   "evidence": [],
+   "explanation": {
+    "does_not_mean": "Credentials and metadata describe the file; they do not show whether its content is true.",
+    "finding_label": "Inconclusive",
+    "group": "inconclusive",
+    "group_label": "Inconclusive",
+    "headline": "MOCK: Inconclusive",
+    "key_figure": null,
+    "sentences": [
+     {
+      "kind": "mock",
+      "sources": [
+       "source"
+      ],
+      "text": "Invented scenario data: no model ran, and nothing here is a measurement."
+     },
+     {
+      "kind": "examined",
+      "quoted": true,
+      "sources": [
+       "tested_scope"
+      ],
+      "text": "Scope: MOCK: invented by a scenario script; no model ran."
+     },
+     {
+      "kind": "not_established",
+      "sources": [
+       "section"
+      ],
+      "text": "Credentials and metadata describe the file; they do not show whether its content is true."
+     }
+    ],
+    "status_label": "Completed",
+    "template_id": "generic.completed.inconclusive.mock.v2",
+    "title": "Content credentials (C2PA)",
+    "what_it_checks": "Looks for embedded C2PA content credentials."
+   },
+   "finding": "inconclusive",
+   "limitations": [
+    "MOCK: invented by a scenario script; no model ran.",
+    "Scenario data for dashboard development only."
+   ],
+   "model": null,
+   "module_id": "c2pa",
+   "observations": [],
+   "reason": null,
+   "score": null,
+   "section": "provenance",
+   "segments": [],
+   "source": "mock",
+   "status": "completed",
+   "tested_scope": "MOCK: invented by a scenario script; no model ran.",
+   "timing_ms": 0.0,
+   "units_analysed": 16,
+   "version": "mock-0",
+   "warnings": []
+  }
+ ],
+ "probe": {
+  "container": "mov,mp4",
+  "duration_s": 8.0,
+  "filename": "mock_clip.mp4",
+  "has_audio": true,
+  "has_video": true,
+  "height": 360,
+  "media_type": "video",
+  "mime_type": "video/mp4",
+  "n_faces": 1,
+  "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "size_bytes": 1000000,
+  "speech_detected": true,
+  "width": 640
+ },
+ "request_id": "mock-provenance_inconclusive",
+ "schema_version": "2.1",
+ "sections": {
+  "authenticity": [
+   "face_video"
+  ],
+  "cross_modal": [],
+  "provenance": [
+   "c2pa"
+  ]
+ },
+ "source_summary": "mock",
+ "statement": "This report lists what each module found within its tested scope. A module that found nothing, did not run, was unsupported or was inconclusive does not show that the media is authentic. No single probability that the media is fake is given.",
+ "status": {
+  "processing_time_ms": 0.0,
+  "state": "ok"
+ },
+ "summary": {
+  "counts": {
+   "attention": 0,
+   "credential": 0,
+   "did_not_run": 0,
+   "experimental": 0,
+   "inconclusive": 1,
+   "informational": 0,
+   "not_applicable": 0,
+   "nothing_found": 1,
+   "unsupported": 0
+  },
+  "disagreements": [],
+  "groups": [
+   {
+    "id": "nothing_found",
+    "label": "Nothing found within tested scope",
+    "modules": [
+     "face_video"
+    ]
+   },
+   {
+    "id": "inconclusive",
+    "label": "Inconclusive",
+    "modules": [
+     "c2pa"
+    ]
+   }
+  ],
+  "headline": "2 checks ran on this video. 1 found nothing within its tested scope; 1 was inconclusive.",
+  "media_facts": [
+   {
+    "label": "Faces",
+    "sources": [
+     "probe.n_faces"
+    ],
+    "text": "Faces stated in the probe: 1.",
+    "value": true
+   },
+   {
+    "label": "Speech",
+    "sources": [
+     "probe.speech_detected"
+    ],
+    "text": "Speech stated in the probe: yes.",
+    "value": true
+   }
+  ],
+  "no_overall_score": "No overall score or verdict is given: each check reports only on what it examines."
+ }
+}

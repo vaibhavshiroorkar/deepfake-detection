@@ -1,0 +1,17 @@
+READY (fork A2, 2026-10-25). Figures redrawn with all text at 9 pt or more at the stated embed width. Files in assets/figures (PNG 300 dpi for Word and slides, PDF for the paper).
+
+Report (text block 6.1 to 6.3 in): embed at the width below, do not shrink more than 3 percent.
+  fig01_pipeline.png          6.1 in  (native 6.12 x 4.41)
+  fig02_splits.png            6.1 in  (native 6.12 x 3.82)
+  fig03_ladder.png            6.1 in  (native 6.12 x 5.16; now a table of the measured ladder, taller than before)
+  fig04_staircase.png         6.0 in  (native 6.07 x 3.61)
+  fig05_rppg.png              6.1 in  (native 6.13 x 3.12)
+  fig06_timeline.png          6.1 in  (native 6.12 x 3.51)
+  fig08_shortlist.png         6.1 in  (native 6.12 x 4.91; table with group rows, Task column removed)
+  fig08_ladder_results.png    6.1 in  (native 6.34 x 3.97; 9.5 pt text, 9.1 pt at 6.1 in)
+  fig09_lavdf_cells.png       5.3 to 6.1 in  (native 5.25 x 3.53)
+  fig07_web_real.png          6.1 in  (NEW: the three real-checkpoint screenshots side by side with (a) image, (b) video with audio, (c) audio file inside the image, not cropped; fig07_web.png is the old stand-in figure and is unchanged)
+
+Slides (13.33 in wide): embed at 8 in or wider where the layout allows; at 8 in the text is 12 pt or more (9.5 pt x 8 / 6.1 = 12.4 pt; the 9 pt notes become 11.8 pt).
+
+Paper: embeds all of these at the full text width (7.0 in, text 10.3 pt or more); paper/main.tex and paper/figures are already updated (fig07_web_real.pdf is Fig. 5).

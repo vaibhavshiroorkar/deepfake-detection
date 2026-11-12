@@ -1,0 +1,98 @@
+PASS GET /groups: 3 datasets, nothing skipped (['lavdf_unread_ta', 'lavdf_unread_tv', 'cfeval_unread_ti'])
+PASS lavdf_unread_ta: listed threshold equals checkpoint
+PASS lavdf_unread_ta: status text marks the output experimental
+PASS lavdf_unread_ta: five groups G1 to G5
+PASS lavdf_unread_ta G1: listed counts 190/86/104 equal the stored result
+PASS lavdf_unread_ta G2: listed counts 1055/498/557 equal the stored result
+PASS lavdf_unread_ta G3: listed counts 4265/2033/2232 equal the stored result
+PASS lavdf_unread_ta G4: listed counts 10599/5042/5557 equal the stored result
+PASS lavdf_unread_ta G5: listed counts 3618/1386/2232 equal the stored result
+PASS lavdf_unread_ta G1: every metric and interval of the HTTP run equals results.json (state done)
+PASS lavdf_unread_ta G1: run threshold is the checkpoint's, fixed
+PASS lavdf_unread_ta G1: run read the descriptor's score file
+PASS lavdf_unread_ta G1: purpose and split
+PASS lavdf_unread_ta G2: every metric and interval of the HTTP run equals results.json (state done)
+PASS lavdf_unread_ta G2: run threshold is the checkpoint's, fixed
+PASS lavdf_unread_ta G2: run read the descriptor's score file
+PASS lavdf_unread_ta G2: purpose and split
+PASS lavdf_unread_ta G3: every metric and interval of the HTTP run equals results.json (state done)
+PASS lavdf_unread_ta G3: run threshold is the checkpoint's, fixed
+PASS lavdf_unread_ta G3: run read the descriptor's score file
+PASS lavdf_unread_ta G3: purpose and split
+PASS lavdf_unread_ta G4: every metric and interval of the HTTP run equals results.json (state done)
+PASS lavdf_unread_ta G4: run threshold is the checkpoint's, fixed
+PASS lavdf_unread_ta G4: run read the descriptor's score file
+PASS lavdf_unread_ta G4: purpose and split
+PASS lavdf_unread_ta G5: every metric and interval of the HTTP run equals results.json (state done)
+PASS lavdf_unread_ta G5: run threshold is the checkpoint's, fixed
+PASS lavdf_unread_ta G5: run read the descriptor's score file
+PASS lavdf_unread_ta G5: purpose and split
+PASS lavdf_unread_ta FULL: every metric and interval of the HTTP run equals results.json (state done)
+PASS lavdf_unread_ta FULL: run threshold is the checkpoint's, fixed
+PASS lavdf_unread_ta FULL: run read the descriptor's score file
+PASS lavdf_unread_ta FULL: purpose and split
+PASS lavdf_unread_tv: listed threshold equals checkpoint
+PASS lavdf_unread_tv: status text marks the output experimental
+PASS lavdf_unread_tv: five groups G1 to G5
+PASS lavdf_unread_tv G1: listed counts 190/87/103 equal the stored result
+PASS lavdf_unread_tv G2: listed counts 1055/506/549 equal the stored result
+PASS lavdf_unread_tv G3: listed counts 4265/2048/2217 equal the stored result
+PASS lavdf_unread_tv G4: listed counts 10599/5078/5521 equal the stored result
+PASS lavdf_unread_tv G5: listed counts 3065/2048/1017 equal the stored result
+PASS lavdf_unread_tv G1: every metric and interval of the HTTP run equals results.json (state done)
+PASS lavdf_unread_tv G1: run threshold is the checkpoint's, fixed
+PASS lavdf_unread_tv G1: run read the descriptor's score file
+PASS lavdf_unread_tv G1: purpose and split
+PASS lavdf_unread_tv G2: every metric and interval of the HTTP run equals results.json (state done)
+PASS lavdf_unread_tv G2: run threshold is the checkpoint's, fixed
+PASS lavdf_unread_tv G2: run read the descriptor's score file
+PASS lavdf_unread_tv G2: purpose and split
+PASS lavdf_unread_tv G3: every metric and interval of the HTTP run equals results.json (state done)
+PASS lavdf_unread_tv G3: run threshold is the checkpoint's, fixed
+PASS lavdf_unread_tv G3: run read the descriptor's score file
+PASS lavdf_unread_tv G3: purpose and split
+PASS lavdf_unread_tv G4: every metric and interval of the HTTP run equals results.json (state done)
+PASS lavdf_unread_tv G4: run threshold is the checkpoint's, fixed
+PASS lavdf_unread_tv G4: run read the descriptor's score file
+PASS lavdf_unread_tv G4: purpose and split
+PASS lavdf_unread_tv G5: every metric and interval of the HTTP run equals results.json (state done)
+PASS lavdf_unread_tv G5: run threshold is the checkpoint's, fixed
+PASS lavdf_unread_tv G5: run read the descriptor's score file
+PASS lavdf_unread_tv G5: purpose and split
+PASS lavdf_unread_tv FULL: every metric and interval of the HTTP run equals results.json (state done)
+PASS lavdf_unread_tv FULL: run threshold is the checkpoint's, fixed
+PASS lavdf_unread_tv FULL: run read the descriptor's score file
+PASS lavdf_unread_tv FULL: purpose and split
+PASS cfeval_unread_ti: listed threshold equals checkpoint
+PASS cfeval_unread_ti: status text marks the output experimental
+PASS cfeval_unread_ti: five groups G1 to G5
+PASS cfeval_unread_ti G1: listed counts 198/100/98 equal the stored result
+PASS cfeval_unread_ti G2: listed counts 791/398/393 equal the stored result
+PASS cfeval_unread_ti G3: listed counts 2372/1188/1184 equal the stored result
+PASS cfeval_unread_ti G4: listed counts 7209/4536/2673 equal the stored result
+PASS cfeval_unread_ti G5: listed counts 368/184/184 equal the stored result
+PASS cfeval_unread_ti G1: every metric and interval of the HTTP run equals results.json (state done)
+PASS cfeval_unread_ti G1: run threshold is the checkpoint's, fixed
+PASS cfeval_unread_ti G1: run read the descriptor's score file
+PASS cfeval_unread_ti G1: purpose and split
+PASS cfeval_unread_ti G2: every metric and interval of the HTTP run equals results.json (state done)
+PASS cfeval_unread_ti G2: run threshold is the checkpoint's, fixed
+PASS cfeval_unread_ti G2: run read the descriptor's score file
+PASS cfeval_unread_ti G2: purpose and split
+PASS cfeval_unread_ti G3: every metric and interval of the HTTP run equals results.json (state done)
+PASS cfeval_unread_ti G3: run threshold is the checkpoint's, fixed
+PASS cfeval_unread_ti G3: run read the descriptor's score file
+PASS cfeval_unread_ti G3: purpose and split
+PASS cfeval_unread_ti G4: every metric and interval of the HTTP run equals results.json (state done)
+PASS cfeval_unread_ti G4: run threshold is the checkpoint's, fixed
+PASS cfeval_unread_ti G4: run read the descriptor's score file
+PASS cfeval_unread_ti G4: purpose and split
+PASS cfeval_unread_ti G5: every metric and interval of the HTTP run equals results.json (state done)
+PASS cfeval_unread_ti G5: run threshold is the checkpoint's, fixed
+PASS cfeval_unread_ti G5: run read the descriptor's score file
+PASS cfeval_unread_ti G5: purpose and split
+PASS refusal {'dataset': 'lavdf_unread_tv', 'group': 'FULL'} -> 400 FULL_NOT_CONFIRMED
+PASS refusal {'dataset': 'lavdf_unread_tv', 'group': 'G1', 'threshold': 0.1} -> 400 INVALID_REQUEST
+PASS refusal {'dataset': 'lavdf_unread_tv', 'group': 'G9'} -> 404 UNKNOWN_GROUP
+PASS refusal {'dataset': 'celebdf_family', 'group': 'G1'} -> 404 UNKNOWN_DATASET
+PASS refusal {'dataset': 'cfeval_unread_ti', 'group': 'FULL', 'confirm_full': True} -> 404 UNKNOWN_GROUP

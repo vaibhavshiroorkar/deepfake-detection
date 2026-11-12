@@ -1,0 +1,64 @@
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# data, checkpoints and papers are never committed (size, licences)
+/data/
+checkpoints/
+runs/
+papers_pdf/
+*.pt
+*.pth
+*.ckpt
+
+# secrets
+.env
+*.token
+*.key
+
+# LaTeX and preview build outputs (rebuilt from sources)
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.blg
+paper/*.bbl
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
+paper/main.pdf
+report/*_preview.pdf
+slides/*_preview.pdf
+
+# supplied earlier-project documents: not committed until the user confirms (D-001, D-014)
+Document Template/
+
+# supplied by the dataset authors after approval (their code is MIT licensed, the link is per user): not committed
+/download-FaceForensics.py
+
+# archives are never committed (datasets arrive as zip or tar; record hashes in docs/DATA_LOG.md instead)
+*.zip
+*.tar
+*.tar.gz
+*.fdmdownload
+
+# renders of the deliverables for visual inspection (not committed)
+**/_render/
+**/_render2/
+**/_oldrender/
+
+# v2 deliverables build outputs (rebuilt from sources; main.pdf stays tracked; added 2026-10-29, D-093)
+deliverables_v2/research_paper/*.aux
+deliverables_v2/research_paper/*.bbl
+deliverables_v2/research_paper/*.blg
+deliverables_v2/research_paper/*.fdb_latexmk
+deliverables_v2/research_paper/*.fls
+deliverables_v2/research_paper/*.log
+deliverables_v2/research_paper/*.lof
+deliverables_v2/research_paper/*.lot
+deliverables_v2/research_paper/*.out
+deliverables_v2/research_paper/*.toc
+deliverables_v2/presentation/_charts/
+
+# Google Drive hand-over bundles (D-099)
+/_drive_upload/

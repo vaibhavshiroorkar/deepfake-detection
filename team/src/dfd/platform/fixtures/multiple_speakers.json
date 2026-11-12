@@ -1,0 +1,408 @@
+{
+ "conflicts": [],
+ "coverage": {
+  "completed": [
+   {
+    "module_id": "face_video"
+   },
+   {
+    "module_id": "speech"
+   },
+   {
+    "module_id": "lip_sync"
+   }
+  ],
+  "failed": [],
+  "not_applicable": [],
+  "skipped": [],
+  "timed_out": [],
+  "unsupported": []
+ },
+ "input": {
+  "filename": "mock_clip.mp4",
+  "media_type": "video",
+  "mime_type": "video/mp4",
+  "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "size_bytes": 1000000
+ },
+ "modules": [
+  {
+   "assessment": {
+    "basis": "threshold_rule",
+    "calibration": {
+     "is_probability": false,
+     "statement": null
+    },
+    "evidence": [],
+    "meaning": "The result does not support a verdict.",
+    "mock": true,
+    "not_established": "This reading is not a probability and not proof. A reading of no strong evidence, an inconclusive reading or a failed check does not show that the media is unmanipulated.",
+    "raw": {
+     "score": null,
+     "score_kind": "model_output",
+     "threshold": null
+    },
+    "reasons": [
+     "module_inconclusive"
+    ],
+    "tier": "detector",
+    "uncertainty": {
+     "level": "high",
+     "text": "The module itself reported no finding."
+    },
+    "verdict": "inconclusive",
+    "verdict_label": "Inconclusive",
+    "version": "v1",
+    "why": "Invented scenario data, no model ran."
+   },
+   "errors": [],
+   "evidence": [],
+   "explanation": {
+    "does_not_mean": "A result from one check does not show how the file was made; other checks can disagree.",
+    "finding_label": "Inconclusive",
+    "group": "inconclusive",
+    "group_label": "Inconclusive",
+    "headline": "MOCK: Inconclusive",
+    "key_figure": null,
+    "sentences": [
+     {
+      "kind": "mock",
+      "sources": [
+       "source"
+      ],
+      "text": "Invented scenario data: no model ran, and nothing here is a measurement."
+     },
+     {
+      "kind": "examined",
+      "quoted": true,
+      "sources": [
+       "tested_scope"
+      ],
+      "text": "Scope: MOCK: invented by a scenario script; no model ran."
+     },
+     {
+      "kind": "observation",
+      "quoted": true,
+      "sources": [
+       "warnings[0]"
+      ],
+      "text": "MOCK: 3 faces; only the largest is scored."
+     },
+     {
+      "kind": "not_established",
+      "sources": [
+       "section"
+      ],
+      "text": "A result from one check does not show how the file was made; other checks can disagree."
+     }
+    ],
+    "status_label": "Completed",
+    "template_id": "generic.completed.inconclusive.mock.v2",
+    "title": "Face manipulation analysis",
+    "what_it_checks": "Looks for face-swap manipulation in the largest face of a video."
+   },
+   "finding": "inconclusive",
+   "limitations": [
+    "MOCK: invented by a scenario script; no model ran.",
+    "Scenario data for dashboard development only."
+   ],
+   "model": null,
+   "module_id": "face_video",
+   "observations": [],
+   "reason": null,
+   "score": null,
+   "section": "authenticity",
+   "segments": [],
+   "source": "mock",
+   "status": "completed",
+   "tested_scope": "MOCK: invented by a scenario script; no model ran.",
+   "timing_ms": 0.0,
+   "units_analysed": 16,
+   "version": "mock-0",
+   "warnings": [
+    {
+     "code": "MULTIPLE_FACES",
+     "message": "MOCK: 3 faces; only the largest is scored"
+    }
+   ]
+  },
+  {
+   "assessment": {
+    "basis": "threshold_rule",
+    "calibration": {
+     "is_probability": false,
+     "statement": null
+    },
+    "evidence": [],
+    "meaning": "The result does not support a verdict.",
+    "mock": true,
+    "not_established": "This reading is not a probability and not proof. A reading of no strong evidence, an inconclusive reading or a failed check does not show that the media is unmanipulated.",
+    "raw": {
+     "score": null,
+     "score_kind": "model_output",
+     "threshold": null
+    },
+    "reasons": [
+     "module_inconclusive"
+    ],
+    "tier": "limited",
+    "uncertainty": {
+     "level": "high",
+     "text": "The module itself reported no finding."
+    },
+    "verdict": "inconclusive",
+    "verdict_label": "Inconclusive",
+    "version": "v1",
+    "why": "Invented scenario data, no model ran."
+   },
+   "errors": [],
+   "evidence": [],
+   "explanation": {
+    "does_not_mean": "A result from one check does not show how the file was made; other checks can disagree.",
+    "finding_label": "Inconclusive",
+    "group": "inconclusive",
+    "group_label": "Inconclusive",
+    "headline": "MOCK: Inconclusive",
+    "key_figure": null,
+    "sentences": [
+     {
+      "kind": "mock",
+      "sources": [
+       "source"
+      ],
+      "text": "Invented scenario data: no model ran, and nothing here is a measurement."
+     },
+     {
+      "kind": "examined",
+      "quoted": true,
+      "sources": [
+       "tested_scope"
+      ],
+      "text": "Scope: MOCK: invented by a scenario script; no model ran."
+     },
+     {
+      "kind": "observation",
+      "quoted": true,
+      "sources": [
+       "warnings[0]"
+      ],
+      "text": "MOCK: overlapping speakers lower reliability."
+     },
+     {
+      "kind": "not_established",
+      "sources": [
+       "section"
+      ],
+      "text": "A result from one check does not show how the file was made; other checks can disagree."
+     }
+    ],
+    "status_label": "Completed",
+    "template_id": "generic.completed.inconclusive.mock.v2",
+    "title": "Synthetic speech analysis",
+    "what_it_checks": "Looks for synthetic or converted speech in the first seconds of the audio."
+   },
+   "finding": "inconclusive",
+   "limitations": [
+    "MOCK: invented by a scenario script; no model ran.",
+    "Scenario data for dashboard development only."
+   ],
+   "model": null,
+   "module_id": "speech",
+   "observations": [],
+   "reason": null,
+   "score": null,
+   "section": "authenticity",
+   "segments": [],
+   "source": "mock",
+   "status": "completed",
+   "tested_scope": "MOCK: invented by a scenario script; no model ran.",
+   "timing_ms": 0.0,
+   "units_analysed": 16,
+   "version": "mock-0",
+   "warnings": [
+    {
+     "code": "MULTIPLE_SPEAKERS",
+     "message": "MOCK: overlapping speakers lower reliability"
+    }
+   ]
+  },
+  {
+   "assessment": {
+    "basis": "heuristic",
+    "calibration": {
+     "is_probability": false,
+     "statement": null
+    },
+    "evidence": [],
+    "meaning": "The result does not support a verdict.",
+    "mock": true,
+    "not_established": "This reading is not a probability and not proof. A reading of no strong evidence, an inconclusive reading or a failed check does not show that the media is unmanipulated.",
+    "raw": {
+     "score": null,
+     "score_kind": "none",
+     "threshold": null
+    },
+    "reasons": [
+     "module_inconclusive"
+    ],
+    "tier": "limited",
+    "uncertainty": {
+     "level": "high",
+     "text": "The measurement was not confident enough."
+    },
+    "verdict": "inconclusive",
+    "verdict_label": "Inconclusive",
+    "version": "v1",
+    "why": "Invented scenario data, no model ran."
+   },
+   "errors": [],
+   "evidence": [],
+   "explanation": {
+    "does_not_mean": "A timing result alone does not show whether the file was manipulated.",
+    "finding_label": "Inconclusive",
+    "group": "inconclusive",
+    "group_label": "Inconclusive",
+    "headline": "MOCK: Inconclusive",
+    "key_figure": null,
+    "sentences": [
+     {
+      "kind": "mock",
+      "sources": [
+       "source"
+      ],
+      "text": "Invented scenario data: no model ran, and nothing here is a measurement."
+     },
+     {
+      "kind": "examined",
+      "quoted": true,
+      "sources": [
+       "tested_scope"
+      ],
+      "text": "Scope: MOCK: invented by a scenario script; no model ran."
+     },
+     {
+      "kind": "observation",
+      "quoted": true,
+      "sources": [
+       "warnings[0]"
+      ],
+      "text": "MOCK: cannot tell which face is speaking."
+     },
+     {
+      "kind": "not_established",
+      "sources": [
+       "section"
+      ],
+      "text": "A timing result alone does not show whether the file was manipulated."
+     }
+    ],
+    "status_label": "Completed",
+    "template_id": "generic.completed.inconclusive.mock.v2",
+    "title": "Audio-visual synchronisation",
+    "what_it_checks": "Measures whether the audio and the mouth movements of one face are in step."
+   },
+   "finding": "inconclusive",
+   "limitations": [
+    "MOCK: invented by a scenario script; no model ran.",
+    "Scenario data for dashboard development only."
+   ],
+   "model": null,
+   "module_id": "lip_sync",
+   "observations": [],
+   "reason": null,
+   "score": null,
+   "section": "cross_modal",
+   "segments": [],
+   "source": "mock",
+   "status": "completed",
+   "tested_scope": "MOCK: invented by a scenario script; no model ran.",
+   "timing_ms": 0.0,
+   "units_analysed": 16,
+   "version": "mock-0",
+   "warnings": [
+    {
+     "code": "SPEAKER_NOT_ATTRIBUTED",
+     "message": "MOCK: cannot tell which face is speaking"
+    }
+   ]
+  }
+ ],
+ "probe": {
+  "container": "mov,mp4",
+  "duration_s": 8.0,
+  "filename": "mock_clip.mp4",
+  "has_audio": true,
+  "has_video": true,
+  "height": 360,
+  "media_type": "video",
+  "mime_type": "video/mp4",
+  "n_faces": 3,
+  "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "size_bytes": 1000000,
+  "speech_detected": true,
+  "width": 640
+ },
+ "request_id": "mock-multiple_speakers",
+ "schema_version": "2.1",
+ "sections": {
+  "authenticity": [
+   "face_video",
+   "speech"
+  ],
+  "cross_modal": [
+   "lip_sync"
+  ],
+  "provenance": []
+ },
+ "source_summary": "mock",
+ "statement": "This report lists what each module found within its tested scope. A module that found nothing, did not run, was unsupported or was inconclusive does not show that the media is authentic. No single probability that the media is fake is given.",
+ "status": {
+  "processing_time_ms": 0.0,
+  "state": "ok"
+ },
+ "summary": {
+  "counts": {
+   "attention": 0,
+   "credential": 0,
+   "did_not_run": 0,
+   "experimental": 0,
+   "inconclusive": 3,
+   "informational": 0,
+   "not_applicable": 0,
+   "nothing_found": 0,
+   "unsupported": 0
+  },
+  "disagreements": [],
+  "groups": [
+   {
+    "id": "inconclusive",
+    "label": "Inconclusive",
+    "modules": [
+     "face_video",
+     "speech",
+     "lip_sync"
+    ]
+   }
+  ],
+  "headline": "3 checks ran on this video. 3 were inconclusive.",
+  "media_facts": [
+   {
+    "label": "Faces",
+    "sources": [
+     "probe.n_faces"
+    ],
+    "text": "Faces stated in the probe: 3.",
+    "value": true
+   },
+   {
+    "label": "Speech",
+    "sources": [
+     "probe.speech_detected"
+    ],
+    "text": "Speech stated in the probe: yes.",
+    "value": true
+   }
+  ],
+  "no_overall_score": "No overall score or verdict is given: each check reports only on what it examines."
+ }
+}

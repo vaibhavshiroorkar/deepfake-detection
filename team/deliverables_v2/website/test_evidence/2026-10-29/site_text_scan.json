@@ -1,0 +1,238 @@
+{
+ "5_face_image_frame_ffpp_val.png": {
+  "cards": [
+   {
+    "m": "image_detector",
+    "label": "Possible manipulation (weak evidence)",
+    "unc": "High uncertainty",
+    "tier": "limited"
+   },
+   {
+    "m": "content_credentials",
+    "label": "No content credentials found",
+    "unc": null,
+    "tier": "provenance"
+   },
+   {
+    "m": "media_metadata",
+    "label": "Information only",
+    "unc": null,
+    "tier": "context"
+   },
+   {
+    "m": "generated_image",
+    "label": "Experimental signal observed, no reliable verdict available",
+    "unc": "High uncertainty",
+    "tier": "experimental"
+   },
+   {
+    "m": "face_video",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   },
+   {
+    "m": "speech",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   },
+   {
+    "m": "lip_sync",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   },
+   {
+    "m": "generated_video",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   }
+  ],
+  "hits": {
+   "MOCK/mock": [
+    "ple report. Its data is invented, so it carries a MOCK banner.       Choose a demo scenarioMOCK: conflic",
+    "arries a MOCK banner.       Choose a demo scenarioMOCK: conflicting modulesMOCK: module failureMOCK: mod",
+    "   Choose a demo scenarioMOCK: conflicting modulesMOCK: module failureMOCK: module timeoutMOCK: multiple",
+    "narioMOCK: conflicting modulesMOCK: module failureMOCK: module timeoutMOCK: multiple speakersMOCK: no au"
+   ],
+   "calibrated probability": [
+    "t faces, so for an image with a face it is not a calibrated probability. It is the output of one experimental check,"
+   ],
+   "D-id": [
+    "d in the encoder repo; accepted as research-only (D-038); see docs/DATA_LOG.mdEvaluationE-002 (encoder ra"
+   ],
+   "E-id": [
+    "-V head, which was evaluated on video clips only (E-005 (fine-tuning; temperature and threshold fitted on",
+    " fitted on the FaceForensics++ validation split); E-014 (sealed test, tag I-4: AUC 0.8218 [0.8020, 0.8393",
+    "RAIT_SCOPE]]LimitationsEvaluated by this project (E-028) on images that contain a face: 3,119 images from",
+    " or on face generators.Evaluated by this project (E-028) on images that contain a face: 3,119 images from"
+   ],
+   "overall": [
+    "mined and how far its result can be relied on. No overall score is given.                           What are you ",
+    "observed and what it cannot tell you. There is no overall score.                  Or look at an example report. I",
+    "y outcome. It is not a probability, a score or an overall verdict.       What the checks found4 checks ran on this ",
+    "eechNot applicable: a still image has no audio.No overall score or verdict is given: each check reports only on w"
+   ]
+  }
+ },
+ "3_talking_head_with_audio_lavdf_train.mp4": {
+  "cards": [
+   {
+    "m": "face_video",
+    "label": "No strong evidence of manipulation detected",
+    "unc": "High uncertainty",
+    "tier": "detector"
+   },
+   {
+    "m": "speech",
+    "label": "No strong evidence of manipulation detected",
+    "unc": "Moderate uncertainty",
+    "tier": "limited"
+   },
+   {
+    "m": "lip_sync",
+    "label": "No audio-visual mismatch found",
+    "unc": "High uncertainty",
+    "tier": "limited"
+   },
+   {
+    "m": "content_credentials",
+    "label": "No content credentials found",
+    "unc": null,
+    "tier": "provenance"
+   },
+   {
+    "m": "media_metadata",
+    "label": "Information only",
+    "unc": null,
+    "tier": "context"
+   },
+   {
+    "m": "generated_video",
+    "label": "Experimental signal observed, no reliable verdict available",
+    "unc": "High uncertainty",
+    "tier": "experimental"
+   },
+   {
+    "m": "image_detector",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   },
+   {
+    "m": "generated_image",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   }
+  ],
+  "hits": {
+   "MOCK/mock": [
+    "ple report. Its data is invented, so it carries a MOCK banner.       Choose a demo scenarioMOCK: conflic",
+    "arries a MOCK banner.       Choose a demo scenarioMOCK: conflicting modulesMOCK: module failureMOCK: mod",
+    "   Choose a demo scenarioMOCK: conflicting modulesMOCK: module failureMOCK: module timeoutMOCK: multiple",
+    "narioMOCK: conflicting modulesMOCK: module failureMOCK: module timeoutMOCK: multiple speakersMOCK: no au"
+   ],
+   "D-id": [
+    "rts a finding, which then carries no information (D-075).Technical detailsModule idspeechVersionI-5-freez",
+    "base: Apache-2.0 tag; WavLM base+: research-only (D-038); Whisper small: see docs/DATA_LOG.mdEvaluationE-"
+   ],
+   "E-id": [
+    "ontent-driven edits) the sealed AUC is below 0.5 (E-014).A manipulation of the audio only is not visible ",
+    " fitted on the FaceForensics++ validation split); E-014 (sealed test, tag I-4: AUC 0.8218 [0.8020, 0.8393",
+    "t on another source is lower (In-the-Wild test_x, E-014).The audio track of a video was scored on LAV-DF ",
+    "AV-DF at a sealed AUC of 0.6462 [0.6188, 0.6723] (E-014, tag I-5, 2,000-video exploratory subset), so the"
+   ],
+   "percent": [
+    "lidation E-024 (frozen configuration, new clips, 95% Wilson intervals): unmodified synchronised clips ",
+    "nised clips were flagged potential_mismatch in 15.0% [8.1, 26.1] of 60 LAV-DF train clips and 13.3% [6",
+    "15.0% [8.1, 26.1] of 60 LAV-DF train clips and 13.3% [6.9, 24.2] of 60 FakeAVCeleb development clips (",
+    "eAVCeleb development clips (preregistered limit: 10%), and 25.0% [15.8, 37.2] of clips shifted by only"
+   ],
+   "overall": [
+    "mined and how far its result can be relied on. No overall score is given.                           What are you ",
+    "observed and what it cannot tell you. There is no overall score.                  Or look at an example report. I",
+    "y outcome. It is not a probability, a score or an overall verdict.       What the checks found6 checks ran on this ",
+    " synchronisation check (not a speech detector).No overall score or verdict is given: each check reports only on w"
+   ]
+  }
+ },
+ "4_speech_audio_asvspoof_dev.flac": {
+  "cards": [
+   {
+    "m": "speech",
+    "label": "No strong evidence of manipulation detected",
+    "unc": "Moderate uncertainty",
+    "tier": "limited"
+   },
+   {
+    "m": "content_credentials",
+    "label": "No content credentials found",
+    "unc": null,
+    "tier": "provenance"
+   },
+   {
+    "m": "media_metadata",
+    "label": "Information only",
+    "unc": null,
+    "tier": "context"
+   },
+   {
+    "m": "face_video",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   },
+   {
+    "m": "image_detector",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   },
+   {
+    "m": "generated_image",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   },
+   {
+    "m": "lip_sync",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   },
+   {
+    "m": "generated_video",
+    "label": "Did not apply",
+    "unc": null,
+    "tier": "none"
+   }
+  ],
+  "hits": {
+   "MOCK/mock": [
+    "ple report. Its data is invented, so it carries a MOCK banner.       Choose a demo scenarioMOCK: conflic",
+    "arries a MOCK banner.       Choose a demo scenarioMOCK: conflicting modulesMOCK: module failureMOCK: mod",
+    "   Choose a demo scenarioMOCK: conflicting modulesMOCK: module failureMOCK: module timeoutMOCK: multiple",
+    "narioMOCK: conflicting modulesMOCK: module failureMOCK: module timeoutMOCK: multiple speakersMOCK: no au"
+   ],
+   "D-id": [
+    "rts a finding, which then carries no information (D-075).Technical detailsModule idspeechVersionI-5-freez",
+    "base: Apache-2.0 tag; WavLM base+: research-only (D-038); Whisper small: see docs/DATA_LOG.mdEvaluationE-"
+   ],
+   "E-id": [
+    "t on another source is lower (In-the-Wild test_x, E-014).The audio track of a video was scored on LAV-DF ",
+    "AV-DF at a sealed AUC of 0.6462 [0.6188, 0.6723] (E-014, tag I-5, 2,000-video exploratory subset), so the",
+    "isper small: see docs/DATA_LOG.mdEvaluationE-007, E-008, E-009 (exploratory development; the calibration ",
+    "mall: see docs/DATA_LOG.mdEvaluationE-007, E-008, E-009 (exploratory development; the calibration is expl"
+   ],
+   "overall": [
+    "mined and how far its result can be relied on. No overall score is given.                           What are you ",
+    "observed and what it cannot tell you. There is no overall score.                  Or look at an example report. I",
+    "y outcome. It is not a probability, a score or an overall verdict.       What the checks found3 checks ran on this ",
+    "ent, but that does not mean it contains speech.No overall score or verdict is given: each check reports only on w"
+   ]
+  }
+ }
+}

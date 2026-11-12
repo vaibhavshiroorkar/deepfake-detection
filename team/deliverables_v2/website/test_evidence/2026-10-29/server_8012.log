@@ -1,0 +1,288 @@
+ * Serving Flask app 'dfd.platform.dashboard.serve'
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:8012
+Press CTRL+C to quit
+127.0.0.1 - - [29/Oct/2026 04:38:10] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:15] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:15] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:15] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:15] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:15] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:15] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:15] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:15] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:15] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:15] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:15] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:15] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:15] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:15] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:15] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [29/Oct/2026 04:38:15] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:16] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:16] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:17] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:17] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:18] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+[ WARN:0@32.578] global net_impl_backend.cpp:345 cv::dnn::dnn5_v20260605::Net::Impl::setPreferableTarget Targets are not supported by the new graph engine for now
+127.0.0.1 - - [29/Oct/2026 04:38:18] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:18] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:19] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:19] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:20] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:20] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:20] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:21] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:21] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:22] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:22] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:22] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:23] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:23] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:24] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:24] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:24] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:25] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:25] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:26] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:26] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:26] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:27] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:27] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:28] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:28] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:28] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:29] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:29] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:30] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:30] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:30] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:31] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:31] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:32] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:32] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:33] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:33] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:33] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:34] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+[transformers] Model config: bos_token_id must be `None` or an integer within the vocabulary (between 0 and 31999), got 49406. This may result in unexpected behavior.
+[transformers] Model config: eos_token_id must be `None` or an integer within the vocabulary (between 0 and 31999), got 49407. This may result in unexpected behavior.
+Loading weights:   0%|          | 0/408 [00:00<?, ?it/s]Loading weights:  14%|#4        | 58/408 [00:00<00:00, 579.90it/s]127.0.0.1 - - [29/Oct/2026 04:38:34] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+Loading weights:  30%|###       | 124/408 [00:00<00:00, 609.63it/s]Loading weights:  45%|####5     | 185/408 [00:00<00:00, 593.48it/s]Loading weights: 100%|##########| 408/408 [00:00<00:00, 1032.86it/s]
+127.0.0.1 - - [29/Oct/2026 04:38:35] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:35] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+Loading weights:   0%|          | 0/590 [00:00<?, ?it/s]127.0.0.1 - - [29/Oct/2026 04:38:35] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+Loading weights:   8%|8         | 49/590 [00:00<00:01, 478.55it/s]Loading weights:  16%|#6        | 97/590 [00:00<00:01, 477.22it/s]Loading weights:  25%|##4       | 145/590 [00:00<00:01, 330.05it/s]127.0.0.1 - - [29/Oct/2026 04:38:36] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+Loading weights:  31%|###       | 182/590 [00:00<00:01, 274.77it/s]Loading weights:  36%|###6      | 213/590 [00:00<00:01, 272.79it/s]Loading weights:  41%|####1     | 244/590 [00:00<00:01, 277.07it/s]127.0.0.1 - - [29/Oct/2026 04:38:36] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+Loading weights:  46%|####6     | 274/590 [00:00<00:01, 275.84it/s]Loading weights:  52%|#####1    | 306/590 [00:01<00:01, 281.41it/s]Loading weights: 100%|##########| 590/590 [00:01<00:00, 570.81it/s]
+127.0.0.1 - - [29/Oct/2026 04:38:37] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:37] "GET /api/jobs/d0e08f98edf442ddaa346f829a0df904 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:38] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:38] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:38] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:38] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:38] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:38] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:38] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:38] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [29/Oct/2026 04:38:38] "GET /api/jobs/e4ca9d0dea9c49548447f89b32f2e0a9 HTTP/1.1" 200 -
+Loading weights:   0%|          | 0/211 [00:00<?, ?it/s]Loading weights: 100%|##########| 211/211 [00:00<00:00, 42566.41it/s]
+127.0.0.1 - - [29/Oct/2026 04:38:38] "GET /api/jobs/e4ca9d0dea9c49548447f89b32f2e0a9 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:39] "GET /api/jobs/e4ca9d0dea9c49548447f89b32f2e0a9 HTTP/1.1" 200 -
+Loading weights:   0%|          | 0/248 [00:00<?, ?it/s]Loading weights: 100%|##########| 248/248 [00:00<00:00, 39782.28it/s]
+127.0.0.1 - - [29/Oct/2026 04:38:39] "GET /api/jobs/e4ca9d0dea9c49548447f89b32f2e0a9 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:40] "GET /api/jobs/e4ca9d0dea9c49548447f89b32f2e0a9 HTTP/1.1" 200 -
+Loading weights:   0%|          | 0/479 [00:00<?, ?it/s]Loading weights:  16%|#6        | 77/479 [00:00<00:00, 761.31it/s]Loading weights:  33%|###3      | 159/479 [00:00<00:00, 779.46it/s]Loading weights:  49%|####9     | 237/479 [00:00<00:00, 654.12it/s]127.0.0.1 - - [29/Oct/2026 04:38:40] "GET /api/jobs/e4ca9d0dea9c49548447f89b32f2e0a9 HTTP/1.1" 200 -
+Loading weights:  64%|######3   | 305/479 [00:00<00:00, 661.93it/s]Loading weights: 100%|##########| 479/479 [00:00<00:00, 1060.88it/s]
+[ WARN:2@55.482] global net_impl_backend.cpp:345 cv::dnn::dnn5_v20260605::Net::Impl::setPreferableTarget Targets are not supported by the new graph engine for now
+127.0.0.1 - - [29/Oct/2026 04:38:41] "GET /api/jobs/e4ca9d0dea9c49548447f89b32f2e0a9 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:41] "GET /api/jobs/e4ca9d0dea9c49548447f89b32f2e0a9 HTTP/1.1" 200 -
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+127.0.0.1 - - [29/Oct/2026 04:38:41] "GET /api/jobs/e4ca9d0dea9c49548447f89b32f2e0a9 HTTP/1.1" 200 -
+Loading weights:   0%|          | 0/223 [00:00<?, ?it/s]Loading weights: 100%|##########| 223/223 [00:00<00:00, 4180.97it/s]
+127.0.0.1 - - [29/Oct/2026 04:38:42] "GET /api/jobs/e4ca9d0dea9c49548447f89b32f2e0a9 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:43] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:43] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:43] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:43] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:43] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:43] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:43] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:43] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [29/Oct/2026 04:38:43] "GET /api/jobs/2739f15ec725489bb8488e963e7a4f8e HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:43] "GET /api/jobs/2739f15ec725489bb8488e963e7a4f8e HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /api/evallab/catalogue HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /api/evallab/catalogue HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /?poll_interval_ms=300 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:44] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:45] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:45] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:45] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:45] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:45] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:45] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:45] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:46] "GET /api/fixtures/conflicting_modules HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:46] "GET /api/fixtures/conflicting_modules HTTP/1.1" 304 -
+127.0.0.1 - - [29/Oct/2026 04:38:46] "GET /api/fixtures/video_manipulation_indicated HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:46] "GET /api/fixtures/video_manipulation_indicated HTTP/1.1" 304 -
+127.0.0.1 - - [29/Oct/2026 04:38:46] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:46] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:47] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:47] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:47] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:47] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:47] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:47] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:47] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:47] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:47] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:47] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:47] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:47] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:47] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [29/Oct/2026 04:38:47] "GET /api/jobs/db7791103d80462ba92b378dc89fdaf6 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:47] "GET /api/jobs/db7791103d80462ba92b378dc89fdaf6 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:48] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:48] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:48] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:48] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:48] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:48] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:48] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:48] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [29/Oct/2026 04:38:48] "GET /api/jobs/991766b3b77f4609aafea9eceb4b86f6 HTTP/1.1" 200 -
+[ WARN:6@63.427] global net_impl_backend.cpp:345 cv::dnn::dnn5_v20260605::Net::Impl::setPreferableTarget Targets are not supported by the new graph engine for now
+127.0.0.1 - - [29/Oct/2026 04:38:49] "GET /api/jobs/991766b3b77f4609aafea9eceb4b86f6 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:49] "GET /api/jobs/991766b3b77f4609aafea9eceb4b86f6 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:49] "GET /api/jobs/991766b3b77f4609aafea9eceb4b86f6 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:50] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:50] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:50] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:50] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:50] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:50] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:50] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:50] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [29/Oct/2026 04:38:50] "GET /api/jobs/e8e24c06fe304b4bb8c16c78d8869507 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:51] "GET /api/jobs/e8e24c06fe304b4bb8c16c78d8869507 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:51] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:51] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:51] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:51] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:51] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:51] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:51] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:51] "GET /api/evallab/catalogue HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:52] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:52] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:52] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:52] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:52] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:52] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:52] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:52] "GET /api/evallab/catalogue HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:52] "GET /?poll_interval_ms=300 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:52] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:52] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:52] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:52] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:52] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:52] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:53] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:53] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:53] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:53] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:53] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:53] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:53] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:53] "GET /api/fixtures/conflicting_modules HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:53] "GET /api/fixtures/conflicting_modules HTTP/1.1" 304 -
+127.0.0.1 - - [29/Oct/2026 04:38:53] "GET /api/fixtures/video_manipulation_indicated HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:38:54] "GET /api/fixtures/video_manipulation_indicated HTTP/1.1" 304 -
+127.0.0.1 - - [29/Oct/2026 04:39:26] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:26] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:26] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:26] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:26] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:26] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:26] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:26] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [29/Oct/2026 04:39:26] "GET /api/jobs/a67a4379ae184cb2954ba206631a18c3 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:27] "GET /api/jobs/a67a4379ae184cb2954ba206631a18c3 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:28] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:28] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:28] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:28] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:28] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:28] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:28] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:28] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [29/Oct/2026 04:39:28] "GET /api/jobs/d537da5be5d3444e8b25cd956433142b HTTP/1.1" 200 -
+[ WARN:10@103.475] global net_impl_backend.cpp:345 cv::dnn::dnn5_v20260605::Net::Impl::setPreferableTarget Targets are not supported by the new graph engine for now
+127.0.0.1 - - [29/Oct/2026 04:39:29] "GET /api/jobs/d537da5be5d3444e8b25cd956433142b HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:29] "GET /api/jobs/d537da5be5d3444e8b25cd956433142b HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:29] "GET /api/jobs/d537da5be5d3444e8b25cd956433142b HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:30] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:30] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:30] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:30] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:30] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:30] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:30] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:30] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [29/Oct/2026 04:39:30] "GET /api/jobs/d24c1a8c51d945bc96fedb2bc8130d62 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:31] "GET /api/jobs/d24c1a8c51d945bc96fedb2bc8130d62 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:42] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:42] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:42] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:42] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:42] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:42] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:42] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:42] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [29/Oct/2026 04:39:42] "GET /api/jobs/7839695c94b44985b123c22043d5b974 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:42] "GET /api/jobs/7839695c94b44985b123c22043d5b974 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:44] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:44] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:44] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:44] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:44] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:44] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:44] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:44] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [29/Oct/2026 04:39:44] "GET /api/jobs/abcfcc5e00834f8e9518d153139f0743 HTTP/1.1" 200 -
+[ WARN:14@118.917] global net_impl_backend.cpp:345 cv::dnn::dnn5_v20260605::Net::Impl::setPreferableTarget Targets are not supported by the new graph engine for now
+127.0.0.1 - - [29/Oct/2026 04:39:44] "GET /api/jobs/abcfcc5e00834f8e9518d153139f0743 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:44] "GET /api/jobs/abcfcc5e00834f8e9518d153139f0743 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:45] "GET /api/jobs/abcfcc5e00834f8e9518d153139f0743 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:46] "GET /?poll_interval_ms=400 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:46] "GET /assets/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:46] "GET /assets/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:46] "GET /assets/evallab.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:46] "GET /api/vocabulary HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:46] "GET /api/mode HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:46] "GET /api/fixtures HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:46] "POST /api/analyse HTTP/1.1" 202 -
+127.0.0.1 - - [29/Oct/2026 04:39:46] "GET /api/jobs/ec1d5f21336a403c8927ae53d0d14984 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Oct/2026 04:39:46] "GET /api/jobs/ec1d5f21336a403c8927ae53d0d14984 HTTP/1.1" 200 -

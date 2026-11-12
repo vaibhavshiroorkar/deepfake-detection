@@ -1,0 +1,540 @@
+{
+ "conflicts": [
+  {
+   "modules": [
+    "face_video",
+    "speech"
+   ],
+   "note": "Some modules found indications of manipulation and others found none within their tested scope. The modules cover different kinds of manipulation, so this is not necessarily a contradiction."
+  }
+ ],
+ "coverage": {
+  "completed": [
+   {
+    "module_id": "face_video"
+   },
+   {
+    "module_id": "speech"
+   },
+   {
+    "module_id": "lip_sync"
+   },
+   {
+    "module_id": "c2pa"
+   }
+  ],
+  "failed": [],
+  "not_applicable": [],
+  "skipped": [],
+  "timed_out": [],
+  "unsupported": []
+ },
+ "input": {
+  "filename": "mock_clip.mp4",
+  "media_type": "video",
+  "mime_type": "video/mp4",
+  "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "size_bytes": 1000000
+ },
+ "modules": [
+  {
+   "assessment": {
+    "basis": "threshold_rule",
+    "calibration": {
+     "is_probability": false,
+     "statement": "The scores behind this reading are ranking scores of research models. They were calibrated on in-domain validation data only, so a score of 0.7 does not mean a 70 percent chance, and no probability is given."
+    },
+    "evidence": [
+     {
+      "experiment": "E-015",
+      "id": "E015_visual_specificity",
+      "text": "On the sealed half of FakeAVCeleb the frozen video threshold flagged 0.4 percent of the unmanipulated videos, so a flag was rarely a false alarm there."
+     },
+     {
+      "experiment": "E-015",
+      "id": "E015_visual_sensitivity",
+      "text": "On the sealed half of FakeAVCeleb the frozen video threshold caught 48 percent of the fake videos, so a missed fake is common."
+     }
+    ],
+    "meaning": "The face-video check scored the video above its decision line. This is a possible sign only: its false-alarm rate differed between test sets and it is not a determination.",
+    "mock": true,
+    "not_established": "This reading is not a probability and not proof. A reading of no strong evidence, an inconclusive reading or a failed check does not show that the media is unmanipulated.",
+    "raw": {
+     "score": 0.97,
+     "score_kind": "model_output",
+     "threshold": null
+    },
+    "reasons": [],
+    "tier": "detector",
+    "uncertainty": {
+     "level": "high",
+     "text": "The frozen video head flagged few unmanipulated videos in one sealed test (FakeAVCeleb), but its false-alarm rate was higher on other sealed video sets and its results differ between datasets, so a flag is a possible sign and not a determination."
+    },
+    "verdict": "possible_face_manipulation",
+    "verdict_label": "Possible manipulation",
+    "version": "v1",
+    "why": "Invented scenario data, no model ran. The frozen video head flagged few unmanipulated videos in one sealed test (FakeAVCeleb), but its false-alarm rate was higher on other sealed video sets and its results differ between datasets, so a flag is a possible sign and not a determination."
+   },
+   "errors": [],
+   "evidence": [],
+   "explanation": {
+    "does_not_mean": "A result from one check does not show how the file was made; other checks can disagree.",
+    "finding_label": "Indicates manipulation",
+    "group": "attention",
+    "group_label": "Merits attention",
+    "headline": "MOCK: Indicates manipulation",
+    "key_figure": null,
+    "sentences": [
+     {
+      "kind": "mock",
+      "sources": [
+       "source"
+      ],
+      "text": "Invented scenario data: no model ran, and nothing here is a measurement."
+     },
+     {
+      "kind": "examined",
+      "quoted": true,
+      "sources": [
+       "tested_scope"
+      ],
+      "text": "Scope: MOCK: invented by a scenario script; no model ran."
+     },
+     {
+      "kind": "model_output",
+      "sources": [
+       "score.value"
+      ],
+      "text": "Scripted MOCK score: 0.97. It is not a measurement."
+     },
+     {
+      "kind": "not_established",
+      "sources": [
+       "section"
+      ],
+      "text": "A result from one check does not show how the file was made; other checks can disagree."
+     }
+    ],
+    "status_label": "Completed",
+    "template_id": "generic.completed.indicates_manipulation.mock.v2",
+    "title": "Face manipulation analysis",
+    "what_it_checks": "Looks for face-swap manipulation in the largest face of a video."
+   },
+   "finding": "indicates_manipulation",
+   "limitations": [
+    "MOCK: invented by a scenario script; no model ran.",
+    "Scenario data for dashboard development only."
+   ],
+   "model": null,
+   "module_id": "face_video",
+   "observations": [],
+   "reason": null,
+   "score": {
+    "calibrated": false,
+    "meaning": "MOCK number with no meaning; it is not a measurement.",
+    "threshold": null,
+    "value": 0.97
+   },
+   "section": "authenticity",
+   "segments": [
+    {
+     "end_s": 3.5,
+     "note": "MOCK segment",
+     "start_s": 1.0
+    }
+   ],
+   "source": "mock",
+   "status": "completed",
+   "tested_scope": "MOCK: invented by a scenario script; no model ran.",
+   "timing_ms": 0.0,
+   "units_analysed": 16,
+   "version": "mock-0",
+   "warnings": []
+  },
+  {
+   "assessment": {
+    "basis": "threshold_rule",
+    "calibration": {
+     "is_probability": false,
+     "statement": "The scores behind this reading are ranking scores of research models. They were calibrated on in-domain validation data only, so a score of 0.7 does not mean a 70 percent chance, and no probability is given."
+    },
+    "evidence": [
+     {
+      "experiment": "E-015",
+      "id": "E015_audio_specificity",
+      "text": "On the sealed half of FakeAVCeleb the frozen speech threshold flagged 36 percent of the unmanipulated audio, so a flag alone is weak evidence."
+     },
+     {
+      "experiment": "E-015",
+      "id": "E015_audio_sensitivity",
+      "text": "On the sealed half of FakeAVCeleb the frozen speech threshold caught 96 percent of the fake audio."
+     },
+     {
+      "experiment": "E-030",
+      "id": "E030_speech_eer_itw",
+      "text": "On 42 sealed In-the-Wild speakers the speech system's equal error rate was 15.8 percent."
+     }
+    ],
+    "meaning": "The check found nothing within its tested scope. This does not show that the media is unmanipulated.",
+    "mock": true,
+    "not_established": "This reading is not a probability and not proof. A reading of no strong evidence, an inconclusive reading or a failed check does not show that the media is unmanipulated.",
+    "raw": {
+     "score": 0.3,
+     "score_kind": "model_output",
+     "threshold": null
+    },
+    "reasons": [],
+    "tier": "limited",
+    "uncertainty": {
+     "level": "moderate",
+     "text": "The speech model caught most fake audio in its sealed test, but its error rate is 15.8 percent on speakers recorded in the wild."
+    },
+    "verdict": "no_strong_evidence",
+    "verdict_label": "No strong evidence of manipulation detected",
+    "version": "v1",
+    "why": "Invented scenario data, no model ran. The speech model caught most fake audio in its sealed test, but its error rate is 15.8 percent on speakers recorded in the wild."
+   },
+   "errors": [],
+   "evidence": [],
+   "explanation": {
+    "does_not_mean": "A result from one check does not show how the file was made; other checks can disagree.",
+    "finding_label": "No indication within tested scope",
+    "group": "nothing_found",
+    "group_label": "Nothing found within tested scope",
+    "headline": "MOCK: No indication within tested scope",
+    "key_figure": null,
+    "sentences": [
+     {
+      "kind": "mock",
+      "sources": [
+       "source"
+      ],
+      "text": "Invented scenario data: no model ran, and nothing here is a measurement."
+     },
+     {
+      "kind": "examined",
+      "quoted": true,
+      "sources": [
+       "tested_scope"
+      ],
+      "text": "Scope: MOCK: invented by a scenario script; no model ran."
+     },
+     {
+      "kind": "model_output",
+      "sources": [
+       "score.value"
+      ],
+      "text": "Scripted MOCK score: 0.30. It is not a measurement."
+     },
+     {
+      "kind": "not_established",
+      "sources": [
+       "section"
+      ],
+      "text": "A result from one check does not show how the file was made; other checks can disagree."
+     }
+    ],
+    "status_label": "Completed",
+    "template_id": "generic.completed.no_indication_within_tested_scope.mock.v2",
+    "title": "Synthetic speech analysis",
+    "what_it_checks": "Looks for synthetic or converted speech in the first seconds of the audio."
+   },
+   "finding": "no_indication_within_tested_scope",
+   "limitations": [
+    "MOCK: invented by a scenario script; no model ran.",
+    "Scenario data for dashboard development only."
+   ],
+   "model": null,
+   "module_id": "speech",
+   "observations": [],
+   "reason": null,
+   "score": {
+    "calibrated": false,
+    "meaning": "MOCK number with no meaning; it is not a measurement.",
+    "threshold": null,
+    "value": 0.3
+   },
+   "section": "authenticity",
+   "segments": [],
+   "source": "mock",
+   "status": "completed",
+   "tested_scope": "MOCK: invented by a scenario script; no model ran.",
+   "timing_ms": 0.0,
+   "units_analysed": 16,
+   "version": "mock-0",
+   "warnings": []
+  },
+  {
+   "assessment": {
+    "basis": "heuristic",
+    "calibration": {
+     "is_probability": false,
+     "statement": null
+    },
+    "evidence": [],
+    "meaning": "The audio and the mouth movements were not in step by the measured rule, which is weak evidence.",
+    "mock": true,
+    "not_established": "This reading is not a probability and not proof. A reading of no strong evidence, an inconclusive reading or a failed check does not show that the media is unmanipulated.",
+    "raw": {
+     "score": null,
+     "score_kind": "none",
+     "threshold": null
+    },
+    "reasons": [],
+    "tier": "limited",
+    "uncertainty": {
+     "level": "high",
+     "text": "The rule was fitted on unmanipulated clips and its band covers about one such clip in ten at the edges; it is weak evidence, not a detector."
+    },
+    "verdict": "possible_mismatch",
+    "verdict_label": "Possible audio-visual mismatch (weak evidence)",
+    "version": "v1",
+    "why": "Invented scenario data, no model ran. The rule was fitted on unmanipulated clips and its band covers about one such clip in ten at the edges; it is weak evidence, not a detector."
+   },
+   "errors": [],
+   "evidence": [],
+   "explanation": {
+    "does_not_mean": "A timing result alone does not show whether the file was manipulated.",
+    "finding_label": "Potential mismatch",
+    "group": "attention",
+    "group_label": "Merits attention",
+    "headline": "MOCK: Potential mismatch",
+    "key_figure": null,
+    "sentences": [
+     {
+      "kind": "mock",
+      "sources": [
+       "source"
+      ],
+      "text": "Invented scenario data: no model ran, and nothing here is a measurement."
+     },
+     {
+      "kind": "examined",
+      "quoted": true,
+      "sources": [
+       "tested_scope"
+      ],
+      "text": "Scope: MOCK: invented by a scenario script; no model ran."
+     },
+     {
+      "kind": "not_established",
+      "sources": [
+       "section"
+      ],
+      "text": "A timing result alone does not show whether the file was manipulated."
+     }
+    ],
+    "status_label": "Completed",
+    "template_id": "generic.completed.potential_mismatch.mock.v2",
+    "title": "Audio-visual synchronisation",
+    "what_it_checks": "Measures whether the audio and the mouth movements of one face are in step."
+   },
+   "finding": "potential_mismatch",
+   "limitations": [
+    "MOCK: invented by a scenario script; no model ran.",
+    "Scenario data for dashboard development only."
+   ],
+   "model": null,
+   "module_id": "lip_sync",
+   "observations": [],
+   "reason": null,
+   "score": null,
+   "section": "cross_modal",
+   "segments": [],
+   "source": "mock",
+   "status": "completed",
+   "tested_scope": "MOCK: invented by a scenario script; no model ran.",
+   "timing_ms": 0.0,
+   "units_analysed": 16,
+   "version": "mock-0",
+   "warnings": []
+  },
+  {
+   "assessment": {
+    "basis": "provenance",
+    "calibration": {
+     "is_probability": false,
+     "statement": null
+    },
+    "evidence": [],
+    "meaning": "A missing credential says nothing about the content.",
+    "mock": true,
+    "not_established": "This reading is not a probability and not proof. A reading of no strong evidence, an inconclusive reading or a failed check does not show that the media is unmanipulated.",
+    "raw": {
+     "score": null,
+     "score_kind": "none",
+     "threshold": null
+    },
+    "reasons": [],
+    "tier": "provenance",
+    "uncertainty": {
+     "level": "not_assessed",
+     "text": "Credentials describe where a file came from, not whether what it shows is true."
+    },
+    "verdict": "no_credentials",
+    "verdict_label": "No content credentials found",
+    "version": "v1",
+    "why": "Invented scenario data, no model ran."
+   },
+   "errors": [],
+   "evidence": [],
+   "explanation": {
+    "does_not_mean": "Credentials and metadata describe the file; they do not show whether its content is true.",
+    "finding_label": "No credentials found",
+    "group": "nothing_found",
+    "group_label": "Nothing found within tested scope",
+    "headline": "MOCK: No credentials found",
+    "key_figure": null,
+    "sentences": [
+     {
+      "kind": "mock",
+      "sources": [
+       "source"
+      ],
+      "text": "Invented scenario data: no model ran, and nothing here is a measurement."
+     },
+     {
+      "kind": "examined",
+      "quoted": true,
+      "sources": [
+       "tested_scope"
+      ],
+      "text": "Scope: MOCK: invented by a scenario script; no model ran."
+     },
+     {
+      "kind": "not_established",
+      "sources": [
+       "section"
+      ],
+      "text": "Credentials and metadata describe the file; they do not show whether its content is true."
+     }
+    ],
+    "status_label": "Completed",
+    "template_id": "generic.completed.no_credentials_found.mock.v2",
+    "title": "Content credentials (C2PA)",
+    "what_it_checks": "Looks for embedded C2PA content credentials."
+   },
+   "finding": "no_credentials_found",
+   "limitations": [
+    "MOCK: invented by a scenario script; no model ran.",
+    "Scenario data for dashboard development only."
+   ],
+   "model": null,
+   "module_id": "c2pa",
+   "observations": [],
+   "reason": null,
+   "score": null,
+   "section": "provenance",
+   "segments": [],
+   "source": "mock",
+   "status": "completed",
+   "tested_scope": "MOCK: invented by a scenario script; no model ran.",
+   "timing_ms": 0.0,
+   "units_analysed": 16,
+   "version": "mock-0",
+   "warnings": []
+  }
+ ],
+ "probe": {
+  "container": "mov,mp4",
+  "duration_s": 8.0,
+  "filename": "mock_clip.mp4",
+  "has_audio": true,
+  "has_video": true,
+  "height": 360,
+  "media_type": "video",
+  "mime_type": "video/mp4",
+  "n_faces": 1,
+  "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "size_bytes": 1000000,
+  "speech_detected": true,
+  "width": 640
+ },
+ "request_id": "mock-video_manipulation_indicated",
+ "schema_version": "2.1",
+ "sections": {
+  "authenticity": [
+   "face_video",
+   "speech"
+  ],
+  "cross_modal": [
+   "lip_sync"
+  ],
+  "provenance": [
+   "c2pa"
+  ]
+ },
+ "source_summary": "mock",
+ "statement": "This report lists what each module found within its tested scope. A module that found nothing, did not run, was unsupported or was inconclusive does not show that the media is authentic. No single probability that the media is fake is given.",
+ "status": {
+  "processing_time_ms": 0.0,
+  "state": "ok"
+ },
+ "summary": {
+  "counts": {
+   "attention": 2,
+   "credential": 0,
+   "did_not_run": 0,
+   "experimental": 0,
+   "inconclusive": 0,
+   "informational": 0,
+   "not_applicable": 0,
+   "nothing_found": 2,
+   "unsupported": 0
+  },
+  "disagreements": [
+   {
+    "modules": [
+     "face_video",
+     "speech"
+    ],
+    "text": "Some modules found indications of manipulation and others found none within their tested scope. The modules cover different kinds of manipulation, so this is not necessarily a contradiction."
+   },
+   {
+    "modules": [
+     "lip_sync",
+     "speech"
+    ],
+    "text": "Some checks raised a point that merits attention while detector checks found nothing within their tested scope. These checks look at different things and can disagree; neither cancels the other."
+   }
+  ],
+  "groups": [
+   {
+    "id": "attention",
+    "label": "Merits attention",
+    "modules": [
+     "face_video",
+     "lip_sync"
+    ]
+   },
+   {
+    "id": "nothing_found",
+    "label": "Nothing found within tested scope",
+    "modules": [
+     "speech",
+     "c2pa"
+    ]
+   }
+  ],
+  "headline": "4 checks ran on this video. 2 checks found points that merit attention; 2 found nothing within their tested scope.",
+  "media_facts": [
+   {
+    "label": "Faces",
+    "sources": [
+     "probe.n_faces"
+    ],
+    "text": "Faces stated in the probe: 1.",
+    "value": true
+   },
+   {
+    "label": "Speech",
+    "sources": [
+     "probe.speech_detected"
+    ],
+    "text": "Speech stated in the probe: yes.",
+    "value": true
+   }
+  ],
+  "no_overall_score": "No overall score or verdict is given: each check reports only on what it examines."
+ }
+}

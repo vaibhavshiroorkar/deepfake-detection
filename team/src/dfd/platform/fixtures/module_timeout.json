@@ -1,0 +1,320 @@
+{
+ "conflicts": [],
+ "coverage": {
+  "completed": [
+   {
+    "module_id": "speech"
+   }
+  ],
+  "failed": [],
+  "not_applicable": [],
+  "skipped": [],
+  "timed_out": [
+   {
+    "module_id": "generated_video",
+    "reason": "no result within 0.05 s"
+   }
+  ],
+  "unsupported": []
+ },
+ "input": {
+  "filename": "mock_clip.mp4",
+  "media_type": "video",
+  "mime_type": "video/mp4",
+  "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "size_bytes": 1000000
+ },
+ "modules": [
+  {
+   "assessment": {
+    "basis": "none",
+    "calibration": {
+     "is_probability": false,
+     "statement": null
+    },
+    "evidence": [],
+    "meaning": "The check could not complete; nothing can be said from it.",
+    "mock": true,
+    "not_established": "This reading is not a probability and not proof. A reading of no strong evidence, an inconclusive reading or a failed check does not show that the media is unmanipulated.",
+    "raw": {
+     "score": null,
+     "score_kind": "none",
+     "threshold": null
+    },
+    "reasons": [
+     "timed_out"
+    ],
+    "tier": "none",
+    "uncertainty": {
+     "level": "not_assessed",
+     "text": "No result was produced."
+    },
+    "verdict": "analysis_failed",
+    "verdict_label": "Analysis failed",
+    "version": "v1",
+    "why": "Invented scenario data, no model ran."
+   },
+   "errors": [
+    {
+     "code": "MODULE_TIMEOUT",
+     "message": "limit 0.05 s"
+    }
+   ],
+   "evidence": [],
+   "explanation": {
+    "does_not_mean": "This check gives no information about the file.",
+    "finding_label": null,
+    "group": "did_not_run",
+    "group_label": "Did not complete",
+    "headline": "MOCK: Did not complete within its time limit",
+    "key_figure": null,
+    "sentences": [
+     {
+      "kind": "mock",
+      "sources": [
+       "source"
+      ],
+      "text": "Invented scenario data: no model ran, and nothing here is a measurement."
+     },
+     {
+      "kind": "observation",
+      "quoted": true,
+      "sources": [
+       "reason"
+      ],
+      "text": "Reason: no result within 0.05 s."
+     },
+     {
+      "kind": "observation",
+      "quoted": true,
+      "sources": [
+       "errors[0]"
+      ],
+      "text": "Error MODULE_TIMEOUT: limit 0.05 s."
+     },
+     {
+      "kind": "not_established",
+      "sources": [
+       "status"
+      ],
+      "text": "No finding is made by this check for this file. The other checks are reported separately and are not affected."
+     }
+    ],
+    "status_label": "Timed out",
+    "template_id": "generic.timed_out.v2",
+    "title": "AI-generated video (experimental research)",
+    "what_it_checks": "A research prototype for fully generated video. It makes no finding."
+   },
+   "finding": null,
+   "limitations": [],
+   "model": null,
+   "module_id": "generated_video",
+   "observations": [],
+   "reason": "no result within 0.05 s",
+   "score": null,
+   "section": "authenticity",
+   "segments": [],
+   "source": "mock",
+   "status": "timed_out",
+   "tested_scope": "",
+   "timing_ms": 0.0,
+   "units_analysed": null,
+   "version": "mock-0",
+   "warnings": []
+  },
+  {
+   "assessment": {
+    "basis": "threshold_rule",
+    "calibration": {
+     "is_probability": false,
+     "statement": "The scores behind this reading are ranking scores of research models. They were calibrated on in-domain validation data only, so a score of 0.7 does not mean a 70 percent chance, and no probability is given."
+    },
+    "evidence": [
+     {
+      "experiment": "E-015",
+      "id": "E015_audio_specificity",
+      "text": "On the sealed half of FakeAVCeleb the frozen speech threshold flagged 36 percent of the unmanipulated audio, so a flag alone is weak evidence."
+     },
+     {
+      "experiment": "E-015",
+      "id": "E015_audio_sensitivity",
+      "text": "On the sealed half of FakeAVCeleb the frozen speech threshold caught 96 percent of the fake audio."
+     },
+     {
+      "experiment": "E-030",
+      "id": "E030_speech_eer_itw",
+      "text": "On 42 sealed In-the-Wild speakers the speech system's equal error rate was 15.8 percent."
+     }
+    ],
+    "meaning": "The check found nothing within its tested scope. This does not show that the media is unmanipulated.",
+    "mock": true,
+    "not_established": "This reading is not a probability and not proof. A reading of no strong evidence, an inconclusive reading or a failed check does not show that the media is unmanipulated.",
+    "raw": {
+     "score": 0.2,
+     "score_kind": "model_output",
+     "threshold": null
+    },
+    "reasons": [],
+    "tier": "limited",
+    "uncertainty": {
+     "level": "moderate",
+     "text": "The speech model caught most fake audio in its sealed test, but its error rate is 15.8 percent on speakers recorded in the wild."
+    },
+    "verdict": "no_strong_evidence",
+    "verdict_label": "No strong evidence of manipulation detected",
+    "version": "v1",
+    "why": "Invented scenario data, no model ran. The speech model caught most fake audio in its sealed test, but its error rate is 15.8 percent on speakers recorded in the wild."
+   },
+   "errors": [],
+   "evidence": [],
+   "explanation": {
+    "does_not_mean": "A result from one check does not show how the file was made; other checks can disagree.",
+    "finding_label": "No indication within tested scope",
+    "group": "nothing_found",
+    "group_label": "Nothing found within tested scope",
+    "headline": "MOCK: No indication within tested scope",
+    "key_figure": null,
+    "sentences": [
+     {
+      "kind": "mock",
+      "sources": [
+       "source"
+      ],
+      "text": "Invented scenario data: no model ran, and nothing here is a measurement."
+     },
+     {
+      "kind": "examined",
+      "quoted": true,
+      "sources": [
+       "tested_scope"
+      ],
+      "text": "Scope: MOCK: invented by a scenario script; no model ran."
+     },
+     {
+      "kind": "model_output",
+      "sources": [
+       "score.value"
+      ],
+      "text": "Scripted MOCK score: 0.20. It is not a measurement."
+     },
+     {
+      "kind": "not_established",
+      "sources": [
+       "section"
+      ],
+      "text": "A result from one check does not show how the file was made; other checks can disagree."
+     }
+    ],
+    "status_label": "Completed",
+    "template_id": "generic.completed.no_indication_within_tested_scope.mock.v2",
+    "title": "Synthetic speech analysis",
+    "what_it_checks": "Looks for synthetic or converted speech in the first seconds of the audio."
+   },
+   "finding": "no_indication_within_tested_scope",
+   "limitations": [
+    "MOCK: invented by a scenario script; no model ran.",
+    "Scenario data for dashboard development only."
+   ],
+   "model": null,
+   "module_id": "speech",
+   "observations": [],
+   "reason": null,
+   "score": {
+    "calibrated": false,
+    "meaning": "MOCK number with no meaning; it is not a measurement.",
+    "threshold": null,
+    "value": 0.2
+   },
+   "section": "authenticity",
+   "segments": [],
+   "source": "mock",
+   "status": "completed",
+   "tested_scope": "MOCK: invented by a scenario script; no model ran.",
+   "timing_ms": 0.0,
+   "units_analysed": 16,
+   "version": "mock-0",
+   "warnings": []
+  }
+ ],
+ "probe": {
+  "container": "mov,mp4",
+  "duration_s": 8.0,
+  "filename": "mock_clip.mp4",
+  "has_audio": true,
+  "has_video": true,
+  "height": 360,
+  "media_type": "video",
+  "mime_type": "video/mp4",
+  "n_faces": 1,
+  "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "size_bytes": 1000000,
+  "speech_detected": true,
+  "width": 640
+ },
+ "request_id": "mock-module_timeout",
+ "schema_version": "2.1",
+ "sections": {
+  "authenticity": [
+   "generated_video",
+   "speech"
+  ],
+  "cross_modal": [],
+  "provenance": []
+ },
+ "source_summary": "mock",
+ "statement": "This report lists what each module found within its tested scope. A module that found nothing, did not run, was unsupported or was inconclusive does not show that the media is authentic. No single probability that the media is fake is given.",
+ "status": {
+  "processing_time_ms": 0.0,
+  "state": "partial"
+ },
+ "summary": {
+  "counts": {
+   "attention": 0,
+   "credential": 0,
+   "did_not_run": 1,
+   "experimental": 0,
+   "inconclusive": 0,
+   "informational": 0,
+   "not_applicable": 0,
+   "nothing_found": 1,
+   "unsupported": 0
+  },
+  "disagreements": [],
+  "groups": [
+   {
+    "id": "nothing_found",
+    "label": "Nothing found within tested scope",
+    "modules": [
+     "speech"
+    ]
+   },
+   {
+    "id": "did_not_run",
+    "label": "Did not complete",
+    "modules": [
+     "generated_video"
+    ]
+   }
+  ],
+  "headline": "1 check ran on this video. 1 found nothing within its tested scope. 1 did not complete.",
+  "media_facts": [
+   {
+    "label": "Faces",
+    "sources": [
+     "probe.n_faces"
+    ],
+    "text": "Faces stated in the probe: 1.",
+    "value": true
+   },
+   {
+    "label": "Speech",
+    "sources": [
+     "probe.speech_detected"
+    ],
+    "text": "Speech stated in the probe: yes.",
+    "value": true
+   }
+  ],
+  "no_overall_score": "No overall score or verdict is given: each check reports only on what it examines."
+ }
+}
