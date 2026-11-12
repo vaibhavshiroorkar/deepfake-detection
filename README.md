@@ -28,6 +28,7 @@ The [findings](docs/research/findings.md) hold every measured claim. The [paper 
 
 ## Documents
 
+- [Project history](docs/project-history.md): start here. What we planned, measured, got wrong and changed, from the first commit to now.
 - [Research design](docs/research-design.md): question, protocol, ablations, and exit criteria.
 - [Data card](docs/data-card.md): data contract, split policy, risks, and handling rules.
 - [Roadmap](ROADMAP.md): research phases and what each one settled.
