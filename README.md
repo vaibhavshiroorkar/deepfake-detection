@@ -11,6 +11,13 @@ Calibrated late fusion combines them, and the model withholds a verdict when req
 
 A second track asks whether a frozen encoder with a linear probe can detect a video generator it has never seen.
 
+## Two projects in this repository
+
+- The root of the repository is this study. Vaibhav Shiroorkar wrote most of it, and Adithya Jithesh contributed.
+- [`team/`](team/README.md) is the team final-year project by Shivansh Gupta, Vaibhav Shiroorkar and Adithya Jithesh. It was supervised by Dr. Tejashree Phatak. It was imported from [Shivansh-gupta-2005/deepfake-detection](https://github.com/Shivansh-gupta-2005/deepfake-detection) with its full history. Its tags carry a `team/` prefix, for example `team/submission-final`.
+
+Run `git log --format='%h %an %s' --all` to see who wrote each commit. The two projects keep separate splits, ledgers and environments. A number from one is never mixed into the other without a new logged run.
+
 ## Results
 
 A face model that scores 0.999 ROC AUC on its own test set drops to 0.67 on Celeb-DF.
