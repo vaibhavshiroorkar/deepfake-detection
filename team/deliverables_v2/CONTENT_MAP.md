@@ -1,5 +1,7 @@
 # CONTENT MAP (evidence for the v2 paper, report, deck and website)
 
+Historical deliverable record. Use the [current research package](../../docs/research/presentation/README.md) for the full project presentation and equal credit. Earlier binaries retain their original evidence cutoff and attribution. Their recorded hashes apply to the historical version, not to later documentation edits.
+
 Written 2026-10-28 by the evidence workstream, read-only over the repository. Every number below is copied from the source named next to it.
 Source keys: EXP = docs/EXPERIMENTS.md (entry E-xxx, RESULT block), DEC = docs/DECISIONS.md, PB = docs/PERFORMANCE_BENCHMARK.md,
 DL = docs/DATA_LOG.md, TR = docs/TESTING_RECORD.md, RS = docs/RESEARCH.md, GF = docs/GEMINI_FEASIBILITY.md, RI = docs/RESEARCH_INTEGRITY.md,

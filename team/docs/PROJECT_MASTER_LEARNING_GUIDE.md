@@ -1,5 +1,7 @@
 # PROJECT MASTER LEARNING GUIDE
 
+For the complete history, current evidence boundaries and equal speaking allocation, use the [research package](../../docs/research/presentation/README.md). All three members share equal credit under [AUTHORS.md](../../AUTHORS.md). Older task assignments and dates below describe the earlier workflow.
+
 Multimodal deepfake detection for images, video and the speech in videos. A textbook for the three authors (Shivansh Gupta, Vaibhav Shiroorkar, Adithya Jithesh) to learn, rebuild and defend the project.
 
 Written 2026-10-30 from the repository at commit e27de9a (tag `submission-final`). Every fact here was checked against the source code or the project records; the companion file `docs/GROUND_TRUTH_INVENTORY.md` lists the status of each component, and section 6 of that file lists the places where code and documents disagree. Numbers are quoted with their experiment id (E-xxx) or decision id (D-xxx). Where something could not be established, this guide says so.

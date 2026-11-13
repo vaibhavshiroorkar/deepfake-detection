@@ -1,5 +1,7 @@
 # VIVA_PREP
 
+For the complete history, current evidence boundaries and equal speaking allocation, use the [research package](../../docs/research/presentation/README.md). All three members share equal credit under [AUTHORS.md](../../AUTHORS.md). Older task assignments and dates below describe the earlier workflow.
+
 Last updated: 2026-10-24 (Session 1) (Session 0)
 
 A bank of questions an examiner may ask, grouped by theme. Each question is linked to the decision (D or O), experiment (E) or paper (R) that will answer it. Answers marked "pending evidence" stay that way until the evidence exists; nothing here is a prepared claim. Section 8 holds standard mathematical definitions, which do not depend on experiments, with the source used.

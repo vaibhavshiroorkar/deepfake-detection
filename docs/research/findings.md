@@ -872,11 +872,9 @@ separated from the visual branch on DFDC AUC. Both are true. Fusion fixes a
 useful number of threshold decisions without improving the ranking, and ROC-AUC
 only sees the ranking.
 
-The number that bounds the project is 1,585. Those are clips where the fused
-score and the visual branch are both wrong, so no fusion head over these
-branches can recover them: the information is not in the inputs. Against 2,351
-compared clips, 67 percent of DFDC is beyond anything the head can do, and work
-on the head is work on the remaining third.
+The evaluated fusion and visual decisions share 1,585 errors among 2,351 compared clips.
+That count does not bound what another head could recover from continuous features.
+It describes the evaluated operating points. The affected fusion comparisons require corrected cross-fitting.
 
 Two exclusions matter and both are printed by the script rather than assumed.
 The in-domain row drops exactly 75 clips because the branch report labels

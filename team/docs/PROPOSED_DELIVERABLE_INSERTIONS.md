@@ -1,5 +1,7 @@
 # PROPOSED DELIVERABLE INSERTIONS (DRAFT FOR REVIEW, NOT APPLIED)
 
+Resolution (2026-11-12): the user requested current research materials. The [current package](../../docs/research/presentation/README.md) includes E-033/E-034 as exploratory evidence. It preserves the original submission binaries. The proposal below records the earlier decision context.
+
 Written 2026-10-31. This is a draft list of possible additions to the paper, report and slides based on E-033, E-034 and the verified literature comparison. **Nothing here has been applied.** submission/final/ and deliverables_v2/ are unchanged. Applying any item needs the team's decision, then a rebuild with the deliverables' own build scripts, the number checks, and a regenerated submission manifest (D-093).
 
 ## What is eligible for inclusion

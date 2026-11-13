@@ -1,5 +1,7 @@
 # Research design
 
+Vaibhav Shiroorkar, Shivansh Gupta and Adithya Jithesh share equal credit, one third each, across all project work and deliverables. Author order does not imply rank. See [credit policy](../AUTHORS.md) and the [current research presentation](research/presentation/README.md).
+
 ## Research question
 
 Under source-disjoint and shortcut-controlled evaluation, does cue-specific fusion of visual artifacts, audio spoofing, and mouth-audio alignment generalize better than a strong visual baseline?

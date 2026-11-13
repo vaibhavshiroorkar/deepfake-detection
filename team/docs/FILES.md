@@ -1,5 +1,10 @@
 # FILES
 
+The current research presentation lives in [../../docs/research/presentation/](../../docs/research/presentation/README.md).
+It contains the report source, slide source, rehearsal, editable report and deck, PDFs and rebuild scripts.
+[../../AUTHORS.md](../../AUTHORS.md) defines equal credit across the full project.
+The inventory below describes the earlier team directory layout.
+
 Last updated: 2026-10-31 (post-freeze benchmark and Evaluation Lab groups, D-094: new rows at the end)
 (Superseded 2026-10-31) Last updated: 2026-10-30 (final-submission preparation: four new docs listed at the end)
 (Superseded 2026-10-30) Last updated: 2026-10-29 (final clean-up on main, D-093: status cells brought up to date, superseded archive marked, unlisted tracked files added at the end)

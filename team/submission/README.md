@@ -1,5 +1,7 @@
 # Submission package: Multimodal Deepfake Detection for Images, Video and Audio
 
+Historical deliverable record. Use the [current research package](../../docs/research/presentation/README.md) for the full project presentation and equal credit. Earlier binaries retain their original evidence cutoff and attribution. Their recorded hashes apply to the historical version, not to later documentation edits.
+
 Authors (in this order): Shivansh Gupta (16014023052), Vaibhav Shiroorkar (16014024805), Adithya Jithesh (16014024803). Guide: Dr. Tejashree Phatak. Department of Electronics and Computer Engineering, K. J. Somaiya School of Engineering, Somaiya Vidyavihar University, 2026-27.
 
 ## What is in this folder

@@ -1,5 +1,7 @@
 # Exhibition documentation: change record (2026-10-31)
 
+Historical deliverable record. Use the [current research package](../../../docs/research/presentation/README.md) for the full project presentation and equal credit. Earlier binaries retain their original evidence cutoff and attribution. Their recorded hashes apply to the historical version, not to later documentation edits.
+
 Sources: submission/final/Project_Report_SUBMIT.docx and submission/final/paper_source (paper PDF IEEE_Research_Paper_SUBMIT.pdf). Originals unchanged (SHA-256 list compared before and after).
 
 ## Edits (audio-visual framing only)

@@ -1,5 +1,8 @@
 # Project roadmap
 
+The [project history](docs/project-history.md) connects these phases to the July prototype and the team research line.
+Use the [current research materials](docs/research/presentation/README.md) for the presentation, including corrections and post-freeze evidence.
+
 The project tests whether cue-specific multimodal fusion generalizes better than
 a strong visual baseline. Each phase has an exit gate. A later phase must not
 change decisions frozen by an earlier phase.

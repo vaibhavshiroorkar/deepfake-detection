@@ -1,5 +1,7 @@
 # Final submission files (written 2026-10-30)
 
+Historical deliverable record. Use the [current research package](../../../docs/research/presentation/README.md) for the full project presentation and equal credit. Earlier binaries retain their original evidence cutoff and attribution. Their recorded hashes apply to the historical version, not to later documentation edits.
+
 | Classroom task | File to upload | SHA-256 |
 |---|---|---|
 | 28 (report PDF) | Project_Report_SUBMIT.pdf | e1b7fb64f4a2490568eb2ecfff40647b639d9c38f6b24a4fcef05c08ddb5c722 |

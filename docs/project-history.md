@@ -7,6 +7,10 @@ finding, an experiment entry or a commit, and each one is cited.
 
 The detail lives elsewhere. Read this first, then follow the links.
 
+Vaibhav Shiroorkar, Shivansh Gupta and Adithya Jithesh share equal credit across every phase.
+See [authors and equal credit](../AUTHORS.md) and the [current research presentation](research/presentation/README.md).
+Historical results below remain subject to the corrections in the result registry.
+
 ## The question
 
 Can a detector that combines several cues (face artifacts, voice spoofing and
@@ -21,16 +25,18 @@ the work below is about finding that out and proving it.
 
 ## Timeline
 
-| Dates | Phase | Who |
-|---|---|---|
-| 2026-07-04 to 07-23 | First plan and prototype | Vaibhav, Adithya |
-| 2026-08-01 to 08-05 | First trained visual streams | Adithya, Vaibhav |
-| 2026-08-24 to 09-04 | Rebuild as a research platform | Vaibhav |
-| 2026-09-09 to 09-15 | Full pipeline, first real results | Vaibhav |
-| 2026-10-13 to 10-22 | Seeds, challengers and the paper draft | Vaibhav |
-| 2026-10-24 to 10-29 | Team project with a sealed test | Shivansh, Vaibhav, Adithya |
-| 2026-10-27 to 10-29 | Audit of this project, claims withdrawn | Vaibhav |
-| 2026-11 | Both projects in one repository | Vaibhav |
+| Dates | Phase |
+|---|---|
+| 2026-07-04 to 07-23 | First plan and prototype |
+| 2026-08-01 to 08-05 | First trained visual streams |
+| 2026-08-24 to 09-04 | Rebuild as a research platform |
+| 2026-09-09 to 09-15 | Full pipeline, first results |
+| 2026-10-13 to 10-22 | Seeds, challengers and the paper draft |
+| 2026-10-24 to 10-29 | Team project with a sealed test |
+| 2026-10-27 to 10-29 | Audit of the root study, claims withdrawn |
+| 2026-10-31 | Exploratory post-freeze evaluations E-033 and E-034 |
+| 2026-11-02 | AV-HuBERT experiments E-035 and E-036 preregistered |
+| 2026-11-12 | Both histories joined; research materials and equal credit aligned |
 
 ## 1. The first plan (July)
 
@@ -110,10 +116,10 @@ Every branch and the fusion head were retrained at seeds 17, 29 and 43.
 - **Seed beats every effect.** Cross-corpus on DFDC, the fused score moves 0.1078
   with the seed. The 0.7500 headline was the best of three; the mean is 0.6873
   (F27). At three seeds, fusion never beats the visual branch on DFDC (F19).
-- **The named mechanism is absent.** The cross-attention streams logged diagonal
+- **The intended mechanism is unproven.** The cross-attention streams logged diagonal
   attention mass every epoch, never as part of the loss. It sat at chance in
   every run while the emotion stream reached 0.9991 ROC-AUC (F1). The model is
-  accurate, but its attention does not line up sound with face.
+  accurate in those runs, but diagonal attention does not establish its use of timing.
 - **Two of three branches do not transfer.** The sync branch is at or below
   chance at all three seeds (F26). The audio branch reads 0.5054 on DFDC against
   0.7739 in-domain (F30).
@@ -131,8 +137,8 @@ A user web app, an in-browser demo and a LaTeX paper draft followed.
 
 From 2026-10-24 Shivansh Gupta, Vaibhav Shiroorkar and Adithya Jithesh built a
 second system for the final-year submission, supervised by Dr. Tejashree Phatak.
-It lives in [`team/`](../team/README.md). Shivansh wrote most of its commits; it
-ran on Vaibhav's GPU and reused datasets from this project.
+It lives in [`team/`](../team/README.md). Both research lines receive equal team credit.
+The team experiments used a separate protocol and reused available datasets.
 
 It was built to a stricter protocol than this project had used:
 
@@ -156,10 +162,11 @@ splits and encoders:
 | The audio-visual signal is not audio-visual | attention at chance while accuracy is high (F1) | visual head at chance within produced LAV-DF videos, 0.5032 (E-014) |
 | File format beats content | visual models read the codec (F35) | codec metadata alone separates real from fake FakeAVCeleb video at 0.9985 (E-021) |
 
-Two independent pipelines reaching the same result is a replication, not one
-pipeline's bug. That agreement is the strongest result either project has.
+These are related observations from different protocols, not a controlled replication.
+The root study's LAV-DF window defect also prevents treating its old score as valid corroboration.
 
-The team submitted on 2026-10-29 (tag `team/submission-final`).
+The historical submission is preserved under `team/submission/` and tag `team/submission-final`.
+Its checklist dates the final files to 2026-10-30. File preparation does not establish an external submission date.
 
 ## 6. Audit and withdrawn claims (late October)
 
@@ -204,6 +211,25 @@ Each fault became a rule, so it cannot recur silently:
   aligned; it does not yet show the model ignores timing.
 - The team's preregistered E-035 (zero-shot AV-HuBERT on LAV-DF windows) and
   E-036 (trained heads) are the next audio-visual runs.
+
+## 7. Post-freeze evaluations and the current research package
+
+E-033 evaluated the frozen video and speech heads on previously unread LAV-DF samples.
+E-034 evaluated the image head on previously unread Community Forensics-Eval shards.
+Both have appended results in the [team experiment log](../team/docs/EXPERIMENTS.md).
+Their preregistered blocks still say PLANNED because those blocks preserve the ordering record.
+These are exploratory evaluations on seen distributions, not new confirmatory tests.
+
+The [post-freeze comparison](../team/docs/POST_FREEZE_BENCHMARK_COMPARISON.md) records weak transfer and format sensitivity.
+For example, the image head's pooled AUROC was 0.7909 on 7,209 images.
+Its PNG-only diagnostic was 0.5693 on 368 images. The populations differ, so this does not prove a format effect.
+
+On 2026-11-02, E-035 and E-036 preregistered zero-shot and trained AV-HuBERT heads.
+Their result slots remain empty. Implementation and preregistration are progress, not measured accuracy.
+
+On 2026-11-12, the repository joined both histories and linked the July prototype history.
+The [current presentation set](research/presentation/README.md) brings these phases together.
+It includes the post-freeze findings while keeping the historical submission identifiable.
 
 ## Where to read more
 

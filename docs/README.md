@@ -2,6 +2,9 @@
 
 ## Start here
 
+- [Research presentation and report](research/presentation/README.md): the current presentation set, with equal credit for all three members.
+- [Project history](project-history.md): July 2026 through the current work.
+- [Authors and equal credit](../AUTHORS.md): shared credit across both research lines and all deliverables.
 - [Project overview](../README.md)
 - [Project status](handoff.md): what is measured, what is next.
 - [Findings](research/findings.md): every claim the measurements support, by

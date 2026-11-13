@@ -1,5 +1,7 @@
 # PLAN
 
+Current presentation plan: use the [research package](../../docs/research/presentation/README.md), including E-033/E-034 as exploratory findings. E-035 and E-036 remain planned experiments with no appended results. All three members receive equal credit; the old allocation interview is no longer a prerequisite for documenting that credit. The schedule below is historical.
+
 Last updated: 2026-10-31 (state verified against the repository: freeze, post-freeze experiments E-015 to E-034, submission set and the 2026-10-31 benchmark work; see the section "Verified state on 2026-10-31" at the end; the day-by-day schedule below is the historical plan and is not edited)
 (Superseded 2026-10-31) Last updated: 2026-10-25 (Session 3: I-1 to I-7 and the baseline have logged runs; the freeze is not run)
 

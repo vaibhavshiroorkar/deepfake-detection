@@ -45,7 +45,7 @@ What is established:
 
 - Tracked files: `git diff cf84b99 0704b3a` shows no change under `paper/`, `report/`, `slides/`, `src/dfd/infer`, `src/dfd/web` or the 33 tracked files of `data/_final`; the only change to `ledger/` and the only non-additive change to `docs/NUMBERS.json` (a regenerated header line) are described above.
 - Frozen E-020 heads: the SHA-256 of `head_C1/C2/C3.npz` on disk equals the hashes recorded in `e020_dev_results.json` and in the ledger line.
-- Sealed E-015: `data/_results/e015/predictions_test_x.csv` has SHA-256 ac58b9f8…, equal to the ledger entry.
+- Sealed E-015: `data/_results/e015/predictions_test_x.csv` has SHA-256 ac58b9f8..., equal to the ledger entry.
 - `checkpoints/I-5-freeze-candidate/`: the files hash to the values in that checkpoint's own `metadata.json`.
 
 What is NOT established: `checkpoints/I-*`, `data/_results/freeze`, `data/_final` outputs that are untracked, and sealed result files other than the E-015 predictions are git-ignored, and no independent, trusted hash manifest recorded before the sprint exists for all of them. For these only file modification times (nothing newer than the branch point) and, for some, self-recorded hashes were checked. A modification time does not prove a file is unchanged. A trusted baseline would need a hash manifest committed (or otherwise recorded by a third party) before the artifacts are used; creating one now would only certify the present state and is not done.

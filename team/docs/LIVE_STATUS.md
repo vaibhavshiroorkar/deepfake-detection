@@ -1,5 +1,7 @@
 # LIVE STATUS: modern-generator, literature and product work (from 2026-10-27 00:45 IST)
 
+For the complete history, current evidence boundaries and equal speaking allocation, use the [research package](../../docs/research/presentation/README.md). All three members share equal credit under [AUTHORS.md](../../AUTHORS.md). Older task assignments and dates below describe the earlier workflow.
+
 Short running record so that parallel work does not lose track. Each owner updates only its own rows. Final results go to the
 living documents (EXPERIMENTS, DATA_LOG, STATUS); this file is a coordination aid, not a result record.
 

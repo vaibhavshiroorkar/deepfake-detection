@@ -1,5 +1,9 @@
 # Multimodal deepfake detection (final-year project)
 
+Vaibhav Shiroorkar, Shivansh Gupta and Adithya Jithesh share equal credit, one third each, across all project work and deliverables. Author order does not imply rank.
+
+Current research materials: [report and presentation](../docs/research/presentation/README.md). The submission folders below are historical copies. Run team commands from `team/`. Imported tags now use the `team/` prefix.
+
 Research prototype: image, video and audio-in-video analysis, with a modular platform that reports per-module findings, never one fused verdict. It is not a validated deepfake detector. Read the limitations of each module in its report entry before relying on any output.
 
 - Setup, optional C2PA, required local artifacts and hashes, how to run the tests: [docs/SETUP.md](docs/SETUP.md)

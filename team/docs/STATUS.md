@@ -1,5 +1,9 @@
 # STATUS
 
+Current research handoff (2026-11-12): both histories are now in one repository. The [current research package](../../docs/research/presentation/README.md) covers the prototype, sealed results, corrections and post-freeze evaluations. All three members receive equal credit under [AUTHORS.md](../../AUTHORS.md).
+
+NEXT STEP: verify the local T-AV artifacts and run the already preregistered E-035 checks under its sealed-source exclusions. E-036 is also preregistered; neither entry has results. E-033 and E-034 have appended results despite the preserved PLANNED wording in their registration blocks. Earlier next-step lines below are historical. No new experiment was run to prepare these materials.
+
 Last updated: 2026-11-02 (branch av-module, D-100: Drive bundles verified and moved into checkpoints/ and data/_*; Celeb-DF v2 moved to data/celebdf_v2 and FF++ c23 hash-checked (DATA_LOG section "Second machine setup of 2026-11-02"); AV-HuBERT, mouth crops and zero-shot agreement in src/dfd/av/ with tests; ASVspoof 2019 LA and In-the-Wild downloads resumed; DeepSpeak v2 access still refused; no E-entry run).
 
 NEXT STEP (2026-11-02, av-module): build the LAV-DF matched-window manifests for T-AV from data/_manifests (excluding the sealed lavdf_subset and every clip sharing a source with it), hash-check data/lavdf and data/fakeavceleb against the manifests, then preregister I-8a in docs/EXPERIMENTS.md before any score is read.

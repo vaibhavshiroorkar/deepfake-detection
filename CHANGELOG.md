@@ -9,6 +9,8 @@ number instead of restating it.
 
 ### Added
 
+- A research report, presentation and rehearsal covering both project histories through November 2026. See [research materials](docs/research/presentation/README.md).
+- A shared [credit policy](AUTHORS.md) assigning one third to each student across both research lines and all current deliverables.
 - Public demo start, status and stop commands. The demo serves an isolated
   visual-model runtime through a temporary HTTPS tunnel and excludes datasets.
 - An in-browser demo of the best single visual model and the familiarity gate,

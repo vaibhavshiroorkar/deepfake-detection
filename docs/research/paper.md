@@ -1,5 +1,7 @@
 # Validity checks catch a detector that looks right and is not
 
+Vaibhav Shiroorkar, Shivansh Gupta and Adithya Jithesh share equal credit, one third each, across all project work and deliverables. Author order does not imply rank. See [credit policy](../../AUTHORS.md) and the [current research presentation](presentation/README.md).
+
 The fusion, LAV-DF and PE/CLIP results below are historical measurements with known protocol defects.
 Outer-fold labels selected the checkpoints that produced the original OOF features.
 Explicit zero-start LAV-DF windows could shift into annotated manipulation.
@@ -22,7 +24,7 @@ measurements those checks produced.
 
 Three results carry the paper. A cross-attention stream reached 0.9991 ROC-AUC
 while a correspondence measure recorded every epoch and never optimised sat at
-chance, so the accuracy is real and the stated mechanism is absent. Freezing
+chance. That statistic does not establish whether the model uses timing information. Freezing
 BatchNorm during fine-tuning, a change that looked like a clear improvement on
 validation, cost 0.5430 of in-domain ROC-AUC and bought 0.1276 cross-corpus in an
 uncontrolled comparison; with the epoch budget held fixed that cross-corpus
@@ -590,15 +592,12 @@ answer it gave.
 | visual, DFDC | 1,942 of 2,410 | 0.8517 | **0.9244** | 1,482 |
 
 On both cross-corpus sets the model is more confident when wrong than when right.
-This closes an escape route 5.9 leaves open: abstaining on partial coverage buys
-no accuracy, and abstaining on low confidence cannot work either, because
-confidence does not separate right from wrong once the corpus changes. There is no
-threshold on this score that drops errors faster than correct answers.
+These historical results warn that simple confidence abstention may fail after distribution shift.
+Mean confidence alone does not establish every possible threshold tradeoff.
+The affected fusion comparisons also require corrected cross-fitting.
 
-The same analysis bounds what any fusion head could do here. On DFDC the fused
-score and its own visual branch are both wrong on **1,585 of 2,351** compared
-clips, so 67 percent of that corpus is not recoverable by combining these
-branches at all. Fusion repairs 314 of the branch's errors and breaks 5, an
+On DFDC the evaluated fusion and visual decisions share errors on **1,585 of 2,351** compared clips.
+This is not an upper bound on another head using the continuous branch features. Fusion repairs 314 of the branch's errors and breaks 5, an
 asymmetric trade that ROC-AUC does not show because it changes threshold
 decisions without improving the ranking.
 

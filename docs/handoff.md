@@ -1,5 +1,7 @@
 # Project status
 
+Vaibhav Shiroorkar, Shivansh Gupta and Adithya Jithesh share equal credit, one third each, across all project work and deliverables. Author order does not imply rank. See [credit policy](../AUTHORS.md) and the [current research presentation](research/presentation/README.md).
+
 ## Current state
 
 The next experiments must use the corrected data and checkpoint contracts in

@@ -432,8 +432,8 @@ also yields a human-readable reason.
 
 Against jointly generated content the branch is close to useless for Level 1, by
 construction, and this project's measurement is the stronger warning: the stream
-built to exploit facial-vocal inconsistency is the best stream here and provably
-does not use the mechanism. Implement the inconsistency as a recorded quantity,
+built to exploit facial-vocal inconsistency scored highly without diagonal attention above chance.
+That does not prove it ignores timing. Causal perturbations are needed to test the mechanism. Implement the inconsistency as a recorded quantity,
 the correlation between facial and vocal affect trajectories, keep it out of the
 loss, and let it earn Level 2 weight if it ever separates anything.
 

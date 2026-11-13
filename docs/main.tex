@@ -23,17 +23,17 @@ Validity Checks Catch a Detector That Looks Right and Is Not}
 Mumbai, India \\
 v.shiroorkar@somaiya.edu}
 \and
-\IEEEauthorblockN{Adithya Jithesh}
-\IEEEauthorblockA{\textit{Dept. of Electronics and Computer Engineering} \\
-\textit{KJ Somaiya School of Engineering}\\
-Mumbai, India \\
-adithya.j@somaiya.edu}
-\and
 \IEEEauthorblockN{Shivansh Gupta}
 \IEEEauthorblockA{\textit{Dept. of Electronics and Computer Engineering} \\
 \textit{KJ Somaiya School of Engineering}\\
 Mumbai, India \\
 shivansh.gupta@somaiya.edu}
+\and
+\IEEEauthorblockN{Adithya Jithesh}
+\IEEEauthorblockA{\textit{Dept. of Electronics and Computer Engineering} \\
+\textit{KJ Somaiya School of Engineering}\\
+Mumbai, India \\
+adithya.j@somaiya.edu}
 \and
 \IEEEauthorblockN{Tejashree Phatak}
 \IEEEauthorblockA{\textit{Dept. of Electronics and Computer Engineering} \\
@@ -43,6 +43,11 @@ tejashree@somaiya.edu}
 }
 
 \maketitle
+
+\begin{quote}\small
+Vaibhav Shiroorkar, Shivansh Gupta and Adithya Jithesh share equal credit, one third each, across all project work and deliverables. Author order does not imply rank.
+This is a research draft. Historical fusion, LAV-DF and PE/CLIP results require corrected reruns. The current report and presentation are in docs/research/presentation/.
+\end{quote}
 
 \begin{abstract}
 Lip-sync forgeries change only the mouth and the voice, so a detector that
@@ -56,8 +61,8 @@ evaluation. The historical fusion comparison requires a nested rerun. Historical
 gain, but their outer-holdout labels selected branch checkpoints. Those
 comparisons require nested cross-fitting before they support a conclusion. The stronger result is how close the project came to reporting
 the opposite. A cross-attention stream reached 0.9991 ROC-AUC while its
-attention stayed at the uniform value, so its accuracy is real and its named
-mechanism is absent. The served visual models partly read the video codec:
+attention stayed at the uniform value. This does not establish whether it uses
+timing information; causal perturbations are needed. The served visual models partly read the video codec:
 re-encoding genuine clips with the codec of the largest fake category makes
 93.3 percent of them look fake. Compression augmentation with codec-swapped
 checkpoint selection cost 0.19 of cross-corpus ROC-AUC.

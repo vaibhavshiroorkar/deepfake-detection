@@ -1,5 +1,7 @@
 # Rehearsal script for the 14 main slides
 
+Historical deliverable record. Use the [current research package](../../docs/research/presentation/README.md) for the full project presentation and equal credit. Earlier binaries retain their original evidence cutoff and attribution. Their recorded hashes apply to the historical version, not to later documentation edits.
+
 Spoken length: about 40 seconds per slide, 9 to 10 minutes for the main slides. For each slide: the one sentence to say, the number to say aloud, and the question an examiner is most likely to ask, with the short answer. Backup slides B1 to B10 follow the divider (slide 15) and are for questions only.
 
 | # | Slide | Say (one sentence) | Number to say aloud | Likely question and short answer |

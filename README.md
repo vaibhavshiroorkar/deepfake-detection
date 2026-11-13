@@ -13,10 +13,12 @@ A second track asks whether a frozen encoder with a linear probe can detect a vi
 
 ## Two projects in this repository
 
-- The root of the repository is this study. Vaibhav Shiroorkar wrote most of it, and Adithya Jithesh contributed.
+- The root of the repository contains the cue-specific fusion and generalization study.
 - [`team/`](team/README.md) is the team final-year project by Shivansh Gupta, Vaibhav Shiroorkar and Adithya Jithesh. It was supervised by Dr. Tejashree Phatak. It was imported from [Shivansh-gupta-2005/deepfake-detection](https://github.com/Shivansh-gupta-2005/deepfake-detection) with its full history. Its tags carry a `team/` prefix, for example `team/submission-final`.
 
-Run `git log --format='%h %an %s' --all` to see who wrote each commit. The two projects keep separate splits, ledgers and environments. A number from one is never mixed into the other without a new logged run.
+Vaibhav Shiroorkar, Shivansh Gupta and Adithya Jithesh share equal credit, one third each, across both projects and all deliverables. Author order does not imply rank. See [authors and equal credit](AUTHORS.md).
+
+The two projects keep separate splits, ledgers and environments. A number from one is never mixed into the other without a new logged run.
 
 ## Results
 
@@ -28,6 +30,7 @@ The [findings](docs/research/findings.md) hold every measured claim. The [paper 
 
 ## Documents
 
+- [Current research presentation](docs/research/presentation/README.md): report, slides, rehearsal and evidence covering July through November 2026.
 - [Project history](docs/project-history.md): start here. What we planned, measured, got wrong and changed, from the first commit to now.
 - [Research design](docs/research-design.md): question, protocol, ablations, and exit criteria.
 - [Data card](docs/data-card.md): data contract, split policy, risks, and handling rules.

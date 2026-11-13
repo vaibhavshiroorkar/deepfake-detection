@@ -1,5 +1,9 @@
 # DOC_SYNC
 
+Current research materials use [one report source and one slide source](../../docs/research/presentation/README.md).
+They cover July through November, including exploratory E-033/E-034 and the planned E-035/E-036.
+All current deliverables follow [equal credit](../../AUTHORS.md). The mapping below belongs to the earlier submission.
+
 Written 2026-10-25. Maps each decided item to the place where it appears in the paper (`paper/main.tex`), the report (`report/DeepFake_Detection_Technical_Report.docx`) and the slides (`slides/DeepFake_Detection_Presentation.pptx`). The documents never print decision IDs in visible text: IDs live in LaTeX comments, Word comments and speaker notes, and this file is the index. Section names are those of the documents as built; paper sections are Roman numerals, report sections are chapter numbers, slide numbers are in the order of the deck (1 to 16 main, 17 to 24 backup).
 
 Placeholders: every `[pending]` carries its experiment ID (or, for a cell with no registered experiment yet, `E-000`) in a comment of the same line (paper), a Word comment (report) or the speaker notes (slides). The E-001 ranking exists in docs/EXPERIMENTS.md but is exploratory and still being re-run, so it is shown as `[pending]` in all three documents (DOC_FACTS section 1). Nothing else carries a measured number.

@@ -1,5 +1,7 @@
 # Teammate hand-over: what is in git, what is on Drive, what you rebuild (2026-10-31, D-099)
 
+For the complete history, current evidence boundaries and equal speaking allocation, use the [research package](../../docs/research/presentation/README.md). All three members share equal credit under [AUTHORS.md](../../AUTHORS.md). Older task assignments and dates below describe the earlier workflow.
+
 This page is for a team member who clones the repository on a machine that already holds the datasets. Read `CLAUDE.md`, then `docs/STATUS.md`, then `docs/SETUP.md`.
 
 ## 1. In git (clone the repository)
@@ -22,7 +24,7 @@ The loader checks the checkpoint hashes in each `metadata.json` (D-028, D-044), 
 | Item | Why not uploaded | How to get it |
 |---|---|---|
 | Raw datasets (`data/ffpp`, `data/celebdf_v2`, `data/lavdf`, `data/fakeavceleb`, `data/df26`, others) and their archives | You already have them; their terms forbid redistribution | Place them at the paths listed in `docs/DATA_LOG.md` |
-| `data/models/syncnet/syncnet_v2.model` | Weights licence not stated by the source (DATA_LOG G4) | Download from the official URL in DATA_LOG G4; SHA-256 `961e8696…5442`. Copy `SOURCE.json` from the original machine or recreate it as in DATA_LOG |
+| `data/models/syncnet/syncnet_v2.model` | Weights licence not stated by the source (DATA_LOG G4) | Download from the official URL in DATA_LOG G4; SHA-256 `961e8696...5442`. Copy `SOURCE.json` from the original machine or recreate it as in DATA_LOG |
 | Hugging Face encoders (EfficientNet-B4, DINOv2-small and others) and `data/_logs/encoder_weights.json` paths | Public, pinned by revision | `scripts/sweep/fetch_encoders.py` downloads and hash-checks them and rewrites `encoder_weights.json` with your local paths |
 | `data/_demo_inputs/demo_set/` | Copies of dataset media | `scripts/platform/make_demo_set.py` rebuilds it from your datasets |
 | `data/_crops*`, `data/_features*`, `data/_canonical*`, `data/_cache` | Large caches derived from dataset videos | Rebuilt by the scripts named in each `docs/EXPERIMENTS.md` entry |

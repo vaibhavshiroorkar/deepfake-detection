@@ -1,5 +1,7 @@
 # FINAL DEMO RUNBOOK
 
+For the complete history, current evidence boundaries and equal speaking allocation, use the [research package](../../docs/research/presentation/README.md). All three members share equal credit under [AUTHORS.md](../../AUTHORS.md). Older task assignments and dates below describe the earlier workflow.
+
 Written 2026-10-30 for Task 31 (final end-to-end demonstration and its MP4 recording). Based on the code (deliverables_v2/website/serve_v2.py, src/dfd/platform/dashboard/serve.py), docs/DEMO.md, deliverables_v2/website/README.md and submission/README.md.
 
 **Verification state.** The live website was last exercised end to end on 2026-10-28 and 2026-10-29 in Edge through Playwright (deliverables_v2/website/test_evidence/ui_v2_run.json: `problems: 0`; docs/TESTING_RECORD.md sections 16 and 17). It was **not** re-run while writing this runbook on 2026-10-30: no server was started. On 2026-10-30 the following were confirmed present on the development machine: `.venv/Scripts/python.exe`, ffmpeg on PATH, `checkpoints/I-5-freeze-candidate/` (metadata.json, weights_T-V.pt, head_T-I.npz, three speech heads), `data/models/syncnet/syncnet_v2.model`, and the eight demo inputs in `data/_demo_inputs/`. Do a full rehearsal (section 3) before recording.

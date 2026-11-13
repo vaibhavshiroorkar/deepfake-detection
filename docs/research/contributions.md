@@ -1,5 +1,7 @@
 # What this project contributes
 
+Vaibhav Shiroorkar, Shivansh Gupta and Adithya Jithesh share equal credit, one third each, across all project work and deliverables. Author order does not imply rank. See [credit policy](../../AUTHORS.md) and the [current research presentation](presentation/README.md).
+
 A single place to answer "what is new here". Nothing in this file is a new
 measurement: every claim points at a result ID in
 [result traceability](result-traceability.md) and a finding in
@@ -31,7 +33,7 @@ artifacts and protocols are verified. Historical fusion, LAV-DF and PE/CLIP
 numbers do not establish performance after the corrections in
 [reproducibility](../reproducibility.md).
 
-## 1. A detector that is accurate and provably not using the cue it is named for
+## 1. Accuracy does not establish the intended mechanism
 
 **Measured.** `B-training-histories`, `B-lavdf-lipsync`, `B-stream-scores`, F1.
 
@@ -42,12 +44,9 @@ separate training runs it sat at its chance value and stayed there, while the
 emotion stream's ROC-AUC rose from 0.9847 to 0.9991 and became the most accurate
 model in the project.
 
-The strongest version is on LAV-DF, where the corpus itself forbids the
-alternatives: matched windows from the same file, one on a 0.66-second
-manipulated span and one missing it, holding speaker, codec and re-encoding
-constant. The stream reads 0.9969 ROC-AUC there with diagonal mass still at
-chance. So the accuracy is real, the mechanism is absent, and the corpus design
-rules out the usual explanations.
+The historical LAV-DF test intended to compare manipulated and genuine windows from the same file.
+The later window audit found a label defect, so this comparison requires a rerun. The stream reads 0.9969 ROC-AUC there with diagonal mass still at
+chance. This historical score requires a corrected-window rerun. Attention mass alone does not establish whether timing information is used.
 
 **Prior work exists** on cross-attention lip-sync detection: DF-TransFusion uses
 lip-audio cross-attention, and LIPINC-V2 uses cross-modal transformers with
@@ -137,22 +136,19 @@ specific to corpora with cue-disjoint categories. It is a trap this project fell
 into and then caught, and the error-analysis script now excludes those clips
 automatically rather than trusting anyone to remember.
 
-## 6. A measured ceiling on what any fusion head could achieve
+## 6. Shared errors in the evaluated decisions
 
 **Measured.** `A-error-analysis`, F23.
 
 On DFDC the fused score and its own visual branch are both wrong on **1,585 of
-2,351** compared clips. No fusion head over these branches can recover those:
-the information is not in the inputs. Fusion repairs 314 of the visual branch's
+2,351** compared clips. These are shared errors at the evaluated operating points. They do not prove that the continuous features lack recoverable information. Fusion repairs 314 of the visual branch's
 errors and breaks 5, a strongly asymmetric trade that ROC-AUC does not show
 because it changes threshold decisions without improving the ranking.
 
-So 67 percent of that corpus is beyond head design, and head work is work on the
-remaining third.
+A different model or decision rule could change those errors. The affected fusion results also require the registry reruns.
 
 **Not found in prior work** as a reported quantity. Ablations typically report
-what fusion gains; the both-wrong count bounds what it could ever gain and is
-one line of analysis on predictions people already have.
+what fusion gains; the both-wrong count describes the evaluated decisions. It is not a bound on every possible fusion model.
 
 ## 7. Seed variance larger than the effects being reported
 
@@ -206,7 +202,7 @@ where the decision does not: the `rtvc` head holdout (AUC falls 0.0437 while 73
 of 75 clips go missed, F20), the confidence inversion (F22), and this. That
 convergence is the argument, not any one table.
 
-## 9. Confidence that inverts cross-corpus, closing the abstention route
+## 9. Confidence that inverts in historical cross-corpus results
 
 **Measured.** `A-error-analysis`, F22.
 
@@ -214,10 +210,8 @@ On both cross-corpus sets the model is **more confident when wrong than when
 right**: 0.8742 against 0.8299 on DFDC, with 951 of 1,590 fusion errors past 0.9
 confidence, and 1,482 of 1,942 for the visual branch.
 
-This matters because it closes a specific escape route. F9 already found that
-abstaining on partial coverage buys no accuracy; this shows abstaining on low
-confidence cannot work either, because confidence does not separate right from
-wrong once the corpus changes. It is also why the density model in F17 works:
+This matters when considering confidence-based abstention. F9 already found that
+abstaining on partial coverage buys no accuracy; this suggests that simple confidence abstention may fail in these historical results. It does not rule out every calibration or abstention method. It is also why the density model in F17 works:
 it scores the input rather than trusting the detector's certainty, and it
 intercepts 74.4 percent of unfamiliar genuine clips at 8.7 percent abstention on
 familiar ones, 67.3 percent averaged over twenty reference splits, taking false

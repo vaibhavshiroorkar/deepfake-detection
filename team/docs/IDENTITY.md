@@ -1,5 +1,7 @@
 # IDENTITY
 
+Current credit policy: [AUTHORS.md](../../AUTHORS.md). Each student receives one third across all project work and deliverables. Current author order is Vaibhav Shiroorkar, Shivansh Gupta, Adithya Jithesh. Template observations below describe the historical sources.
+
 Written 2026-10-25. Every identity field that the three deliverables show, with the exact value, the file it was read from and the page or slide. The values below are copied as written and are used unchanged in the paper, the report and the slides (scripts/check_docs.py compares against this file). Nothing here was invented, corrected or reformatted. Sources: the Word report template (`Document Template/67F_B Tech Semester VII Project Report template.doc`, read through Word; WT), the reference report (`Document Template/Deepfake_detection_system_report_ (1).pdf`, PDF page numbers; RR) and the reference deck (`Document Template/DeepFake_Detection_System_Presentation (2).pptx`; RD). The Document Template folder was not modified.
 
 ## Fields
