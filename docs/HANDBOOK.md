@@ -201,7 +201,7 @@ A first attempt on LAV-DF used a window-level manifest in which 2,527 of 3,483 f
 |---|---|---|---|---|---|
 | 1, neutralizer v1 | all 21,544 FakeAVCeleb clips | 0.933 | 0.901 | 0.994 | **Failed.** Re-muxing added 28 ms of leading silence to face-swapped clips (mistake 59) |
 | check, neutralizer v4 | 600-clip sample, not reused | 0.598 | 0.489 | 0.702 | Below the bar on clip and video labels; the audio label keeps a residual |
-| 2, neutralizer v4 | all FakeAVCeleb clips | running | | | Reported whether it passes or not |
+| 2, neutralizer v4 | 20,284 clips (1,260 short generated-speech clips refused, no real ones) | 0.632 | 0.617 | 0.793 | **Not met.** Main residual: video bitrate (0.57 to 0.64), which under constant-quality encoding follows image content |
 
 ### 5.2 Older numbers, and why none of them is a result yet
 
