@@ -70,3 +70,15 @@ The data section listed FakeAVCeleb plus the LAV-DF train partition as training 
 - **Reverse models (H3 only)** train on the neutral LAV-DF train partition only, with the same recipe and seeds. They are scored on FakeAVCeleb test.
 - **LAV-DF** is used per file. A file's labels come from `modify_video` and `modify_audio`. Its sync windows start at 0, 2 and 4 s, like FakeAVCeleb.
 - **No model trains on both corpora** in P-001.
+
+## Amendment A3, 2026-11-13, before any P-001 result is read
+
+LAV-DF is sampled by original recording (`scripts/sample_lavdf.py`, seed 17). Each sampled original comes with all its edits, so real and fake clips share speaker, room and camera.
+
+| Partition | Originals | Files | Use |
+|---|---|---|---|
+| test | 1,000 | 3,823 | Cross-corpus target for H2 and H3 |
+| train | 1,500 | 5,684 | Reverse models for H3 |
+| dev | 300 | 1,089 | Validation for the reverse models |
+
+The DFDC target is the existing 3,032-clip subset (`runs/streams-20260905/dfdc-manifest.csv`), neutralized like the training data.
