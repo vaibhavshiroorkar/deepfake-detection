@@ -54,9 +54,9 @@ Real clips are H.264. Most face-swapped clips are MPEG-4 Part 2. Clips with gene
 ```text
 clip (mp4)
   |
-  +-- neutralize: cut audio and video together at the first and last
-  |   non-silent sample, re-encode H.264 25 fps + AAC 16 kHz mono,
-  |   loudness -23 LUFS, strip metadata          (preprocessing/neutralize.py)
+  +-- neutralize (v4): decode audio once, scale to -23 dBFS RMS, start at the
+  |   first sound on a whole frame, keep exactly 3.00 s, dither -66 dBFS,
+  |   re-encode H.264 25 fps + AAC, strip metadata (preprocessing/neutralize.py)
   |
   +-- views: face track -> 16 face crops (224 px)
   |          audio -> 4 s at 16 kHz
@@ -112,7 +112,7 @@ The code layout:
 - **FaceForensics++ splits by connected component.** The face donor is a real person who is also a source elsewhere. Splitting by source alone let 226 identities cross train and test. Component grouping gives 0.
 - **Locked targets cannot train, choose or calibrate anything.** `src/deepfake_detection/data/guards.py` refuses DFDC, Celeb-DF, MNW, DeepSpeak, In-the-Wild, KoDF and HiFi-AVDF for training and selection. DFDC was once used to pick a model, and that made its numbers partly in-sample.
 - **Thresholds come from validation, with a receipt.** `ddf threshold --split val` records the clips it chose on. `ddf evaluate --threshold-file` refuses to run if any of those clips is being evaluated.
-- **Neutral copies before training.** Codec, silence and loudness differ by class in the raw files. Every training and test clip goes through `neutralize_dataset.py` first.
+- **Neutral copies before training.** Codec, silence, loudness and length differ by class in the raw files. Every training and test clip goes through `neutralize_dataset.py` first. Every neutral clip is exactly 3.00 s long. Clips with less sound than that are refused, and refusals are counted per category, because short clips are mostly generated speech.
 - **Three seeds, identity bootstrap.** Seed alone moved DFDC AUC by 0.073 in earlier runs, which is larger than most effects we measured. Every claim uses seeds 17, 29 and 43 and 1,000 identity-level bootstrap resamples.
 
 **Known limits of the data.**
@@ -194,6 +194,14 @@ LAV-DF is different from FakeAVCeleb. Every category is H.264 with AAC audio, so
 
 A first attempt on LAV-DF used a window-level manifest in which 2,527 of 3,483 files supply both a real and a fake window. File cues cannot separate two windows of the same file, so that run understated the shortcut. It was deleted, and LAV-DF is being audited per file.
 
+
+**H1: does neutralization remove the shortcut?** (preregistered bar: ceiling at most 0.60 on the clip label)
+
+| Attempt | Data | Clip | Video | Audio | Result |
+|---|---|---|---|---|---|
+| 1, neutralizer v1 | all 21,544 FakeAVCeleb clips | 0.933 | 0.901 | 0.994 | **Failed.** Re-muxing added 28 ms of leading silence to face-swapped clips (mistake 59) |
+| check, neutralizer v4 | 600-clip sample, not reused | 0.598 | 0.489 | 0.702 | Below the bar on clip and video labels; the audio label keeps a residual |
+| 2, neutralizer v4 | all FakeAVCeleb clips | running | | | Reported whether it passes or not |
 
 ### 5.2 Older numbers, and why none of them is a result yet
 
@@ -971,6 +979,30 @@ uncommitted working tree unless marked open.
   The submitted tree is reachable only through tag `team/submission-final`.
 - **Fix:** Open. Point the links at `results/legacy-team/` or the tag.
 - **Source:** `docs/project-history.md`, lines 140 to 242; commit `fb463ba`.
+
+#### 59. The first neutralizer put the shortcut back
+
+- **What went wrong:** Neutralizer v1 cut clips with an ffmpeg input seek and normalized loudness with `loudnorm`. Re-muxing exposed each source's AAC priming differently. Face-swapped clips gained 28 ms of leading silence that real clips did not. Duration and trailing silence still differed by class too.
+- **How it was caught:** By preregistered test H1, the audit rerun on the neutral copies (2026-11-13). The ceiling was 0.933, where the bar was 0.60.
+- **What it cost:** One full neutralization (about two hours) and the feature extraction already started on it. No model was trained on v1 copies.
+- **Fix:** Neutralizer v4 handles the audio as samples in numpy, starts each cut on a whole frame, fixes every clip at 3.00 s, and dithers away synthetic digital zeros. It was checked on a 600-clip sample first: ceilings 0.598 (clip), 0.489 (video), 0.702 (audio). A regression test builds two differently encoded sources and requires identical edges.
+- **Source:** `results/shortcut-audit/fakeavceleb-neutral-v1/summary.json`; P-001 amendment A4; commit `438fb23`.
+
+#### 60. The preregistration contradicted itself
+
+- **What went wrong:** P-001 listed LAV-DF train as training data and also used LAV-DF test as a cross-corpus target and as the target of a transfer test.
+- **How it was caught:** While planning the cross-corpus runs, before any result was read.
+- **What it cost:** Nothing measured. It would have made the H2 and H3 cross-corpus claims false.
+- **Fix:** Amendment A2: primary models train on FakeAVCeleb only. Reverse models train on LAV-DF only, for H3.
+- **Source:** P-001 amendment A2; commit `371e087`.
+
+#### 61. The feature extractor probed every file before starting
+
+- **What went wrong:** `extract_avhubert_features.py` asked ffprobe for each clip's length one file at a time before extracting anything. On 21,544 clips that took most of an hour.
+- **How it was caught:** The run had written nothing after 50 minutes.
+- **What it cost:** About an hour of an overnight run.
+- **Fix:** Read lengths from the neutralizer's sidecar and probe the rest in parallel.
+- **Source:** commit `3b83b43`.
 
 ## 7. What a hard reviewer would say
 
