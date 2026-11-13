@@ -1,6 +1,6 @@
 {
   "dataset": "FakeAVCeleb",
-  "source_manifest": "C:\\Users\\vaibh\\AppData\\Local\\Temp\\claude\\8d7b57b1741742ac\\e1102bc1-c535-4936-a622-4e4054be3582\\scratchpad\\v2check.csv",
+  "source_manifest": "sample-manifest.csv",
   "rows_in": 600,
   "rows_out": 571,
   "rows_failed": 29,

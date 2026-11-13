@@ -1,6 +1,6 @@
 {
   "dataset": "check",
-  "manifest": "C:\\Users\\vaibh\\AppData\\Local\\Temp\\claude\\8d7b57b1741742ac\\e1102bc1-c535-4936-a622-4e4054be3582\\scratchpad\\v2check-neutral.csv",
+  "manifest": "sample-manifest-neutral.csv",
   "clips_requested": 571,
   "clips_read": 571,
   "clips_failed": 0,
