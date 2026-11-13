@@ -54,3 +54,10 @@ These are fixed now so no test set can choose them:
 ## Reported for every run
 
 ROC-AUC, PR-AUC, balanced accuracy, EER (interpolated), FPR and FNR at the frozen threshold, FPR at 95% TPR, Brier score, ECE, coverage. Per-clip predictions are committed under `results/`.
+
+## Amendment A1, 2026-11-13, before any P-001 model is trained
+
+- **Training subsample.** The training partition is thinned with `ddf split subsample --fake-ratio 3 --seed 17`. This keeps every clip with real video (RealVideo-RealAudio and RealVideo-FakeAudio). It samples video-fake clips at 3 per real-video clip, spread across (category, method) strata. Validation and test keep their natural mix. Reason: FakeAVCeleb has about 500 real identities against about 20,000 fakes, and the earlier study used the same rule.
+- **Audio path: three seeds.** The audio path is trained at seeds 17, 29 and 43. The earlier driver trained it at seed 17 only.
+- **Sync path input.** Each clip gives up to three 2-second windows at 0, 2 and 4 s, with a face in at least 80% of frames. A clip's score is the mean of its window scores. Clips with no usable window are abstentions and are counted in coverage.
+- **LAV-DF in H1.** LAV-DF is audited per file (`scripts/build_lavdf_file_manifest.py`), not per window. A window manifest lets one file supply both labels.
