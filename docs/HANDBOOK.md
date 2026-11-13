@@ -167,7 +167,31 @@ The full list of commands is in [docs/reference/cli.md](reference/cli.md). How r
 
 `scripts/shortcut_audit.py` reads each clip's file metadata and audio edges and nothing else. It then scores how well each cue alone separates real from fake. Folds are grouped by identity.
 
-<!-- AUDIT TABLE -->
+**Shortcut ceiling.** This is the AUC of a gradient-boosted model given only file and audio-edge cues. Folds are grouped by identity. Raw files.
+
+| Corpus | Clips | Real vs fake | Fake video | Fake audio | Strongest single cue |
+|---|---|---|---|---|---|
+| FakeAVCeleb | 21,544 | **0.994** | **0.997** | **1.000** (0.9996) | Video codec (0.971 clip label); leading silence (0.992 audio label) |
+| DFDC (our subset) | 3,032 | 0.588 | 0.588 | no audio fakes | Bitrate, 0.548 |
+| LAV-DF | file-level sample | pending | pending | pending | |
+
+**What FakeAVCeleb's files say about their labels** (results/shortcut-audit/fakeavceleb):
+
+| Category | Clips | Video codec | Audio codec | Median leading silence | Median trailing silence |
+|---|---|---|---|---|---|
+| RealVideo-RealAudio | 500 | H.264 (all) | AAC (all) | 0 ms | 24 ms |
+| RealVideo-FakeAudio | 500 | H.264 (all) | **MP3 (493)**, AAC (7) | 31.5 ms | **1,191.6 ms** |
+| FakeVideo-RealAudio | 9,709 | **MPEG-4 Part 2 (8,979)**, H.264 (730) | AAC (all) | 0 ms | 17 ms |
+| FakeVideo-FakeAudio | 10,835 | **MPEG-4 Part 2 (all)** | AAC (all) | 31.4 ms | 173 ms |
+
+Three things follow:
+
+- FakeAVCeleb's labels can be read off its files. Any detector score on raw FakeAVCeleb has to be compared with 0.994, not with 0.5.
+- Two of these cues have not been reported for this dataset: the MP3 audio track on generated speech, and the per-category codec split.
+- DFDC is close to clean on these cues. That is one reason detectors trained on FakeAVCeleb fall toward chance there: the cue they learned is absent.
+
+A first attempt on LAV-DF used a window-level manifest in which 2,527 of 3,483 files supply both a real and a fake window. File cues cannot separate two windows of the same file, so that run understated the shortcut. It was deleted, and LAV-DF is being audited per file.
+
 
 ### 5.2 Older numbers, and why none of them is a result yet
 

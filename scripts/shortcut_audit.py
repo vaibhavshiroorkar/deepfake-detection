@@ -228,6 +228,12 @@ def main(argv: list[str] | None = None) -> int:
 
     with arguments.manifest.open(newline="", encoding="utf-8-sig") as handle:
         manifest = {row["clip_id"]: row for row in csv.DictReader(handle)}
+    # Older manifests (DFDC, LAV-DF windows) carry only manipulation_type.
+    for row in manifest.values():
+        kind = row.get("manipulation_type", "")
+        row.setdefault("video_fake", str(int(kind.startswith("FakeVideo-"))))
+        row.setdefault("audio_fake", str(int(kind.endswith("-FakeAudio"))))
+        row.setdefault("clip_fake", str(int(row["video_fake"] == "1" or row["audio_fake"] == "1")))
     ids = sorted(manifest)
     if arguments.limit and len(ids) > arguments.limit:
         generator = np.random.default_rng(arguments.seed)
