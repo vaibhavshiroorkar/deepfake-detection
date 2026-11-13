@@ -1,0 +1,33 @@
+{
+  "dataset": "FakeAVCeleb",
+  "source_manifest": "data\\manifests\\fakeavceleb.csv",
+  "rows_in": 21544,
+  "rows_out": 20284,
+  "rows_failed": 1260,
+  "refused_by_category": {
+    "RealVideo-FakeAudio": {
+      "too short": 50
+    },
+    "FakeVideo-FakeAudio": {
+      "too short": 1210
+    }
+  },
+  "rows_in_by_category": {
+    "FakeVideo-FakeAudio": 10835,
+    "FakeVideo-RealAudio": 9709,
+    "RealVideo-FakeAudio": 500,
+    "RealVideo-RealAudio": 500
+  },
+  "settings": {
+    "fps": 25,
+    "crf": 23,
+    "preset": "medium",
+    "audio_bitrate": "64k",
+    "audio_rate": 16000,
+    "loudness_dbfs": -23.0,
+    "dither_dbfs": -66.0,
+    "silence_dbfs": -60.0,
+    "fixed_seconds": 3.0,
+    "version": 4
+  }
+}
