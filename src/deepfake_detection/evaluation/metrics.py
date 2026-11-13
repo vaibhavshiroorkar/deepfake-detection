@@ -76,6 +76,24 @@ def _expected_calibration_error(
     return error
 
 
+def equal_error_rate(fpr: np.ndarray, fnr: np.ndarray) -> float:
+    """The rate where FPR equals FNR, read off the ROC by linear interpolation.
+
+    Taking the nearest ROC point instead can be off by several points on the
+    small sets this project evaluates (MNW has 134 clips).
+    """
+    difference = fpr - fnr
+    crossing = np.flatnonzero(difference >= 0)
+    if crossing.size == 0:
+        return float((fpr[-1] + fnr[-1]) / 2)
+    upper = int(crossing[0])
+    if upper == 0 or difference[upper] == 0:
+        return float((fpr[upper] + fnr[upper]) / 2)
+    lower = upper - 1
+    weight = -difference[lower] / (difference[upper] - difference[lower])
+    return float(fpr[lower] + weight * (fpr[upper] - fpr[lower]))
+
+
 def binary_metrics(
     *,
     labels: Sequence[int],
@@ -104,8 +122,7 @@ def binary_metrics(
 
     curve_fpr, curve_tpr, _ = roc_curve(y_true, y_prob)
     curve_fnr = 1 - curve_tpr
-    eer_index = int(np.argmin(np.abs(curve_fpr - curve_fnr)))
-    eer = float((curve_fpr[eer_index] + curve_fnr[eer_index]) / 2)
+    eer = equal_error_rate(curve_fpr, curve_fnr)
     eligible = np.flatnonzero(curve_tpr >= 0.95)
     fpr_at_95_tpr = float(curve_fpr[eligible].min()) if eligible.size else 1.0
 

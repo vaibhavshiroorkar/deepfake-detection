@@ -250,7 +250,7 @@ try {
             @("in-domain-test", "$run/split-v2/test-usable.csv", "FakeAVCeleb", "development_test"),
             @("celebdf", "runs/full-20260904/celebdf-test-manifest.csv", "Celeb-DF-v2", "generalization_celebdf"),
             @("mnw", "runs/full-20260904/mnw-manifest.csv", "MNW", "external_mnw"),
-            @("dfdc", "runs/streams-20260905/dfdc-manifest.csv", "DFDC", "generalization_celebdf")
+            @("dfdc", "runs/streams-20260905/dfdc-manifest.csv", "DFDC", "generalization_cross_corpus")
         )) {
             Invoke-Ddf "evaluate-visual-$($t[0])" evaluate branch --branch visual `
                 --checkpoint $visual --manifest $t[1] --cache-index $cacheIndex `

@@ -193,7 +193,19 @@ def test_guard_refuses_mnw_for_every_model_influencing_operation(
 
 def test_guard_allows_datasets_that_are_not_locked() -> None:
     reject_evaluation_only("FakeAVCeleb", operation="training")
-    reject_evaluation_only("Celeb-DF-v2", operation="training")
+    reject_evaluation_only("LAV-DF", operation="training")
+    reject_evaluation_only("ASVspoof2019_LA", operation="training")
+
+
+@pytest.mark.parametrize(
+    "dataset", ["DFDC", "Celeb-DF-v2", "DeepSpeak_v2", "In-the-Wild", "KoDF", "HiFi-AVDF"]
+)
+def test_guard_locks_every_cross_corpus_target(dataset: str) -> None:
+    # A cross-corpus target stops being one the moment it picks an epoch, an
+    # ensemble or a threshold. The old guard locked MNW only, and DFDC chose
+    # the batch-norm arm and the visual ensemble.
+    with pytest.raises(EvaluationOnlyDatasetError):
+        reject_evaluation_only(dataset, operation="training")
 
 
 def test_guard_catches_a_locked_dataset_blended_with_others() -> None:

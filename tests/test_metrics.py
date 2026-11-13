@@ -88,3 +88,14 @@ def test_threshold_selection_rejects_single_class_input() -> None:
             labels=[0, 0],
             probabilities=[0.1, 0.2],
         )
+
+
+def test_eer_interpolates_between_roc_points() -> None:
+    # The ROC crosses FPR = FNR between (1/3, 0.5) and (1/3, 0.0). The nearest
+    # point alone would report (1/3 + 1/2) / 2 = 0.4167.
+    metrics = binary_metrics(
+        labels=[0, 0, 0, 1, 1],
+        probabilities=[0.1, 0.5, 0.7, 0.6, 0.9],
+        threshold=0.5,
+    )
+    assert abs(metrics.eer - 1 / 3) < 1e-9

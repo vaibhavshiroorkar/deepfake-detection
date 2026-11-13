@@ -121,7 +121,7 @@ function Evaluate-Visual {
     # and already scored on seed 17; add them here if the spread is wanted there.
     foreach ($t in @(
         @("in-domain-test", "$run/split/test-usable.csv", "FakeAVCeleb", "development_test"),
-        @("dfdc", "runs/streams-20260905/dfdc-manifest.csv", "DFDC", "generalization_celebdf")
+        @("dfdc", "runs/streams-20260905/dfdc-manifest.csv", "DFDC", "generalization_cross_corpus")
     )) {
         $output = "$run/evaluation/visual-$($t[0])-seed$Seed-metrics.json"
         if (Test-Path $output) {

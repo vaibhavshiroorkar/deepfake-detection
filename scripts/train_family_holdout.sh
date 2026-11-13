@@ -14,7 +14,7 @@
 # Sequential on purpose: each arm wants the whole GPU. Re-running skips arms
 # whose checkpoint already exists.
 set -e
-cd "C:/Users/vaibh/Documents/GitHub/deepfake-generalization"
+cd "$(dirname "$0")/.."
 PY=.venv/Scripts/python.exe
 RUN=runs/ffpp-20260913
 HASH=a6fe6c0d041538d9fda06a0898bec876f35ebb7f2e0090f025af29fe8f6df6c6

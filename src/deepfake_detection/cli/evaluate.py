@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 from dataclasses import asdict
 from pathlib import Path
 
@@ -90,6 +91,9 @@ def _evaluate_branch(arguments: argparse.Namespace) -> int:
             f"No clip in {arguments.manifest} has a {arguments.branch} view"
         )
 
+    threshold_source = _resolve_threshold(
+        arguments, {record.clip_id for record in manifest_records}
+    )
     dataset = CachedBranchDataset(
         records=records,
         cache_index=cache_index,
@@ -147,6 +151,7 @@ def _evaluate_branch(arguments: argparse.Namespace) -> int:
 
     report = branch_evaluation_report(arguments, rows, state, preprocessing_hash)
     report["loss"] = loss_sum / len(rows)
+    report["threshold_source"] = threshold_source
     report["coverage"] = coverage(manifest_records, rows, abstained)
     _write_json(arguments.output, report)
     arguments.predictions.parent.mkdir(parents=True, exist_ok=True)
@@ -173,6 +178,38 @@ def _evaluate_branch(arguments: argparse.Namespace) -> int:
     return 0
 
 
+def _resolve_threshold(
+    arguments: argparse.Namespace, evaluated_clip_ids: set[str]
+) -> dict[str, object]:
+    """Set `arguments.threshold` and say where it came from.
+
+    A threshold file records the split and the clip ids it was chosen on. If
+    any of those clips is in the evaluated set, the threshold saw the answers
+    it is being judged on, so the evaluation refuses to run. A bare
+    `--threshold` stays available for fixed operating points, and the report
+    says it was fixed.
+    """
+    path = getattr(arguments, "threshold_file", None)
+    if path is None:
+        return {"kind": "fixed", "value": arguments.threshold}
+    selection = json.loads(Path(path).read_text(encoding="utf-8"))
+    selected_on = set(selection.get("clip_ids", ()))
+    if overlap := selected_on & evaluated_clip_ids:
+        raise ValueError(
+            f"The threshold in {path} was selected on {len(overlap)} of the "
+            "clips being evaluated. Select it on a validation or out-of-fold split."
+        )
+    arguments.threshold = float(selection["threshold"])
+    return {
+        "kind": "selected",
+        "value": arguments.threshold,
+        "file": str(path),
+        "split": selection["split"],
+        "objective": selection["objective"],
+        "selection_rows": selection["scored"],
+    }
+
+
 def _select_threshold(arguments: argparse.Namespace) -> int:
     with arguments.predictions.open(newline="", encoding="utf-8-sig") as handle:
         rows = tuple(csv.DictReader(handle))
@@ -185,8 +222,10 @@ def _select_threshold(arguments: argparse.Namespace) -> int:
         arguments.output,
         {
             "selection_set": str(arguments.predictions),
+            "split": arguments.split,
             "objective": "balanced_accuracy",
             "scored": len(scored),
+            "clip_ids": sorted(row["clip_id"] for row in scored if row.get("clip_id")),
             **asdict(selection),
         },
     )
@@ -211,6 +250,9 @@ def _evaluate(arguments: argparse.Namespace) -> int:
         )
         for row in rows
     ]
+    threshold_source = _resolve_threshold(
+        arguments, {row["clip_id"] for row in rows if row.get("clip_id")}
+    )
     overall = evaluate_items(items, threshold=arguments.threshold)
     methods = per_method_metrics(items, threshold=arguments.threshold)
     intervals = (
@@ -252,6 +294,7 @@ def _evaluate(arguments: argparse.Namespace) -> int:
         arguments.output,
         {
             "threshold": arguments.threshold,
+            "threshold_source": threshold_source,
             "overall": asdict(overall),
             "confidence_intervals": {
                 name: asdict(interval) for name, interval in intervals.items()
@@ -294,7 +337,7 @@ def register_evaluate(commands) -> None:
     evaluate_branch.add_argument("--cache-index", type=Path, required=True)
     evaluate_branch.add_argument("--cache-root", type=Path, required=True)
     evaluate_branch.add_argument("--dataset", required=True)
-    evaluate_branch.add_argument("--threshold", type=float, required=True)
+    _add_threshold_options(evaluate_branch)
     evaluate_branch.add_argument("--output", type=Path, required=True)
     evaluate_branch.add_argument("--predictions", type=Path, required=True)
     evaluate_branch.add_argument("--evidence-scope", required=True)
@@ -313,7 +356,7 @@ def register_evaluate(commands) -> None:
     evaluate_predictions = evaluate_commands.add_parser("predictions")
     evaluate_predictions.add_argument("--predictions", type=Path, required=True)
     evaluate_predictions.add_argument("--output", type=Path, required=True)
-    evaluate_predictions.add_argument("--threshold", type=float, required=True)
+    _add_threshold_options(evaluate_predictions)
     evaluate_predictions.add_argument("--bootstrap-samples", type=int, default=1_000)
     evaluate_predictions.add_argument("--seed", type=int, default=17)
     evaluate_predictions.set_defaults(handler=_evaluate)
@@ -322,5 +365,12 @@ def register_evaluate(commands) -> None:
 def register_threshold(commands) -> None:
     threshold = commands.add_parser("threshold")
     threshold.add_argument("--predictions", type=Path, required=True)
+    threshold.add_argument("--split", choices=("val", "oof"), required=True)
     threshold.add_argument("--output", type=Path, required=True)
     threshold.set_defaults(handler=_select_threshold)
+
+
+def _add_threshold_options(parser: argparse.ArgumentParser) -> None:
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--threshold", type=float)
+    group.add_argument("--threshold-file", type=Path)

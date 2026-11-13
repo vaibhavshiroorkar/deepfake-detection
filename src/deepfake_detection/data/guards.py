@@ -17,7 +17,12 @@ from collections.abc import Iterable
 
 # Held apart from data/mnw.py so importing the guard cannot pull in pandas, and
 # so adding a second locked dataset later does not mean touching an adapter.
-EVALUATION_ONLY_DATASETS = frozenset({"MNW"})
+# Every cross-corpus target is locked, not only MNW. DFDC was left open, and it
+# was used to pick the batch-norm arm and the visual ensemble, which made its
+# "cross-corpus" numbers partly in-sample.
+EVALUATION_ONLY_DATASETS = frozenset(
+    {"MNW", "DFDC", "Celeb-DF-v2", "DeepSpeak_v2", "In-the-Wild", "KoDF", "HiFi-AVDF"}
+)
 
 
 class EvaluationOnlyDatasetError(RuntimeError):

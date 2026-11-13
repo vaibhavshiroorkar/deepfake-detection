@@ -68,10 +68,13 @@ class ClipRecord:
             raise ValueError(f"Unknown manipulation type: {manipulation_type}")
         video_fake = manipulation_type.startswith("FakeVideo-")
         audio_fake = manipulation_type.endswith("-FakeAudio")
+        # FakeAVCeleb writes "fake.mp4" as the target of every
+        # RealVideo-FakeAudio row. A file name is not a person.
         targets = tuple(
             value
             for key in ("target1", "target2")
             if (value := row.get(key, "-")) not in {"", "-"}
+            and not value.lower().endswith((".mp4", ".wav", ".avi"))
         )
         return cls(
             clip_id=row["clip_id"].strip(),

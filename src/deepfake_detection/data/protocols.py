@@ -5,8 +5,9 @@ import json
 import random
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from itertools import combinations
+from typing import Literal
 
 from .manifest import ClipRecord
 
@@ -20,12 +21,68 @@ class SplitAudit:
     method_counts: dict[str, dict[str, int]]
 
 
+def identity_components(records: Sequence[ClipRecord]) -> dict[str, str]:
+    """Map every identity to a representative of its connected component.
+
+    Two identities are connected when one clip names both, as source and
+    target. A component is the smallest unit that can go to one partition
+    without the same face appearing in another.
+    """
+    parent: dict[str, str] = {}
+
+    def find(identity: str) -> str:
+        parent.setdefault(identity, identity)
+        while parent[identity] != identity:
+            parent[identity] = parent[parent[identity]]
+            identity = parent[identity]
+        return identity
+
+    for record in records:
+        root = find(record.source)
+        for target in record.targets:
+            other = find(target)
+            if other != root:
+                parent[max(root, other)] = min(root, other)
+                root = min(root, other)
+    return {identity: find(identity) for identity in parent}
+
+
 def build_source_split(
     records: Sequence[ClipRecord],
     *,
     seed: int,
     ratios: tuple[float, float, float] = (0.70, 0.15, 0.15),
+    group_by: Literal["source", "component"] = "source",
 ) -> Split:
+    """Split by identity, stratified by demographics.
+
+    `group_by="source"` keeps each source identity in one partition but lets a
+    target identity appear elsewhere. `group_by="component"` keeps every
+    identity a clip names in one partition; use it where targets are real
+    people who also appear as sources, as in FaceForensics++.
+    """
+    if group_by == "component":
+        component = identity_components(records)
+        if len(set(component.values())) < 3:
+            raise ValueError(
+                "The identity graph has fewer than three components, so no "
+                "identity-disjoint split exists. Use group_by='source' with "
+                "identity_strict_subset instead."
+            )
+        units = [replace(record, source=component[record.source]) for record in records]
+        demographics: dict[str, Counter[tuple[str, str]]] = defaultdict(Counter)
+        for unit in units:
+            demographics[unit.source][(unit.race, unit.gender)] += 1
+        majority = {key: counts.most_common(1)[0][0] for key, counts in demographics.items()}
+        units = [replace(u, race=majority[u.source][0], gender=majority[u.source][1]) for u in units]
+        unit_split = build_source_split(units, seed=seed, ratios=ratios)
+        owner = {u.clip_id: name for name, rows in unit_split.items() for u in rows}
+        grouped_records: dict[str, list[ClipRecord]] = {name: [] for name in unit_split}
+        for record in records:
+            grouped_records[owner[record.clip_id]].append(record)
+        return {name: tuple(rows) for name, rows in grouped_records.items()}
+    if group_by != "source":
+        raise ValueError(f"Unknown grouping: {group_by}")
     if len(ratios) != 3 or any(ratio <= 0 for ratio in ratios):
         raise ValueError("Split ratios must contain three positive values")
     if abs(sum(ratios) - 1.0) > 1e-9:

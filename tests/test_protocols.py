@@ -182,3 +182,54 @@ class SourceSplitTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ComponentSplitTests(unittest.TestCase):
+    """FF++ stores the face donor in `targets`. Splitting on `source` alone let
+    226 donor identities cross train and test (runs/ffpp-20260913 audit)."""
+
+    def _swap_pairs(self) -> tuple[ClipRecord, ...]:
+        rows = []
+        for number in range(0, 30, 2):
+            left, right = f"id{number:02d}", f"id{number + 1:02d}"
+            rows += [make_record(f"{left}-real", left), make_record(f"{right}-real", right)]
+            rows.append(make_record(f"{left}-{right}-swap", left, targets=(right,), method="swap"))
+        return tuple(rows)
+
+    def test_source_grouping_can_leak_donor_identities(self) -> None:
+        leaks = [
+            audit_split(build_source_split(self._swap_pairs(), seed=seed)).all_identity_overlaps
+            for seed in range(5)
+        ]
+        self.assertTrue(any(leaks))
+
+    def test_component_grouping_leaves_no_identity_overlap(self) -> None:
+        for seed in range(5):
+            split = build_source_split(self._swap_pairs(), seed=seed, group_by="component")
+            self.assertEqual(audit_split(split).all_identity_overlaps, {})
+            self.assertEqual(sum(len(rows) for rows in split.values()), 45)
+
+    def test_component_grouping_refuses_a_fully_connected_graph(self) -> None:
+        chain = tuple(
+            make_record(f"c{n}", f"id{n:02d}", targets=(f"id{n + 1:02d}",), method="swap")
+            for n in range(10)
+        )
+        with self.assertRaisesRegex(ValueError, "components"):
+            build_source_split(chain, seed=1, group_by="component")
+
+
+class ManifestTargetTests(unittest.TestCase):
+    def test_a_file_name_in_the_target_column_is_not_an_identity(self) -> None:
+        # FakeAVCeleb's meta_data.csv puts "fake.mp4" in target1 for all 499
+        # RealVideo-FakeAudio rows. Read as a person, it dropped that whole
+        # category from the identity-strict subset.
+        row = {
+            "clip_id": "B__id00076__00109_fake",
+            "video_path": "x.mp4",
+            "manipulation_type": "RealVideo-FakeAudio",
+            "method": "rtvc",
+            "source": "id00076",
+            "target1": "fake.mp4",
+            "target2": "-",
+        }
+        self.assertEqual(ClipRecord.from_mapping(row).targets, ())

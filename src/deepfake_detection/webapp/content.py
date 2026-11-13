@@ -407,7 +407,7 @@ FAILURES: tuple[dict, ...] = (
             {
                 "title": "Never run",
                 "detail": "The leading-silence ablation, the MTCNN against YuNet detector benchmark, the AASIST and SyncNet baselines, and a clean-environment reproduction.",
-                "source": "ROADMAP.md, F31",
+                "source": "docs/research/findings.md, F31",
             },
         ),
     },

@@ -189,7 +189,12 @@ def _manifest_usable(arguments: argparse.Namespace) -> int:
 def _split_build(arguments: argparse.Namespace) -> int:
     reject_evaluation_only(arguments.dataset, operation="split building")
     result = load_manifest(arguments.manifest, dataset=arguments.dataset)
-    split = build_source_split(result.records, seed=arguments.seed)
+    # FaceForensics++ names the face donor as a target who is also a source in
+    # other clips, so only component grouping keeps every face in one partition.
+    group_by = arguments.group_by or (
+        "component" if arguments.dataset == "FaceForensics++" else "source"
+    )
+    split = build_source_split(result.records, seed=arguments.seed, group_by=group_by)
     strict = identity_strict_subset(split)
     audit = audit_split(split)
     for name, records in split.items():
@@ -201,6 +206,7 @@ def _split_build(arguments: argparse.Namespace) -> int:
         arguments.output_dir / "audit.json",
         {
             "seed": arguments.seed,
+            "group_by": group_by,
             "split_hash": split_hash(split),
             "rows": {name: len(records) for name, records in split.items()},
             "strict_rows": {name: len(records) for name, records in strict.items()},
@@ -468,6 +474,7 @@ def register_split(commands) -> None:
     split_build.add_argument("--output-dir", type=Path, required=True)
     split_build.add_argument("--dataset", required=True)
     split_build.add_argument("--seed", type=int, required=True)
+    split_build.add_argument("--group-by", choices=("source", "component"))
     split_build.set_defaults(handler=_split_build)
     split_crossfit = split_commands.add_parser("crossfit")
     split_crossfit.add_argument("--manifest", type=Path, required=True)

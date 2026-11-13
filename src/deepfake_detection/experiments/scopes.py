@@ -26,6 +26,8 @@ DEVELOPMENT_VALIDATION = "development_validation"
 DEVELOPMENT_TEST = "development_test"
 # Cross-dataset zero-shot metrics on Celeb-DF-v2.
 GENERALIZATION_CELEBDF = "generalization_celebdf"
+# Zero-shot metrics on any other locked cross-corpus target (DFDC, DeepSpeak).
+GENERALIZATION_CROSS_CORPUS = "generalization_cross_corpus"
 # The locked external benchmark. Read once, after models and thresholds freeze.
 EXTERNAL_MNW = "external_mnw"
 
@@ -37,11 +39,14 @@ EVIDENCE_SCOPES = (
     DEVELOPMENT_VALIDATION,
     DEVELOPMENT_TEST,
     GENERALIZATION_CELEBDF,
+    GENERALIZATION_CROSS_CORPUS,
     EXTERNAL_MNW,
 )
 
 # Scopes whose metrics describe a dataset the model was never trained on.
-GENERALIZATION_SCOPES = frozenset({GENERALIZATION_CELEBDF, EXTERNAL_MNW})
+GENERALIZATION_SCOPES = frozenset(
+    {GENERALIZATION_CELEBDF, GENERALIZATION_CROSS_CORPUS, EXTERNAL_MNW}
+)
 
 # Scopes that must never be quoted as evidence about real-world performance.
 NON_EVIDENCE_SCOPES = frozenset({SOFTWARE_FIXTURE_ONLY, PROTOTYPE_ONLY})
