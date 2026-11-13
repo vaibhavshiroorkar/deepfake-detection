@@ -2,18 +2,19 @@
 
 ## Start here
 
-- [Research presentation and report](research/presentation/README.md): the current presentation set, with equal credit for all three members.
-- [Project history](project-history.md): July 2026 through the current work.
-- [Authors and equal credit](../AUTHORS.md): shared credit across both research lines and all deliverables.
+- [Project handbook](HANDBOOK.md): the one file to read first. What the project is, what it measured, every mistake, what to do next, the paper plan and the full history.
+- [Preregistration P-001](../results/preregistration/P-001-shortcut-neutral-av-study.md): the current study's hypotheses, fixed before any run.
+- [Authors and equal credit](../AUTHORS.md)
 - [Project overview](../README.md)
-- [Project status](handoff.md): what is measured, what is next.
+- [Generated inventory](handoff.md): datasets on disk, evaluation reports and MLflow runs, written by `ddf handoff update`.
+- [Research presentation and report](research/presentation/README.md): the November presentation set.
 - [Findings](research/findings.md): every claim the measurements support, by
   F-number. Other documents cite these numbers rather than restate them.
 - [Obstacles](obstacles.md): known traps by area.
 
-## Handbook
+## Deep dives
 
-One chapter per pipeline stage, from the [handbook index](handbook/README.md):
+One chapter per pipeline stage, written 2026-10-29, from the [chapter index](handbook/README.md). Chapter 08 describes the old ResNet-18 sync branch, which AV-HuBERT has replaced:
 
 - [Problem and research question](handbook/01-problem-and-research-question.md)
 - [Deep learning foundations](handbook/02-deep-learning-foundations.md)
@@ -36,7 +37,7 @@ One chapter per pipeline stage, from the [handbook index](handbook/README.md):
 
 - [Research design](research-design.md)
 - [Model selection](model-selection.md)
-- [Experiment matrix](research/experiment-matrix.md)
+- [Related work and novelty check](research/related-work.md)
 - [Result traceability](research/result-traceability.md)
 - [Findings](research/findings.md)
 - [Predictions](research/predictions.md)
@@ -51,6 +52,5 @@ One chapter per pipeline stage, from the [handbook index](handbook/README.md):
 - [Model card](model-card.md)
 - [Reproducibility](reproducibility.md)
 - [Threat model](threat-model.md)
-- [Roadmap](../ROADMAP.md)
 - [Changelog](../CHANGELOG.md)
 - [ADR-001: Local MLflow tracking](decisions/ADR-001-local-mlflow.md)

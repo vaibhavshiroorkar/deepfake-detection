@@ -7,6 +7,36 @@ number instead of restating it.
 
 ## Unreleased
 
+### 2026-11-13: one project, protocol fixes, shortcut-neutral pipeline
+
+The plan behind these changes is preregistered in
+[P-001](results/preregistration/P-001-shortcut-neutral-av-study.md).
+
+Merged:
+
+- The team project is folded in and `team/` is deleted. The submitted tree stays at the tag `team/submission-final`. Its ledger, experiment log, data log and integrity record are in [`results/legacy-team/`](results/legacy-team/README.md). Its data moved to `data/` (ASVspoof2019_LA, In-the-Wild, `legacy-team/`) and its checkpoints to `runs/legacy-team/`. A second byte-identical Celeb-DF copy (9.5 GB) and a duplicate AV-HuBERT Base checkpoint were removed.
+- `streams/avhubert.py` now takes the team version, which loads Base and Large. The old one loaded Base only.
+- New `avsync/`: the real-only `AlignmentHead`, the supervised `WindowHead`, MediaPipe mouth crops and AV-HuBERT feature caching, ported from the team project.
+- New `data/speech.py`: ASVspoof 2019 LA (121,461 rows, matches the official counts, no speaker in two partitions) and In-the-Wild (31,779 clips) manifests for the audio path.
+
+Fixed:
+
+- **FF++ identity leak.** `build_source_split(group_by="component")` keeps every identity a clip names in one partition. The old source-only grouping let 226 identities cross train and test. `ddf split build` uses component grouping for FaceForensics++ by default and records the mode in `audit.json`.
+- **Target column.** FakeAVCeleb's metadata puts `fake.mp4` in the target column of all 499 RealVideo-FakeAudio rows. It was read as a person, so the identity-strict subset dropped that whole category. File names are no longer read as identities.
+- **Locked test sets.** DFDC, Celeb-DF v2, DeepSpeak v2, In-the-Wild, KoDF and HiFi-AVDF are now evaluation-only, as MNW already was. DFDC had been used to choose the BatchNorm arm and the visual ensemble.
+- **DFDC scope.** Its reports used scope `generalization_celebdf`. A new `generalization_cross_corpus` scope replaces it in the drivers.
+- **Threshold provenance.** `ddf threshold` now needs `--split val|oof` and records the clip ids it selected on. `ddf evaluate` takes `--threshold-file`, refuses a threshold selected on any evaluated clip, and writes `threshold_source` into every report. A bare `--threshold` is still allowed, and the report marks it `fixed`.
+- **EER** now interpolates where FPR equals FNR. It used to take the nearest ROC point.
+- **Hardcoded path.** `scripts/train_family_holdout.sh` no longer changes into the old folder name.
+- **Environment.** The editable install pointed at the old folder `deepfake-generalization`, so the package did not import and the test suite had not run since the rename.
+
+Added:
+
+- `scripts/shortcut_audit.py`. For each clip it reads container, codecs, bitrates, frame rate, size, duration, leading and trailing digital silence, and loudness. It then scores each cue alone, and all cues together, as a real-or-fake classifier, with folds grouped by identity. Output goes to `results/shortcut-audit/<dataset>/`.
+- `preprocessing/neutralize.py` and `scripts/neutralize_dataset.py`. They cut audio and video together at the first and last sample above -60 dBFS, then re-encode to H.264 at 25 fps with AAC at 16 kHz mono. They also normalize loudness to -23 LUFS and strip metadata. They write a new manifest with shifted `sync_start_sec`, plus a sidecar of every cut.
+- `evaluation/conformal.py`. False-alarm thresholds from real clips only: split-conformal, Neyman-Pearson umbrella, and the minimum number of real clips needed (59 for alpha = delta = 0.05).
+- [Related work](docs/research/related-work.md): which of the four objectives are new, with sources for every claim in `docs/research/related-work/`. Access steps for AV-Deepfake1M, DeepSpeak v2, KoDF and HiFi-AVDF are still to be added to the [dataset notes](docs/research/datasets.md).
+
 ### Added
 
 - A research report, presentation and rehearsal covering both project histories through November 2026. See [research materials](docs/research/presentation/README.md).

@@ -15,7 +15,7 @@ The repository contains two research lines. The root studies cue-specific fusion
 The team project studies frozen encoders and separate findings for image, face-video and speech analysis.
 Their protocols and scores remain separate throughout this report.
 
-Evidence: AUTHORS.md; docs/project-history.md; team/docs/IDENTITY.md; docs/research/result-traceability.md.
+Evidence: AUTHORS.md; docs/HANDBOOK.md; docs/IDENTITY.md at tag team/submission-final; docs/research/result-traceability.md.
 
 ## Research question and method
 
@@ -35,7 +35,7 @@ Missing evidence and experimental modules can produce an inconclusive result.
 ROC-AUC measures ranking across thresholds. It does not measure the false-alarm rate at the threshold used in a demonstration.
 Report the threshold, false positives, missed manipulations and coverage alongside ranking metrics.
 
-Evidence: docs/research-design.md; docs/research/architecture.md; team/docs/PROTOCOL.md; team/README.md.
+Evidence: docs/research-design.md; docs/research/architecture.md; `docs/PROTOCOL.md` at tag `team/submission-final`; results/legacy-team/README.md.
 
 ## Development from July through September
 
@@ -55,7 +55,7 @@ Some striking historical scores were later withdrawn. Keep their measurements an
 The lesson from this phase is procedural: a trained model and a high score are insufficient evidence.
 The evaluation must establish which cue is being measured and which information was available during model selection.
 
-Evidence: docs/project-history.md sections 1 to 3; ROADMAP.md; docs/research/findings.md; docs/research/result-traceability.md.
+Evidence: docs/HANDBOOK.md section 12; docs/research/findings.md; docs/research/result-traceability.md.
 
 ## October methods and sealed evaluation
 
@@ -75,7 +75,7 @@ The apparent superiority at 95 percent does not survive the corrected 98.33 perc
 The two codebases provide related evidence about shortcut risks.
 They are not a controlled replication because their models, data partitions and target labels differ.
 
-Evidence: team/docs/ITERATIONS.md; team/docs/PROTOCOL.md; team/docs/EXPERIMENTS.md E-006 and E-014; team/submission/REHEARSAL.md.
+Evidence: `docs/ITERATIONS.md` at tag `team/submission-final`; `docs/PROTOCOL.md` at tag `team/submission-final`; results/legacy-team/EXPERIMENTS.md E-006 and E-014; `submission/REHEARSAL.md` at tag `team/submission-final`.
 
 ## Sealed results and their limits
 
@@ -97,7 +97,7 @@ Post hoc false-positive rates at the frozen face-video thresholds were 0.1098 on
 These E-032 rates are not confirmatory endpoints. They describe the risk of calling genuine media manipulated.
 Published benchmark values from different subsets or training protocols provide context, not a fair ranking of systems.
 
-Evidence: team/docs/EXPERIMENTS.md E-014 and E-032; team/submission/REHEARSAL.md; team/docs/POST_FREEZE_BENCHMARK_COMPARISON.md.
+Evidence: results/legacy-team/EXPERIMENTS.md E-014 and E-032; `submission/REHEARSAL.md` at tag `team/submission-final`; `docs/POST_FREEZE_BENCHMARK_COMPARISON.md` at tag `team/submission-final`.
 
 ## Corrections that change the conclusions
 
@@ -138,7 +138,7 @@ The target label and sample pool must accompany each score. These values cannot 
 The image diagnostic uses a smaller, different population. Its lower score is an association, not proof that format caused the difference.
 Nested sample-size groups overlap and are not independent replications.
 
-Evidence: team/docs/EXPERIMENTS.md E-033 and E-034; team/docs/POST_FREEZE_EVALUATION_PROTOCOL.md; team/docs/POST_FREEZE_BENCHMARK_COMPARISON.md.
+Evidence: results/legacy-team/EXPERIMENTS.md E-033 and E-034; `docs/POST_FREEZE_EVALUATION_PROTOCOL.md` at tag `team/submission-final`; `docs/POST_FREEZE_BENCHMARK_COMPARISON.md` at tag `team/submission-final`.
 
 ## November work and remaining experiments
 
@@ -156,7 +156,7 @@ The 2026-11-12 integration preserved both histories and linked the early prototy
 The present report brings the evidence into one narrative while retaining separate protocols.
 Equal credit applies to all three student authors across the entire project.
 
-Evidence: team/docs/EXPERIMENTS.md E-035 and E-036; team/src/dfd/av/; docs/handoff.md; docs/project-history.md.
+Evidence: results/legacy-team/EXPERIMENTS.md E-035 and E-036; src/deepfake_detection/avsync/; docs/handoff.md; docs/HANDBOOK.md.
 
 ## Demonstration and reproducibility
 
@@ -177,4 +177,4 @@ The presentation's defensible conclusion is that evaluation controls expose fail
 The research contribution is the documented testing and correction process, subject to the listed reruns and limitations.
 No claim of state-of-the-art performance, deployment readiness or literature priority follows from this report.
 
-Evidence: README.md; docs/reproducibility.md; docs/model-card.md; team/docs/SETUP.md; team/docs/FINAL_DEMO_RUNBOOK.md; team/docs/RESEARCH_INTEGRITY.md.
+Evidence: README.md; docs/reproducibility.md; docs/model-card.md; `docs/SETUP.md` at tag `team/submission-final`; `docs/FINAL_DEMO_RUNBOOK.md` at tag `team/submission-final`; `docs/RESEARCH_INTEGRITY.md` at tag `team/submission-final`.

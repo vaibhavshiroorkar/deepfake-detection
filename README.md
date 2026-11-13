@@ -22,18 +22,18 @@ Legacy team numbers used different splits. They are never mixed with new results
 ## Results
 
 A face model that scores 0.999 ROC AUC on its own test set drops to 0.67 on Celeb-DF.
+On FakeAVCeleb, file-level cues alone separate real from fake: leading digital silence predicts fake audio at about 0.99 AUC, and the video codec predicts fake video at about 0.97. The current study ([P-001](results/preregistration/P-001-shortcut-neutral-av-study.md)) removes these cues from training and test data before measuring anything.
 Historical fusion comparisons found no cross-corpus gain. Their fold checkpoints used outer-holdout labels for epoch selection, so that conclusion needs a nested cross-fitting rerun.
 The historical DF26 Perception Encoder score of 0.7527 used the wrong input normalization, so corrected performance is unknown.
 
-The [findings](docs/research/findings.md) hold every measured claim. The [paper draft](docs/research/paper.md) reports both tracks, and every number in it resolves to a row in [result traceability](docs/research/result-traceability.md). The [project status](docs/handoff.md) lists what is measured and what runs next.
+The [findings](docs/research/findings.md) hold every measured claim. The [paper draft](docs/research/paper.md) reports both tracks, and every number in it resolves to a row in [result traceability](docs/research/result-traceability.md). The [handbook](docs/HANDBOOK.md) says what is measured, what went wrong and what runs next.
 
 ## Documents
 
+- [Project handbook](docs/HANDBOOK.md): start here. What the project is, what it measured, every mistake from the first commit on, what to do next, and the paper plan.
 - [Current research presentation](docs/research/presentation/README.md): report, slides, rehearsal and evidence covering July through November 2026.
-- [Project history](docs/project-history.md): start here. What we planned, measured, got wrong and changed, from the first commit to now.
 - [Research design](docs/research-design.md): question, protocol, ablations, and exit criteria.
 - [Data card](docs/data-card.md): data contract, split policy, risks, and handling rules.
-- [Roadmap](ROADMAP.md): research phases and what each one settled.
 - [Model selection](docs/model-selection.md): controlled component comparisons and selection rules.
 - [Reproducibility](docs/reproducibility.md): required run metadata and local tracking.
 - [License and use terms](LICENSE.md): code terms, and the terms of each dataset.

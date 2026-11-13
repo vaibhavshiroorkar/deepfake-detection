@@ -13,6 +13,17 @@ read. **Fully generated video** is the class it has no mechanism for: no real
 source, no seam, and the evidence lives in the whole frame and in the frequency
 domain.
 
+## Access status, 2026-11-13
+
+| Dataset | State | Next step | Role in P-001 |
+|---|---|---|---|
+| DeepSpeak v2 | Requested on Hugging Face, awaiting the authors. `data/DeepSpeak_v2` is empty. | Wait. If nothing after a week, email the authors with the request date and Hugging Face username. | Locked test target. The licence allows training, but keeping it unseen keeps it independent. |
+| AV-Deepfake1M | Not requested. Needs the EULA on the Hugging Face page. | Sign with a university email and the supervisor's name. | Third corpus with per-modality labels; official unseen-speaker test set. |
+| KoDF | Not requested. The paper points to https://moneybrain-research.github.io/kodf. It was built under a Korean government data project, so access may go through AI Hub. | Try the project page; if AI Hub blocks non-Korean users, email the authors. | Comparison with published FakeAVCeleb -> KoDF numbers. |
+| HiFi-AVDF | Not requested. Released with HAVIC, https://github.com/tuffy-studio/HAVIC; research use only. | Follow the repository README. | The hardest published AV test set: detectors at 90+ on KoDF fall to 58 to 76 on it. |
+
+Send every request from a university address. Gated datasets often reject personal ones.
+
 ## Person-centric, closest to what this project already does
 
 ### DeepSpeak v2

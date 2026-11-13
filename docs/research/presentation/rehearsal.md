@@ -25,8 +25,8 @@ All three members share equal project credit and prepare the full report.
 
 ## Demonstration
 
-Before presenting, check the local environment and checkpoint requirements in `team/docs/SETUP.md`.
-Follow `team/docs/FINAL_DEMO_RUNBOOK.md` for the detailed sequence.
+Before presenting, check the local environment and checkpoint requirements in `docs/SETUP.md` at tag `team/submission-final`.
+Follow `docs/FINAL_DEMO_RUNBOOK.md` at tag `team/submission-final` for the detailed sequence.
 Use an approved local example. Explain which modules ran and which could not produce evidence.
 Keep mock mode visible if real checkpoints are missing. Do not present a mock output as a measured detector result.
 
