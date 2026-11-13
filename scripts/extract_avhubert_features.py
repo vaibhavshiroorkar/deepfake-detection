@@ -74,8 +74,11 @@ def main(argv: list[str] | None = None) -> int:
     index_path = arguments.output / "index.csv"
     done: set[str] = set()
     if index_path.exists():
+        # Only final outcomes count as done. A decode error under memory
+        # pressure is transient, and skipping it on resume would lose the window.
         with index_path.open(newline="", encoding="utf-8") as handle:
-            done = {r["window_id"] for r in csv.DictReader(handle)}
+            done = {r["window_id"] for r in csv.DictReader(handle)
+                    if r["status"] in {"ok", "no face", "no audio"}}
 
     paths = []
     for row in rows:
