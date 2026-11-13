@@ -15,9 +15,13 @@ DDF=(".venv/Scripts/python.exe" -m deepfake_detection.cli)
 RUN=runs/p001
 SHARDS=${SHARDS:-3}
 SEEDS=(17 29 43)
-mkdir -p "$RUN/logs" "$RUN/checkpoints" "$RUN/evaluation" "$RUN/usable"
+mkdir -p "$RUN/logs" "$RUN/checkpoints" "$RUN/evaluation" "$RUN/usable" "$RUN/receipts"
 
 stage() { echo "[$(date '+%H:%M:%S')] $*"; }
+# Each stage leaves a receipt: the command, a hash of every input, of every
+# Python file in src/ and scripts/, and of every output (research_artifacts.py).
+# A rerun with the same code and inputs verifies the old outputs instead.
+receipt() { local name=$1; shift; $PY scripts/research_artifacts.py --receipt "$RUN/receipts/$name.json" "$@"; }
 
 test -f "$RUN/split/train.csv" || { echo "missing $RUN/split; run the sync chain first"; exit 1; }
 
@@ -62,8 +66,9 @@ for branch in visual audio; do
     epochs=$([ "$branch" = visual ] && echo 8 || echo 6)
     for seed in "${SEEDS[@]}"; do
         name="$branch-seed$seed"
-        if [ ! -f "$RUN/checkpoints/$name.pt" ]; then
-            stage "train $name"
+        stage "train $name"
+        receipt "train-$name" --outputs "$RUN/checkpoints/$name.pt" "$RUN/checkpoints/$name-history.json" \
+            --inputs "$RUN/usable/train-$branch.csv" "$RUN/usable/val-$branch.csv" "$RUN/cache-index.csv" -- \
             "${DDF[@]}" train "$branch" --train-manifest "$RUN/usable/train-$branch.csv" \
                 --validation-manifest "$RUN/usable/val-$branch.csv" \
                 --cache-index "$RUN/cache-index.csv" --cache-root "$RUN/cache" --dataset FakeAVCeleb \
@@ -72,7 +77,6 @@ for branch in visual audio; do
                 --device cuda --epochs "$epochs" --learning-rate 0.0001 --weight-decay 0.0001 \
                 --patience 2 --workers 0 --seed "$seed" --batch-size 8 --accumulation-steps 2 \
                 --freeze-epochs 1 > "$RUN/logs/train-$name.log" 2>&1
-        fi
         stage "evaluate $name"
         "${DDF[@]}" evaluate branch --branch "$branch" --checkpoint "$RUN/checkpoints/$name.pt" \
             --manifest "$RUN/usable/val-$branch.csv" --cache-index "$RUN/cache-index.csv" --cache-root "$RUN/cache" \
@@ -82,6 +86,10 @@ for branch in visual audio; do
         "${DDF[@]}" threshold --predictions "$RUN/evaluation/$name-val-predictions.csv" --split val \
             --output "$RUN/evaluation/$name-threshold.json"
         for part in test test-identity-strict; do
+            receipt "evaluate-$name-$part" --outputs "$RUN/evaluation/$name-$part-metrics.json" \
+                "$RUN/evaluation/$name-$part-predictions.csv" \
+                --inputs "$RUN/checkpoints/$name.pt" "$RUN/usable/$part-$branch.csv" \
+                "$RUN/evaluation/$name-threshold.json" -- \
             "${DDF[@]}" evaluate branch --branch "$branch" --checkpoint "$RUN/checkpoints/$name.pt" \
                 --manifest "$RUN/usable/$part-$branch.csv" --cache-index "$RUN/cache-index.csv" --cache-root "$RUN/cache" \
                 --dataset FakeAVCeleb --threshold-file "$RUN/evaluation/$name-threshold.json" \
