@@ -19,6 +19,7 @@ import argparse
 import csv
 import json
 import subprocess
+from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Pool
 from pathlib import Path
 
@@ -57,6 +58,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--windows", type=int, default=3)
     parser.add_argument("--workers", type=int, default=6)
     parser.add_argument("--limit", type=int)
+    parser.add_argument("--cuts", type=Path, help="neutralizer sidecar with kept_sec per clip")
     arguments = parser.parse_args(argv)
 
     from deepfake_detection.avsync.features import cache_path, encode, init_worker, prepare_window
@@ -74,11 +76,24 @@ def main(argv: list[str] | None = None) -> int:
         with index_path.open(newline="", encoding="utf-8") as handle:
             done = {r["window_id"] for r in csv.DictReader(handle)}
 
-    jobs, meta = [], []
+    paths = []
     for row in rows:
         path = Path(row["video_path"].replace("\\", "/"))
-        path = path if path.is_absolute() else arguments.data_dir / path
-        for start in window_starts(_duration(path), row.get("sync_start_sec", "") or "", arguments.windows):
+        paths.append(path if path.is_absolute() else arguments.data_dir / path)
+    # The neutralizer's sidecar already holds every kept length. Probing 21,544
+    # files one by one took most of an hour on the first run.
+    lengths: dict[str, float] = {}
+    if arguments.cuts and arguments.cuts.exists():
+        with arguments.cuts.open(newline="", encoding="utf-8") as handle:
+            lengths = {r["clip_id"]: float(r["kept_sec"]) for r in csv.DictReader(handle) if r.get("kept_sec")}
+    missing = [i for i, row in enumerate(rows) if row["clip_id"] not in lengths]
+    with ThreadPoolExecutor(16) as pool:
+        for i, value in zip(missing, pool.map(_duration, [paths[i] for i in missing]), strict=True):
+            lengths[rows[i]["clip_id"]] = value
+
+    jobs, meta = [], []
+    for row, path in zip(rows, paths, strict=True):
+        for start in window_starts(lengths[row["clip_id"]], row.get("sync_start_sec", "") or "", arguments.windows):
             window_id = f"{row['clip_id']}@{start:.2f}"
             if window_id in done:
                 continue
