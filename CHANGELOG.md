@@ -37,6 +37,19 @@ Added:
 - `evaluation/conformal.py`. False-alarm thresholds from real clips only: split-conformal, Neyman-Pearson umbrella, and the minimum number of real clips needed (59 for alpha = delta = 0.05).
 - [Related work](docs/research/related-work.md): which of the four objectives are new, with sources for every claim in `docs/research/related-work/`. Access steps for AV-Deepfake1M, DeepSpeak v2, KoDF and HiFi-AVDF are still to be added to the [dataset notes](docs/research/datasets.md).
 
+Later on 2026-11-13:
+
+- **Shortcut audits committed** (`results/shortcut-audit/`).
+  - FakeAVCeleb: file and audio-edge cues alone reach 0.994 AUC for real vs fake, 0.997 for fake video and 0.9996 for fake audio.
+  - In FakeAVCeleb, 493 of 500 fake-audio clips carry MP3 audio where real clips carry AAC.
+  - LAV-DF has no codec cue, but bitrate, trailing silence and duration together reach 0.936.
+  - DFDC is close to clean (0.588).
+- **LAV-DF file manifest.** `scripts/build_lavdf_file_manifest.py` labels each file by what was done to it. A first LAV-DF audit on the window manifest was deleted: 2,527 of 3,483 files supplied both a real and a fake window, so file cues could not separate them.
+- **Feature extraction.** `scripts/extract_avhubert_features.py` caches AV-HuBERT lips, audio and fused features for up to three 2-second windows per clip.
+- **Sync path trainer.** `scripts/train_sync_path.py` trains the real-only alignment head at three seeds. Both the training loss and the epoch choice use real clips only.
+- **Visual and audio driver.** `scripts/run_p001_branches.sh` runs both paths at three seeds, with thresholds chosen on validation and recorded with each report.
+- **P-001 amendment A1**, committed before training: the training subsample rule, three audio seeds, sync windows, and the per-file LAV-DF audit.
+
 ### Added
 
 - A research report, presentation and rehearsal covering both project histories through November 2026. See [research materials](docs/research/presentation/README.md).
