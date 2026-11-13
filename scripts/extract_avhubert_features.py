@@ -40,10 +40,10 @@ def _duration(path: Path) -> float:
         return 0.0
 
 
-def window_starts(duration: float, fixed: str, count: int) -> list[float]:
+def window_starts(duration: float, fixed: str, count: int, step: float = 2.0) -> list[float]:
     if fixed.strip():
         return [float(fixed)]
-    starts = [2.0 * i for i in range(count) if 2.0 * i + WINDOW_SECONDS <= duration + 1e-6]
+    starts = [step * i for i in range(count) if step * i + WINDOW_SECONDS <= duration + 1e-6]
     return starts or ([0.0] if duration >= 1.0 else [])
 
 
@@ -56,6 +56,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--landmarker", type=Path, default=Path("models/mediapipe/face_landmarker.task"))
     parser.add_argument("--eye-px", type=float, default=64.0)
     parser.add_argument("--windows", type=int, default=3)
+    parser.add_argument("--step", type=float, default=2.0, help="seconds between window starts")
     parser.add_argument("--workers", type=int, default=6)
     parser.add_argument("--limit", type=int)
     parser.add_argument("--cuts", type=Path, help="neutralizer sidecar with kept_sec per clip")
@@ -93,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
 
     jobs, meta = [], []
     for row, path in zip(rows, paths, strict=True):
-        for start in window_starts(lengths[row["clip_id"]], row.get("sync_start_sec", "") or "", arguments.windows):
+        for start in window_starts(lengths[row["clip_id"]], row.get("sync_start_sec", "") or "", arguments.windows, arguments.step):
             window_id = f"{row['clip_id']}@{start:.2f}"
             if window_id in done:
                 continue

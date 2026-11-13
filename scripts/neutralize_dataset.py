@@ -87,10 +87,16 @@ def main(argv: list[str] | None = None) -> int:
         if row["clip_id"] in cuts:
             by_path[str(row["_target"])] = cuts[row["clip_id"]]
     kept, failed = [], 0
+    refused: dict[str, dict[str, int]] = {}
     for row in rows:
         cut = cuts.get(row["clip_id"]) or by_path.get(str(row["_target"]))
         if not cut or cut.get("error"):
             failed += 1
+            reason = (cut or {}).get("error", "missing") or "missing"
+            reason = "too short" if str(reason).startswith("too short") else "ffmpeg or decode error"
+            kind = row.get("manipulation_type", "unknown")
+            refused.setdefault(kind, {}).setdefault(reason, 0)
+            refused[kind][reason] += 1
             continue
         offset = float(cut["offset_sec"])
         row["video_path"] = str(Path(row["_target"]).relative_to(arguments.data_dir)).replace("\\", "/") \
@@ -111,6 +117,10 @@ def main(argv: list[str] | None = None) -> int:
         "rows_in": len(rows),
         "rows_out": len(kept),
         "rows_failed": failed,
+        # A refusal that hits one class harder is a selection effect; report it.
+        "refused_by_category": refused,
+        "rows_in_by_category": {k: sum(1 for r in rows if r.get("manipulation_type") == k)
+                                for k in sorted({r.get("manipulation_type", "") for r in rows})},
         "settings": settings.as_dict(),
     }
     arguments.manifest_out.with_suffix(".json").write_text(json.dumps(summary, indent=2) + "\n",

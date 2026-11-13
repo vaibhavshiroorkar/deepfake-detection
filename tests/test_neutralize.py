@@ -6,12 +6,17 @@ import numpy as np
 import pytest
 
 from deepfake_detection.preprocessing.neutralize import (
+    dither,
+    SAMPLE_RATE,
     NeutralSettings,
     cut_window,
     ffmpeg_command,
     neutralize_clip,
+    normalize_level,
     silence_bounds,
 )
+
+HAS_FFMPEG = shutil.which("ffmpeg") is not None and shutil.which("ffprobe") is not None
 
 
 def test_silence_bounds_find_digital_silence_at_both_ends() -> None:
@@ -23,27 +28,77 @@ def test_silence_bounds_find_digital_silence_at_both_ends() -> None:
 
 
 def test_quiet_speech_is_not_silence() -> None:
-    # -50 dBFS is quiet but above the -60 dBFS cut.
     wave = np.full(1000, 10 ** (-50 / 20), np.float32)
     assert silence_bounds(wave, 1000) == (0.0, 0.0)
 
 
-def test_a_clip_that_would_become_too_short_is_kept_whole() -> None:
-    assert cut_window(1.2, 0.5, 0.5, minimum=1.0) == (0.0, 1.2)
-    assert cut_window(6.0, 0.03, 1.2, minimum=1.0) == (0.03, pytest.approx(4.8))
+def test_cuts_start_on_a_whole_frame_and_have_one_length() -> None:
+    # 31 ms of leading silence rounds up to frame 1 (40 ms); the span is fixed.
+    start, end = cut_window(6.0, 0.031, 1.19, fixed=3.0, fps=25)
+    assert start == pytest.approx(0.04)
+    assert end == pytest.approx(3.04)
+    # 1.2 s of sound cannot give a 3 s span.
+    assert cut_window(2.0, 0.4, 0.4, fixed=3.0, fps=25) is None
 
 
-def test_one_seek_cuts_both_streams() -> None:
-    command = ffmpeg_command(Path("a.mp4"), Path("b.mp4"), 0.03, 4.8, True, NeutralSettings())
-    # The seek sits before -i, so it applies to the input and therefore to both streams.
+def test_level_normalization_is_a_plain_gain() -> None:
+    wave = np.sin(np.linspace(0, 200, 16000)).astype(np.float32) * 0.01
+    out = normalize_level(wave, -23.0)
+    assert 20 * np.log10(np.sqrt(np.mean(out.astype(np.float64) ** 2))) == pytest.approx(-23.0, abs=0.05)
+    # Same shape, so no delay: the peak sits where it was.
+    assert int(np.argmax(out)) == int(np.argmax(wave))
+
+
+def test_audio_comes_from_the_cut_wav_not_from_the_source() -> None:
+    command = ffmpeg_command(Path("a.mp4"), Path("b.mp4"), 0.04, 4.8, Path("a.wav"), NeutralSettings())
     assert command.index("-ss") < command.index("-i")
-    assert "-map_metadata" in command and "libx264" in command and "loudnorm" in " ".join(command)
+    assert command[command.index("1:a:0") - 1] == "-map"
+    assert "loudnorm" not in " ".join(command) and "-bf" in command
 
 
-@pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="needs ffmpeg")
+def _decode(path: Path) -> np.ndarray:
+    out = subprocess.run(["ffmpeg", "-v", "error", "-i", str(path), "-map", "0:a:0", "-ac", "1",
+                          "-ar", str(SAMPLE_RATE), "-f", "f32le", "pipe:1"], capture_output=True, check=True)
+    return np.frombuffer(out.stdout, np.float32)
+
+
+def _starts(path: Path) -> list[str]:
+    return subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=codec_type,start_time",
+                           "-of", "csv=p=0", str(path)], capture_output=True, text=True, check=True).stdout.split()
+
+
+def _make(path: Path, video_codec: str, audio_codec: str, silence: float) -> None:
+    tone = f"if(gte(t,{silence}),0.3*sin(2*PI*440*t),0)"
+    subprocess.run(
+        ["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "testsrc=size=64x64:rate=25:duration=3",
+         "-f", "lavfi", "-i", f"aevalsrc='{tone}':s=44100:d=3",
+         "-c:v", video_codec, "-c:a", audio_codec, "-shortest", str(path)],
+        check=True,
+    )
+
+
+@pytest.mark.skipif(not HAS_FFMPEG, reason="needs ffmpeg")
+def test_differently_built_sources_leave_identical_edges(tmp_path: Path) -> None:
+    # Version 1 let each source's AAC priming leak through the re-mux: face-swapped
+    # FakeAVCeleb clips gained 28 ms of leading silence that real clips did not.
+    first, second = tmp_path / "a.mp4", tmp_path / "b.mp4"
+    _make(first, "mpeg4", "aac", silence=0.5)
+    _make(second, "libx264", "libmp3lame", silence=0.0)
+    outputs = []
+    for source in (first, second):
+        target = tmp_path / f"n-{source.name}"
+        report = neutralize_clip(source, target, NeutralSettings(fixed_seconds=2.0))
+        assert "error" not in report
+        outputs.append(target)
+    for target in outputs:
+        leading, _ = silence_bounds(_decode(target))
+        assert leading < 0.002
+    assert _starts(outputs[0]) == _starts(outputs[1])
+
+
+@pytest.mark.skipif(not HAS_FFMPEG, reason="needs ffmpeg")
 def test_neutral_copy_drops_the_silence_and_changes_the_codec(tmp_path: Path) -> None:
     source = tmp_path / "source.mp4"
-    # 0.5 s silence, 2 s tone, 1 s silence, under an MPEG-4 Part 2 video.
     subprocess.run(
         ["ffmpeg", "-v", "error", "-y",
          "-f", "lavfi", "-i", "testsrc=size=64x64:rate=25:duration=3.5",
@@ -53,13 +108,31 @@ def test_neutral_copy_drops_the_silence_and_changes_the_codec(tmp_path: Path) ->
         check=True,
     )
     target = tmp_path / "neutral.mp4"
-    report = neutralize_clip(source, target, NeutralSettings())
+    report = neutralize_clip(source, target, NeutralSettings(fixed_seconds=1.5))
     assert "error" not in report
-    assert report["offset_sec"] == pytest.approx(0.5, abs=0.06)
-    assert report["kept_sec"] == pytest.approx(2.0, abs=0.1)
+    assert report["offset_sec"] == pytest.approx(0.52, abs=0.05)
+    assert report["kept_sec"] == pytest.approx(1.5, abs=0.01)
     codec = subprocess.run(
         ["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
          "stream=codec_name", "-of", "csv=p=0", str(target)],
         capture_output=True, text=True, check=True,
     ).stdout.strip()
     assert codec == "h264"
+
+
+@pytest.mark.skipif(not HAS_FFMPEG, reason="needs ffmpeg")
+def test_a_clip_with_too_little_sound_is_refused(tmp_path: Path) -> None:
+    source = tmp_path / "short.mp4"
+    _make(source, "libx264", "aac", silence=2.5)  # 0.5 s of tone in a 3 s clip
+    report = neutralize_clip(source, tmp_path / "out.mp4", NeutralSettings(fixed_seconds=2.0))
+    assert report["error"].startswith("too short")
+
+
+def test_dither_removes_digital_zeros_and_repeats_per_file() -> None:
+    zeros = np.zeros(16000, np.float32)
+    once, again = dither(zeros, -66.0, "a.mp4"), dither(zeros, -66.0, "a.mp4")
+    assert np.count_nonzero(once) == once.size
+    assert np.array_equal(once, again)
+    assert not np.array_equal(once, dither(zeros, -66.0, "b.mp4"))
+    level = 20 * np.log10(np.sqrt(np.mean(once.astype(np.float64) ** 2)))
+    assert level == pytest.approx(-66.0, abs=0.5)

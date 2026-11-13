@@ -1,18 +1,36 @@
 """Make real and fake clips leave the encoder looking the same.
 
 FakeAVCeleb shows why this exists. Its real clips are H.264; 92 percent of its
-face-swapped clips are MPEG-4 Part 2. Clips with generated audio start with
-about 30 ms of digital silence and end with about 1.2 s of it, while real clips
-have neither. Each of those cues alone separates the classes at 0.97 AUC or
-better (results/shortcut-audit). A detector trained on the raw files can learn
-the pipeline instead of the manipulation.
+face-swapped clips are MPEG-4 Part 2. Its generated-voice clips carry MP3 audio,
+start with about 30 ms of digital silence and end with about 1.2 s of it. Each
+of those cues alone separates the classes at 0.97 AUC or better
+(results/shortcut-audit). A detector trained on the raw files can learn the
+pipeline instead of the manipulation.
 
-The fix treats every clip identically:
+Every clip is treated identically:
 
-1. Find the first and last audio sample above -60 dBFS.
-2. Cut video and audio together at those two instants, so lip-sync is kept.
-3. Re-encode with one codec, frame rate, pixel format and audio format.
-4. Normalise loudness, and strip container metadata.
+1. Decode the audio once, to 16 kHz mono samples.
+2. Scale the samples to a fixed RMS level. This is a plain gain in numpy, with
+   no filter look-ahead, so no filter can add a clip-dependent delay. Scaling
+   comes first so that "silence" means the same thing in every clip.
+3. Find the first and last sample above -60 dBFS. Round the start up to a
+   whole video frame, and keep exactly `fixed_seconds` from there, so every
+   clip has the same length. Generated speech is shorter than real speech, so
+   duration alone was a cue. A clip too short for the fixed span is refused and
+   counted.
+4. Add dither, quiet noise at -66 dBFS, seeded by the file name. Speech
+   synthesizers write exact digital zeros in their pauses; microphones never
+   do. Dither removes the zeros without hiding that a pause is clean.
+5. Encode the video for that span (H.264, 25 fps, no B-frames) and mux it with
+   the cut audio as AAC. Strip container metadata.
+
+Version 2 detected silence before scaling, so quiet tails crossed the
+threshold differently by class, and it kept each clip's natural length.
+Version 1 cut with an ffmpeg input seek and normalized with `loudnorm`. That
+re-muxed each source's AAC priming differently: face-swapped clips gained 28 ms
+of leading silence that real clips did not, so the shortcut came back
+(results/shortcut-audit/fakeavceleb-neutral-v1). Version 2 never lets ffmpeg
+touch the audio timeline before encoding.
 
 The cut offset is returned so that labels with timestamps (LAV-DF's forged
 segments) can be shifted by the same amount.
@@ -20,8 +38,12 @@ segments) can be shifted by the same amount.
 
 from __future__ import annotations
 
+import hashlib
 import json
+import math
 import subprocess
+import tempfile
+import wave
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -29,6 +51,7 @@ import numpy as np
 
 SAMPLE_RATE = 16_000
 SILENCE_DBFS = -60.0
+VERSION = 4
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,55 +61,83 @@ class NeutralSettings:
     preset: str = "medium"
     audio_bitrate: str = "64k"
     audio_rate: int = SAMPLE_RATE
-    loudness_lufs: float = -23.0
+    loudness_dbfs: float = -23.0
+    dither_dbfs: float = -66.0
     silence_dbfs: float = SILENCE_DBFS
-    # Never cut a clip below this; a clip that is mostly silence keeps its length.
-    minimum_seconds: float = 1.0
+    # Every neutral clip is exactly this long; shorter clips are refused.
+    fixed_seconds: float = 3.0
+    version: int = VERSION
 
     def as_dict(self) -> dict[str, object]:
         return {name: getattr(self, name) for name in self.__slots__}
 
 
 def silence_bounds(
-    wave: np.ndarray, rate: int = SAMPLE_RATE, threshold_dbfs: float = SILENCE_DBFS
+    wave_samples: np.ndarray, rate: int = SAMPLE_RATE, threshold_dbfs: float = SILENCE_DBFS
 ) -> tuple[float, float]:
     """Seconds of digital silence at the start and at the end of a mono wave."""
-    if wave.size == 0:
+    if wave_samples.size == 0:
         return 0.0, 0.0
-    loud = np.flatnonzero(np.abs(wave) > 10 ** (threshold_dbfs / 20))
+    loud = np.flatnonzero(np.abs(wave_samples) > 10 ** (threshold_dbfs / 20))
     if loud.size == 0:
         return 0.0, 0.0
-    return float(loud[0]) / rate, float(wave.size - 1 - loud[-1]) / rate
+    return float(loud[0]) / rate, float(wave_samples.size - 1 - loud[-1]) / rate
 
 
 def cut_window(
-    duration: float, leading: float, trailing: float, minimum: float
-) -> tuple[float, float]:
-    """Start and end of the kept span, falling back to the whole clip if too short."""
-    start, end = leading, duration - trailing
-    if end - start < minimum:
-        return 0.0, duration
-    return start, end
+    duration: float, leading: float, trailing: float, fixed: float, fps: int = 25
+) -> tuple[float, float] | None:
+    """A span of exactly `fixed` seconds starting on the first whole frame of sound.
+
+    Returns None when the sounding part of the clip is shorter than `fixed`.
+    The start rounds up, so no leading silence is kept.
+    """
+    start = math.ceil(leading * fps - 1e-9) / fps
+    if start + fixed > duration - trailing + 1e-9:
+        return None
+    return start, start + fixed
+
+
+def normalize_level(samples: np.ndarray, target_dbfs: float) -> np.ndarray:
+    """Scale to a fixed RMS level. A plain gain: no look-ahead, no delay."""
+    rms = float(np.sqrt(np.mean(np.square(samples, dtype=np.float64)))) if samples.size else 0.0
+    if rms <= 0:
+        return samples.astype(np.float32)
+    return np.clip(samples * (10 ** (target_dbfs / 20) / rms), -1.0, 1.0).astype(np.float32)
+
+
+def dither(samples: np.ndarray, level_dbfs: float, seed_text: str) -> np.ndarray:
+    """Add Gaussian noise at a fixed RMS level, the same recipe for every clip."""
+    seed = int.from_bytes(hashlib.sha256(seed_text.encode()).digest()[:8], "little")
+    noise = np.random.default_rng(seed).normal(0.0, 10 ** (level_dbfs / 20), samples.shape)
+    return (samples + noise).astype(np.float32)
+
+
+def write_wav(path: Path, samples: np.ndarray, rate: int) -> None:
+    pcm = (np.clip(samples, -1.0, 1.0) * 32767).astype("<i2")
+    with wave.open(str(path), "wb") as handle:
+        handle.setnchannels(1)
+        handle.setsampwidth(2)
+        handle.setframerate(rate)
+        handle.writeframes(pcm.tobytes())
 
 
 def ffmpeg_command(
-    source: Path, target: Path, start: float, end: float, has_audio: bool, settings: NeutralSettings
+    source: Path, target: Path, start: float, end: float, audio_wav: Path | None, settings: NeutralSettings
 ) -> list[str]:
-    # One input seek before -i cuts both streams at the same instant.
     command = [
         "ffmpeg", "-y", "-v", "error", "-nostdin",
         "-ss", f"{start:.4f}", "-to", f"{end:.4f}", "-i", str(source),
+    ]
+    if audio_wav is not None:
+        command += ["-i", str(audio_wav)]
+    command += [
         "-map_metadata", "-1", "-map", "0:v:0",
         "-vf", f"fps={settings.fps},format=yuv420p",
-        "-c:v", "libx264", "-preset", settings.preset, "-crf", str(settings.crf),
+        "-c:v", "libx264", "-preset", settings.preset, "-crf", str(settings.crf), "-bf", "0",
     ]
-    if has_audio:
-        command += [
-            "-map", "0:a:0",
-            "-af", f"loudnorm=I={settings.loudness_lufs}:TP=-2:LRA=11",
-            "-c:a", "aac", "-b:a", settings.audio_bitrate,
-            "-ar", str(settings.audio_rate), "-ac", "1",
-        ]
+    if audio_wav is not None:
+        command += ["-map", "1:a:0", "-c:a", "aac", "-b:a", settings.audio_bitrate, "-shortest"]
     else:
         command += ["-an"]
     command += ["-movflags", "+faststart", str(target)]
@@ -113,14 +164,23 @@ def _duration(path: Path) -> float:
 def neutralize_clip(source: Path, target: Path, settings: NeutralSettings) -> dict[str, object]:
     """Write the neutral copy and report what was cut."""
     target.parent.mkdir(parents=True, exist_ok=True)
-    wave = _read_audio(source)
+    audio = normalize_level(_read_audio(source), settings.loudness_dbfs)
     duration = _duration(source)
-    leading, trailing = silence_bounds(wave, SAMPLE_RATE, settings.silence_dbfs)
-    start, end = cut_window(duration, leading, trailing, settings.minimum_seconds)
-    run = subprocess.run(
-        ffmpeg_command(source, target, start, end, wave.size > 0, settings),
-        capture_output=True, check=False,
-    )
+    leading, trailing = silence_bounds(audio, SAMPLE_RATE, settings.silence_dbfs)
+    window = cut_window(duration, leading, trailing, settings.fixed_seconds, settings.fps)
+    if window is None:
+        return {"error": f"too short: under {settings.fixed_seconds} s of sound"}
+    start, end = window
+    with tempfile.TemporaryDirectory() as scratch:
+        wav = None
+        if audio.size:
+            span = audio[round(start * SAMPLE_RATE) : round(end * SAMPLE_RATE)]
+            wav = Path(scratch) / "audio.wav"
+            # Scale the kept span again so every clip has the same level.
+            level = normalize_level(span, settings.loudness_dbfs)
+            write_wav(wav, dither(level, settings.dither_dbfs, source.name), SAMPLE_RATE)
+        run = subprocess.run(ffmpeg_command(source, target, start, end, wav, settings),
+                             capture_output=True, check=False)
     if run.returncode != 0 or not target.is_file():
         return {"error": run.stderr.decode(errors="replace")[:200]}
     return {
@@ -128,5 +188,5 @@ def neutralize_clip(source: Path, target: Path, settings: NeutralSettings) -> di
         "kept_sec": round(end - start, 4),
         "cut_leading_sec": round(start, 4),
         "cut_trailing_sec": round(duration - end, 4),
-        "has_audio": wave.size > 0,
+        "has_audio": audio.size > 0,
     }

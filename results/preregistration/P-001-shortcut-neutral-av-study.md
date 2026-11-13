@@ -82,3 +82,20 @@ LAV-DF is sampled by original recording (`scripts/sample_lavdf.py`, seed 17). Ea
 | dev | 300 | 1,089 | Validation for the reverse models |
 
 The DFDC target is the existing 3,032-clip subset (`runs/streams-20260905/dfdc-manifest.csv`), neutralized like the training data.
+
+## Amendment A4, 2026-11-13, after H1 attempt 1 and before any model is trained
+
+**H1 attempt 1 failed.** On the version-1 neutral copies, the shortcut ceiling was 0.933 (clip label). The record is in `results/shortcut-audit/fakeavceleb-neutral-v1`. Re-muxing exposed each source's AAC priming differently, so face-swapped clips gained 28 ms of leading silence. Duration and trailing silence also still carried the label.
+
+The neutralizer is now version 4 (`preprocessing/neutralize.py`):
+
+- Audio is decoded once, cut on sample indices and scaled to a fixed RMS level in numpy, then muxed as a WAV.
+- Cuts start on a whole video frame.
+- **Every clip is exactly 3.00 s long, starting at the first sound.** Clips with less than 3.00 s of sound are refused. Refusals are counted per category, because they remove short generated-speech clips more often than real ones.
+- Dither at -66 dBFS removes the exact digital zeros that speech synthesizers leave in pauses.
+
+On a 600-clip validation sample (150 per category, not used for anything else), version 4 gave ceilings of 0.598 (clip), 0.489 (video) and 0.702 (audio). 29 of 300 fake-audio clips and 0 of 300 others were refused.
+
+H1 is re-run once on the full set with version 4. Its result is reported whether it passes or not. The audio-label ceiling is reported beside H3, because a residual audio cue weakens any modality-prediction claim.
+
+**Sync windows** become 2 s windows starting at 0 and 1 s (`--step 1`), because every clip is now 3 s. This replaces the 0, 2 and 4 s rule of A1.
