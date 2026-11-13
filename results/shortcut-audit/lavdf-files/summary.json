@@ -1,0 +1,129 @@
+{
+  "dataset": "LAV-DF",
+  "manifest": "data\\manifests\\lavdf-files.csv",
+  "clips_requested": 8000,
+  "clips_read": 8000,
+  "clips_failed": 0,
+  "silence_threshold_dbfs": -60,
+  "folds": 5,
+  "fold_grouping": "source identity",
+  "clip_fake": {
+    "positives": 5862,
+    "negatives": 2138,
+    "cue_auc": {
+      "audio_bitrate": 0.7749,
+      "trailing_silence_ms": 0.6963,
+      "duration": 0.6352,
+      "video_bitrate": 0.6338,
+      "overall_bitrate": 0.6103,
+      "loudness_db": 0.5141,
+      "leading_silence_ms": 0.509,
+      "fps": 0.5,
+      "width": 0.5,
+      "height": 0.5,
+      "audio_sample_rate": 0.5,
+      "container": 0.4805,
+      "video_codec": 0.4805,
+      "pixel_format": 0.4805,
+      "audio_codec": 0.4805,
+      "has_audio": 0.4805
+    },
+    "shortcut_ceiling_auc": 0.9359
+  },
+  "video_fake": {
+    "positives": 3915,
+    "negatives": 4085,
+    "cue_auc": {
+      "audio_bitrate": 0.6544,
+      "trailing_silence_ms": 0.6093,
+      "duration": 0.5547,
+      "video_bitrate": 0.5457,
+      "overall_bitrate": 0.5295,
+      "loudness_db": 0.511,
+      "leading_silence_ms": 0.5066,
+      "fps": 0.5,
+      "width": 0.5,
+      "height": 0.5,
+      "audio_sample_rate": 0.5,
+      "container": 0.4901,
+      "video_codec": 0.4901,
+      "pixel_format": 0.4901,
+      "audio_codec": 0.4901,
+      "has_audio": 0.4901
+    },
+    "shortcut_ceiling_auc": 0.7382
+  },
+  "audio_fake": {
+    "positives": 3893,
+    "negatives": 4107,
+    "cue_auc": {
+      "audio_bitrate": 0.6301,
+      "trailing_silence_ms": 0.6041,
+      "duration": 0.6003,
+      "video_bitrate": 0.5985,
+      "overall_bitrate": 0.5916,
+      "leading_silence_ms": 0.5073,
+      "loudness_db": 0.5051,
+      "fps": 0.5,
+      "width": 0.5,
+      "height": 0.5,
+      "audio_sample_rate": 0.5,
+      "container": 0.4844,
+      "video_codec": 0.4844,
+      "pixel_format": 0.4844,
+      "audio_codec": 0.4844,
+      "has_audio": 0.4844
+    },
+    "shortcut_ceiling_auc": 0.7514
+  },
+  "codec_census": {
+    "RealVideo-RealAudio": {
+      "clips": 2138,
+      "video_codec": {
+        "h264": 2138
+      },
+      "container": {
+        "mov,mp4,m4a,3gp,3g2,mj2": 2138
+      },
+      "audio_codec": {
+        "aac": 2138
+      }
+    },
+    "RealVideo-FakeAudio": {
+      "clips": 1947,
+      "video_codec": {
+        "h264": 1947
+      },
+      "container": {
+        "mov,mp4,m4a,3gp,3g2,mj2": 1947
+      },
+      "audio_codec": {
+        "aac": 1947
+      }
+    },
+    "FakeVideo-RealAudio": {
+      "clips": 1969,
+      "video_codec": {
+        "h264": 1969
+      },
+      "container": {
+        "mov,mp4,m4a,3gp,3g2,mj2": 1969
+      },
+      "audio_codec": {
+        "aac": 1969
+      }
+    },
+    "FakeVideo-FakeAudio": {
+      "clips": 1946,
+      "video_codec": {
+        "h264": 1946
+      },
+      "container": {
+        "mov,mp4,m4a,3gp,3g2,mj2": 1946
+      },
+      "audio_codec": {
+        "aac": 1946
+      }
+    }
+  }
+}

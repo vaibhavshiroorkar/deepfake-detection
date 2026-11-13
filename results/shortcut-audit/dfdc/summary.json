@@ -1,0 +1,82 @@
+{
+  "dataset": "DFDC",
+  "manifest": "runs\\streams-20260905\\dfdc-manifest.csv",
+  "clips_requested": 3032,
+  "clips_read": 3032,
+  "clips_failed": 0,
+  "silence_threshold_dbfs": -60,
+  "folds": 5,
+  "fold_grouping": "source identity",
+  "clip_fake": {
+    "positives": 2838,
+    "negatives": 194,
+    "cue_auc": {
+      "overall_bitrate": 0.5479,
+      "video_bitrate": 0.5479,
+      "width": 0.534,
+      "height": 0.534,
+      "leading_silence_ms": 0.5201,
+      "fps": 0.518,
+      "audio_bitrate": 0.5118,
+      "duration": 0.5097,
+      "loudness_db": 0.5093,
+      "trailing_silence_ms": 0.5045,
+      "audio_sample_rate": 0.5018,
+      "container": 0.4979,
+      "video_codec": 0.4979,
+      "pixel_format": 0.4979,
+      "audio_codec": 0.4979,
+      "has_audio": 0.4979
+    },
+    "shortcut_ceiling_auc": 0.5878
+  },
+  "video_fake": {
+    "positives": 2838,
+    "negatives": 194,
+    "cue_auc": {
+      "overall_bitrate": 0.5479,
+      "video_bitrate": 0.5479,
+      "width": 0.534,
+      "height": 0.534,
+      "leading_silence_ms": 0.5201,
+      "fps": 0.518,
+      "audio_bitrate": 0.5118,
+      "duration": 0.5097,
+      "loudness_db": 0.5093,
+      "trailing_silence_ms": 0.5045,
+      "audio_sample_rate": 0.5018,
+      "container": 0.4979,
+      "video_codec": 0.4979,
+      "pixel_format": 0.4979,
+      "audio_codec": 0.4979,
+      "has_audio": 0.4979
+    },
+    "shortcut_ceiling_auc": 0.5878
+  },
+  "codec_census": {
+    "FakeVideo-RealAudio": {
+      "clips": 2838,
+      "video_codec": {
+        "h264": 2838
+      },
+      "container": {
+        "mov,mp4,m4a,3gp,3g2,mj2": 2838
+      },
+      "audio_codec": {
+        "aac": 2838
+      }
+    },
+    "RealVideo-RealAudio": {
+      "clips": 194,
+      "video_codec": {
+        "h264": 194
+      },
+      "container": {
+        "mov,mp4,m4a,3gp,3g2,mj2": 194
+      },
+      "audio_codec": {
+        "aac": 194
+      }
+    }
+  }
+}

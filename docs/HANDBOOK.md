@@ -173,7 +173,7 @@ The full list of commands is in [docs/reference/cli.md](reference/cli.md). How r
 |---|---|---|---|---|---|
 | FakeAVCeleb | 21,544 | **0.994** | **0.997** | **1.000** (0.9996) | Video codec (0.971 clip label); leading silence (0.992 audio label) |
 | DFDC (our subset) | 3,032 | 0.588 | 0.588 | no audio fakes | Bitrate, 0.548 |
-| LAV-DF | file-level sample | pending | pending | pending | |
+| LAV-DF | 8,000 files (stratified sample) | **0.936** | 0.738 | 0.751 | No single strong cue: audio bitrate 0.775, trailing silence 0.696, duration 0.635 |
 
 **What FakeAVCeleb's files say about their labels** (results/shortcut-audit/fakeavceleb):
 
@@ -189,6 +189,8 @@ Three things follow:
 - FakeAVCeleb's labels can be read off its files. Any detector score on raw FakeAVCeleb has to be compared with 0.994, not with 0.5.
 - Two of these cues have not been reported for this dataset: the MP3 audio track on generated speech, and the per-category codec split.
 - DFDC is close to clean on these cues. That is one reason detectors trained on FakeAVCeleb fall toward chance there: the cue they learned is absent.
+
+LAV-DF is different from FakeAVCeleb. Every category is H.264 with AAC audio, so the codec carries nothing. But weak cues add up: audio bitrate, trailing silence and duration together reach 0.936. Neutralization fixes the audio bitrate and removes edge silence. It cannot fix duration, because LAV-DF's edits replace words and change a clip's length. Our paths read fixed 2 to 4 second windows and never see the length, but any model given whole clips could learn it.
 
 A first attempt on LAV-DF used a window-level manifest in which 2,527 of 3,483 files supply both a real and a fake window. File cues cannot separate two windows of the same file, so that run understated the shortcut. It was deleted, and LAV-DF is being audited per file.
 

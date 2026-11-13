@@ -1,0 +1,131 @@
+{
+  "dataset": "FakeAVCeleb",
+  "manifest": "data\\manifests\\fakeavceleb.csv",
+  "clips_requested": 21544,
+  "clips_read": 21544,
+  "clips_failed": 0,
+  "silence_threshold_dbfs": -60,
+  "folds": 5,
+  "fold_grouping": "source identity",
+  "clip_fake": {
+    "positives": 21044,
+    "negatives": 500,
+    "cue_auc": {
+      "video_codec": 0.9705,
+      "overall_bitrate": 0.9395,
+      "video_bitrate": 0.9255,
+      "leading_silence_ms": 0.7713,
+      "audio_bitrate": 0.7496,
+      "audio_sample_rate": 0.6907,
+      "duration": 0.6679,
+      "trailing_silence_ms": 0.6555,
+      "loudness_db": 0.5915,
+      "audio_codec": 0.5113,
+      "fps": 0.5017,
+      "width": 0.5016,
+      "height": 0.5015,
+      "container": 0.4996,
+      "pixel_format": 0.4996,
+      "has_audio": 0.4996
+    },
+    "shortcut_ceiling_auc": 0.9942
+  },
+  "video_fake": {
+    "positives": 20544,
+    "negatives": 1000,
+    "cue_auc": {
+      "video_codec": 0.982,
+      "video_bitrate": 0.9529,
+      "overall_bitrate": 0.9426,
+      "audio_codec": 0.745,
+      "duration": 0.6813,
+      "trailing_silence_ms": 0.616,
+      "audio_sample_rate": 0.56,
+      "loudness_db": 0.5444,
+      "audio_bitrate": 0.5409,
+      "fps": 0.5388,
+      "leading_silence_ms": 0.5128,
+      "width": 0.5016,
+      "height": 0.5016,
+      "container": 0.4996,
+      "pixel_format": 0.4996,
+      "has_audio": 0.4996
+    },
+    "shortcut_ceiling_auc": 0.997
+  },
+  "audio_fake": {
+    "positives": 11335,
+    "negatives": 10209,
+    "cue_auc": {
+      "leading_silence_ms": 0.9921,
+      "trailing_silence_ms": 0.8135,
+      "audio_bitrate": 0.7673,
+      "duration": 0.7051,
+      "overall_bitrate": 0.6725,
+      "video_bitrate": 0.6371,
+      "audio_sample_rate": 0.6361,
+      "loudness_db": 0.5831,
+      "video_codec": 0.5348,
+      "audio_codec": 0.5186,
+      "fps": 0.5028,
+      "height": 0.5017,
+      "width": 0.5017,
+      "container": 0.4967,
+      "pixel_format": 0.4967,
+      "has_audio": 0.4967
+    },
+    "shortcut_ceiling_auc": 0.9996
+  },
+  "codec_census": {
+    "RealVideo-RealAudio": {
+      "clips": 500,
+      "video_codec": {
+        "h264": 500
+      },
+      "container": {
+        "mov,mp4,m4a,3gp,3g2,mj2": 500
+      },
+      "audio_codec": {
+        "aac": 500
+      }
+    },
+    "RealVideo-FakeAudio": {
+      "clips": 500,
+      "video_codec": {
+        "h264": 500
+      },
+      "container": {
+        "mov,mp4,m4a,3gp,3g2,mj2": 500
+      },
+      "audio_codec": {
+        "mp3": 493,
+        "aac": 7
+      }
+    },
+    "FakeVideo-RealAudio": {
+      "clips": 9709,
+      "video_codec": {
+        "h264": 730,
+        "mpeg4": 8979
+      },
+      "container": {
+        "mov,mp4,m4a,3gp,3g2,mj2": 9709
+      },
+      "audio_codec": {
+        "aac": 9709
+      }
+    },
+    "FakeVideo-FakeAudio": {
+      "clips": 10835,
+      "video_codec": {
+        "mpeg4": 10835
+      },
+      "container": {
+        "mov,mp4,m4a,3gp,3g2,mj2": 10835
+      },
+      "audio_codec": {
+        "aac": 10835
+      }
+    }
+  }
+}
