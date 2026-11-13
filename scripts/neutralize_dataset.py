@@ -49,8 +49,11 @@ def main(argv: list[str] | None = None) -> int:
     sidecar_path = arguments.manifest_out.with_suffix(".cuts.csv")
     cuts: dict[str, dict] = {}
     if sidecar_path.exists():
+        # A refusal for length is final. Any other error (a decoder that could
+        # not start under memory pressure) is retried on resume.
         with sidecar_path.open(newline="", encoding="utf-8") as handle:
-            cuts = {r["clip_id"]: r for r in csv.DictReader(handle)}
+            cuts = {r["clip_id"]: r for r in csv.DictReader(handle)
+                    if not r.get("error") or r["error"].startswith("too short")}
 
     jobs, seen = [], set()
     for row in rows:
