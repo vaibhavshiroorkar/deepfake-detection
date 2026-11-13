@@ -61,3 +61,12 @@ ROC-AUC, PR-AUC, balanced accuracy, EER (interpolated), FPR and FNR at the froze
 - **Audio path: three seeds.** The audio path is trained at seeds 17, 29 and 43. The earlier driver trained it at seed 17 only.
 - **Sync path input.** Each clip gives up to three 2-second windows at 0, 2 and 4 s, with a face in at least 80% of frames. A clip's score is the mean of its window scores. Clips with no usable window are abstentions and are counted in coverage.
 - **LAV-DF in H1.** LAV-DF is audited per file (`scripts/build_lavdf_file_manifest.py`), not per window. A window manifest lets one file supply both labels.
+
+## Amendment A2, 2026-11-13, before any P-001 result is read
+
+The data section listed FakeAVCeleb plus the LAV-DF train partition as training data. H2 also treats the LAV-DF test set as a cross-corpus target, and H3 needs a model trained on each corpus alone. These contradict each other. Resolved as follows:
+
+- **Primary models (H1, H2, H4)** train on neutral FakeAVCeleb only. LAV-DF test and DFDC are then both cross-corpus targets for H2.
+- **Reverse models (H3 only)** train on the neutral LAV-DF train partition only, with the same recipe and seeds. They are scored on FakeAVCeleb test.
+- **LAV-DF** is used per file. A file's labels come from `modify_video` and `modify_audio`. Its sync windows start at 0, 2 and 4 s, like FakeAVCeleb.
+- **No model trains on both corpora** in P-001.
