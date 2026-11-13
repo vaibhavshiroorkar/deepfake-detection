@@ -1,18 +1,18 @@
 """AV-HuBERT without fairseq: the pretrained audio-visual encoder as plain torch.
 
 Meta's release (facebookresearch/av_hubert) runs inside fairseq, and fairseq
-pins a PyTorch too old for this GPU (see `streams/encoders.py`). The model
-itself is small enough to restate:
+pins a PyTorch too old for this GPU. The model itself is small enough to
+restate (Base: width 768, 12 layers; Large: width 1024, 24 layers):
 
-    video  [B, 1, T, 88, 88] grey lips -> 3D conv + ResNet-18 -> [B, 512, T] -> 768
-    audio  [B, 104, T] stacked fbank   -> linear                       -> 768
-    concat [B, T, 1536] -> LayerNorm -> linear 768 -> positional conv
-                        -> 12 pre-norm transformer layers -> LayerNorm
+    video  [B, 1, T, 88, 88] grey lips -> 3D conv + ResNet-18 -> [B, 512, T] -> width
+    audio  [B, 104, T] stacked fbank   -> linear                       -> width
+    concat [B, T, 2 width] -> LayerNorm -> linear width -> positional conv
+                           -> pre-norm transformer layers -> LayerNorm
 
 Each module mirrors its fairseq counterpart parameter for parameter, so the
 released checkpoint loads with `strict=True` after one rename (the attention
-projections, which torch stores stacked). `scripts/check_encoder_ports.py`
-compares this module's output against the official code on the same inputs.
+projections, which torch stores stacked). `scripts/check_encoder_ports.py` compares the Base output
+against the official code on the same inputs.
 
 Either modality may be missing. AV-HuBERT was pretrained with modality dropout,
 which replaces the absent stream's features with zeros, and the lip-sync stream
@@ -45,6 +45,8 @@ LIP_STD = 0.165
 # mel filters over 25 ms windows every 10 ms. Four frames are stacked into one
 # 104-dim vector, so audio runs at 25 Hz, the video rate.
 SAMPLE_RATE = 16_000
+IMAGENET_MEAN = (0.485, 0.456, 0.406)
+IMAGENET_STD = (0.229, 0.224, 0.225)
 FILTERS = 26
 STACK = 4
 WINDOW = 400
@@ -112,10 +114,10 @@ class _ResEncoder(nn.Module):
 
 
 class _SubModel(nn.Module):
-    def __init__(self, input_dim: int, resnet: nn.Module | None = None) -> None:
+    def __init__(self, input_dim: int, width: int, resnet: nn.Module | None = None) -> None:
         super().__init__()
         self.resnet = resnet
-        self.proj = nn.Linear(input_dim, WIDTH)
+        self.proj = nn.Linear(input_dim, width)
 
     def forward(self, x: Tensor) -> Tensor:
         if self.resnet is not None:
@@ -127,9 +129,9 @@ class _SamePadConv(nn.Module):
     """fairseq's positional convolution: weight-normed, grouped, one sample
     trimmed so an even kernel keeps the sequence length."""
 
-    def __init__(self) -> None:
+    def __init__(self, width: int) -> None:
         super().__init__()
-        conv = nn.Conv1d(WIDTH, WIDTH, kernel_size=128, padding=64, groups=16)
+        conv = nn.Conv1d(width, width, kernel_size=128, padding=64, groups=16)
         self.conv = nn.utils.parametrizations.weight_norm(conv, name="weight", dim=2)
 
     def forward(self, x: Tensor) -> Tensor:
@@ -139,13 +141,13 @@ class _SamePadConv(nn.Module):
 class _Layer(nn.Module):
     """`TransformerSentenceEncoderLayer` with `layer_norm_first=True`."""
 
-    def __init__(self) -> None:
+    def __init__(self, width: int, heads: int, ffn: int) -> None:
         super().__init__()
-        self.self_attn = nn.MultiheadAttention(WIDTH, 12, batch_first=True)
-        self.self_attn_layer_norm = nn.LayerNorm(WIDTH)
-        self.fc1 = nn.Linear(WIDTH, 3072)
-        self.fc2 = nn.Linear(3072, WIDTH)
-        self.final_layer_norm = nn.LayerNorm(WIDTH)
+        self.self_attn = nn.MultiheadAttention(width, heads, batch_first=True)
+        self.self_attn_layer_norm = nn.LayerNorm(width)
+        self.fc1 = nn.Linear(width, ffn)
+        self.fc2 = nn.Linear(ffn, width)
+        self.final_layer_norm = nn.LayerNorm(width)
 
     def forward(self, x: Tensor, padding_mask: Tensor | None) -> Tensor:
         normed = self.self_attn_layer_norm(x)
@@ -157,17 +159,23 @@ class _Layer(nn.Module):
 
 
 class AVHubert(nn.Module):
-    """The AV-HuBERT Base encoder. `forward` returns the last layer, [B, T, 768]."""
+    """The AV-HuBERT encoder. `forward` returns the last layer, [B, T, width].
 
-    def __init__(self, layers: int = 12) -> None:
+    The defaults are Base; Large is width 1024, 24 layers, 16 heads, ffn 4096.
+    """
+
+    def __init__(
+        self, width: int = WIDTH, layers: int = 12, heads: int = 12, ffn: int = 3072
+    ) -> None:
         super().__init__()
-        self.feature_extractor_audio = _SubModel(FILTERS * STACK)
-        self.feature_extractor_video = _SubModel(512, _ResEncoder())
-        self.layer_norm = nn.LayerNorm(2 * WIDTH)
-        self.post_extract_proj = nn.Linear(2 * WIDTH, WIDTH)
-        self.pos_conv = _SamePadConv()
-        self.layers = nn.ModuleList(_Layer() for _ in range(layers))
-        self.encoder_layer_norm = nn.LayerNorm(WIDTH)
+        self.width = width
+        self.feature_extractor_audio = _SubModel(FILTERS * STACK, width)
+        self.feature_extractor_video = _SubModel(512, width, _ResEncoder())
+        self.layer_norm = nn.LayerNorm(2 * width)
+        self.post_extract_proj = nn.Linear(2 * width, width)
+        self.pos_conv = _SamePadConv(width)
+        self.layers = nn.ModuleList(_Layer(width, heads, ffn) for _ in range(layers))
+        self.encoder_layer_norm = nn.LayerNorm(width)
 
     def forward(
         self,
@@ -175,9 +183,14 @@ class AVHubert(nn.Module):
         video: Tensor | None = None,
         audio: Tensor | None = None,
         padding_mask: Tensor | None = None,
+        output_layer: int | None = None,
     ) -> Tensor:
         """`video` is [B, 1, T, 88, 88] normalised grey lips, `audio` is
-        [B, 104, T] from `audio_features`. At least one must be given."""
+        [B, 104, T] from `audio_features`. At least one must be given.
+
+        `output_layer` (1-based) stops after that transformer layer and skips
+        the final LayerNorm, as fairseq's `extract_features(output_layer=...)`
+        does; None runs every layer."""
         if video is None and audio is None:
             raise ValueError("AV-HuBERT needs audio, video or both")
         video_features = (
@@ -197,8 +210,10 @@ class AVHubert(nn.Module):
         if padding_mask is not None:
             x = x.masked_fill(padding_mask.unsqueeze(-1), 0.0)
         x = x + self.pos_conv(x.transpose(1, 2)).transpose(1, 2)
-        for layer in self.layers:
+        for index, layer in enumerate(self.layers, start=1):
             x = layer(x, padding_mask)
+            if index == output_layer:
+                return x
         return self.encoder_layer_norm(x)
 
 
@@ -253,10 +268,6 @@ def _mel_filterbank() -> np.ndarray:
         for i in range(int(bins[j + 1]), int(bins[j + 2])):
             bank[j, i] = (bins[j + 2] - i) / (bins[j + 2] - bins[j + 1])
     return bank
-
-
-IMAGENET_MEAN = (0.485, 0.456, 0.406)
-IMAGENET_STD = (0.229, 0.224, 0.225)
 
 
 def lip_frames(mouth: Tensor, *, crop: float = 1.0, center_y: float = 0.5) -> Tensor:
@@ -357,8 +368,12 @@ def load_avhubert(path: Path) -> AVHubert:
     if model_cfg.get("modality_fuse") != "concat" or not model_cfg.get(
         "layer_norm_first"
     ):
-        raise ValueError(f"{path} is not an AV-HuBERT Base pretraining checkpoint")
-    layers = model_cfg.get("encoder_layers", 12)
-    model = AVHubert(layers=layers)
+        raise ValueError(f"{path} is not an AV-HuBERT pretraining checkpoint")
+    model = AVHubert(
+        width=model_cfg.get("encoder_embed_dim", WIDTH),
+        layers=model_cfg.get("encoder_layers", 12),
+        heads=model_cfg.get("encoder_attention_heads", 12),
+        ffn=model_cfg.get("encoder_ffn_embed_dim", 3072),
+    )
     model.load_state_dict(_rename(checkpoint["model"]), strict=True)
     return model.eval()

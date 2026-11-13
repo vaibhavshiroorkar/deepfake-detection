@@ -11,14 +11,13 @@ Calibrated late fusion combines them, and the model withholds a verdict when req
 
 A second track asks whether a frozen encoder with a linear probe can detect a video generator it has never seen.
 
-## Two projects in this repository
+## History
 
-- The root of the repository contains the cue-specific fusion and generalization study.
-- [`team/`](team/README.md) is the team final-year project by Shivansh Gupta, Vaibhav Shiroorkar and Adithya Jithesh. It was supervised by Dr. Tejashree Phatak. It was imported from [Shivansh-gupta-2005/deepfake-detection](https://github.com/Shivansh-gupta-2005/deepfake-detection) with its full history. Its tags carry a `team/` prefix, for example `team/submission-final`.
+This repository is one project. It absorbed the team final-year project by Shivansh Gupta, Vaibhav Shiroorkar and Adithya Jithesh, supervised by Dr. Tejashree Phatak. Its full history was imported, and the submitted tree stays reachable at the tag `team/submission-final`. Its sealed results, ledger and data log are kept in [`results/legacy-team/`](results/legacy-team/README.md). Its AV-HuBERT port and real-only alignment heads now live in `src/deepfake_detection/avsync/`.
 
-Vaibhav Shiroorkar, Shivansh Gupta and Adithya Jithesh share equal credit, one third each, across both projects and all deliverables. Author order does not imply rank. See [authors and equal credit](AUTHORS.md).
+Vaibhav Shiroorkar, Shivansh Gupta and Adithya Jithesh share equal credit, one third each, across all work and deliverables. Author order does not imply rank. See [authors and equal credit](AUTHORS.md).
 
-The two projects keep separate splits, ledgers and environments. A number from one is never mixed into the other without a new logged run.
+Legacy team numbers used different splits. They are never mixed with new results without a new logged run.
 
 ## Results
 
