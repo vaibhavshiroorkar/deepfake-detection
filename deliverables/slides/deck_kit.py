@@ -36,8 +36,8 @@ def rgb(h: str) -> RGBColor:
 
 
 class Deck:
-    def __init__(self, template: str):
-        self.prs = Presentation(template)
+    def __init__(self, template: str | None):
+        self.prs = Presentation(template)      # None gives a blank presentation (the poster)
         self.layout = {lay.name: lay for lay in self.prs.slide_layouts}
         ids = self.prs.slides._sldIdLst
         for sld in list(ids):            # the template should have none; drop any that are there

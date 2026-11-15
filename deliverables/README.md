@@ -8,6 +8,8 @@ Every number in a deliverable is a placeholder filled from `results/numbers.json
     .venv/Scripts/python.exe scripts/make_figures.py
     .venv/Scripts/python.exe deliverables/slides/build_deck.py      # add --draft to mark missing numbers [pending]
     powershell -File deliverables/slides/export.ps1                  # PDF of the deck, through PowerPoint
+    .venv/Scripts/python.exe deliverables/poster/build_poster.py    # add --draft as above
+    powershell -File deliverables/slides/export.ps1 -Name Deepfake_Detection_Poster
 
 ## Slides
 
@@ -16,3 +18,7 @@ Every number in a deliverable is a placeholder filled from `results/numbers.json
 A deliverable that names a number missing from `results/numbers.json` fails to build. It never prints a gap or an old value.
 
 Tools still needed for PDFs: a LaTeX distribution for the paper (MiKTeX or TeX Live), and LibreOffice or Microsoft Word to export the report and slides to PDF.
+
+## Poster
+
+`poster/build_poster.py` writes `build/Deepfake_Detection_Poster.pptx`, one A0 portrait page in three columns: the audit, the cleaning and the sync path, then the results. It uses the same numbers, figures and helpers as the slides. A figure whose run has not finished shows a `[pending]` box until it exists.
