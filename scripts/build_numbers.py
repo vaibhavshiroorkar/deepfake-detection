@@ -10,7 +10,6 @@ rebuild the deliverables, and every document agrees with the evidence.
 
 from __future__ import annotations
 
-import csv
 import json
 from pathlib import Path
 
@@ -108,7 +107,46 @@ def h4(numbers: dict) -> None:
         for name, values in report["results"].items():
             _put(numbers, f"{key}.{name}.fpr", round(values["false_positive_rate"], 3), path)
             _put(numbers, f"{key}.{name}.tpr", round(values["true_positive_rate"], 3), path)
-        _put(numbers, f"{key}.success", report["h4_success"], path)
+        _put(numbers, f"{key}.success", _yes(report["h4_success"]), path)
+
+
+def _yes(flag: bool) -> str:
+    # Pass and fail print as words; a bare True or False would land in the paper as code.
+    return "yes" if flag else "no"
+
+
+def branches(numbers: dict) -> None:
+    """Visual and audio paths: branch.part.seedS.*, scored on the label each path was trained for."""
+    directory = RESULTS / "p001-branches"
+    if not directory.exists():
+        return
+    for path in sorted(directory.glob("*-seed*-*-metrics.json")):
+        branch, rest = path.stem.removesuffix("-metrics").split("-seed", 1)
+        seed, part = rest.split("-", 1)
+        metrics_file(numbers, f"{branch}.{part}.seed{seed}", path)
+
+
+def h2(numbers: dict) -> None:
+    """H2 (amendment A8): fusion minus visual-only per target, the Holm decision and the fusion weights."""
+    path = RESULTS / "p001-h2" / "h2.json"
+    if not path.exists():
+        return
+    report = json.loads(path.read_text(encoding="utf-8"))
+    for target, result in report["targets"].items():
+        key = f"h2.{target}"
+        for field in ("estimate", "lower", "upper"):
+            _put(numbers, f"{key}.{field}", round(result[field], 3), path)
+        _put(numbers, f"{key}.p", round(result["p_one_sided"], 3), path)
+        _put(numbers, f"{key}.clips", result["clips"], path)
+        _put(numbers, f"{key}.identities", result["identities"], path)
+        for seed, diff in zip(report["seeds"], result["per_seed"], strict=True):
+            _put(numbers, f"{key}.seed{seed}", round(diff, 3), path)
+    for target, decision in report["holm"].items():
+        _put(numbers, f"h2.{target}.holm", _yes(decision["rejected_at_0.05"]), path)
+    _put(numbers, "h2.success", _yes(report["h2_success"]), path)
+    for seed, entry in report["weights"].items():
+        for branch, coef in zip(entry["branches"], entry["coef"], strict=True):
+            _put(numbers, f"h2.weights.seed{seed}.{branch}", round(coef, 3), path)
 
 
 def main() -> int:
@@ -118,6 +156,8 @@ def main() -> int:
     sync(numbers)
     sync_training(numbers)
     h4(numbers)
+    branches(numbers)
+    h2(numbers)
     out = RESULTS / "numbers.json"
     out.write_text(json.dumps(dict(sorted(numbers.items())), indent=1) + "\n", encoding="utf-8")
     print(f"{len(numbers)} numbers -> {_rel(out)}")

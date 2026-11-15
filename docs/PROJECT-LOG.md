@@ -130,17 +130,28 @@ The 2-day paper claims four things:
 
 Fusion against visual-only (H2), modality prediction (H3) and the baselines become future work, stated as limitations.
 
-**After the deadline: the full run.** Once the 2-day deliverables are submitted, the 10-day plan runs in full:
+**The 3-day plan (chosen 2026-11-16, replaces the 2-day plan).** The deadline window became 16 to 18 November, which fits H2 as preregistered (amendment A8):
+
+| When | Work |
+|---|---|
+| Mon to about 09:00 | The 2-day chain finishes: sync path on the three targets, H4, audits of the neutral copies |
+| Mon to about 17:00 | FakeAVCeleb visual and audio cache, with the full CPU after 09:00 |
+| Mon evening, overnight | Visual and audio training, 3 seeds each, on the GPU; the three targets cached on the CPU at the same time |
+| Tue about midday | Targets scored by the frozen visual and audio models; the fusion test; H2 result |
+| Tue afternoon to Wed | Deliverables updated with H2; Wednesday is buffer |
+
+The paper then claims five things: the four above plus H2, whichever way it falls. Modality prediction (H3) and the baselines stay future work.
+
+**After the deadline: the full run.** Once the deliverables are submitted, the rest of the 10-day plan runs:
 
 1. Speed up the cache build.
-2. Visual and audio paths, cross-corpus.
-3. Out-of-fold fusion and H2.
-4. LAV-DF reverse models and H3.
-5. AVH-Align and HAVIC baselines.
-6. AV-Deepfake1M and KoDF if access arrives.
-7. The full paper.
+2. LAV-DF reverse models and H3.
+3. AVH-Align and HAVIC baselines.
+4. The StreamFusion MLP, the secondary fusion.
+5. AV-Deepfake1M and KoDF if access arrives.
+6. The full paper.
 
-The 2-day results stay valid: the full run reuses the same frozen sync models, neutral copies and splits. The deliverables are then rebuilt from the larger `results/numbers.json`.
+The results so far stay valid: the full run reuses the same frozen models, neutral copies and splits. The deliverables are then rebuilt from the larger `results/numbers.json`. Open items are tracked in [PENDING.md](PENDING.md).
 
 ## 6. Waiting on others
 
