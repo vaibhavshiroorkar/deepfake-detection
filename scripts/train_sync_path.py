@@ -29,6 +29,7 @@ import torch
 import torch.nn.functional as F
 
 MIN_FACE = 0.8
+WINDOW_FRAMES = 50          # 2 s at 25 fps
 SEEDS = (17, 29, 43)
 
 
@@ -41,14 +42,22 @@ def load_windows(features: Path, clips: dict[str, dict]) -> tuple[list[str], np.
     from deepfake_detection.avsync.features import cache_path
 
     owners, lips, audio = [], [], []
+    short = 0
     with (features / "index.csv").open(newline="", encoding="utf-8") as handle:
         for entry in csv.DictReader(handle):
             if entry["clip_id"] not in clips or entry["status"] != "ok" or float(entry["face"]) < MIN_FACE:
                 continue
             stored = np.load(cache_path(features, entry["window_id"]))
+            # A window whose video ended early has fewer than 50 frames. It cannot be
+            # compared frame for frame, so it is left out and counted, like a no-face window.
+            if stored["lips"].shape[0] != WINDOW_FRAMES or stored["audio"].shape[0] != WINDOW_FRAMES:
+                short += 1
+                continue
             owners.append(entry["clip_id"])
             lips.append(stored["lips"])
             audio.append(stored["audio"])
+    if short:
+        print(f"left out {short} windows shorter than {WINDOW_FRAMES} frames", flush=True)
     if not owners:
         return [], np.zeros((0, 50, 768), np.float16), np.zeros((0, 50, 768), np.float16)
     return owners, np.stack(lips), np.stack(audio)

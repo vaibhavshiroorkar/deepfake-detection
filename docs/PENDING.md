@@ -19,7 +19,7 @@ Three chains run as detached processes. Each resumes from its own log if stopped
 - Run `runs/p001-finalize.sh`: copy the target and H4 outputs into `results/p001-sync-targets/` and `results/p001-h4/`, then rebuild `results/numbers.json`, the figures, the slides, the poster and the Overleaf zips.
 - Add a README with receipts to each new results folder.
 - Commit the audits of the neutral copies under `results/shortcut-audit/*-neutral/`.
-- Report the 23 HiFi-AVDF clips that have no audio track (14 real, 9 fake), and the clips with no face, in the results README and the paper.
+- Report the 23 HiFi-AVDF clips that have no audio track (14 real, 9 fake), the clips with no face, and the 4 windows left out as shorter than 50 frames, in the results README and the paper.
 - Update the README Results section to the P-001 study. It still leads with older numbers.
 - Label the main claims in `FINAL.md` and the handbook as verified, assumed, false or unknown.
 - Write the paper and report text that interprets the cross-corpus and H4 results. The numbers fill in by themselves; the reading of them does not.
@@ -63,6 +63,7 @@ Three chains run as detached processes. Each resumes from its own log if stopped
 - AV-Deepfake1M, AV-Deepfake1M++, KoDF and DeepSpeak v2, if access arrives. They are scored by frozen models only.
 - Measure speaker overlap between FakeAVCeleb, LAV-DF and AV-HuBERT's pretraining data (VoxCeleb2, LRS3).
 - H1 residual: video bitrate still carries the label after neutralization. Test a fixed-bitrate encode under a new amendment.
+- Make the neutralizer refuse a clip with less than 3.00 s of video, not only less than 3.00 s of sound (handbook mistake 67). Apply it under a new amendment, since it changes which clips are kept.
 - Fix the `data/legacy-team/ffpp` links, which point at folders deleted with `team/`.
 - Speed up the visual and audio cache build. It is CPU-bound at about 340 clips an hour when shared.
 - Clear the remaining lint findings, mostly in the slide helpers.

@@ -1069,6 +1069,14 @@ uncommitted working tree unless marked open.
 - **Fix:** Long chains now run as detached processes that outlive the session. Every stage resumes from its own log, so a stop loses only the clip in progress.
 - **Source:** `docs/PROJECT-LOG.md`, decisions of 11-16.
 
+#### 67. Neutral clips could have less video than audio
+
+- **What went wrong:** Neutralizer v4 checks that a clip has 3.00 s of sound, but not 3.00 s of video. In a few HiFi-AVDF clips the video ends first, so muxing with `-shortest` leaves windows of 10 to 41 lip frames instead of 50. The sync scorer stacked windows of every length and failed.
+- **How it was caught:** Scoring HiFi-AVDF stopped with "all input arrays must have the same shape" on 2026-11-16, and H4 found no predictions.
+- **What it cost:** About 20 minutes, and one rerun of the HiFi-AVDF scoring. No result had been read.
+- **Fix:** `load_windows` leaves out and counts any window shorter than 50 frames, as it already did for windows without a face. HiFi-AVDF lost 4 windows. FakeAVCeleb has none (0 of 40,566), so the trained models and the in-domain results are unchanged. A regression test covers it. The neutralizer should also refuse clips with less than 3.00 s of video; that is listed in `docs/PENDING.md`.
+- **Source:** `scripts/train_sync_path.py`; `tests/test_sync_load_windows.py`; `runs/p001-2day.log`.
+
 ## 7. What a hard reviewer would say
 
 These are the strongest objections we expect, with our current answer. "Open" means we have no answer yet and the paper must not pretend otherwise.
