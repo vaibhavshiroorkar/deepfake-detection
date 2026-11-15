@@ -30,6 +30,8 @@ The [findings](docs/research/findings.md) hold every measured claim. The [paper 
 
 ## Documents
 
+- [Final project summary](docs/FINAL.md): the short, clean version of the project.
+- [Project log](docs/PROJECT-LOG.md): decisions and the reasons for them.
 - [Project handbook](docs/HANDBOOK.md): start here. What the project is, what it measured, every mistake from the first commit on, what to do next, and the paper plan.
 - [Current research presentation](docs/research/presentation/README.md): report, slides, rehearsal and evidence covering July through November 2026.
 - [Research design](docs/research-design.md): question, protocol, ablations, and exit criteria.

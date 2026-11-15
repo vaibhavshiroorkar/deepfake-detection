@@ -2,6 +2,8 @@
 
 ## Start here
 
+- [Final project summary](FINAL.md): the clean version, only what the final project uses.
+- [Project log](PROJECT-LOG.md): every decision and discussion behind the work, 13 to 15 November.
 - [Project handbook](HANDBOOK.md): the one file to read first. What the project is, what it measured, every mistake, what to do next, the paper plan and the full history.
 - [Preregistration P-001](../results/preregistration/P-001-shortcut-neutral-av-study.md): the current study's hypotheses, fixed before any run.
 - [Authors and equal credit](../AUTHORS.md)
