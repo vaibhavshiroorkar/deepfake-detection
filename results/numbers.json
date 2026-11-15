@@ -1,0 +1,622 @@
+{
+ "audit.dfdc.raw.census.FakeVideo-RealAudio.clips": {
+  "value": 2838,
+  "source": "results/shortcut-audit/dfdc/summary.json"
+ },
+ "audit.dfdc.raw.census.RealVideo-RealAudio.clips": {
+  "value": 194,
+  "source": "results/shortcut-audit/dfdc/summary.json"
+ },
+ "audit.dfdc.raw.clip": {
+  "value": 0.588,
+  "source": "results/shortcut-audit/dfdc/summary.json"
+ },
+ "audit.dfdc.raw.clips": {
+  "value": 3032,
+  "source": "results/shortcut-audit/dfdc/summary.json"
+ },
+ "audit.dfdc.raw.video": {
+  "value": 0.588,
+  "source": "results/shortcut-audit/dfdc/summary.json"
+ },
+ "audit.fakeavceleb.neutral.audio": {
+  "value": 0.793,
+  "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
+ },
+ "audit.fakeavceleb.neutral.census.FakeVideo-FakeAudio.clips": {
+  "value": 9625,
+  "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
+ },
+ "audit.fakeavceleb.neutral.census.FakeVideo-RealAudio.clips": {
+  "value": 9709,
+  "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
+ },
+ "audit.fakeavceleb.neutral.census.RealVideo-FakeAudio.clips": {
+  "value": 450,
+  "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
+ },
+ "audit.fakeavceleb.neutral.census.RealVideo-RealAudio.clips": {
+  "value": 500,
+  "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
+ },
+ "audit.fakeavceleb.neutral.clip": {
+  "value": 0.632,
+  "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
+ },
+ "audit.fakeavceleb.neutral.clips": {
+  "value": 20284,
+  "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
+ },
+ "audit.fakeavceleb.neutral.video": {
+  "value": 0.617,
+  "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
+ },
+ "audit.fakeavceleb.raw.audio": {
+  "value": 1.0,
+  "source": "results/shortcut-audit/fakeavceleb/summary.json"
+ },
+ "audit.fakeavceleb.raw.census.FakeVideo-FakeAudio.clips": {
+  "value": 10835,
+  "source": "results/shortcut-audit/fakeavceleb/summary.json"
+ },
+ "audit.fakeavceleb.raw.census.FakeVideo-RealAudio.clips": {
+  "value": 9709,
+  "source": "results/shortcut-audit/fakeavceleb/summary.json"
+ },
+ "audit.fakeavceleb.raw.census.RealVideo-FakeAudio.clips": {
+  "value": 500,
+  "source": "results/shortcut-audit/fakeavceleb/summary.json"
+ },
+ "audit.fakeavceleb.raw.census.RealVideo-RealAudio.clips": {
+  "value": 500,
+  "source": "results/shortcut-audit/fakeavceleb/summary.json"
+ },
+ "audit.fakeavceleb.raw.clip": {
+  "value": 0.994,
+  "source": "results/shortcut-audit/fakeavceleb/summary.json"
+ },
+ "audit.fakeavceleb.raw.clips": {
+  "value": 21544,
+  "source": "results/shortcut-audit/fakeavceleb/summary.json"
+ },
+ "audit.fakeavceleb.raw.video": {
+  "value": 0.997,
+  "source": "results/shortcut-audit/fakeavceleb/summary.json"
+ },
+ "audit.fakeavceleb.v1.audio": {
+  "value": 0.994,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
+ },
+ "audit.fakeavceleb.v1.census.FakeVideo-FakeAudio.clips": {
+  "value": 10835,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
+ },
+ "audit.fakeavceleb.v1.census.FakeVideo-RealAudio.clips": {
+  "value": 9709,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
+ },
+ "audit.fakeavceleb.v1.census.RealVideo-FakeAudio.clips": {
+  "value": 500,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
+ },
+ "audit.fakeavceleb.v1.census.RealVideo-RealAudio.clips": {
+  "value": 500,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
+ },
+ "audit.fakeavceleb.v1.clip": {
+  "value": 0.933,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
+ },
+ "audit.fakeavceleb.v1.clips": {
+  "value": 21544,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
+ },
+ "audit.fakeavceleb.v1.video": {
+  "value": 0.901,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
+ },
+ "audit.fakeavceleb.v4check.audio": {
+  "value": 0.702,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
+ },
+ "audit.fakeavceleb.v4check.census.FakeVideo-FakeAudio.clips": {
+  "value": 134,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
+ },
+ "audit.fakeavceleb.v4check.census.FakeVideo-RealAudio.clips": {
+  "value": 150,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
+ },
+ "audit.fakeavceleb.v4check.census.RealVideo-FakeAudio.clips": {
+  "value": 137,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
+ },
+ "audit.fakeavceleb.v4check.census.RealVideo-RealAudio.clips": {
+  "value": 150,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
+ },
+ "audit.fakeavceleb.v4check.clip": {
+  "value": 0.598,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
+ },
+ "audit.fakeavceleb.v4check.clips": {
+  "value": 571,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
+ },
+ "audit.fakeavceleb.v4check.video": {
+  "value": 0.489,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
+ },
+ "audit.lavdf.raw.audio": {
+  "value": 0.751,
+  "source": "results/shortcut-audit/lavdf-files/summary.json"
+ },
+ "audit.lavdf.raw.census.FakeVideo-FakeAudio.clips": {
+  "value": 1946,
+  "source": "results/shortcut-audit/lavdf-files/summary.json"
+ },
+ "audit.lavdf.raw.census.FakeVideo-RealAudio.clips": {
+  "value": 1969,
+  "source": "results/shortcut-audit/lavdf-files/summary.json"
+ },
+ "audit.lavdf.raw.census.RealVideo-FakeAudio.clips": {
+  "value": 1947,
+  "source": "results/shortcut-audit/lavdf-files/summary.json"
+ },
+ "audit.lavdf.raw.census.RealVideo-RealAudio.clips": {
+  "value": 2138,
+  "source": "results/shortcut-audit/lavdf-files/summary.json"
+ },
+ "audit.lavdf.raw.clip": {
+  "value": 0.936,
+  "source": "results/shortcut-audit/lavdf-files/summary.json"
+ },
+ "audit.lavdf.raw.clips": {
+  "value": 8000,
+  "source": "results/shortcut-audit/lavdf-files/summary.json"
+ },
+ "audit.lavdf.raw.video": {
+  "value": 0.738,
+  "source": "results/shortcut-audit/lavdf-files/summary.json"
+ },
+ "neutral.fakeavceleb.kept": {
+  "value": 20284,
+  "source": "results/shortcut-audit/fakeavceleb-neutral/neutralize-summary.json"
+ },
+ "neutral.fakeavceleb.refused": {
+  "value": 1260,
+  "source": "results/shortcut-audit/fakeavceleb-neutral/neutralize-summary.json"
+ },
+ "sync.test-identity-strict.seed17.auc": {
+  "value": 0.78,
+  "source": "results/p001-sync/sync-test-identity-strict-seed17-metrics.json"
+ },
+ "sync.test-identity-strict.seed17.auc_high": {
+  "value": 0.834,
+  "source": "results/p001-sync/sync-test-identity-strict-seed17-metrics.json"
+ },
+ "sync.test-identity-strict.seed17.auc_low": {
+  "value": 0.721,
+  "source": "results/p001-sync/sync-test-identity-strict-seed17-metrics.json"
+ },
+ "sync.test-identity-strict.seed17.balanced_accuracy": {
+  "value": 0.71,
+  "source": "results/p001-sync/sync-test-identity-strict-seed17-metrics.json"
+ },
+ "sync.test-identity-strict.seed17.fpr": {
+  "value": 0.387,
+  "source": "results/p001-sync/sync-test-identity-strict-seed17-metrics.json"
+ },
+ "sync.test-identity-strict.seed17.method.faceswap": {
+  "value": 0.577,
+  "source": "results/p001-sync/sync-test-identity-strict-seed17-metrics.json"
+ },
+ "sync.test-identity-strict.seed17.method.faceswap-wav2lip": {
+  "value": 0.813,
+  "source": "results/p001-sync/sync-test-identity-strict-seed17-metrics.json"
+ },
+ "sync.test-identity-strict.seed17.method.fsgan": {
+  "value": 0.653,
+  "source": "results/p001-sync/sync-test-identity-strict-seed17-metrics.json"
+ },
+ "sync.test-identity-strict.seed17.method.fsgan-wav2lip": {
+  "value": 0.807,
+  "source": "results/p001-sync/sync-test-identity-strict-seed17-metrics.json"
+ },
+ "sync.test-identity-strict.seed17.method.rtvc": {
+  "value": 0.929,
+  "source": "results/p001-sync/sync-test-identity-strict-seed17-metrics.json"
+ },
+ "sync.test-identity-strict.seed17.method.wav2lip": {
+  "value": 0.834,
+  "source": "results/p001-sync/sync-test-identity-strict-seed17-metrics.json"
+ },
+ "sync.test-identity-strict.seed17.n": {
+  "value": 495,
+  "source": "results/p001-sync/sync-test-identity-strict-seed17-metrics.json"
+ },
+ "sync.test-identity-strict.seed29.auc": {
+  "value": 0.809,
+  "source": "results/p001-sync/sync-test-identity-strict-seed29-metrics.json"
+ },
+ "sync.test-identity-strict.seed29.auc_high": {
+  "value": 0.859,
+  "source": "results/p001-sync/sync-test-identity-strict-seed29-metrics.json"
+ },
+ "sync.test-identity-strict.seed29.auc_low": {
+  "value": 0.754,
+  "source": "results/p001-sync/sync-test-identity-strict-seed29-metrics.json"
+ },
+ "sync.test-identity-strict.seed29.balanced_accuracy": {
+  "value": 0.752,
+  "source": "results/p001-sync/sync-test-identity-strict-seed29-metrics.json"
+ },
+ "sync.test-identity-strict.seed29.fpr": {
+  "value": 0.32,
+  "source": "results/p001-sync/sync-test-identity-strict-seed29-metrics.json"
+ },
+ "sync.test-identity-strict.seed29.method.faceswap": {
+  "value": 0.627,
+  "source": "results/p001-sync/sync-test-identity-strict-seed29-metrics.json"
+ },
+ "sync.test-identity-strict.seed29.method.faceswap-wav2lip": {
+  "value": 0.891,
+  "source": "results/p001-sync/sync-test-identity-strict-seed29-metrics.json"
+ },
+ "sync.test-identity-strict.seed29.method.fsgan": {
+  "value": 0.69,
+  "source": "results/p001-sync/sync-test-identity-strict-seed29-metrics.json"
+ },
+ "sync.test-identity-strict.seed29.method.fsgan-wav2lip": {
+  "value": 0.813,
+  "source": "results/p001-sync/sync-test-identity-strict-seed29-metrics.json"
+ },
+ "sync.test-identity-strict.seed29.method.rtvc": {
+  "value": 0.942,
+  "source": "results/p001-sync/sync-test-identity-strict-seed29-metrics.json"
+ },
+ "sync.test-identity-strict.seed29.method.wav2lip": {
+  "value": 0.859,
+  "source": "results/p001-sync/sync-test-identity-strict-seed29-metrics.json"
+ },
+ "sync.test-identity-strict.seed29.n": {
+  "value": 495,
+  "source": "results/p001-sync/sync-test-identity-strict-seed29-metrics.json"
+ },
+ "sync.test-identity-strict.seed43.auc": {
+  "value": 0.81,
+  "source": "results/p001-sync/sync-test-identity-strict-seed43-metrics.json"
+ },
+ "sync.test-identity-strict.seed43.auc_high": {
+  "value": 0.862,
+  "source": "results/p001-sync/sync-test-identity-strict-seed43-metrics.json"
+ },
+ "sync.test-identity-strict.seed43.auc_low": {
+  "value": 0.754,
+  "source": "results/p001-sync/sync-test-identity-strict-seed43-metrics.json"
+ },
+ "sync.test-identity-strict.seed43.balanced_accuracy": {
+  "value": 0.752,
+  "source": "results/p001-sync/sync-test-identity-strict-seed43-metrics.json"
+ },
+ "sync.test-identity-strict.seed43.fpr": {
+  "value": 0.267,
+  "source": "results/p001-sync/sync-test-identity-strict-seed43-metrics.json"
+ },
+ "sync.test-identity-strict.seed43.method.faceswap": {
+  "value": 0.634,
+  "source": "results/p001-sync/sync-test-identity-strict-seed43-metrics.json"
+ },
+ "sync.test-identity-strict.seed43.method.faceswap-wav2lip": {
+  "value": 0.891,
+  "source": "results/p001-sync/sync-test-identity-strict-seed43-metrics.json"
+ },
+ "sync.test-identity-strict.seed43.method.fsgan": {
+  "value": 0.691,
+  "source": "results/p001-sync/sync-test-identity-strict-seed43-metrics.json"
+ },
+ "sync.test-identity-strict.seed43.method.fsgan-wav2lip": {
+  "value": 0.793,
+  "source": "results/p001-sync/sync-test-identity-strict-seed43-metrics.json"
+ },
+ "sync.test-identity-strict.seed43.method.rtvc": {
+  "value": 0.936,
+  "source": "results/p001-sync/sync-test-identity-strict-seed43-metrics.json"
+ },
+ "sync.test-identity-strict.seed43.method.wav2lip": {
+  "value": 0.862,
+  "source": "results/p001-sync/sync-test-identity-strict-seed43-metrics.json"
+ },
+ "sync.test-identity-strict.seed43.n": {
+  "value": 495,
+  "source": "results/p001-sync/sync-test-identity-strict-seed43-metrics.json"
+ },
+ "sync.test.seed17.auc": {
+  "value": 0.775,
+  "source": "results/p001-sync/sync-test-seed17-metrics.json"
+ },
+ "sync.test.seed17.auc_high": {
+  "value": 0.832,
+  "source": "results/p001-sync/sync-test-seed17-metrics.json"
+ },
+ "sync.test.seed17.auc_low": {
+  "value": 0.713,
+  "source": "results/p001-sync/sync-test-seed17-metrics.json"
+ },
+ "sync.test.seed17.balanced_accuracy": {
+  "value": 0.708,
+  "source": "results/p001-sync/sync-test-seed17-metrics.json"
+ },
+ "sync.test.seed17.fpr": {
+  "value": 0.387,
+  "source": "results/p001-sync/sync-test-seed17-metrics.json"
+ },
+ "sync.test.seed17.method.faceswap": {
+  "value": 0.584,
+  "source": "results/p001-sync/sync-test-seed17-metrics.json"
+ },
+ "sync.test.seed17.method.faceswap-wav2lip": {
+  "value": 0.824,
+  "source": "results/p001-sync/sync-test-seed17-metrics.json"
+ },
+ "sync.test.seed17.method.fsgan": {
+  "value": 0.639,
+  "source": "results/p001-sync/sync-test-seed17-metrics.json"
+ },
+ "sync.test.seed17.method.fsgan-wav2lip": {
+  "value": 0.829,
+  "source": "results/p001-sync/sync-test-seed17-metrics.json"
+ },
+ "sync.test.seed17.method.rtvc": {
+  "value": 0.929,
+  "source": "results/p001-sync/sync-test-seed17-metrics.json"
+ },
+ "sync.test.seed17.method.wav2lip": {
+  "value": 0.81,
+  "source": "results/p001-sync/sync-test-seed17-metrics.json"
+ },
+ "sync.test.seed17.n": {
+  "value": 2993,
+  "source": "results/p001-sync/sync-test-seed17-metrics.json"
+ },
+ "sync.test.seed29.auc": {
+  "value": 0.809,
+  "source": "results/p001-sync/sync-test-seed29-metrics.json"
+ },
+ "sync.test.seed29.auc_high": {
+  "value": 0.861,
+  "source": "results/p001-sync/sync-test-seed29-metrics.json"
+ },
+ "sync.test.seed29.auc_low": {
+  "value": 0.751,
+  "source": "results/p001-sync/sync-test-seed29-metrics.json"
+ },
+ "sync.test.seed29.balanced_accuracy": {
+  "value": 0.759,
+  "source": "results/p001-sync/sync-test-seed29-metrics.json"
+ },
+ "sync.test.seed29.fpr": {
+  "value": 0.32,
+  "source": "results/p001-sync/sync-test-seed29-metrics.json"
+ },
+ "sync.test.seed29.method.faceswap": {
+  "value": 0.635,
+  "source": "results/p001-sync/sync-test-seed29-metrics.json"
+ },
+ "sync.test.seed29.method.faceswap-wav2lip": {
+  "value": 0.86,
+  "source": "results/p001-sync/sync-test-seed29-metrics.json"
+ },
+ "sync.test.seed29.method.fsgan": {
+  "value": 0.679,
+  "source": "results/p001-sync/sync-test-seed29-metrics.json"
+ },
+ "sync.test.seed29.method.fsgan-wav2lip": {
+  "value": 0.848,
+  "source": "results/p001-sync/sync-test-seed29-metrics.json"
+ },
+ "sync.test.seed29.method.rtvc": {
+  "value": 0.942,
+  "source": "results/p001-sync/sync-test-seed29-metrics.json"
+ },
+ "sync.test.seed29.method.wav2lip": {
+  "value": 0.845,
+  "source": "results/p001-sync/sync-test-seed29-metrics.json"
+ },
+ "sync.test.seed29.n": {
+  "value": 2993,
+  "source": "results/p001-sync/sync-test-seed29-metrics.json"
+ },
+ "sync.test.seed43.auc": {
+  "value": 0.806,
+  "source": "results/p001-sync/sync-test-seed43-metrics.json"
+ },
+ "sync.test.seed43.auc_high": {
+  "value": 0.859,
+  "source": "results/p001-sync/sync-test-seed43-metrics.json"
+ },
+ "sync.test.seed43.auc_low": {
+  "value": 0.748,
+  "source": "results/p001-sync/sync-test-seed43-metrics.json"
+ },
+ "sync.test.seed43.balanced_accuracy": {
+  "value": 0.749,
+  "source": "results/p001-sync/sync-test-seed43-metrics.json"
+ },
+ "sync.test.seed43.fpr": {
+  "value": 0.267,
+  "source": "results/p001-sync/sync-test-seed43-metrics.json"
+ },
+ "sync.test.seed43.method.faceswap": {
+  "value": 0.642,
+  "source": "results/p001-sync/sync-test-seed43-metrics.json"
+ },
+ "sync.test.seed43.method.faceswap-wav2lip": {
+  "value": 0.854,
+  "source": "results/p001-sync/sync-test-seed43-metrics.json"
+ },
+ "sync.test.seed43.method.fsgan": {
+  "value": 0.677,
+  "source": "results/p001-sync/sync-test-seed43-metrics.json"
+ },
+ "sync.test.seed43.method.fsgan-wav2lip": {
+  "value": 0.836,
+  "source": "results/p001-sync/sync-test-seed43-metrics.json"
+ },
+ "sync.test.seed43.method.rtvc": {
+  "value": 0.936,
+  "source": "results/p001-sync/sync-test-seed43-metrics.json"
+ },
+ "sync.test.seed43.method.wav2lip": {
+  "value": 0.845,
+  "source": "results/p001-sync/sync-test-seed43-metrics.json"
+ },
+ "sync.test.seed43.n": {
+  "value": 2993,
+  "source": "results/p001-sync/sync-test-seed43-metrics.json"
+ },
+ "sync.val.seed17.auc": {
+  "value": 0.791,
+  "source": "results/p001-sync/sync-val-seed17-metrics.json"
+ },
+ "sync.val.seed17.auc_high": {
+  "value": 0.846,
+  "source": "results/p001-sync/sync-val-seed17-metrics.json"
+ },
+ "sync.val.seed17.auc_low": {
+  "value": 0.729,
+  "source": "results/p001-sync/sync-val-seed17-metrics.json"
+ },
+ "sync.val.seed17.balanced_accuracy": {
+  "value": 0.703,
+  "source": "results/p001-sync/sync-val-seed17-metrics.json"
+ },
+ "sync.val.seed17.fpr": {
+  "value": 0.427,
+  "source": "results/p001-sync/sync-val-seed17-metrics.json"
+ },
+ "sync.val.seed17.method.faceswap": {
+  "value": 0.617,
+  "source": "results/p001-sync/sync-val-seed17-metrics.json"
+ },
+ "sync.val.seed17.method.faceswap-wav2lip": {
+  "value": 0.83,
+  "source": "results/p001-sync/sync-val-seed17-metrics.json"
+ },
+ "sync.val.seed17.method.fsgan": {
+  "value": 0.634,
+  "source": "results/p001-sync/sync-val-seed17-metrics.json"
+ },
+ "sync.val.seed17.method.fsgan-wav2lip": {
+  "value": 0.856,
+  "source": "results/p001-sync/sync-val-seed17-metrics.json"
+ },
+ "sync.val.seed17.method.rtvc": {
+  "value": 0.938,
+  "source": "results/p001-sync/sync-val-seed17-metrics.json"
+ },
+ "sync.val.seed17.method.wav2lip": {
+  "value": 0.834,
+  "source": "results/p001-sync/sync-val-seed17-metrics.json"
+ },
+ "sync.val.seed17.n": {
+  "value": 3104,
+  "source": "results/p001-sync/sync-val-seed17-metrics.json"
+ },
+ "sync.val.seed29.auc": {
+  "value": 0.83,
+  "source": "results/p001-sync/sync-val-seed29-metrics.json"
+ },
+ "sync.val.seed29.auc_high": {
+  "value": 0.883,
+  "source": "results/p001-sync/sync-val-seed29-metrics.json"
+ },
+ "sync.val.seed29.auc_low": {
+  "value": 0.774,
+  "source": "results/p001-sync/sync-val-seed29-metrics.json"
+ },
+ "sync.val.seed29.balanced_accuracy": {
+  "value": 0.729,
+  "source": "results/p001-sync/sync-val-seed29-metrics.json"
+ },
+ "sync.val.seed29.fpr": {
+  "value": 0.187,
+  "source": "results/p001-sync/sync-val-seed29-metrics.json"
+ },
+ "sync.val.seed29.method.faceswap": {
+  "value": 0.651,
+  "source": "results/p001-sync/sync-val-seed29-metrics.json"
+ },
+ "sync.val.seed29.method.faceswap-wav2lip": {
+  "value": 0.878,
+  "source": "results/p001-sync/sync-val-seed29-metrics.json"
+ },
+ "sync.val.seed29.method.fsgan": {
+  "value": 0.668,
+  "source": "results/p001-sync/sync-val-seed29-metrics.json"
+ },
+ "sync.val.seed29.method.fsgan-wav2lip": {
+  "value": 0.886,
+  "source": "results/p001-sync/sync-val-seed29-metrics.json"
+ },
+ "sync.val.seed29.method.rtvc": {
+  "value": 0.959,
+  "source": "results/p001-sync/sync-val-seed29-metrics.json"
+ },
+ "sync.val.seed29.method.wav2lip": {
+  "value": 0.877,
+  "source": "results/p001-sync/sync-val-seed29-metrics.json"
+ },
+ "sync.val.seed29.n": {
+  "value": 3104,
+  "source": "results/p001-sync/sync-val-seed29-metrics.json"
+ },
+ "sync.val.seed43.auc": {
+  "value": 0.814,
+  "source": "results/p001-sync/sync-val-seed43-metrics.json"
+ },
+ "sync.val.seed43.auc_high": {
+  "value": 0.87,
+  "source": "results/p001-sync/sync-val-seed43-metrics.json"
+ },
+ "sync.val.seed43.auc_low": {
+  "value": 0.752,
+  "source": "results/p001-sync/sync-val-seed43-metrics.json"
+ },
+ "sync.val.seed43.balanced_accuracy": {
+  "value": 0.671,
+  "source": "results/p001-sync/sync-val-seed43-metrics.json"
+ },
+ "sync.val.seed43.fpr": {
+  "value": 0.12,
+  "source": "results/p001-sync/sync-val-seed43-metrics.json"
+ },
+ "sync.val.seed43.method.faceswap": {
+  "value": 0.648,
+  "source": "results/p001-sync/sync-val-seed43-metrics.json"
+ },
+ "sync.val.seed43.method.faceswap-wav2lip": {
+  "value": 0.859,
+  "source": "results/p001-sync/sync-val-seed43-metrics.json"
+ },
+ "sync.val.seed43.method.fsgan": {
+  "value": 0.659,
+  "source": "results/p001-sync/sync-val-seed43-metrics.json"
+ },
+ "sync.val.seed43.method.fsgan-wav2lip": {
+  "value": 0.858,
+  "source": "results/p001-sync/sync-val-seed43-metrics.json"
+ },
+ "sync.val.seed43.method.rtvc": {
+  "value": 0.953,
+  "source": "results/p001-sync/sync-val-seed43-metrics.json"
+ },
+ "sync.val.seed43.method.wav2lip": {
+  "value": 0.862,
+  "source": "results/p001-sync/sync-val-seed43-metrics.json"
+ },
+ "sync.val.seed43.n": {
+  "value": 3104,
+  "source": "results/p001-sync/sync-val-seed43-metrics.json"
+ }
+}
