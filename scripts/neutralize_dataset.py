@@ -23,11 +23,10 @@ from deepfake_detection.preprocessing.neutralize import NeutralSettings, neutral
 
 
 def _work(job: tuple[str, str, str], settings: NeutralSettings) -> dict[str, object]:
+    # Resume is decided by the cut log alone (see main). A video file without a
+    # log row may be half-written by a crashed run, so it is always redone.
     clip_id, source, target = job
-    target_path = Path(target)
-    if target_path.is_file() and target_path.stat().st_size > 0:
-        return {"clip_id": clip_id, "skipped": True}
-    return {"clip_id": clip_id, **neutralize_clip(Path(source), target_path, settings)}
+    return {"clip_id": clip_id, **neutralize_clip(Path(source), Path(target), settings)}
 
 
 def main(argv: list[str] | None = None) -> int:
