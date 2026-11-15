@@ -37,6 +37,9 @@ The goals, as stated by Vaibhav on 2026-11-13:
 | 11-15 | Skip KoDF and HiFi-AVDF, then reverse both | HiFi-AVDF turned out to be public. Vaibhav chose to keep KoDF until refused | Amendments A5, A6 |
 | 11-15 | Request AV-Deepfake1M and AV-Deepfake1M++ | A third corpus with per-modality labels; AVH-Align's own data | Amendment A6; [datasets](research/datasets.md) |
 | 11-15 | Use the 2-day plan, not the 10-day plan | There is no time for 10 days | Section 5 below |
+| 11-15 | Add HiFi-AVDF back; one frame size per corpus | Public data; generated clips are 1920x1080 while real ones are 1280x720 | Amendments A5, A7 |
+| 11-15 | Build the black book, research paper, slides and poster alongside the 2-day results; every number filled from `results/numbers.json` | Deadline within 2 days; no number typed by hand | [deliverables/](../deliverables/README.md) |
+| 11-15 | After the 2-day deadline, run the full project (the 10-day plan) | The 2-day version cuts fusion (H2), modality prediction (H3) and the baselines | Section 5 below |
 
 ## 3. What we found, in plain words
 
@@ -120,6 +123,18 @@ The 2-day paper claims four things:
 4. False-alarm control from real clips.
 
 Fusion against visual-only (H2), modality prediction (H3) and the baselines become future work, stated as limitations.
+
+**After the deadline: the full run.** Once the 2-day deliverables are submitted, the 10-day plan runs in full:
+
+1. Speed up the cache build.
+2. Visual and audio paths, cross-corpus.
+3. Out-of-fold fusion and H2.
+4. LAV-DF reverse models and H3.
+5. AVH-Align and HAVIC baselines.
+6. AV-Deepfake1M and KoDF if access arrives.
+7. The full paper.
+
+The 2-day results stay valid: the full run reuses the same frozen sync models, neutral copies and splits. The deliverables are then rebuilt from the larger `results/numbers.json`.
 
 ## 6. Waiting on others
 
