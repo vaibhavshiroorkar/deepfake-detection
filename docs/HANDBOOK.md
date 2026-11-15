@@ -226,6 +226,23 @@ These come from earlier stages. Each is listed so nobody cites it by mistake. "R
 
 The pattern behind all of them: the models did very well on the corpus they trained on, and close to chance elsewhere. Section 6 explains how much of that comes from shortcuts and protocol errors.
 
+### 5.3 How the numbers are computed, and what changed
+
+Old and new numbers in this project are **not directly comparable**. This list says what changed in the maths and why. None of these changes was chosen after seeing the result it affects.
+
+| What | Before | Now | Why | Effect on comparison |
+|---|---|---|---|---|
+| EER | FPR and FNR averaged at the nearest ROC point | Linear interpolation where FPR = FNR (`evaluation/metrics.py:equal_error_rate`) | On small sets the nearest point can be off by several points (test case: 0.417 vs exact 0.333) | Old EERs can differ by a few points, most on small sets such as MNW |
+| Decision threshold | Fixed 0.5 | Maximum balanced accuracy on validation. The file records the clip ids used, and evaluation refuses any overlap | 0.5 means nothing on 10:1 fake-heavy data | Old FPR, FNR and balanced accuracy at 0.5 are not comparable |
+| FF++ split | Grouped by source identity | Grouped by connected identity component | Donor faces crossed train and test (226 identities) | Old FF++ in-domain numbers were optimistic |
+| Identity-strict subset | Read "fake.mp4" as a person | File names are not identities | The old strict test had zero fake-audio clips | Old strict numbers covered three of four categories |
+| Input data | Raw files | Neutralizer v4: one codec, fixed 3.00 s, cut at first sound, level -23 dBFS RMS, dither -66 dBFS | Raw files leak the label (ceiling 0.994) | Neutral and raw numbers measure different things. 1,260 short generated-speech clips are refused, so the neutral test set has fewer fakes |
+| Sync clip score | Not used | Mean window misfit s, reported as 1 - exp(-s) | Puts the score in [0, 1) for the evaluation tools | Monotone, so AUC is unchanged. It is not a calibrated probability |
+| Shortcut ceiling | Did not exist | Gradient-boosted trees on file and audio-edge cues, 5 folds grouped by identity | The bar any detector must beat | Single-cue AUCs flip direction in-sample (max of AUC and 1 - AUC), so they are slightly optimistic. The ceiling itself is out-of-fold |
+| False-alarm threshold (H4) | Did not exist | Split conformal rank ceil((n+1)(1 - alpha)); Neyman-Pearson umbrella for an (alpha, delta) bound | Thresholds from the source domain break under shift | Standard published formulas (Vovk et al. 2005; Bates et al. 2023; Tong et al. 2018), not new maths |
+
+**Unchanged:** ROC-AUC itself; the 95% intervals from 1,000 bootstrap resamples of identities (not clips); three seeds; and Holm correction across H2 to H4, as preregistered.
+
 ## 6. Mistakes, start to finish
 
 This log lists every methodological, data, engineering and documentation mistake
