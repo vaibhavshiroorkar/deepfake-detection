@@ -20,6 +20,9 @@ Three chains run as detached processes. Each resumes from its own log if stopped
 - Add a README with receipts to each new results folder.
 - Commit the audits of the neutral copies under `results/shortcut-audit/*-neutral/`.
 - Report the 23 HiFi-AVDF clips that have no audio track (14 real, 9 fake), and the clips with no face, in the results README and the paper.
+- Update the README Results section to the P-001 study. It still leads with older numbers.
+- Update section 5 of the project log to the 3-day plan.
+- Label the main claims in `FINAL.md` and the handbook as verified, assumed, false or unknown.
 - Write the paper and report text that interprets the cross-corpus and H4 results. The numbers fill in by themselves; the reading of them does not.
 - Fill the pending entries in [FINAL.md](FINAL.md); update handbook section 5.1b and the project log.
 - Run the full test suite once the CPU is free.
@@ -35,6 +38,11 @@ Three chains run as detached processes. Each resumes from its own log if stopped
 
 ## 4. Vaibhav
 
+- Confirm the report's front matter, all filled in from the October template:
+  - the Head of Department, Dr. Jagannath Nirmal;
+  - the logo, the Somaiya Vidyavihar mark, which stands in for `1777459645157_kjsce.png`;
+  - the three roll numbers;
+  - that the slide master from the October deck is still the college's current one.
 - Ask the guide what "Batch" means on the report. It is set to 2023-27; the academic year is 2026-27.
 - Upload `deliverables/build/overleaf/report.zip` and `paper.zip` to Overleaf, compile with pdfLaTeX, and send any error.
 - Read the paper and the slides and challenge every claim. Practise the talk once with the speaker notes.
@@ -46,6 +54,7 @@ Three chains run as detached processes. Each resumes from its own log if stopped
 - Decide whether the dashboard and web app (about 11,000 lines, 40% of `src/`) stay as the demo.
 - If they go: delete them with the docs only they read: `docs/research/findings.md`, `docs/research/result-traceability.md`, `docs/handbook/01` to `10`, `docs/obstacles.md`, `docs/model-selection.md`, `docs/handoff.md` and its `ddf handoff update` command, `scripts/update_result_registry.py`, and the checks and tests that cover them.
 - If they stay: update their content to the P-001 study. Today they cite the older findings.
+- Write `docs/SECURITY.md` in the same review. The web app takes uploaded media, decodes it with ffmpeg and loads downloaded model weights; the public demo runs through an HTTPS tunnel; the admin page relies on `DDF_ADMIN_TOKEN`. For each one: the vulnerability, the countermeasure, and whether it is verified, assumed or unknown. Two are already verified: `.env` is git-ignored, and the sync scorer loads checkpoints with `weights_only=True`.
 
 ## 6. Full run, after the deadline
 
