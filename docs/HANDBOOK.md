@@ -1024,7 +1024,7 @@ uncommitted working tree unless marked open.
 - **How it was caught:** The first receipted sync evaluation. The visual and audio driver would have failed the same way at its first training step.
 - **What it cost:** Nothing measured.
 - **Fix:** Resolve a relative program path before launching. The receipt still records the portable relative command.
-- **Source:** commit after `2eb1bc8`, "Resolve relative program paths before launching a receipted stage".
+- **Source:** commit `582a577`.
 
 ## 7. What a hard reviewer would say
 
