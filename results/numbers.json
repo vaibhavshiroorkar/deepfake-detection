@@ -147,6 +147,34 @@
   "value": 0.489,
   "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
  },
+ "audit.hifiavdf.raw.audio": {
+  "value": 0.999,
+  "source": "results/shortcut-audit/hifiavdf/summary.json"
+ },
+ "audit.hifiavdf.raw.census.FakeVideo-FakeAudio.clips": {
+  "value": 1511,
+  "source": "results/shortcut-audit/hifiavdf/summary.json"
+ },
+ "audit.hifiavdf.raw.census.FakeVideo-RealAudio.clips": {
+  "value": 394,
+  "source": "results/shortcut-audit/hifiavdf/summary.json"
+ },
+ "audit.hifiavdf.raw.census.RealVideo-RealAudio.clips": {
+  "value": 1905,
+  "source": "results/shortcut-audit/hifiavdf/summary.json"
+ },
+ "audit.hifiavdf.raw.clip": {
+  "value": 0.999,
+  "source": "results/shortcut-audit/hifiavdf/summary.json"
+ },
+ "audit.hifiavdf.raw.clips": {
+  "value": 3810,
+  "source": "results/shortcut-audit/hifiavdf/summary.json"
+ },
+ "audit.hifiavdf.raw.video": {
+  "value": 0.999,
+  "source": "results/shortcut-audit/hifiavdf/summary.json"
+ },
  "audit.lavdf.raw.audio": {
   "value": 0.751,
   "source": "results/shortcut-audit/lavdf-files/summary.json"

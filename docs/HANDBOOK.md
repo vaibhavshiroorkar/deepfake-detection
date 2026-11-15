@@ -174,6 +174,7 @@ The full list of commands is in [docs/reference/cli.md](reference/cli.md). How r
 |---|---|---|---|---|---|
 | FakeAVCeleb | 21,544 | **0.994** | **0.997** | **1.000** (0.9996) | Video codec (0.971 clip label); leading silence (0.992 audio label) |
 | DFDC (our subset) | 3,032 | 0.588 | 0.588 | no audio fakes | Bitrate, 0.548 |
+| HiFi-AVDF (6 commercial generators) | 3,810 (1,905 real, each paired with a generated copy) | **0.9985** | 0.9985 | 0.9986 | Leading silence 0.821; per generator, frame size, clip length (Sora 2 10.0 s, Veo 3.1 8.0 s), bitrate and sample rate |
 | LAV-DF | 8,000 files (stratified sample) | **0.936** | 0.738 | 0.751 | No single strong cue: audio bitrate 0.775, trailing silence 0.696, duration 0.635 |
 
 **What FakeAVCeleb's files say about their labels** (results/shortcut-audit/fakeavceleb):

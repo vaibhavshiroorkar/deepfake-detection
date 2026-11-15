@@ -15,7 +15,7 @@ Audio-visual deepfake detectors report 95 to 99 AUC on their benchmarks and fail
    - most face swaps are MPEG-4 where real clips are H.264
    - generated speech starts and ends with digital silence
 
-   LAV-DF reaches 0.936 from weak cues combined. DFDC is close to clean at 0.588. HiFi-AVDF, with six commercial generators: *pending*.
+   LAV-DF reaches 0.936 from weak cues combined. DFDC is close to clean at 0.588. HiFi-AVDF, with six commercial generators, reaches 0.9985 from frame size, fixed clip lengths (Sora 2 at exactly 10.0 s, Veo 3.1 at 8.0 s), bitrate, edge silence and sample rate.
 2. **A shortcut-neutral protocol.** One codec, a fixed 3.00 s span from the first sound, a fixed loudness, and dither. Naive cleaning fails (0.933), because re-muxing exposes hidden AAC padding. Our version lowers the ceiling to 0.632. We report that residual and the clips cleaning removes.
 3. **A lip-sync detector trained on real clips only.** It never sees a fake, so it cannot learn a generator's habits. Its scores follow the mechanism: voice cloning is caught best, and face swaps that keep the original lips and voice least.
 4. **False-alarm control from real clips only.** A threshold calibrated on real clips from the new domain, against the threshold carried over from training. *Pending.*
@@ -60,7 +60,7 @@ The FakeAVCeleb split is 70/15/15 by person. Results are also reported on an ide
 | FakeAVCeleb | 0.994 | 0.632 |
 | LAV-DF | 0.936 | *pending* |
 | DFDC | 0.588 | *pending* |
-| HiFi-AVDF | *pending* | *pending* |
+| HiFi-AVDF | 0.9985 | *pending* |
 
 **Sync path, in-domain** (neutral FakeAVCeleb test, ROC-AUC)
 
