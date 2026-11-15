@@ -1045,6 +1045,30 @@ uncommitted working tree unless marked open.
 - **Fix:** Resolve a relative program path before launching. The receipt still records the portable relative command.
 - **Source:** commit `582a577`.
 
+#### 64. Two pipelines wrote the same neutral copies
+
+- **What went wrong:** Stopping a background task stopped its outer shell, but the script inside kept running. A relaunch then started a second copy of the 2-day chain. Both neutralized HiFi-AVDF into the same folder and appended to the same cut log.
+- **How it was caught:** The process list on 2026-11-15 showed two neutralizer trees with the same arguments.
+- **What it cost:** One partial HiFi-AVDF neutralization, deleted and redone. No result was read from it.
+- **Fix:** Stop the whole process tree, and check the process list before any relaunch. One chain owns each output: the resume chain no longer neutralizes DFDC or the LAV-DF test sample.
+- **Source:** `runs/p001-2day.sh`, `runs/p001-resume2.sh` (git-ignored); this entry.
+
+#### 65. Resume skipped a half-written video
+
+- **What went wrong:** The neutralizer skipped any clip whose output video existed. A crash could leave a video with no cut-log row, so the clip was skipped and then dropped from the neutral manifest without an error.
+- **How it was caught:** 18 DFDC videos from the crash on 2026-11-14 had no row in the cut log.
+- **What it cost:** Nothing measured. The 18 files were deleted before the rerun.
+- **Fix:** Resume is decided by the cut log alone. A video without a log row is always redone.
+- **Source:** commit `6c9fc23`.
+
+#### 66. Background runs died with the editor session
+
+- **What went wrong:** The pipelines ran as background tasks of the Claude Code session. When the session ended on 2026-11-15, both chains stopped partway through DFDC neutralization and the cache build.
+- **How it was caught:** The logs had not moved for four hours on 2026-11-16.
+- **What it cost:** About four hours of compute.
+- **Fix:** Long chains now run as detached processes that outlive the session. Every stage resumes from its own log, so a stop loses only the clip in progress.
+- **Source:** `docs/PROJECT-LOG.md`, decisions of 11-16.
+
 ## 7. What a hard reviewer would say
 
 These are the strongest objections we expect, with our current answer. "Open" means we have no answer yet and the paper must not pretend otherwise.

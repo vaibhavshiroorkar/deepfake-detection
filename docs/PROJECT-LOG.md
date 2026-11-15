@@ -40,6 +40,9 @@ The goals, as stated by Vaibhav on 2026-11-13:
 | 11-15 | Add HiFi-AVDF back; one frame size per corpus | Public data; generated clips are 1920x1080 while real ones are 1280x720 | Amendments A5, A7 |
 | 11-15 | Build the black book, research paper, slides and poster alongside the 2-day results; every number filled from `results/numbers.json` | Deadline within 2 days; no number typed by hand | [deliverables/](../deliverables/README.md) |
 | 11-15 | After the 2-day deadline, run the full project (the 10-day plan) | The 2-day version cuts fusion (H2), modality prediction (H3) and the baselines | Section 5 below |
+| 11-16 | Pipelines run as detached processes, outside Claude Code | Both chains died when a Claude Code session ended. Detached, they survive; each resumes from its logs | `runs/p001-2day.log`, `runs/p001-resume2.log` |
+| 11-16 | Only the 2-day chain neutralizes DFDC and the LAV-DF test sample | Two writers on one output corrupted HiFi-AVDF copies on 11-15 | Mistakes log, HANDBOOK section 6 |
+| 11-16 | Slides and poster built from the college slide master in the October deck | The `Document Template` folder is not in the repo; the submitted deck still carries its master | [deliverables/](../deliverables/README.md) |
 
 ## 3. What we found, in plain words
 
