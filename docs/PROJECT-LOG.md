@@ -42,6 +42,9 @@ The goals, as stated by Vaibhav on 2026-11-13:
 | 11-15 | After the 2-day deadline, run the full project (the 10-day plan) | The 2-day version cuts fusion (H2), modality prediction (H3) and the baselines | Section 5 below |
 | 11-16 | Pipelines run as detached processes, outside Claude Code | Both chains died when a Claude Code session ended. Detached, they survive; each resumes from its logs | `runs/p001-2day.log`, `runs/p001-resume2.log` |
 | 11-16 | Only the 2-day chain neutralizes DFDC and the LAV-DF test sample | Two writers on one output corrupted HiFi-AVDF copies on 11-15 | Mistakes log, HANDBOOK section 6 |
+| 11-16 | Three days (11-16 to 11-18) instead of two, so H2 (fusion against visual-only, cross-corpus) runs now | Vaibhav asked whether H2 fits in 3 days; the estimate was about 25 hours of compute plus a day of buffer | P-001 amendment A8, commit `7c81b89`; `runs/p001-h2.sh` |
+| 11-16 | Guide is an Assistant Professor; academic year 2026-27; batch 2023-27, to confirm with the guide | Vaibhav confirmed the title and graduates in 2027 | `deliverables/report/report.tex` |
+| 11-16 | Report and paper compile on Overleaf | Vaibhav uses Overleaf; no LaTeX on this PC | `deliverables/overleaf.py` |
 | 11-16 | Slides and poster built from the college slide master in the October deck | The `Document Template` folder is not in the repo; the submitted deck still carries its master | [deliverables/](../deliverables/README.md) |
 
 ## 3. What we found, in plain words
