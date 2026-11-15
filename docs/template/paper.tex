@@ -1,0 +1,797 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{url}
+
+% Registered results resolve through docs/research/result-traceability.md
+% and docs/research/findings.md. The preliminary encoder comparison uses
+% runs/encoders-20261022/checkpoints/stream-lipsync-avhubert-history.json.
+
+\begin{document}
+
+\title{Multimodal Audio-Visual Deepfake Detection:\\
+Validity Checks Catch a Detector That Looks Right and Is Not}
+
+\author{\IEEEauthorblockN{Vaibhav Shiroorkar}
+\IEEEauthorblockA{\textit{Dept. of Electronics and Computer Engineering} \\
+\textit{KJ Somaiya School of Engineering}\\
+Mumbai, India \\
+v.shiroorkar@somaiya.edu}
+\and
+\IEEEauthorblockN{Adithya Jithesh}
+\IEEEauthorblockA{\textit{Dept. of Electronics and Computer Engineering} \\
+\textit{KJ Somaiya School of Engineering}\\
+Mumbai, India \\
+adithya.j@somaiya.edu}
+\and
+\IEEEauthorblockN{Shivansh Gupta}
+\IEEEauthorblockA{\textit{Dept. of Electronics and Computer Engineering} \\
+\textit{KJ Somaiya School of Engineering}\\
+Mumbai, India \\
+shivansh.gupta@somaiya.edu}
+\and
+\IEEEauthorblockN{Tejashree Phatak}
+\IEEEauthorblockA{\textit{Dept. of Electronics and Computer Engineering} \\
+\textit{KJ Somaiya School of Engineering}\\
+Mumbai, India \\
+tejashree@somaiya.edu}
+}
+
+\maketitle
+
+\begin{abstract}
+Lip-sync deepfakes manipulate the mouth region and the accompanying voice
+while leaving most of the original video untouched. This creates a problem
+for detectors that rely only on visual information, since much of the footage
+they analyse may still be genuine. Combining audio and video seems like a
+natural solution, which led us to develop a system with separate visual and
+audio streams and two cross-attention streams designed to compare mouth
+movements with speech and facial information with voice characteristics.
+Their outputs are combined at the feature level. Rather than assuming that
+these components work as intended, however, we examined whether their
+behaviour supports that assumption. We asked whether cue-specific fusion
+could generalize better than a strong visual baseline under source-disjoint
+evaluation and controlled testing for shortcut learning. Our results did not
+support this expectation. Fusion improved the in-domain ROC-AUC by 0.0159,
+but it failed to outperform the visual baseline on an unseen corpus across
+all three seeds and performed significantly worse for two of them. The
+experiments also exposed problems that would have been easy to overlook if
+we had considered accuracy alone. One cross-attention stream achieved a
+ROC-AUC of 0.9991 while its attention weights remained almost uniform
+throughout training, suggesting that the mechanism it was designed around
+was not contributing as intended. We also found evidence of codec-related
+shortcut learning: when genuine clips were re-encoded using the codec
+associated with the largest fake category, 93.3 percent were classified as
+fake. Combining compression augmentation with codec-swapped checkpoint
+selection reduced cross-corpus ROC-AUC by 0.19. In another experiment,
+selecting a checkpoint using validation loss resulted in below-chance
+performance, while changing only the training seed produced a cross-corpus
+ROC-AUC spread of 0.1078. These findings show why it is important to
+monitor properties that are not directly optimized during training. We
+present our evaluation protocol, the measurements collected, and the
+failures identified throughout the study.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Audio-visual deepfakes, cross-attention, cross-corpus generalization,
+feature-level fusion, media forensics, shortcut learning.
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+Early deepfake techniques mainly focused on replacing entire faces. More
+recent approaches can produce much more targeted manipulations. For example,
+an attacker can generate speech using text-to-speech or voice conversion and
+then regenerate only the mouth region to match the new audio. The rest of the
+video, including its background, lighting, and upper facial region, can remain
+unchanged. This creates a challenge for detectors that rely entirely on
+visual information, since most of the footage they examine may still be
+genuine.
+
+One possible way to address this problem is to analyse audio and video
+together and look for inconsistencies between them. These may include mouth
+movements that do not match the spoken sounds or differences between the
+emotion conveyed by a voice and the expression visible on the face. Our
+system follows this approach. Visual streams process sequences of face crops,
+an audio stream analyses speech, and two cross-attention streams compare the
+mouth with the audio and the face with the voice. A learned head then combines
+these representations at the feature level.
+
+Before running the experiments, we defined the main research question and
+allowed for the possibility that multimodal fusion might not improve
+performance. Specifically, we investigated whether combining visual
+artifacts, audio spoofing cues, and mouth-audio alignment could generalize
+better than a strong visual baseline under source-disjoint evaluation with
+controls for shortcut learning. The results did not support this expectation,
+and we report them together with confidence intervals.
+
+The more useful outcome of the study was identifying issues that would have
+been difficult to notice from performance tables alone. Four findings were
+particularly important:
+
+\begin{enumerate}
+\item One cross-attention stream achieved near-perfect performance even
+though its attention weights remained close to their uniform starting values
+throughout training.
+\item The visual models learned to some extent from video codec differences,
+because the largest fake category in one dataset used a different codec from
+the genuine clips.
+\item Our checkpoint selection procedure retained a model that performed
+below chance during evaluation.
+\item The training seed had a substantial effect on cross-corpus performance,
+sometimes exceeding the differences observed between architectural choices.
+\end{enumerate}
+
+Each of these issues became apparent through a quantity that we recorded
+alongside the training objective but did not directly optimize. We consider
+this practice, rather than the architecture alone, to be the main contribution
+of our work. It encourages us to check whether a model behaves as its design
+suggests, instead of relying only on the final prediction scores. We also
+apply the same approach to fully generated video, where a frozen encoder and
+a linear probe are evaluated on generators that were not seen during
+training.
+
+\section{Related Work}
+
+Several datasets have been developed to study audio-visual deepfakes,
+including FakeAVCeleb~\cite{fakeavceleb} and LAV-DF~\cite{lavdf}, which
+contain manipulated faces and voices. Cross-dataset evaluation commonly
+involves training on FaceForensics++~\cite{ffpp} and testing on datasets such
+as Celeb-DF~\cite{celebdf} and DFDC~\cite{dfdc}. The problem of synchronizing
+mouth movements with speech has also been studied in SyncNet~\cite{syncnet},
+while AV-HuBERT~\cite{avhubert} learns a shared audio-visual speech
+representation from unlabelled video. Self-blended images~\cite{sbi} take a
+different approach by training face forgery detectors on blending artifacts
+rather than on a particular generator. Similarly, a frozen vision-language
+encoder combined with a linear probe has been shown to transfer across image
+generators~\cite{univfd}.
+
+Our work is also related to shortcut learning~\cite{shortcut}, where a model
+achieves good benchmark results by relying on information that was not
+intended to be part of the task. A concurrent study auditing deepfake
+benchmarks using frozen self-supervised features~\cite{audit} is particularly
+relevant to our findings on the choice of region of interest.
+
+We do not claim that multimodal fusion itself is a new contribution. Instead,
+we focus on a problem that can arise when evaluating such systems: a stream
+may produce impressive scores even when the mechanism it was designed to use
+does not appear to be functioning. We investigate this problem through
+specific experiments and checks on the behaviour of the models.
+
+\section{Method}
+
+\subsection{Two systems, one evaluation path}
+
+We investigate two system designs. Design A contains three branches. The
+first uses EfficientNet-B0~\cite{efficientnet}, followed by a GRU that
+processes 16 face crops of size $224\times224$. The crops are detected and
+tracked using MTCNN~\cite{mtcnn}. The second branch uses Wav2Vec2~\cite{wav2vec2}
+with attentive pooling over 4~s of 16~kHz audio to detect spoofing. The third
+branch combines a framewise ResNet-18 mouth encoder with a second Wav2Vec2
+model. It processes a 2~s window containing 50 mouth crops to estimate
+mouth-audio alignment.
+
+The three branches are combined using regularized logistic regression. Their
+logits are calibrated using Platt scaling, and three quality features are
+included in the fusion head. The fusion model is fitted only on out-of-fold
+rows, keeping the fusion training separate from the predictions used to fit
+it.
+
+Design B uses configurable streams and replaces late fusion with a
+feature-level fusion head. Each visual stream uses either EfficientNet-B0 or
+a frozen DINOv3 ViT-S/16~\cite{dinov3} backbone followed by a temporal model.
+The audio-visual streams use cross-attention to compare temporal tokens. The
+attention operation is defined as
+
+\begin{equation}
+A = \operatorname{softmax}\!\left(\frac{(X_a W_Q)(X_v W_K)^\top}{\sqrt{d}}\right),
+\qquad \tilde{X} = A\,(X_v W_V),
+\end{equation}
+
+where the audio tokens $X_a$ act as queries, while the video tokens $X_v$
+provide the keys and values. The stream then embeds the residual
+$X_a-\tilde{X}$ and averages it over time. The intended interpretation is
+that this residual captures audio information that cannot be explained by the
+corresponding mouth movements. The lip-sync stream uses the mouth window and
+its associated audio, whereas the emotion stream uses face crops and voice
+features.
+
+For feature-level fusion, each stream produces a 256-dimensional embedding,
+which is projected to a shared width before the embeddings are concatenated.
+Missing streams are masked after projection, ensuring that an absent stream
+contributes exactly zero. A multi-layer perceptron then produces the final
+classification.
+
+Both designs use the same evaluation code. When we first observed the largest
+performance gap, we suspected that it might have resulted from an evaluation
+bug. To check this, we evaluated the Design A checkpoint through the Design B
+pipeline. It reproduced the same score to four decimal places, suggesting
+that the difference was not caused by the evaluation path.
+
+\subsection{A validity check recorded and never optimized}
+
+A stream designed to align mouth movements with speech should assign greater
+attention to temporally corresponding audio and video tokens. In particular,
+we expect its attention matrix $A$ to place more weight near the diagonal,
+allowing for a small offset between the mouth movement and the recorded sound.
+We therefore record the diagonal mass after every epoch without including it
+in the training loss:
+
+\begin{equation}
+m = \frac{1}{T_q}\sum_{i,j} A_{ij}\,\mathbb{1}\!\left[\,\left|\tfrac{T_k}{T_q}\,i - j\right| \le 1\right]
+\end{equation}
+
+The reason for keeping this measurement separate from the objective is that
+optimizing a diagnostic measure can make it less useful as an independent
+check of the mechanism. If the model is explicitly trained to maximize the
+measure, the result no longer provides the same evidence about whether the
+mechanism has emerged naturally during learning.
+
+The expected value under uniform attention depends on the query length. For
+50 steps, the expected value is 0.0592, while for 8 steps it is 0.3438.
+These values provide a reference for determining whether the measured
+attention is meaningfully different from a uniform distribution.
+
+\subsection{Abstention and provenance}
+
+Some clips do not contain a stable face track. Rather than falling back to
+the full frame or silently excluding these clips, the pipeline marks the
+visual view as unavailable. We report coverage alongside the evaluation
+metrics so that the effect of missing views remains visible.
+
+The data splits are fixed by source identity. Cached views are identified
+using a hash of the preprocessing settings and code version, and the model
+refuses to use a cache produced under different settings. Each registered
+result is also stored with SHA-256 hashes of its artifacts, making it possible
+to trace the reported measurements to the corresponding files.
+
+The preliminary encoder comparison reported later in this paper is based on
+a training history. It has not yet been evaluated on held-out data, so those
+results should be interpreted as preliminary rather than as evidence of
+cross-corpus performance.
+
+\section{Experimental Setup}
+
+For the first track, we train on FakeAVCeleb~\cite{fakeavceleb} using a
+70/15/15 split based on source identity. DFDC~\cite{dfdc} serves as the
+cross-corpus test set and is the only corpus with audio in this study that is
+not derived from VoxCeleb2. We use Celeb-DF-v2~\cite{celebdf} and the
+evaluation-only MNW benchmark~\cite{mnw} for additional external checks.
+LAV-DF~\cite{lavdf} provides a stricter setting for evaluating the cross-modal
+streams, while the c23 version of FaceForensics++~\cite{ffpp} is used as a
+second training corpus following the published cross-dataset protocol.
+
+The second track uses DF26~\cite{df26}, which contains 271 real clips and
+2,420 generated clips from seven generators. Four of these generators are
+commercial and three are open source. We train a frozen-encoder linear probe
+on six generators and evaluate it on the remaining unseen generator.
+
+Our evaluation protocol specifies three training seeds: 17, 29, and 43.
+Every Design A branch and the fusion head were trained using all three seeds.
+However, the Design B streams were trained only with seed 17, which happens
+to give the best DFDC result among the three seeds in the broader comparison.
+Consequently, the single-seed cross-corpus results for Design B should be
+viewed as a best-case observation rather than a typical estimate of
+performance.
+
+We calculate 95 percent bootstrap confidence intervals~\cite{bootstrap},
+with resampling clustered by source identity. This reflects the practical
+question of how a detector might behave when presented with a new set of
+speakers. If a resample contains only one class, we skip it and count it
+rather than assigning it a score of 0.5. Comparisons between systems are
+paired: both systems are evaluated on the same resampled identities, and
+their score difference is calculated within each resample. For DF26, where
+generated clips are not associated with speakers in the same way, we resample
+clips or source videos instead.
+
+\section{Results}
+
+\subsection{The cross-modal streams do not read correspondence}
+
+On held-out FakeAVCeleb clips, the emotion stream achieves a ROC-AUC of
+0.9991, the highest score among the five streams. However, its attention
+weights remain close to their uniform value throughout training. Table
+\ref{tab:diag} compares the measured diagonal attention mass for the emotion
+and lip-sync streams with their expected uniform values across the recorded
+training epochs.
+
+\begin{table}[htbp]
+\caption{Diagonal attention mass against its uniform value}
+\label{tab:diag}
+\centering
+\begin{tabular}{lrrl}
+\toprule
+Stream & Steps & Uniform & Measured \\
+\midrule
+emotion & 8 & 0.3438 & 0.3434 to 0.3457, 9 epochs \\
+lip-sync & 50 & 0.0592 & 0.0592 to 0.0595, 4 epochs \\
+lip-sync, lower encoder LR & 50 & 0.0592 & 0.0592 to 0.0595, 6 epochs \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Over nine epochs, the emotion stream's ROC-AUC increased from 0.9847 to
+0.9991, but its attention distribution barely changed. This suggests that the
+stream learned to distinguish the classes without relying on the temporal
+correspondence that its design was intended to capture. The performance is
+real, but the attention measurements do not support the intended explanation
+for that performance.
+
+FakeAVCeleb contains clips in which the manipulations can affect the video
+as a whole. A model can therefore distinguish genuine and fake clips by
+recognizing generator-related artifacts without comparing the mouth movements
+with the audio. LAV-DF allows us to examine the stream under a stricter
+condition. We extract two windows from each file: one containing the
+manipulated segment and another that does not. Both windows share the same
+speaker, lighting, microphone, and codec.
+
+A lip-sync stream trained on these paired windows achieves a ROC-AUC of
+0.9969 on 1,161 held-out windows. Its diagonal attention mass is 0.0592,
+compared with a uniform value of 0.0600. Although matching the windows removes
+many file-level differences, local artifacts introduced by the manipulation
+can still distinguish the two classes. The near-uniform attention therefore
+does not establish that the model has learned temporal correspondence.
+
+\subsection{The visual models partly read the video codec}
+
+We found a substantial codec difference in FakeAVCeleb. Genuine videos are
+encoded in H.264 at approximately 150~kbps, whereas every fake in the
+face-swap plus Wav2Lip category, the dataset's largest fake category, is
+encoded in MPEG-4 Part~2 at approximately 330~kbps. To investigate whether
+this difference affected the predictions, we re-encoded 75 test clips for
+each condition and evaluated the deployed ensemble using a threshold of 0.5.
+The results are shown in Table~\ref{tab:codec}.
+
+\begin{table}[htbp]
+\caption{Called fake after re-encoding (75 clips per row)}
+\label{tab:codec}
+\centering
+\begin{tabular}{llr}
+\toprule
+Clips & Codec & Called fake \\
+\midrule
+genuine & original H.264 & 0.0\% \\
+genuine & re-encoded H.264 (control) & 0.0\% \\
+genuine & re-encoded MPEG-4 & \textbf{93.3\%} \\
+swap plus Wav2Lip & original MPEG-4 & 100.0\% \\
+swap plus Wav2Lip & re-encoded H.264 & \textbf{30.7\%} \\
+face swap, H.264 & re-encoded MPEG-4 & 100.0\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The control condition helps separate the effect of re-encoding from the
+effect of changing the codec. Re-encoding genuine clips with their original
+codec changes the encoded video, but none of the clips are classified as fake.
+Changing the codec produces a very different outcome: 93.3 percent of genuine
+clips become false positives, while re-encoding the swap-plus-Wav2Lip clips
+with H.264 reduces the fake detection rate to 30.7 percent. These changes
+indicate that the predictions are sensitive to codec-related information.
+
+Since decoding produces the pixels generated by the encoder, including its
+compression artifacts, a model can learn to use those artifacts as a shortcut.
+The results do not imply that every prediction is based on the codec, but they
+show that codec information can have a substantial effect on the deployed
+ensemble.
+
+\subsection{Training against the codec cue costs transfer}
+
+We compared four EfficientNet-B0 training recipes using seed 17. Each recipe
+changes one component relative to the preceding one. The first is the shipped
+recipe, which selects checkpoints using ROC-AUC. The second adds random JPEG,
+H.264, and MPEG-4 round trips to both classes and selects checkpoints using
+codec-swapped validation clips. The third adds self-blended fakes~\cite{sbi},
+and the fourth includes the FaceForensics++ training split.
+
+\begin{table}[htbp]
+\caption{Visual recipes against the codec cue (ROC-AUC)}
+\label{tab:recipes}
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Recipe & FakeAVCeleb & DFDC & Celeb-DF \\
+\midrule
+shipped & 0.9988 & \textbf{0.7611} & 0.6682 \\
++ compression & 0.9959 & 0.5720 & 0.6525 \\
++ self-blending & 0.9978 & 0.6496 & 0.6762 \\
++ FaceForensics++ & 0.9904 & 0.6756 & 0.6509 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+As Table~\ref{tab:recipes} shows, all three modified recipes perform worse
+than the shipped recipe on DFDC. The largest decrease comes from the
+compression recipe, which loses 0.1891 ROC-AUC, and the corresponding
+confidence intervals do not overlap. Self-blending and the additional
+training corpus recover part of this loss, but their DFDC scores remain
+0.0855 below the shipped recipe.
+
+The results on Celeb-DF are less conclusive. The confidence intervals overlap
+for all four recipes, so these experiments do not provide a clear basis for
+distinguishing their performance on that corpus.
+
+It is also important to separate the effects of the individual changes. The
+compression augmentation and the codec-swapped checkpoint selection rule were
+introduced together, so the experiment cannot establish how much of the
+transfer loss comes specifically from reducing the model's reliance on codec
+information. We also retrained the shipped recipe and reproduced the original
+checkpoint exactly, epoch by epoch, confirming that the observed results were
+repeatable under that training configuration.
+
+\subsection{Fusion does not beat the visual branch across corpora}
+
+Table~\ref{tab:fusion} shows the paired ROC-AUC difference between the fused
+system and a model fitted using only the visual branch and the same quality
+features. Each seed uses its own cross-fitted fold models.
+
+\begin{table}[htbp]
+\caption{Fusion minus visual, paired, 95\% interval}
+\label{tab:fusion}
+\centering
+\begin{tabular}{lll}
+\toprule
+Seed & FakeAVCeleb test & DFDC \\
+\midrule
+17 & $+0.0159$ [$+0.0129$, $+0.0190$] & $-0.0085$ [$-0.0196$, $+0.0027$] \\
+29 & $+0.0170$ [$+0.0143$, $+0.0195$] & $-0.0215$ [$-0.0371$, $-0.0052$] \\
+43 & $+0.0184$ [$+0.0159$, $+0.0209$] & $-0.0417$ [$-0.0698$, $-0.0129$] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Fusion improves performance on the in-domain test set for all three seeds.
+Almost all of this improvement comes from 75 clips in which the video is
+genuine but the voice has been replaced. A visual-only branch cannot identify
+these cases from the video alone.
+
+The pattern changes on DFDC. Fusion does not outperform the visual branch
+for any of the three seeds and performs significantly worse for seeds 29
+and 43. We also evaluated every subset of the five Design B streams using
+the same rows. The best combination on DFDC, consisting of the emotion and
+lip-sync streams, achieves 0.6076 ROC-AUC. Combining all five streams gives
+only 0.5411, which is lower than the scores of three of the individual
+streams.
+
+The audio branch achieves a ROC-AUC of 0.5054 [0.4747, 0.5371], which is
+consistent with chance-level performance. The sync branch's anomaly score
+remains below 0.5 for all three seeds. Taken together, these results suggest
+that the branches do not contribute equally to cross-corpus detection: the
+visual branch transfers more successfully, while the audio and sync branches
+do not provide a consistent improvement.
+
+\subsection{Seed spread exceeds the measured fusion differences}
+
+\begin{table}[htbp]
+\caption{DFDC ROC-AUC by training seed}
+\label{tab:seeds}
+\centering
+\begin{tabular}{lrrrr}
+\toprule
+System & 17 & 29 & 43 & Spread \\
+\midrule
+visual branch & 0.7611 & 0.6963 & 0.6878 & 0.0733 \\
+fused system & 0.7500 & 0.6698 & 0.6422 & \textbf{0.1078} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The three seeds produce very similar results within the training domain, with
+scores agreeing to three or four decimal places. The cross-corpus results are
+much less stable. As shown in Table~\ref{tab:seeds}, the fused system has a
+DFDC ROC-AUC spread of 0.1078 across the three seeds. This is approximately
+thirteen times the magnitude of the seed-17 fusion difference reported in
+Table~\ref{tab:fusion}.
+
+Rather than reducing variation, combining the branches appears to amplify
+the effect of the training seed in this experiment. This makes it difficult
+to interpret a result from a single run as representative of the system's
+general performance.
+
+We also evaluated an ensemble formed by averaging the six final visual
+checkpoints, comprising EfficientNet-B0 and ConvNeXt-Tiny~\cite{convnext},
+each trained with three seeds and assigned equal weights. The ensemble
+achieves 0.7739 [0.7401, 0.8064] on DFDC. This is
+$+0.0469$ [$+0.0286$, $+0.0666$] above the EfficientNet seed mean and
+matches the best individual seed. On Celeb-DF, its performance is comparable
+to that of every individual member.
+
+There is an important qualification to this result. We selected this
+particular ensemble grouping after comparing three groupings on DFDC.
+Therefore, its improvement on DFDC still needs to be confirmed on a test
+partition that has not been used during model selection.
+
+\subsection{Choices that looked right on validation}
+
+\textit{Selection on loss.}
+One of the visual streams reached its lowest validation loss at epoch 1,
+while its backbone was still frozen. However, the resulting checkpoint
+achieved only 0.4668 ROC-AUC in-domain, which is below chance. This result
+shows that selecting a checkpoint using validation loss does not necessarily
+produce the best ranking performance.
+
+Binary cross-entropy penalizes confident incorrect predictions heavily.
+Consequently, a model with poor ranking ability can obtain a lower loss than
+a model that ranks examples well but makes overconfident mistakes. Following
+this observation, our trainers select checkpoints using validation ROC-AUC
+rather than validation loss.
+
+\textit{Frozen BatchNorm.}
+Freezing the BatchNorm statistics during fine-tuning increased validation
+performance from 0.5154 to 0.9058. Initially, we interpreted this as a clear
+improvement. The cross-corpus comparison, however, told a different story.
+Relative to frozen statistics, keeping the statistics live reduced in-domain
+ROC-AUC by 0.5430 but improved DFDC performance by 0.1276.
+
+The two configurations had been trained for different numbers of epochs,
+which meant that the original comparison did not isolate the effect of
+BatchNorm. After fixing the training budget, the DFDC difference decreased
+to 0.0177, approximately one seventh of the original value. Live statistics
+appear to act as an unintended domain adapter~\cite{adabn}, and the
+in-domain performance cost is the part of the effect that remains evident
+under the controlled comparison.
+
+\subsection{The operating point fails before the ranking does}
+
+\begin{table}[htbp]
+\caption{Visual branch under corruption of the cached view}
+\label{tab:corruption}
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Condition & ROC-AUC & Genuine called fake & Fakes missed \\
+\midrule
+clean & 0.9988 & 0 of 150 & 3 of 1,498 \\
+JPEG 75 & 0.9934 & \textbf{76 of 150} & 1 \\
+JPEG 50 & 0.9187 & \textbf{150 of 150} & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The corruption experiment illustrates why ROC-AUC alone is not enough to
+describe how a detector behaves at a fixed decision threshold. Under JPEG
+quality 75, ROC-AUC decreases by only 0.0054, which might appear to indicate
+that the model remains robust. Yet the number of genuine clips classified as
+fake rises from zero to 76 out of 150, corresponding to a false alarm rate of
+approximately 51 percent. At JPEG quality 50, every genuine clip in the
+evaluation is classified as fake, despite the model missing none of the fake
+clips.
+
+Audio corruption produces a different failure pattern. Adding noise at
+20~dB SNR reduces ROC-AUC by 0.0227, but the detector misses 857 of 859
+fake clips. These results show that relatively small changes in a ranking
+metric can accompany substantial changes in the decisions made at the
+deployed operating point.
+
+The model also becomes more confident when it is wrong on external datasets.
+On DFDC, the visual branch misclassifies 1,942 of 2,410 clips at a threshold
+of 0.5. Its mean confidence is 0.9244 on incorrect predictions, compared
+with 0.8517 on correct predictions. No confidence threshold removes errors
+faster than it removes correct predictions. On Celeb-DF, the same threshold
+classifies 141 of 155 genuine videos as fake.
+
+We also tested an approach that estimates how familiar a clip looks to the
+model. A Gaussian distribution is fitted to frozen DINOv3 features extracted
+from genuine training clips, and new clips are scored using Mahalanobis
+distance. This model does not train on fake examples; instead, it measures
+whether a clip differs from the distribution of genuine training footage.
+
+At the deployed setting, the method abstains on 8.7 percent of held-out
+genuine FakeAVCeleb clips. On genuine Celeb-DF clips, it intercepts
+74.4 percent, with the result ranging from 49.4 to 83.1 percent across
+twenty reference splits. This reduces false accusations on unfamiliar
+footage from roughly 91 percent to somewhere between a quarter and a third.
+
+\subsection{Open-world generated video}
+
+Before reporting the DF26 results, we identified and removed four potential
+shortcuts: scene content, real clips appearing in multiple splits, sibling
+modes of the same generator, and the presence of audio. The audio difference
+was particularly important because it could predict the label by itself:
+every commercial clip contains an audio track, while almost none of the
+other clips do. We also found that the real clips were the only ones recorded
+at 25 or 29.97 frames per second. To reduce this difference, we re-encoded
+all clips to $640\times360$ at 24 frames per second.
+
+\begin{table}[htbp]
+\caption{Unseen-generator ROC-AUC on DF26, frozen encoder and linear probe}
+\label{tab:df26}
+\centering
+\begin{tabular}{lrl}
+\toprule
+Encoder & Macro & Paired against DINOv3 \\
+\midrule
+Perception Encoder~\cite{pe} & \textbf{0.7527} & $+0.0741$ [$+0.0121$, $+0.1317$] \\
+CLIP ViT-B/16~\cite{clip} & 0.7454 & $+0.0668$ [$+0.0049$, $+0.1289$] \\
+DINOv3 ViT-S/16 & 0.6786 & reference \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Perception Encoder achieves the highest macro ROC-AUC across the seven
+held-out generators, as shown in Table~\ref{tab:df26}. Its scores range from
+0.8496 on Veo~3.1 to 0.6542 on LTX~2.3. However, these results require an
+important qualification. All three encoders received ImageNet-normalized
+pixels. This preprocessing is appropriate for DINOv3 but not for the other
+two encoders, meaning that the comparison was conducted under mismatched
+normalization conditions. The results should therefore not be treated as
+lower bounds. We consider the comparison preliminary until the features are
+re-extracted using the normalization statistics specified for each encoder.
+
+The results also show that the choice of region of interest matters. When
+we evaluate a full-frame probe on FaceForensics++, holding out one
+manipulation family in each arm, the macro score is close to chance at
+0.5387. Using face crops with the fine-tuned visual stream, retrained with
+one family held out each time, reduces the macro score by 0.1231 compared
+with a model trained on all six families. The graphics-based FaceSwap method
+achieves 0.5195.
+
+These findings suggest that full frames may be better suited to detecting
+fully generated video, whereas face crops are more appropriate when the
+task involves manipulation of a real face. The distinction is relevant
+because the visual evidence available to a detector differs between these
+two types of forgery.
+
+\subsection{Encoders the cross-modal design named}
+
+The original stream design specified AV-HuBERT~\cite{avhubert} for lip-sync
+detection and HSEmotion~\cite{hsemotion} for the face component of the
+emotion stream. Neither could be used directly in its released form in our
+environment. AV-HuBERT depends on fairseq, which requires an older PyTorch
+version, while the HSEmotion model is distributed as a pickled model that
+the current version of timm cannot load.
+
+To work around these compatibility issues, we reimplemented AV-HuBERT Base
+in plain PyTorch and loaded the HSEmotion weights into the same
+EfficientNet-B0 architecture. Both implementations were checked against
+the official code using identical inputs, and their features and logits
+agree to within $2\times10^{-6}$. AV-HuBERT is run separately on the lips
+and the audio because its pretraining maps both modalities into a shared
+representation space.
+
+On 98 percent of 128 genuine training clips, correctly aligned audio matches
+the lips better than audio shifted by half a second. A lip-sync stream using
+these features achieves a validation ROC-AUC of 0.9416, compared with
+0.7593 for the Wav2Vec2-based stream. The selected checkpoint comes from
+epoch 2 of a five-epoch run, before the encoder is unfrozen at epoch 3.
+
+Despite the improvement in validation performance, the diagonal attention
+mass remains between 0.05875 and 0.05919, close to the uniform value of
+0.0592. This means that the validation result does not establish that the
+trained attention head has learned temporal alignment. The shifted-audio
+experiment provides evidence about the pretrained features, but it does not
+confirm that the downstream detector uses those features through the intended
+attention mechanism.
+
+These results are preliminary and come from seed 17 only. Held-out
+FakeAVCeleb, DFDC, and fusion scores for the replacement encoders have not
+yet been computed. The HSEmotion training run has also not produced a
+completed result for this comparison. Validation performance alone is
+therefore insufficient to conclude that either replacement improves
+cross-corpus deepfake detection.
+
+\section{Limitations}
+
+Several limitations affect how the results should be interpreted. First,
+all Design B streams were trained with only one seed, although the protocol
+specifies three. As Table~\ref{tab:seeds} shows, the choice of seed can
+substantially change cross-corpus performance. Both Design A and Design B
+were trained on FakeAVCeleb, so their results are comparable to each other
+but should not be directly compared with published results obtained under
+different protocols. Only the FaceForensics++ experiment follows the
+published cross-dataset protocol, and that experiment also uses a single
+seed.
+
+None of the training data was collected in the wild. More importantly, the
+cross-modal streams do not provide evidence that they have learned the
+correspondence their design is intended to capture. One of the original
+research exit criteria required the confidence interval of the synchronization
+offset to exclude chance. This was never measured because the branch's
+training history recorded only a combined loss.
+
+The first track also has limited coverage of fully generated video. It
+detects none of the 10 MNW clips from one talking-head generator. The second
+track relies on a single corpus and a single split, and DF26 is not suitable
+for audio experiments. These limitations mean that the findings should be
+interpreted within the evaluation settings described here. Additional seeds,
+held-out tests, and direct measurements of temporal correspondence are needed
+before drawing broader conclusions about the generalization of the proposed
+systems.
+
+\section{Conclusion}
+
+Our experiments show that cue-specific fusion did not outperform the visual
+baseline across corpora. Combining every stream also performed worse than
+three of the individual streams. Under the evaluation conditions used in this
+study, the original hypothesis was therefore not supported.
+
+The experiments also revealed why performance scores need to be examined
+alongside checks of model behaviour. One stream achieved a ROC-AUC of 0.9991
+without showing meaningful changes in its attention distribution. The visual
+model was sensitive to codec differences, freezing BatchNorm statistics
+changed the apparent balance between in-domain and cross-corpus performance,
+and selecting a checkpoint by validation loss produced below-chance
+performance. We also found that the training seed alone could shift the
+cross-corpus ROC-AUC by 0.1078.
+
+These findings were not apparent from the training objective or the headline
+performance metrics alone. They emerged from measurements that we recorded
+without directly optimizing them. The experiments also helped us correct our
+own interpretation of an earlier result: an apparent effect became roughly
+seven times smaller after the training budget was controlled.
+
+Taken together, the results suggest that reporting a single cross-corpus
+score to four decimal places can give a misleading impression of certainty
+when the choice of seed can produce much larger differences. A reliable
+evaluation should examine not only whether a detector performs well, but
+also whether its internal behaviour supports the explanation for its
+predictions. Reporting seed variation, checking the mechanisms used by
+individual streams, and testing for shortcuts are therefore important parts
+of evaluating audio-visual deepfake detectors.
+
+\begin{thebibliography}{00}
+\bibitem{fakeavceleb} H. Khalid, S. Tariq, M. Kim, and S. S. Woo,
+``FakeAVCeleb: A novel audio-video multimodal deepfake dataset,'' in
+\textit{Proc. NeurIPS Datasets and Benchmarks Track}, 2021.
+\bibitem{lavdf} Z. Cai, K. Stefanov, A. Dhall, and M. Hayat, ``Do you really
+mean that? Content driven audio-visual deepfake dataset and multimodal method
+for temporal forgery localization,'' in \textit{Proc. DICTA}, 2022.
+\bibitem{celebdf} Y. Li, X. Yang, P. Sun, H. Qi, and S. Lyu, ``Celeb-DF: A
+large-scale challenging dataset for DeepFake forensics,'' in \textit{Proc.
+CVPR}, 2020.
+\bibitem{dfdc} B. Dolhansky, J. Bitton, B. Pflaum, J. Lu, R. Howes, M. Wang,
+and C. Canton Ferrer, ``The DeepFake Detection Challenge (DFDC) dataset,''
+arXiv:2006.07397, 2020.
+\bibitem{ffpp} A. R\"ossler, D. Cozzolino, L. Verdoliva, C. Riess, J. Thies,
+and M. Nie{\ss}ner, ``FaceForensics++: Learning to detect manipulated facial
+images,'' in \textit{Proc. ICCV}, 2019.
+\bibitem{syncnet} J. S. Chung and A. Zisserman, ``Out of time: Automated lip
+sync in the wild,'' in \textit{Proc. ACCV Workshops}, 2016.
+\bibitem{avhubert} B. Shi, W.-N. Hsu, K. Lakhotia, and A. Mohamed, ``Learning
+audio-visual speech representation by masked multimodal cluster prediction,''
+in \textit{Proc. ICLR}, 2022.
+\bibitem{sbi} K. Shiohara and T. Yamasaki, ``Detecting deepfakes with
+self-blended images,'' in \textit{Proc. CVPR}, 2022.
+\bibitem{univfd} U. Ojha, Y. Li, and Y. J. Lee, ``Towards universal fake image
+detectors that generalize across generative models,'' in \textit{Proc. CVPR},
+2023.
+\bibitem{shortcut} R. Geirhos, J.-H. Jacobsen, C. Michaelis, R. Zemel,
+W. Brendel, M. Bethge, and F. A. Wichmann, ``Shortcut learning in deep neural
+networks,'' \textit{Nature Machine Intelligence}, vol. 2, pp. 665-673, 2020.
+\bibitem{audit} ``What do deepfake benchmarks measure? An audit using frozen
+self-supervised representations,'' arXiv:2606.26384, 2026.
+\bibitem{efficientnet} M. Tan and Q. V. Le, ``EfficientNet: Rethinking model
+scaling for convolutional neural networks,'' in \textit{Proc. ICML}, 2019.
+\bibitem{mtcnn} K. Zhang, Z. Zhang, Z. Li, and Y. Qiao, ``Joint face detection
+and alignment using multitask cascaded convolutional networks,'' \textit{IEEE
+Signal Process. Lett.}, vol. 23, no. 10, pp. 1499-1503, 2016.
+\bibitem{wav2vec2} A. Baevski, Y. Zhou, A. Mohamed, and M. Auli, ``wav2vec 2.0:
+A framework for self-supervised learning of speech representations,'' in
+\textit{Proc. NeurIPS}, 2020.
+\bibitem{dinov3} O. Sim\'eoni \textit{et al.}, ``DINOv3,'' arXiv:2508.10104,
+2025.
+\bibitem{mnw} Microsoft, Northwestern University, and WITNESS, ``MNW deepfake
+detection benchmark,'' \url{https://github.com/microsoft/MNW}.
+\bibitem{df26} ``DF26,'' dataset,
+\url{https://huggingface.co/datasets/DF26/DF26}, 2026.
+\bibitem{bootstrap} B. Efron and R. J. Tibshirani, \textit{An Introduction to
+the Bootstrap}. New York: Chapman \& Hall, 1993.
+\bibitem{convnext} Z. Liu, H. Mao, C.-Y. Wu, C. Feichtenhofer, T. Darrell, and
+S. Xie, ``A ConvNet for the 2020s,'' in \textit{Proc. CVPR}, 2022.
+\bibitem{adabn} Y. Li, N. Wang, J. Shi, X. Hou, and J. Liu, ``Adaptive batch
+normalization for practical domain adaptation,'' \textit{Pattern Recognition},
+vol. 80, pp. 109-117, 2018.
+\bibitem{pe} D. Bolya \textit{et al.}, ``Perception Encoder: The best visual
+embeddings are not at the output of the network,'' arXiv:2504.13181, 2025.
+\bibitem{clip} A. Radford \textit{et al.}, ``Learning transferable visual
+models from natural language supervision,'' in \textit{Proc. ICML}, 2021.
+\bibitem{hsemotion} A. V. Savchenko, ``Facial expression and attributes
+recognition based on multi-task learning of lightweight neural networks,'' in
+\textit{Proc. IEEE SISY}, 2021.
+\end{thebibliography}
+
+\end{document}
