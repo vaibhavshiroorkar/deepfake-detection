@@ -79,11 +79,15 @@ def build(draft: bool) -> int:
 
     def section(col, y, h, title, paras):
         """A card; h=None sizes it to its text, and the last card of a column takes the rest."""
+        if h is not None and h <= 0:
+            raise SystemExit(f"poster column {col + 1} overflows at '{title}'")
         body = T([("h", title, SZ_H)] + list(paras))
         card = d.add_card(s, colx(col), y, CW, h or int(20 * IN), body, inset=int(0.25 * IN))
         if h is None:
             h = int(C.estimate_text_height(card) + 0.15 * IN)
             card.height = Emu(h)
+        if y + h > PH - FOOT_H:
+            raise SystemExit(f"poster column {col + 1} overflows at '{title}'")
         return y + h + GAP
 
     def figure(col, y, name, alt, keys=(), max_h=None):
@@ -133,9 +137,15 @@ def build(draft: bool) -> int:
     _, th = d.add_table(s, colx(0), y, [int(CW * 0.36), int(CW * 0.36), CW - int(CW * 0.72)],
                         ["Corpus", "Role", "Clips"], rows, size=SZ_S, bold_first_col=True, pad=int(0.12 * IN))
     y += th + GAP
-    section(0, y, PH - FOOT_H - y - GAP, "Protocol", [
+    y = section(0, y, None, "Protocol", [
         ("p", "Splits by identity. Three seeds. 95% intervals from 1,000 bootstrap resamples of people. Thresholds "
               "from validation only. Targets never train, select or calibrate anything.", SZ_S),
+    ])
+    section(0, y, PH - FOOT_H - y - GAP, "What we learned", [
+        ("b", "Cleaning can put a shortcut back: audit the cleaned copies.", SZ_S),
+        ("b", "Real-only training cannot learn file habits.", SZ_S),
+        ("b", "AUC can hold while the threshold breaks.", SZ_S),
+        ("b", "Write hypotheses first; report the one that fails.", SZ_S),
     ])
 
     # column 2: cleaning and the sync path
@@ -165,13 +175,21 @@ def build(draft: bool) -> int:
               "generator's file habits.", SZ_B),
         ("p", "Clip score: mean of  -log sigmoid(g)  over aligned frames and two 2 s windows.", SZ_S),
     ])
-    y = section(1, y, None, "What we learned", [
-        ("b", "Cleaning can put a shortcut back. Audit the cleaned copies, not the plan.", SZ_S),
-        ("b", "A detector trained on real clips only cannot learn a generator's file habits.", SZ_S),
-        ("b", "AUC can hold while the threshold breaks. Report the false-alarm rate too.", SZ_S),
-        ("b", "Write the hypotheses down first, and report the one that fails.", SZ_S),
+    rows = [[name, n(f"{{{{h2.{k}.estimate}}}} [{{{{h2.{k}.lower}}}}, {{{{h2.{k}.upper}}}}]"),
+             "n/a" if k == "hifiavdf" else n(f"{{{{h2.{k}.holm}}}}")]
+            for name, k in [("FakeAVCeleb, strict", "test-identity-strict"), ("DFDC", "dfdc"),
+                            ("LAV-DF test", "lavdf-test"), ("HiFi-AVDF", "hifiavdf")]]
+    y = section(1, y, None, "5. Fusion against visual-only (H2)", [
+        ("p", "Logistic fusion of the three paths, fixed before any branch was trained. Mean gain in AUC over the "
+              "visual path, three seeds; Holm over the first three rows.", SZ_S),
     ])
-    figure(1, y, "fig_pipeline.png", "Pipeline from clip to score", max_h=PH - FOOT_H - y - GAP)
+    _, th = d.add_table(s, colx(1), y, [int(CW * 0.36), int(CW * 0.44), CW - int(CW * 0.80)],
+                        ["Target", "Gain [95%]", "Holm"], rows, size=SZ_S, bold_first_col=True, pad=int(0.08 * IN))
+    y += th + int(0.3 * IN)
+    d.add_text(s, colx(1), y, CW, int(0.8 * IN), T([("p", "**H2 holds: {{h2.success}}**", SZ_B)]), "h2_verdict")
+    y += int(0.8 * IN) + GAP
+    if PH - FOOT_H - y - GAP > int(2 * IN):      # the pipeline figure only where it fits
+        figure(1, y, "fig_pipeline.png", "Pipeline from clip to score", max_h=PH - FOOT_H - y - GAP)
 
     # column 3: results
     y = BODY_TOP
@@ -181,7 +199,7 @@ def build(draft: bool) -> int:
             kk = f"sync.{part}.seed{seed}"
             rows.append([label if seed == 17 else "", str(seed),
                          n(f"{{{{{kk}.auc}}}} [{{{{{kk}.auc_low}}}}, {{{{{kk}.auc_high}}}}]"), n(f"{{{{{kk}.fpr}}}}")])
-    d.add_text(s, colx(2), y, CW, int(0.9 * IN), [("h", "5. Results on neutral FakeAVCeleb", SZ_H)], "head")
+    d.add_text(s, colx(2), y, CW, int(0.9 * IN), [("h", "6. Results on neutral FakeAVCeleb", SZ_H)], "head")
     y += int(1.0 * IN)
     _, th = d.add_table(s, colx(2), y, [int(CW * 0.2), int(CW * 0.14), int(CW * 0.44), CW - int(CW * 0.78)],
                         ["Set", "Seed", "AUC [95%]", "FPR"], rows, size=SZ_S, bold_first_col=True, pad=int(0.06 * IN))
@@ -195,7 +213,7 @@ def build(draft: bool) -> int:
         ("p", "Voice cloning is caught best, Wav2Lip next, and face swaps that keep the real lips least, in all "
               "three seeds.", SZ_B),
     ])
-    y = section(2, y, None, "6. New corpora and false alarms", [
+    y = section(2, y, None, "7. New corpora and false alarms", [
         ("p", "Frozen model on LAV-DF, DFDC and HiFi-AVDF: AUC {{sync.lavdf-test.seed17.auc}}, "
               "{{sync.dfdc.seed17.auc}} and {{sync.hifiavdf.seed17.auc}} (seed 17), against neutral ceilings of "
               "{{audit.lavdf.neutral.clip}}, {{audit.dfdc.neutral.clip}} and {{audit.hifiavdf.neutral.clip}}.", SZ_S),

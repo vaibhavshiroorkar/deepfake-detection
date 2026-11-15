@@ -21,7 +21,6 @@ Three chains run as detached processes. Each resumes from its own log if stopped
 - Commit the audits of the neutral copies under `results/shortcut-audit/*-neutral/`.
 - Report the 23 HiFi-AVDF clips that have no audio track (14 real, 9 fake), and the clips with no face, in the results README and the paper.
 - Update the README Results section to the P-001 study. It still leads with older numbers.
-- Update section 5 of the project log to the 3-day plan.
 - Label the main claims in `FINAL.md` and the handbook as verified, assumed, false or unknown.
 - Write the paper and report text that interprets the cross-corpus and H4 results. The numbers fill in by themselves; the reading of them does not.
 - Fill the pending entries in [FINAL.md](FINAL.md); update handbook section 5.1b and the project log.
@@ -30,8 +29,9 @@ Three chains run as detached processes. Each resumes from its own log if stopped
 ## 3. When H2 finishes (Claude)
 
 - Copy `runs/p001/h2/` into `results/p001-h2/` with a README and receipts.
-- Add the H2 keys to `scripts/build_numbers.py` and an H2 figure to `scripts/make_figures.py`.
-- Add H2 and the in-domain visual and audio results to the paper, report, slides and poster. Fusion and modality prediction are listed as "not run" in all four today, so those lines change too.
+- Add an H2 figure to `scripts/make_figures.py`.
+- Write the sentences that interpret H2 in the paper and the report (marked `% PENDING` in both), and the H2 speaker notes. The tables and the verdict fill in by themselves.
+- Add the visual and audio results on the three targets to the report, if they are worth a table.
 - Cut version 1.0.0 at the final-year submission: changelog heading, `pyproject.toml`, tag `v1.0.0`.
 - Rename the package from `deepfake-generalization` (its old folder name) to `deepfake-detection` in `pyproject.toml` and `uv.lock`, and reinstall. This waits until no chain is running, because the reinstall rewrites the environment the chains use.
 - Reorganize `scripts/` into `p001/` (current study), `data/` (fetching and manifests) and `legacy/` (the September to October pipeline). This waits until no chain is running, because the chains call scripts by path.

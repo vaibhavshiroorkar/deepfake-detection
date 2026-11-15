@@ -8,7 +8,10 @@ Experiment numbers are not repeated here. They live in `results/` and the docume
 
 ## Unreleased
 
-Nothing yet.
+- Project log section 5 describes the 3-day plan.
+- `scripts/build_numbers.py` reads the visual and audio results and H2 into `results/numbers.json`, with tests. Pass and fail print as "yes" and "no".
+- The H2 section is written into the paper, the report (new chapter), the slides (new slide 14) and the poster. Fusion is no longer listed as "not run".
+- The poster build stops when a column overflows, instead of writing a file PowerPoint calls corrupted.
 
 ## 0.3.0 - 2026-11-16: neutral protocol, sync path, deliverable builders
 

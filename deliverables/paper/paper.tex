@@ -65,7 +65,10 @@ AUC is {{sync.test.seed17.auc}}, {{sync.test.seed29.auc}} and
 {{sync.test.seed43.auc}} over three seeds. Its scores follow the mechanism:
 voice cloning is caught best, and face swaps that keep the original lips
 least. We also test whether a threshold set from real target clips
-controls false alarms on new corpora.
+controls false alarms on new corpora, and whether late fusion of visual,
+audio and sync paths beats the visual path alone across corpora. Fusion
+changes AUC by {{h2.dfdc.estimate}} on DFDC and {{h2.lavdf-test.estimate}} on
+LAV-DF.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -111,6 +114,9 @@ method follow what each method does to the lips and the voice.
 \item \textit{False-alarm control from real clips only.} We compare a
 threshold calibrated on real clips from the new domain with the threshold
 carried over from training.
+\item \textit{A preregistered fusion test.} We fuse visual, audio and sync
+paths with a model fixed before any branch was trained, and test it against
+the visual path alone on three locked corpora.
 \end{enumerate}
 
 We do not claim a new architecture. Our hypotheses were committed before the
@@ -129,7 +135,8 @@ person. Our sync detector follows the real-only idea of AVH-Align, and we do
 not claim that idea. What we add is a measurement of such a detector under a
 protocol that removes file cues from both training and test data, with
 identity-grouped splits and a breakdown by manipulation method. Fusion of
-several modalities is not new either, and this paper does not report it.
+several modalities is not new either. We test it only as a preregistered
+comparison with the visual path under the same shortcut control.
 
 \textit{Dataset shortcuts.} M\"uller et al.~\cite{muller2021} showed that
 silence duration alone separates real and spoofed speech in ASVspoof 2019 LA.
@@ -580,6 +587,75 @@ and seed (Table~\ref{tab:h4}).}
 \label{fig:h4}
 \end{figure}
 
+\section{Fusion Against Visual-Only (H2)}
+\label{sec:h2}
+
+\subsection{Visual and audio paths}
+
+The visual path is EfficientNet-B0 with a GRU over face frames, trained on the
+video label. The audio path is Wav2Vec2 Base with attentive pooling, trained
+on the audio label. Both train on the neutral FakeAVCeleb training partition,
+thinned to three video-fake clips per real-video clip, at seeds 17, 29 and 43.
+Each picks its epoch and threshold on validation.
+
+\begin{table}[htbp]
+\caption{Visual and audio paths on the identity-strict neutral FakeAVCeleb
+test (ROC-AUC, 95\% identity-bootstrap interval), each on its own label}
+\label{tab:branches}
+\centering
+\begin{tabular}{lrr}
+\toprule
+Seed & Visual (video label) & Audio (audio label) \\
+\midrule
+17 & {{visual.test-identity-strict.seed17.auc}} [{{visual.test-identity-strict.seed17.auc_low}}, {{visual.test-identity-strict.seed17.auc_high}}] & {{audio.test-identity-strict.seed17.auc}} [{{audio.test-identity-strict.seed17.auc_low}}, {{audio.test-identity-strict.seed17.auc_high}}] \\
+29 & {{visual.test-identity-strict.seed29.auc}} [{{visual.test-identity-strict.seed29.auc_low}}, {{visual.test-identity-strict.seed29.auc_high}}] & {{audio.test-identity-strict.seed29.auc}} [{{audio.test-identity-strict.seed29.auc_low}}, {{audio.test-identity-strict.seed29.auc_high}}] \\
+43 & {{visual.test-identity-strict.seed43.auc}} [{{visual.test-identity-strict.seed43.auc_low}}, {{visual.test-identity-strict.seed43.auc_high}}] & {{audio.test-identity-strict.seed43.auc}} [{{audio.test-identity-strict.seed43.auc_low}}, {{audio.test-identity-strict.seed43.auc_high}}] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Fusion and test}
+
+The fusion was fixed in a dated amendment before any visual or audio model
+existed. It is a logistic regression on the three standardized branch logits,
+fit on FakeAVCeleb validation. Training clips are excluded because each branch
+was fit on them. The fusion's own validation scores, which set its threshold,
+come from 5-fold cross-fitting grouped by identity. The model applied to test
+and to the targets is refit on all of validation. A clip counts only if all
+three paths score it, and the visual path is compared on exactly those clips.
+
+The label is the clip label: a clip is fake if either stream is fake. The
+statistic is AUC(fusion) minus AUC(visual), averaged over the three seeds. Its
+interval comes from 1,000 bootstrap resamples of identities, shared by all
+seeds. The one-sided $p$-value is the share of resamples at or below zero.
+Holm correction at 0.05 runs over three targets: DFDC, LAV-DF test and the
+identity-strict FakeAVCeleb test. H2 holds if at least two survive.
+
+\begin{table*}[htbp]
+\caption{H2: fusion minus visual-only ROC-AUC per seed, and the mean of three
+seeds with a 95\% identity-bootstrap interval; Holm at 0.05 over the first
+three rows}
+\label{tab:h2}
+\centering
+\begin{tabular}{lrrrrrrl}
+\toprule
+Target & Clips & Seed 17 & Seed 29 & Seed 43 & Mean [95\%] & $p$ & Holm \\
+\midrule
+FakeAVCeleb test, strict & {{h2.test-identity-strict.clips|int}} & {{h2.test-identity-strict.seed17}} & {{h2.test-identity-strict.seed29}} & {{h2.test-identity-strict.seed43}} & {{h2.test-identity-strict.estimate}} [{{h2.test-identity-strict.lower}}, {{h2.test-identity-strict.upper}}] & {{h2.test-identity-strict.p}} & {{h2.test-identity-strict.holm}} \\
+DFDC & {{h2.dfdc.clips|int}} & {{h2.dfdc.seed17}} & {{h2.dfdc.seed29}} & {{h2.dfdc.seed43}} & {{h2.dfdc.estimate}} [{{h2.dfdc.lower}}, {{h2.dfdc.upper}}] & {{h2.dfdc.p}} & {{h2.dfdc.holm}} \\
+LAV-DF test & {{h2.lavdf-test.clips|int}} & {{h2.lavdf-test.seed17}} & {{h2.lavdf-test.seed29}} & {{h2.lavdf-test.seed43}} & {{h2.lavdf-test.estimate}} [{{h2.lavdf-test.lower}}, {{h2.lavdf-test.upper}}] & {{h2.lavdf-test.p}} & {{h2.lavdf-test.holm}} \\
+\midrule
+HiFi-AVDF (reported) & {{h2.hifiavdf.clips|int}} & {{h2.hifiavdf.seed17}} & {{h2.hifiavdf.seed29}} & {{h2.hifiavdf.seed43}} & {{h2.hifiavdf.estimate}} [{{h2.hifiavdf.lower}}, {{h2.hifiavdf.upper}}] & {{h2.hifiavdf.p}} & n/a \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Table~\ref{tab:h2} gives the result. By the preregistered rule, H2 holds:
+\textbf{{{h2.success}}}. The seed-17 fusion weights on the standardized logits
+are {{h2.weights.seed17.visual}} (visual), {{h2.weights.seed17.audio}} (audio)
+and {{h2.weights.seed17.sync}} (sync).
+% PENDING (docs/PENDING.md): interpret the H2 result once it exists.
+
 \section{Limitations}
 
 \textit{H1 missed its bar.} The neutral FakeAVCeleb ceiling is
@@ -596,8 +672,8 @@ audio, including part of the voice-cloning row in Table~\ref{tab:methods}.
 refused clips are all generated speech, so the neutral data are not a random
 subset of the raw data.
 
-\textit{No fusion and no baselines yet.} The fusion of visual, audio and sync
-paths (H2) and the modality-prediction test (H3) are not finished. AVH-Align
+\textit{No baselines yet.} The modality-prediction test (H3) is not finished.
+The StreamFusion model, our secondary fusion, was not run. AVH-Align
 and HAVIC have not been run on our protocol, so this paper makes no
 comparison with them.
 

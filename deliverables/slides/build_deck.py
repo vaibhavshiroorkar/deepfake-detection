@@ -150,12 +150,13 @@ def build(draft: bool) -> int:
         ("n", "2.  Remove those cues, and check the removal with the same audit (H1).", 16),
         ("n", "3.  Detect fakes from lip and sound agreement, trained on real clips only.", 16),
         ("n", "4.  Hold the false-alarm rate on a new corpus with real clips only (H4).", 16),
-        ("s", "H2 (fusion of the three paths) and H3 (which stream was faked) are the next stage.", 16),
+        ("n", "5.  Test whether fusion beats the visual path alone (H2).", 16),
+        ("s", "H3 (which stream was faked) is the next stage.", 16),
     ], name="card_objectives")
     card(s, col_x(7), Y0 + 800000, span_w(5), H0 - 800000, [
         ("h", "Not claimed"),
         ("b", "A new network architecture", 16),
-        ("b", "Fusion results (H2) or modality prediction (H3)", 16),
+        ("b", "Modality prediction (H3)", 16),
         ("b", "A comparison with AVH-Align or HAVIC, which we have not yet run on our protocol", 16),
     ], name="card_notclaimed")
 
@@ -426,20 +427,47 @@ def build(draft: bool) -> int:
                                               ("p", "[pending] The H4 table and figure appear when the cross-corpus "
                                                     "run finishes.", 16)], name="card_pending")
 
+    # 13b. H2 ---------------------------------------------------------------------------------------------------
+    s = slide("H2: does fusion beat visual-only?",
+              "The fusion was fixed in amendment A8 before any visual or audio model existed: a logistic regression on the "
+              "three standardized branch logits, fit on FakeAVCeleb validation and cross-fitted by identity. The statistic "
+              "is AUC of the fusion minus AUC of the visual path, on the clip label, averaged over three seeds, with one "
+              "identity bootstrap shared by the seeds. Holm correction runs over DFDC, LAV-DF and the identity-strict "
+              "FakeAVCeleb test, and H2 holds if two of the three survive. HiFi-AVDF is reported outside the rule.",
+              "Fused by a model fixed in advance. Does it beat the visual path on new corpora?")
+    rows = [[name, n(f"{{{{h2.{k}.clips|int}}}}"),
+             n(f"{{{{h2.{k}.estimate}}}} [{{{{h2.{k}.lower}}}}, {{{{h2.{k}.upper}}}}]"), n(f"{{{{h2.{k}.p}}}}"),
+             "n/a" if k == "hifiavdf" else n(f"{{{{h2.{k}.holm}}}}")]
+            for name, k in [("FakeAVCeleb, strict", "test-identity-strict"), ("DFDC", "dfdc"),
+                            ("LAV-DF test", "lavdf-test"), ("HiFi-AVDF (reported)", "hifiavdf")]]
+    _, th = d.add_table(s, L, Y0, [3200000, 1400000, 3400000, 1200000, W - 9200000],
+                        ["Target", "Clips", "Fusion minus visual [95%]", "p", "Holm"], rows, size=16,
+                        bold_first_col=True, pad=40000)
+    y = Y0 + th + 150000
+    card(s, col_x(0), y, span_w(6), BOT - y, [
+        ("h", "Verdict"),
+        ("p", "By the preregistered rule, H2 holds: **{{h2.success}}**.", 16),
+    ], name="card_h2")
+    card(s, col_x(6), y, span_w(6), BOT - y, [
+        ("h", "Fusion weights, seed 17"),
+        ("s", "Visual {{h2.weights.seed17.visual}}, audio {{h2.weights.seed17.audio}}, sync "
+              "{{h2.weights.seed17.sync}}, on standardized logits.", 16),
+    ], name="card_weights")
+
     # 14. limitations and conclusion -----------------------------------------------------------------------
     s = slide("Limitations and conclusion",
               "Audio-visual benchmarks leak their labels through their files, and a detector score on them means little "
               "until it is set beside the file-cue ceiling. Our cleaning lowers the FakeAVCeleb ceiling a lot but misses "
               "the preregistered bar, and we report that. The real-only sync path clears the neutral ceiling and its "
-              "errors follow the mechanism. Next come fusion, modality prediction and the published baselines, AVH-Align "
-              "and HAVIC, on the same protocol.",
+              "errors follow the mechanism. The fusion test was fixed before any branch was trained, and we report it either "
+              "way. Next come modality prediction and the published baselines, AVH-Align and HAVIC, on the same protocol.",
               "Benchmarks leak labels through files. Compare every score with the shortcut ceiling.")
     card(s, col_x(0), Y0, span_w(6), H0, [
         ("h", "Limitations"),
         ("b", "H1 missed its bar: {{audit.fakeavceleb.neutral.clip}} against 0.60", 16),
         ("b", "A residual audio cue: ceiling {{audit.fakeavceleb.neutral.audio}}", 16),
         ("b", "Cleaning refuses {{neutral.fakeavceleb.refused|int}} generated-speech clips", 16),
-        ("b", "No fusion and no published baselines yet", 16),
+        ("b", "No published baselines yet; H3 not run", 16),
         ("b", "Possible speaker overlap with AV-HuBERT pretraining", 16),
     ], name="card_limits")
     card(s, col_x(6), Y0, span_w(6), H0, [
@@ -448,6 +476,7 @@ def build(draft: bool) -> int:
         ("n", "2.  A cleaning protocol, with its failure explained", 16),
         ("n", "3.  A real-only lip-sync detector, measured after cleaning", 16),
         ("n", "4.  A false-alarm test from real clips only", 16),
+        ("n", "5.  A preregistered fusion test (H2)", 16),
         ("s", "Hypotheses were committed before the runs. Every number has a receipt.", 16),
     ], name="card_contrib")
 
@@ -467,7 +496,7 @@ def build(draft: bool) -> int:
               "and rerunning the same code verifies the outputs instead of overwriting them.",
               "Hypotheses before runs, amendments before changes, a receipt for every number.")
     rows = [["H1", "Neutral FakeAVCeleb clip ceiling at most 0.60", "Not met: {{audit.fakeavceleb.neutral.clip}}"],
-            ["H2", "Fusion beats visual-only across corpora", "Next stage"],
+            ["H2", "Fusion beats visual-only on 2 of 3 targets, after Holm", "Holds: {{h2.success}}"],
             ["H3", "Predict the manipulated modality across corpora", "Next stage"],
             ["H4", "Real-only conformal FPR at most 0.07 on every target", "Running"]]
     d.add_table(s, L, Y0, [900000, 6000000, W - 6900000], ["Test", "Bar", "Status"], T_rows(rows, n), size=18,

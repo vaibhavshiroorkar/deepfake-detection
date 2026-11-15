@@ -797,12 +797,15 @@ that we report whether it comes out well or badly.
 The original study plan, preregistration P-001, also includes two further
 tests. One asks whether fusing visual, audio and sync paths beats the visual
 path alone (H2). The other asks whether a model can say which stream was faked
-across corpora (H3). Neither has run in this version. Chapter~\ref{ch:future}
-states this as a limitation and gives the plan to finish them.
+across corpora (H3). H2 runs in this version, under rules fixed before any
+visual or audio model existed (Chapter~\ref{ch:h2}). H3 has not run;
+Chapter~\ref{ch:future} states this as a limitation and gives the plan to
+finish it.
 
 \section{Contributions}
 
-The report makes four claims. They match the four objectives.
+The report makes five claims. The first four match the four objectives; the
+fifth is the preregistered fusion test.
 
 \begin{enumerate}
     \item \textbf{The census.} On FakeAVCeleb the shortcut ceiling is
@@ -825,6 +828,10 @@ The report makes four claims. They match the four objectives.
     \item \textbf{False-alarm control.} A threshold calibrated on real clips of
     the new domain, set against the threshold carried over from training, on
     LAV-DF and HiFi-AVDF.
+    \item \textbf{The fusion test.} Visual, audio and sync paths fused by a
+    model fixed in advance, against the visual path alone, on DFDC, LAV-DF and
+    the identity-strict FakeAVCeleb test. By the preregistered rule, H2 holds:
+    {{h2.success}}.
 \end{enumerate}
 
 We do not claim a new architecture. Fusion of audio and video is not new, and
@@ -1437,7 +1444,7 @@ existed. Table~\ref{tab:hypotheses} lists the four tests.
         \textbf{ID} & \textbf{Test} & \textbf{Success} & \textbf{Status} \\
         \midrule
         H1 & Shortcut ceiling on neutral copies, clip label, all cues, grouped five-fold & AUC at most 0.60 on each training corpus & Run; not met \\
-        H2 & Fusion minus visual-only ROC-AUC, paired, mean of three seeds & Interval above 0 on at least two of DFDC, LAV-DF test and FakeAVCeleb strict test & Not run \\
+        H2 & Fusion minus visual-only ROC-AUC, paired, mean of three seeds & Interval above 0 on at least two of DFDC, LAV-DF test and FakeAVCeleb strict test & See Chapter~\ref{ch:h2} \\
         H3 & Manipulated-modality macro-F1, trained on FakeAVCeleb and tested on LAV-DF, and the reverse & Both directions above the clip-label baseline & Not run \\
         H4 & Realized FPR with a real-only conformal threshold, $\alpha = 0.05$, $n_{\mathrm{cal}} = 200$ real target clips & FPR at most 0.07 on every target & See Chapter~\ref{ch:crosscorpus} \\
         \bottomrule
@@ -1450,7 +1457,8 @@ audio path is Wav2Vec2 Base~\cite{wav2vec2} with attentive pooling. The sync
 path is frozen AV-HuBERT Base~\cite{avhubert} with an alignment head trained on
 real clips only. Fusion is logistic regression on out-of-fold path logits. No
 ensembles across seeds or architectures appear in primary results. A Holm
-correction applies across H2 to H4. H1 is a precondition: if it fails, the
+correction applies to H2's three targets (amendment A8 narrowed it from "H2 to
+H4", because H4 is a bar check with no $p$-value). H1 is a precondition: if it fails, the
 other tests still run and carry that caveat.
 
 \subsection{Amendments}
@@ -1475,6 +1483,7 @@ amendment is edited. Table~\ref{tab:amendments} summarizes them.
         A5 & 15 Nov & HiFi-AVDF added as a locked target, audited raw and neutral before scoring. HAVIC weights may be scored on it, but not on our FakeAVCeleb test \\
         A6 & 15 Nov & KoDF, AV-Deepfake1M and AV-Deepfake1M++ become locked targets if access arrives; late data is scored only by frozen models \\
         A7 & 15 Nov & One frame size per corpus, because HiFi-AVDF frame size follows the label \\
+        A8 & 16 Nov & Before any visual or audio model existed: how the H2 fusion is fit (logistic regression on validation, cross-fitted by identity) and tested (mean of three seeds, shared identity bootstrap, Holm over three targets) \\
         \bottomrule
     \end{tabularx}
 \end{table}
@@ -2151,9 +2160,100 @@ the calibration clips and the scored clips come from the same distribution.
 Within one corpus that is reasonable. Across shifts inside a corpus it may not
 hold. Second, each row uses one random calibration draw. The marginal
 conformal guarantee holds on average over draws, so one draw can land above
-$\alpha$ by chance. Third, H4 is one of three tests under the preregistered
-Holm correction. H2 and H3 have not run, so the full correction cannot be
-applied yet. It waits for the full run.
+$\alpha$ by chance. Third, H4 is a bar check, not a $p$-value test, so it sits
+outside the Holm correction, which amendment A8 limits to H2's three targets.
+
+%
+\chapter{Fusion Against Visual-Only (H2)}
+\label{ch:h2}
+
+The first plan of this project fused three paths and expected the fusion to
+beat any single path. The root study found no such gain across corpora, and
+its fusion numbers turned out to be compromised (Chapter~\ref{ch:history}). This chapter runs
+the comparison again, on neutral data, under rules fixed before any visual or
+audio model existed.
+
+\section{The Visual and Audio Paths}
+
+The visual path is EfficientNet-B0~\cite{efficientnet} with a GRU over face
+frames, trained on the video label. The audio path is Wav2Vec2
+Base~\cite{wav2vec2} with attentive pooling, trained on the audio label. Both
+train on the neutral FakeAVCeleb training partition, thinned to three
+video-fake clips per real-video clip (amendment A1), at seeds 17, 29 and 43.
+Each picks its epoch and its threshold on validation.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Visual and audio paths on the identity-strict neutral FakeAVCeleb
+    test (ROC-AUC, 95\% identity-bootstrap interval), each on its own label}
+    \label{tab:branches}
+    \begin{tabular}{lll}
+        \toprule
+        \textbf{Seed} & \textbf{Visual (video label)} & \textbf{Audio (audio label)} \\
+        \midrule
+        17 & {{visual.test-identity-strict.seed17.auc}} [{{visual.test-identity-strict.seed17.auc_low}}, {{visual.test-identity-strict.seed17.auc_high}}] & {{audio.test-identity-strict.seed17.auc}} [{{audio.test-identity-strict.seed17.auc_low}}, {{audio.test-identity-strict.seed17.auc_high}}] \\
+        29 & {{visual.test-identity-strict.seed29.auc}} [{{visual.test-identity-strict.seed29.auc_low}}, {{visual.test-identity-strict.seed29.auc_high}}] & {{audio.test-identity-strict.seed29.auc}} [{{audio.test-identity-strict.seed29.auc_low}}, {{audio.test-identity-strict.seed29.auc_high}}] \\
+        43 & {{visual.test-identity-strict.seed43.auc}} [{{visual.test-identity-strict.seed43.auc_low}}, {{visual.test-identity-strict.seed43.auc_high}}] & {{audio.test-identity-strict.seed43.auc}} [{{audio.test-identity-strict.seed43.auc_low}}, {{audio.test-identity-strict.seed43.auc_high}}] \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{How the Fusion Is Fit}
+
+Amendment A8 fixed every choice below on 16 November, before any visual or
+audio checkpoint existed:
+
+\begin{itemize}
+    \item \textbf{Inputs.} Each path's logit for the clip. The sync logit is the
+    logit of its probability. Each logit is standardized on the fit set.
+    \item \textbf{Fit set.} FakeAVCeleb validation. Training clips are left out,
+    because each path was fit on them and their logits are in-sample.
+    Validation chose each path's epoch and threshold and nothing else.
+    \item \textbf{Model.} Logistic regression, L2, $C = 1$, balanced class
+    weights. Nothing is tuned.
+    \item \textbf{Out-of-fold scores.} The fusion's own validation scores, which
+    set its threshold, come from 5-fold cross-fitting grouped by identity. The
+    model applied elsewhere is refit on all of validation.
+    \item \textbf{Coverage.} A clip counts only if all three paths score it. The
+    visual path is compared on exactly the same clips.
+\end{itemize}
+
+\section{The Test}
+
+The label is the clip label: a clip is fake if either stream is fake. For each
+target and seed, the statistic is AUC(fusion) minus AUC(visual). H2 uses the
+mean of the three seeds. Its interval comes from 1,000 bootstrap resamples of
+identities, and each resample is applied to all three seeds at once. The
+one-sided $p$-value is the share of resamples with a mean at or below zero.
+Holm correction at 0.05 runs over three targets: DFDC, LAV-DF test and the
+identity-strict FakeAVCeleb test. H2 holds if at least two survive. HiFi-AVDF
+gets the same statistic, outside the rule.
+
+\section{Result}
+
+\begin{table}[htbp]
+    \centering
+    \caption{H2: fusion minus visual-only ROC-AUC, mean of three seeds, 95\%
+    identity-bootstrap interval; Holm at 0.05 over the first three rows}
+    \label{tab:h2}
+    \begin{tabular}{lrlrl}
+        \toprule
+        \textbf{Target} & \textbf{Clips} & \textbf{Mean [95\%]} & \textbf{$p$} & \textbf{Holm} \\
+        \midrule
+        FakeAVCeleb, strict & {{h2.test-identity-strict.clips|int}} & {{h2.test-identity-strict.estimate}} [{{h2.test-identity-strict.lower}}, {{h2.test-identity-strict.upper}}] & {{h2.test-identity-strict.p}} & {{h2.test-identity-strict.holm}} \\
+        DFDC & {{h2.dfdc.clips|int}} & {{h2.dfdc.estimate}} [{{h2.dfdc.lower}}, {{h2.dfdc.upper}}] & {{h2.dfdc.p}} & {{h2.dfdc.holm}} \\
+        LAV-DF test & {{h2.lavdf-test.clips|int}} & {{h2.lavdf-test.estimate}} [{{h2.lavdf-test.lower}}, {{h2.lavdf-test.upper}}] & {{h2.lavdf-test.p}} & {{h2.lavdf-test.holm}} \\
+        \midrule
+        HiFi-AVDF & {{h2.hifiavdf.clips|int}} & {{h2.hifiavdf.estimate}} [{{h2.hifiavdf.lower}}, {{h2.hifiavdf.upper}}] & {{h2.hifiavdf.p}} & n/a \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+By the preregistered rule, H2 holds: \textbf{{{h2.success}}}. The seed-17
+fusion weights on the standardized logits are {{h2.weights.seed17.visual}}
+(visual), {{h2.weights.seed17.audio}} (audio) and {{h2.weights.seed17.sync}}
+(sync).
+% PENDING (docs/PENDING.md): interpret the H2 result once it exists.
 
 %
 \chapter{Limitations and Future Scope}
@@ -2186,12 +2286,10 @@ clips.
 
 \subsection{Parts of the study that have not run}
 
-Three parts of the preregistered study have not run in this version:
+Two parts of the preregistered study have not run in this version, and the
+secondary fusion model was dropped for the deadline window (amendment A8):
 
 \begin{itemize}
-    \item \textbf{Fusion (H2).} The visual and audio paths and their fusion
-    with the sync path have not been trained on neutral data. We cannot say
-    whether fusion beats the visual path once the shortcuts are gone.
     \item \textbf{Modality prediction (H3).} The test of whether a model can
     say which stream was faked, across FakeAVCeleb and LAV-DF, has not run.
     \item \textbf{Baselines.} AVH-Align~\cite{smeu2025} and
@@ -2236,9 +2334,8 @@ deadline, in this order:
 
 \begin{enumerate}
     \item Speed up the cache build for the visual and audio paths.
-    \item Train the visual and audio paths on neutral data at three seeds, and
-    score them across corpora.
-    \item Train out-of-fold fusion and run H2.
+    \item Run the StreamFusion model, the secondary fusion, against the
+    logistic fusion of H2.
     \item Train the reverse models on LAV-DF and run H3 in both directions.
     \item Run the AVH-Align and HAVIC baselines on our protocol.
     \item Add AV-Deepfake1M and KoDF if access arrives. Both were requested,
