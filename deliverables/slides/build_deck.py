@@ -38,7 +38,7 @@ OUT = ROOT / "deliverables" / "build" / "Deepfake_Detection_Presentation.pptx"
 TITLE = "Shortcut-Neutral Multimodal Audio-Visual Deepfake Detection"
 MEMBERS = [("Vaibhav Shiroorkar", "16014024805"), ("Adithya Jithesh", "16014024803"), ("Shivansh Gupta", "16014023052")]
 GUIDE = "Dr. Tejashree Phatak"
-GUIDE_ROLE = "Associate Professor"   # the report says Associate, the October deck said Assistant; confirm
+GUIDE_ROLE = "Assistant Professor"
 
 
 class Numbers:

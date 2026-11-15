@@ -17,7 +17,11 @@ Every number in a deliverable is a placeholder filled from `results/numbers.json
 
 A deliverable that names a number missing from `results/numbers.json` fails to build. It never prints a gap or an old value.
 
-Tools still needed for PDFs: a LaTeX distribution for the paper (MiKTeX or TeX Live), and LibreOffice or Microsoft Word to export the report and slides to PDF.
+## Report and paper on Overleaf
+
+The report and the paper compile on Overleaf. `overleaf.py` writes `build/overleaf/report.zip` and `build/overleaf/paper.zip`: each holds `main.tex` with every number filled, plus the figures and the college logo it uses. In Overleaf choose New Project, then Upload Project, pick the zip, and compile with pdfLaTeX. With `--draft`, a missing number prints as [pending] and a missing figure as a framed box.
+
+    .venv/Scripts/python.exe deliverables/overleaf.py --draft
 
 ## Poster
 
