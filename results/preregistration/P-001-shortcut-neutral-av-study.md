@@ -118,3 +118,13 @@ HiFi-AVDF (Peng et al., CVPR 2026 Findings) is added as a **locked cross-corpus 
   - AV-Deepfake1M++ is a locked target for H4, the false-alarm test under shift.
   - Both get the shortcut audit first. Smeu et al. (CVPR 2025) already documented leading silence in AV-Deepfake1M.
 - A dataset that arrives after the primary models are frozen is scored with those frozen models only. Nothing is retrained because a new target appeared.
+
+## Amendment A7, 2026-11-15, before HiFi-AVDF is neutralized or scored
+
+The raw HiFi-AVDF audit, while still running, showed frame size following the label. Real clips are 1280x720. Generated clips are 1920x1080 (Kling 2.5: 1920x1072). Neutralizer v4 kept native size, which was correct for FakeAVCeleb and LAV-DF (all 224x224), but would carry this cue into HiFi-AVDF.
+
+- **Fixed frame size per corpus.** Every clip of a corpus is resampled to one frame size: the native size of its real clips (`--size`).
+  - HiFi-AVDF: 1280x720, stretched, not padded. Padding would add black bars to Kling clips alone. Stretching changes Kling's aspect ratio by 0.4%.
+  - FakeAVCeleb and LAV-DF: unchanged (already uniform), so existing neutral copies and the trained sync models stay valid.
+  - DFDC: unchanged. Both classes mix 1920x1080 and 1080x1920 (portrait: 35% of fakes, 28% of reals). The neutral audit reports what orientation still carries.
+- No model has been scored on HiFi-AVDF. Only the raw audit, which reads file properties, has run.

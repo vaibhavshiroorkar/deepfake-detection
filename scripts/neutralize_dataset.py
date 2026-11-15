@@ -38,8 +38,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-root", type=Path, default=Path("data/neutral"))
     parser.add_argument("--manifest-out", type=Path, required=True)
     parser.add_argument("--workers", type=int, default=12)
+    parser.add_argument("--size", help="one frame size for the corpus, WxH (stretched)")
     arguments = parser.parse_args(argv)
-    settings = NeutralSettings()
+    settings = NeutralSettings(size=arguments.size)
 
     with arguments.manifest.open(newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)

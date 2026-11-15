@@ -136,3 +136,13 @@ def test_dither_removes_digital_zeros_and_repeats_per_file() -> None:
     assert not np.array_equal(once, dither(zeros, -66.0, "b.mp4"))
     level = 20 * np.log10(np.sqrt(np.mean(once.astype(np.float64) ** 2)))
     assert level == pytest.approx(-66.0, abs=0.5)
+
+
+def test_a_fixed_size_scales_every_clip_to_one_frame() -> None:
+    # HiFi-AVDF: generated clips are 1920x1080 or 1920x1072, real ones 1280x720.
+    # Stretching, not padding: padding would add black bars to one generator only.
+    command = ffmpeg_command(Path("a.mp4"), Path("b.mp4"), 0.0, 3.0, None, NeutralSettings(size="1280x720"))
+    video_filter = command[command.index("-vf") + 1]
+    assert video_filter.startswith("scale=1280:720") and "pad" not in video_filter
+    plain = ffmpeg_command(Path("a.mp4"), Path("b.mp4"), 0.0, 3.0, None, NeutralSettings())
+    assert "scale" not in plain[plain.index("-vf") + 1]

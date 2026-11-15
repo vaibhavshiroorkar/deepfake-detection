@@ -63,6 +63,9 @@ class NeutralSettings:
     audio_rate: int = SAMPLE_RATE
     loudness_dbfs: float = -23.0
     dither_dbfs: float = -66.0
+    # One frame size for a whole corpus, "WxH", stretched (not padded). None keeps
+    # the native size, which is right when a corpus is already uniform.
+    size: str | None = None
     silence_dbfs: float = SILENCE_DBFS
     # Every neutral clip is exactly this long; shorter clips are refused.
     fixed_seconds: float = 3.0
@@ -122,6 +125,14 @@ def write_wav(path: Path, samples: np.ndarray, rate: int) -> None:
         handle.writeframes(pcm.tobytes())
 
 
+def _video_filter(settings: NeutralSettings) -> str:
+    steps = []
+    if settings.size:
+        width, height = (int(v) for v in settings.size.lower().split("x"))
+        steps += [f"scale={width}:{height}:flags=bicubic", "setsar=1"]
+    return ",".join([*steps, f"fps={settings.fps}", "format=yuv420p"])
+
+
 def ffmpeg_command(
     source: Path, target: Path, start: float, end: float, audio_wav: Path | None, settings: NeutralSettings
 ) -> list[str]:
@@ -133,7 +144,7 @@ def ffmpeg_command(
         command += ["-i", str(audio_wav)]
     command += [
         "-map_metadata", "-1", "-map", "0:v:0",
-        "-vf", f"fps={settings.fps},format=yuv420p",
+        "-vf", _video_filter(settings),
         "-c:v", "libx264", "-preset", settings.preset, "-crf", str(settings.crf), "-bf", "0",
     ]
     if audio_wav is not None:
