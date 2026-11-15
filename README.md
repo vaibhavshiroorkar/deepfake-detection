@@ -31,6 +31,7 @@ The [paper, report, slides and poster](deliverables/README.md) fill every number
 ## Documents
 
 - [Final project summary](docs/FINAL.md): the short, clean version of the project.
+- [Pending work](docs/PENDING.md): everything still open, in order.
 - [Project log](docs/PROJECT-LOG.md): decisions and the reasons for them.
 - [Project handbook](docs/HANDBOOK.md): start here. What the project is, what it measured, every mistake from the first commit on, what to do next, and the paper plan.
 - [Deliverables](deliverables/README.md): the paper, report, slides and poster, and how to rebuild them.
