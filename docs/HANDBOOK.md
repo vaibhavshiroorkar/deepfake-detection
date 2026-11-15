@@ -203,6 +203,12 @@ A first attempt on LAV-DF used a window-level manifest in which 2,527 of 3,483 f
 | check, neutralizer v4 | 600-clip sample, not reused | 0.598 | 0.489 | 0.702 | Below the bar on clip and video labels; the audio label keeps a residual |
 | 2, neutralizer v4 | 20,284 clips (1,260 short generated-speech clips refused, no real ones) | 0.632 | 0.617 | 0.793 | **Not met.** Main residual: video bitrate (0.57 to 0.64), which under constant-quality encoding follows image content |
 
+### 5.1b The sync path (P-001, 2026-11-15)
+
+Frozen AV-HuBERT features, with an alignment head trained only on real clips. Scored on neutral FakeAVCeleb, test AUC is **0.775, 0.809 and 0.806** for seeds 17, 29 and 43 (identity-strict test: 0.781 to 0.810). The old ResNet-18 sync branch scored 0.44 to 0.49. All three seeds sit above the shortcut ceiling on these copies (0.632).
+
+The per-method pattern shows it reads lip-audio agreement: voice cloning 0.942, Wav2Lip 0.84 to 0.86, and face swap alone 0.63 to 0.68 (a face swap keeps the original lips and voice). At the threshold chosen on validation, it flags 27 to 39% of real test clips. That is the false-alarm problem H4 addresses. Details: [results/p001-sync](../results/p001-sync/README.md).
+
 ### 5.2 Older numbers, and why none of them is a result yet
 
 These come from earlier stages. Each is listed so nobody cites it by mistake. "Requires rerun" means a defect in section 6 touches it.
@@ -1003,6 +1009,22 @@ uncommitted working tree unless marked open.
 - **What it cost:** About an hour of an overnight run.
 - **Fix:** Read lengths from the neutralizer's sidecar and probe the rest in parallel.
 - **Source:** commit `3b83b43`.
+
+#### 62. Resume treated temporary failures as finished
+
+- **What went wrong:** Under memory pressure, ffmpeg could not start (Windows error 0xC0000142). The feature extractor and the neutralizer wrote those failures into their resume records, and on restart they would have skipped those clips for good.
+- **How it was caught:** All 182 windows written in the last minutes before the memory stop were errors, and the same window extracted fine on its own.
+- **What it cost:** Nothing measured. The bad index rows were removed before the rerun.
+- **Fix:** Only final outcomes count as done: "ok", "no face", "no audio", and refusals for length.
+- **Source:** commits `78dc2e3`, `033e3a9`.
+
+#### 63. The receipt tool could not launch anything on Windows
+
+- **What went wrong:** `scripts/research_artifacts.py` passed `.venv/Scripts/python.exe` to Windows as a relative path with forward slashes. Windows will not start a program from that, so every receipted stage failed at launch.
+- **How it was caught:** The first receipted sync evaluation. The visual and audio driver would have failed the same way at its first training step.
+- **What it cost:** Nothing measured.
+- **Fix:** Resolve a relative program path before launching. The receipt still records the portable relative command.
+- **Source:** commit after `2eb1bc8`, "Resolve relative program paths before launching a receipted stage".
 
 ## 7. What a hard reviewer would say
 
