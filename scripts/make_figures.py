@@ -44,7 +44,7 @@ def have(*keys: str) -> bool:
 
 def _bars(ax, positions, heights, color, width, label):
     bars = ax.bar(positions, heights, width=width, color=color, label=label, edgecolor="white", linewidth=1.5)
-    for bar, height in zip(bars, heights):
+    for bar, height in zip(bars, heights, strict=True):
         ax.text(bar.get_x() + bar.get_width() / 2, height + 0.01, f"{height:.3f}", ha="center", va="bottom",
                 fontsize=8, color=INK)
 
