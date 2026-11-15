@@ -1,6 +1,6 @@
 """Drawing helpers for build_deck.py: text, cards, tables, diagram boxes, pictures and slide scaffolding.
 
-Copied from the October builder (deliverables/presentation/build_deck_v2.py) so the new deck keeps the
+Copied from the October builder (tag team/submission-final, deliverables_v2/presentation/build_deck_v2.py) so the new deck keeps the
 same grid, type scale and look on the college master. The only change is that the helpers take the
 presentation from `Deck` instead of a module global.
 """
