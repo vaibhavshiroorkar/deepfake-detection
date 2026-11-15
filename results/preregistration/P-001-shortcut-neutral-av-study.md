@@ -99,3 +99,13 @@ On a 600-clip validation sample (150 per category, not used for anything else), 
 H1 is re-run once on the full set with version 4. Its result is reported whether it passes or not. The audio-label ceiling is reported beside H3, because a residual audio cue weakens any modality-prediction claim.
 
 **Sync windows** become 2 s windows starting at 0 and 1 s (`--step 1`), because every clip is now 3 s. This replaces the 0, 2 and 4 s rule of A1.
+
+## Amendment A5, 2026-11-15, before HiFi-AVDF is downloaded
+
+HiFi-AVDF (Peng et al., CVPR 2026 Findings) is added as a **locked cross-corpus target**. It is public (huggingface.co/datasets/JielunPeng/HiFi-AVDF, MIT licence, 6.5 GB). It pairs each real video with a generated copy from one of six commercial generators: Kling 2.5, PixVerse V5, Seedance 1.0, Sora 2, Veo 3.1 and Wan 2.5. The 2026-11-15 decision to skip it is reversed, because access turned out to need no request.
+
+- **Use.** H2 (fusion vs visual-only) and H4 (real-only false-alarm control) are scored on it, with results per generator and pooled. It never trains, selects or calibrates anything, except the real-only calibration split that H4 defines.
+- **Audit first.** `scripts/shortcut_audit.py` runs on the raw files before any model is scored, grouped by real-fake pair. The neutralized copy is audited the same way. Both ceilings are reported beside every HiFi-AVDF number.
+- **Same pipeline.** Neutralizer v4 with fixed 3.00 s clips, with refusals counted per generator.
+- **HAVIC baseline.** HAVIC's released fine-tuned weights (huggingface.co/JielunPeng/HAVIC) may be scored on HiFi-AVDF, DFDC and LAV-DF. They are not scored on our FakeAVCeleb test: HAVIC fine-tuned on a random, ungrouped FakeAVCeleb split, so its weights have almost certainly seen our test identities.
+- KoDF stays skipped.

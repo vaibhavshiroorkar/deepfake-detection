@@ -104,7 +104,8 @@ The code layout:
 | MNW | 134 clips | clip | Locked external test, read once |
 | ASVspoof 2019 LA | 121,461 utterances | audio | Audio path training |
 | In-the-Wild | 31,779 utterances | audio | Locked audio test |
-| DeepSpeak v2, AV-Deepfake1M | not on disk | | Requested or to request: [access status](research/datasets.md#access-status-2026-11-13). KoDF and HiFi-AVDF were skipped |
+| HiFi-AVDF | downloading | clip, audio, video (real paired with generated) | Locked test on six modern generators (P-001 A5) |
+| DeepSpeak v2, AV-Deepfake1M | not on disk | | Requested or to request: [access status](research/datasets.md#access-status-2026-11-13). KoDF was skipped |
 
 **Rules, and the mistake each one prevents.**
 
@@ -1081,7 +1082,7 @@ Ranked by how much each step strengthens the paper per day of work.
 | 6 | Real-only threshold under codec and corpus shift (H4) | The deployment result; CPU only once scores exist | a day |
 | 7 | Modality transfer, FakeAVCeleb <-> LAV-DF (H3) | The second new claim | a GPU day |
 | 8 | Speaker overlap with AV-HuBERT pretraining (objection 4) | Closes an obvious hole | a day |
-| 9 | ~~Request KoDF and HiFi-AVDF~~ Skipped on 2026-11-15. Run public baselines (AVH-Align, HAVIC) on our data instead | A run baseline is fairer than a quoted table; their absence is a stated limitation | none |
+| 9 | HiFi-AVDF (public, added back by P-001 A5) as a locked test on six modern generators; run public baselines (AVH-Align, HAVIC) on our data. KoDF skipped | A run baseline is fairer than a quoted table | 6.5 GB download |
 | 10 | Trailing-silence and loudness cues on LAV-DF and DFDC | Extends the audit beyond FakeAVCeleb | hours |
 
 What not to do:

@@ -20,7 +20,7 @@ domain.
 | DeepSpeak v2 | Requested on Hugging Face, awaiting the authors. `data/DeepSpeak_v2` is empty. | Wait. If nothing after a week, email the authors with the request date and Hugging Face username. | Locked test target. The licence allows training, but keeping it unseen keeps it independent. |
 | AV-Deepfake1M | Not requested. Needs the EULA on the Hugging Face page. | Sign with a university email and the supervisor's name. | Third corpus with per-modality labels; official unseen-speaker test set. |
 | KoDF | **Skipped (decided 2026-11-15).** Project page: https://moneybrain-research.github.io/kodf. Access may go through AI Hub. | None. | Would only have allowed comparison with published FakeAVCeleb -> KoDF numbers, which come from shortcut-carrying raw data. |
-| HiFi-AVDF | **Skipped (decided 2026-11-15).** Released with HAVIC, https://github.com/tuffy-studio/HAVIC. | None. | Would have tested modern generators. Its absence is a stated limitation: no claim about the newest generators. |
+| HiFi-AVDF | **Public, ungated, MIT, 6.5 GB** (https://huggingface.co/datasets/JielunPeng/HiFi-AVDF). Skip reversed on 2026-11-15 (P-001 A5). | Download into `data/HiFi-AVDF`. | Locked target: real videos paired with copies from Kling 2.5, PixVerse V5, Seedance 1.0, Sora 2, Veo 3.1 and Wan 2.5. |
 
 Send every request from a university address. Gated datasets often reject personal ones.
 
