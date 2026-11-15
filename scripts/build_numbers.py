@@ -41,6 +41,9 @@ def audits(numbers: dict) -> None:
         for label, short in (("clip_fake", "clip"), ("video_fake", "video"), ("audio_fake", "audio")):
             if label in summary:
                 _put(numbers, f"audit.{key}.{short}", round(summary[label]["shortcut_ceiling_auc"], 3), path)
+                for cue, auc in summary[label]["cue_auc"].items():
+                    if auc == auc:  # skip NaN cues
+                        _put(numbers, f"audit.{key}.cue.{short}.{cue}", round(auc, 3), path)
         census = summary.get("codec_census", {})
         for kind, entry in census.items():
             _put(numbers, f"audit.{key}.census.{kind}.clips", entry["clips"], path)
@@ -55,6 +58,10 @@ def neutralization(numbers: dict) -> None:
         summary = json.loads(path.read_text(encoding="utf-8"))
         _put(numbers, "neutral.fakeavceleb.kept", summary["rows_out"], path)
         _put(numbers, "neutral.fakeavceleb.refused", summary["rows_failed"], path)
+        for kind, reasons in summary.get("refused_by_category", {}).items():
+            _put(numbers, f"neutral.fakeavceleb.refused.{kind}", sum(reasons.values()), path)
+        for kind, count in summary.get("rows_in_by_category", {}).items():
+            _put(numbers, f"neutral.fakeavceleb.in.{kind}", count, path)
 
 
 def metrics_file(numbers: dict, prefix: str, path: Path) -> None:
@@ -82,6 +89,15 @@ def sync(numbers: dict) -> None:
             metrics_file(numbers, f"{base}.{part}.seed{seed}", path)
 
 
+def sync_training(numbers: dict) -> None:
+    path = RESULTS / "p001-sync" / "training.json"
+    if path.exists():
+        log = json.loads(path.read_text(encoding="utf-8"))
+        first = next(iter(log.values()))
+        _put(numbers, "sync.train.real_windows", first["real_train_windows"], path)
+        _put(numbers, "sync.train.real_val_windows", first["real_val_windows"], path)
+
+
 def h4(numbers: dict) -> None:
     directory = RESULTS / "p001-h4"
     if not directory.exists():
@@ -100,6 +116,7 @@ def main() -> int:
     audits(numbers)
     neutralization(numbers)
     sync(numbers)
+    sync_training(numbers)
     h4(numbers)
     out = RESULTS / "numbers.json"
     out.write_text(json.dumps(dict(sorted(numbers.items())), indent=1) + "\n", encoding="utf-8")

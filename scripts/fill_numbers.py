@@ -18,9 +18,10 @@ ROOT = Path(__file__).resolve().parents[1]
 PATTERN = re.compile(r"\{\{\s*([A-Za-z0-9_.\-]+)\s*(?:\|\s*(pct|int|3))?\s*\}\}")
 
 
-def render(value, style: str | None) -> str:
+def render(value, style: str | None, latex: bool = False) -> str:
     if style == "pct":
-        return f"{100 * float(value):.0f}%"
+        # In LaTeX a bare % starts a comment and swallows the rest of the line.
+        return f"{100 * float(value):.0f}" + ("\\%" if latex else "%")
     if style == "int":
         return f"{int(value):,}"
     if style == "3" or isinstance(value, float):
@@ -28,11 +29,11 @@ def render(value, style: str | None) -> str:
     return str(value)
 
 
-def fill(text: str, numbers: dict) -> str:
+def fill(text: str, numbers: dict, latex: bool = False) -> str:
     missing = sorted({m.group(1) for m in PATTERN.finditer(text) if m.group(1) not in numbers})
     if missing:
         raise SystemExit("missing numbers: " + ", ".join(missing))
-    return PATTERN.sub(lambda m: render(numbers[m.group(1)]["value"], m.group(2)), text)
+    return PATTERN.sub(lambda m: render(numbers[m.group(1)]["value"], m.group(2), latex), text)
 
 
 def main(argv: list[str]) -> int:
@@ -41,7 +42,8 @@ def main(argv: list[str]) -> int:
     numbers = json.loads((ROOT / "results" / "numbers.json").read_text(encoding="utf-8"))
     source, target = Path(argv[0]), Path(argv[1])
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(fill(source.read_text(encoding="utf-8"), numbers), encoding="utf-8")
+    latex = target.suffix == ".tex"
+    target.write_text(fill(source.read_text(encoding="utf-8"), numbers, latex), encoding="utf-8")
     print(f"filled {source} -> {target}")
     return 0
 

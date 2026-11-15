@@ -19,3 +19,7 @@ def test_placeholders_are_filled_with_styles() -> None:
 def test_a_missing_number_stops_the_build() -> None:
     with pytest.raises(SystemExit, match="missing numbers: b.auc"):
         fill_numbers.fill("{{a.auc}} and {{b.auc}}", NUMBERS)
+
+
+def test_percent_is_escaped_for_latex() -> None:
+    assert fill_numbers.fill("{{a.fpr|pct}} flagged", NUMBERS, latex=True) == "27\\% flagged"
