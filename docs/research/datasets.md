@@ -17,9 +17,9 @@ domain.
 
 | Dataset | State | Next step | Role in P-001 |
 |---|---|---|---|
-| DeepSpeak v2 | Requested on Hugging Face, awaiting the authors. `data/DeepSpeak_v2` is empty. | Wait. If nothing after a week, email the authors with the request date and Hugging Face username. | Locked test target. The licence allows training, but keeping it unseen keeps it independent. |
-| AV-Deepfake1M | Not requested. Needs the EULA on the Hugging Face page. | Sign with a university email and the supervisor's name. | Third corpus with per-modality labels; official unseen-speaker test set. |
-| KoDF | **Skipped (decided 2026-11-15).** Project page: https://moneybrain-research.github.io/kodf. Access may go through AI Hub. | None. | Would only have allowed comparison with published FakeAVCeleb -> KoDF numbers, which come from shortcut-carrying raw data. |
+| DeepSpeak v2 | Requested on Hugging Face, awaiting the authors (form re-confirmed 2026-11-15). `data/DeepSpeak_v2` is empty. | Wait. If nothing after a week, email the authors with the request date and Hugging Face username. | Locked test target. The licence allows training, but keeping it unseen keeps it independent. |
+| AV-Deepfake1M | **Requested 2026-11-15** on Hugging Face (manual approval). AV-Deepfake1M++ is a separate gated repo, not yet requested. | Wait for approval. | Third corpus with per-modality labels; official unseen-speaker test set. |
+| KoDF | **Skipped (decided 2026-11-15)**, but access was requested anyway on 2026-11-15. Using it would need its own P-001 amendment first. Project page: https://moneybrain-research.github.io/kodf. Access may go through AI Hub. | None. | Would only have allowed comparison with published FakeAVCeleb -> KoDF numbers, which come from shortcut-carrying raw data. |
 | HiFi-AVDF | **Public, ungated, MIT, 6.5 GB** (https://huggingface.co/datasets/JielunPeng/HiFi-AVDF). Skip reversed on 2026-11-15 (P-001 A5). | Download into `data/HiFi-AVDF`. | Locked target: real videos paired with copies from Kling 2.5, PixVerse V5, Seedance 1.0, Sora 2, Veo 3.1 and Wan 2.5. |
 
 Send every request from a university address. Gated datasets often reject personal ones.
@@ -56,9 +56,11 @@ simulate real-world degradation. Research-only licence.
 
 <https://github.com/ControlNet/AV-Deepfake1M>
 
-**Status: needs a signed EULA.** There is no direct download and no Hugging Face
-mirror. Access goes through the challenge site, <https://deepfakes1m.github.io/2025>,
-and requires agreeing to the EULA. A `avdeepfake1m` pip package loads the data
+**Status: requested 2026-11-15.** Both sets are gated Hugging Face datasets with
+manual approval: <https://huggingface.co/datasets/ControlNet/AV-Deepfake1M> and
+<https://huggingface.co/datasets/ControlNet/AV-Deepfake1M-PlusPlus> (a separate
+request). An earlier version of this note said there was no Hugging Face mirror;
+that was wrong. The challenge site is <https://deepfakes1m.github.io/2025>. A `avdeepfake1m` pip package loads the data
 once it is obtained.
 
 Relevant beyond its size: the manipulations are localized in time, which is the
