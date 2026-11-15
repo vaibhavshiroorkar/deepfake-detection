@@ -109,3 +109,12 @@ HiFi-AVDF (Peng et al., CVPR 2026 Findings) is added as a **locked cross-corpus 
 - **Same pipeline.** Neutralizer v4 with fixed 3.00 s clips, with refusals counted per generator.
 - **HAVIC baseline.** HAVIC's released fine-tuned weights (huggingface.co/JielunPeng/HAVIC) may be scored on HiFi-AVDF, DFDC and LAV-DF. They are not scored on our FakeAVCeleb test: HAVIC fine-tuned on a random, ungrouped FakeAVCeleb split, so its weights have almost certainly seen our test identities.
 - KoDF stays skipped.
+
+## Amendment A6, 2026-11-15, before any KoDF or AV-Deepfake1M data exists here
+
+- **KoDF** is a locked cross-corpus target if access is granted. The 2026-11-15 skip is reversed. It enters with the same rules as HiFi-AVDF (A5): raw and neutral shortcut audits before scoring, neutralizer v4, and results per method and pooled. If access is refused, KoDF is reported as unavailable, not dropped silently.
+- **AV-Deepfake1M and AV-Deepfake1M++** were requested on 2026-11-15, through the 2025 challenge and the gated Hugging Face repos.
+  - AV-Deepfake1M is a locked target for H2. It is also a third corpus for H3, with reverse models trained on its training split under the A2 rules.
+  - AV-Deepfake1M++ is a locked target for H4, the false-alarm test under shift.
+  - Both get the shortcut audit first. Smeu et al. (CVPR 2025) already documented leading silence in AV-Deepfake1M.
+- A dataset that arrives after the primary models are frozen is scored with those frozen models only. Nothing is retrained because a new target appeared.
