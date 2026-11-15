@@ -1,0 +1,74 @@
+{
+  "seed17": {
+    "selection": "lowest alignment loss on real validation windows",
+    "val_loss": 0.5151818990707397,
+    "epoch": 9,
+    "history": [
+      0.6851645708084106,
+      0.645269513130188,
+      0.6073623895645142,
+      0.5798359513282776,
+      0.5602409839630127,
+      0.543926477432251,
+      0.5333178043365479,
+      0.5260267853736877,
+      0.5267631411552429,
+      0.5151818990707397
+    ],
+    "real_train_windows": 697,
+    "real_val_windows": 150,
+    "scored_clips": {
+      "val": 3104,
+      "test": 2993,
+      "test-identity-strict": 495
+    }
+  },
+  "seed29": {
+    "selection": "lowest alignment loss on real validation windows",
+    "val_loss": 0.4122629761695862,
+    "epoch": 9,
+    "history": [
+      0.6588573455810547,
+      0.5749094486236572,
+      0.5036656856536865,
+      0.4696035385131836,
+      0.4393792152404785,
+      0.4296194314956665,
+      0.43006080389022827,
+      0.4350655674934387,
+      0.4166537821292877,
+      0.4122629761695862
+    ],
+    "real_train_windows": 697,
+    "real_val_windows": 150,
+    "scored_clips": {
+      "val": 3104,
+      "test": 2993,
+      "test-identity-strict": 495
+    }
+  },
+  "seed43": {
+    "selection": "lowest alignment loss on real validation windows",
+    "val_loss": 0.4188593029975891,
+    "epoch": 8,
+    "history": [
+      0.6294964551925659,
+      0.5261574387550354,
+      0.48608916997909546,
+      0.45446276664733887,
+      0.44612762331962585,
+      0.43268173933029175,
+      0.4264123737812042,
+      0.4467785656452179,
+      0.4188593029975891,
+      0.4434164762496948
+    ],
+    "real_train_windows": 697,
+    "real_val_windows": 150,
+    "scored_clips": {
+      "val": 3104,
+      "test": 2993,
+      "test-identity-strict": 495
+    }
+  }
+}
