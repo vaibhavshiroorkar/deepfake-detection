@@ -1,6 +1,6 @@
 # Deliverables
 
-The black book (project report), research paper, slides and poster for the final-year project. The report and paper builders were restored from the October submission; the slides and poster are new builders on the college slide master (tag `team/submission-final`, folder `deliverables_v2/`). They were made for the Somaiya Vidyavihar University format.
+The black book (project report), research paper, slides and poster for the final-year project. The report and paper builders were restored from the October submission (tag `team/submission-final`, folder `deliverables_v2/`). The slides and poster are new builders on the college slide master. All four follow the Somaiya Vidyavihar University format.
 
 Every number in a deliverable is a placeholder filled from `results/numbers.json`, which `scripts/build_numbers.py` builds from the committed result files. To update all deliverables after a new result:
 
