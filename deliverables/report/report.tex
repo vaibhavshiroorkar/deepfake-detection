@@ -2249,7 +2249,16 @@ gets the same statistic, outside the rule.
     \end{tabular}
 \end{table}
 
-By the preregistered rule, H2 holds: \textbf{{{h2.success}}}. The seed-17
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth,keepaspectratio]{fig_h2.png}
+    \caption{Fusion minus visual-only ROC-AUC per target: the mean of three
+    seeds with its 95\% interval, and each seed as a dot}
+    \label{fig:h2}
+\end{figure}
+
+Table~\ref{tab:h2} and Figure~\ref{fig:h2} give the result. By the
+preregistered rule, H2 holds: \textbf{{{h2.success}}}. The seed-17
 fusion weights on the standardized logits are {{h2.weights.seed17.visual}}
 (visual), {{h2.weights.seed17.audio}} (audio) and {{h2.weights.seed17.sync}}
 (sync).

@@ -29,7 +29,6 @@ Three chains run as detached processes. Each resumes from its own log if stopped
 ## 3. When H2 finishes (Claude)
 
 - Copy `runs/p001/h2/` into `results/p001-h2/` with a README and receipts.
-- Add an H2 figure to `scripts/make_figures.py`.
 - Write the sentences that interpret H2 in the paper and the report (marked `% PENDING` in both), and the H2 speaker notes. The tables and the verdict fill in by themselves.
 - Add the visual and audio results on the three targets to the report, if they are worth a table.
 - Cut version 1.0.0 at the final-year submission: changelog heading, `pyproject.toml`, tag `v1.0.0`.

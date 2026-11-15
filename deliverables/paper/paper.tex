@@ -650,7 +650,16 @@ HiFi-AVDF (reported) & {{h2.hifiavdf.clips|int}} & {{h2.hifiavdf.seed17}} & {{h2
 \end{tabular}
 \end{table*}
 
-Table~\ref{tab:h2} gives the result. By the preregistered rule, H2 holds:
+\begin{figure}[htbp]
+\centerline{\includegraphics[width=\columnwidth]{fig_h2.png}}
+\caption{Fusion minus visual-only ROC-AUC per target: the mean of three seeds
+with its 95\% identity-bootstrap interval, and each seed as a dot
+(Table~\ref{tab:h2}).}
+\label{fig:h2}
+\end{figure}
+
+Table~\ref{tab:h2} and Fig.~\ref{fig:h2} give the result. By the
+preregistered rule, H2 holds:
 \textbf{{{h2.success}}}. The seed-17 fusion weights on the standardized logits
 are {{h2.weights.seed17.visual}} (visual), {{h2.weights.seed17.audio}} (audio)
 and {{h2.weights.seed17.sync}} (sync).

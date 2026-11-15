@@ -180,8 +180,32 @@ def _save(fig, name: str) -> str:
     return name
 
 
+def h2() -> str | None:
+    """Fusion minus visual-only AUC per target: the 3-seed mean with its interval, and each seed as a dot."""
+    targets = [("FakeAVCeleb, strict", "test-identity-strict"), ("DFDC", "dfdc"), ("LAV-DF", "lavdf-test"),
+               ("HiFi-AVDF (reported)", "hifiavdf")]
+    targets = [(n, t) for n, t in targets if have(f"h2.{t}.estimate", f"h2.{t}.lower", f"h2.{t}.upper")]
+    if not targets:
+        return None
+    fig, ax = plt.subplots(figsize=(6.2, 2.6))
+    for i, (_, t) in enumerate(targets):
+        y = len(targets) - 1 - i
+        est, lo, hi = value(f"h2.{t}.estimate"), value(f"h2.{t}.lower"), value(f"h2.{t}.upper")
+        ax.plot([lo, hi], [y, y], color=BLUE, linewidth=2, solid_capstyle="round")
+        ax.scatter([est], [y], s=36, color=BLUE, zorder=3, edgecolor="white", linewidth=1.5)
+        seeds = [value(f"h2.{t}.seed{s}") for s in (17, 29, 43) if have(f"h2.{t}.seed{s}")]
+        ax.scatter(seeds, [y + 0.22] * len(seeds), s=10, color=INK, zorder=3)
+        ax.text(hi, y, f"  {est:+.3f}", va="center", fontsize=8, color=INK)
+    ax.axvline(0, color=MUTED, linewidth=0.8)
+    ax.set_yticks(range(len(targets)), [n for n, _ in reversed(targets)])
+    ax.set_xlabel("AUC(fusion) - AUC(visual), mean of 3 seeds with 95% interval (dots: single seeds)")
+    ax.xaxis.grid(True, color=GRID, linewidth=0.6)
+    ax.set_axisbelow(True)
+    return _save(fig, "fig_h2.png")
+
+
 def main() -> int:
-    for build in (pipeline, census, h1, sync_methods, cross_corpus, h4):
+    for build in (pipeline, census, h1, sync_methods, cross_corpus, h4, h2):
         made = build()
         print(f"{build.__name__:14} {'-> ' + made if made else 'skipped: numbers not produced yet'}")
     return 0
