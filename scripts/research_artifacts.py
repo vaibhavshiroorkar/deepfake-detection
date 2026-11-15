@@ -97,6 +97,11 @@ def run_stage(
     if completed(receipt, configuration, outputs):
         print(f"Verified completed stage: {receipt}", flush=True)
         return 0
+    # Windows will not start a program given as a relative path with forward
+    # slashes (".venv/Scripts/python.exe"), so resolve one that exists here.
+    program = Path(command[0])
+    if not program.is_absolute() and program.exists():
+        command = [str(program.resolve()), *command[1:]]
     # The operator supplies an argument vector. No shell interprets its values.
     code = subprocess.run(command, check=False).returncode  # noqa: S603
     if code == 0:
