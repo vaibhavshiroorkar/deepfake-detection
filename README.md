@@ -26,20 +26,20 @@ On FakeAVCeleb, file-level cues alone separate real from fake: leading digital s
 Historical fusion comparisons found no cross-corpus gain. Their fold checkpoints used outer-holdout labels for epoch selection, so that conclusion needs a nested cross-fitting rerun.
 The historical DF26 Perception Encoder score of 0.7527 used the wrong input normalization, so corrected performance is unknown.
 
-The [findings](docs/research/findings.md) hold every measured claim. The [paper draft](docs/research/paper.md) reports both tracks, and every number in it resolves to a row in [result traceability](docs/research/result-traceability.md). The [handbook](docs/HANDBOOK.md) says what is measured, what went wrong and what runs next.
+The [paper, report, slides and poster](deliverables/README.md) fill every number from `results/numbers.json`, which is built from the committed result files. The [handbook](docs/HANDBOOK.md) says what is measured, what went wrong and what runs next. Older measured claims are in [findings](docs/research/findings.md) and [result traceability](docs/research/result-traceability.md).
 
 ## Documents
 
 - [Final project summary](docs/FINAL.md): the short, clean version of the project.
 - [Project log](docs/PROJECT-LOG.md): decisions and the reasons for them.
 - [Project handbook](docs/HANDBOOK.md): start here. What the project is, what it measured, every mistake from the first commit on, what to do next, and the paper plan.
-- [Current research presentation](docs/research/presentation/README.md): report, slides, rehearsal and evidence covering July through November 2026.
+- [Deliverables](deliverables/README.md): the paper, report, slides and poster, and how to rebuild them.
 - [Research design](docs/research-design.md): question, protocol, ablations, and exit criteria.
 - [Data card](docs/data-card.md): data contract, split policy, risks, and handling rules.
 - [Model selection](docs/model-selection.md): controlled component comparisons and selection rules.
 - [Reproducibility](docs/reproducibility.md): required run metadata and local tracking.
 - [License and use terms](LICENSE.md): code terms, and the terms of each dataset.
-- [Contributions](docs/research/contributions.md): what is new here, and what is already published.
+- [Related work](docs/research/related-work.md): what is new here, and what is already published.
 - [Model card](docs/model-card.md): what the system is, what it measures, and why it should not be deployed.
 - [Threat model](docs/threat-model.md): supported threats, failure modes, and claim limits.
 - [Dashboard](docs/dashboard.md): the two halves of the dashboard and how state crosses pages.

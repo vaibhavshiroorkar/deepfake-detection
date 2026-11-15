@@ -2,7 +2,7 @@
 
 The project trains on face manipulations of real recordings and is close to
 blind on fully generated video: 0 of 10 on `vasa_1` and 0 of 4 on `raskai` in
-the [paper source book](paper-source.md) section 5.7. Closing that gap needs
+the old paper source book, section 5.7 (removed; `git show 100c220:docs/research/paper-source.md`). Closing that gap needs
 data of the right class. This is the survey of what exists and what it costs,
 so the choice is made once and recorded rather than re-searched every time.
 

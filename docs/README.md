@@ -9,7 +9,7 @@
 - [Authors and equal credit](../AUTHORS.md)
 - [Project overview](../README.md)
 - [Generated inventory](handoff.md): datasets on disk, evaluation reports and MLflow runs, written by `ddf handoff update`.
-- [Research presentation and report](research/presentation/README.md): the November presentation set.
+- [Deliverables](../deliverables/README.md): the paper, report, slides and poster.
 - [Findings](research/findings.md): every claim the measurements support, by
   F-number. Other documents cite these numbers rather than restate them.
 - [Obstacles](obstacles.md): known traps by area.
@@ -33,7 +33,6 @@ One chapter per pipeline stage, written 2026-10-29, from the [chapter index](han
 
 - [CLI reference](reference/cli.md)
 - [Dashboard](dashboard.md)
-- [Architecture for generated media](research/architecture.md)
 
 ## Research evidence
 
@@ -42,11 +41,8 @@ One chapter per pipeline stage, written 2026-10-29, from the [chapter index](han
 - [Related work and novelty check](research/related-work.md)
 - [Result traceability](research/result-traceability.md)
 - [Findings](research/findings.md)
-- [Predictions](research/predictions.md)
 - [Corpora](research/datasets.md)
-- [Contributions](research/contributions.md)
-- [Paper draft](research/paper.md) and the
-  [generated tables it is written from](research/paper-source.md)
+- [Paper](../deliverables/paper/paper.tex) and [report](../deliverables/report/report.tex)
 
 ## Decisions and project controls
 

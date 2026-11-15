@@ -21,5 +21,5 @@ This credit allocation follows the team's instruction of 2026-11-12.
 It does not claim identical hours or identical tasks for each person.
 Git records retain their original authorship. Earlier submission files retain their historical contents and are not the current presentation set.
 
-The [research presentation](docs/research/presentation/README.md) assigns five slides and four minutes to each member.
+The [presentation](deliverables/README.md) is shared across the three members.
 All three members should be prepared to answer questions about the whole project.

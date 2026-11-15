@@ -1144,7 +1144,7 @@ Call O2 "manipulated-modality prediction", not "attribution". AMDD (2026) uses "
 | Data card, model card, threat model | [data-card.md](data-card.md), [model-card.md](model-card.md), [threat-model.md](threat-model.md) |
 | Dataset notes and access | [research/datasets.md](research/datasets.md) |
 | Change record | [CHANGELOG.md](../CHANGELOG.md) |
-| Paper draft | [research/paper.md](research/paper.md), [main.tex](main.tex) |
+| Paper, report, slides, poster | [deliverables/](../deliverables/README.md) |
 
 ## 11. Glossary
 
@@ -1370,6 +1370,6 @@ On 2026-11-02, E-035 and E-036 preregistered zero-shot and trained AV-HuBERT hea
 Their result slots remain empty. Implementation and preregistration are progress, not measured accuracy.
 
 On 2026-11-12, the repository joined both histories and linked the July prototype history.
-The [current presentation set](research/presentation/README.md) brings these phases together.
+The [deliverables](../deliverables/README.md) bring these phases together.
 It includes the post-freeze findings while keeping the historical submission identifiable.
 

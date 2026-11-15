@@ -209,7 +209,7 @@ PRIOR_WORK: tuple[dict, ...] = (
             "chance, so the accuracy did not come from lip-sync. We did not "
             "find this check reported in that literature."
         ),
-        "source": "findings.md F1, contributions.md item 1",
+        "source": "findings.md F1",
     },
     {
         "title": '"When AUC Misleads" (polarization under domain shift)',
@@ -241,7 +241,7 @@ PRIOR_WORK: tuple[dict, ...] = (
             "probe is at chance on FF++ while face crops are not."
         ),
         "difference": "Read before claiming F13 as new.",
-        "source": "findings.md F13, contributions.md",
+        "source": "findings.md F13",
     },
 )
 

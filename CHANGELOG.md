@@ -52,7 +52,7 @@ Later on 2026-11-13:
 
 ### Added
 
-- A research report, presentation and rehearsal covering both project histories through November 2026. See [research materials](docs/research/presentation/README.md).
+- A research report, presentation and rehearsal covering both project histories through November 2026. (Removed 2026-11-16; `git show 100c220:docs/research/presentation/README.md`.)
 - A shared [credit policy](AUTHORS.md) assigning one third to each student across both research lines and all current deliverables.
 - Public demo start, status and stop commands. The demo serves an isolated
   visual-model runtime through a temporary HTTPS tunnel and excludes datasets.
@@ -209,7 +209,7 @@ produced are findings F1 to F34.
   cache builds, cross-fitting per seed.
 - **Generated media.** DF26 fetching and frame-rate normalisation, the frozen
   probe pipeline with leave-one-generator-out (F15, F33), the authenticity
-  density gate (F17), and `docs/research/architecture.md`.
+  density gate (F17), and `docs/research/architecture.md` (removed 2026-11-16; read it with `git show 100c220:docs/research/architecture.md`).
 - **Dashboard.** The teaching pages, the MLflow reader, dataset discovery over
   `data/`, the checkpoint picker that reads architecture from tensor shapes, and
   the trained Lip-Sync and Emotion pages.
