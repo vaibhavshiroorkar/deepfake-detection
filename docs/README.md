@@ -51,5 +51,5 @@ One chapter per pipeline stage, written 2026-10-29, from the [chapter index](han
 - [Model card](model-card.md)
 - [Reproducibility](reproducibility.md)
 - [Threat model](threat-model.md)
-- [Changelog](../CHANGELOG.md)
+- [Changelog](CHANGELOG.md): finished work, by version
 - [ADR-001: Local MLflow tracking](decisions/ADR-001-local-mlflow.md)

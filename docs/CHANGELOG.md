@@ -1,20 +1,39 @@
 # Changelog
 
-This file records material changes to the software and research protocol.
-Experiment metrics belong in the experiment tracker and in
-[findings](docs/research/findings.md), not this file; entries cite a finding
-number instead of restating it.
+Finished work, grouped by version. Open work is in [PENDING.md](PENDING.md), and the reasons behind each decision are in the [project log](PROJECT-LOG.md).
+
+When a pending item is done, it moves here under **Unreleased**. A stage ends with a version: the Unreleased heading becomes the version number and date, `pyproject.toml` takes the same version, and the commit is tagged `vX.Y.Z`. Comparing a version with the pending list before it shows what was planned and what was finished.
+
+Experiment numbers are not repeated here. They live in `results/` and the documents built from them.
 
 ## Unreleased
+
+Nothing yet.
+
+## 0.3.0 - 2026-11-16: neutral protocol, sync path, deliverable builders
+
+- **Neutralizer v4.** Audio is handled as samples: level to -23 dBFS RMS, cut at the first sound on a whole frame, exactly 3.00 s, dither at -66 dBFS, then one encode. Version 1 had put leading silence back through AAC priming (P-001 amendment A4).
+- **H1 run twice and reported as not met.** The neutral FakeAVCeleb ceiling is 0.632 against a bar of 0.60.
+- **Real-only sync path.** Frozen AV-HuBERT features and an alignment head trained on real clips only, three seeds, with receipts. In-domain results are in `results/p001-sync/`.
+- **Locked targets prepared.** HiFi-AVDF manifest (amendments A5 and A7, one frame size per corpus), LAV-DF sampled by original recording (A3), and neutral copies of DFDC, LAV-DF test and HiFi-AVDF.
+- **Frozen target scoring and H4.** `scripts/score_sync_targets.py` and `scripts/run_h4.py` (split conformal and Neyman-Pearson umbrella thresholds from real target clips).
+- **H2 fixed in advance and coded.** Amendment A8 fixes the fusion fit and test before any visual or audio model existed; `fusion/h2.py` and `scripts/run_h2.py` implement it, with tests.
+- **Numbers and figures from result files.** `scripts/build_numbers.py` writes `results/numbers.json`; `scripts/fill_numbers.py` fills every `{{key}}`; `scripts/make_figures.py` draws the figures.
+- **Deliverables.** The report in the college LaTeX format, the IEEE paper, a 19-slide deck on the college slide master, an A0 poster, and Overleaf zips. All 33 references were checked against their sources.
+- **Resume fixes.** Transient extraction and neutralization failures are retried instead of skipped. Neutralization resumes from the cut log alone, so a half-written video is redone. Receipted stages resolve relative program paths on Windows.
+- **Docs.** `PENDING.md`, `PROJECT-LOG.md`, `FINAL.md` and three new mistakes in the handbook. Stale docs and the October Word and paper builders were removed (git keeps them). This changelog moved into `docs/`.
+
+## 0.2.0 - 2026-11-13: one project, protocol fixes, shortcut audit
+
 
 ### 2026-11-13: one project, protocol fixes, shortcut-neutral pipeline
 
 The plan behind these changes is preregistered in
-[P-001](results/preregistration/P-001-shortcut-neutral-av-study.md).
+[P-001](../results/preregistration/P-001-shortcut-neutral-av-study.md).
 
 Merged:
 
-- The team project is folded in and `team/` is deleted. The submitted tree stays at the tag `team/submission-final`. Its ledger, experiment log, data log and integrity record are in [`results/legacy-team/`](results/legacy-team/README.md). Its data moved to `data/` (ASVspoof2019_LA, In-the-Wild, `legacy-team/`) and its checkpoints to `runs/legacy-team/`. A second byte-identical Celeb-DF copy (9.5 GB) and a duplicate AV-HuBERT Base checkpoint were removed.
+- The team project is folded in and `team/` is deleted. The submitted tree stays at the tag `team/submission-final`. Its ledger, experiment log, data log and integrity record are in [`results/legacy-team/`](../results/legacy-team/README.md). Its data moved to `data/` (ASVspoof2019_LA, In-the-Wild, `legacy-team/`) and its checkpoints to `runs/legacy-team/`. A second byte-identical Celeb-DF copy (9.5 GB) and a duplicate AV-HuBERT Base checkpoint were removed.
 - `streams/avhubert.py` now takes the team version, which loads Base and Large. The old one loaded Base only.
 - New `avsync/`: the real-only `AlignmentHead`, the supervised `WindowHead`, MediaPipe mouth crops and AV-HuBERT feature caching, ported from the team project.
 - New `data/speech.py`: ASVspoof 2019 LA (121,461 rows, matches the official counts, no speaker in two partitions) and In-the-Wild (31,779 clips) manifests for the audio path.
@@ -35,7 +54,7 @@ Added:
 - `scripts/shortcut_audit.py`. For each clip it reads container, codecs, bitrates, frame rate, size, duration, leading and trailing digital silence, and loudness. It then scores each cue alone, and all cues together, as a real-or-fake classifier, with folds grouped by identity. Output goes to `results/shortcut-audit/<dataset>/`.
 - `preprocessing/neutralize.py` and `scripts/neutralize_dataset.py`. They cut audio and video together at the first and last sample above -60 dBFS, then re-encode to H.264 at 25 fps with AAC at 16 kHz mono. They also normalize loudness to -23 LUFS and strip metadata. They write a new manifest with shifted `sync_start_sec`, plus a sidecar of every cut.
 - `evaluation/conformal.py`. False-alarm thresholds from real clips only: split-conformal, Neyman-Pearson umbrella, and the minimum number of real clips needed (59 for alpha = delta = 0.05).
-- [Related work](docs/research/related-work.md): which of the four objectives are new, with sources for every claim in `docs/research/related-work/`. Access steps for AV-Deepfake1M, DeepSpeak v2, KoDF and HiFi-AVDF are still to be added to the [dataset notes](docs/research/datasets.md).
+- [Related work](research/related-work.md): which of the four objectives are new, with sources for every claim in `docs/research/related-work/`. Access steps for AV-Deepfake1M, DeepSpeak v2, KoDF and HiFi-AVDF are still to be added to the [dataset notes](research/datasets.md).
 
 Later on 2026-11-13:
 
@@ -53,7 +72,7 @@ Later on 2026-11-13:
 ### Added
 
 - A research report, presentation and rehearsal covering both project histories through November 2026. (Removed 2026-11-16; `git show 100c220:docs/research/presentation/README.md`.)
-- A shared [credit policy](AUTHORS.md) assigning one third to each student across both research lines and all current deliverables.
+- A shared [credit policy](../AUTHORS.md) assigning one third to each student across both research lines and all current deliverables.
 - Public demo start, status and stop commands. The demo serves an isolated
   visual-model runtime through a temporary HTTPS tunnel and excludes datasets.
 - An in-browser demo of the best single visual model and the familiarity gate,

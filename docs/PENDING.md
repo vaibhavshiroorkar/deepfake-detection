@@ -1,6 +1,6 @@
 # Pending work
 
-Everything still open, in the order it will happen. Done items are removed rather than ticked; git history keeps them.
+Everything still open, in the order it will happen. A finished item moves to the Unreleased section of the [changelog](CHANGELOG.md).
 The reasons behind each item are in the [project log](PROJECT-LOG.md). The rules for each test are in [P-001](../results/preregistration/P-001-shortcut-neutral-av-study.md).
 
 ## 1. Running now
@@ -29,6 +29,8 @@ Three chains run as detached processes. Each resumes from its own log if stopped
 - Copy `runs/p001/h2/` into `results/p001-h2/` with a README and receipts.
 - Add the H2 keys to `scripts/build_numbers.py` and an H2 figure to `scripts/make_figures.py`.
 - Add H2 and the in-domain visual and audio results to the paper, report, slides and poster. Fusion and modality prediction are listed as "not run" in all four today, so those lines change too.
+- Cut version 1.0.0 at the final-year submission: changelog heading, `pyproject.toml`, tag `v1.0.0`.
+- Rename the package from `deepfake-generalization` (its old folder name) to `deepfake-detection` in `pyproject.toml` and `uv.lock`, and reinstall. This waits until no chain is running, because the reinstall rewrites the environment the chains use.
 - Reorganize `scripts/` into `p001/` (current study), `data/` (fetching and manifests) and `legacy/` (the September to October pipeline). This waits until no chain is running, because the chains call scripts by path.
 
 ## 4. Vaibhav

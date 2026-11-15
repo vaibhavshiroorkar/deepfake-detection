@@ -46,7 +46,7 @@ The [paper, report, slides and poster](deliverables/README.md) fill every number
 - [Dashboard](docs/dashboard.md): the two halves of the dashboard and how state crosses pages.
 - [Web app](#web-app): the user-facing upload page, its admin settings, and the PDF report.
 - [Obstacles](docs/obstacles.md): known traps by area, and how each was resolved.
-- [Changelog](CHANGELOG.md): material software and protocol changes.
+- [Changelog](docs/CHANGELOG.md): finished work, by version.
 
 ## Quick start
 

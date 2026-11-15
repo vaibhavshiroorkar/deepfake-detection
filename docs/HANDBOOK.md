@@ -530,7 +530,7 @@ The root study restarted on 2026-08-24. Its first entries fall in late August.
 - **What it cost:** More than ten commits of tooling, later deleted. The face
   detector was frozen by decision, not measurement.
 - **Fix:** Package removed; ROADMAP Phase 2 records the decision.
-- **Source:** `ROADMAP.md` (removed; read it with `git show 6d55756:ROADMAP.md`), Phase 2; `CHANGELOG.md`, Removed; commits `8d3e669`
+- **Source:** `ROADMAP.md` (removed; read it with `git show 6d55756:ROADMAP.md`), Phase 2; `docs/CHANGELOG.md`, 0.2.0, Removed; commits `8d3e669`
   to `1bbf27a`.
 
 #### 21. The sync window ignored where LAV-DF hides its forgeries
@@ -732,7 +732,7 @@ The root study restarted on 2026-08-24. Its first entries fall in late August.
   the only seed where ConvNeXt separates from EfficientNet on DFDC, so it
   decided VIS-01. It is also one of the six web-app ensemble members.
 - **Fix:** One `BestEpoch` on validation ROC-AUC for every trainer.
-- **Source:** `CHANGELOG.md`, Changed; `docs/research/findings.md` F29.
+- **Source:** `docs/CHANGELOG.md`, 0.2.0, Changed; `docs/research/findings.md` F29.
 
 #### 38. Challenger flags built the wrong models
 
@@ -745,7 +745,7 @@ The root study restarted on 2026-08-24. Its first entries fall in late August.
 - **What it cost:** Any "WavLM result" would have measured a truncated
   Wav2Vec2. AUD-01 stayed undecided anyway, since both read 1.0000.
 - **Fix:** `AutoModel` builders; checkpoints record their architecture.
-- **Source:** commit `23c253a`; `CHANGELOG.md`, Changed;
+- **Source:** commit `23c253a`; `docs/CHANGELOG.md`, 0.2.0, Changed;
   `docs/research/findings.md` F28.
 
 #### 39. DFDC's audio placeholder was read as a measurement
@@ -770,7 +770,7 @@ The root study restarted on 2026-08-24. Its first entries fall in late August.
   rerun`.
 - **Fix:** Each encoder uses its own statistics, recorded in the feature file.
   Re-extraction is open.
-- **Source:** `docs/research/findings.md` F33, F17; `CHANGELOG.md`, Fixed.
+- **Source:** `docs/research/findings.md` F33, F17; `docs/CHANGELOG.md`, 0.2.0, Fixed.
 
 #### 41. Fusion fold checkpoints chose epochs on the holdout they scored
 
@@ -1143,7 +1143,7 @@ Call O2 "manipulated-modality prediction", not "attribution". AMDD (2026) uses "
 | Research design and protocol | [research-design.md](research-design.md) |
 | Data card, model card, threat model | [data-card.md](data-card.md), [model-card.md](model-card.md), [threat-model.md](threat-model.md) |
 | Dataset notes and access | [research/datasets.md](research/datasets.md) |
-| Change record | [CHANGELOG.md](../CHANGELOG.md) |
+| Change record | [CHANGELOG.md](CHANGELOG.md) |
 | Paper, report, slides, poster | [deliverables/](../deliverables/README.md) |
 
 ## 11. Glossary

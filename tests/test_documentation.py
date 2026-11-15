@@ -328,7 +328,7 @@ def test_change_contract_accepts_code_docs_and_changelog_together() -> None:
                 Path("src/deepfake_detection/cli/train.py"),
                 Path("tests/test_cli.py"),
                 Path("docs/reference/cli.md"),
-                Path("CHANGELOG.md"),
+                Path("docs/CHANGELOG.md"),
             )
         )
         == ()

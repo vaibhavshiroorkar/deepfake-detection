@@ -85,7 +85,7 @@ def check_change_contract(
     paths = tuple(changed_paths)
     source_changed = any(path.parts[:1] == ("src",) for path in paths)
     teaching_docs_changed = any(
-        path.suffix == ".md" and path.name != "CHANGELOG.md" for path in paths
+        path.suffix == ".md" and path.as_posix() != "docs/CHANGELOG.md" for path in paths
     )
     material_changed = source_changed or any(
         path.as_posix()
@@ -98,7 +98,7 @@ def check_change_contract(
         }
         for path in paths
     )
-    changelog_changed = Path("CHANGELOG.md") in paths
+    changelog_changed = Path("docs/CHANGELOG.md") in paths
     issues: list[DocumentationIssue] = []
     if source_changed and not teaching_docs_changed:
         issues.append(
@@ -111,7 +111,7 @@ def check_change_contract(
     if material_changed and not changelog_changed:
         issues.append(
             DocumentationIssue(
-                Path("CHANGELOG.md"),
+                Path("docs/CHANGELOG.md"),
                 "material-change-needs-changelog",
                 "Material changes require a changelog entry",
             )
