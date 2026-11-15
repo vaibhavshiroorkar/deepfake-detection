@@ -1,9 +1,25 @@
 {
+ "audit.dfdc.raw.census.FakeVideo-RealAudio.audio_codec.aac": {
+  "value": 2838,
+  "source": "results/shortcut-audit/dfdc/summary.json"
+ },
  "audit.dfdc.raw.census.FakeVideo-RealAudio.clips": {
   "value": 2838,
   "source": "results/shortcut-audit/dfdc/summary.json"
  },
+ "audit.dfdc.raw.census.FakeVideo-RealAudio.video_codec.h264": {
+  "value": 2838,
+  "source": "results/shortcut-audit/dfdc/summary.json"
+ },
+ "audit.dfdc.raw.census.RealVideo-RealAudio.audio_codec.aac": {
+  "value": 194,
+  "source": "results/shortcut-audit/dfdc/summary.json"
+ },
  "audit.dfdc.raw.census.RealVideo-RealAudio.clips": {
+  "value": 194,
+  "source": "results/shortcut-audit/dfdc/summary.json"
+ },
+ "audit.dfdc.raw.census.RealVideo-RealAudio.video_codec.h264": {
   "value": 194,
   "source": "results/shortcut-audit/dfdc/summary.json"
  },
@@ -23,19 +39,51 @@
   "value": 0.793,
   "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
  },
+ "audit.fakeavceleb.neutral.census.FakeVideo-FakeAudio.audio_codec.aac": {
+  "value": 9625,
+  "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
+ },
  "audit.fakeavceleb.neutral.census.FakeVideo-FakeAudio.clips": {
   "value": 9625,
+  "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
+ },
+ "audit.fakeavceleb.neutral.census.FakeVideo-FakeAudio.video_codec.h264": {
+  "value": 9625,
+  "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
+ },
+ "audit.fakeavceleb.neutral.census.FakeVideo-RealAudio.audio_codec.aac": {
+  "value": 9709,
   "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
  },
  "audit.fakeavceleb.neutral.census.FakeVideo-RealAudio.clips": {
   "value": 9709,
   "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
  },
+ "audit.fakeavceleb.neutral.census.FakeVideo-RealAudio.video_codec.h264": {
+  "value": 9709,
+  "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
+ },
+ "audit.fakeavceleb.neutral.census.RealVideo-FakeAudio.audio_codec.aac": {
+  "value": 450,
+  "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
+ },
  "audit.fakeavceleb.neutral.census.RealVideo-FakeAudio.clips": {
   "value": 450,
   "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
  },
+ "audit.fakeavceleb.neutral.census.RealVideo-FakeAudio.video_codec.h264": {
+  "value": 450,
+  "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
+ },
+ "audit.fakeavceleb.neutral.census.RealVideo-RealAudio.audio_codec.aac": {
+  "value": 500,
+  "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
+ },
  "audit.fakeavceleb.neutral.census.RealVideo-RealAudio.clips": {
+  "value": 500,
+  "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
+ },
+ "audit.fakeavceleb.neutral.census.RealVideo-RealAudio.video_codec.h264": {
   "value": 500,
   "source": "results/shortcut-audit/fakeavceleb-neutral/summary.json"
  },
@@ -55,19 +103,59 @@
   "value": 1.0,
   "source": "results/shortcut-audit/fakeavceleb/summary.json"
  },
+ "audit.fakeavceleb.raw.census.FakeVideo-FakeAudio.audio_codec.aac": {
+  "value": 10835,
+  "source": "results/shortcut-audit/fakeavceleb/summary.json"
+ },
  "audit.fakeavceleb.raw.census.FakeVideo-FakeAudio.clips": {
   "value": 10835,
+  "source": "results/shortcut-audit/fakeavceleb/summary.json"
+ },
+ "audit.fakeavceleb.raw.census.FakeVideo-FakeAudio.video_codec.mpeg4": {
+  "value": 10835,
+  "source": "results/shortcut-audit/fakeavceleb/summary.json"
+ },
+ "audit.fakeavceleb.raw.census.FakeVideo-RealAudio.audio_codec.aac": {
+  "value": 9709,
   "source": "results/shortcut-audit/fakeavceleb/summary.json"
  },
  "audit.fakeavceleb.raw.census.FakeVideo-RealAudio.clips": {
   "value": 9709,
   "source": "results/shortcut-audit/fakeavceleb/summary.json"
  },
+ "audit.fakeavceleb.raw.census.FakeVideo-RealAudio.video_codec.h264": {
+  "value": 730,
+  "source": "results/shortcut-audit/fakeavceleb/summary.json"
+ },
+ "audit.fakeavceleb.raw.census.FakeVideo-RealAudio.video_codec.mpeg4": {
+  "value": 8979,
+  "source": "results/shortcut-audit/fakeavceleb/summary.json"
+ },
+ "audit.fakeavceleb.raw.census.RealVideo-FakeAudio.audio_codec.aac": {
+  "value": 7,
+  "source": "results/shortcut-audit/fakeavceleb/summary.json"
+ },
+ "audit.fakeavceleb.raw.census.RealVideo-FakeAudio.audio_codec.mp3": {
+  "value": 493,
+  "source": "results/shortcut-audit/fakeavceleb/summary.json"
+ },
  "audit.fakeavceleb.raw.census.RealVideo-FakeAudio.clips": {
   "value": 500,
   "source": "results/shortcut-audit/fakeavceleb/summary.json"
  },
+ "audit.fakeavceleb.raw.census.RealVideo-FakeAudio.video_codec.h264": {
+  "value": 500,
+  "source": "results/shortcut-audit/fakeavceleb/summary.json"
+ },
+ "audit.fakeavceleb.raw.census.RealVideo-RealAudio.audio_codec.aac": {
+  "value": 500,
+  "source": "results/shortcut-audit/fakeavceleb/summary.json"
+ },
  "audit.fakeavceleb.raw.census.RealVideo-RealAudio.clips": {
+  "value": 500,
+  "source": "results/shortcut-audit/fakeavceleb/summary.json"
+ },
+ "audit.fakeavceleb.raw.census.RealVideo-RealAudio.video_codec.h264": {
   "value": 500,
   "source": "results/shortcut-audit/fakeavceleb/summary.json"
  },
@@ -87,19 +175,51 @@
   "value": 0.994,
   "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
  },
+ "audit.fakeavceleb.v1.census.FakeVideo-FakeAudio.audio_codec.aac": {
+  "value": 10835,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
+ },
  "audit.fakeavceleb.v1.census.FakeVideo-FakeAudio.clips": {
   "value": 10835,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
+ },
+ "audit.fakeavceleb.v1.census.FakeVideo-FakeAudio.video_codec.h264": {
+  "value": 10835,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
+ },
+ "audit.fakeavceleb.v1.census.FakeVideo-RealAudio.audio_codec.aac": {
+  "value": 9709,
   "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
  },
  "audit.fakeavceleb.v1.census.FakeVideo-RealAudio.clips": {
   "value": 9709,
   "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
  },
+ "audit.fakeavceleb.v1.census.FakeVideo-RealAudio.video_codec.h264": {
+  "value": 9709,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
+ },
+ "audit.fakeavceleb.v1.census.RealVideo-FakeAudio.audio_codec.aac": {
+  "value": 500,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
+ },
  "audit.fakeavceleb.v1.census.RealVideo-FakeAudio.clips": {
   "value": 500,
   "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
  },
+ "audit.fakeavceleb.v1.census.RealVideo-FakeAudio.video_codec.h264": {
+  "value": 500,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
+ },
+ "audit.fakeavceleb.v1.census.RealVideo-RealAudio.audio_codec.aac": {
+  "value": 500,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
+ },
  "audit.fakeavceleb.v1.census.RealVideo-RealAudio.clips": {
+  "value": 500,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
+ },
+ "audit.fakeavceleb.v1.census.RealVideo-RealAudio.video_codec.h264": {
   "value": 500,
   "source": "results/shortcut-audit/fakeavceleb-neutral-v1/summary.json"
  },
@@ -119,19 +239,51 @@
   "value": 0.702,
   "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
  },
+ "audit.fakeavceleb.v4check.census.FakeVideo-FakeAudio.audio_codec.aac": {
+  "value": 134,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
+ },
  "audit.fakeavceleb.v4check.census.FakeVideo-FakeAudio.clips": {
   "value": 134,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
+ },
+ "audit.fakeavceleb.v4check.census.FakeVideo-FakeAudio.video_codec.h264": {
+  "value": 134,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
+ },
+ "audit.fakeavceleb.v4check.census.FakeVideo-RealAudio.audio_codec.aac": {
+  "value": 150,
   "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
  },
  "audit.fakeavceleb.v4check.census.FakeVideo-RealAudio.clips": {
   "value": 150,
   "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
  },
+ "audit.fakeavceleb.v4check.census.FakeVideo-RealAudio.video_codec.h264": {
+  "value": 150,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
+ },
+ "audit.fakeavceleb.v4check.census.RealVideo-FakeAudio.audio_codec.aac": {
+  "value": 137,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
+ },
  "audit.fakeavceleb.v4check.census.RealVideo-FakeAudio.clips": {
   "value": 137,
   "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
  },
+ "audit.fakeavceleb.v4check.census.RealVideo-FakeAudio.video_codec.h264": {
+  "value": 137,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
+ },
+ "audit.fakeavceleb.v4check.census.RealVideo-RealAudio.audio_codec.aac": {
+  "value": 150,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
+ },
  "audit.fakeavceleb.v4check.census.RealVideo-RealAudio.clips": {
+  "value": 150,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
+ },
+ "audit.fakeavceleb.v4check.census.RealVideo-RealAudio.video_codec.h264": {
   "value": 150,
   "source": "results/shortcut-audit/fakeavceleb-neutral-v4-check/summary.json"
  },
@@ -151,16 +303,60 @@
   "value": 0.999,
   "source": "results/shortcut-audit/hifiavdf/summary.json"
  },
+ "audit.hifiavdf.raw.census.FakeVideo-FakeAudio.audio_codec.aac": {
+  "value": 1502,
+  "source": "results/shortcut-audit/hifiavdf/summary.json"
+ },
+ "audit.hifiavdf.raw.census.FakeVideo-FakeAudio.audio_codec.none": {
+  "value": 9,
+  "source": "results/shortcut-audit/hifiavdf/summary.json"
+ },
  "audit.hifiavdf.raw.census.FakeVideo-FakeAudio.clips": {
   "value": 1511,
+  "source": "results/shortcut-audit/hifiavdf/summary.json"
+ },
+ "audit.hifiavdf.raw.census.FakeVideo-FakeAudio.video_codec.h264": {
+  "value": 1502,
+  "source": "results/shortcut-audit/hifiavdf/summary.json"
+ },
+ "audit.hifiavdf.raw.census.FakeVideo-FakeAudio.video_codec.mpeg4": {
+  "value": 9,
+  "source": "results/shortcut-audit/hifiavdf/summary.json"
+ },
+ "audit.hifiavdf.raw.census.FakeVideo-RealAudio.audio_codec.aac": {
+  "value": 394,
   "source": "results/shortcut-audit/hifiavdf/summary.json"
  },
  "audit.hifiavdf.raw.census.FakeVideo-RealAudio.clips": {
   "value": 394,
   "source": "results/shortcut-audit/hifiavdf/summary.json"
  },
+ "audit.hifiavdf.raw.census.FakeVideo-RealAudio.video_codec.h264": {
+  "value": 394,
+  "source": "results/shortcut-audit/hifiavdf/summary.json"
+ },
+ "audit.hifiavdf.raw.census.RealVideo-RealAudio.audio_codec.aac": {
+  "value": 1889,
+  "source": "results/shortcut-audit/hifiavdf/summary.json"
+ },
+ "audit.hifiavdf.raw.census.RealVideo-RealAudio.audio_codec.eac3": {
+  "value": 2,
+  "source": "results/shortcut-audit/hifiavdf/summary.json"
+ },
+ "audit.hifiavdf.raw.census.RealVideo-RealAudio.audio_codec.none": {
+  "value": 14,
+  "source": "results/shortcut-audit/hifiavdf/summary.json"
+ },
  "audit.hifiavdf.raw.census.RealVideo-RealAudio.clips": {
   "value": 1905,
+  "source": "results/shortcut-audit/hifiavdf/summary.json"
+ },
+ "audit.hifiavdf.raw.census.RealVideo-RealAudio.video_codec.h264": {
+  "value": 1897,
+  "source": "results/shortcut-audit/hifiavdf/summary.json"
+ },
+ "audit.hifiavdf.raw.census.RealVideo-RealAudio.video_codec.mpeg4": {
+  "value": 8,
   "source": "results/shortcut-audit/hifiavdf/summary.json"
  },
  "audit.hifiavdf.raw.clip": {
@@ -179,19 +375,51 @@
   "value": 0.751,
   "source": "results/shortcut-audit/lavdf-files/summary.json"
  },
+ "audit.lavdf.raw.census.FakeVideo-FakeAudio.audio_codec.aac": {
+  "value": 1946,
+  "source": "results/shortcut-audit/lavdf-files/summary.json"
+ },
  "audit.lavdf.raw.census.FakeVideo-FakeAudio.clips": {
   "value": 1946,
+  "source": "results/shortcut-audit/lavdf-files/summary.json"
+ },
+ "audit.lavdf.raw.census.FakeVideo-FakeAudio.video_codec.h264": {
+  "value": 1946,
+  "source": "results/shortcut-audit/lavdf-files/summary.json"
+ },
+ "audit.lavdf.raw.census.FakeVideo-RealAudio.audio_codec.aac": {
+  "value": 1969,
   "source": "results/shortcut-audit/lavdf-files/summary.json"
  },
  "audit.lavdf.raw.census.FakeVideo-RealAudio.clips": {
   "value": 1969,
   "source": "results/shortcut-audit/lavdf-files/summary.json"
  },
+ "audit.lavdf.raw.census.FakeVideo-RealAudio.video_codec.h264": {
+  "value": 1969,
+  "source": "results/shortcut-audit/lavdf-files/summary.json"
+ },
+ "audit.lavdf.raw.census.RealVideo-FakeAudio.audio_codec.aac": {
+  "value": 1947,
+  "source": "results/shortcut-audit/lavdf-files/summary.json"
+ },
  "audit.lavdf.raw.census.RealVideo-FakeAudio.clips": {
   "value": 1947,
   "source": "results/shortcut-audit/lavdf-files/summary.json"
  },
+ "audit.lavdf.raw.census.RealVideo-FakeAudio.video_codec.h264": {
+  "value": 1947,
+  "source": "results/shortcut-audit/lavdf-files/summary.json"
+ },
+ "audit.lavdf.raw.census.RealVideo-RealAudio.audio_codec.aac": {
+  "value": 2138,
+  "source": "results/shortcut-audit/lavdf-files/summary.json"
+ },
  "audit.lavdf.raw.census.RealVideo-RealAudio.clips": {
+  "value": 2138,
+  "source": "results/shortcut-audit/lavdf-files/summary.json"
+ },
+ "audit.lavdf.raw.census.RealVideo-RealAudio.video_codec.h264": {
   "value": 2138,
   "source": "results/shortcut-audit/lavdf-files/summary.json"
  },

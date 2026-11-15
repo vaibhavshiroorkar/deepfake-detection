@@ -44,6 +44,9 @@ def audits(numbers: dict) -> None:
         census = summary.get("codec_census", {})
         for kind, entry in census.items():
             _put(numbers, f"audit.{key}.census.{kind}.clips", entry["clips"], path)
+            for field in ("video_codec", "audio_codec"):
+                for codec, count in entry.get(field, {}).items():
+                    _put(numbers, f"audit.{key}.census.{kind}.{field}.{codec or 'none'}", count, path)
 
 
 def neutralization(numbers: dict) -> None:
