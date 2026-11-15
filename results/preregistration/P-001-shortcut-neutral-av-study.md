@@ -128,3 +128,17 @@ The raw HiFi-AVDF audit, while still running, showed frame size following the la
   - FakeAVCeleb and LAV-DF: unchanged (already uniform), so existing neutral copies and the trained sync models stay valid.
   - DFDC: unchanged. Both classes mix 1920x1080 and 1080x1920 (portrait: 35% of fakes, 28% of reals). The neutral audit reports what orientation still carries.
 - No model has been scored on HiFi-AVDF. Only the raw audit, which reads file properties, has run.
+
+## Amendment A8, 2026-11-16, before any visual or audio model is trained and before any fusion is fit
+
+The 2-day window became 3 days (11-16 to 11-18), so H2 runs now instead of in the full run. No visual or audio checkpoint exists yet, and no target has been scored by those paths. This fixes how the fusion is fitted and tested.
+
+- **Inputs.** For each clip: the visual logit and the audio logit from `ddf evaluate branch`, and the sync logit, logit(p) of the sync probability. Fusion at seed s uses the three branches of seed s. Probabilities are clipped to [1e-6, 1 - 1e-6] before the logit, and each logit is standardized with the mean and SD of the fit set.
+- **Fit set: FakeAVCeleb validation.** Training clips are excluded: each branch was fit on them, so their logits are in-sample. Validation chose each branch's epoch and threshold and nothing else. Branch logits there are slightly optimistic, and we report that.
+- **What "out-of-fold" means here.** The fusion's own validation scores, which set its threshold, come from 5-fold cross-fitting with folds grouped by identity. The model applied to test and to the targets is refit on all of validation.
+- **Model.** scikit-learn `LogisticRegression`, L2, C = 1.0, lbfgs, `class_weight="balanced"`. Nothing else is tuned.
+- **Coverage.** A clip enters H2 only if all three branches score it (a face is found and the clip has audio). Visual-only is compared on exactly the same clips. Coverage is reported per target.
+- **Statistic.** Per target and seed: ROC-AUC(fusion) minus ROC-AUC(visual-only). The H2 statistic is the mean of the three seed differences. Its interval comes from 1,000 bootstrap resamples of identities (seed 17). Each resample is applied to all three seeds at once. Identities are FakeAVCeleb `source`, the DFDC original video, the LAV-DF original recording, and the HiFi-AVDF real and generated pair.
+- **Decision.** The one-sided p-value is the share of resamples with a mean difference at or below 0. Holm at 0.05 runs across the three H2 targets {DFDC, LAV-DF test, FakeAVCeleb test-strict}. H2 holds if at least 2 of the 3 survive. H4 is a bar check with no p-value, so the Holm family is H2's three targets; this narrows the earlier "H2 to H4" wording. HiFi-AVDF gets the same statistic, outside the success rule.
+- **Dropped for this window.** The StreamFusion MLP (secondary) is not run.
+- **Targets** are cached with the training preprocessing hash and scored by frozen checkpoints with their validation threshold files. They never fit, select or calibrate anything.
