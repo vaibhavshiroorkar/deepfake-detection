@@ -37,6 +37,7 @@ Experiment numbers are not repeated here. They live in `results/` and the docume
 - Amendment A11 (exploratory): frozen CLIP ViT-L/14 and XLS-R backbones on the P-001 protocol. Visual streams now convert the cache's ImageNet normalization to their backbone's own, read from the backbone's config (tested). EfficientNet and DINOv3 are unaffected. `ddf train visual-stream --backbone clip` is available.
 - `scripts/score_visual_stream.py` scores a visual-stream checkpoint on cached clips, rebuilt from its history file, in the branch prediction format (tested).
 - `scripts/run_h2.py` runs before a reported-only target is scored and lists it under `not_scored_yet`; the Holm targets stay mandatory (tested). The H2 chain was relaunched to cache DFDC and LAV-DF in parallel, because full-HD targets cached at about 290 clips an hour.
+- The six P-001 visual and audio models are trained (3 seeds each). The PC hung under four concurrent heavy jobs (handbook mistake 70); the chains resumed one heavy job at a time.
 - The poster build stops when a column overflows, instead of writing a file PowerPoint calls corrupted.
 
 ## 0.3.0 - 2026-11-16: neutral protocol, sync path, deliverable builders

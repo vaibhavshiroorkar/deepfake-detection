@@ -1138,6 +1138,23 @@ uncommitted working tree unless marked open.
 - **Fix:** A YuNet locator runs only when the landmarker finds a face in fewer than 80% of a window's frames. The landmarker then runs on a crop around the face and the points are mapped back. Windows that already passed are copied unchanged, and the no-locator path still reproduces cached FakeAVCeleb windows. Tests cover the crop region.
 - **Source:** P-001 amendment A10; `src/deepfake_detection/avsync/mouth.py`; `runs/p001-a10.sh`.
 
+#### 70. Too many heavy jobs at once hung the PC
+
+- **What went wrong:** On 2026-11-16 the PC ran four heavy jobs at once:
+  - target caching, first at three shards per corpus and then at two, each shard with its own GPU face detector;
+  - the P-001 chain's extra step, which neutralizes LAV-DF's dev and train sets with six ffmpeg workers;
+  - the first CLIP ViT-L model of amendment A11, on the GPU.
+
+  Free RAM first fell to 2.4 GB, and Claude Code reaped its watcher. The PC then hung soon after the CLIP training started, and Windows recorded an unclean restart (Kernel-Power 41). No crash dump names a cause, so whether RAM or the GPU ran out is unknown.
+- **How it was caught:** The PC had to be restarted. All chains stopped. No file was half-written: cache writes are atomic, and the A11 checkpoint had not been saved yet.
+- **What it cost:** About an hour of compute and the A11 training start. The six P-001 models had already finished.
+- **Fix:**
+  - One heavy job at a time on this PC. Target caching runs at two shards per corpus.
+  - A11 now waits until H2 has its Holm-family result.
+  - The neutralization of LAV-DF's dev and train sets moved to the full run, since the deadline does not need it.
+  - Measure memory per process before raising parallelism, not after.
+- **Source:** `runs/p001-h2.log`, `runs/p001-a11.log`; Windows System log, 2026-11-16 15:32.
+
 ## 7. What a hard reviewer would say
 
 These are the strongest objections we expect, with our current answer. "Open" means we have no answer yet and the paper must not pretend otherwise.

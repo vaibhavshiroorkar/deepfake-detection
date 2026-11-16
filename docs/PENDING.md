@@ -5,13 +5,12 @@ The reasons behind each item are in the [project log](PROJECT-LOG.md). The rules
 
 ## 1. Running now
 
-Two chains run as detached processes. Each resumes from its own log if stopped. Do not restart or shut down the PC while they run. The 2-day chain and the A10 rescoring are done.
+Two chains run as detached processes. The six P-001 visual and audio models are trained. Each resumes from its own log if stopped. Do not restart or shut down the PC while they run. The 2-day chain and the A10 rescoring are done.
 
 | Chain | Log | What it does | Expected finish |
 |---|---|---|---|
-| Resume 2 | `runs/p001-resume2.log` | Visual and audio training, 3 seeds each (visual seed 17 done at 12:47) | Mon 11-16, evening |
-| H2 | `runs/p001-h2.log` | Relaunched 14:18 for speed. Caches DFDC and LAV-DF (three shards each), runs H2 on its Holm family as soon as they are scored, then adds HiFi-AVDF (reported only) when it is cached | Family: Tue morning; with HiFi-AVDF: Tue afternoon |
-| A11 | `runs/p001-a11.log` | Waits for the P-001 models, then trains and scores CLIP and XLS-R (exploratory) | Tue; stop rule 17 November, 23:59 |
+| H2 | `runs/p001-h2.log` | Restarted after the PC crash (15:35). Caches DFDC and LAV-DF (two shards each), runs H2 on its Holm family as soon as they are scored, then adds HiFi-AVDF (reported only) | Family: Tue morning to midday; with HiFi-AVDF: Tue afternoon |
+| A11 | `runs/p001-a11.log` | Waits for the H2 family result, then trains and scores CLIP and XLS-R (exploratory). Never alongside the caching | Tue; stop rule 17 November, 23:59 |
 
 ## 2. While the chains run (Claude)
 
@@ -73,6 +72,7 @@ The full design, with what to keep, what to replace and why, is in [P-002 design
 - Measure speaker overlap between FakeAVCeleb, LAV-DF and AV-HuBERT's pretraining data (VoxCeleb2, LRS3).
 - H1 residual: video bitrate still carries the label after neutralization. Test a fixed-bitrate encode under a new amendment.
 - Make the neutralizer refuse a clip with less than 3.00 s of video, not only less than 3.00 s of sound (handbook mistake 67). Apply it under a new amendment, since it changes which clips are kept.
+- Finish neutralizing LAV-DF's dev and train sets (`runs/p001-resume2.sh`, last step), for H3. It stopped in the 11-16 crash and resumes from its cut log.
 - Fix the `data/legacy-team/ffpp` links, which point at folders deleted with `team/`.
 - Speed up the visual and audio cache build. It is CPU-bound at about 340 clips an hour when shared.
 - Clear the remaining lint findings, mostly in the slide helpers.
