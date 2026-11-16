@@ -43,6 +43,7 @@ One chapter per pipeline stage, written 2026-10-29, from the [chapter index](han
 - [Result traceability](research/result-traceability.md)
 - [Findings](research/findings.md)
 - [Corpora](research/datasets.md)
+- [P-002 design](research/P-002-design.md): how to rebuild for maximum performance after P-001
 - [Paper](../deliverables/paper/paper.tex) and [report](../deliverables/report/report.tex)
 
 ## Decisions and project controls

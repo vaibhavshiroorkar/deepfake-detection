@@ -5,15 +5,14 @@ The reasons behind each item are in the [project log](PROJECT-LOG.md). The rules
 
 ## 1. Running now
 
-Three chains run as detached processes. Each resumes from its own log if stopped. Do not restart or shut down the PC while they run.
+Two chains run as detached processes. Each resumes from its own log if stopped. Do not restart or shut down the PC while they run. The 2-day chain and the A10 rescoring are done.
 
 | Chain | Log | What it does | Expected finish |
 |---|---|---|---|
-| 2-day | `runs/p001-2day.log` | AV-HuBERT features for HiFi-AVDF, LAV-DF test and DFDC; frozen sync scores; H4; audits of the neutral copies | Mon 11-16, about 09:00 |
-| Resume 2 | `runs/p001-resume2.log` | FakeAVCeleb visual and audio cache, then visual and audio training, 3 seeds each | Cache Mon about 17:00; training overnight |
-| H2 | `runs/p001-h2.log` | Waits for the two above; caches the three targets, scores them with the frozen visual and audio models, then runs the fusion test (amendment A8) | Tue 11-17, about midday |
+| Resume 2 | `runs/p001-resume2.log` | Visual and audio training, 3 seeds each (visual seed 17 done at 12:47) | Mon 11-16, evening |
+| H2 | `runs/p001-h2.log` | Caches the three targets, scores them with each visual and audio model as it lands, then runs the fusion test (amendment A8) | Late Mon or early Tue |
 
-## 2. When the 2-day chain finishes (Claude)
+## 2. While the chains run (Claude)
 
 - State in the paper, report and slides limitations that all models train on one corpus (FakeAVCeleb: 2021, about 500 real videos, about 350 speakers for the sync path), so the results show how such a detector transfers, not that every detector fails.
 - Update the README Results section to the P-001 study. It still leads with older numbers.
@@ -51,6 +50,8 @@ Three chains run as detached processes. Each resumes from its own log if stopped
 - Write `docs/SECURITY.md` in the same review. The web app takes uploaded media, decodes it with ffmpeg and loads downloaded model weights; the public demo runs through an HTTPS tunnel; the admin page relies on `DDF_ADMIN_TOKEN`. For each one: the vulnerability, the countermeasure, and whether it is verified, assumed or unknown. Two are already verified: `.env` is git-ignored, and the sync scorer loads checkpoints with `weights_only=True`.
 
 ## 6. Full run, after the deadline
+
+The full design, with what to keep, what to replace and why, is in [P-002 design](research/P-002-design.md). The items below are its first steps.
 
 - Leave-one-corpus-out training as the main protocol: train on every corpus but one, test on the one left out, and rotate. It keeps every test unseen and adds training variety. It needs a new preregistration first, because LAV-DF and DFDC would stop being locked targets.
 - H3: predict which modality was faked, with reverse models trained on LAV-DF (amendment A2).
