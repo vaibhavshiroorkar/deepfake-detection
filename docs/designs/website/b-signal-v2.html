@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Direction B v2: Signal, refined</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0f1626;      /* page */
+  --deep:#0a1020;     /* hero well */
+  --surface:#162036;  /* panels */
+  --line:#263352;     /* rules */
+  --text:#e9edf4;
+  --muted:#9aa6bd;
+  --sound:#f2b544;    /* audio trace, and anything about sound */
+  --mouth:#a9c4ff;    /* mouth trace, and anything about the face */
+  --alert:#ff6b5b;    /* shortcuts and fakes only */
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--ink);color:var(--text);font:17px/1.55 "Schibsted Grotesk",system-ui,sans-serif}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--sound);outline-offset:3px;border-radius:4px}
+.wrap{max-width:1160px;margin:0 auto;padding:0 28px}
+
+/* nav: quiet text links, one action */
+nav{display:flex;align-items:center;justify-content:space-between;padding:22px 0}
+.brand{font-weight:700;font-size:18px;letter-spacing:-.01em;text-decoration:none}
+nav ul{display:flex;gap:28px;list-style:none;margin:0;padding:0;font-size:15px;color:var(--muted)}
+nav ul a{text-decoration:none}nav ul a:hover{color:var(--text)}
+.btn{display:inline-block;background:var(--text);color:var(--ink);font-weight:600;font-size:15px;padding:11px 18px;border-radius:8px;text-decoration:none}
+.btn.quiet{background:transparent;color:var(--text);box-shadow:inset 0 0 0 1px var(--line)}
+
+/* hero: headline left, the signature traces right */
+.hero{display:grid;grid-template-columns:1fr 1.05fr;gap:56px;align-items:center;padding:64px 0 80px}
+h1{font-size:clamp(40px,5.4vw,68px);line-height:1.02;letter-spacing:-.03em;font-weight:800;margin:0 0 22px;max-width:13ch}
+.lede{font-size:19px;color:var(--muted);max-width:42ch;margin:0}
+.actions{display:flex;gap:12px;margin-top:30px}
+.scope{background:var(--deep);border:1px solid var(--line);border-radius:14px;padding:22px 22px 16px}
+.scope svg{display:block;width:100%;height:auto}
+.legend{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:14px;color:var(--muted)}
+.legend span,.toggle button{white-space:nowrap}
+.key{display:flex;gap:18px}.key span::before{content:"";display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:7px;vertical-align:middle;background:currentColor}
+.k-sound{color:var(--sound)}.k-mouth{color:var(--mouth)}
+.toggle{display:inline-flex;background:var(--surface);border-radius:8px;padding:3px}
+.toggle button{font:inherit;font-size:14px;color:var(--muted);background:none;border:0;padding:7px 12px;border-radius:6px;cursor:pointer}
+.toggle button[aria-pressed=true]{background:var(--line);color:var(--text)}
+.readout{margin-top:10px;font-size:15px;min-height:1.5em}
+
+/* findings: one chart */
+section.block{padding:72px 0;border-top:1px solid var(--line)}
+h2{font-size:clamp(28px,3.4vw,40px);line-height:1.1;letter-spacing:-.02em;font-weight:700;margin:0 0 14px;max-width:24ch}
+.intro{color:var(--muted);max-width:60ch;margin:0 0 36px}
+.dumbbell{display:grid;gap:22px}
+.row{display:grid;grid-template-columns:150px 1fr 120px;align-items:center;gap:18px}
+.row .name{font-weight:600}
+.track{position:relative;height:28px}
+.track::before{content:"";position:absolute;left:0;right:0;top:13px;height:2px;background:var(--line)}
+.chance{position:absolute;top:2px;bottom:2px;width:1px;background:var(--muted);opacity:.6}
+.seg{position:absolute;top:12px;height:4px;background:linear-gradient(90deg,var(--mouth),var(--alert));border-radius:2px;opacity:.35}
+.dot{position:absolute;top:6px;width:16px;height:16px;border-radius:50%;transform:translateX(-50%)}
+.dot.raw{background:var(--alert)}.dot.clean{background:var(--mouth)}
+.row .vals{font-size:15px;color:var(--muted);text-align:right}
+.axis{display:grid;grid-template-columns:150px 1fr 120px;gap:18px;font-size:13px;color:var(--muted)}
+.axis div{display:flex;justify-content:space-between}
+.chartkey{display:flex;gap:22px;font-size:14px;color:var(--muted);margin-top:18px}
+.chartkey i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:7px;vertical-align:-1px}
+
+/* the three checks, in parallel */
+.paths{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch}
+.inputs{display:grid;gap:12px}
+.check{border:1px solid var(--line);border-radius:10px;padding:16px 18px;background:var(--surface)}
+.check h3{margin:0 0 4px;font-size:18px}.check p{margin:0;color:var(--muted);font-size:15px}
+.check.face h3{color:var(--mouth)}.check.voice h3{color:var(--sound)}
+.join{width:70px;position:relative}
+.join svg{position:absolute;inset:0;width:100%;height:100%}
+.verdict{border:1px solid var(--line);border-radius:10px;padding:22px;align-self:center;background:var(--deep)}
+.verdict p{color:var(--muted);margin:6px 0 0;font-size:15px}
+
+/* detector teaser */
+.detect{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.drop{border:1px dashed #3a4a6c;border-radius:12px;padding:40px;text-align:center;color:var(--muted)}
+.drop strong{display:block;color:var(--text);font-size:17px;margin-bottom:4px}
+footer{border-top:1px solid var(--line);padding:30px 0 50px;color:var(--muted);font-size:14px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+
+@media (max-width:860px){
+  .hero,.detect{grid-template-columns:1fr}
+  nav ul{display:none}
+  .row,.axis{grid-template-columns:96px 1fr 84px;gap:10px}
+  .paths{grid-template-columns:1fr}.join{display:none}.verdict{margin-top:12px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head>
+<body><div class="wrap">
+
+<nav aria-label="Main"><a class="brand" href="#">Deepfake Check</a>
+<ul><li><a href="#">Detector</a></li><li><a href="#">How it works</a></li><li><a href="#">Research</a></li><li><a href="#">About</a></li><li><a href="#">Contact</a></li></ul>
+<a class="btn" href="#">Check a video</a></nav>
+
+<header class="hero">
+  <div>
+    <h1>Deepfake detectors were grading the file, not the face.</h1>
+    <p class="lede">On two major benchmarks, file details alone predict which clips are fake. We removed those clues and tested what detectors can still see.</p>
+    <div class="actions"><a class="btn" href="#">Check a video</a><a class="btn quiet" href="#">Read the research</a></div>
+  </div>
+  <figure class="scope" aria-labelledby="scope-cap">
+    <svg id="traces" viewBox="0 0 560 250" role="img" aria-label="Speech loudness and mouth opening over two seconds"></svg>
+    <div class="legend"><div class="key"><span class="k-sound">Speech loudness</span><span class="k-mouth">Mouth opening</span></div>
+      <div class="toggle" role="group" aria-label="Clip"><button type="button" aria-pressed="true" data-mode="real">Real clip</button><button type="button" aria-pressed="false" data-mode="fake">Dubbed clip</button></div></div>
+    <figcaption id="scope-cap" class="readout">In a real clip, the mouth opens when the sound gets loud.</figcaption>
+  </figure>
+</header>
+
+<section class="block" aria-labelledby="f-title">
+  <h2 id="f-title">How much the file format gives away</h2>
+  <p class="intro">A classifier that sees no pixels and hears no speech, only codec, length, bitrate and silence. Its score is the bar any real detector has to beat. Then the same test after we clean every clip the same way.</p>
+  <div class="dumbbell" id="db"></div>
+  <div class="axis"><span></span><div><span>0.5 (chance)</span><span>0.75</span><span>1.0</span></div><span></span></div>
+  <div class="chartkey"><span><i style="background:var(--alert)"></i>Raw files</span><span><i style="background:var(--mouth)"></i>After cleaning</span></div>
+</section>
+
+<section class="block" aria-labelledby="p-title">
+  <h2 id="p-title">Three checks, read side by side</h2>
+  <p class="intro">Each check scores the clip on its own. The site shows all three, so you can see which one raised the flag.</p>
+  <div class="paths">
+    <div class="inputs">
+      <div class="check face"><h3>Face</h3><p>Looks for blending and texture left by face swaps, frame by frame.</p></div>
+      <div class="check voice"><h3>Voice</h3><p>Listens for the patterns of cloned or synthetic speech.</p></div>
+      <div class="check"><h3>Lip sync</h3><p>Asks whether the mouth matches the sound. Trained on real clips only.</p></div>
+    </div>
+    <div class="join" aria-hidden="true"><svg viewBox="0 0 70 300" preserveAspectRatio="none"><path d="M0 50 C40 50 40 150 70 150 M0 150 L70 150 M0 250 C40 250 40 150 70 150" stroke="#263352" stroke-width="2" fill="none"/></svg></div>
+    <div class="verdict"><h3 style="margin:0;font-size:20px">One verdict, with a known false-alarm rate</h3><p>The threshold is set from real clips of the same kind, so about 5 in 100 genuine videos get flagged, not one in three.</p></div>
+  </div>
+</section>
+
+<section class="block detect" aria-labelledby="d-title">
+  <div><h2 id="d-title">Try it on a clip</h2><p class="intro" style="margin:0">One person speaking to camera, at least 3 seconds. The video is checked on our server and then deleted.</p></div>
+  <div class="drop"><strong>Drop a video here</strong>MP4, MOV or WebM, up to 90 MB</div>
+</section>
+
+<footer><span>Vaibhav Shiroorkar, Adithya Jithesh and Shivansh Gupta. Guided by Dr. Tejashree Phatak, K. J. Somaiya School of Engineering.</span><span>A research prototype. Read the limits before trusting a verdict.</span></footer>
+</div>
+
+<script>
+/* The signature: speech loudness and mouth opening over 2 s. Drawn once on load; the toggle
+   shifts the mouth trace out of step, which is what a lip-sync detector measures. */
+(function(){
+  const svg=document.getElementById('traces'),W=560,H=250,N=200;
+  const env=t=>{let v=0;[[.08,.09],[.25,.07],[.42,.11],[.60,.08],[.77,.10],[.93,.08]].forEach(([c,w])=>{v+=Math.exp(-((t-c)**2)/(2*w*w*.25))});return Math.min(v,1)};
+  const sound=i=>{const t=i/N;return env(t)*(0.78+0.22*Math.sin(i*0.45))};
+  const mouth=(i,shift,amp)=>{const t=Math.min(Math.max(i/N-shift,0),1);return env(t)*amp};
+  const path=(f,y0,h)=>Array.from({length:N+1},(_,i)=>`${i?'L':'M'}${(i/N*W).toFixed(1)} ${(y0-f(i)*h).toFixed(1)}`).join(' ');
+  const ns='http://www.w3.org/2000/svg';
+  const mk=(d,col,w)=>{const p=document.createElementNS(ns,'path');p.setAttribute('d',d);p.setAttribute('fill','none');p.setAttribute('stroke',col);p.setAttribute('stroke-width',w);p.setAttribute('stroke-linejoin','round');svg.appendChild(p);return p};
+  for(let x=0;x<=W;x+=70){const l=document.createElementNS(ns,'line');l.setAttribute('x1',x);l.setAttribute('x2',x);l.setAttribute('y1',8);l.setAttribute('y2',H-8);l.setAttribute('stroke','#1b2742');svg.appendChild(l)}
+  const s=mk(path(sound,118,100),'#f2b544',2);
+  const m=mk(path(i=>mouth(i,0,1),236,100),'#a9c4ff',2.5);
+  const read=document.getElementById('scope-cap');
+  const states={real:{shift:0,amp:1,text:'In a real clip, the mouth opens when the sound gets loud.'},
+                fake:{shift:.09,amp:.75,text:'In a dubbed clip, the mouth lags the sound by about 180 ms. That gap is what the lip-sync check scores.'}};
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(!reduce){[s,m].forEach(p=>{const L=p.getTotalLength();p.style.strokeDasharray=L;p.style.strokeDashoffset=L;p.getBoundingClientRect();p.style.transition='stroke-dashoffset 1.4s ease-out';p.style.strokeDashoffset=0})}
+  let cur={shift:0,amp:1};
+  function go(mode){const t=states[mode];document.querySelectorAll('.toggle button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===mode));read.textContent=t.text;
+    m.style.strokeDasharray='none';m.style.transition='none';
+    if(reduce){m.setAttribute('d',path(i=>mouth(i,t.shift,t.amp),236,100));cur=t;return}
+    const from={...cur},t0=performance.now();
+    (function step(now){const k=Math.min((now-t0)/450,1),e=1-(1-k)**3,sh=from.shift+(t.shift-from.shift)*e,am=from.amp+(t.amp-from.amp)*e;
+      m.setAttribute('d',path(i=>mouth(i,sh,am),236,100));if(k<1)requestAnimationFrame(step);else cur=t})(t0)}
+  document.querySelectorAll('.toggle button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.mode)));
+
+  /* findings chart: shortcut ceiling, raw against cleaned (results/shortcut-audit) */
+  const data=[['FakeAVCeleb',.994,.632],['HiFi-AVDF',.999,.629],['LAV-DF',.936,.557],['DFDC',.588,.526]];
+  const x=v=>((v-.5)/.5*100).toFixed(2)+'%';
+  document.getElementById('db').innerHTML=data.map(([n,r,c])=>`<div class="row"><span class="name">${n}</span>
+    <div class="track"><span class="chance" style="left:0"></span><span class="seg" style="left:${x(c)};width:calc(${x(r)} - ${x(c)})"></span>
+    <span class="dot clean" style="left:${x(c)}" title="After cleaning ${c}"></span><span class="dot raw" style="left:${x(r)}" title="Raw ${r}"></span></div>
+    <span class="vals">${r.toFixed(3)} to ${c.toFixed(3)}</span></div>`).join('');
+})();
+</script>
+</body></html>
