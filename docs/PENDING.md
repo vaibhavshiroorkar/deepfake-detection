@@ -14,7 +14,6 @@ Three chains run as detached processes. Each resumes from its own log if stopped
 | H2 | `runs/p001-h2.log` | Waits for the two above; caches the three targets, scores them with the frozen visual and audio models, then runs the fusion test (amendment A8) | Tue 11-17, about midday |
 
 ## 2. When the 2-day chain finishes (Claude)
-- Add the A10 coverage note to the cross-corpus slide's speaker notes (the paper and report have it).
 
 - Report the 23 HiFi-AVDF clips that have no audio track (14 real, 9 fake), the clips with no face, and the 4 windows left out as shorter than 50 frames, in the paper and the report (the results README has them).
 - Update the README Results section to the P-001 study. It still leads with older numbers.

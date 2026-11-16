@@ -394,7 +394,9 @@ def build(draft: bool) -> int:
               "whole clips with commercial generators, so each target tests something different. LAV-DF has two rows. "
               "Our neutral copy keeps 3 seconds from the first sound, and in 46 percent of LAV-DF fakes those 3 seconds "
               "hold no edited word, so the file label calls real footage fake. We found this after reading the file-label "
-              "result and added the window label in amendment A9; both rows stay on the slide.",
+              "result and added the window label in amendment A9; both rows stay on the slide. The DFDC row is after "
+              "amendment A10: the face finder first missed small DFDC faces and scored only 921 clips, and locating the "
+              "face first raised that to {{sync.dfdc.seed17.scored|int}}, with little change in AUC.",
               "Each locked target, beside its own neutral shortcut ceiling.")
     rows = []
     for name, k, audit in [("LAV-DF, file label", "lavdf-test", "lavdf.neutral"), ("LAV-DF, window label", "lavdf-window", "lavdf.window"),
