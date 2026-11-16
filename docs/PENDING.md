@@ -20,7 +20,7 @@ Two chains run as detached processes. Each resumes from its own log if stopped. 
 
 Chosen 11-16: prepare the rebuild now, with no GPU and no change to anything H2 uses; build it after the submission. Design: [P-002 design](research/P-002-design.md).
 
-- Draft the P-002 preregistration (`results/preregistration/P-002-draft.md`): the questions, the leave-one-corpus-out and leave-one-generator-out protocol, the paths, the baselines and the success bars. It is committed as a draft and frozen before any P-002 run.
+- Freeze P-002 (`results/preregistration/P-002-draft.md`, now drafted) after the baselines are reproduced: set the bars of Q1 to Q6, then rename it to `P-002.md` and mark it frozen, before any P-002 model is trained.
 - AV-Deepfake1M++: size (1.46 TB) and licence (gated EULA) are checked; the metadata format is still unknown. Decide on a stratified subset or an external disk, since this PC has about 519 GB free. Follow up on access.
 - Confirm the assumed licences in `docs/research/P-002-backbones.md` (CLIP, XLS-R) before P-002 uses them.
 

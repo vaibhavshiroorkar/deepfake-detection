@@ -33,6 +33,7 @@ Experiment numbers are not repeated here. They live in `results/` and the docume
   - HiFi-AVDF full span is 0.999;
   - the FakeAVCeleb ceiling is 0.632.
 - `docs/research/P-002-backbones.md`: visual pick CLIP ViT-L/14 with LayerNorm-only tuning (mean cross-dataset video AUROC 94.2), audio pick frozen XLS-R (mean EER 17.4, where the current wav2vec2 Base is 28.4), with criteria, labels and sources. AV-Deepfake1M++ is 1.46 TB, more than this PC's free disk.
+- `results/preregistration/P-002-draft.md`: the P-002 questions (Q1 to Q6), data, ingestion checks, paths and draft bars. Not frozen.
 - The poster build stops when a column overflows, instead of writing a file PowerPoint calls corrupted.
 
 ## 0.3.0 - 2026-11-16: neutral protocol, sync path, deliverable builders
