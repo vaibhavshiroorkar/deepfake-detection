@@ -16,6 +16,7 @@ Experiment numbers are not repeated here. They live in `results/` and the docume
 - Amendment A9: neutral LAV-DF clips are labelled by their kept window (`scripts/lavdf_window_labels.py`); 1,307 of 2,823 fake clips had no edited time in it. H2 uses the window label; the sync path and H4 on LAV-DF are reported under both labels. Handbook mistake 68.
 - The paper, report, slides, poster and figures show LAV-DF under both labels, explain A9, and use the window label for H2.
 - Amendment A10: the mouth cropper can locate small faces with YuNet before landmarking (`--locator`), used only on windows below the 0.8 face share. DFDC had found a face in 35% of windows. Handbook mistake 69.
+- The 2-day chain finished (sync path on the three targets, H4, neutral audits). Neutral ceilings: HiFi-AVDF 0.999 to 0.629, LAV-DF 0.936 to 0.557, DFDC 0.588 to 0.526. The cache build then moved to normal priority.
 - The poster build stops when a column overflows, instead of writing a file PowerPoint calls corrupted.
 
 ## 0.3.0 - 2026-11-16: neutral protocol, sync path, deliverable builders

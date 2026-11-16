@@ -18,7 +18,6 @@ Three chains run as detached processes. Each resumes from its own log if stopped
 - Wait for `runs/p001-a10.sh` (log `runs/p001-a10.log`): targets re-extracted with the face locator and rescored (amendment A10). Run the finalize step only after it, so `results/` gets the A10 results; the earlier results go to `results/p001-sync-targets-pre-a10/` and `results/p001-h4-pre-a10/`.
 - Report DFDC, LAV-DF and HiFi-AVDF coverage before and after A10, and the sync and H4 results under both, in the paper, report and slides.
 
-- Raise the resume 2 chain from idle to normal priority.
 - Run `runs/p001-finalize.sh`: copy the target and H4 outputs into `results/p001-sync-targets/` and `results/p001-h4/`, then rebuild `results/numbers.json`, the figures, the slides, the poster and the Overleaf zips.
 - Add a README with receipts to each new results folder.
 - Commit the audits of the neutral copies under `results/shortcut-audit/*-neutral/`.
