@@ -14,7 +14,6 @@ Two chains run as detached processes. Each resumes from its own log if stopped. 
 
 ## 2. While the chains run (Claude)
 
-- Label the main claims in the handbook as verified, assumed, false or unknown (`FINAL.md` is done).
 - Run the full test suite once the CPU is free.
 
 ## 3. When H2 finishes (Claude)

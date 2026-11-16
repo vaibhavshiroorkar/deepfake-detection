@@ -164,6 +164,15 @@ The full list of commands is in [docs/reference/cli.md](reference/cli.md). How r
 
 ## 5. What we have measured
 
+How sure each part of this section is:
+
+| Section | Label | Backed by |
+|---|---|---|
+| 5.1 to 5.1c, P-001 results | Verified | The results folder each one links, through `results/numbers.json` |
+| 5.1b, "it reads lip-audio agreement" | Assumed | The ranking by method fits the mechanism, but the audio-label residual (0.793) overlaps the voice-cloning row. An ablation that removes the audio residual would test it |
+| 5.2, older numbers | Not results | Each row says why it needs a rerun; none is cited as a finding |
+| 5.3, maths changes | Verified | Each change cites the code that implements it, and its test |
+
 ### 5.1 The shortcut audit (new study, 2026-11-13)
 
 `scripts/shortcut_audit.py` reads each clip's file metadata and audio edges and nothing else. It then scores how well each cue alone separates real from fake. Folds are grouped by identity.
