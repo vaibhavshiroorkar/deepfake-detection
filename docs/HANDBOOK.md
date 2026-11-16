@@ -211,6 +211,42 @@ Frozen AV-HuBERT features, with an alignment head trained only on real clips. Sc
 
 The per-method pattern shows it reads lip-audio agreement: voice cloning 0.942, Wav2Lip 0.84 to 0.86, and face swap alone 0.63 to 0.68 (a face swap keeps the original lips and voice). At the threshold chosen on validation, it flags 27 to 39% of real test clips. That is the false-alarm problem H4 addresses. Details: [results/p001-sync](../results/p001-sync/README.md).
 
+### 5.1c The locked targets and H4 (P-001, 2026-11-16)
+
+The three frozen sync models were scored on neutral copies of LAV-DF, DFDC and HiFi-AVDF. Scoring them exposed three protocol flaws, each fixed in the open with the earlier result kept:
+
+- **Short video (mistake 67).** Some clips had less video than audio. Their windows are left out and counted.
+- **The window missed the edit (A9, mistake 68).** 46% of LAV-DF fake clips had no edited time in the kept 3 s, so LAV-DF is reported under the file label and under a window label.
+- **Small faces (A10, mistake 69).** The landmarker missed small DFDC faces. A YuNet locator raised DFDC coverage from 921 to 2,908 clips.
+
+**Neutral ceilings on the targets:**
+
+| Corpus | Raw | Neutral |
+|---|---|---|
+| HiFi-AVDF | 0.9985 | 0.629 |
+| LAV-DF | 0.936 | 0.557 (file label), 0.575 (window label) |
+| DFDC | 0.588 | 0.526 |
+
+**Sync AUC across seeds:**
+
+| Target | AUC across seeds |
+|---|---|
+| LAV-DF, file label | 0.60 to 0.62 |
+| LAV-DF, window label | 0.63 to 0.66 |
+| DFDC | 0.55 to 0.58 |
+| HiFi-AVDF | 0.56 to 0.57 |
+
+HiFi-AVDF falls below its file-cue ceiling. By generator, PixVerse V5 is caught best and Sora 2 falls below chance: generators that make sound and picture together leave little lip mismatch.
+
+**H4:**
+
+- The carried-over threshold flags 31 to 48% of real clips.
+- The real-only conformal threshold holds the rate near 5%. H4 is met on HiFi-AVDF and on LAV-DF under the file label, in all seeds. Under the window label, 2 of 3 seeds miss the bar.
+- The cost is recall: 5 to 11% of fakes are caught.
+- DFDC cannot run H4, because it has 194 real clips.
+
+Details: [results/p001-sync-targets](../results/p001-sync-targets/README.md) and [results/p001-h4](../results/p001-h4/README.md).
+
 ### 5.2 Older numbers, and why none of them is a result yet
 
 These come from earlier stages. Each is listed so nobody cites it by mistake. "Requires rerun" means a defect in section 6 touches it.

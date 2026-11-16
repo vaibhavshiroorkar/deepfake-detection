@@ -46,6 +46,10 @@ The goals, as stated by Vaibhav on 2026-11-13:
 | 11-16 | Guide is an Assistant Professor; academic year 2026-27; batch 2023-27, to confirm with the guide | Vaibhav confirmed the title and graduates in 2027 | `deliverables/report/report.tex` |
 | 11-16 | Report and paper compile on Overleaf | Vaibhav uses Overleaf; no LaTeX on this PC | `deliverables/overleaf.py` |
 | 11-16 | Slides and poster built from the college slide master in the October deck | The `Document Template` folder is not in the repo; the submitted deck still carries its master | [deliverables/](../deliverables/README.md) |
+| 11-16 | Label LAV-DF clips by their kept window as well as by file (A9) | 46% of LAV-DF fake clips had no edited time in the 3 s window. Found after the file-label result was read, so both are reported; H2 uses the window label | P-001 A9; handbook mistake 68 |
+| 11-16 | Locate small faces with YuNet before landmarking, on the targets (A10) | The landmarker found a face in only 35% of DFDC windows. Found after the DFDC result was read, so both are reported | P-001 A10; handbook mistake 69 |
+| 11-16 | Train on one corpus for this submission; plan leave-one-corpus-out for the next study | Vaibhav asked whether training on one corpus is right. It is right for measuring transfer, but it limits how strong the detector can be | `docs/research/P-002-design.md` |
+| 11-16 | Write the plan to rebuild for maximum performance after the deadline | Vaibhav asked for an unbiased redesign, even a remake | `docs/research/P-002-design.md` |
 
 ## 3. What we found, in plain words
 
@@ -54,8 +58,12 @@ The goals, as stated by Vaibhav on 2026-11-13:
 3. **Cleaning has a cost we must report.** 1,260 short clips were refused, all generated speech and none real.
 4. **The real-only lip-sync path works for the right reason.** In-domain test AUC is 0.775 to 0.809 over three seeds. By method: voice cloning 0.94, Wav2Lip 0.84 to 0.86, face swap alone 0.63 to 0.68. The old sync branch was below chance.
 5. **False alarms are the weak spot.** At the validation threshold, 27 to 39% of real clips are flagged. H4 tests whether real-only calibration fixes this.
+6. **Cleaning works on the new corpora too.** HiFi-AVDF falls from 0.9985 to 0.629, LAV-DF from 0.936 to 0.557, and DFDC from 0.588 to 0.526.
+7. **The lip-sync path transfers poorly.** Its cross-corpus AUC is 0.55 to 0.66. On HiFi-AVDF it falls below the file-cue ceiling, because generators that make sound and picture together leave little lip mismatch. On Sora 2 it scores below chance.
+8. **Real-only calibration controls false alarms, at a cost.** The carried-over threshold flags 31 to 48% of real clips. A threshold from 200 real clips holds about 5%, and H4 is met on HiFi-AVDF and on LAV-DF (file label). It then catches only 5 to 11% of fakes.
+9. **Checks found three protocol flaws after results were read.** Short video, LAV-DF windows that missed the edit (A9), and small faces (A10). Each was fixed in the open, and the earlier results are kept.
 
-Every number has its files in `results/`. The handbook, section 5, has the tables.
+Every number has its files in `results/`. The handbook, sections 5.1 to 5.1c, has the tables.
 
 ## 4. Questions asked, and the answers given
 
