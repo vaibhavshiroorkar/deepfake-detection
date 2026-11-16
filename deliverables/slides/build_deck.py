@@ -399,7 +399,7 @@ def build(draft: bool) -> int:
     rows = []
     for name, k, audit in [("LAV-DF, file label", "lavdf-test", "lavdf.neutral"), ("LAV-DF, window label", "lavdf-window", "lavdf.window"),
                            ("DFDC", "dfdc", "dfdc.neutral"), ("HiFi-AVDF", "hifiavdf", "hifiavdf.neutral")]:
-        rows.append([name, n(f"{{{{sync.{k}.seed17.n|int}}}}")]
+        rows.append([name, n(f"{{{{sync.{k}.seed17.scored|int}}}}")]
                     + [n(f"{{{{sync.{k}.seed{sd}.auc}}}}") for sd in (17, 29, 43)]
                     + [n(f"{{{{audit.{audit}.clip}}}}")])
     _, th = d.add_table(s, L, Y0, [2400000, 1500000] + [(W - 6100000) // 3] * 3 + [2200000],

@@ -480,10 +480,10 @@ bootstrap interval), with each target's neutral shortcut ceiling}
 \toprule
 Target & Clips & Seed 17 & Seed 29 & Seed 43 & Neutral ceiling \\
 \midrule
-LAV-DF test, file label & {{sync.lavdf-test.seed17.n|int}} & {{sync.lavdf-test.seed17.auc}} [{{sync.lavdf-test.seed17.auc_low}}, {{sync.lavdf-test.seed17.auc_high}}] & {{sync.lavdf-test.seed29.auc}} [{{sync.lavdf-test.seed29.auc_low}}, {{sync.lavdf-test.seed29.auc_high}}] & {{sync.lavdf-test.seed43.auc}} [{{sync.lavdf-test.seed43.auc_low}}, {{sync.lavdf-test.seed43.auc_high}}] & {{audit.lavdf.neutral.clip}} \\
-LAV-DF test, window label & {{sync.lavdf-window.seed17.n|int}} & {{sync.lavdf-window.seed17.auc}} [{{sync.lavdf-window.seed17.auc_low}}, {{sync.lavdf-window.seed17.auc_high}}] & {{sync.lavdf-window.seed29.auc}} [{{sync.lavdf-window.seed29.auc_low}}, {{sync.lavdf-window.seed29.auc_high}}] & {{sync.lavdf-window.seed43.auc}} [{{sync.lavdf-window.seed43.auc_low}}, {{sync.lavdf-window.seed43.auc_high}}] & {{audit.lavdf.window.clip}} \\
-DFDC & {{sync.dfdc.seed17.n|int}} & {{sync.dfdc.seed17.auc}} [{{sync.dfdc.seed17.auc_low}}, {{sync.dfdc.seed17.auc_high}}] & {{sync.dfdc.seed29.auc}} [{{sync.dfdc.seed29.auc_low}}, {{sync.dfdc.seed29.auc_high}}] & {{sync.dfdc.seed43.auc}} [{{sync.dfdc.seed43.auc_low}}, {{sync.dfdc.seed43.auc_high}}] & {{audit.dfdc.neutral.clip}} \\
-HiFi-AVDF & {{sync.hifiavdf.seed17.n|int}} & {{sync.hifiavdf.seed17.auc}} [{{sync.hifiavdf.seed17.auc_low}}, {{sync.hifiavdf.seed17.auc_high}}] & {{sync.hifiavdf.seed29.auc}} [{{sync.hifiavdf.seed29.auc_low}}, {{sync.hifiavdf.seed29.auc_high}}] & {{sync.hifiavdf.seed43.auc}} [{{sync.hifiavdf.seed43.auc_low}}, {{sync.hifiavdf.seed43.auc_high}}] & {{audit.hifiavdf.neutral.clip}} \\
+LAV-DF test, file label & {{sync.lavdf-test.seed17.scored|int}} & {{sync.lavdf-test.seed17.auc}} [{{sync.lavdf-test.seed17.auc_low}}, {{sync.lavdf-test.seed17.auc_high}}] & {{sync.lavdf-test.seed29.auc}} [{{sync.lavdf-test.seed29.auc_low}}, {{sync.lavdf-test.seed29.auc_high}}] & {{sync.lavdf-test.seed43.auc}} [{{sync.lavdf-test.seed43.auc_low}}, {{sync.lavdf-test.seed43.auc_high}}] & {{audit.lavdf.neutral.clip}} \\
+LAV-DF test, window label & {{sync.lavdf-window.seed17.scored|int}} & {{sync.lavdf-window.seed17.auc}} [{{sync.lavdf-window.seed17.auc_low}}, {{sync.lavdf-window.seed17.auc_high}}] & {{sync.lavdf-window.seed29.auc}} [{{sync.lavdf-window.seed29.auc_low}}, {{sync.lavdf-window.seed29.auc_high}}] & {{sync.lavdf-window.seed43.auc}} [{{sync.lavdf-window.seed43.auc_low}}, {{sync.lavdf-window.seed43.auc_high}}] & {{audit.lavdf.window.clip}} \\
+DFDC & {{sync.dfdc.seed17.scored|int}} & {{sync.dfdc.seed17.auc}} [{{sync.dfdc.seed17.auc_low}}, {{sync.dfdc.seed17.auc_high}}] & {{sync.dfdc.seed29.auc}} [{{sync.dfdc.seed29.auc_low}}, {{sync.dfdc.seed29.auc_high}}] & {{sync.dfdc.seed43.auc}} [{{sync.dfdc.seed43.auc_low}}, {{sync.dfdc.seed43.auc_high}}] & {{audit.dfdc.neutral.clip}} \\
+HiFi-AVDF & {{sync.hifiavdf.seed17.scored|int}} & {{sync.hifiavdf.seed17.auc}} [{{sync.hifiavdf.seed17.auc_low}}, {{sync.hifiavdf.seed17.auc_high}}] & {{sync.hifiavdf.seed29.auc}} [{{sync.hifiavdf.seed29.auc_low}}, {{sync.hifiavdf.seed29.auc_high}}] & {{sync.hifiavdf.seed43.auc}} [{{sync.hifiavdf.seed43.auc_low}}, {{sync.hifiavdf.seed43.auc_high}}] & {{audit.hifiavdf.neutral.clip}} \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -536,6 +536,27 @@ fakes are scored against all real clips. The raw audit showed that each
 generator had its own file fingerprint. After neutralization the clips share
 one codec, frame size, length and loudness, so any difference between rows
 has to come from what is left in the pixels and the sound.
+
+\textit{Reading.} The sync path keeps some signal on every target, but far
+less than in its own domain. On LAV-DF it clears the neutral ceiling under
+both labels. On DFDC, where every fake keeps its original voice, it sits just
+above the ceiling of {{audit.dfdc.neutral.clip}}. On HiFi-AVDF it falls below
+the neutral ceiling of {{audit.hifiavdf.neutral.clip}}: the bitrate left
+after neutralization says more about the label than the lips do. The
+per-generator rows explain why. PixVerse~V5 is caught best
+({{sync.hifiavdf.seed17.method.pixverseV5}} at seed 17), Veo~3.1 sits near
+chance ({{sync.hifiavdf.seed17.method.veo3.1}}), and Sora~2 falls below it
+({{sync.hifiavdf.seed17.method.sora2}}). Generators that make sound and
+picture together leave little mismatch between lips and voice, and on Sora~2
+the generated clips look \emph{more} in sync than the real ones. A detector
+built on lip-voice mismatch has nothing to find there.
+
+\textit{Coverage.} The DFDC row is the result after amendment A10. The face
+landmarker first found a face in only 2,110 of 6,064 DFDC windows, because
+DFDC faces are small in full-HD frames, so the sync path scored 921 clips.
+Locating the face with a second detector before landmarking raised this to
+{{sync.dfdc.seed17.scored|int}} clips scored. AUC changed little, but the
+intervals narrowed. Both versions are in the released results.
 
 \subsection{False-alarm control (H4)}
 
@@ -593,6 +614,21 @@ the FPR back to its target, and how many fakes that costs. The TPR column of
 each real-only rule is that cost. The umbrella rule asks for a stronger
 guarantee than the conformal rule, so its threshold is at least as strict on
 the same calibration set. Fig.~\ref{fig:h4} plots the same numbers.
+
+\textit{Reading.} The threshold carried over from FakeAVCeleb does not
+transfer: it flags a large share of real clips on every target. Set from 200
+real target clips, the conformal threshold brings the false-positive rate back
+near $\alpha$. H4 is met on HiFi-AVDF in all three seeds, and on LAV-DF under
+the file label, as preregistered, in all three seeds. Under the window label,
+which amendment A9 added after these results were read, two of the three
+LAV-DF seeds land above the bar. The window label turns clips cut from edited
+recordings into real clips, so the calibration reals and the scored reals may
+no longer share one distribution, which is the assumption the conformal
+guarantee needs. The cost of control is recall. At a false-positive rate near
+5\%, the sync path catches only {{h4.hifiavdf-seed17.conformal_real_only.tpr|pct}}
+of HiFi-AVDF fakes and {{h4.lavdf-test-seed17.conformal_real_only.tpr|pct}} of
+LAV-DF fakes at seed 17. Real-only calibration fixes the operating point. It
+cannot add signal the detector does not have.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics[width=\columnwidth]{fig_h4.png}}

@@ -19,6 +19,7 @@ Experiment numbers are not repeated here. They live in `results/` and the docume
 - The 2-day chain finished (sync path on the three targets, H4, neutral audits). Neutral ceilings: HiFi-AVDF 0.999 to 0.629, LAV-DF 0.936 to 0.557, DFDC 0.588 to 0.526. The cache build then moved to normal priority.
 - Results committed: `results/p001-sync-targets/` and `results/p001-h4/` (after A10, with READMEs), the results from before A10 beside them, and the neutral audits of the three targets plus the LAV-DF window label. H4 is met on HiFi-AVDF and on LAV-DF under the file label in all seeds; under the window label 2 of 3 LAV-DF seeds miss the bar. `numbers.json` holds 953 numbers.
 - The cross-corpus and H4 figures no longer overlap their labels.
+- The paper and report interpret the cross-corpus and H4 results, including coverage before and after A10. Target tables count clips scored (`.scored`) instead of all clips (`.n`), which had included clips with no usable window.
 - The poster build stops when a column overflows, instead of writing a file PowerPoint calls corrupted.
 
 ## 0.3.0 - 2026-11-16: neutral protocol, sync path, deliverable builders

@@ -74,6 +74,8 @@ def metrics_file(numbers: dict, prefix: str, path: Path) -> None:
     _put(numbers, f"{prefix}.fpr", round(overall["fpr"], 3), path)
     _put(numbers, f"{prefix}.balanced_accuracy", round(overall["balanced_accuracy"], 3), path)
     _put(numbers, f"{prefix}.n", report["overall"]["total"], path)
+    # n counts every clip in the set; scored leaves out clips with no usable window (no face, no audio).
+    _put(numbers, f"{prefix}.scored", report["overall"].get("scored", report["overall"]["total"]), path)
     for method, entry in report.get("per_method", {}).items():
         if entry.get("metrics"):
             _put(numbers, f"{prefix}.method.{method}", round(entry["metrics"]["roc_auc"], 3), path)

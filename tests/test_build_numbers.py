@@ -42,10 +42,11 @@ def test_branch_keys_split_branch_seed_and_part(tmp_path):
     module = _module(tmp_path)
     out = tmp_path / "results" / "p001-branches"
     out.mkdir(parents=True)
-    report = {"overall": {"metrics": {"roc_auc": 0.91234, "fpr": 0.2, "balanced_accuracy": 0.8}, "total": 500},
+    report = {"overall": {"metrics": {"roc_auc": 0.91234, "fpr": 0.2, "balanced_accuracy": 0.8}, "total": 500, "scored": 480},
               "confidence_intervals": {"roc_auc": {"lower": 0.88, "upper": 0.94}}}
     (out / "visual-seed17-test-identity-strict-metrics.json").write_text(json.dumps(report))
     numbers: dict = {}
     module.branches(numbers)
     assert numbers["visual.test-identity-strict.seed17.auc"]["value"] == 0.912
     assert numbers["visual.test-identity-strict.seed17.n"]["value"] == 500
+    assert numbers["visual.test-identity-strict.seed17.scored"]["value"] == 480

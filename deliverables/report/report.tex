@@ -2020,21 +2020,21 @@ with HiFi-AVDF also split by generator.
         \toprule
         \textbf{Target} & \textbf{Seed} & \textbf{Clips} & \textbf{AUC [95\% CI]} & \textbf{Bal. acc.} & \textbf{FPR} \\
         \midrule
-        LAV-DF, file label & 17 & {{sync.lavdf-test.seed17.n|int}} & {{sync.lavdf-test.seed17.auc}} [{{sync.lavdf-test.seed17.auc_low}}, {{sync.lavdf-test.seed17.auc_high}}] & {{sync.lavdf-test.seed17.balanced_accuracy}} & {{sync.lavdf-test.seed17.fpr}} \\
-                    & 29 & {{sync.lavdf-test.seed29.n|int}} & {{sync.lavdf-test.seed29.auc}} [{{sync.lavdf-test.seed29.auc_low}}, {{sync.lavdf-test.seed29.auc_high}}] & {{sync.lavdf-test.seed29.balanced_accuracy}} & {{sync.lavdf-test.seed29.fpr}} \\
-                    & 43 & {{sync.lavdf-test.seed43.n|int}} & {{sync.lavdf-test.seed43.auc}} [{{sync.lavdf-test.seed43.auc_low}}, {{sync.lavdf-test.seed43.auc_high}}] & {{sync.lavdf-test.seed43.balanced_accuracy}} & {{sync.lavdf-test.seed43.fpr}} \\
+        LAV-DF, file label & 17 & {{sync.lavdf-test.seed17.scored|int}} & {{sync.lavdf-test.seed17.auc}} [{{sync.lavdf-test.seed17.auc_low}}, {{sync.lavdf-test.seed17.auc_high}}] & {{sync.lavdf-test.seed17.balanced_accuracy}} & {{sync.lavdf-test.seed17.fpr}} \\
+                    & 29 & {{sync.lavdf-test.seed29.scored|int}} & {{sync.lavdf-test.seed29.auc}} [{{sync.lavdf-test.seed29.auc_low}}, {{sync.lavdf-test.seed29.auc_high}}] & {{sync.lavdf-test.seed29.balanced_accuracy}} & {{sync.lavdf-test.seed29.fpr}} \\
+                    & 43 & {{sync.lavdf-test.seed43.scored|int}} & {{sync.lavdf-test.seed43.auc}} [{{sync.lavdf-test.seed43.auc_low}}, {{sync.lavdf-test.seed43.auc_high}}] & {{sync.lavdf-test.seed43.balanced_accuracy}} & {{sync.lavdf-test.seed43.fpr}} \\
         \midrule
-        LAV-DF, window label & 17 & {{sync.lavdf-window.seed17.n|int}} & {{sync.lavdf-window.seed17.auc}} [{{sync.lavdf-window.seed17.auc_low}}, {{sync.lavdf-window.seed17.auc_high}}] & {{sync.lavdf-window.seed17.balanced_accuracy}} & {{sync.lavdf-window.seed17.fpr}} \\
-                    & 29 & {{sync.lavdf-window.seed29.n|int}} & {{sync.lavdf-window.seed29.auc}} [{{sync.lavdf-window.seed29.auc_low}}, {{sync.lavdf-window.seed29.auc_high}}] & {{sync.lavdf-window.seed29.balanced_accuracy}} & {{sync.lavdf-window.seed29.fpr}} \\
-                    & 43 & {{sync.lavdf-window.seed43.n|int}} & {{sync.lavdf-window.seed43.auc}} [{{sync.lavdf-window.seed43.auc_low}}, {{sync.lavdf-window.seed43.auc_high}}] & {{sync.lavdf-window.seed43.balanced_accuracy}} & {{sync.lavdf-window.seed43.fpr}} \\
+        LAV-DF, window label & 17 & {{sync.lavdf-window.seed17.scored|int}} & {{sync.lavdf-window.seed17.auc}} [{{sync.lavdf-window.seed17.auc_low}}, {{sync.lavdf-window.seed17.auc_high}}] & {{sync.lavdf-window.seed17.balanced_accuracy}} & {{sync.lavdf-window.seed17.fpr}} \\
+                    & 29 & {{sync.lavdf-window.seed29.scored|int}} & {{sync.lavdf-window.seed29.auc}} [{{sync.lavdf-window.seed29.auc_low}}, {{sync.lavdf-window.seed29.auc_high}}] & {{sync.lavdf-window.seed29.balanced_accuracy}} & {{sync.lavdf-window.seed29.fpr}} \\
+                    & 43 & {{sync.lavdf-window.seed43.scored|int}} & {{sync.lavdf-window.seed43.auc}} [{{sync.lavdf-window.seed43.auc_low}}, {{sync.lavdf-window.seed43.auc_high}}] & {{sync.lavdf-window.seed43.balanced_accuracy}} & {{sync.lavdf-window.seed43.fpr}} \\
         \midrule
-        DFDC & 17 & {{sync.dfdc.seed17.n|int}} & {{sync.dfdc.seed17.auc}} [{{sync.dfdc.seed17.auc_low}}, {{sync.dfdc.seed17.auc_high}}] & {{sync.dfdc.seed17.balanced_accuracy}} & {{sync.dfdc.seed17.fpr}} \\
-             & 29 & {{sync.dfdc.seed29.n|int}} & {{sync.dfdc.seed29.auc}} [{{sync.dfdc.seed29.auc_low}}, {{sync.dfdc.seed29.auc_high}}] & {{sync.dfdc.seed29.balanced_accuracy}} & {{sync.dfdc.seed29.fpr}} \\
-             & 43 & {{sync.dfdc.seed43.n|int}} & {{sync.dfdc.seed43.auc}} [{{sync.dfdc.seed43.auc_low}}, {{sync.dfdc.seed43.auc_high}}] & {{sync.dfdc.seed43.balanced_accuracy}} & {{sync.dfdc.seed43.fpr}} \\
+        DFDC & 17 & {{sync.dfdc.seed17.scored|int}} & {{sync.dfdc.seed17.auc}} [{{sync.dfdc.seed17.auc_low}}, {{sync.dfdc.seed17.auc_high}}] & {{sync.dfdc.seed17.balanced_accuracy}} & {{sync.dfdc.seed17.fpr}} \\
+             & 29 & {{sync.dfdc.seed29.scored|int}} & {{sync.dfdc.seed29.auc}} [{{sync.dfdc.seed29.auc_low}}, {{sync.dfdc.seed29.auc_high}}] & {{sync.dfdc.seed29.balanced_accuracy}} & {{sync.dfdc.seed29.fpr}} \\
+             & 43 & {{sync.dfdc.seed43.scored|int}} & {{sync.dfdc.seed43.auc}} [{{sync.dfdc.seed43.auc_low}}, {{sync.dfdc.seed43.auc_high}}] & {{sync.dfdc.seed43.balanced_accuracy}} & {{sync.dfdc.seed43.fpr}} \\
         \midrule
-        HiFi-AVDF & 17 & {{sync.hifiavdf.seed17.n|int}} & {{sync.hifiavdf.seed17.auc}} [{{sync.hifiavdf.seed17.auc_low}}, {{sync.hifiavdf.seed17.auc_high}}] & {{sync.hifiavdf.seed17.balanced_accuracy}} & {{sync.hifiavdf.seed17.fpr}} \\
-                  & 29 & {{sync.hifiavdf.seed29.n|int}} & {{sync.hifiavdf.seed29.auc}} [{{sync.hifiavdf.seed29.auc_low}}, {{sync.hifiavdf.seed29.auc_high}}] & {{sync.hifiavdf.seed29.balanced_accuracy}} & {{sync.hifiavdf.seed29.fpr}} \\
-                  & 43 & {{sync.hifiavdf.seed43.n|int}} & {{sync.hifiavdf.seed43.auc}} [{{sync.hifiavdf.seed43.auc_low}}, {{sync.hifiavdf.seed43.auc_high}}] & {{sync.hifiavdf.seed43.balanced_accuracy}} & {{sync.hifiavdf.seed43.fpr}} \\
+        HiFi-AVDF & 17 & {{sync.hifiavdf.seed17.scored|int}} & {{sync.hifiavdf.seed17.auc}} [{{sync.hifiavdf.seed17.auc_low}}, {{sync.hifiavdf.seed17.auc_high}}] & {{sync.hifiavdf.seed17.balanced_accuracy}} & {{sync.hifiavdf.seed17.fpr}} \\
+                  & 29 & {{sync.hifiavdf.seed29.scored|int}} & {{sync.hifiavdf.seed29.auc}} [{{sync.hifiavdf.seed29.auc_low}}, {{sync.hifiavdf.seed29.auc_high}}] & {{sync.hifiavdf.seed29.balanced_accuracy}} & {{sync.hifiavdf.seed29.fpr}} \\
+                  & 43 & {{sync.hifiavdf.seed43.scored|int}} & {{sync.hifiavdf.seed43.auc}} [{{sync.hifiavdf.seed43.auc_low}}, {{sync.hifiavdf.seed43.auc_high}}] & {{sync.hifiavdf.seed43.balanced_accuracy}} & {{sync.hifiavdf.seed43.fpr}} \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -2080,6 +2080,34 @@ These generators were released long after FakeAVCeleb was made. The sync path
 never saw any of them, nor any fake at all. Its result on each one measures
 how well that generator matches lip motion to speech, as judged by a model of
 real speech.
+
+\subsection{What the results show}
+
+The sync path keeps some signal on every target, but far less than on
+FakeAVCeleb, where it was trained. On LAV-DF it clears the neutral ceiling
+under both labels. On DFDC, where every fake keeps its original voice, it sits
+just above the ceiling of {{audit.dfdc.neutral.clip}}. On HiFi-AVDF it falls
+below the neutral ceiling of {{audit.hifiavdf.neutral.clip}}, so the bitrate
+left after cleaning says more about the label than the lips do.
+
+The generators explain why. PixVerse V5 is caught best
+({{sync.hifiavdf.seed17.method.pixverseV5}} at seed 17). Veo 3.1 sits near
+chance ({{sync.hifiavdf.seed17.method.veo3.1}}), and Sora 2 falls below it
+({{sync.hifiavdf.seed17.method.sora2}}). These tools make sound and picture
+together, so lips and voice already match. On Sora 2 the generated clips look
+more in sync than the real ones. A detector built on lip-voice mismatch has
+nothing to find there. That is a limit of the idea, not only of our model.
+
+\subsection{Coverage, before and after amendment A10}
+
+The face landmarker first found a face in only 2,110 of 6,064 DFDC windows,
+because DFDC faces are small in full-HD frames. The sync path then scored 921
+DFDC clips, 67 of them real. Amendment A10 locates the face with a second
+detector first, only for windows that fall below the face bar. DFDC coverage
+rose to {{sync.dfdc.seed17.scored|int}} clips, and HiFi-AVDF to
+{{sync.hifiavdf.seed17.scored|int}}. AUC changed little; the intervals
+narrowed. The tables show the results after A10. Both versions are in
+\texttt{results/}.
 
 \section{H4: False-Alarm Control From Real Clips}
 
@@ -2181,6 +2209,28 @@ hold. Second, each row uses one random calibration draw. The marginal
 conformal guarantee holds on average over draws, so one draw can land above
 $\alpha$ by chance. Third, H4 is a bar check, not a $p$-value test, so it sits
 outside the Holm correction, which amendment A8 limits to H2's three targets.
+
+\subsection{What H4 shows}
+
+The threshold carried over from FakeAVCeleb does not transfer. It flags a large
+share of real clips on every target. Set from 200 real target clips, the
+conformal threshold brings the false-positive rate back near $\alpha$. H4 is
+met on HiFi-AVDF in all three seeds, and on LAV-DF under the preregistered
+file label in all three seeds.
+
+Under the window label, which amendment A9 added after these results were
+read, two of the three LAV-DF seeds land above the bar. The window label turns
+clips cut from edited recordings into real clips. The calibration reals and
+the scored reals may then no longer share one distribution, which is the
+assumption the guarantee needs.
+
+The price of control is recall. Near a 5\% false-positive rate, the sync path
+catches {{h4.hifiavdf-seed17.conformal_real_only.tpr|pct}} of HiFi-AVDF fakes
+and {{h4.lavdf-test-seed17.conformal_real_only.tpr|pct}} of LAV-DF fakes at
+seed 17. Real-only calibration fixes the operating point. It cannot add signal
+the detector does not have. A deployed system would need a stronger detector
+under the same calibration, which is what the fusion of Chapter~\ref{ch:h2}
+tests.
 
 %
 \chapter{Fusion Against Visual-Only (H2)}

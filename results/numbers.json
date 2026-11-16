@@ -2955,6 +2955,10 @@
   "value": 3032,
   "source": "results/p001-sync-targets/sync-dfdc-seed17-metrics.json"
  },
+ "sync.dfdc.seed17.scored": {
+  "value": 2908,
+  "source": "results/p001-sync-targets/sync-dfdc-seed17-metrics.json"
+ },
  "sync.dfdc.seed29.auc": {
   "value": 0.575,
   "source": "results/p001-sync-targets/sync-dfdc-seed29-metrics.json"
@@ -2983,6 +2987,10 @@
   "value": 3032,
   "source": "results/p001-sync-targets/sync-dfdc-seed29-metrics.json"
  },
+ "sync.dfdc.seed29.scored": {
+  "value": 2908,
+  "source": "results/p001-sync-targets/sync-dfdc-seed29-metrics.json"
+ },
  "sync.dfdc.seed43.auc": {
   "value": 0.565,
   "source": "results/p001-sync-targets/sync-dfdc-seed43-metrics.json"
@@ -3009,6 +3017,10 @@
  },
  "sync.dfdc.seed43.n": {
   "value": 3032,
+  "source": "results/p001-sync-targets/sync-dfdc-seed43-metrics.json"
+ },
+ "sync.dfdc.seed43.scored": {
+  "value": 2908,
   "source": "results/p001-sync-targets/sync-dfdc-seed43-metrics.json"
  },
  "sync.hifiavdf.seed17.auc": {
@@ -3059,6 +3071,10 @@
   "value": 3808,
   "source": "results/p001-sync-targets/sync-hifiavdf-seed17-metrics.json"
  },
+ "sync.hifiavdf.seed17.scored": {
+  "value": 3739,
+  "source": "results/p001-sync-targets/sync-hifiavdf-seed17-metrics.json"
+ },
  "sync.hifiavdf.seed29.auc": {
   "value": 0.57,
   "source": "results/p001-sync-targets/sync-hifiavdf-seed29-metrics.json"
@@ -3105,6 +3121,10 @@
  },
  "sync.hifiavdf.seed29.n": {
   "value": 3808,
+  "source": "results/p001-sync-targets/sync-hifiavdf-seed29-metrics.json"
+ },
+ "sync.hifiavdf.seed29.scored": {
+  "value": 3739,
   "source": "results/p001-sync-targets/sync-hifiavdf-seed29-metrics.json"
  },
  "sync.hifiavdf.seed43.auc": {
@@ -3155,6 +3175,10 @@
   "value": 3808,
   "source": "results/p001-sync-targets/sync-hifiavdf-seed43-metrics.json"
  },
+ "sync.hifiavdf.seed43.scored": {
+  "value": 3739,
+  "source": "results/p001-sync-targets/sync-hifiavdf-seed43-metrics.json"
+ },
  "sync.lavdf-test.seed17.auc": {
   "value": 0.597,
   "source": "results/p001-sync-targets/sync-lavdf-test-seed17-metrics.json"
@@ -3189,6 +3213,10 @@
  },
  "sync.lavdf-test.seed17.n": {
   "value": 3823,
+  "source": "results/p001-sync-targets/sync-lavdf-test-seed17-metrics.json"
+ },
+ "sync.lavdf-test.seed17.scored": {
+  "value": 3693,
   "source": "results/p001-sync-targets/sync-lavdf-test-seed17-metrics.json"
  },
  "sync.lavdf-test.seed29.auc": {
@@ -3227,6 +3255,10 @@
   "value": 3823,
   "source": "results/p001-sync-targets/sync-lavdf-test-seed29-metrics.json"
  },
+ "sync.lavdf-test.seed29.scored": {
+  "value": 3693,
+  "source": "results/p001-sync-targets/sync-lavdf-test-seed29-metrics.json"
+ },
  "sync.lavdf-test.seed43.auc": {
   "value": 0.622,
   "source": "results/p001-sync-targets/sync-lavdf-test-seed43-metrics.json"
@@ -3261,6 +3293,10 @@
  },
  "sync.lavdf-test.seed43.n": {
   "value": 3823,
+  "source": "results/p001-sync-targets/sync-lavdf-test-seed43-metrics.json"
+ },
+ "sync.lavdf-test.seed43.scored": {
+  "value": 3693,
   "source": "results/p001-sync-targets/sync-lavdf-test-seed43-metrics.json"
  },
  "sync.lavdf-window.seed17.auc": {
@@ -3299,6 +3335,10 @@
   "value": 3823,
   "source": "results/p001-sync-targets/sync-lavdf-window-seed17-metrics.json"
  },
+ "sync.lavdf-window.seed17.scored": {
+  "value": 3693,
+  "source": "results/p001-sync-targets/sync-lavdf-window-seed17-metrics.json"
+ },
  "sync.lavdf-window.seed29.auc": {
   "value": 0.657,
   "source": "results/p001-sync-targets/sync-lavdf-window-seed29-metrics.json"
@@ -3335,6 +3375,10 @@
   "value": 3823,
   "source": "results/p001-sync-targets/sync-lavdf-window-seed29-metrics.json"
  },
+ "sync.lavdf-window.seed29.scored": {
+  "value": 3693,
+  "source": "results/p001-sync-targets/sync-lavdf-window-seed29-metrics.json"
+ },
  "sync.lavdf-window.seed43.auc": {
   "value": 0.655,
   "source": "results/p001-sync-targets/sync-lavdf-window-seed43-metrics.json"
@@ -3369,6 +3413,10 @@
  },
  "sync.lavdf-window.seed43.n": {
   "value": 3823,
+  "source": "results/p001-sync-targets/sync-lavdf-window-seed43-metrics.json"
+ },
+ "sync.lavdf-window.seed43.scored": {
+  "value": 3693,
   "source": "results/p001-sync-targets/sync-lavdf-window-seed43-metrics.json"
  },
  "sync.test-identity-strict.seed17.auc": {
@@ -3416,6 +3464,10 @@
   "source": "results/p001-sync/sync-test-identity-strict-seed17-metrics.json"
  },
  "sync.test-identity-strict.seed17.n": {
+  "value": 495,
+  "source": "results/p001-sync/sync-test-identity-strict-seed17-metrics.json"
+ },
+ "sync.test-identity-strict.seed17.scored": {
   "value": 495,
   "source": "results/p001-sync/sync-test-identity-strict-seed17-metrics.json"
  },
@@ -3467,6 +3519,10 @@
   "value": 495,
   "source": "results/p001-sync/sync-test-identity-strict-seed29-metrics.json"
  },
+ "sync.test-identity-strict.seed29.scored": {
+  "value": 495,
+  "source": "results/p001-sync/sync-test-identity-strict-seed29-metrics.json"
+ },
  "sync.test-identity-strict.seed43.auc": {
   "value": 0.81,
   "source": "results/p001-sync/sync-test-identity-strict-seed43-metrics.json"
@@ -3512,6 +3568,10 @@
   "source": "results/p001-sync/sync-test-identity-strict-seed43-metrics.json"
  },
  "sync.test-identity-strict.seed43.n": {
+  "value": 495,
+  "source": "results/p001-sync/sync-test-identity-strict-seed43-metrics.json"
+ },
+ "sync.test-identity-strict.seed43.scored": {
   "value": 495,
   "source": "results/p001-sync/sync-test-identity-strict-seed43-metrics.json"
  },
@@ -3563,6 +3623,10 @@
   "value": 2993,
   "source": "results/p001-sync/sync-test-seed17-metrics.json"
  },
+ "sync.test.seed17.scored": {
+  "value": 2993,
+  "source": "results/p001-sync/sync-test-seed17-metrics.json"
+ },
  "sync.test.seed29.auc": {
   "value": 0.809,
   "source": "results/p001-sync/sync-test-seed29-metrics.json"
@@ -3611,6 +3675,10 @@
   "value": 2993,
   "source": "results/p001-sync/sync-test-seed29-metrics.json"
  },
+ "sync.test.seed29.scored": {
+  "value": 2993,
+  "source": "results/p001-sync/sync-test-seed29-metrics.json"
+ },
  "sync.test.seed43.auc": {
   "value": 0.806,
   "source": "results/p001-sync/sync-test-seed43-metrics.json"
@@ -3656,6 +3724,10 @@
   "source": "results/p001-sync/sync-test-seed43-metrics.json"
  },
  "sync.test.seed43.n": {
+  "value": 2993,
+  "source": "results/p001-sync/sync-test-seed43-metrics.json"
+ },
+ "sync.test.seed43.scored": {
   "value": 2993,
   "source": "results/p001-sync/sync-test-seed43-metrics.json"
  },
@@ -3715,6 +3787,10 @@
   "value": 3104,
   "source": "results/p001-sync/sync-val-seed17-metrics.json"
  },
+ "sync.val.seed17.scored": {
+  "value": 3104,
+  "source": "results/p001-sync/sync-val-seed17-metrics.json"
+ },
  "sync.val.seed29.auc": {
   "value": 0.83,
   "source": "results/p001-sync/sync-val-seed29-metrics.json"
@@ -3763,6 +3839,10 @@
   "value": 3104,
   "source": "results/p001-sync/sync-val-seed29-metrics.json"
  },
+ "sync.val.seed29.scored": {
+  "value": 3104,
+  "source": "results/p001-sync/sync-val-seed29-metrics.json"
+ },
  "sync.val.seed43.auc": {
   "value": 0.814,
   "source": "results/p001-sync/sync-val-seed43-metrics.json"
@@ -3808,6 +3888,10 @@
   "source": "results/p001-sync/sync-val-seed43-metrics.json"
  },
  "sync.val.seed43.n": {
+  "value": 3104,
+  "source": "results/p001-sync/sync-val-seed43-metrics.json"
+ },
+ "sync.val.seed43.scored": {
   "value": 3104,
   "source": "results/p001-sync/sync-val-seed43-metrics.json"
  }
