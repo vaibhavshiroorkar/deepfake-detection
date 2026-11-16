@@ -556,7 +556,10 @@ landmarker first found a face in only 2,110 of 6,064 DFDC windows, because
 DFDC faces are small in full-HD frames, so the sync path scored 921 clips.
 Locating the face with a second detector before landmarking raised this to
 {{sync.dfdc.seed17.scored|int}} clips scored. AUC changed little, but the
-intervals narrowed. Both versions are in the released results.
+intervals narrowed. Both versions are in the released results. HiFi-AVDF
+also has {{audit.hifiavdf.raw.census.RealVideo-RealAudio.audio_codec.none|int}}
+real and {{audit.hifiavdf.raw.census.FakeVideo-FakeAudio.audio_codec.none|int}}
+generated source clips with no audio track, which a sync path cannot score.
 
 \subsection{False-alarm control (H4)}
 

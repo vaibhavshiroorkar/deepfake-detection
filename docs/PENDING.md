@@ -15,7 +15,6 @@ Three chains run as detached processes. Each resumes from its own log if stopped
 
 ## 2. When the 2-day chain finishes (Claude)
 
-- Report the 23 HiFi-AVDF clips that have no audio track (14 real, 9 fake), the clips with no face, and the 4 windows left out as shorter than 50 frames, in the paper and the report (the results README has them).
 - Update the README Results section to the P-001 study. It still leads with older numbers.
 - Label the main claims in `FINAL.md` and the handbook as verified, assumed, false or unknown.
 - Fill the pending entries in [FINAL.md](FINAL.md); update handbook section 5.1b and the project log.

@@ -2109,6 +2109,14 @@ rose to {{sync.dfdc.seed17.scored|int}} clips, and HiFi-AVDF to
 narrowed. The tables show the results after A10. Both versions are in
 \texttt{results/}.
 
+Two smaller gaps remain. HiFi-AVDF has
+{{audit.hifiavdf.raw.census.RealVideo-RealAudio.audio_codec.none|int}} real and
+{{audit.hifiavdf.raw.census.FakeVideo-FakeAudio.audio_codec.none|int}} generated
+source clips with no audio track, which a sync path cannot score. A few
+neutral clips also have less video than audio, so some of their windows hold
+fewer than 50 frames. Those windows are left out and counted, as windows
+without a face already were.
+
 \section{H4: False-Alarm Control From Real Clips}
 
 \subsection{The question}

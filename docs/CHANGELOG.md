@@ -20,6 +20,7 @@ Experiment numbers are not repeated here. They live in `results/` and the docume
 - Results committed: `results/p001-sync-targets/` and `results/p001-h4/` (after A10, with READMEs), the results from before A10 beside them, and the neutral audits of the three targets plus the LAV-DF window label. H4 is met on HiFi-AVDF and on LAV-DF under the file label in all seeds; under the window label 2 of 3 LAV-DF seeds miss the bar. `numbers.json` holds 953 numbers.
 - The cross-corpus and H4 figures no longer overlap their labels.
 - The paper and report interpret the cross-corpus and H4 results, including coverage before and after A10. Target tables count clips scored (`.scored`) instead of all clips (`.n`), which had included clips with no usable window.
+- The paper and report state the HiFi-AVDF clips without audio and the short windows left out.
 - The poster build stops when a column overflows, instead of writing a file PowerPoint calls corrupted.
 
 ## 0.3.0 - 2026-11-16: neutral protocol, sync path, deliverable builders
