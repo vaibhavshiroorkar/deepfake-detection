@@ -55,6 +55,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--weights", type=Path, default=Path("models/avhubert/base_vox_iter5.pt"))
     parser.add_argument("--landmarker", type=Path, default=Path("models/mediapipe/face_landmarker.task"))
     parser.add_argument("--eye-px", type=float, default=64.0)
+    parser.add_argument("--locator", type=Path, help="YuNet model for small faces (P-001 amendment A10)")
     parser.add_argument("--windows", type=int, default=3)
     parser.add_argument("--step", type=float, default=2.0, help="seconds between window starts")
     parser.add_argument("--workers", type=int, default=6)
@@ -111,7 +112,8 @@ def main(argv: list[str] | None = None) -> int:
         if not done:
             writer.writeheader()
         with Pool(arguments.workers, initializer=init_worker,
-                  initargs=(str(arguments.landmarker), arguments.eye_px)) as pool:
+                  initargs=(str(arguments.landmarker), arguments.eye_px,
+                            str(arguments.locator) if arguments.locator else None)) as pool:
             for count, ((clip_id, window_id, start), (face, crops, audio)) in enumerate(
                 zip(meta, pool.imap(prepare_window, jobs, chunksize=2), strict=True), start=1
             ):

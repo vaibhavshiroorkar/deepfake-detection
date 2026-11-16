@@ -135,11 +135,24 @@ def normalise_lips(crops: np.ndarray) -> np.ndarray:
     return (centre - LIP_MEAN) / LIP_STD
 
 
+LOCATE_SCALE = 2.2      # region side as a multiple of the face box side (A10)
+
+
+def locate_region(box: np.ndarray, width: int, height: int, scale: float = LOCATE_SCALE) -> tuple[int, int, int]:
+    """(x0, y0, side) of a square around a face box (x, y, w, h), kept inside the frame."""
+    x, y, w, h = (float(v) for v in box)
+    side = int(min(max(w, h) * scale, width, height))
+    x0 = int(min(max(0.0, x + w / 2 - side / 2), width - side))
+    y0 = int(min(max(0.0, y + h / 2 - side / 2), height - side))
+    return x0, y0, side
+
+
 class MouthCropper:
     """MediaPipe Face Landmarker in video mode, one instance per clip at a time."""
 
     def __init__(self, model: str | Path = DEFAULT_MODEL, *, eye_px: float = DEFAULT_EYE_PX,
-                 smooth: int = DEFAULT_SMOOTH) -> None:
+                 smooth: int = DEFAULT_SMOOTH, locator: str | Path | None = None,
+                 min_share: float = 0.8) -> None:
         from mediapipe.tasks.python import BaseOptions, vision
 
         self._vision = vision
@@ -150,8 +163,15 @@ class MouthCropper:
         )
         self.eye_px = eye_px
         self.smooth = smooth
+        # P-001 amendment A10: an optional YuNet locator for faces too small for the
+        # landmarker's own detector. Used only when the full frame finds too few faces.
+        self._locator = None
+        if locator is not None:
+            import cv2
+            self._locator = cv2.FaceDetectorYN.create(str(locator), "", (320, 320), 0.6)
+        self.min_share = min_share
 
-    def poses(self, frames: np.ndarray) -> list[Pose | None]:
+    def _landmark(self, frames: np.ndarray, offset: tuple[int, int] = (0, 0)) -> list[Pose | None]:
         import mediapipe as mp
 
         out: list[Pose | None] = []
@@ -164,8 +184,36 @@ class MouthCropper:
                     out.append(None)
                     continue
                 height, width = frame.shape[:2]
-                points = np.array([(p.x * width, p.y * height) for p in result.face_landmarks[0]])
+                points = np.array([(p.x * width + offset[0], p.y * height + offset[1])
+                                   for p in result.face_landmarks[0]])
                 out.append(pose_from_landmarks(points))
+        return out
+
+    def _locate(self, frames: np.ndarray) -> tuple[int, int, int] | None:
+        """A square region around the face, from YuNet on the first, middle and last frame."""
+        import cv2
+
+        boxes = []
+        for frame in (frames[0], frames[len(frames) // 2], frames[-1]):
+            height, width = frame.shape[:2]
+            self._locator.setInputSize((width, height))
+            _, faces = self._locator.detect(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+            if faces is not None and len(faces):
+                boxes.append(faces[np.argmax(faces[:, -1])][:4])
+        if not boxes:
+            return None
+        return locate_region(np.median(np.array(boxes), axis=0), frames.shape[2], frames.shape[1])
+
+    def poses(self, frames: np.ndarray) -> list[Pose | None]:
+        out = self._landmark(frames)
+        share = np.mean([p is not None for p in out])
+        if self._locator is not None and share < self.min_share:
+            region = self._locate(frames)
+            if region is not None:
+                x0, y0, side = region
+                located = self._landmark(frames[:, y0:y0 + side, x0:x0 + side], offset=(x0, y0))
+                if np.mean([p is not None for p in located]) > share:
+                    out = located
         return smooth_poses(out, self.smooth)
 
     def lips(self, frames: np.ndarray) -> tuple[np.ndarray, np.ndarray]:

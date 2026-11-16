@@ -18,9 +18,15 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from deepfake_detection.streams.avhubert import AVHubert
-from deepfake_detection.avsync.mouth import FPS, MouthCropper, crop_mouth, normalise_lips, read_window
+from deepfake_detection.avsync.mouth import (
+    FPS,
+    MouthCropper,
+    crop_mouth,
+    normalise_lips,
+    read_window,
+)
 from deepfake_detection.avsync.sync import model_inputs
+from deepfake_detection.streams.avhubert import AVHubert
 
 WINDOW_S = 2.0
 FRAMES = round(WINDOW_S * FPS)
@@ -28,9 +34,9 @@ FRAMES = round(WINDOW_S * FPS)
 _cropper: MouthCropper | None = None
 
 
-def init_worker(landmarker: str | Path, eye_px: float) -> None:
+def init_worker(landmarker: str | Path, eye_px: float, locator: str | Path | None = None) -> None:
     global _cropper
-    _cropper = MouthCropper(landmarker, eye_px=eye_px)
+    _cropper = MouthCropper(landmarker, eye_px=eye_px, locator=locator)
 
 
 def prepare_window(job: tuple[str, float]) -> tuple[float | str, np.ndarray | None, np.ndarray | None]:

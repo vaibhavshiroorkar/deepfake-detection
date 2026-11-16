@@ -1085,6 +1085,14 @@ uncommitted working tree unless marked open.
 - **Fix:** Amendment A9. A neutral LAV-DF clip is labelled by its kept window: fake if the window overlaps manipulated time by at least one frame (`scripts/lavdf_window_labels.py`, with tests). H2 uses the window label. The sync path and H4 are reported under both labels. Other corpora manipulate whole clips and are unaffected. A check that the kept window covers the label should have been part of A3.
 - **Source:** P-001 amendment A9; `data/manifests/lavdf-test-window.json`.
 
+#### 69. The face finder missed small faces on DFDC
+
+- **What went wrong:** The mouth cropper ran MediaPipe's Face Landmarker on full frames. Its detector expects a face that fills much of the frame, as in FakeAVCeleb's 224x224 clips. On 1920x1080 DFDC frames with 100 to 150 pixel faces it found no face in 65% of windows, so the sync path scored 921 of 3,032 DFDC clips and only 67 real ones.
+- **How it was caught:** The DFDC scoring log on 2026-11-16 said "scored 921 of 3032", and H4 refused DFDC with 67 real clips. A check of 60 clips showed landscape clips failing more than portrait ones, which pointed at face size. Locating the face with YuNet first found it in all 10 sample windows tried.
+- **What it cost:** The DFDC sync result was read before the fix, so the correction is disclosed (amendment A10). About two hours of re-extraction on the three targets.
+- **Fix:** A YuNet locator runs only when the landmarker finds a face in fewer than 80% of a window's frames. The landmarker then runs on a crop around the face and the points are mapped back. Windows that already passed are copied unchanged, and the no-locator path still reproduces cached FakeAVCeleb windows. Tests cover the crop region.
+- **Source:** P-001 amendment A10; `src/deepfake_detection/avsync/mouth.py`; `runs/p001-a10.sh`.
+
 ## 7. What a hard reviewer would say
 
 These are the strongest objections we expect, with our current answer. "Open" means we have no answer yet and the paper must not pretend otherwise.
