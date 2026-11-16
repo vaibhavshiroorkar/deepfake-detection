@@ -1,4 +1,412 @@
 {
+ "audio.dfdc.seed17.n": {
+  "value": 3032,
+  "source": "results/p001-branches/audio-seed17-dfdc-metrics.json"
+ },
+ "audio.dfdc.seed17.scored": {
+  "value": 3032,
+  "source": "results/p001-branches/audio-seed17-dfdc-metrics.json"
+ },
+ "audio.dfdc.seed17.single_class": {
+  "value": "yes",
+  "source": "results/p001-branches/audio-seed17-dfdc-metrics.json"
+ },
+ "audio.dfdc.seed29.n": {
+  "value": 3032,
+  "source": "results/p001-branches/audio-seed29-dfdc-metrics.json"
+ },
+ "audio.dfdc.seed29.scored": {
+  "value": 3032,
+  "source": "results/p001-branches/audio-seed29-dfdc-metrics.json"
+ },
+ "audio.dfdc.seed29.single_class": {
+  "value": "yes",
+  "source": "results/p001-branches/audio-seed29-dfdc-metrics.json"
+ },
+ "audio.dfdc.seed43.n": {
+  "value": 3032,
+  "source": "results/p001-branches/audio-seed43-dfdc-metrics.json"
+ },
+ "audio.dfdc.seed43.scored": {
+  "value": 3032,
+  "source": "results/p001-branches/audio-seed43-dfdc-metrics.json"
+ },
+ "audio.dfdc.seed43.single_class": {
+  "value": "yes",
+  "source": "results/p001-branches/audio-seed43-dfdc-metrics.json"
+ },
+ "audio.lavdf-test.seed17.auc": {
+  "value": 0.653,
+  "source": "results/p001-branches/audio-seed17-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed17.auc_high": {
+  "value": 0.671,
+  "source": "results/p001-branches/audio-seed17-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed17.auc_low": {
+  "value": 0.638,
+  "source": "results/p001-branches/audio-seed17-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed17.balanced_accuracy": {
+  "value": 0.526,
+  "source": "results/p001-branches/audio-seed17-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed17.fpr": {
+  "value": 0.007,
+  "source": "results/p001-branches/audio-seed17-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed17.method.lavdf-FakeVideo-FakeAudio": {
+  "value": 0.655,
+  "source": "results/p001-branches/audio-seed17-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed17.method.lavdf-RealVideo-FakeAudio": {
+  "value": 0.651,
+  "source": "results/p001-branches/audio-seed17-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed17.n": {
+  "value": 3823,
+  "source": "results/p001-branches/audio-seed17-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed17.scored": {
+  "value": 3823,
+  "source": "results/p001-branches/audio-seed17-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed29.auc": {
+  "value": 0.576,
+  "source": "results/p001-branches/audio-seed29-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed29.auc_high": {
+  "value": 0.586,
+  "source": "results/p001-branches/audio-seed29-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed29.auc_low": {
+  "value": 0.566,
+  "source": "results/p001-branches/audio-seed29-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed29.balanced_accuracy": {
+  "value": 0.54,
+  "source": "results/p001-branches/audio-seed29-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed29.fpr": {
+  "value": 0.202,
+  "source": "results/p001-branches/audio-seed29-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed29.method.lavdf-FakeVideo-FakeAudio": {
+  "value": 0.578,
+  "source": "results/p001-branches/audio-seed29-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed29.method.lavdf-RealVideo-FakeAudio": {
+  "value": 0.574,
+  "source": "results/p001-branches/audio-seed29-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed29.n": {
+  "value": 3823,
+  "source": "results/p001-branches/audio-seed29-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed29.scored": {
+  "value": 3823,
+  "source": "results/p001-branches/audio-seed29-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed43.auc": {
+  "value": 0.648,
+  "source": "results/p001-branches/audio-seed43-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed43.auc_high": {
+  "value": 0.662,
+  "source": "results/p001-branches/audio-seed43-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed43.auc_low": {
+  "value": 0.634,
+  "source": "results/p001-branches/audio-seed43-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed43.balanced_accuracy": {
+  "value": 0.523,
+  "source": "results/p001-branches/audio-seed43-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed43.fpr": {
+  "value": 0.003,
+  "source": "results/p001-branches/audio-seed43-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed43.method.lavdf-FakeVideo-FakeAudio": {
+  "value": 0.649,
+  "source": "results/p001-branches/audio-seed43-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed43.method.lavdf-RealVideo-FakeAudio": {
+  "value": 0.647,
+  "source": "results/p001-branches/audio-seed43-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed43.n": {
+  "value": 3823,
+  "source": "results/p001-branches/audio-seed43-lavdf-test-metrics.json"
+ },
+ "audio.lavdf-test.seed43.scored": {
+  "value": 3823,
+  "source": "results/p001-branches/audio-seed43-lavdf-test-metrics.json"
+ },
+ "audio.test-identity-strict.seed17.auc": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed17-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed17.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed17-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed17.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed17-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed17.balanced_accuracy": {
+  "value": 0.997,
+  "source": "results/p001-branches/audio-seed17-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed17.fpr": {
+  "value": 0.006,
+  "source": "results/p001-branches/audio-seed17-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed17.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed17-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed17.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed17-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed17.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed17-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed17.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed17-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed17.n": {
+  "value": 495,
+  "source": "results/p001-branches/audio-seed17-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed17.scored": {
+  "value": 495,
+  "source": "results/p001-branches/audio-seed17-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed29.auc": {
+  "value": 0.952,
+  "source": "results/p001-branches/audio-seed29-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed29.auc_high": {
+  "value": 0.971,
+  "source": "results/p001-branches/audio-seed29-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed29.auc_low": {
+  "value": 0.931,
+  "source": "results/p001-branches/audio-seed29-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed29.balanced_accuracy": {
+  "value": 0.869,
+  "source": "results/p001-branches/audio-seed29-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed29.fpr": {
+  "value": 0.145,
+  "source": "results/p001-branches/audio-seed29-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed29.method.faceswap-wav2lip": {
+  "value": 0.999,
+  "source": "results/p001-branches/audio-seed29-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed29.method.fsgan-wav2lip": {
+  "value": 0.918,
+  "source": "results/p001-branches/audio-seed29-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed29.method.rtvc": {
+  "value": 0.954,
+  "source": "results/p001-branches/audio-seed29-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed29.method.wav2lip": {
+  "value": 0.951,
+  "source": "results/p001-branches/audio-seed29-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed29.n": {
+  "value": 495,
+  "source": "results/p001-branches/audio-seed29-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed29.scored": {
+  "value": 495,
+  "source": "results/p001-branches/audio-seed29-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed43.auc": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed43-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed43.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed43-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed43.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed43-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed43.balanced_accuracy": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed43-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed43.fpr": {
+  "value": 0.0,
+  "source": "results/p001-branches/audio-seed43-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed43.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed43-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed43.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed43-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed43.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed43-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed43.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed43-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed43.n": {
+  "value": 495,
+  "source": "results/p001-branches/audio-seed43-test-identity-strict-metrics.json"
+ },
+ "audio.test-identity-strict.seed43.scored": {
+  "value": 495,
+  "source": "results/p001-branches/audio-seed43-test-identity-strict-metrics.json"
+ },
+ "audio.test.seed17.auc": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed17-test-metrics.json"
+ },
+ "audio.test.seed17.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed17-test-metrics.json"
+ },
+ "audio.test.seed17.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed17-test-metrics.json"
+ },
+ "audio.test.seed17.balanced_accuracy": {
+  "value": 0.998,
+  "source": "results/p001-branches/audio-seed17-test-metrics.json"
+ },
+ "audio.test.seed17.fpr": {
+  "value": 0.003,
+  "source": "results/p001-branches/audio-seed17-test-metrics.json"
+ },
+ "audio.test.seed17.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed17-test-metrics.json"
+ },
+ "audio.test.seed17.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed17-test-metrics.json"
+ },
+ "audio.test.seed17.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed17-test-metrics.json"
+ },
+ "audio.test.seed17.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed17-test-metrics.json"
+ },
+ "audio.test.seed17.n": {
+  "value": 2993,
+  "source": "results/p001-branches/audio-seed17-test-metrics.json"
+ },
+ "audio.test.seed17.scored": {
+  "value": 2993,
+  "source": "results/p001-branches/audio-seed17-test-metrics.json"
+ },
+ "audio.test.seed29.auc": {
+  "value": 0.964,
+  "source": "results/p001-branches/audio-seed29-test-metrics.json"
+ },
+ "audio.test.seed29.auc_high": {
+  "value": 0.973,
+  "source": "results/p001-branches/audio-seed29-test-metrics.json"
+ },
+ "audio.test.seed29.auc_low": {
+  "value": 0.954,
+  "source": "results/p001-branches/audio-seed29-test-metrics.json"
+ },
+ "audio.test.seed29.balanced_accuracy": {
+  "value": 0.896,
+  "source": "results/p001-branches/audio-seed29-test-metrics.json"
+ },
+ "audio.test.seed29.fpr": {
+  "value": 0.139,
+  "source": "results/p001-branches/audio-seed29-test-metrics.json"
+ },
+ "audio.test.seed29.method.faceswap-wav2lip": {
+  "value": 0.964,
+  "source": "results/p001-branches/audio-seed29-test-metrics.json"
+ },
+ "audio.test.seed29.method.fsgan-wav2lip": {
+  "value": 0.968,
+  "source": "results/p001-branches/audio-seed29-test-metrics.json"
+ },
+ "audio.test.seed29.method.rtvc": {
+  "value": 0.948,
+  "source": "results/p001-branches/audio-seed29-test-metrics.json"
+ },
+ "audio.test.seed29.method.wav2lip": {
+  "value": 0.963,
+  "source": "results/p001-branches/audio-seed29-test-metrics.json"
+ },
+ "audio.test.seed29.n": {
+  "value": 2993,
+  "source": "results/p001-branches/audio-seed29-test-metrics.json"
+ },
+ "audio.test.seed29.scored": {
+  "value": 2993,
+  "source": "results/p001-branches/audio-seed29-test-metrics.json"
+ },
+ "audio.test.seed43.auc": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed43-test-metrics.json"
+ },
+ "audio.test.seed43.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed43-test-metrics.json"
+ },
+ "audio.test.seed43.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed43-test-metrics.json"
+ },
+ "audio.test.seed43.balanced_accuracy": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed43-test-metrics.json"
+ },
+ "audio.test.seed43.fpr": {
+  "value": 0.0,
+  "source": "results/p001-branches/audio-seed43-test-metrics.json"
+ },
+ "audio.test.seed43.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed43-test-metrics.json"
+ },
+ "audio.test.seed43.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed43-test-metrics.json"
+ },
+ "audio.test.seed43.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed43-test-metrics.json"
+ },
+ "audio.test.seed43.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-branches/audio-seed43-test-metrics.json"
+ },
+ "audio.test.seed43.n": {
+  "value": 2993,
+  "source": "results/p001-branches/audio-seed43-test-metrics.json"
+ },
+ "audio.test.seed43.scored": {
+  "value": 2993,
+  "source": "results/p001-branches/audio-seed43-test-metrics.json"
+ },
  "audit.dfdc.neutral.census.FakeVideo-RealAudio.audio_codec.aac": {
   "value": 2838,
   "source": "results/shortcut-audit/dfdc-neutral/summary.json"
@@ -2643,6 +3051,638 @@
   "value": 0.547,
   "source": "results/shortcut-audit/lavdf-window-neutral/summary.json"
  },
+ "h2.dfdc.auc.audio.max": {
+  "value": 0.547,
+  "source": "results/p001-h2/fusion-dfdc-seed*-predictions.csv"
+ },
+ "h2.dfdc.auc.audio.min": {
+  "value": 0.513,
+  "source": "results/p001-h2/fusion-dfdc-seed*-predictions.csv"
+ },
+ "h2.dfdc.auc.fusion.max": {
+  "value": 0.723,
+  "source": "results/p001-h2/fusion-dfdc-seed*-predictions.csv"
+ },
+ "h2.dfdc.auc.fusion.min": {
+  "value": 0.687,
+  "source": "results/p001-h2/fusion-dfdc-seed*-predictions.csv"
+ },
+ "h2.dfdc.auc.sync.max": {
+  "value": 0.579,
+  "source": "results/p001-h2/fusion-dfdc-seed*-predictions.csv"
+ },
+ "h2.dfdc.auc.sync.min": {
+  "value": 0.557,
+  "source": "results/p001-h2/fusion-dfdc-seed*-predictions.csv"
+ },
+ "h2.dfdc.auc.visual.max": {
+  "value": 0.729,
+  "source": "results/p001-h2/fusion-dfdc-seed*-predictions.csv"
+ },
+ "h2.dfdc.auc.visual.min": {
+  "value": 0.679,
+  "source": "results/p001-h2/fusion-dfdc-seed*-predictions.csv"
+ },
+ "h2.dfdc.clips": {
+  "value": 2786,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.dfdc.estimate": {
+  "value": 0.003,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.dfdc.holm": {
+  "value": "no",
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.dfdc.identities": {
+  "value": 180,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.dfdc.lower": {
+  "value": -0.008,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.dfdc.p": {
+  "value": 0.305,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.dfdc.seed17": {
+  "value": -0.007,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.dfdc.seed17.auc.audio": {
+  "value": 0.513,
+  "source": "results/p001-h2/fusion-dfdc-seed17-predictions.csv"
+ },
+ "h2.dfdc.seed17.auc.fusion": {
+  "value": 0.723,
+  "source": "results/p001-h2/fusion-dfdc-seed17-predictions.csv"
+ },
+ "h2.dfdc.seed17.auc.sync": {
+  "value": 0.557,
+  "source": "results/p001-h2/fusion-dfdc-seed17-predictions.csv"
+ },
+ "h2.dfdc.seed17.auc.visual": {
+  "value": 0.729,
+  "source": "results/p001-h2/fusion-dfdc-seed17-predictions.csv"
+ },
+ "h2.dfdc.seed29": {
+  "value": 0.008,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.dfdc.seed29.auc.audio": {
+  "value": 0.547,
+  "source": "results/p001-h2/fusion-dfdc-seed29-predictions.csv"
+ },
+ "h2.dfdc.seed29.auc.fusion": {
+  "value": 0.687,
+  "source": "results/p001-h2/fusion-dfdc-seed29-predictions.csv"
+ },
+ "h2.dfdc.seed29.auc.sync": {
+  "value": 0.579,
+  "source": "results/p001-h2/fusion-dfdc-seed29-predictions.csv"
+ },
+ "h2.dfdc.seed29.auc.visual": {
+  "value": 0.679,
+  "source": "results/p001-h2/fusion-dfdc-seed29-predictions.csv"
+ },
+ "h2.dfdc.seed43": {
+  "value": 0.008,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.dfdc.seed43.auc.audio": {
+  "value": 0.535,
+  "source": "results/p001-h2/fusion-dfdc-seed43-predictions.csv"
+ },
+ "h2.dfdc.seed43.auc.fusion": {
+  "value": 0.707,
+  "source": "results/p001-h2/fusion-dfdc-seed43-predictions.csv"
+ },
+ "h2.dfdc.seed43.auc.sync": {
+  "value": 0.57,
+  "source": "results/p001-h2/fusion-dfdc-seed43-predictions.csv"
+ },
+ "h2.dfdc.seed43.auc.visual": {
+  "value": 0.699,
+  "source": "results/p001-h2/fusion-dfdc-seed43-predictions.csv"
+ },
+ "h2.dfdc.upper": {
+  "value": 0.013,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-test.auc.audio.max": {
+  "value": 0.688,
+  "source": "results/p001-h2/fusion-lavdf-test-seed*-predictions.csv"
+ },
+ "h2.lavdf-test.auc.audio.min": {
+  "value": 0.581,
+  "source": "results/p001-h2/fusion-lavdf-test-seed*-predictions.csv"
+ },
+ "h2.lavdf-test.auc.fusion.max": {
+  "value": 0.392,
+  "source": "results/p001-h2/fusion-lavdf-test-seed*-predictions.csv"
+ },
+ "h2.lavdf-test.auc.fusion.min": {
+  "value": 0.319,
+  "source": "results/p001-h2/fusion-lavdf-test-seed*-predictions.csv"
+ },
+ "h2.lavdf-test.auc.sync.max": {
+  "value": 0.622,
+  "source": "results/p001-h2/fusion-lavdf-test-seed*-predictions.csv"
+ },
+ "h2.lavdf-test.auc.sync.min": {
+  "value": 0.598,
+  "source": "results/p001-h2/fusion-lavdf-test-seed*-predictions.csv"
+ },
+ "h2.lavdf-test.auc.visual.max": {
+  "value": 0.257,
+  "source": "results/p001-h2/fusion-lavdf-test-seed*-predictions.csv"
+ },
+ "h2.lavdf-test.auc.visual.min": {
+  "value": 0.185,
+  "source": "results/p001-h2/fusion-lavdf-test-seed*-predictions.csv"
+ },
+ "h2.lavdf-test.clips": {
+  "value": 3686,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-test.estimate": {
+  "value": 0.123,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-test.identities": {
+  "value": 968,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-test.lower": {
+  "value": 0.113,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-test.p": {
+  "value": 0.0,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-test.seed17": {
+  "value": 0.133,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-test.seed17.auc.audio": {
+  "value": 0.659,
+  "source": "results/p001-h2/fusion-lavdf-test-seed17-predictions.csv"
+ },
+ "h2.lavdf-test.seed17.auc.fusion": {
+  "value": 0.319,
+  "source": "results/p001-h2/fusion-lavdf-test-seed17-predictions.csv"
+ },
+ "h2.lavdf-test.seed17.auc.sync": {
+  "value": 0.598,
+  "source": "results/p001-h2/fusion-lavdf-test-seed17-predictions.csv"
+ },
+ "h2.lavdf-test.seed17.auc.visual": {
+  "value": 0.185,
+  "source": "results/p001-h2/fusion-lavdf-test-seed17-predictions.csv"
+ },
+ "h2.lavdf-test.seed29": {
+  "value": 0.091,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-test.seed29.auc.audio": {
+  "value": 0.581,
+  "source": "results/p001-h2/fusion-lavdf-test-seed29-predictions.csv"
+ },
+ "h2.lavdf-test.seed29.auc.fusion": {
+  "value": 0.348,
+  "source": "results/p001-h2/fusion-lavdf-test-seed29-predictions.csv"
+ },
+ "h2.lavdf-test.seed29.auc.sync": {
+  "value": 0.622,
+  "source": "results/p001-h2/fusion-lavdf-test-seed29-predictions.csv"
+ },
+ "h2.lavdf-test.seed29.auc.visual": {
+  "value": 0.257,
+  "source": "results/p001-h2/fusion-lavdf-test-seed29-predictions.csv"
+ },
+ "h2.lavdf-test.seed43": {
+  "value": 0.145,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-test.seed43.auc.audio": {
+  "value": 0.688,
+  "source": "results/p001-h2/fusion-lavdf-test-seed43-predictions.csv"
+ },
+ "h2.lavdf-test.seed43.auc.fusion": {
+  "value": 0.392,
+  "source": "results/p001-h2/fusion-lavdf-test-seed43-predictions.csv"
+ },
+ "h2.lavdf-test.seed43.auc.sync": {
+  "value": 0.622,
+  "source": "results/p001-h2/fusion-lavdf-test-seed43-predictions.csv"
+ },
+ "h2.lavdf-test.seed43.auc.visual": {
+  "value": 0.247,
+  "source": "results/p001-h2/fusion-lavdf-test-seed43-predictions.csv"
+ },
+ "h2.lavdf-test.upper": {
+  "value": 0.133,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-window.auc.audio.max": {
+  "value": 0.848,
+  "source": "results/p001-h2/fusion-lavdf-window-seed*-predictions.csv"
+ },
+ "h2.lavdf-window.auc.audio.min": {
+  "value": 0.632,
+  "source": "results/p001-h2/fusion-lavdf-window-seed*-predictions.csv"
+ },
+ "h2.lavdf-window.auc.fusion.max": {
+  "value": 0.622,
+  "source": "results/p001-h2/fusion-lavdf-window-seed*-predictions.csv"
+ },
+ "h2.lavdf-window.auc.fusion.min": {
+  "value": 0.503,
+  "source": "results/p001-h2/fusion-lavdf-window-seed*-predictions.csv"
+ },
+ "h2.lavdf-window.auc.sync.max": {
+  "value": 0.658,
+  "source": "results/p001-h2/fusion-lavdf-window-seed*-predictions.csv"
+ },
+ "h2.lavdf-window.auc.sync.min": {
+  "value": 0.635,
+  "source": "results/p001-h2/fusion-lavdf-window-seed*-predictions.csv"
+ },
+ "h2.lavdf-window.auc.visual.max": {
+  "value": 0.41,
+  "source": "results/p001-h2/fusion-lavdf-window-seed*-predictions.csv"
+ },
+ "h2.lavdf-window.auc.visual.min": {
+  "value": 0.369,
+  "source": "results/p001-h2/fusion-lavdf-window-seed*-predictions.csv"
+ },
+ "h2.lavdf-window.clips": {
+  "value": 3686,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-window.estimate": {
+  "value": 0.17,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-window.holm": {
+  "value": "yes",
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-window.identities": {
+  "value": 968,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-window.lower": {
+  "value": 0.156,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-window.p": {
+  "value": 0.0,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-window.seed17": {
+  "value": 0.205,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-window.seed17.auc.audio": {
+  "value": 0.807,
+  "source": "results/p001-h2/fusion-lavdf-window-seed17-predictions.csv"
+ },
+ "h2.lavdf-window.seed17.auc.fusion": {
+  "value": 0.574,
+  "source": "results/p001-h2/fusion-lavdf-window-seed17-predictions.csv"
+ },
+ "h2.lavdf-window.seed17.auc.sync": {
+  "value": 0.635,
+  "source": "results/p001-h2/fusion-lavdf-window-seed17-predictions.csv"
+ },
+ "h2.lavdf-window.seed17.auc.visual": {
+  "value": 0.369,
+  "source": "results/p001-h2/fusion-lavdf-window-seed17-predictions.csv"
+ },
+ "h2.lavdf-window.seed29": {
+  "value": 0.094,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-window.seed29.auc.audio": {
+  "value": 0.632,
+  "source": "results/p001-h2/fusion-lavdf-window-seed29-predictions.csv"
+ },
+ "h2.lavdf-window.seed29.auc.fusion": {
+  "value": 0.503,
+  "source": "results/p001-h2/fusion-lavdf-window-seed29-predictions.csv"
+ },
+ "h2.lavdf-window.seed29.auc.sync": {
+  "value": 0.658,
+  "source": "results/p001-h2/fusion-lavdf-window-seed29-predictions.csv"
+ },
+ "h2.lavdf-window.seed29.auc.visual": {
+  "value": 0.409,
+  "source": "results/p001-h2/fusion-lavdf-window-seed29-predictions.csv"
+ },
+ "h2.lavdf-window.seed43": {
+  "value": 0.212,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.lavdf-window.seed43.auc.audio": {
+  "value": 0.848,
+  "source": "results/p001-h2/fusion-lavdf-window-seed43-predictions.csv"
+ },
+ "h2.lavdf-window.seed43.auc.fusion": {
+  "value": 0.622,
+  "source": "results/p001-h2/fusion-lavdf-window-seed43-predictions.csv"
+ },
+ "h2.lavdf-window.seed43.auc.sync": {
+  "value": 0.655,
+  "source": "results/p001-h2/fusion-lavdf-window-seed43-predictions.csv"
+ },
+ "h2.lavdf-window.seed43.auc.visual": {
+  "value": 0.41,
+  "source": "results/p001-h2/fusion-lavdf-window-seed43-predictions.csv"
+ },
+ "h2.lavdf-window.upper": {
+  "value": 0.183,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.success": {
+  "value": "yes",
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test-identity-strict.auc.audio.max": {
+  "value": 0.708,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed*-predictions.csv"
+ },
+ "h2.test-identity-strict.auc.audio.min": {
+  "value": 0.703,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed*-predictions.csv"
+ },
+ "h2.test-identity-strict.auc.fusion.max": {
+  "value": 0.992,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed*-predictions.csv"
+ },
+ "h2.test-identity-strict.auc.fusion.min": {
+  "value": 0.979,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed*-predictions.csv"
+ },
+ "h2.test-identity-strict.auc.sync.max": {
+  "value": 0.81,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed*-predictions.csv"
+ },
+ "h2.test-identity-strict.auc.sync.min": {
+  "value": 0.78,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed*-predictions.csv"
+ },
+ "h2.test-identity-strict.auc.visual.max": {
+  "value": 0.9,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed*-predictions.csv"
+ },
+ "h2.test-identity-strict.auc.visual.min": {
+  "value": 0.898,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed*-predictions.csv"
+ },
+ "h2.test-identity-strict.clips": {
+  "value": 495,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test-identity-strict.estimate": {
+  "value": 0.088,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test-identity-strict.holm": {
+  "value": "yes",
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test-identity-strict.identities": {
+  "value": 75,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test-identity-strict.lower": {
+  "value": 0.078,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test-identity-strict.p": {
+  "value": 0.0,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test-identity-strict.seed17": {
+  "value": 0.093,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test-identity-strict.seed17.auc.audio": {
+  "value": 0.704,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed17-predictions.csv"
+ },
+ "h2.test-identity-strict.seed17.auc.fusion": {
+  "value": 0.99,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed17-predictions.csv"
+ },
+ "h2.test-identity-strict.seed17.auc.sync": {
+  "value": 0.78,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed17-predictions.csv"
+ },
+ "h2.test-identity-strict.seed17.auc.visual": {
+  "value": 0.898,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed17-predictions.csv"
+ },
+ "h2.test-identity-strict.seed29": {
+  "value": 0.08,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test-identity-strict.seed29.auc.audio": {
+  "value": 0.703,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed29-predictions.csv"
+ },
+ "h2.test-identity-strict.seed29.auc.fusion": {
+  "value": 0.979,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed29-predictions.csv"
+ },
+ "h2.test-identity-strict.seed29.auc.sync": {
+  "value": 0.809,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed29-predictions.csv"
+ },
+ "h2.test-identity-strict.seed29.auc.visual": {
+  "value": 0.899,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed29-predictions.csv"
+ },
+ "h2.test-identity-strict.seed43": {
+  "value": 0.092,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test-identity-strict.seed43.auc.audio": {
+  "value": 0.708,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed43-predictions.csv"
+ },
+ "h2.test-identity-strict.seed43.auc.fusion": {
+  "value": 0.992,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed43-predictions.csv"
+ },
+ "h2.test-identity-strict.seed43.auc.sync": {
+  "value": 0.81,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed43-predictions.csv"
+ },
+ "h2.test-identity-strict.seed43.auc.visual": {
+  "value": 0.9,
+  "source": "results/p001-h2/fusion-test-identity-strict-seed43-predictions.csv"
+ },
+ "h2.test-identity-strict.upper": {
+  "value": 0.1,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test.auc.audio.max": {
+  "value": 0.763,
+  "source": "results/p001-h2/fusion-test-seed*-predictions.csv"
+ },
+ "h2.test.auc.audio.min": {
+  "value": 0.755,
+  "source": "results/p001-h2/fusion-test-seed*-predictions.csv"
+ },
+ "h2.test.auc.fusion.max": {
+  "value": 0.997,
+  "source": "results/p001-h2/fusion-test-seed*-predictions.csv"
+ },
+ "h2.test.auc.fusion.min": {
+  "value": 0.996,
+  "source": "results/p001-h2/fusion-test-seed*-predictions.csv"
+ },
+ "h2.test.auc.sync.max": {
+  "value": 0.809,
+  "source": "results/p001-h2/fusion-test-seed*-predictions.csv"
+ },
+ "h2.test.auc.sync.min": {
+  "value": 0.775,
+  "source": "results/p001-h2/fusion-test-seed*-predictions.csv"
+ },
+ "h2.test.auc.visual.max": {
+  "value": 0.984,
+  "source": "results/p001-h2/fusion-test-seed*-predictions.csv"
+ },
+ "h2.test.auc.visual.min": {
+  "value": 0.983,
+  "source": "results/p001-h2/fusion-test-seed*-predictions.csv"
+ },
+ "h2.test.clips": {
+  "value": 2993,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test.estimate": {
+  "value": 0.013,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test.identities": {
+  "value": 75,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test.lower": {
+  "value": 0.011,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test.p": {
+  "value": 0.0,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test.seed17": {
+  "value": 0.014,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test.seed17.auc.audio": {
+  "value": 0.755,
+  "source": "results/p001-h2/fusion-test-seed17-predictions.csv"
+ },
+ "h2.test.seed17.auc.fusion": {
+  "value": 0.997,
+  "source": "results/p001-h2/fusion-test-seed17-predictions.csv"
+ },
+ "h2.test.seed17.auc.sync": {
+  "value": 0.775,
+  "source": "results/p001-h2/fusion-test-seed17-predictions.csv"
+ },
+ "h2.test.seed17.auc.visual": {
+  "value": 0.984,
+  "source": "results/p001-h2/fusion-test-seed17-predictions.csv"
+ },
+ "h2.test.seed29": {
+  "value": 0.013,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test.seed29.auc.audio": {
+  "value": 0.757,
+  "source": "results/p001-h2/fusion-test-seed29-predictions.csv"
+ },
+ "h2.test.seed29.auc.fusion": {
+  "value": 0.996,
+  "source": "results/p001-h2/fusion-test-seed29-predictions.csv"
+ },
+ "h2.test.seed29.auc.sync": {
+  "value": 0.809,
+  "source": "results/p001-h2/fusion-test-seed29-predictions.csv"
+ },
+ "h2.test.seed29.auc.visual": {
+  "value": 0.983,
+  "source": "results/p001-h2/fusion-test-seed29-predictions.csv"
+ },
+ "h2.test.seed43": {
+  "value": 0.014,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.test.seed43.auc.audio": {
+  "value": 0.763,
+  "source": "results/p001-h2/fusion-test-seed43-predictions.csv"
+ },
+ "h2.test.seed43.auc.fusion": {
+  "value": 0.997,
+  "source": "results/p001-h2/fusion-test-seed43-predictions.csv"
+ },
+ "h2.test.seed43.auc.sync": {
+  "value": 0.806,
+  "source": "results/p001-h2/fusion-test-seed43-predictions.csv"
+ },
+ "h2.test.seed43.auc.visual": {
+  "value": 0.984,
+  "source": "results/p001-h2/fusion-test-seed43-predictions.csv"
+ },
+ "h2.test.upper": {
+  "value": 0.016,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.weights.seed17.audio": {
+  "value": 6.189,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.weights.seed17.sync": {
+  "value": -0.356,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.weights.seed17.visual": {
+  "value": 3.27,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.weights.seed29.audio": {
+  "value": 0.476,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.weights.seed29.sync": {
+  "value": 1.056,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.weights.seed29.visual": {
+  "value": 2.509,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.weights.seed43.audio": {
+  "value": 2.62,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.weights.seed43.sync": {
+  "value": 0.497,
+  "source": "results/p001-h2/h2.json"
+ },
+ "h2.weights.seed43.visual": {
+  "value": 2.467,
+  "source": "results/p001-h2/h2.json"
+ },
  "h4.hifiavdf-seed17.conformal_real_only.fpr": {
   "value": 0.057,
   "source": "results/p001-h4/sync-hifiavdf-seed17.json"
@@ -3894,5 +4934,497 @@
  "sync.val.seed43.scored": {
   "value": 3104,
   "source": "results/p001-sync/sync-val-seed43-metrics.json"
+ },
+ "visual.dfdc.seed17.auc": {
+  "value": 0.726,
+  "source": "results/p001-branches/visual-seed17-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed17.auc_high": {
+  "value": 0.758,
+  "source": "results/p001-branches/visual-seed17-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed17.auc_low": {
+  "value": 0.693,
+  "source": "results/p001-branches/visual-seed17-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed17.balanced_accuracy": {
+  "value": 0.554,
+  "source": "results/p001-branches/visual-seed17-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed17.fpr": {
+  "value": 0.0,
+  "source": "results/p001-branches/visual-seed17-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed17.method.dfdc-swap": {
+  "value": 0.726,
+  "source": "results/p001-branches/visual-seed17-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed17.n": {
+  "value": 2858,
+  "source": "results/p001-branches/visual-seed17-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed17.scored": {
+  "value": 2858,
+  "source": "results/p001-branches/visual-seed17-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed29.auc": {
+  "value": 0.671,
+  "source": "results/p001-branches/visual-seed29-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed29.auc_high": {
+  "value": 0.708,
+  "source": "results/p001-branches/visual-seed29-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed29.auc_low": {
+  "value": 0.635,
+  "source": "results/p001-branches/visual-seed29-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed29.balanced_accuracy": {
+  "value": 0.555,
+  "source": "results/p001-branches/visual-seed29-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed29.fpr": {
+  "value": 0.044,
+  "source": "results/p001-branches/visual-seed29-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed29.method.dfdc-swap": {
+  "value": 0.671,
+  "source": "results/p001-branches/visual-seed29-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed29.n": {
+  "value": 2858,
+  "source": "results/p001-branches/visual-seed29-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed29.scored": {
+  "value": 2858,
+  "source": "results/p001-branches/visual-seed29-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed43.auc": {
+  "value": 0.693,
+  "source": "results/p001-branches/visual-seed43-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed43.auc_high": {
+  "value": 0.731,
+  "source": "results/p001-branches/visual-seed43-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed43.auc_low": {
+  "value": 0.654,
+  "source": "results/p001-branches/visual-seed43-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed43.balanced_accuracy": {
+  "value": 0.611,
+  "source": "results/p001-branches/visual-seed43-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed43.fpr": {
+  "value": 0.072,
+  "source": "results/p001-branches/visual-seed43-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed43.method.dfdc-swap": {
+  "value": 0.693,
+  "source": "results/p001-branches/visual-seed43-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed43.n": {
+  "value": 2858,
+  "source": "results/p001-branches/visual-seed43-dfdc-metrics.json"
+ },
+ "visual.dfdc.seed43.scored": {
+  "value": 2858,
+  "source": "results/p001-branches/visual-seed43-dfdc-metrics.json"
+ },
+ "visual.lavdf-test.seed17.auc": {
+  "value": 0.352,
+  "source": "results/p001-branches/visual-seed17-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed17.auc_high": {
+  "value": 0.362,
+  "source": "results/p001-branches/visual-seed17-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed17.auc_low": {
+  "value": 0.343,
+  "source": "results/p001-branches/visual-seed17-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed17.balanced_accuracy": {
+  "value": 0.385,
+  "source": "results/p001-branches/visual-seed17-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed17.fpr": {
+  "value": 0.447,
+  "source": "results/p001-branches/visual-seed17-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed17.method.lavdf-FakeVideo-FakeAudio": {
+  "value": 0.344,
+  "source": "results/p001-branches/visual-seed17-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed17.method.lavdf-FakeVideo-RealAudio": {
+  "value": 0.361,
+  "source": "results/p001-branches/visual-seed17-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed17.n": {
+  "value": 3815,
+  "source": "results/p001-branches/visual-seed17-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed17.scored": {
+  "value": 3815,
+  "source": "results/p001-branches/visual-seed17-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed29.auc": {
+  "value": 0.391,
+  "source": "results/p001-branches/visual-seed29-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed29.auc_high": {
+  "value": 0.399,
+  "source": "results/p001-branches/visual-seed29-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed29.auc_low": {
+  "value": 0.381,
+  "source": "results/p001-branches/visual-seed29-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed29.balanced_accuracy": {
+  "value": 0.42,
+  "source": "results/p001-branches/visual-seed29-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed29.fpr": {
+  "value": 0.598,
+  "source": "results/p001-branches/visual-seed29-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed29.method.lavdf-FakeVideo-FakeAudio": {
+  "value": 0.386,
+  "source": "results/p001-branches/visual-seed29-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed29.method.lavdf-FakeVideo-RealAudio": {
+  "value": 0.396,
+  "source": "results/p001-branches/visual-seed29-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed29.n": {
+  "value": 3815,
+  "source": "results/p001-branches/visual-seed29-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed29.scored": {
+  "value": 3815,
+  "source": "results/p001-branches/visual-seed29-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed43.auc": {
+  "value": 0.389,
+  "source": "results/p001-branches/visual-seed43-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed43.auc_high": {
+  "value": 0.399,
+  "source": "results/p001-branches/visual-seed43-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed43.auc_low": {
+  "value": 0.38,
+  "source": "results/p001-branches/visual-seed43-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed43.balanced_accuracy": {
+  "value": 0.432,
+  "source": "results/p001-branches/visual-seed43-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed43.fpr": {
+  "value": 0.65,
+  "source": "results/p001-branches/visual-seed43-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed43.method.lavdf-FakeVideo-FakeAudio": {
+  "value": 0.384,
+  "source": "results/p001-branches/visual-seed43-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed43.method.lavdf-FakeVideo-RealAudio": {
+  "value": 0.395,
+  "source": "results/p001-branches/visual-seed43-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed43.n": {
+  "value": 3815,
+  "source": "results/p001-branches/visual-seed43-lavdf-test-metrics.json"
+ },
+ "visual.lavdf-test.seed43.scored": {
+  "value": 3815,
+  "source": "results/p001-branches/visual-seed43-lavdf-test-metrics.json"
+ },
+ "visual.test-identity-strict.seed17.auc": {
+  "value": 0.989,
+  "source": "results/p001-branches/visual-seed17-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed17.auc_high": {
+  "value": 0.997,
+  "source": "results/p001-branches/visual-seed17-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed17.auc_low": {
+  "value": 0.979,
+  "source": "results/p001-branches/visual-seed17-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed17.balanced_accuracy": {
+  "value": 0.967,
+  "source": "results/p001-branches/visual-seed17-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed17.fpr": {
+  "value": 0.0,
+  "source": "results/p001-branches/visual-seed17-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed17.method.faceswap": {
+  "value": 0.95,
+  "source": "results/p001-branches/visual-seed17-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed17.method.faceswap-wav2lip": {
+  "value": 0.964,
+  "source": "results/p001-branches/visual-seed17-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed17.method.fsgan": {
+  "value": 0.999,
+  "source": "results/p001-branches/visual-seed17-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed17.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-branches/visual-seed17-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed17.method.wav2lip": {
+  "value": 0.996,
+  "source": "results/p001-branches/visual-seed17-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed17.n": {
+  "value": 495,
+  "source": "results/p001-branches/visual-seed17-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed17.scored": {
+  "value": 495,
+  "source": "results/p001-branches/visual-seed17-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed29.auc": {
+  "value": 0.988,
+  "source": "results/p001-branches/visual-seed29-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed29.auc_high": {
+  "value": 0.995,
+  "source": "results/p001-branches/visual-seed29-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed29.auc_low": {
+  "value": 0.979,
+  "source": "results/p001-branches/visual-seed29-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed29.balanced_accuracy": {
+  "value": 0.952,
+  "source": "results/p001-branches/visual-seed29-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed29.fpr": {
+  "value": 0.0,
+  "source": "results/p001-branches/visual-seed29-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed29.method.faceswap": {
+  "value": 0.94,
+  "source": "results/p001-branches/visual-seed29-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed29.method.faceswap-wav2lip": {
+  "value": 0.98,
+  "source": "results/p001-branches/visual-seed29-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed29.method.fsgan": {
+  "value": 0.997,
+  "source": "results/p001-branches/visual-seed29-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed29.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-branches/visual-seed29-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed29.method.wav2lip": {
+  "value": 0.996,
+  "source": "results/p001-branches/visual-seed29-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed29.n": {
+  "value": 495,
+  "source": "results/p001-branches/visual-seed29-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed29.scored": {
+  "value": 495,
+  "source": "results/p001-branches/visual-seed29-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed43.auc": {
+  "value": 0.99,
+  "source": "results/p001-branches/visual-seed43-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed43.auc_high": {
+  "value": 0.996,
+  "source": "results/p001-branches/visual-seed43-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed43.auc_low": {
+  "value": 0.982,
+  "source": "results/p001-branches/visual-seed43-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed43.balanced_accuracy": {
+  "value": 0.95,
+  "source": "results/p001-branches/visual-seed43-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed43.fpr": {
+  "value": 0.014,
+  "source": "results/p001-branches/visual-seed43-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed43.method.faceswap": {
+  "value": 0.952,
+  "source": "results/p001-branches/visual-seed43-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed43.method.faceswap-wav2lip": {
+  "value": 0.99,
+  "source": "results/p001-branches/visual-seed43-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed43.method.fsgan": {
+  "value": 0.998,
+  "source": "results/p001-branches/visual-seed43-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed43.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-branches/visual-seed43-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed43.method.wav2lip": {
+  "value": 0.995,
+  "source": "results/p001-branches/visual-seed43-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed43.n": {
+  "value": 495,
+  "source": "results/p001-branches/visual-seed43-test-identity-strict-metrics.json"
+ },
+ "visual.test-identity-strict.seed43.scored": {
+  "value": 495,
+  "source": "results/p001-branches/visual-seed43-test-identity-strict-metrics.json"
+ },
+ "visual.test.seed17.auc": {
+  "value": 0.997,
+  "source": "results/p001-branches/visual-seed17-test-metrics.json"
+ },
+ "visual.test.seed17.auc_high": {
+  "value": 0.999,
+  "source": "results/p001-branches/visual-seed17-test-metrics.json"
+ },
+ "visual.test.seed17.auc_low": {
+  "value": 0.993,
+  "source": "results/p001-branches/visual-seed17-test-metrics.json"
+ },
+ "visual.test.seed17.balanced_accuracy": {
+  "value": 0.986,
+  "source": "results/p001-branches/visual-seed17-test-metrics.json"
+ },
+ "visual.test.seed17.fpr": {
+  "value": 0.0,
+  "source": "results/p001-branches/visual-seed17-test-metrics.json"
+ },
+ "visual.test.seed17.method.faceswap": {
+  "value": 0.973,
+  "source": "results/p001-branches/visual-seed17-test-metrics.json"
+ },
+ "visual.test.seed17.method.faceswap-wav2lip": {
+  "value": 0.998,
+  "source": "results/p001-branches/visual-seed17-test-metrics.json"
+ },
+ "visual.test.seed17.method.fsgan": {
+  "value": 1.0,
+  "source": "results/p001-branches/visual-seed17-test-metrics.json"
+ },
+ "visual.test.seed17.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-branches/visual-seed17-test-metrics.json"
+ },
+ "visual.test.seed17.method.wav2lip": {
+  "value": 0.997,
+  "source": "results/p001-branches/visual-seed17-test-metrics.json"
+ },
+ "visual.test.seed17.n": {
+  "value": 2993,
+  "source": "results/p001-branches/visual-seed17-test-metrics.json"
+ },
+ "visual.test.seed17.scored": {
+  "value": 2993,
+  "source": "results/p001-branches/visual-seed17-test-metrics.json"
+ },
+ "visual.test.seed29.auc": {
+  "value": 0.997,
+  "source": "results/p001-branches/visual-seed29-test-metrics.json"
+ },
+ "visual.test.seed29.auc_high": {
+  "value": 0.999,
+  "source": "results/p001-branches/visual-seed29-test-metrics.json"
+ },
+ "visual.test.seed29.auc_low": {
+  "value": 0.994,
+  "source": "results/p001-branches/visual-seed29-test-metrics.json"
+ },
+ "visual.test.seed29.balanced_accuracy": {
+  "value": 0.974,
+  "source": "results/p001-branches/visual-seed29-test-metrics.json"
+ },
+ "visual.test.seed29.fpr": {
+  "value": 0.0,
+  "source": "results/p001-branches/visual-seed29-test-metrics.json"
+ },
+ "visual.test.seed29.method.faceswap": {
+  "value": 0.965,
+  "source": "results/p001-branches/visual-seed29-test-metrics.json"
+ },
+ "visual.test.seed29.method.faceswap-wav2lip": {
+  "value": 0.999,
+  "source": "results/p001-branches/visual-seed29-test-metrics.json"
+ },
+ "visual.test.seed29.method.fsgan": {
+  "value": 0.998,
+  "source": "results/p001-branches/visual-seed29-test-metrics.json"
+ },
+ "visual.test.seed29.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-branches/visual-seed29-test-metrics.json"
+ },
+ "visual.test.seed29.method.wav2lip": {
+  "value": 0.996,
+  "source": "results/p001-branches/visual-seed29-test-metrics.json"
+ },
+ "visual.test.seed29.n": {
+  "value": 2993,
+  "source": "results/p001-branches/visual-seed29-test-metrics.json"
+ },
+ "visual.test.seed29.scored": {
+  "value": 2993,
+  "source": "results/p001-branches/visual-seed29-test-metrics.json"
+ },
+ "visual.test.seed43.auc": {
+  "value": 0.997,
+  "source": "results/p001-branches/visual-seed43-test-metrics.json"
+ },
+ "visual.test.seed43.auc_high": {
+  "value": 0.999,
+  "source": "results/p001-branches/visual-seed43-test-metrics.json"
+ },
+ "visual.test.seed43.auc_low": {
+  "value": 0.994,
+  "source": "results/p001-branches/visual-seed43-test-metrics.json"
+ },
+ "visual.test.seed43.balanced_accuracy": {
+  "value": 0.971,
+  "source": "results/p001-branches/visual-seed43-test-metrics.json"
+ },
+ "visual.test.seed43.fpr": {
+  "value": 0.014,
+  "source": "results/p001-branches/visual-seed43-test-metrics.json"
+ },
+ "visual.test.seed43.method.faceswap": {
+  "value": 0.971,
+  "source": "results/p001-branches/visual-seed43-test-metrics.json"
+ },
+ "visual.test.seed43.method.faceswap-wav2lip": {
+  "value": 0.999,
+  "source": "results/p001-branches/visual-seed43-test-metrics.json"
+ },
+ "visual.test.seed43.method.fsgan": {
+  "value": 0.998,
+  "source": "results/p001-branches/visual-seed43-test-metrics.json"
+ },
+ "visual.test.seed43.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-branches/visual-seed43-test-metrics.json"
+ },
+ "visual.test.seed43.method.wav2lip": {
+  "value": 0.996,
+  "source": "results/p001-branches/visual-seed43-test-metrics.json"
+ },
+ "visual.test.seed43.n": {
+  "value": 2993,
+  "source": "results/p001-branches/visual-seed43-test-metrics.json"
+ },
+ "visual.test.seed43.scored": {
+  "value": 2993,
+  "source": "results/p001-branches/visual-seed43-test-metrics.json"
  }
 }

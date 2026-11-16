@@ -50,3 +50,39 @@ def test_branch_keys_split_branch_seed_and_part(tmp_path):
     assert numbers["visual.test-identity-strict.seed17.auc"]["value"] == 0.912
     assert numbers["visual.test-identity-strict.seed17.n"]["value"] == 500
     assert numbers["visual.test-identity-strict.seed17.scored"]["value"] == 480
+
+
+def test_single_class_set_records_counts_and_no_auc(tmp_path, capsys):
+    # Every DFDC clip in our subset has real audio, so the audio path's DFDC set has one class and
+    # the evaluator writes metrics: null. That is a result to record, not a crash.
+    module = _module(tmp_path)
+    out = tmp_path / "results" / "p001-branches"
+    out.mkdir(parents=True)
+    report = {"overall": {"metrics": None, "total": 3032, "scored": 3032},
+              "confidence_intervals": {}}
+    (out / "audio-seed17-dfdc-metrics.json").write_text(json.dumps(report))
+    numbers: dict = {}
+    module.branches(numbers)
+    assert "audio.dfdc.seed17.auc" not in numbers
+    assert numbers["audio.dfdc.seed17.n"]["value"] == 3032
+    assert numbers["audio.dfdc.seed17.single_class"]["value"] == "yes"
+    assert "one class" in capsys.readouterr().out
+
+
+def test_h2_levels_give_each_path_auc_on_the_clip_label(tmp_path):
+    # The H2 differences hide the levels: +0.17 over a visual path below chance reads differently
+    # from +0.17 over 0.9. Each path's AUC per seed, and its range over seeds, come from the predictions.
+    module = _module(tmp_path)
+    out = tmp_path / "results" / "p001-h2"
+    out.mkdir(parents=True)
+    rows = "clip_id,label,source,fusion,visual_logit,audio_logit,sync_logit\n" \
+           "a,1,s,0.9,-1,2,0.5\nb,1,s,0.8,1,3,0.1\nc,0,s,0.1,2,1,0.3\nd,0,s,0.2,0,0,0.2\n"
+    for seed in (17, 29):
+        (out / f"fusion-dfdc-seed{seed}-predictions.csv").write_text(rows)
+    numbers: dict = {}
+    module.h2_levels(numbers)
+    assert numbers["h2.dfdc.seed17.auc.fusion"]["value"] == 1.0
+    assert numbers["h2.dfdc.seed17.auc.visual"]["value"] == 0.25
+    assert numbers["h2.dfdc.seed29.auc.audio"]["value"] == 1.0
+    assert numbers["h2.dfdc.auc.visual.min"]["value"] == 0.25
+    assert numbers["h2.dfdc.auc.sync.max"]["value"] == 0.5

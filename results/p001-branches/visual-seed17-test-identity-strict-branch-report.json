@@ -1,0 +1,113 @@
+{
+  "branch": "visual",
+  "checkpoint_run_id": "p001-visual-seed17",
+  "checkpoint_sha256": "51ffb6115f6b8b2d38ff938bfff1f5c4e610c15f6e5612807aad2b2c9c37ee23",
+  "class_balance": {
+    "fake": 352,
+    "minimum_rows_per_class": 10,
+    "ranking_metrics_reliable": true,
+    "real": 143
+  },
+  "confusion": {
+    "false_negative": 23,
+    "false_positive": 0,
+    "true_negative": 143,
+    "true_positive": 329
+  },
+  "coverage": {
+    "abstained_by_reason": {},
+    "abstained_rows": 0,
+    "abstention_rate": 0.0,
+    "manifest_rows": 495,
+    "scored_rows": 495
+  },
+  "dataset": "FakeAVCeleb",
+  "detection_rate": 0.9346590909090909,
+  "evidence_scope": "development_test",
+  "fixed_threshold": 0.8822148442268372,
+  "loss": 0.11685223253349764,
+  "metrics": {
+    "balanced_accuracy": 0.9673295454545454,
+    "brier": 0.02585166885466189,
+    "eer": 0.03125,
+    "expected_calibration_error": 0.032793832493762526,
+    "f1": 0.9662261380323054,
+    "fnr": 0.06534090909090909,
+    "fpr": 0.0,
+    "fpr_at_95_tpr": 0.0,
+    "pr_auc": 0.9962839892280599,
+    "precision": 1.0,
+    "recall": 0.9346590909090909,
+    "roc_auc": 0.9892621582962493
+  },
+  "per_manipulation_type": {
+    "FakeVideo-FakeAudio": {
+      "accuracy": 0.9705882352941176,
+      "mean_probability": 0.9730421497541315,
+      "rows": 102
+    },
+    "FakeVideo-RealAudio": {
+      "accuracy": 0.92,
+      "mean_probability": 0.9464394753240049,
+      "rows": 250
+    },
+    "RealVideo-FakeAudio": {
+      "accuracy": 1.0,
+      "mean_probability": 0.039904132151551655,
+      "rows": 68
+    },
+    "RealVideo-RealAudio": {
+      "accuracy": 1.0,
+      "mean_probability": 0.05066374438581988,
+      "rows": 75
+    }
+  },
+  "per_method": {
+    "faceswap": {
+      "accuracy": 0.7692307692307693,
+      "mean_probability": 0.8559867426072463,
+      "rows": 52
+    },
+    "faceswap-wav2lip": {
+      "accuracy": 0.8,
+      "mean_probability": 0.8056112445890904,
+      "rows": 5
+    },
+    "fsgan": {
+      "accuracy": 0.9642857142857143,
+      "mean_probability": 0.9789661525615624,
+      "rows": 84
+    },
+    "fsgan-wav2lip": {
+      "accuracy": 1.0,
+      "mean_probability": 0.9986117959022522,
+      "rows": 10
+    },
+    "real": {
+      "accuracy": 1.0,
+      "mean_probability": 0.05066374438581988,
+      "rows": 75
+    },
+    "rtvc": {
+      "accuracy": 1.0,
+      "mean_probability": 0.039904132151551655,
+      "rows": 68
+    },
+    "wav2lip": {
+      "accuracy": 0.9651741293532339,
+      "mean_probability": 0.9706543606627195,
+      "rows": 201
+    }
+  },
+  "preprocessing_hash": "5f2954fbda2cd643b4da48b8a526b0aa3d9ad831033ac8d22704d78d885df7d1",
+  "rows": 495,
+  "threshold_source": {
+    "file": "runs\\p001\\evaluation\\visual-seed17-threshold.json",
+    "kind": "selected",
+    "objective": "balanced_accuracy",
+    "selection_rows": 3104,
+    "split": "val",
+    "value": 0.8822148442268372
+  },
+  "trained_on_split_hash": "6310dfa0225b0e1978a662df8c3acef9505e2bd7f451e9f49a4e7ed8e2e8db00"
+}

@@ -450,7 +450,13 @@ def build(draft: bool) -> int:
               "three standardized branch logits, fit on FakeAVCeleb validation and cross-fitted by identity. The statistic "
               "is AUC of the fusion minus AUC of the visual path, on the clip label, averaged over three seeds, with one "
               "identity bootstrap shared by the seeds. Holm correction runs over DFDC, LAV-DF and the identity-strict "
-              "FakeAVCeleb test, and H2 holds if two of the three survive. HiFi-AVDF is reported outside the rule.",
+              "FakeAVCeleb test, and H2 holds if two of the three survive. HiFi-AVDF is reported outside the rule. "
+              "It holds, but read the levels. On FakeAVCeleb the gain is the cloned-voice clips the visual path never "
+              "trained on. On LAV-DF the visual path is below chance, at {{h2.lavdf-window.auc.visual.min}} to "
+              "{{h2.lavdf-window.auc.visual.max}}, and fusion still trails the audio path and the sync path alone, "
+              "likely because its weights come from FakeAVCeleb. On DFDC every clip has real audio and fusion adds nothing. "
+              "So adding audio and sync helps, but this fusion does not transfer. A fusion that can drop a path is "
+              "future work.",
               "Fused by a model fixed in advance. Does it beat the visual path on new corpora?")
     rows = [[name, n(f"{{{{h2.{k}.clips|int}}}}"),
              n(f"{{{{h2.{k}.estimate}}}} [{{{{h2.{k}.lower}}}}, {{{{h2.{k}.upper}}}}]"), n(f"{{{{h2.{k}.p}}}}"),

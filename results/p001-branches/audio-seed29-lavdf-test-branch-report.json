@@ -1,0 +1,98 @@
+{
+  "branch": "audio",
+  "checkpoint_run_id": "p001-audio-seed29",
+  "checkpoint_sha256": "109fd920e8e8410d6ba5aacc74b5ad3a69836194181480eb0fa42dedecd01a32",
+  "class_balance": {
+    "fake": 1877,
+    "minimum_rows_per_class": 10,
+    "ranking_metrics_reliable": true,
+    "real": 1946
+  },
+  "confusion": {
+    "false_negative": 1346,
+    "false_positive": 393,
+    "true_negative": 1553,
+    "true_positive": 531
+  },
+  "coverage": {
+    "abstained_by_reason": {},
+    "abstained_rows": 0,
+    "abstention_rate": 0.0,
+    "manifest_rows": 3823,
+    "scored_rows": 3823
+  },
+  "dataset": "LAV-DF",
+  "detection_rate": 0.28289824187533297,
+  "evidence_scope": "generalization_cross_corpus",
+  "fixed_threshold": 0.7027939260005951,
+  "loss": 0.8341280885183029,
+  "metrics": {
+    "balanced_accuracy": 0.5404727591699379,
+    "brier": 0.2889248621116715,
+    "eer": 0.4448588172615876,
+    "expected_calibration_error": 0.1845848565132377,
+    "f1": 0.3791503034630489,
+    "fnr": 0.717101758124667,
+    "fpr": 0.20195272353545735,
+    "fpr_at_95_tpr": 0.9295991778006166,
+    "pr_auc": 0.5484608506274453,
+    "precision": 0.5746753246753247,
+    "recall": 0.28289824187533297,
+    "roc_auc": 0.5761190119371129
+  },
+  "per_manipulation_type": {
+    "FakeVideo-FakeAudio": {
+      "accuracy": 0.2838847385272145,
+      "mean_probability": 0.4865505073483926,
+      "rows": 937
+    },
+    "FakeVideo-RealAudio": {
+      "accuracy": 0.7801268498942917,
+      "mean_probability": 0.43601509694395935,
+      "rows": 946
+    },
+    "RealVideo-FakeAudio": {
+      "accuracy": 0.28191489361702127,
+      "mean_probability": 0.48229951888639877,
+      "rows": 940
+    },
+    "RealVideo-RealAudio": {
+      "accuracy": 0.815,
+      "mean_probability": 0.39255077184643594,
+      "rows": 1000
+    }
+  },
+  "per_method": {
+    "lavdf-FakeVideo-FakeAudio": {
+      "accuracy": 0.2838847385272145,
+      "mean_probability": 0.4865505073483926,
+      "rows": 937
+    },
+    "lavdf-FakeVideo-RealAudio": {
+      "accuracy": 0.7801268498942917,
+      "mean_probability": 0.43601509694395935,
+      "rows": 946
+    },
+    "lavdf-RealVideo-FakeAudio": {
+      "accuracy": 0.28191489361702127,
+      "mean_probability": 0.48229951888639877,
+      "rows": 940
+    },
+    "lavdf-RealVideo-RealAudio": {
+      "accuracy": 0.815,
+      "mean_probability": 0.39255077184643594,
+      "rows": 1000
+    }
+  },
+  "preprocessing_hash": "5f2954fbda2cd643b4da48b8a526b0aa3d9ad831033ac8d22704d78d885df7d1",
+  "rows": 3823,
+  "threshold_source": {
+    "file": "runs\\p001\\evaluation\\audio-seed29-threshold.json",
+    "kind": "selected",
+    "objective": "balanced_accuracy",
+    "selection_rows": 3104,
+    "split": "val",
+    "value": 0.7027939260005951
+  },
+  "trained_on_split_hash": "6310dfa0225b0e1978a662df8c3acef9505e2bd7f451e9f49a4e7ed8e2e8db00"
+}

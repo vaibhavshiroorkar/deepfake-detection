@@ -10,6 +10,7 @@ rebuild the deliverables, and every document agrees with the evidence.
 
 from __future__ import annotations
 
+import csv
 import json
 from pathlib import Path
 
@@ -67,15 +68,20 @@ def neutralization(numbers: dict) -> None:
 def metrics_file(numbers: dict, prefix: str, path: Path) -> None:
     report = json.loads(path.read_text(encoding="utf-8"))
     overall = report["overall"]["metrics"]
+    _put(numbers, f"{prefix}.n", report["overall"]["total"], path)
+    # n counts every clip in the set; scored leaves out clips with no usable window (no face, no audio).
+    _put(numbers, f"{prefix}.scored", report["overall"].get("scored", report["overall"]["total"]), path)
+    if overall is None:
+        # A set with one class has no AUC (the audio path on DFDC: every clip has real audio).
+        _put(numbers, f"{prefix}.single_class", "yes", path)
+        print(f"{prefix}: one class in the set, no AUC ({_rel(path)})")
+        return
     intervals = report["confidence_intervals"]
     _put(numbers, f"{prefix}.auc", round(overall["roc_auc"], 3), path)
     _put(numbers, f"{prefix}.auc_low", round(intervals["roc_auc"]["lower"], 3), path)
     _put(numbers, f"{prefix}.auc_high", round(intervals["roc_auc"]["upper"], 3), path)
     _put(numbers, f"{prefix}.fpr", round(overall["fpr"], 3), path)
     _put(numbers, f"{prefix}.balanced_accuracy", round(overall["balanced_accuracy"], 3), path)
-    _put(numbers, f"{prefix}.n", report["overall"]["total"], path)
-    # n counts every clip in the set; scored leaves out clips with no usable window (no face, no audio).
-    _put(numbers, f"{prefix}.scored", report["overall"].get("scored", report["overall"]["total"]), path)
     for method, entry in report.get("per_method", {}).items():
         if entry.get("metrics"):
             _put(numbers, f"{prefix}.method.{method}", round(entry["metrics"]["roc_auc"], 3), path)
@@ -152,6 +158,46 @@ def h2(numbers: dict) -> None:
             _put(numbers, f"h2.weights.seed{seed}.{branch}", round(coef, 3), path)
 
 
+def _auc(labels: list[int], scores: list[float]) -> float:
+    """ROC-AUC as the Mann-Whitney statistic, with tied scores sharing their average rank."""
+    order = sorted(range(len(scores)), key=scores.__getitem__)
+    ranks = [0.0] * len(scores)
+    i = 0
+    while i < len(order):
+        j = i
+        while j + 1 < len(order) and scores[order[j + 1]] == scores[order[i]]:
+            j += 1
+        for k in range(i, j + 1):
+            ranks[order[k]] = (i + j) / 2 + 1
+        i = j + 1
+    positives = sum(labels)
+    negatives = len(labels) - positives
+    rank_sum = sum(r for r, y in zip(ranks, labels, strict=True) if y == 1)
+    return (rank_sum - positives * (positives + 1) / 2) / (positives * negatives)
+
+
+def h2_levels(numbers: dict) -> None:
+    """Each path's AUC on the clip label, on the clips H2 compares, so the differences can be read
+    against their levels: h2.{target}.seed{S}.auc.{path}, and the min and max over seeds."""
+    directory = RESULTS / "p001-h2"
+    paths = {"fusion": "fusion", "visual": "visual_logit", "audio": "audio_logit", "sync": "sync_logit"}
+    by_target: dict[str, dict[str, list[float]]] = {}
+    for path in sorted(directory.glob("fusion-*-seed*-predictions.csv")):
+        target, seed = path.stem.removeprefix("fusion-").removesuffix("-predictions").rsplit("-seed", 1)
+        with path.open(encoding="utf-8", newline="") as handle:
+            rows = list(csv.DictReader(handle))
+        labels = [int(row["label"]) for row in rows]
+        for name, column in paths.items():
+            value = round(_auc(labels, [float(row[column]) for row in rows]), 3)
+            _put(numbers, f"h2.{target}.seed{seed}.auc.{name}", value, path)
+            by_target.setdefault(target, {}).setdefault(name, []).append(value)
+    for target, levels in by_target.items():
+        for name, values in levels.items():
+            source = directory / f"fusion-{target}-seed*-predictions.csv"
+            _put(numbers, f"h2.{target}.auc.{name}.min", min(values), source)
+            _put(numbers, f"h2.{target}.auc.{name}.max", max(values), source)
+
+
 def main() -> int:
     numbers: dict = {}
     audits(numbers)
@@ -161,6 +207,7 @@ def main() -> int:
     h4(numbers)
     branches(numbers)
     h2(numbers)
+    h2_levels(numbers)
     out = RESULTS / "numbers.json"
     out.write_text(json.dumps(dict(sorted(numbers.items())), indent=1) + "\n", encoding="utf-8")
     print(f"{len(numbers)} numbers -> {_rel(out)}")

@@ -9,6 +9,10 @@ Experiment numbers are not repeated here. They live in `results/` and the docume
 ## Unreleased
 
 - H2 ran on its Holm family on 11-16 at 22:56, and its preregistered rule says "H2 holds". Fusion minus visual-only: FakeAVCeleb strict +0.088, LAV-DF (window label) +0.170, DFDC +0.003 (p = 0.305). Output in `runs/p001/h2/`; HiFi-AVDF is not in it yet.
+- H2 results committed: `results/p001-h2/` (fusion predictions, `h2.json`, receipt) and `results/p001-branches/` (the six visual and audio models on the test set and the targets, with identity-bootstrap intervals), each with a README.
+- H2 is interpreted in the paper, the report and the H2 speaker notes, with a new table of each path's AUC on the clip label. The gain on LAV-DF is over a visual path that is below chance, and fusion there trails the audio and sync paths alone; on DFDC it adds nothing.
+- `scripts/build_numbers.py` records a one-class set (the audio path on DFDC) as counts with no AUC instead of failing, and adds each path's AUC on the clip label for H2 (`h2.{target}.auc.{path}`), checked against scikit-learn on all 60 values. Both with tests.
+- The visual and audio results on the targets are shown through that table and `results/p001-branches/README.md`, not a separate report table.
 - The PC hung a second time (handbook mistake 71). The H2 chain now skips finished stages and caches HiFi-AVDF alone at four shards; A11 waits for the whole H2 chain; a resource monitor logs RAM and GPU use every minute.
 - Project log section 5 describes the 3-day plan.
 - `scripts/build_numbers.py` reads the visual and audio results and H2 into `results/numbers.json`, with tests. Pass and fail print as "yes" and "no".

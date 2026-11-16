@@ -1,0 +1,78 @@
+{
+  "branch": "visual",
+  "checkpoint_run_id": "p001-visual-seed43",
+  "checkpoint_sha256": "e006a9ecfd31df0f8b9cf3da04c6da2552e1690b4c6fcc2b7244eafbf79b75dd",
+  "class_balance": {
+    "fake": 2677,
+    "minimum_rows_per_class": 10,
+    "ranking_metrics_reliable": true,
+    "real": 181
+  },
+  "confusion": {
+    "false_negative": 1893,
+    "false_positive": 13,
+    "true_negative": 168,
+    "true_positive": 784
+  },
+  "coverage": {
+    "abstained_by_reason": {},
+    "abstained_rows": 0,
+    "abstention_rate": 0.0,
+    "manifest_rows": 2858,
+    "scored_rows": 2858
+  },
+  "dataset": "DFDC",
+  "detection_rate": 0.29286514755323123,
+  "evidence_scope": "generalization_cross_corpus",
+  "fixed_threshold": 0.6996829509735107,
+  "loss": 2.034932500837231,
+  "metrics": {
+    "balanced_accuracy": 0.6105209715666708,
+    "brier": 0.5057563065752959,
+    "eer": 0.3370165745856354,
+    "expected_calibration_error": 0.5722427049331499,
+    "f1": 0.45135290731145655,
+    "fnr": 0.7071348524467688,
+    "fpr": 0.0718232044198895,
+    "fpr_at_95_tpr": 0.9392265193370166,
+    "pr_auc": 0.9710690813366145,
+    "precision": 0.9836888331242158,
+    "recall": 0.29286514755323123,
+    "roc_auc": 0.6928346029302199
+  },
+  "per_manipulation_type": {
+    "FakeVideo-RealAudio": {
+      "accuracy": 0.29286514755323123,
+      "mean_probability": 0.37974933862506466,
+      "rows": 2677
+    },
+    "RealVideo-RealAudio": {
+      "accuracy": 0.9281767955801105,
+      "mean_probability": 0.1377976232141421,
+      "rows": 181
+    }
+  },
+  "per_method": {
+    "dfdc-swap": {
+      "accuracy": 0.29286514755323123,
+      "mean_probability": 0.37974933862506466,
+      "rows": 2677
+    },
+    "real": {
+      "accuracy": 0.9281767955801105,
+      "mean_probability": 0.1377976232141421,
+      "rows": 181
+    }
+  },
+  "preprocessing_hash": "5f2954fbda2cd643b4da48b8a526b0aa3d9ad831033ac8d22704d78d885df7d1",
+  "rows": 2858,
+  "threshold_source": {
+    "file": "runs\\p001\\evaluation\\visual-seed43-threshold.json",
+    "kind": "selected",
+    "objective": "balanced_accuracy",
+    "selection_rows": 3104,
+    "split": "val",
+    "value": 0.6996829509735107
+  },
+  "trained_on_split_hash": "6310dfa0225b0e1978a662df8c3acef9505e2bd7f451e9f49a4e7ed8e2e8db00"
+}

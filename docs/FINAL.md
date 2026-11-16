@@ -27,7 +27,7 @@ Audio-visual deepfake detectors report 95 to 99 AUC on their benchmarks and fail
    - In-domain, its scores follow the mechanism: voice cloning is caught best, and face swaps that keep the original lips and voice least. Verified: `results/p001-sync/`.
    - Assumed: the ranking by method reflects lip-voice agreement rather than the leftover audio cue. The audio-label ceiling on the neutral copies is still 0.793, and it overlaps the voice-cloning row; an ablation that removes the audio residual would test this.
 4. **False-alarm control from real clips only.** On new corpora, the threshold carried over from training flags 31 to 48% of real clips. A threshold set from 200 real target clips holds the rate near 5%. H4 is met on HiFi-AVDF and on LAV-DF under the file label, in all three seeds. Verified: `results/p001-h4/`.
-5. **A preregistered fusion test (H2).** Visual, audio and sync paths, fused by a model fixed in advance (amendment A8), against the visual path alone. *Running.*
+5. **A preregistered fusion test (H2).** Visual, audio and sync paths, fused by a model fixed in advance (amendment A8), against the visual path alone. Holds on its rule; see the results below.
 
 ## Method
 
@@ -108,7 +108,15 @@ On HiFi-AVDF the sync path falls below the file-cue ceiling. By generator, PixVe
 
 At these thresholds the sync path catches only 5 to 11% of fakes. DFDC is not run: it has 194 real clips, fewer than the 200 calibration needs.
 
-**Fusion (H2):** *running.*
+**Fusion (H2)**, fusion minus visual-only AUC on the clip label, mean of three seeds, Holm over the first three rows. Verified: `results/p001-h2/`.
+
+| Target | Difference [95%] | Visual alone | Fusion | Holm |
+|---|---|---|---|---|
+| FakeAVCeleb test, strict | +0.088 [+0.078, +0.100] | 0.90 | 0.98 to 0.99 | yes |
+| DFDC | +0.003 [-0.008, +0.013] | 0.68 to 0.73 | 0.69 to 0.72 | no |
+| LAV-DF, window label | +0.170 [+0.156, +0.183] | 0.37 to 0.41 | 0.50 to 0.62 | yes |
+
+H2 holds by its rule (two of three). The gain on FakeAVCeleb is the cloned-voice clips the visual path never trained on. On LAV-DF the visual path is below chance, and fusion trails the audio path (0.63 to 0.85) and the sync path (0.64 to 0.66) alone in every seed (verified). That its FakeAVCeleb-fit weights cause this is assumed; fitting the fusion on a held-out corpus would test it. HiFi-AVDF, reported outside the rule, is pending.
 
 ## Limitations
 

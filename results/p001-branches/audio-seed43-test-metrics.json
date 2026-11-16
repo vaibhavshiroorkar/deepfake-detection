@@ -1,0 +1,233 @@
+{
+  "confidence_intervals": {
+    "balanced_accuracy": {
+      "estimate": 0.9996628455832771,
+      "lower": 0.9989122157605288,
+      "successful_samples": 1000,
+      "upper": 1.0
+    },
+    "brier": {
+      "estimate": 0.005989032926693685,
+      "lower": 0.0015536085569571503,
+      "successful_samples": 1000,
+      "upper": 0.013433852835258062
+    },
+    "eer": {
+      "estimate": 0.0006743088334457692,
+      "lower": 0.0,
+      "successful_samples": 1000,
+      "upper": 0.0021755684789425966
+    },
+    "expected_calibration_error": {
+      "estimate": 0.007023617283405072,
+      "lower": 0.0027678663598331202,
+      "successful_samples": 1000,
+      "upper": 0.014491562571934123
+    },
+    "f1": {
+      "estimate": 0.9996627318718381,
+      "lower": 0.998911031197367,
+      "successful_samples": 1000,
+      "upper": 1.0
+    },
+    "fnr": {
+      "estimate": 0.0006743088334457181,
+      "lower": 0.0,
+      "successful_samples": 1000,
+      "upper": 0.0021755684789426205
+    },
+    "fpr": {
+      "estimate": 0.0,
+      "lower": 0.0,
+      "successful_samples": 1000,
+      "upper": 0.0
+    },
+    "fpr_at_95_tpr": {
+      "estimate": 0.0,
+      "lower": 0.0,
+      "successful_samples": 1000,
+      "upper": 0.0
+    },
+    "pr_auc": {
+      "estimate": 0.9999654864320693,
+      "lower": 0.9998740833786454,
+      "successful_samples": 1000,
+      "upper": 1.0
+    },
+    "precision": {
+      "estimate": 1.0,
+      "lower": 1.0,
+      "successful_samples": 1000,
+      "upper": 1.0
+    },
+    "recall": {
+      "estimate": 0.9993256911665542,
+      "lower": 0.9978244315210574,
+      "successful_samples": 1000,
+      "upper": 1.0
+    },
+    "roc_auc": {
+      "estimate": 0.9999642750286916,
+      "lower": 0.9998686304072254,
+      "successful_samples": 1000,
+      "upper": 1.0
+    }
+  },
+  "fusion_vs_visual_auc": null,
+  "gender": {
+    "unknown": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": {
+        "balanced_accuracy": 0.9996628455832771,
+        "brier": 0.005989032926693685,
+        "eer": 0.0006743088334457692,
+        "expected_calibration_error": 0.007023617283405072,
+        "f1": 0.9996627318718381,
+        "fnr": 0.0006743088334457181,
+        "fpr": 0.0,
+        "fpr_at_95_tpr": 0.0,
+        "pr_auc": 0.9999654864320693,
+        "precision": 1.0,
+        "recall": 0.9993256911665542,
+        "roc_auc": 0.9999642750286916
+      },
+      "scored": 2993,
+      "total": 2993
+    }
+  },
+  "macro_method_roc_auc": 0.9999611582606669,
+  "overall": {
+    "abstained": 0,
+    "coverage": 1.0,
+    "metrics": {
+      "balanced_accuracy": 0.9996628455832771,
+      "brier": 0.005989032926693685,
+      "eer": 0.0006743088334457692,
+      "expected_calibration_error": 0.007023617283405072,
+      "f1": 0.9996627318718381,
+      "fnr": 0.0006743088334457181,
+      "fpr": 0.0,
+      "fpr_at_95_tpr": 0.0,
+      "pr_auc": 0.9999654864320693,
+      "precision": 1.0,
+      "recall": 0.9993256911665542,
+      "roc_auc": 0.9999642750286916
+    },
+    "scored": 2993,
+    "total": 2993
+  },
+  "per_method": {
+    "faceswap-wav2lip": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": {
+        "balanced_accuracy": 0.998533724340176,
+        "brier": 0.00968349709653063,
+        "eer": 0.0029325513196480917,
+        "expected_calibration_error": 0.011898808180004408,
+        "f1": 0.9985315712187959,
+        "fnr": 0.002932551319648094,
+        "fpr": 0.0,
+        "fpr_at_95_tpr": 0.0,
+        "pr_auc": 0.9994427455924659,
+        "precision": 1.0,
+        "recall": 0.9970674486803519,
+        "roc_auc": 0.9998446330426676
+      },
+      "scored": 1851,
+      "total": 1851
+    },
+    "fsgan-wav2lip": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": {
+        "balanced_accuracy": 1.0,
+        "brier": 0.008607333594175981,
+        "eer": 0.0,
+        "expected_calibration_error": 0.011641811311020343,
+        "f1": 1.0,
+        "fnr": 0.0,
+        "fpr": 0.0,
+        "fpr_at_95_tpr": 0.0,
+        "pr_auc": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "roc_auc": 1.0
+      },
+      "scored": 1969,
+      "total": 1969
+    },
+    "rtvc": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": {
+        "balanced_accuracy": 1.0,
+        "brier": 0.010739884665781331,
+        "eer": 0.0,
+        "expected_calibration_error": 0.014735804247749628,
+        "f1": 1.0,
+        "fnr": 0.0,
+        "fpr": 0.0,
+        "fpr_at_95_tpr": 0.0,
+        "pr_auc": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "roc_auc": 1.0
+      },
+      "scored": 1578,
+      "total": 1578
+    },
+    "wav2lip": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": {
+        "balanced_accuracy": 1.0,
+        "brier": 0.007975537762836158,
+        "eer": 0.0,
+        "expected_calibration_error": 0.010718047824174678,
+        "f1": 1.0,
+        "fnr": 0.0,
+        "fpr": 0.0,
+        "fpr_at_95_tpr": 0.0,
+        "pr_auc": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "roc_auc": 1.0
+      },
+      "scored": 2125,
+      "total": 2125
+    }
+  },
+  "race": {
+    "unknown": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": {
+        "balanced_accuracy": 0.9996628455832771,
+        "brier": 0.005989032926693685,
+        "eer": 0.0006743088334457692,
+        "expected_calibration_error": 0.007023617283405072,
+        "f1": 0.9996627318718381,
+        "fnr": 0.0006743088334457181,
+        "fpr": 0.0,
+        "fpr_at_95_tpr": 0.0,
+        "pr_auc": 0.9999654864320693,
+        "precision": 1.0,
+        "recall": 0.9993256911665542,
+        "roc_auc": 0.9999642750286916
+      },
+      "scored": 2993,
+      "total": 2993
+    }
+  },
+  "threshold": 0.9884761571884155,
+  "threshold_source": {
+    "file": "runs\\p001\\evaluation\\audio-seed43-threshold.json",
+    "kind": "selected",
+    "objective": "balanced_accuracy",
+    "selection_rows": 3104,
+    "split": "val",
+    "value": 0.9884761571884155
+  }
+}

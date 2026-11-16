@@ -1,0 +1,40 @@
+{
+  "confidence_intervals": null,
+  "fusion_vs_visual_auc": null,
+  "gender": {
+    "unknown": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": null,
+      "scored": 3032,
+      "total": 3032
+    }
+  },
+  "macro_method_roc_auc": null,
+  "overall": {
+    "abstained": 0,
+    "coverage": 1.0,
+    "metrics": null,
+    "scored": 3032,
+    "total": 3032
+  },
+  "per_method": {},
+  "race": {
+    "unknown": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": null,
+      "scored": 3032,
+      "total": 3032
+    }
+  },
+  "threshold": 0.9644157886505127,
+  "threshold_source": {
+    "file": "runs\\p001\\evaluation\\audio-seed17-threshold.json",
+    "kind": "selected",
+    "objective": "balanced_accuracy",
+    "selection_rows": 3104,
+    "split": "val",
+    "value": 0.9644157886505127
+  }
+}

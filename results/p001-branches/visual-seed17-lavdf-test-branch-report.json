@@ -1,0 +1,98 @@
+{
+  "branch": "visual",
+  "checkpoint_run_id": "p001-visual-seed17",
+  "checkpoint_sha256": "51ffb6115f6b8b2d38ff938bfff1f5c4e610c15f6e5612807aad2b2c9c37ee23",
+  "class_balance": {
+    "fake": 1879,
+    "minimum_rows_per_class": 10,
+    "ranking_metrics_reliable": true,
+    "real": 1936
+  },
+  "confusion": {
+    "false_negative": 1471,
+    "false_positive": 866,
+    "true_negative": 1070,
+    "true_positive": 408
+  },
+  "coverage": {
+    "abstained_by_reason": {},
+    "abstained_rows": 0,
+    "abstention_rate": 0.0,
+    "manifest_rows": 3815,
+    "scored_rows": 3815
+  },
+  "dataset": "LAV-DF",
+  "detection_rate": 0.21713677488025546,
+  "evidence_scope": "generalization_cross_corpus",
+  "fixed_threshold": 0.8822148442268372,
+  "loss": 1.413968914176971,
+  "metrics": {
+    "balanced_accuracy": 0.3849113626467393,
+    "brier": 0.4280726569182854,
+    "eer": 0.6141564662054284,
+    "expected_calibration_error": 0.37740178351433334,
+    "f1": 0.2588011417697431,
+    "fnr": 0.7828632251197446,
+    "fpr": 0.44731404958677684,
+    "fpr_at_95_tpr": 0.9746900826446281,
+    "pr_auc": 0.392784306540364,
+    "precision": 0.3202511773940345,
+    "recall": 0.21713677488025546,
+    "roc_auc": 0.35228880866822954
+  },
+  "per_manipulation_type": {
+    "FakeVideo-FakeAudio": {
+      "accuracy": 0.2012847965738758,
+      "mean_probability": 0.6100086941846449,
+      "rows": 934
+    },
+    "FakeVideo-RealAudio": {
+      "accuracy": 0.2328042328042328,
+      "mean_probability": 0.6267254601868372,
+      "rows": 945
+    },
+    "RealVideo-FakeAudio": {
+      "accuracy": 0.8166311300639659,
+      "mean_probability": 0.5964525588837736,
+      "rows": 938
+    },
+    "RealVideo-RealAudio": {
+      "accuracy": 0.3046092184368738,
+      "mean_probability": 0.8800869927851703,
+      "rows": 998
+    }
+  },
+  "per_method": {
+    "lavdf-FakeVideo-FakeAudio": {
+      "accuracy": 0.2012847965738758,
+      "mean_probability": 0.6100086941846449,
+      "rows": 934
+    },
+    "lavdf-FakeVideo-RealAudio": {
+      "accuracy": 0.2328042328042328,
+      "mean_probability": 0.6267254601868372,
+      "rows": 945
+    },
+    "lavdf-RealVideo-FakeAudio": {
+      "accuracy": 0.8166311300639659,
+      "mean_probability": 0.5964525588837736,
+      "rows": 938
+    },
+    "lavdf-RealVideo-RealAudio": {
+      "accuracy": 0.3046092184368738,
+      "mean_probability": 0.8800869927851703,
+      "rows": 998
+    }
+  },
+  "preprocessing_hash": "5f2954fbda2cd643b4da48b8a526b0aa3d9ad831033ac8d22704d78d885df7d1",
+  "rows": 3815,
+  "threshold_source": {
+    "file": "runs\\p001\\evaluation\\visual-seed17-threshold.json",
+    "kind": "selected",
+    "objective": "balanced_accuracy",
+    "selection_rows": 3104,
+    "split": "val",
+    "value": 0.8822148442268372
+  },
+  "trained_on_split_hash": "6310dfa0225b0e1978a662df8c3acef9505e2bd7f451e9f49a4e7ed8e2e8db00"
+}

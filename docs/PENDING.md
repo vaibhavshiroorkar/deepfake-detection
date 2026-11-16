@@ -34,9 +34,7 @@ Stop rule: if the upgraded models are not scored on all three targets by 17 Nove
 
 ## 3. When H2 finishes (Claude)
 
-- Copy `runs/p001/h2/` into `results/p001-h2/` with a README and receipts.
-- Write the sentences that interpret H2 in the paper and the report (marked `% PENDING` in both), and the H2 speaker notes. The tables and the verdict fill in by themselves.
-- Add the visual and audio results on the three targets to the report, if they are worth a table.
+- When the H2 chain logs "h2 chain done": rerun `runs/p001-finalize.sh` (it recopies `results/p001-branches/` and `results/p001-h2/` with HiFi-AVDF), copy the final `h2.json` receipt into `results/p001-h2/receipts/`, add the HiFi-AVDF rows to both READMEs, and add one sentence on HiFi-AVDF to the H2 interpretation in the paper, report and notes.
 - Cut version 1.0.0 at the final-year submission: changelog heading, `pyproject.toml`, tag `v1.0.0`.
 - Rename the package from `deepfake-generalization` (its old folder name) to `deepfake-detection` in `pyproject.toml` and `uv.lock`, and reinstall. This waits until no chain is running, because the reinstall rewrites the environment the chains use.
 - Reorganize `scripts/` into `p001/` (current study), `data/` (fetching and manifests) and `legacy/` (the September to October pipeline). This waits until no chain is running, because the chains call scripts by path.

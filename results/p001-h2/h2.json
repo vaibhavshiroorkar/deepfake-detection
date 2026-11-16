@@ -1,0 +1,265 @@
+{
+  "amendment": "A8",
+  "seeds": [
+    17,
+    29,
+    43
+  ],
+  "weights": {
+    "17": {
+      "branches": [
+        "visual",
+        "audio",
+        "sync"
+      ],
+      "coef": [
+        3.2695014096776855,
+        6.189363787186134,
+        -0.35551246652379465
+      ],
+      "intercept": 10.650407320674216,
+      "mean": [
+        5.693395048305863,
+        -0.41031653667341883,
+        0.572970566301162
+      ],
+      "scale": [
+        2.5933845246758773,
+        8.433889745889624,
+        0.5687787931013067
+      ],
+      "threshold_from_oof_validation": 0.4875426310997763,
+      "validation_clips": 3104
+    },
+    "29": {
+      "branches": [
+        "visual",
+        "audio",
+        "sync"
+      ],
+      "coef": [
+        2.508506235212468,
+        0.4755655643397798,
+        1.0557497966724387
+      ],
+      "intercept": 5.252027785588333,
+      "mean": [
+        4.87478761478645,
+        0.49947711287213786,
+        0.17834504832912157
+      ],
+      "scale": [
+        2.64075392516522,
+        1.8366532832878455,
+        0.6946140918208034
+      ],
+      "threshold_from_oof_validation": 0.2166758273695964,
+      "validation_clips": 3104
+    },
+    "43": {
+      "branches": [
+        "visual",
+        "audio",
+        "sync"
+      ],
+      "coef": [
+        2.4670079818183357,
+        2.6195252657990684,
+        0.4969732987216781
+      ],
+      "intercept": 6.5490594458002604,
+      "mean": [
+        5.159672052674112,
+        -0.16540305945073291,
+        -0.10464672858306469
+      ],
+      "scale": [
+        2.7054301556598874,
+        7.385630119736846,
+        0.648984935207217
+      ],
+      "threshold_from_oof_validation": 0.4912665211238669,
+      "validation_clips": 3104
+    }
+  },
+  "targets": {
+    "test-identity-strict": {
+      "estimate": 0.08822222222222227,
+      "per_seed": [
+        0.09266666666666667,
+        0.08009523809523811,
+        0.09190476190476204
+      ],
+      "lower": 0.07751102507910874,
+      "upper": 0.0995228873164616,
+      "p_one_sided": 0.0,
+      "successful_samples": 1000,
+      "clips": 495,
+      "identities": 75,
+      "coverage": [
+        {
+          "seed": 17,
+          "scored_by_all": 495,
+          "scored_by_sync": 495
+        },
+        {
+          "seed": 29,
+          "scored_by_all": 495,
+          "scored_by_sync": 495
+        },
+        {
+          "seed": 43,
+          "scored_by_all": 495,
+          "scored_by_sync": 495
+        }
+      ],
+      "clips_scored_by_every_seed": 495
+    },
+    "dfdc": {
+      "estimate": 0.0031186627608380166,
+      "per_seed": [
+        -0.006709482206264661,
+        0.007864516032255353,
+        0.008200954456523357
+      ],
+      "lower": -0.0075908033252471245,
+      "upper": 0.013195679271433341,
+      "p_one_sided": 0.305,
+      "successful_samples": 1000,
+      "clips": 2786,
+      "identities": 180,
+      "coverage": [
+        {
+          "seed": 17,
+          "scored_by_all": 2786,
+          "scored_by_sync": 2908
+        },
+        {
+          "seed": 29,
+          "scored_by_all": 2786,
+          "scored_by_sync": 2908
+        },
+        {
+          "seed": 43,
+          "scored_by_all": 2786,
+          "scored_by_sync": 2908
+        }
+      ],
+      "clips_scored_by_every_seed": 2786
+    },
+    "lavdf-window": {
+      "estimate": 0.17027388690962417,
+      "per_seed": [
+        0.20485928288832683,
+        0.09360360548770286,
+        0.21235877235284278
+      ],
+      "lower": 0.1563428420537825,
+      "upper": 0.18338054112660368,
+      "p_one_sided": 0.0,
+      "successful_samples": 1000,
+      "clips": 3686,
+      "identities": 968,
+      "coverage": [
+        {
+          "seed": 17,
+          "scored_by_all": 3686,
+          "scored_by_sync": 3693
+        },
+        {
+          "seed": 29,
+          "scored_by_all": 3686,
+          "scored_by_sync": 3693
+        },
+        {
+          "seed": 43,
+          "scored_by_all": 3686,
+          "scored_by_sync": 3693
+        }
+      ],
+      "clips_scored_by_every_seed": 3686
+    },
+    "test": {
+      "estimate": 0.013368364937933142,
+      "per_seed": [
+        0.013662325793922792,
+        0.01261137765592879,
+        0.013831391363947843
+      ],
+      "lower": 0.01134372972906616,
+      "upper": 0.015676983946052044,
+      "p_one_sided": 0.0,
+      "successful_samples": 1000,
+      "clips": 2993,
+      "identities": 75,
+      "coverage": [
+        {
+          "seed": 17,
+          "scored_by_all": 2993,
+          "scored_by_sync": 2993
+        },
+        {
+          "seed": 29,
+          "scored_by_all": 2993,
+          "scored_by_sync": 2993
+        },
+        {
+          "seed": 43,
+          "scored_by_all": 2993,
+          "scored_by_sync": 2993
+        }
+      ],
+      "clips_scored_by_every_seed": 2993
+    },
+    "lavdf-test": {
+      "estimate": 0.12308079853415084,
+      "per_seed": [
+        0.13326445651080332,
+        0.09096542388590284,
+        0.14501251520574637
+      ],
+      "lower": 0.1132295711747763,
+      "upper": 0.13323530483421317,
+      "p_one_sided": 0.0,
+      "successful_samples": 1000,
+      "clips": 3686,
+      "identities": 968,
+      "coverage": [
+        {
+          "seed": 17,
+          "scored_by_all": 3686,
+          "scored_by_sync": 3693
+        },
+        {
+          "seed": 29,
+          "scored_by_all": 3686,
+          "scored_by_sync": 3693
+        },
+        {
+          "seed": 43,
+          "scored_by_all": 3686,
+          "scored_by_sync": 3693
+        }
+      ],
+      "clips_scored_by_every_seed": 3686
+    }
+  },
+  "not_scored_yet": [
+    "hifiavdf"
+  ],
+  "holm": {
+    "test-identity-strict": {
+      "p_one_sided": 0.0,
+      "rejected_at_0.05": true
+    },
+    "dfdc": {
+      "p_one_sided": 0.305,
+      "rejected_at_0.05": false
+    },
+    "lavdf-window": {
+      "p_one_sided": 0.0,
+      "rejected_at_0.05": true
+    }
+  },
+  "h2_success": true
+}

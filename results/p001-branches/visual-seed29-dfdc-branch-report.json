@@ -1,0 +1,78 @@
+{
+  "branch": "visual",
+  "checkpoint_run_id": "p001-visual-seed29",
+  "checkpoint_sha256": "072dac97fb6b78717fc2cc8e48c86820cbc0a3f0b015030ecba9826fdc668337",
+  "class_balance": {
+    "fake": 2677,
+    "minimum_rows_per_class": 10,
+    "ranking_metrics_reliable": true,
+    "real": 181
+  },
+  "confusion": {
+    "false_negative": 2265,
+    "false_positive": 8,
+    "true_negative": 173,
+    "true_positive": 412
+  },
+  "coverage": {
+    "abstained_by_reason": {},
+    "abstained_rows": 0,
+    "abstention_rate": 0.0,
+    "manifest_rows": 2858,
+    "scored_rows": 2858
+  },
+  "dataset": "DFDC",
+  "detection_rate": 0.153903623459096,
+  "evidence_scope": "generalization_cross_corpus",
+  "fixed_threshold": 0.6812310218811035,
+  "loss": 2.191746785308699,
+  "metrics": {
+    "balanced_accuracy": 0.5548523642157358,
+    "brier": 0.6250422268741489,
+    "eer": 0.3683227493462832,
+    "expected_calibration_error": 0.698427206397945,
+    "f1": 0.26606393283823054,
+    "fnr": 0.846096376540904,
+    "fpr": 0.04419889502762431,
+    "fpr_at_95_tpr": 0.9392265193370166,
+    "pr_auc": 0.966393583836581,
+    "precision": 0.9809523809523809,
+    "recall": 0.153903623459096,
+    "roc_auc": 0.6710839419899821
+  },
+  "per_manipulation_type": {
+    "FakeVideo-RealAudio": {
+      "accuracy": 0.153903623459096,
+      "mean_probability": 0.2470141287348075,
+      "rows": 2677
+    },
+    "RealVideo-RealAudio": {
+      "accuracy": 0.9558011049723757,
+      "mean_probability": 0.10849846127952413,
+      "rows": 181
+    }
+  },
+  "per_method": {
+    "dfdc-swap": {
+      "accuracy": 0.153903623459096,
+      "mean_probability": 0.2470141287348075,
+      "rows": 2677
+    },
+    "real": {
+      "accuracy": 0.9558011049723757,
+      "mean_probability": 0.10849846127952413,
+      "rows": 181
+    }
+  },
+  "preprocessing_hash": "5f2954fbda2cd643b4da48b8a526b0aa3d9ad831033ac8d22704d78d885df7d1",
+  "rows": 2858,
+  "threshold_source": {
+    "file": "runs\\p001\\evaluation\\visual-seed29-threshold.json",
+    "kind": "selected",
+    "objective": "balanced_accuracy",
+    "selection_rows": 3104,
+    "split": "val",
+    "value": 0.6812310218811035
+  },
+  "trained_on_split_hash": "6310dfa0225b0e1978a662df8c3acef9505e2bd7f451e9f49a4e7ed8e2e8db00"
+}

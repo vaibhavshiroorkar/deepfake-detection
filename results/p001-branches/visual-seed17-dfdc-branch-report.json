@@ -1,0 +1,78 @@
+{
+  "branch": "visual",
+  "checkpoint_run_id": "p001-visual-seed17",
+  "checkpoint_sha256": "51ffb6115f6b8b2d38ff938bfff1f5c4e610c15f6e5612807aad2b2c9c37ee23",
+  "class_balance": {
+    "fake": 2677,
+    "minimum_rows_per_class": 10,
+    "ranking_metrics_reliable": true,
+    "real": 181
+  },
+  "confusion": {
+    "false_negative": 2389,
+    "false_positive": 0,
+    "true_negative": 181,
+    "true_positive": 288
+  },
+  "coverage": {
+    "abstained_by_reason": {},
+    "abstained_rows": 0,
+    "abstention_rate": 0.0,
+    "manifest_rows": 2858,
+    "scored_rows": 2858
+  },
+  "dataset": "DFDC",
+  "detection_rate": 0.10758311542771759,
+  "evidence_scope": "generalization_cross_corpus",
+  "fixed_threshold": 0.8822148442268372,
+  "loss": 2.8178091484654444,
+  "metrics": {
+    "balanced_accuracy": 0.5537915577138588,
+    "brier": 0.6565779765973245,
+    "eer": 0.3149171270718232,
+    "expected_calibration_error": 0.7139259345758082,
+    "f1": 0.1942664418212479,
+    "fnr": 0.8924168845722824,
+    "fpr": 0.0,
+    "fpr_at_95_tpr": 0.9281767955801105,
+    "pr_auc": 0.9741577791362195,
+    "precision": 1.0,
+    "recall": 0.10758311542771759,
+    "roc_auc": 0.7257216683142877
+  },
+  "per_manipulation_type": {
+    "FakeVideo-RealAudio": {
+      "accuracy": 0.10758311542771759,
+      "mean_probability": 0.23391346750671527,
+      "rows": 2677
+    },
+    "RealVideo-RealAudio": {
+      "accuracy": 1.0,
+      "mean_probability": 0.05753219042466027,
+      "rows": 181
+    }
+  },
+  "per_method": {
+    "dfdc-swap": {
+      "accuracy": 0.10758311542771759,
+      "mean_probability": 0.23391346750671527,
+      "rows": 2677
+    },
+    "real": {
+      "accuracy": 1.0,
+      "mean_probability": 0.05753219042466027,
+      "rows": 181
+    }
+  },
+  "preprocessing_hash": "5f2954fbda2cd643b4da48b8a526b0aa3d9ad831033ac8d22704d78d885df7d1",
+  "rows": 2858,
+  "threshold_source": {
+    "file": "runs\\p001\\evaluation\\visual-seed17-threshold.json",
+    "kind": "selected",
+    "objective": "balanced_accuracy",
+    "selection_rows": 3104,
+    "split": "val",
+    "value": 0.8822148442268372
+  },
+  "trained_on_split_hash": "6310dfa0225b0e1978a662df8c3acef9505e2bd7f451e9f49a4e7ed8e2e8db00"
+}
