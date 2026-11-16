@@ -5,12 +5,13 @@ The reasons behind each item are in the [project log](PROJECT-LOG.md). The rules
 
 ## 1. Running now
 
-Two chains run as detached processes. The six P-001 visual and audio models are trained. Each resumes from its own log if stopped. Do not restart or shut down the PC while they run. The 2-day chain and the A10 rescoring are done.
+Two chains run as detached processes, strictly one after the other (handbook mistake 71). Each resumes from its own log if stopped. Do not restart or shut down the PC while they run. The H2 Holm-family result is done (11-16, 22:56).
 
 | Chain | Log | What it does | Expected finish |
 |---|---|---|---|
-| H2 | `runs/p001-h2.log` | Restarted after the PC crash (15:35). Caches DFDC and LAV-DF (two shards each), runs H2 on its Holm family as soon as they are scored, then adds HiFi-AVDF (reported only) | Family: Tue morning to midday; with HiFi-AVDF: Tue afternoon |
-| A11 | `runs/p001-a11.log` | Waits for the H2 family result, then trains and scores CLIP and XLS-R (exploratory). Never alongside the caching | Tue; stop rule 17 November, 23:59 |
+| H2 | `runs/p001-h2.log` | Restarted 11-17 01:14 after the second hang. Caches HiFi-AVDF alone at four shards (373 of 3,809 clips were cached), scores the six P-001 models on it, and runs H2 again with it (reported only) | About 07:45 Tue (measured at 530 clips an hour in the first minutes) |
+| A11 | `runs/p001-a11.log` | Waits for "h2 chain done", then trains and scores CLIP and XLS-R (exploratory), three seeds each | Tue evening; stop rule 17 November, 23:59 |
+| Monitor | `runs/p001/logs/resources.log` | Free RAM, GPU memory, power and temperature, once a minute. Stops after A11 | With A11 |
 
 ## 2. While the chains run (Claude)
 
@@ -28,7 +29,7 @@ Chosen 11-16: prepare the rebuild now, with no GPU and no change to anything H2 
 
 Stop rule: if the upgraded models are not scored on all three targets by 17 November, 23:59, A11 is reported as not completed.
 
-- `runs/p001-a11.sh` (log `runs/p001-a11.log`) runs it all once the GPU is free (after the P-001 audio models): it trains CLIP (`ddf train visual-stream --backbone clip --freeze-backbone`) and XLS-R (`ddf train audio --audio-model facebook/wav2vec2-xls-r-300m`, frozen for every epoch) at three seeds. Choose thresholds on validation and score the identity-strict test and the targets.
+- `runs/p001-a11.sh` (log `runs/p001-a11.log`) runs it all once the whole H2 chain is done, HiFi-AVDF included: it trains CLIP (`ddf train visual-stream --backbone clip --freeze-backbone`) and XLS-R (`ddf train audio --audio-model facebook/wav2vec2-xls-r-300m`, frozen for every epoch) at three seeds. Choose thresholds on validation and score the identity-strict test and the targets.
 - Compare each with its P-001 path (paired identity bootstrap), and add an exploratory section to the paper and report.
 
 ## 3. When H2 finishes (Claude)

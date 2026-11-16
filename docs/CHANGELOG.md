@@ -8,6 +8,8 @@ Experiment numbers are not repeated here. They live in `results/` and the docume
 
 ## Unreleased
 
+- H2 ran on its Holm family on 11-16 at 22:56, and its preregistered rule says "H2 holds". Fusion minus visual-only: FakeAVCeleb strict +0.088, LAV-DF (window label) +0.170, DFDC +0.003 (p = 0.305). Output in `runs/p001/h2/`; HiFi-AVDF is not in it yet.
+- The PC hung a second time (handbook mistake 71). The H2 chain now skips finished stages and caches HiFi-AVDF alone at four shards; A11 waits for the whole H2 chain; a resource monitor logs RAM and GPU use every minute.
 - Project log section 5 describes the 3-day plan.
 - `scripts/build_numbers.py` reads the visual and audio results and H2 into `results/numbers.json`, with tests. Pass and fail print as "yes" and "no".
 - The H2 section is written into the paper, the report (new chapter), the slides (new slide 14) and the poster. Fusion is no longer listed as "not run".

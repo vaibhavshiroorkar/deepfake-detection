@@ -1155,6 +1155,18 @@ uncommitted working tree unless marked open.
   - Measure memory per process before raising parallelism, not after.
 - **Source:** `runs/p001-h2.log`, `runs/p001-a11.log`; Windows System log, 2026-11-16 15:32.
 
+#### 71. The fix for mistake 70 still let CLIP train beside the caching
+
+- **What went wrong:** The fix made A11 wait for the H2 Holm-family result. But the H2 chain then cached HiFi-AVDF in the background, so CLIP training started beside two cache shards anyway. The PC hung again at 00:13 on 2026-11-17, during CLIP's fourth epoch (Kernel-Power 41, bugcheck 0, so no dump).
+- **How it was caught:** No process was running at the next session; both logs stopped at 22:56. Both hangs (11-16 15:32 and 11-17 00:13) came with CLIP training beside target caching. Four cache shards alone had run for seven hours without trouble.
+- **What it cost:** CLIP seed 17 (three epochs, about 80 minutes, no checkpoint saved yet) and about an hour and a half of HiFi-AVDF caching at half speed. The 373 HiFi-AVDF clips already cached were kept, since cache writes are atomic.
+- **Fix:**
+  - The H2 chain caches HiFi-AVDF in the foreground, at four shards, and skips its finished stages. A11 waits for "h2 chain done".
+  - `runs/resource-monitor.sh` logs free RAM, GPU memory, power and temperature every minute to `runs/p001/logs/resources.log`, so a third hang would show what ran out.
+  - A rule that says "wait for X" has to check that X is the last heavy job, not just the last one named.
+- **Also found:** `Start-Process bash -ArgumentList '-c', '...'` joins its arguments with spaces, so `bash -c` got only the first word and exited silently. Pass one string with the command in quotes: `-ArgumentList "-c `"...`""`.
+- **Source:** `runs/p001-h2.log`, `runs/p001-a11.log`, `runs/p001/a11/logs/train-clip-seed17.log`; Windows System log, 2026-11-17 00:13.
+
 ## 7. What a hard reviewer would say
 
 These are the strongest objections we expect, with our current answer. "Open" means we have no answer yet and the paper must not pretend otherwise.

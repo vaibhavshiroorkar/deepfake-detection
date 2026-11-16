@@ -50,6 +50,7 @@ The goals, as stated by Vaibhav on 2026-11-13:
 | 11-16 | Locate small faces with YuNet before landmarking, on the targets (A10) | The landmarker found a face in only 35% of DFDC windows. Found after the DFDC result was read, so both are reported | P-001 A10; handbook mistake 69 |
 | 11-16 | Train on one corpus for this submission; plan leave-one-corpus-out for the next study | Vaibhav asked whether training on one corpus is right. It is right for measuring transfer, but it limits how strong the detector can be | `docs/research/P-002-design.md` |
 | 11-16 | Write the plan to rebuild for maximum performance after the deadline | Vaibhav asked for an unbiased redesign, even a remake | `docs/research/P-002-design.md` |
+| 11-17 | Run HiFi-AVDF caching, then H2 with HiFi-AVDF, then A11, strictly one after another | Both PC hangs came with CLIP training beside target caching; four cache shards alone ran stable for seven hours. The serial order still fits the A11 stop rule (11-17, 23:59) if the estimates hold | Handbook mistake 71; `runs/p001-h2.sh`, `runs/p001-a11.sh` |
 
 ## 3. What we found, in plain words
 
