@@ -14,7 +14,6 @@ Two chains run as detached processes. Each resumes from its own log if stopped. 
 
 ## 2. While the chains run (Claude)
 
-- State in the paper, report and slides limitations that all models train on one corpus (FakeAVCeleb: 2021, about 500 real videos, about 350 speakers for the sync path), so the results show how such a detector transfers, not that every detector fails.
 - Update the README Results section to the P-001 study. It still leads with older numbers.
 - Label the main claims in `FINAL.md` and the handbook as verified, assumed, false or unknown.
 - Fill the pending entries in [FINAL.md](FINAL.md); update handbook section 5.1b and the project log.

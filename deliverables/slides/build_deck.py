@@ -485,6 +485,7 @@ def build(draft: bool) -> int:
         ("b", "A residual audio cue: ceiling {{audit.fakeavceleb.neutral.audio}}", 16),
         ("b", "Cleaning refuses {{neutral.fakeavceleb.refused|int}} generated-speech clips", 16),
         ("b", "No published baselines yet; H3 not run", 16),
+        ("b", "One training corpus: FakeAVCeleb, 2021, about 500 real videos", 16),
         ("b", "Possible speaker overlap with AV-HuBERT pretraining", 16),
     ], name="card_limits")
     card(s, col_x(6), Y0, span_w(6), H0, [

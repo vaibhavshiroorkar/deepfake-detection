@@ -2347,6 +2347,18 @@ fusion weights on the standardized logits are {{h2.weights.seed17.visual}}
 
 \section{Limitations}
 
+\subsection{One training corpus}
+
+Every model in this report learns from one corpus, FakeAVCeleb. It dates from
+2021, has about 500 real videos, and its fakes are crude by today's standard.
+The sync path learned from the real clips of about 350 speakers. A model that
+has seen this little variety is expected to transfer poorly, so the
+cross-corpus results describe how a detector trained this way transfers once
+the shortcuts are gone. They do not show that every detector fails, or that
+more and newer training data would not help. Testing that needs training on
+several corpora with one held out at a time, which is the main protocol we
+propose next (Section~\ref{sec:next}).
+
 \subsection{H1 missed its preregistered bar}
 
 The neutral FakeAVCeleb ceiling is {{audit.fakeavceleb.neutral.clip}}, against
@@ -2413,12 +2425,17 @@ LAV-DF and HiFi-AVDF only.
 \end{itemize}
 
 \section{The Full-Run Plan}
+\label{sec:next}
 
-This report follows the two-day plan chosen on 15 November 2026, because of
-the submission deadline. The full preregistered study runs after the
-deadline, in this order:
+This report follows the short plan chosen for the submission deadline, three
+days from 16 November 2026. The full study runs after the deadline, in this
+order:
 
 \begin{enumerate}
+    \item Train on several corpora with one held out at a time
+    (leave-one-corpus-out), so every test stays unseen while the models see
+    more variety. This needs a new preregistration, P-002, because LAV-DF and
+    DFDC would no longer be locked targets.
     \item Speed up the cache build for the visual and audio paths.
     \item Run the StreamFusion model, the secondary fusion, against the
     logistic fusion of H2.

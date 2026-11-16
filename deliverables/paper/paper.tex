@@ -739,6 +739,13 @@ The StreamFusion model, our secondary fusion, was not run. AVH-Align
 and HAVIC have not been run on our protocol, so this paper makes no
 comparison with them.
 
+\textit{One training corpus.} Every model learns from FakeAVCeleb alone: about
+500 real videos from 2021, with crude fakes, and about 350 speakers for the
+sync path. The cross-corpus results show how a detector trained this way
+transfers once the shortcuts are gone, not that every detector fails. Training
+on several corpora with one held out at a time would test whether more variety
+helps.
+
 \textit{Possible speaker overlap.} FakeAVCeleb, LAV-DF and AV-HuBERT's
 pretraining data share speaker sources (VoxCeleb2 and LRS3). Some cross-corpus
 signal may come from the encoder having heard a speaker before. We have not

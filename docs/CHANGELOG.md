@@ -22,6 +22,7 @@ Experiment numbers are not repeated here. They live in `results/` and the docume
 - The paper and report interpret the cross-corpus and H4 results, including coverage before and after A10. Target tables count clips scored (`.scored`) instead of all clips (`.n`), which had included clips with no usable window.
 - The paper and report state the HiFi-AVDF clips without audio and the short windows left out.
 - `docs/research/P-002-design.md`: a design for rebuilding the study for maximum performance after the submission, from what P-001 showed.
+- The paper, report and slides state the one-training-corpus limitation; the report's full-run plan now leads with leave-one-corpus-out training under P-002.
 - The poster build stops when a column overflows, instead of writing a file PowerPoint calls corrupted.
 
 ## 0.3.0 - 2026-11-16: neutral protocol, sync path, deliverable builders
