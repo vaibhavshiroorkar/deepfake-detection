@@ -122,15 +122,19 @@ def sync_methods() -> str | None:
 
 
 def cross_corpus() -> str | None:
-    targets = [("FakeAVCeleb (in-domain)", "test"), ("LAV-DF, file label", "lavdf-test"), ("LAV-DF, window label", "lavdf-window"), ("DFDC", "dfdc"), ("HiFi-AVDF", "hifiavdf")]
+    targets = [("FakeAVCeleb\n(in-domain)", "test"), ("LAV-DF\n(file label)", "lavdf-test"),
+               ("LAV-DF\n(window label)", "lavdf-window"), ("DFDC", "dfdc"), ("HiFi-AVDF", "hifiavdf")]
     targets = [(n, t) for n, t in targets if have(*(f"sync.{t}.seed{s}.auc" for s in (17, 29, 43)))]
     if len(targets) < 2:
         return None
-    fig, ax = plt.subplots(figsize=(6.2, 3.0))
+    fig, ax = plt.subplots(figsize=(6.6, 3.0))
     means = [sum(value(f"sync.{t}.seed{s}.auc") for s in (17, 29, 43)) / 3 for _, t in targets]
-    _bars(ax, range(len(targets)), means, BLUE, 0.55, "Mean of 3 seeds")
+    ax.bar(range(len(targets)), means, width=0.55, color=BLUE, edgecolor="white", linewidth=1.5)
     for i, (_, t) in enumerate(targets):
-        ax.scatter([i] * 3, [value(f"sync.{t}.seed{s}.auc") for s in (17, 29, 43)], s=14, color=INK, zorder=3)
+        seeds = [value(f"sync.{t}.seed{s}.auc") for s in (17, 29, 43)]
+        ax.scatter([i] * 3, seeds, s=14, color=INK, zorder=3)
+        # The mean sits above the highest seed so the dots never cover it.
+        ax.text(i, max(seeds) + 0.02, f"{means[i]:.3f}", ha="center", va="bottom", fontsize=8, color=INK)
     ax.axhline(0.5, color=MUTED, linewidth=0.6)
     ax.set_xticks(range(len(targets)), [n for n, _ in targets])
     _finish(ax, "Sync path ROC-AUC (dots: single seeds)", (0.3, 1.05))
@@ -149,11 +153,10 @@ def h4() -> str | None:
     for offset, (label, rule, color) in enumerate(rules):
         heights = [sum(value(f"h4.{t}-seed{s}.{rule}.fpr") for s in (17, 29, 43)) / 3 for _, t in targets]
         _bars(ax, [i + (offset - 1) * width for i in range(len(targets))], heights, color, width, label)
-    ax.axhline(0.05, color=MUTED, linestyle=(0, (4, 3)), linewidth=1)
-    ax.text(len(targets) - 0.5, 0.055, "target alpha 0.05", ha="right", va="bottom", fontsize=8, color=MUTED)
+    ax.axhline(0.05, color=MUTED, linestyle=(0, (4, 3)), linewidth=1, label="Target alpha 0.05")
     ax.set_xticks(range(len(targets)), [n for n, _ in targets])
-    _finish(ax, "False-positive rate on real clips (mean of 3 seeds)", (0, 1.0))
-    ax.legend(frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=3, fontsize=8)
+    _finish(ax, "False-positive rate on real clips\n(mean of 3 seeds)", (0, 0.6))
+    ax.legend(frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.0), ncol=4, fontsize=8)
     return _save(fig, "fig_h4.png")
 
 

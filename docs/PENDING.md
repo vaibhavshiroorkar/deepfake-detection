@@ -14,14 +14,9 @@ Three chains run as detached processes. Each resumes from its own log if stopped
 | H2 | `runs/p001-h2.log` | Waits for the two above; caches the three targets, scores them with the frozen visual and audio models, then runs the fusion test (amendment A8) | Tue 11-17, about midday |
 
 ## 2. When the 2-day chain finishes (Claude)
-
-- Wait for `runs/p001-a10.sh` (log `runs/p001-a10.log`): targets re-extracted with the face locator and rescored (amendment A10). Run the finalize step only after it, so `results/` gets the A10 results; the earlier results go to `results/p001-sync-targets-pre-a10/` and `results/p001-h4-pre-a10/`.
 - Report DFDC, LAV-DF and HiFi-AVDF coverage before and after A10, and the sync and H4 results under both, in the paper, report and slides.
 
-- Run `runs/p001-finalize.sh`: copy the target and H4 outputs into `results/p001-sync-targets/` and `results/p001-h4/`, then rebuild `results/numbers.json`, the figures, the slides, the poster and the Overleaf zips.
-- Add a README with receipts to each new results folder.
-- Commit the audits of the neutral copies under `results/shortcut-audit/*-neutral/`.
-- Report the 23 HiFi-AVDF clips that have no audio track (14 real, 9 fake), the clips with no face, and the 4 windows left out as shorter than 50 frames, in the results README and the paper.
+- Report the 23 HiFi-AVDF clips that have no audio track (14 real, 9 fake), the clips with no face, and the 4 windows left out as shorter than 50 frames, in the paper and the report (the results README has them).
 - Update the README Results section to the P-001 study. It still leads with older numbers.
 - Label the main claims in `FINAL.md` and the handbook as verified, assumed, false or unknown.
 - Write the paper and report text that interprets the cross-corpus and H4 results. The numbers fill in by themselves; the reading of them does not.

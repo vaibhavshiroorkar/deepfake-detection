@@ -17,6 +17,8 @@ Experiment numbers are not repeated here. They live in `results/` and the docume
 - The paper, report, slides, poster and figures show LAV-DF under both labels, explain A9, and use the window label for H2.
 - Amendment A10: the mouth cropper can locate small faces with YuNet before landmarking (`--locator`), used only on windows below the 0.8 face share. DFDC had found a face in 35% of windows. Handbook mistake 69.
 - The 2-day chain finished (sync path on the three targets, H4, neutral audits). Neutral ceilings: HiFi-AVDF 0.999 to 0.629, LAV-DF 0.936 to 0.557, DFDC 0.588 to 0.526. The cache build then moved to normal priority.
+- Results committed: `results/p001-sync-targets/` and `results/p001-h4/` (after A10, with READMEs), the results from before A10 beside them, and the neutral audits of the three targets plus the LAV-DF window label. H4 is met on HiFi-AVDF and on LAV-DF under the file label in all seeds; under the window label 2 of 3 LAV-DF seeds miss the bar. `numbers.json` holds 953 numbers.
+- The cross-corpus and H4 figures no longer overlap their labels.
 - The poster build stops when a column overflows, instead of writing a file PowerPoint calls corrupted.
 
 ## 0.3.0 - 2026-11-16: neutral protocol, sync path, deliverable builders

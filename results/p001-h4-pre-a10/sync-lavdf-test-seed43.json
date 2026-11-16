@@ -1,0 +1,28 @@
+{
+  "predictions": "runs/p001/sync-targets/sync-lavdf-test-seed43-predictions.csv",
+  "alpha": 0.05,
+  "delta": 0.05,
+  "n_cal": 200,
+  "minimum_n_for_umbrella": 59,
+  "calibration_seed": 20261113,
+  "held_out_real": 766,
+  "held_out_fake": 2727,
+  "results": {
+    "source_validation": {
+      "threshold": 0.377747,
+      "false_positive_rate": 0.31070496083550914,
+      "true_positive_rate": 0.43564356435643564
+    },
+    "conformal_real_only": {
+      "threshold": 0.580948,
+      "false_positive_rate": 0.06266318537859007,
+      "true_positive_rate": 0.061606160616061605
+    },
+    "umbrella_real_only": {
+      "threshold": 0.66664,
+      "false_positive_rate": 0.0195822454308094,
+      "true_positive_rate": 0.0176017601760176
+    }
+  },
+  "h4_success": true
+}

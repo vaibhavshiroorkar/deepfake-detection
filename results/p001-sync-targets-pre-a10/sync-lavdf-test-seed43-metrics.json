@@ -1,0 +1,213 @@
+{
+  "confidence_intervals": {
+    "balanced_accuracy": {
+      "estimate": 0.5692710575405366,
+      "lower": 0.5547642571891859,
+      "successful_samples": 1000,
+      "upper": 0.5834171166743951
+    },
+    "brier": {
+      "estimate": 0.34650069700362446,
+      "lower": 0.33833334606950094,
+      "successful_samples": 1000,
+      "upper": 0.35452891559977023
+    },
+    "eer": {
+      "estimate": 0.41107444077741107,
+      "lower": 0.39579089054785044,
+      "successful_samples": 1000,
+      "upper": 0.4283652074318356
+    },
+    "expected_calibration_error": {
+      "estimate": 0.39495918034118604,
+      "lower": 0.3830691441335297,
+      "successful_samples": 1000,
+      "upper": 0.40606279734964157
+    },
+    "f1": {
+      "estimate": 0.5654450261780105,
+      "lower": 0.5380664287081406,
+      "successful_samples": 1000,
+      "upper": 0.5930691192369781
+    },
+    "fnr": {
+      "estimate": 0.5643564356435643,
+      "lower": 0.5310908837130169,
+      "successful_samples": 1000,
+      "upper": 0.5950134883367003
+    },
+    "fpr": {
+      "estimate": 0.2971014492753623,
+      "lower": 0.26987323813176256,
+      "successful_samples": 1000,
+      "upper": 0.32748650986041855
+    },
+    "fpr_at_95_tpr": {
+      "estimate": 0.8416149068322981,
+      "lower": 0.7809892682131424,
+      "successful_samples": 1000,
+      "upper": 0.8719074294964642
+    },
+    "pr_auc": {
+      "estimate": 0.7883505981521971,
+      "lower": 0.7758379421312227,
+      "successful_samples": 1000,
+      "upper": 0.8011217727448422
+    },
+    "precision": {
+      "estimate": 0.8054237288135593,
+      "lower": 0.7906474820143885,
+      "successful_samples": 1000,
+      "upper": 0.8196931417374266
+    },
+    "recall": {
+      "estimate": 0.43564356435643564,
+      "lower": 0.40498651166329974,
+      "successful_samples": 1000,
+      "upper": 0.4689091162869831
+    },
+    "roc_auc": {
+      "estimate": 0.6215636746559404,
+      "lower": 0.6056596818043499,
+      "successful_samples": 1000,
+      "upper": 0.6379394764978216
+    }
+  },
+  "fusion_vs_visual_auc": null,
+  "gender": {
+    "unknown": {
+      "abstained": 130,
+      "coverage": 0.9659952916557677,
+      "metrics": {
+        "balanced_accuracy": 0.5692710575405366,
+        "brier": 0.34650069700362446,
+        "eer": 0.41107444077741107,
+        "expected_calibration_error": 0.39495918034118604,
+        "f1": 0.5654450261780105,
+        "fnr": 0.5643564356435643,
+        "fpr": 0.2971014492753623,
+        "fpr_at_95_tpr": 0.8416149068322981,
+        "pr_auc": 0.7883505981521971,
+        "precision": 0.8054237288135593,
+        "recall": 0.43564356435643564,
+        "roc_auc": 0.6215636746559404
+      },
+      "scored": 3693,
+      "total": 3823
+    }
+  },
+  "macro_method_roc_auc": 0.6216313631148062,
+  "overall": {
+    "abstained": 130,
+    "coverage": 0.9659952916557677,
+    "metrics": {
+      "balanced_accuracy": 0.5692710575405366,
+      "brier": 0.34650069700362446,
+      "eer": 0.41107444077741107,
+      "expected_calibration_error": 0.39495918034118604,
+      "f1": 0.5654450261780105,
+      "fnr": 0.5643564356435643,
+      "fpr": 0.2971014492753623,
+      "fpr_at_95_tpr": 0.8416149068322981,
+      "pr_auc": 0.7883505981521971,
+      "precision": 0.8054237288135593,
+      "recall": 0.43564356435643564,
+      "roc_auc": 0.6215636746559404
+    },
+    "scored": 3693,
+    "total": 3823
+  },
+  "per_method": {
+    "lavdf-FakeVideo-FakeAudio": {
+      "abstained": 67,
+      "coverage": 0.9654104284976768,
+      "metrics": {
+        "balanced_accuracy": 0.5771129921764782,
+        "brier": 0.26578930824093744,
+        "eer": 0.41039823008849563,
+        "expected_calibration_error": 0.172063707486631,
+        "f1": 0.5103189493433395,
+        "fnr": 0.5486725663716814,
+        "fpr": 0.2971014492753623,
+        "fpr_at_95_tpr": 0.8053830227743272,
+        "pr_auc": 0.5533574344930277,
+        "precision": 0.5870503597122302,
+        "recall": 0.45132743362831856,
+        "roc_auc": 0.6259613358617784
+      },
+      "scored": 1870,
+      "total": 1937
+    },
+    "lavdf-FakeVideo-RealAudio": {
+      "abstained": 65,
+      "coverage": 0.9665981500513875,
+      "metrics": {
+        "balanced_accuracy": 0.5465312425754336,
+        "brier": 0.2758878378794859,
+        "eer": 0.42950819672131146,
+        "expected_calibration_error": 0.17988835140882514,
+        "f1": 0.4579858883899936,
+        "fnr": 0.6098360655737705,
+        "fpr": 0.2971014492753623,
+        "fpr_at_95_tpr": 0.8457556935817805,
+        "pr_auc": 0.5394907927092469,
+        "precision": 0.5543478260869565,
+        "recall": 0.3901639344262295,
+        "roc_auc": 0.597736143637783
+      },
+      "scored": 1881,
+      "total": 1946
+    },
+    "lavdf-RealVideo-FakeAudio": {
+      "abstained": 66,
+      "coverage": 0.965979381443299,
+      "metrics": {
+        "balanced_accuracy": 0.5843787907808211,
+        "brier": 0.2603422625331222,
+        "eer": 0.39544513457556935,
+        "expected_calibration_error": 0.1628431552828175,
+        "f1": 0.522867737948084,
+        "fnr": 0.5341409691629956,
+        "fpr": 0.2971014492753623,
+        "fpr_at_95_tpr": 0.8333333333333334,
+        "pr_auc": 0.5737629650592642,
+        "precision": 0.5957746478873239,
+        "recall": 0.4658590308370044,
+        "roc_auc": 0.6411966098448573
+      },
+      "scored": 1874,
+      "total": 1940
+    }
+  },
+  "race": {
+    "unknown": {
+      "abstained": 130,
+      "coverage": 0.9659952916557677,
+      "metrics": {
+        "balanced_accuracy": 0.5692710575405366,
+        "brier": 0.34650069700362446,
+        "eer": 0.41107444077741107,
+        "expected_calibration_error": 0.39495918034118604,
+        "f1": 0.5654450261780105,
+        "fnr": 0.5643564356435643,
+        "fpr": 0.2971014492753623,
+        "fpr_at_95_tpr": 0.8416149068322981,
+        "pr_auc": 0.7883505981521971,
+        "precision": 0.8054237288135593,
+        "recall": 0.43564356435643564,
+        "roc_auc": 0.6215636746559404
+      },
+      "scored": 3693,
+      "total": 3823
+    }
+  },
+  "threshold": 0.377747,
+  "threshold_source": {
+    "file": "runs\\p001\\sync\\sync-seed43-threshold.json",
+    "kind": "selected",
+    "objective": "balanced_accuracy",
+    "selection_rows": 3104,
+    "split": "val",
+    "value": 0.377747
+  }
+}

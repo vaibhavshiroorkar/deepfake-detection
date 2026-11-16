@@ -1,0 +1,28 @@
+{
+  "predictions": "runs/p001/sync-targets/sync-hifiavdf-seed17-predictions.csv",
+  "alpha": 0.05,
+  "delta": 0.05,
+  "n_cal": 200,
+  "minimum_n_for_umbrella": 59,
+  "calibration_seed": 20261113,
+  "held_out_real": 1684,
+  "held_out_fake": 1855,
+  "results": {
+    "source_validation": {
+      "threshold": 0.516042,
+      "false_positive_rate": 0.4845605700712589,
+      "true_positive_rate": 0.5849056603773585
+    },
+    "conformal_real_only": {
+      "threshold": 0.739366,
+      "false_positive_rate": 0.057007125890736345,
+      "true_positive_rate": 0.07277628032345014
+    },
+    "umbrella_real_only": {
+      "threshold": 0.821718,
+      "false_positive_rate": 0.019002375296912115,
+      "true_positive_rate": 0.02587601078167116
+    }
+  },
+  "h4_success": true
+}
