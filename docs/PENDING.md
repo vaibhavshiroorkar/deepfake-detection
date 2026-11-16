@@ -28,8 +28,7 @@ Chosen 11-16: prepare the rebuild now, with no GPU and no change to anything H2 
 
 Stop rule: if the upgraded models are not scored on all three targets by 17 November, 23:59, A11 is reported as not completed.
 
-- Write a scorer for visual-stream checkpoints on cached clips (validation, test and the three targets), with the same prediction format as `ddf evaluate branch`.
-- Once the GPU is free (after the P-001 audio models): train CLIP (`ddf train visual-stream --backbone clip --freeze-backbone`) and XLS-R (`ddf train audio --audio-model facebook/wav2vec2-xls-r-300m`, frozen for every epoch) at three seeds. Choose thresholds on validation and score the identity-strict test and the targets.
+- `runs/p001-a11.sh` (log `runs/p001-a11.log`) runs it all once the GPU is free (after the P-001 audio models): it trains CLIP (`ddf train visual-stream --backbone clip --freeze-backbone`) and XLS-R (`ddf train audio --audio-model facebook/wav2vec2-xls-r-300m`, frozen for every epoch) at three seeds. Choose thresholds on validation and score the identity-strict test and the targets.
 - Compare each with its P-001 path (paired identity bootstrap), and add an exploratory section to the paper and report.
 
 ## 3. When H2 finishes (Claude)

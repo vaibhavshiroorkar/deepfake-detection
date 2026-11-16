@@ -35,6 +35,7 @@ Experiment numbers are not repeated here. They live in `results/` and the docume
 - `docs/research/P-002-backbones.md`: visual pick CLIP ViT-L/14 with LayerNorm-only tuning (mean cross-dataset video AUROC 94.2), audio pick frozen XLS-R (mean EER 17.4, where the current wav2vec2 Base is 28.4), with criteria, labels and sources. AV-Deepfake1M++ is 1.46 TB, more than this PC's free disk.
 - `results/preregistration/P-002-draft.md`: the P-002 questions (Q1 to Q6), data, ingestion checks, paths and draft bars. Not frozen.
 - Amendment A11 (exploratory): frozen CLIP ViT-L/14 and XLS-R backbones on the P-001 protocol. Visual streams now convert the cache's ImageNet normalization to their backbone's own, read from the backbone's config (tested). EfficientNet and DINOv3 are unaffected. `ddf train visual-stream --backbone clip` is available.
+- `scripts/score_visual_stream.py` scores a visual-stream checkpoint on cached clips, rebuilt from its history file, in the branch prediction format (tested).
 - The poster build stops when a column overflows, instead of writing a file PowerPoint calls corrupted.
 
 ## 0.3.0 - 2026-11-16: neutral protocol, sync path, deliverable builders
