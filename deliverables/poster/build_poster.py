@@ -178,7 +178,7 @@ def build(draft: bool) -> int:
     rows = [[name, n(f"{{{{h2.{k}.estimate}}}} [{{{{h2.{k}.lower}}}}, {{{{h2.{k}.upper}}}}]"),
              "n/a" if k == "hifiavdf" else n(f"{{{{h2.{k}.holm}}}}")]
             for name, k in [("FakeAVCeleb, strict", "test-identity-strict"), ("DFDC", "dfdc"),
-                            ("LAV-DF test", "lavdf-test"), ("HiFi-AVDF", "hifiavdf")]]
+                            ("LAV-DF, window", "lavdf-window"), ("HiFi-AVDF", "hifiavdf")]]
     y = section(1, y, None, "5. Fusion against visual-only (H2)", [
         ("p", "Logistic fusion of the three paths, fixed before any branch was trained. Mean gain in AUC over the "
               "visual path, three seeds; Holm over the first three rows.", SZ_S),
@@ -214,9 +214,9 @@ def build(draft: bool) -> int:
               "three seeds.", SZ_B),
     ])
     y = section(2, y, None, "7. New corpora and false alarms", [
-        ("p", "Frozen model on LAV-DF, DFDC and HiFi-AVDF: AUC {{sync.lavdf-test.seed17.auc}}, "
+        ("p", "Frozen model on LAV-DF (window label), DFDC and HiFi-AVDF: AUC {{sync.lavdf-window.seed17.auc}}, "
               "{{sync.dfdc.seed17.auc}} and {{sync.hifiavdf.seed17.auc}} (seed 17), against neutral ceilings of "
-              "{{audit.lavdf.neutral.clip}}, {{audit.dfdc.neutral.clip}} and {{audit.hifiavdf.neutral.clip}}.", SZ_S),
+              "{{audit.lavdf.window.clip}}, {{audit.dfdc.neutral.clip}} and {{audit.hifiavdf.neutral.clip}}.", SZ_S),
     ])
     y = figure(2, y, "fig_cross_corpus.png", "Sync path AUC on each locked target",
                keys=("sync.hifiavdf.seed17.auc",), max_h=int(6 * IN))

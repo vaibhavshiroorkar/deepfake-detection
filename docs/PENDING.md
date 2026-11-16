@@ -22,7 +22,6 @@ Three chains run as detached processes. Each resumes from its own log if stopped
 - Report the 23 HiFi-AVDF clips that have no audio track (14 real, 9 fake), the clips with no face, and the 4 windows left out as shorter than 50 frames, in the results README and the paper.
 - Update the README Results section to the P-001 study. It still leads with older numbers.
 - Label the main claims in `FINAL.md` and the handbook as verified, assumed, false or unknown.
-- Add the LAV-DF window-label rows (amendment A9) to the cross-corpus and H4 tables in the paper, report and slides, and explain A9 there. The H2 tables already need `lavdf-window` keys in place of `lavdf-test`.
 - Write the paper and report text that interprets the cross-corpus and H4 results. The numbers fill in by themselves; the reading of them does not.
 - Fill the pending entries in [FINAL.md](FINAL.md); update handbook section 5.1b and the project log.
 - Run the full test suite once the CPU is free.

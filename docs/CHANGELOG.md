@@ -14,6 +14,7 @@ Experiment numbers are not repeated here. They live in `results/` and the docume
 - `scripts/make_figures.py` draws `fig_h2.png` (fusion minus visual-only per target, with intervals and single seeds) once H2 exists; the paper and the report include it.
 - The sync scorer leaves out and counts windows shorter than 50 frames instead of failing (handbook mistake 67). HiFi-AVDF scored again with the fix: 4 windows left out.
 - Amendment A9: neutral LAV-DF clips are labelled by their kept window (`scripts/lavdf_window_labels.py`); 1,307 of 2,823 fake clips had no edited time in it. H2 uses the window label; the sync path and H4 on LAV-DF are reported under both labels. Handbook mistake 68.
+- The paper, report, slides, poster and figures show LAV-DF under both labels, explain A9, and use the window label for H2.
 - The poster build stops when a column overflows, instead of writing a file PowerPoint calls corrupted.
 
 ## 0.3.0 - 2026-11-16: neutral protocol, sync path, deliverable builders

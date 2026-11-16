@@ -1484,6 +1484,7 @@ amendment is edited. Table~\ref{tab:amendments} summarizes them.
         A6 & 15 Nov & KoDF, AV-Deepfake1M and AV-Deepfake1M++ become locked targets if access arrives; late data is scored only by frozen models \\
         A7 & 15 Nov & One frame size per corpus, because HiFi-AVDF frame size follows the label \\
         A8 & 16 Nov & Before any visual or audio model existed: how the H2 fusion is fit (logistic regression on validation, cross-fitted by identity) and tested (mean of three seeds, shared identity bootstrap, Holm over three targets) \\
+        A9 & 16 Nov & After the LAV-DF sync and H4 results were read, before H2: LAV-DF clips are also labelled by their kept window, because 46\% of fake clips have no edited time in it. Both labels are reported; H2 uses the window label \\
         \bottomrule
     \end{tabularx}
 \end{table}
@@ -1968,6 +1969,15 @@ their edits, 3,823 files), the DFDC subset, and HiFi-AVDF. All three are
 locked. They train, select and calibrate nothing, except that H4 draws real
 calibration clips from the target by design.
 
+LAV-DF needs two labels. The neutral copy keeps 3.00 s from the first sound,
+but LAV-DF edits single words anywhere in a longer recording. In 1,307 of the
+2,823 fake clips, the kept window contains no edited time at all, so under the
+file label they are real footage labelled fake. We found this after reading
+the file-label results for the sync path and H4. Amendment A9 adds a window
+label: a clip is fake if its kept window overlaps edited time by at least one
+frame. Every LAV-DF result below is reported under both labels. H2, which had
+not run, uses the window label.
+
 \section{Shortcut Ceilings of the Target Copies}
 
 Table~\ref{tab:target-ceilings} gives the ceiling of each target on raw files
@@ -1984,7 +1994,8 @@ ceiling of the same corpus, not against 0.5.
          & \multicolumn{3}{c}{\textbf{Raw}} & \multicolumn{3}{c}{\textbf{Neutral}} \\
         \textbf{Corpus} & \textbf{Clip} & \textbf{Video} & \textbf{Audio} & \textbf{Clip} & \textbf{Video} & \textbf{Audio} \\
         \midrule
-        LAV-DF    & {{audit.lavdf.raw.clip}} & {{audit.lavdf.raw.video}} & {{audit.lavdf.raw.audio}} & {{audit.lavdf.neutral.clip}} & {{audit.lavdf.neutral.video}} & {{audit.lavdf.neutral.audio}} \\
+        LAV-DF, file label & {{audit.lavdf.raw.clip}} & {{audit.lavdf.raw.video}} & {{audit.lavdf.raw.audio}} & {{audit.lavdf.neutral.clip}} & {{audit.lavdf.neutral.video}} & {{audit.lavdf.neutral.audio}} \\
+        LAV-DF, window label & {{audit.lavdf.raw.clip}} & {{audit.lavdf.raw.video}} & {{audit.lavdf.raw.audio}} & {{audit.lavdf.window.clip}} & {{audit.lavdf.window.video}} & {{audit.lavdf.window.audio}} \\
         DFDC      & {{audit.dfdc.raw.clip}} & {{audit.dfdc.raw.video}} & n/a & {{audit.dfdc.neutral.clip}} & n/a & n/a \\
         HiFi-AVDF & {{audit.hifiavdf.raw.clip}} & {{audit.hifiavdf.raw.video}} & {{audit.hifiavdf.raw.audio}} & {{audit.hifiavdf.neutral.clip}} & {{audit.hifiavdf.neutral.video}} & {{audit.hifiavdf.neutral.audio}} \\
         \bottomrule
@@ -2009,9 +2020,13 @@ with HiFi-AVDF also split by generator.
         \toprule
         \textbf{Target} & \textbf{Seed} & \textbf{Clips} & \textbf{AUC [95\% CI]} & \textbf{Bal. acc.} & \textbf{FPR} \\
         \midrule
-        LAV-DF test & 17 & {{sync.lavdf-test.seed17.n|int}} & {{sync.lavdf-test.seed17.auc}} [{{sync.lavdf-test.seed17.auc_low}}, {{sync.lavdf-test.seed17.auc_high}}] & {{sync.lavdf-test.seed17.balanced_accuracy}} & {{sync.lavdf-test.seed17.fpr}} \\
+        LAV-DF, file label & 17 & {{sync.lavdf-test.seed17.n|int}} & {{sync.lavdf-test.seed17.auc}} [{{sync.lavdf-test.seed17.auc_low}}, {{sync.lavdf-test.seed17.auc_high}}] & {{sync.lavdf-test.seed17.balanced_accuracy}} & {{sync.lavdf-test.seed17.fpr}} \\
                     & 29 & {{sync.lavdf-test.seed29.n|int}} & {{sync.lavdf-test.seed29.auc}} [{{sync.lavdf-test.seed29.auc_low}}, {{sync.lavdf-test.seed29.auc_high}}] & {{sync.lavdf-test.seed29.balanced_accuracy}} & {{sync.lavdf-test.seed29.fpr}} \\
                     & 43 & {{sync.lavdf-test.seed43.n|int}} & {{sync.lavdf-test.seed43.auc}} [{{sync.lavdf-test.seed43.auc_low}}, {{sync.lavdf-test.seed43.auc_high}}] & {{sync.lavdf-test.seed43.balanced_accuracy}} & {{sync.lavdf-test.seed43.fpr}} \\
+        \midrule
+        LAV-DF, window label & 17 & {{sync.lavdf-window.seed17.n|int}} & {{sync.lavdf-window.seed17.auc}} [{{sync.lavdf-window.seed17.auc_low}}, {{sync.lavdf-window.seed17.auc_high}}] & {{sync.lavdf-window.seed17.balanced_accuracy}} & {{sync.lavdf-window.seed17.fpr}} \\
+                    & 29 & {{sync.lavdf-window.seed29.n|int}} & {{sync.lavdf-window.seed29.auc}} [{{sync.lavdf-window.seed29.auc_low}}, {{sync.lavdf-window.seed29.auc_high}}] & {{sync.lavdf-window.seed29.balanced_accuracy}} & {{sync.lavdf-window.seed29.fpr}} \\
+                    & 43 & {{sync.lavdf-window.seed43.n|int}} & {{sync.lavdf-window.seed43.auc}} [{{sync.lavdf-window.seed43.auc_low}}, {{sync.lavdf-window.seed43.auc_high}}] & {{sync.lavdf-window.seed43.balanced_accuracy}} & {{sync.lavdf-window.seed43.fpr}} \\
         \midrule
         DFDC & 17 & {{sync.dfdc.seed17.n|int}} & {{sync.dfdc.seed17.auc}} [{{sync.dfdc.seed17.auc_low}}, {{sync.dfdc.seed17.auc_high}}] & {{sync.dfdc.seed17.balanced_accuracy}} & {{sync.dfdc.seed17.fpr}} \\
              & 29 & {{sync.dfdc.seed29.n|int}} & {{sync.dfdc.seed29.auc}} [{{sync.dfdc.seed29.auc_low}}, {{sync.dfdc.seed29.auc_high}}] & {{sync.dfdc.seed29.balanced_accuracy}} & {{sync.dfdc.seed29.fpr}} \\
@@ -2126,9 +2141,13 @@ of each rule, and Figure~\ref{fig:h4} plots the false-positive rates.
          & & \multicolumn{2}{c}{\textbf{Source}} & \multicolumn{2}{c}{\textbf{Conformal}} & \multicolumn{2}{c}{\textbf{Umbrella}} & \\
         \textbf{Target} & \textbf{Seed} & \textbf{FPR} & \textbf{TPR} & \textbf{FPR} & \textbf{TPR} & \textbf{FPR} & \textbf{TPR} & \textbf{Success} \\
         \midrule
-        LAV-DF test & 17 & {{h4.lavdf-test-seed17.source_validation.fpr}} & {{h4.lavdf-test-seed17.source_validation.tpr}} & {{h4.lavdf-test-seed17.conformal_real_only.fpr}} & {{h4.lavdf-test-seed17.conformal_real_only.tpr}} & {{h4.lavdf-test-seed17.umbrella_real_only.fpr}} & {{h4.lavdf-test-seed17.umbrella_real_only.tpr}} & {{h4.lavdf-test-seed17.success}} \\
+        LAV-DF, file label & 17 & {{h4.lavdf-test-seed17.source_validation.fpr}} & {{h4.lavdf-test-seed17.source_validation.tpr}} & {{h4.lavdf-test-seed17.conformal_real_only.fpr}} & {{h4.lavdf-test-seed17.conformal_real_only.tpr}} & {{h4.lavdf-test-seed17.umbrella_real_only.fpr}} & {{h4.lavdf-test-seed17.umbrella_real_only.tpr}} & {{h4.lavdf-test-seed17.success}} \\
                     & 29 & {{h4.lavdf-test-seed29.source_validation.fpr}} & {{h4.lavdf-test-seed29.source_validation.tpr}} & {{h4.lavdf-test-seed29.conformal_real_only.fpr}} & {{h4.lavdf-test-seed29.conformal_real_only.tpr}} & {{h4.lavdf-test-seed29.umbrella_real_only.fpr}} & {{h4.lavdf-test-seed29.umbrella_real_only.tpr}} & {{h4.lavdf-test-seed29.success}} \\
                     & 43 & {{h4.lavdf-test-seed43.source_validation.fpr}} & {{h4.lavdf-test-seed43.source_validation.tpr}} & {{h4.lavdf-test-seed43.conformal_real_only.fpr}} & {{h4.lavdf-test-seed43.conformal_real_only.tpr}} & {{h4.lavdf-test-seed43.umbrella_real_only.fpr}} & {{h4.lavdf-test-seed43.umbrella_real_only.tpr}} & {{h4.lavdf-test-seed43.success}} \\
+        \midrule
+        LAV-DF, window label & 17 & {{h4.lavdf-window-seed17.source_validation.fpr}} & {{h4.lavdf-window-seed17.source_validation.tpr}} & {{h4.lavdf-window-seed17.conformal_real_only.fpr}} & {{h4.lavdf-window-seed17.conformal_real_only.tpr}} & {{h4.lavdf-window-seed17.umbrella_real_only.fpr}} & {{h4.lavdf-window-seed17.umbrella_real_only.tpr}} & {{h4.lavdf-window-seed17.success}} \\
+                    & 29 & {{h4.lavdf-window-seed29.source_validation.fpr}} & {{h4.lavdf-window-seed29.source_validation.tpr}} & {{h4.lavdf-window-seed29.conformal_real_only.fpr}} & {{h4.lavdf-window-seed29.conformal_real_only.tpr}} & {{h4.lavdf-window-seed29.umbrella_real_only.fpr}} & {{h4.lavdf-window-seed29.umbrella_real_only.tpr}} & {{h4.lavdf-window-seed29.success}} \\
+                    & 43 & {{h4.lavdf-window-seed43.source_validation.fpr}} & {{h4.lavdf-window-seed43.source_validation.tpr}} & {{h4.lavdf-window-seed43.conformal_real_only.fpr}} & {{h4.lavdf-window-seed43.conformal_real_only.tpr}} & {{h4.lavdf-window-seed43.umbrella_real_only.fpr}} & {{h4.lavdf-window-seed43.umbrella_real_only.tpr}} & {{h4.lavdf-window-seed43.success}} \\
         \midrule
         HiFi-AVDF & 17 & {{h4.hifiavdf-seed17.source_validation.fpr}} & {{h4.hifiavdf-seed17.source_validation.tpr}} & {{h4.hifiavdf-seed17.conformal_real_only.fpr}} & {{h4.hifiavdf-seed17.conformal_real_only.tpr}} & {{h4.hifiavdf-seed17.umbrella_real_only.fpr}} & {{h4.hifiavdf-seed17.umbrella_real_only.tpr}} & {{h4.hifiavdf-seed17.success}} \\
                   & 29 & {{h4.hifiavdf-seed29.source_validation.fpr}} & {{h4.hifiavdf-seed29.source_validation.tpr}} & {{h4.hifiavdf-seed29.conformal_real_only.fpr}} & {{h4.hifiavdf-seed29.conformal_real_only.tpr}} & {{h4.hifiavdf-seed29.umbrella_real_only.fpr}} & {{h4.hifiavdf-seed29.umbrella_real_only.tpr}} & {{h4.hifiavdf-seed29.success}} \\
@@ -2242,7 +2261,7 @@ gets the same statistic, outside the rule.
         \midrule
         FakeAVCeleb, strict & {{h2.test-identity-strict.clips|int}} & {{h2.test-identity-strict.estimate}} [{{h2.test-identity-strict.lower}}, {{h2.test-identity-strict.upper}}] & {{h2.test-identity-strict.p}} & {{h2.test-identity-strict.holm}} \\
         DFDC & {{h2.dfdc.clips|int}} & {{h2.dfdc.estimate}} [{{h2.dfdc.lower}}, {{h2.dfdc.upper}}] & {{h2.dfdc.p}} & {{h2.dfdc.holm}} \\
-        LAV-DF test & {{h2.lavdf-test.clips|int}} & {{h2.lavdf-test.estimate}} [{{h2.lavdf-test.lower}}, {{h2.lavdf-test.upper}}] & {{h2.lavdf-test.p}} & {{h2.lavdf-test.holm}} \\
+        LAV-DF test & {{h2.lavdf-window.clips|int}} & {{h2.lavdf-window.estimate}} [{{h2.lavdf-window.lower}}, {{h2.lavdf-window.upper}}] & {{h2.lavdf-window.p}} & {{h2.lavdf-window.holm}} \\
         \midrule
         HiFi-AVDF & {{h2.hifiavdf.clips|int}} & {{h2.hifiavdf.estimate}} [{{h2.hifiavdf.lower}}, {{h2.hifiavdf.upper}}] & {{h2.hifiavdf.p}} & n/a \\
         \bottomrule

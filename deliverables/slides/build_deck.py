@@ -19,15 +19,24 @@ ROOT = HERE.parents[1]
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(ROOT / "scripts"))
 
+import slide_common as C  # noqa: E402
+from deck_kit import (  # noqa: E402
+    F_BLUE,
+    F_GREEN,
+    F_GREY,
+    F_ORANGE,
+    F_RED,
+    H0,
+    Y0,
+    Deck,
+    set_spacing,
+    style_run,
+)
+from fill_numbers import PATTERN, render  # noqa: E402
+from lxml import etree  # noqa: E402
 from pptx.enum.text import MSO_ANCHOR, PP_ALIGN  # noqa: E402
 from pptx.oxml.ns import qn  # noqa: E402
 from pptx.util import Emu  # noqa: E402
-from lxml import etree  # noqa: E402
-
-import slide_common as C  # noqa: E402
-from deck_kit import (F_BLUE, F_GREEN, F_GREY, F_ORANGE, F_RED, H0, Y0, Deck, set_spacing,  # noqa: E402
-                      style_run)
-from fill_numbers import PATTERN, render  # noqa: E402
 from slide_common import BOT, GREY, L, W, col_x, span_w  # noqa: E402
 
 TEMPLATE = HERE / "college-template.pptx"
@@ -105,7 +114,8 @@ def build(draft: bool) -> int:
                              "K. J. Somaiya School of Engineering, Somaiya Vidyavihar University"]):
         p = tf.paragraphs[0] if i == 0 else tf.add_paragraph()
         p.alignment = PP_ALIGN.CENTER
-        r = p.add_run(); r.text = txt
+        r = p.add_run()
+        r.text = txt
         style_run(r, 18, False, False, GREY)
         set_spacing(p, 0, 2)
     ph_y, ph_h = 1600000, 2250000
@@ -381,13 +391,17 @@ def build(draft: bool) -> int:
               "The models are frozen. Nothing is retrained, selected or thresholded on a target corpus. Each target is "
               "audited raw, neutralized with version 4 and audited again, and the neutral ceiling is the bar. LAV-DF "
               "replaces single words inside real recordings, our DFDC subset has no fake audio, and HiFi-AVDF makes "
-              "whole clips with commercial generators, so each target tests something different.",
+              "whole clips with commercial generators, so each target tests something different. LAV-DF has two rows. "
+              "Our neutral copy keeps 3 seconds from the first sound, and in 46 percent of LAV-DF fakes those 3 seconds "
+              "hold no edited word, so the file label calls real footage fake. We found this after reading the file-label "
+              "result and added the window label in amendment A9; both rows stay on the slide.",
               "Each locked target, beside its own neutral shortcut ceiling.")
     rows = []
-    for name, k, audit in [("LAV-DF test", "lavdf-test", "lavdf"), ("DFDC", "dfdc", "dfdc"), ("HiFi-AVDF", "hifiavdf", "hifiavdf")]:
+    for name, k, audit in [("LAV-DF, file label", "lavdf-test", "lavdf.neutral"), ("LAV-DF, window label", "lavdf-window", "lavdf.window"),
+                           ("DFDC", "dfdc", "dfdc.neutral"), ("HiFi-AVDF", "hifiavdf", "hifiavdf.neutral")]:
         rows.append([name, n(f"{{{{sync.{k}.seed17.n|int}}}}")]
                     + [n(f"{{{{sync.{k}.seed{sd}.auc}}}}") for sd in (17, 29, 43)]
-                    + [n(f"{{{{audit.{audit}.neutral.clip}}}}")])
+                    + [n(f"{{{{audit.{audit}.clip}}}}")])
     _, th = d.add_table(s, L, Y0, [2400000, 1500000] + [(W - 6100000) // 3] * 3 + [2200000],
                         ["Target", "Clips", "Seed 17", "Seed 29", "Seed 43", "Neutral ceiling"], rows, size=16,
                         bold_first_col=True, pad=40000)
@@ -411,9 +425,10 @@ def build(draft: bool) -> int:
         ("b", "Umbrella: smallest rank with P(FPR > alpha) at most delta", 16),
         ("s", "alpha = delta = 0.05, n = 200. Bar: FPR at most 0.07.", 16),
     ], name="card_rules")
-    if n.has("h4.lavdf-test-seed17.conformal_real_only.fpr", "h4.hifiavdf-seed17.conformal_real_only.fpr"):
+    if n.has("h4.lavdf-test-seed17.conformal_real_only.fpr", "h4.lavdf-window-seed17.conformal_real_only.fpr",
+             "h4.hifiavdf-seed17.conformal_real_only.fpr"):
         rows = []
-        for name, k in [("LAV-DF", "lavdf-test"), ("HiFi-AVDF", "hifiavdf")]:
+        for name, k in [("LAV-DF, file", "lavdf-test"), ("LAV-DF, window", "lavdf-window"), ("HiFi-AVDF", "hifiavdf")]:
             for sd in (17, 29, 43):
                 h = f"h4.{k}-seed{sd}"
                 rows.append([name if sd == 17 else "", str(sd), n(f"{{{{{h}.source_validation.fpr}}}}"),
@@ -439,7 +454,7 @@ def build(draft: bool) -> int:
              n(f"{{{{h2.{k}.estimate}}}} [{{{{h2.{k}.lower}}}}, {{{{h2.{k}.upper}}}}]"), n(f"{{{{h2.{k}.p}}}}"),
              "n/a" if k == "hifiavdf" else n(f"{{{{h2.{k}.holm}}}}")]
             for name, k in [("FakeAVCeleb, strict", "test-identity-strict"), ("DFDC", "dfdc"),
-                            ("LAV-DF test", "lavdf-test"), ("HiFi-AVDF (reported)", "hifiavdf")]]
+                            ("LAV-DF, window label", "lavdf-window"), ("HiFi-AVDF (reported)", "hifiavdf")]]
     _, th = d.add_table(s, L, Y0, [3200000, 1400000, 3400000, 1200000, W - 9200000],
                         ["Target", "Clips", "Fusion minus visual [95%]", "p", "Holm"], rows, size=16,
                         bold_first_col=True, pad=40000)

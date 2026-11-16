@@ -122,7 +122,7 @@ def sync_methods() -> str | None:
 
 
 def cross_corpus() -> str | None:
-    targets = [("FakeAVCeleb (in-domain)", "test"), ("LAV-DF", "lavdf-test"), ("DFDC", "dfdc"), ("HiFi-AVDF", "hifiavdf")]
+    targets = [("FakeAVCeleb (in-domain)", "test"), ("LAV-DF, file label", "lavdf-test"), ("LAV-DF, window label", "lavdf-window"), ("DFDC", "dfdc"), ("HiFi-AVDF", "hifiavdf")]
     targets = [(n, t) for n, t in targets if have(*(f"sync.{t}.seed{s}.auc" for s in (17, 29, 43)))]
     if len(targets) < 2:
         return None
@@ -138,7 +138,7 @@ def cross_corpus() -> str | None:
 
 
 def h4() -> str | None:
-    targets = [("LAV-DF", "lavdf-test"), ("HiFi-AVDF", "hifiavdf")]
+    targets = [("LAV-DF, file", "lavdf-test"), ("LAV-DF, window", "lavdf-window"), ("HiFi-AVDF", "hifiavdf")]
     rules = [("Source threshold", "source_validation", BLUE), ("Real-only conformal", "conformal_real_only", ORANGE),
              ("Real-only umbrella", "umbrella_real_only", AQUA)]
     targets = [(n, t) for n, t in targets if have(*(f"h4.{t}-seed{s}.{r}.fpr" for s in (17, 29, 43) for _, r, _ in rules))]
@@ -182,7 +182,7 @@ def _save(fig, name: str) -> str:
 
 def h2() -> str | None:
     """Fusion minus visual-only AUC per target: the 3-seed mean with its interval, and each seed as a dot."""
-    targets = [("FakeAVCeleb, strict", "test-identity-strict"), ("DFDC", "dfdc"), ("LAV-DF", "lavdf-test"),
+    targets = [("FakeAVCeleb, strict", "test-identity-strict"), ("DFDC", "dfdc"), ("LAV-DF, window label", "lavdf-window"),
                ("HiFi-AVDF (reported)", "hifiavdf")]
     targets = [(n, t) for n, t in targets if have(f"h2.{t}.estimate", f"h2.{t}.lower", f"h2.{t}.upper")]
     if not targets:
