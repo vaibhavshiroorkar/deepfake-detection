@@ -156,3 +156,15 @@ The 2-day window became 3 days (11-16 to 11-18), so H2 runs now instead of in th
 - **Not changed.** Splits, models, thresholds, the calibration draw, and every other target.
 
 **Why it was missed.** The cut log records each clip's offset, and A3 sampled LAV-DF by recording, but no check compared the kept window with the edit times. Handbook mistake 68 records it.
+
+## Amendment A10, 2026-11-16, after the DFDC sync result was read, and before any H2 result exists
+
+**What was found.** On neutral DFDC, the mouth cropper found a face in only 2,110 of 6,064 windows, so the sync path scored 921 of 3,032 clips and only 67 real ones. The cropper runs MediaPipe's Face Landmarker on the full frame. Its detector is built for faces that fill much of the frame, as in FakeAVCeleb's 224x224 clips. DFDC frames are 1920x1080 or 1080x1920 with faces of about 100 to 150 pixels. On 10 random windows with no face found, locating the face first with the YuNet detector already in the repository (`artifacts/models/face_detection_yunet_2026may.onnx`), then running the landmarker on a crop around it, found the face in all 10 (in 24 to 50 of 50 frames).
+
+**Change.**
+
+- **Located fallback.** When the landmarker alone finds a face in fewer than 80% of a window's frames (the existing `MIN_FACE` bar), YuNet locates the face on the first, middle and last frame. The landmarker runs again on a square crop 2.2 times the median face size around it, and the landmarks are mapped back to full-frame coordinates. The fallback is kept only if it finds a face in more frames. The mouth crop that follows is unchanged, and is scaled by eye distance either way.
+- **Scope.** All three locked targets, all windows below the bar, with no use of labels. Windows that already passed are not touched, so their features stay byte-identical.
+- **Training data unchanged.** The trained sync models are not retrained. FakeAVCeleb windows that fail the bar are not re-extracted; the models stay frozen.
+- **Reporting.** The DFDC, LAV-DF and HiFi-AVDF sync and H4 results before A10 stay on record. Results after A10 are reported as the corrected version, with coverage per target. H2, which has not run, uses the A10 features.
+- **H4 on DFDC.** Our DFDC subset has 194 real clips, fewer than the 200 that H4's calibration needs, so H4 still does not run on DFDC.
