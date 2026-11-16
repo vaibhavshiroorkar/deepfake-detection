@@ -16,6 +16,10 @@ EFFICIENTNET_B0 = "tf_efficientnet_b0.ns_jft_in1k"  # ~5M params, 1280-dim
 # face crop becomes a 14x14 patch grid, and the prefix is 5 rows (CLS plus 4
 # registers) rather than 1.
 DINOV3 = "vit_small_patch16_dinov3.lvd1689m"  # ~22M params, 384-dim
+# OpenAI CLIP ViT-L/14 image tower, ~300M params, 1024-dim. Chosen for P-001
+# amendment A11 from docs/research/P-002-backbones.md. It expects CLIP's own
+# input normalization, which VisualStream applies from the backbone's config.
+CLIP_VIT_L14 = "vit_large_patch14_clip_224.openai"
 
 
 @dataclass
@@ -77,6 +81,12 @@ class StreamConfig:
 
 def efficientnet_config(**overrides) -> StreamConfig:
     base = {"stream_name": "efficientnet", "backbone_name": EFFICIENTNET_B0}
+    base.update(overrides)
+    return StreamConfig(**base)
+
+
+def clip_config(**overrides) -> StreamConfig:
+    base = {"stream_name": "clip", "backbone_name": CLIP_VIT_L14, "global_pool": "token"}
     base.update(overrides)
     return StreamConfig(**base)
 

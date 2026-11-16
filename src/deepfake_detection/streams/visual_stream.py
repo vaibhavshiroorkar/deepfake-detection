@@ -22,6 +22,23 @@ from torch import nn
 
 from .config import StreamConfig
 
+# The normalization every cached visual view is stored in (views/alignment.py).
+IMAGENET_MEAN = (0.485, 0.456, 0.406)
+IMAGENET_STD = (0.229, 0.224, 0.225)
+
+
+def renormalize(frames: torch.Tensor, from_mean, from_std, to_mean, to_std) -> torch.Tensor:
+    """Re-express normalized [..., 3, H, W] frames under another mean and std."""
+    shape = (1,) * (frames.dim() - 3) + (3, 1, 1)
+
+    def as_tensor(values):
+        return torch.as_tensor(values, dtype=frames.dtype, device=frames.device).view(shape)
+
+    if tuple(from_mean) == tuple(to_mean) and tuple(from_std) == tuple(to_std):
+        return frames
+    pixels = frames * as_tensor(from_std) + as_tensor(from_mean)
+    return (pixels - as_tensor(to_mean)) / as_tensor(to_std)
+
 
 def _create_backbone(config: StreamConfig) -> nn.Module:
     """The timm backbone, built at the config's input resolution.
@@ -81,6 +98,17 @@ class VisualStream(nn.Module):
         self.backbone = _create_backbone(config)
         self.feature_dim = self.backbone.num_features
 
+        # Cached frames are ImageNet-normalized. A backbone trained under another
+        # normalization (CLIP) gets its own, read from its pretrained config so a
+        # new backbone cannot silently skip it. Non-persistent buffers keep old
+        # checkpoints loadable.
+        cfg = getattr(self.backbone, "pretrained_cfg", None) or {}
+        mean = tuple(cfg.get("mean", IMAGENET_MEAN))
+        std = tuple(cfg.get("std", IMAGENET_STD))
+        self.renormalizes = (mean, std) != (IMAGENET_MEAN, IMAGENET_STD)
+        self.register_buffer("backbone_mean", torch.tensor(mean).view(1, 3, 1, 1), persistent=False)
+        self.register_buffer("backbone_std", torch.tensor(std).view(1, 3, 1, 1), persistent=False)
+
         # Gradient checkpointing is a VRAM trade, not a correctness requirement.
         # Some timm backbones expose the method and assert on enable, so a
         # refusal is recorded rather than swallowed, and it is never fatal.
@@ -122,6 +150,9 @@ class VisualStream(nn.Module):
         self.temp_head = nn.Linear(config.common_dim, 1)
 
     def _run_backbone_chunked(self, frames_flat: torch.Tensor) -> torch.Tensor:
+        if self.renormalizes:
+            frames_flat = renormalize(frames_flat, IMAGENET_MEAN, IMAGENET_STD,
+                                      self.backbone_mean.flatten().tolist(), self.backbone_std.flatten().tolist())
         chunk = self.config.frame_chunk_size
         if not chunk or chunk >= frames_flat.shape[0]:
             return self.backbone(frames_flat)

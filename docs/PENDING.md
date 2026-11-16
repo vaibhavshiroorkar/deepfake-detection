@@ -24,6 +24,14 @@ Chosen 11-16: prepare the rebuild now, with no GPU and no change to anything H2 
 - AV-Deepfake1M++: size (1.46 TB) and licence (gated EULA) are checked; the metadata format is still unknown. Decide on a stratified subset or an external disk, since this PC has about 519 GB free. Follow up on access.
 - Confirm the assumed licences in `docs/research/P-002-backbones.md` (CLIP, XLS-R) before P-002 uses them.
 
+## 2c. Amendment A11, the exploratory backbone test (Claude)
+
+Stop rule: if the upgraded models are not scored on all three targets by 17 November, 23:59, A11 is reported as not completed.
+
+- Write a scorer for visual-stream checkpoints on cached clips (validation, test and the three targets), with the same prediction format as `ddf evaluate branch`.
+- Once the GPU is free (after the P-001 audio models): train CLIP (`ddf train visual-stream --backbone clip --freeze-backbone`) and XLS-R (`ddf train audio --audio-model facebook/wav2vec2-xls-r-300m`, frozen for every epoch) at three seeds. Choose thresholds on validation and score the identity-strict test and the targets.
+- Compare each with its P-001 path (paired identity bootstrap), and add an exploratory section to the paper and report.
+
 ## 3. When H2 finishes (Claude)
 
 - Copy `runs/p001/h2/` into `results/p001-h2/` with a README and receipts.

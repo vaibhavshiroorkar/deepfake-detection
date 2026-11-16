@@ -244,7 +244,7 @@ def _binary_branch_train(arguments: argparse.Namespace) -> int:
     return 0
 
 
-VISUAL_STREAM_PRESETS = ("dinov3", "efficientnet")
+VISUAL_STREAM_PRESETS = ("clip", "dinov3", "efficientnet")
 
 
 def _visual_stream_train(arguments: argparse.Namespace) -> int:
@@ -274,6 +274,7 @@ def _visual_stream_train(arguments: argparse.Namespace) -> int:
         collate_branch_items,
     )
     from deepfake_detection.streams.config import (
+        clip_config,
         dinov3_config,
         efficientnet_config,
     )
@@ -290,6 +291,7 @@ def _visual_stream_train(arguments: argparse.Namespace) -> int:
     )
 
     presets = {
+        "clip": clip_config,
         "dinov3": dinov3_config,
         "efficientnet": efficientnet_config,
     }
