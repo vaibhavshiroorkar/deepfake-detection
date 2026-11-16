@@ -14,8 +14,8 @@ Two chains run as detached processes. Each resumes from its own log if stopped. 
 
 ## 2. While the chains run (Claude)
 
-- Label the main claims in `FINAL.md` and the handbook as verified, assumed, false or unknown.
-- Fill the pending entries in [FINAL.md](FINAL.md); update handbook section 5.1b and the project log.
+- Label the main claims in the handbook as verified, assumed, false or unknown (`FINAL.md` is done).
+- Update handbook section 5.1b and the project log with the target, A9, A10 and H4 results.
 - Run the full test suite once the CPU is free.
 
 ## 3. When H2 finishes (Claude)

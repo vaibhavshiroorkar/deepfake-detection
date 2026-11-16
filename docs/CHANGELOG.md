@@ -24,6 +24,7 @@ Experiment numbers are not repeated here. They live in `results/` and the docume
 - `docs/research/P-002-design.md`: a design for rebuilding the study for maximum performance after the submission, from what P-001 showed.
 - The paper, report and slides state the one-training-corpus limitation; the report's full-run plan now leads with leave-one-corpus-out training under P-002.
 - The README describes P-001 and its results, each linked to its results folder, instead of the older study.
+- `docs/FINAL.md` is complete except H2. Every main claim is labelled verified (with its results folder) or assumed (with what would test it).
 - The poster build stops when a column overflows, instead of writing a file PowerPoint calls corrupted.
 
 ## 0.3.0 - 2026-11-16: neutral protocol, sync path, deliverable builders
