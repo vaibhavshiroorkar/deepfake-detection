@@ -16,6 +16,15 @@ Two chains run as detached processes. Each resumes from its own log if stopped. 
 
 - Run the full test suite once the CPU is free.
 
+## 2b. P-002 preparation, alongside (Claude)
+
+Chosen 11-16: prepare the rebuild now, with no GPU and no change to anything H2 uses; build it after the submission. Design: [P-002 design](research/P-002-design.md).
+
+- Ingestion checks as code and tests, run on every corpus before any model: face coverage, video at least as long as audio, the labelled segment inside the scored window, and the shortcut ceiling. They turn handbook mistakes 67 to 69 into automatic gates.
+- Draft the P-002 preregistration (`results/preregistration/P-002-draft.md`): the questions, the leave-one-corpus-out and leave-one-generator-out protocol, the paths, the baselines and the success bars. It is committed as a draft and frozen before any P-002 run.
+- Choose the backbones by written criteria: CLIP ViT-L/14 and DINOv2/v3 for faces, WavLM-Large and XLS-R for audio, AV-HuBERT Large for sync. One table, each cell labelled verified, assumed or unknown, with sources.
+- Check AV-Deepfake1M and 1M++: file format, segment labels, size on disk and licence terms. Follow up on access.
+
 ## 3. When H2 finishes (Claude)
 
 - Copy `runs/p001/h2/` into `results/p001-h2/` with a README and receipts.
