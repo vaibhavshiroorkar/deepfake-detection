@@ -34,10 +34,13 @@ def _fixture(tmp: Path, parts, drop_audio_clip=None):
             noise = np.random.default_rng(seed).normal(0, 1, (n, 3))
             def prob(k, gain, labels=labels, noise=noise):
                 return 1 / (1 + np.exp(-(labels * gain + noise[:, k])))
-            base = [{"clip_id": f"{part}-{i}", "label": int(labels[i]), "source": f"id{i // 4}"} for i in range(n)]
+            clip_part = "lavdf-test" if part == "lavdf-window" else part   # same clips, other label
+            base = [{"clip_id": f"{clip_part}-{i}", "label": int(labels[i]), "source": f"id{i // 4}"} for i in range(n)]
             sync_dir = tmp / ("sync" if part in ("val", "test", "test-identity-strict") else "targets")
             _write(sync_dir / f"sync-{part}-seed{seed}-predictions.csv",
                    [{**b, "probability": f"{prob(2, 0.5)[i]:.6f}"} for i, b in enumerate(base)])
+            if part == "lavdf-window":
+                continue                     # branch files are shared with lavdf-test
             _write(tmp / "branches" / f"visual-seed{seed}-{part}-predictions.csv",
                    [{**b, "probability": f"{prob(0, 0.7)[i]:.6f}"} for i, b in enumerate(base)])
             audio = [{**b, "probability": f"{prob(1, 2.0)[i]:.6f}"} for i, b in enumerate(base)]
@@ -47,7 +50,7 @@ def _fixture(tmp: Path, parts, drop_audio_clip=None):
 
 
 def test_run_h2_end_to_end(tmp_path):
-    parts = ("val", "test", "test-identity-strict", "dfdc", "lavdf-test", "hifiavdf")
+    parts = ("val", "test", "test-identity-strict", "dfdc", "lavdf-test", "lavdf-window", "hifiavdf")
     _fixture(tmp_path, parts, drop_audio_clip=3)
     out = tmp_path / "out"
     code = _load().main(["--branch-dir", str(tmp_path / "branches"), "--sync-dir", str(tmp_path / "sync"),
@@ -57,6 +60,7 @@ def test_run_h2_end_to_end(tmp_path):
     assert report["h2_success"] is True            # audio carries signal the visual path lacks
     dfdc = report["targets"]["dfdc"]
     assert dfdc["clips_scored_by_every_seed"] == 159   # one clip lost its audio score in one seed
+    assert report["targets"]["lavdf-window"]["clips_scored_by_every_seed"] == 159
     assert dfdc["estimate"] > 0
-    assert set(report["holm"]) == {"test-identity-strict", "dfdc", "lavdf-test"}
+    assert set(report["holm"]) == {"test-identity-strict", "dfdc", "lavdf-window"}
     assert (out / "fusion-hifiavdf-seed43-predictions.csv").exists()

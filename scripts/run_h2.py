@@ -34,8 +34,10 @@ from deepfake_detection.fusion.h2 import (  # noqa: E402
 )
 
 SEEDS = (17, 29, 43)
-H2_TARGETS = ("test-identity-strict", "dfdc", "lavdf-test")      # the Holm family (A8)
-REPORTED = ("test", "hifiavdf")                                   # same statistic, outside the rule
+H2_TARGETS = ("test-identity-strict", "dfdc", "lavdf-window")    # the Holm family (A8; LAV-DF by window label, A9)
+REPORTED = ("test", "hifiavdf", "lavdf-test")                     # same statistic, outside the rule
+# The window label (A9) changes labels only; the visual and audio scores are those of the same clips.
+BRANCH_PART = {"lavdf-window": "lavdf-test"}
 
 
 def read(path: Path) -> dict[str, dict]:
@@ -46,8 +48,9 @@ def read(path: Path) -> dict[str, dict]:
 def load(part: str, seed: int, args) -> tuple[list[str], np.ndarray, np.ndarray, np.ndarray, int]:
     sync_dir = args.sync_dir if part in ("val", "test", "test-identity-strict") else args.sync_targets
     sync = read(sync_dir / f"sync-{part}-seed{seed}-predictions.csv")
-    visual = read(args.branch_dir / f"visual-seed{seed}-{part}-predictions.csv")
-    audio = read(args.branch_dir / f"audio-seed{seed}-{part}-predictions.csv")
+    branch_part = BRANCH_PART.get(part, part)
+    visual = read(args.branch_dir / f"visual-seed{seed}-{branch_part}-predictions.csv")
+    audio = read(args.branch_dir / f"audio-seed{seed}-{branch_part}-predictions.csv")
     clips = sorted(set(sync) & set(visual) & set(audio))
     x = np.column_stack([logit([float(src[c]["probability"]) for c in clips]) for src in (visual, audio, sync)])
     labels = np.array([int(sync[c]["label"]) for c in clips])
@@ -94,6 +97,8 @@ def main(argv: list[str] | None = None) -> int:
         loaded = {seed: load(part, seed, args) for seed in SEEDS}
         # The shared bootstrap needs every seed on the same clips, so keep the clips all seeds scored.
         common = sorted(set.intersection(*(set(loaded[s][0]) for s in SEEDS)))
+        if not common:
+            raise SystemExit(f"{part}: no clip is scored by all three paths in every seed")
         pairs, coverage = [], []
         for seed in SEEDS:
             clips, labels, groups, x, n_sync = loaded[seed]

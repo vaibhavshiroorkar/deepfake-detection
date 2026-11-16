@@ -1077,6 +1077,14 @@ uncommitted working tree unless marked open.
 - **Fix:** `load_windows` leaves out and counts any window shorter than 50 frames, as it already did for windows without a face. HiFi-AVDF lost 4 windows. FakeAVCeleb has none (0 of 40,566), so the trained models and the in-domain results are unchanged. A regression test covers it. The neutralizer should also refuse clips with less than 3.00 s of video; that is listed in `docs/PENDING.md`.
 - **Source:** `scripts/train_sync_path.py`; `tests/test_sync_load_windows.py`; `runs/p001-2day.log`.
 
+#### 68. The fixed window missed LAV-DF's edits
+
+- **What went wrong:** Neutralizer v4 keeps 3.00 s from the first sound. LAV-DF edits one or a few words inside longer recordings, so the kept window often misses the edit. Of 2,823 fake clips in the neutral LAV-DF test sample, 1,307 (46%) contain no manipulated time in the window and 407 contain part of it. Under the file label those 1,307 clips are real footage labelled fake, which caps any detector's AUC on LAV-DF.
+- **How it was caught:** The LAV-DF sync AUC (0.60 to 0.62) was low for the corpus the sync path suits best. Comparing each clip's kept window with `fake_periods` in the LAV-DF metadata showed the gap (2026-11-16).
+- **What it cost:** The LAV-DF sync and H4 results were read under the file label before the fix, so the correction is disclosed rather than preregistered. H2 had not run.
+- **Fix:** Amendment A9. A neutral LAV-DF clip is labelled by its kept window: fake if the window overlaps manipulated time by at least one frame (`scripts/lavdf_window_labels.py`, with tests). H2 uses the window label. The sync path and H4 are reported under both labels. Other corpora manipulate whole clips and are unaffected. A check that the kept window covers the label should have been part of A3.
+- **Source:** P-001 amendment A9; `data/manifests/lavdf-test-window.json`.
+
 ## 7. What a hard reviewer would say
 
 These are the strongest objections we expect, with our current answer. "Open" means we have no answer yet and the paper must not pretend otherwise.

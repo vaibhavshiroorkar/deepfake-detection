@@ -30,7 +30,8 @@ def audits(numbers: dict) -> None:
              "fakeavceleb-neutral": "fakeavceleb.neutral", "fakeavceleb-neutral-v4-check": "fakeavceleb.v4check",
              "lavdf-files": "lavdf.raw", "dfdc": "dfdc.raw", "hifiavdf": "hifiavdf.raw",
              "hifiavdf-neutral": "hifiavdf.neutral", "dfdc-neutral": "dfdc.neutral",
-             "lavdf-test-neutral": "lavdf.neutral"}
+             "lavdf-test-neutral": "lavdf.neutral",
+             "lavdf-window-neutral": "lavdf.window"}   # LAV-DF by window label (A9)
     for folder, key in names.items():
         path = RESULTS / "shortcut-audit" / folder / "summary.json"
         if not path.exists():
