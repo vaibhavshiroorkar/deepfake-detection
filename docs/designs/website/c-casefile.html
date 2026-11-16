@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Direction C: Case file</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#ecebe6;--sheet:#fbfaf6;--ink:#141414;--muted:#5f5e58;--line:#141414;--red:#d92d20;--hl:#fde68a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "IBM Plex Sans",system-ui,sans-serif}
+.wrap{max-width:1160px;margin:0 auto;padding:0 28px}.mono{font-family:"IBM Plex Mono",monospace}
+nav{display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:2px solid var(--line)}
+.brand{font:700 20px "Space Grotesk";text-transform:uppercase;letter-spacing:.02em}
+nav ul{display:flex;gap:0;list-style:none;margin:0;padding:0}nav li{border-left:2px solid var(--line);padding:6px 16px;font:500 13px "IBM Plex Mono";text-transform:uppercase}
+.cta{background:var(--red);color:#fff;padding:10px 16px;font:500 14px "IBM Plex Mono";text-transform:uppercase;text-decoration:none;border:2px solid var(--line);box-shadow:4px 4px 0 var(--line)}
+.ghost{background:var(--sheet);color:var(--ink);padding:10px 16px;font:500 14px "IBM Plex Mono";text-transform:uppercase;text-decoration:none;border:2px solid var(--line)}
+.hero{display:grid;grid-template-columns:1.3fr .7fr;border-bottom:2px solid var(--line)}
+.hero>div{padding:56px 36px 48px 0}.hero aside{border-left:2px solid var(--line);padding:30px}
+.case{font:500 12px "IBM Plex Mono";text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+h1{font:700 clamp(44px,6.2vw,84px)/.95 "Space Grotesk";letter-spacing:-.03em;text-transform:uppercase;margin:16px 0 22px}
+mark{background:var(--hl);padding:0 .1em}
+.lede{font-size:19px;max-width:40ch;color:#2a2a2a}.btns{display:flex;gap:14px;margin-top:28px}
+.stamp{display:inline-block;border:3px solid var(--red);color:var(--red);font:700 15px "Space Grotesk";text-transform:uppercase;padding:6px 12px;transform:rotate(-4deg);margin-top:20px}
+.ex{background:var(--sheet);border:2px solid var(--line);padding:16px;margin-bottom:14px}.ex .n{font:700 46px/1 "Space Grotesk"}.ex p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:2px solid var(--line)}
+.g{padding:26px 24px;border-right:2px solid var(--line)}.g:last-child{border-right:0}
+.g h3{font:700 22px/1.1 "Space Grotesk";text-transform:uppercase;margin:10px 0}.g p{color:var(--muted);font-size:15px;margin:0}
+.det{display:grid;grid-template-columns:1fr 1fr;border:2px solid var(--line);margin:48px 0;background:var(--sheet)}
+.det>div{padding:26px}.det>div+div{border-left:2px solid var(--line)}
+.drop{border:2px dashed var(--line);padding:30px;text-align:center;font:500 13px "IBM Plex Mono";text-transform:uppercase}
+.row{display:flex;justify-content:space-between;border-bottom:1px solid #cfcdc4;padding:8px 0;font:500 14px "IBM Plex Mono"}
+footer{border-top:2px solid var(--line);padding:22px 0 44px;font:500 12px "IBM Plex Mono";text-transform:uppercase;display:flex;justify-content:space-between}
+</style></head><body><div class="wrap">
+<nav><div class="brand">Deepfake Check</div><ul><li>Detector</li><li>How it works</li><li>Research</li><li>About</li><li>Contact</li></ul></nav>
+<section class="hero"><div><div class="case">Case P-001 / Opened 13 Nov 2026 / Status: findings published</div>
+<h1>The evidence was in <mark>the file format</mark>.</h1>
+<p class="lede">Deepfake benchmarks leak their answers through codecs, lengths and silences. We stripped those clues and re-examined every detector.</p>
+<div class="btns"><a class="cta" href="#">Examine a clip</a><a class="ghost" href="#">Open the case file</a></div>
+<div class="stamp">Shortcut confirmed</div></div>
+<aside><div class="case">Exhibit A</div><div class="ex"><div class="n">0.994</div><p>File clues alone, FakeAVCeleb. No face, no voice.</p></div>
+<div class="case">Exhibit B</div><div class="ex"><div class="n">0.999 to 0.629</div><p>HiFi-AVDF, before and after cleaning.</p></div>
+<div class="case">Exhibit C</div><div class="ex"><div class="n">0.40</div><p>Lip-sync on Sora 2. The lips already match.</p></div></aside></section>
+<div class="grid3">
+<div class="g"><div class="case">Finding 01</div><h3>Benchmarks leak labels</h3><p>Fake voices are MP3, real ones AAC. Face swaps are MPEG-4.</p></div>
+<div class="g"><div class="case">Finding 02</div><h3>Cleaning works, mostly</h3><p>Every corpus drops toward chance after neutralization. FakeAVCeleb misses our bar.</p></div>
+<div class="g"><div class="case">Finding 03</div><h3>New generators win</h3><p>Sound and picture made together leave no mismatch to find.</p></div></div>
+<section class="det"><div><div class="case">The detector</div><h3 style="font:700 30px/1 'Space Grotesk';text-transform:uppercase;margin:10px 0 16px">Submit evidence</h3><div class="drop">Drop a clip of one person speaking</div></div>
+<div><div class="case">Report</div><div class="row"><span>Face</span><span>0.22</span></div><div class="row"><span>Voice</span><span>0.18</span></div><div class="row"><span>Lip-sync</span><span>0.41</span></div><div class="row" style="color:var(--red)"><span>Verdict, 5% false alarms</span><span>Likely real</span></div></div></section>
+<footer><span>Shiroorkar / Jithesh / Gupta / Guide: Dr. Phatak</span><span>Research prototype / read the limits</span></footer>
+</div></body></html>

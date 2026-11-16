@@ -19,3 +19,4 @@ mlflow.db
 /mlruns/
 /models/
 .env
+/.superpowers/

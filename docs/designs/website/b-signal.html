@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Direction B: Signal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0f14;--panel:#121820;--panel2:#161e28;--line:#232d3a;--text:#e7ecf2;--muted:#8a96a6;--accent:#5eead4;--warn:#f59e0b;--bad:#f87171}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(1200px 600px at 70% -10%,#12303a 0%,transparent 60%),var(--bg);color:var(--text);font:16px/1.55 Geist,system-ui,sans-serif}
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px}.mono{font-family:"Geist Mono",monospace}
+nav{display:flex;justify-content:space-between;align-items:center;padding:20px 0}
+.brand{font-weight:600;display:flex;gap:10px;align-items:center}.dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px #5eead422}
+nav ul{display:flex;gap:24px;list-style:none;margin:0;padding:0;color:var(--muted);font-size:14px}
+.cta{background:var(--accent);color:#04211d;padding:10px 16px;border-radius:8px;font-weight:600;text-decoration:none}
+.ghost{border:1px solid var(--line);color:var(--text);padding:10px 16px;border-radius:8px;text-decoration:none}
+.hero{padding:84px 0 48px;text-align:center}
+.pill{display:inline-flex;gap:8px;border:1px solid var(--line);background:var(--panel);padding:6px 12px;border-radius:999px;font-size:13px;color:var(--muted)}
+h1{font-weight:700;font-size:clamp(42px,6vw,76px);line-height:1.02;letter-spacing:-.035em;margin:22px auto 18px;max-width:16ch}
+h1 span{background:linear-gradient(90deg,var(--accent),#93c5fd);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{color:var(--muted);font-size:19px;max-width:56ch;margin:0 auto}
+.btns{display:flex;gap:12px;justify-content:center;margin-top:28px}
+.bento{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin:40px 0 70px}
+.b{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:14px;padding:22px}
+.b .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+.big{grid-column:span 3;grid-row:span 2}.mid{grid-column:span 3}.sm{grid-column:span 2}
+.stat{font:600 54px/1 Geist;letter-spacing:-.03em;margin:12px 0 6px}.stat.bad{color:var(--bad)}.stat.ok{color:var(--accent)}
+.bar{display:flex;align-items:center;gap:10px;margin:10px 0;font-size:14px}.bar .t{flex:1;height:8px;background:#0e141b;border-radius:4px;overflow:hidden}.bar .t i{display:block;height:100%}
+.b p{color:var(--muted);font-size:14px;margin:6px 0 0}
+.det{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.drop{border:1px dashed #33414f;border-radius:10px;padding:26px;text-align:center;color:var(--muted);font-size:14px}
+.chk{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}.chk:last-child{border:0}
+footer{border-top:1px solid var(--line);padding:26px 0 44px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between}
+</style></head><body><div class="wrap">
+<nav><div class="brand"><span class="dot"></span>Deepfake Check</div><ul><li>Detector</li><li>How it works</li><li>Research</li><li>About</li><li>Contact</li></ul><a class="cta" href="#">Try it</a></nav>
+<section class="hero"><span class="pill mono">P-001 / preregistered / every number has a receipt</span>
+<h1>Detect the fake. <span>Not the file format.</span></h1>
+<p class="lede">Audio-visual deepfake detectors look near perfect on their benchmarks. We show how much of that comes from file clues, remove them, and test three detectors on video they have never seen.</p>
+<div class="btns"><a class="cta" href="#">Check a video</a><a class="ghost" href="#">See the research</a></div></section>
+<div class="bento">
+<div class="b big"><div class="lbl">The shortcut</div><div class="stat bad">0.994</div><p>AUC from file details alone on FakeAVCeleb. Codec, length and silence predict the label.</p>
+<div style="margin-top:22px"><div class="bar mono"><span style="width:92px">FakeAVCeleb</span><div class="t"><i style="width:99%;background:var(--bad)"></i></div>0.994</div>
+<div class="bar mono"><span style="width:92px">HiFi-AVDF</span><div class="t"><i style="width:99.8%;background:var(--bad)"></i></div>0.999</div>
+<div class="bar mono"><span style="width:92px">LAV-DF</span><div class="t"><i style="width:93%;background:var(--warn)"></i></div>0.936</div>
+<div class="bar mono"><span style="width:92px">DFDC</span><div class="t"><i style="width:59%;background:var(--accent)"></i></div>0.588</div></div></div>
+<div class="b mid"><div class="lbl">After cleaning</div><div class="stat ok">0.629</div><p>HiFi-AVDF's file-clue ceiling, down from 0.999. One codec, fixed length, one loudness.</p></div>
+<div class="b mid"><div class="lbl">False alarms, controlled</div><div class="stat ok">~5%</div><p>A threshold set from 200 real clips of a new source, instead of 31 to 48% with the old one.</p></div>
+<div class="b sm"><div class="lbl">Lip-sync, in domain</div><div class="stat">0.81</div><p>Trained on real clips only.</p></div>
+<div class="b sm"><div class="lbl">On Sora 2</div><div class="stat bad">0.40</div><p>Lips already match the voice.</p></div>
+<div class="b sm"><div class="lbl">Protocol</div><div class="stat">11</div><p>Dated amendments, all public.</p></div>
+<div class="b" style="grid-column:span 6"><div class="lbl">The detector</div><div class="det"><div class="drop">Drop a clip of one person speaking (MP4, MOV, WebM)</div>
+<div><div class="chk mono"><span>Face check</span><span>0.22</span></div><div class="chk mono"><span>Voice check</span><span>0.18</span></div><div class="chk mono"><span>Lip-sync check</span><span>0.41</span></div><div class="chk mono" style="color:var(--accent)"><span>Verdict at 5% false alarms</span><span>likely real</span></div></div></div></div>
+</div>
+<footer><span>Vaibhav Shiroorkar, Adithya Jithesh, Shivansh Gupta / Guide: Dr. Tejashree Phatak</span><span>Research prototype</span></footer>
+</div></body></html>

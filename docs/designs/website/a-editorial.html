@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Direction A: Editorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#f6f3ee;--ink:#1b1a17;--muted:#5d5a53;--rule:#d9d3c7;--accent:#c2410c;--card:#fffdf9}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.6 Inter,system-ui,sans-serif}
+a{color:inherit}.wrap{max-width:1120px;margin:0 auto;padding:0 28px}
+nav{display:flex;justify-content:space-between;align-items:center;padding:22px 0;border-bottom:1px solid var(--rule)}
+.brand{font:600 20px Fraunces,serif;letter-spacing:-.01em}.brand span{color:var(--accent)}
+nav ul{display:flex;gap:26px;list-style:none;margin:0;padding:0;font-size:15px;color:var(--muted)}
+.cta{background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:6px;text-decoration:none;font-weight:500}
+.hero{padding:88px 0 56px;display:grid;grid-template-columns:1.25fr .75fr;gap:56px;align-items:end}
+.kicker{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+h1{font:400 clamp(44px,6vw,78px)/1.02 Fraunces,serif;letter-spacing:-.025em;margin:14px 0 22px}
+h1 em{font-style:italic;color:var(--accent)}
+.lede{font-size:20px;color:var(--muted);max-width:34ch}
+.btns{display:flex;gap:14px;margin-top:30px}.ghost{border:1px solid var(--ink);padding:9px 16px;border-radius:6px;text-decoration:none}
+.fig{background:var(--card);border:1px solid var(--rule);padding:22px;border-radius:4px}
+.fig .n{font:400 64px/1 Fraunces,serif}.fig .n small{font-size:22px;color:var(--muted)}
+.fig p{margin:6px 0 0;font-size:14px;color:var(--muted)}.fig hr{border:0;border-top:1px solid var(--rule);margin:16px 0}
+.fig .cap{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.cols{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--ink);margin-top:20px}
+.col{padding:26px 24px 34px 0;border-right:1px solid var(--rule)}.col+.col{padding-left:24px}.col:last-child{border-right:0}
+.col .num{font:600 13px Inter;color:var(--accent)}.col h3{font:400 26px/1.15 Fraunces,serif;margin:8px 0 10px}
+.col p{color:var(--muted);font-size:15px;margin:0}
+.strip{margin:64px 0;padding:36px;background:var(--card);border:1px solid var(--rule);display:grid;grid-template-columns:1fr 1.2fr;gap:36px;align-items:center}
+.drop{border:1.5px dashed var(--rule);border-radius:4px;padding:34px;text-align:center;color:var(--muted)}
+.meter{height:10px;background:#ece6db;border-radius:5px;position:relative;margin:14px 0}.meter i{position:absolute;left:0;top:0;bottom:0;width:31%;background:var(--ink);border-radius:5px}
+.meter b{position:absolute;left:62%;top:-6px;bottom:-6px;width:2px;background:var(--accent)}
+footer{border-top:1px solid var(--rule);padding:28px 0 48px;color:var(--muted);font-size:14px;display:flex;justify-content:space-between}
+</style></head><body><div class="wrap">
+<nav><div class="brand">Deepfake<span>.</span>Check</div><ul><li>Detector</li><li>How it works</li><li>Research</li><li>About</li><li>Contact</li></ul><a class="cta" href="#">Try the detector</a></nav>
+<section class="hero"><div><div class="kicker">A final-year research project, K. J. Somaiya</div>
+<h1>Most deepfake detectors read the <em>file</em>, not the face.</h1>
+<p class="lede">We found that benchmark files give their labels away. We removed those clues, then measured what detectors can really see.</p>
+<div class="btns"><a class="cta" href="#">Try the detector</a><a class="ghost" href="#">Read the research</a></div></div>
+<aside class="fig"><div class="cap">Figure 1</div><div class="n">0.994 <small>AUC</small></div><p>File details alone (codec, length, silence) predict which FakeAVCeleb clips are fake. No pixels, no sound.</p><hr><div class="n">0.632 <small>AUC</small></div><p>The same test after our cleaning.</p></aside></section>
+<div class="cols">
+<div class="col"><div class="num">01 / The problem</div><h3>Benchmarks leak their labels.</h3><p>Fake voices are MP3, real ones AAC. Face swaps are MPEG-4. A model can learn the format.</p></div>
+<div class="col"><div class="num">02 / Our fix</div><h3>Clean every clip the same way.</h3><p>One codec, 3 seconds from the first sound, one loudness. Then check that the clues are gone.</p></div>
+<div class="col"><div class="num">03 / What still fails</div><h3>New generators beat lip-sync.</h3><p>Sora 2 and Veo 3.1 make sound and picture together, so the lips already match.</p></div></div>
+<section class="strip"><div><div class="kicker">The detector</div><h3 style="font:400 32px/1.1 Fraunces,serif;margin:10px 0">Check a clip. See why.</h3><p style="color:var(--muted)">Three checks: the face, the voice, and whether the lips match the sound. Each shows its own score.</p></div>
+<div><div class="drop">Drop a video of one person speaking</div><div class="meter"><i></i><b></b></div><div style="display:flex;justify-content:space-between;font-size:13px;color:var(--muted)"><span>Score 0.31: likely real</span><span>Threshold 0.62</span></div></div></section>
+<footer><span>Vaibhav Shiroorkar, Adithya Jithesh, Shivansh Gupta. Guide: Dr. Tejashree Phatak.</span><span>Research prototype. Read the limits before trusting a verdict.</span></footer>
+</div></body></html>

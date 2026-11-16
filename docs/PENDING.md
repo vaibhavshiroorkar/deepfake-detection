@@ -53,7 +53,16 @@ Stop rule: if the upgraded models are not scored on all three targets by 17 Nove
 - Decide whether to delete `mlartifacts/`, `mlruns/` and `mlflow.db` (6.8 GB of September to October tracking records) and `dist/` (an old package build and the October `final-report.pdf`).
 - Send the DeepSpeak reminder around 11-22 if there is no answer. Forward any reply from AV-Deepfake1M, AV-Deepfake1M++ or KoDF.
 
-## 5. Dashboard and web app check (to schedule)
+## 5. Frontends (decided 11-16, in progress)
+
+- The web app becomes the main site: Home with a hero, Detector, How it works, Research, About us, Contact (a form, sent through Resend to Vaibhav's mail), plus the hidden Admin page. Everything on the current site carries over and gets updated to P-001; Vaibhav decides later what to drop.
+- Build approach: evolve the current FastAPI web app (approach A). Host it on a Hugging Face Docker Space (free CPU Basic: 2 vCPU, 16 GB, sleeps after 48 h idle). Check on Vaibhav's account that free Docker Spaces still work; fall back to this PC with a temporary link.
+- Choose a design direction from the three mockups in `docs/designs/website/`, then write `docs/DESIGN.md`, the design doc and the plan.
+- The detector runs the P-001 pipeline on an upload: neutralize, the three paths, and the threshold.
+- Retire the old in-browser demo: `hosting/browser/`, `docs/hosting.md`, the README link. Vaibhav deletes the Space on Hugging Face if he wants it gone.
+- Keep the Streamlit dashboard as the teaching and experiment tool, rename it, and update its pages to the P-001 pipeline.
+
+## 5b. Dashboard and web app check (older notes)
 
 - Decide whether the dashboard and web app (about 11,000 lines, 40% of `src/`) stay as the demo.
 - If they go: delete them with the docs only they read: `docs/research/findings.md`, `docs/research/result-traceability.md`, `docs/handbook/01` to `10`, `docs/obstacles.md`, `docs/model-selection.md`, `docs/handoff.md` and its `ddf handoff update` command, `scripts/update_result_registry.py`, and the checks and tests that cover them.
