@@ -1,15 +1,17 @@
-# Deepfake Generalization
+# Shortcut-Neutral Audio-Visual Deepfake Detection
 
-Live demo: [huggingface.co/spaces/vaibhavshiroorkar/deepfake-generalization](https://huggingface.co/spaces/vaibhavshiroorkar/deepfake-generalization).
-It runs the best single face model in your browser, so your video never leaves your device.
-Expect it to withhold a verdict, or get it wrong, on most clips from outside its training data.
-That gap is what this project studies.
+Audio-visual deepfake detectors score near perfect on their own benchmark and fail on video from elsewhere. This project shows that part of that benchmark score comes from how the files were made, not from the manipulation. It then measures detectors again with those file cues removed.
 
-The project tests whether three cue-specific detectors generalize better together than a visual detector alone.
-The branches inspect visual artifacts, audio spoofing, and mouth-audio alignment.
-Calibrated late fusion combines them, and the model withholds a verdict when required evidence is missing.
+The current study is [P-001](results/preregistration/P-001-shortcut-neutral-av-study.md). It has four steps:
 
-A second track asks whether a frozen encoder with a linear probe can detect a video generator it has never seen.
+1. **Audit.** A classifier that reads only file details (codec, bitrate, frame size, duration, edge silence) measures how much of each corpus's label it can predict.
+2. **Neutralize.** Every clip gets one codec, a fixed 3.00 s span from the first sound, one loudness and a noise floor. The audit is then run again.
+3. **Detect.** Three paths score each clip: visual artifacts, audio spoofing, and lip-voice agreement. The lip-sync path learns from real clips only. A fusion of the three is tested against the visual path alone.
+4. **Control false alarms.** A threshold set from real clips of a new corpus is tested against the threshold carried over from training.
+
+Models train on FakeAVCeleb only. LAV-DF, DFDC and HiFi-AVDF are locked: they never train, tune or choose anything.
+
+A browser demo of an earlier face model runs at [huggingface.co/spaces/vaibhavshiroorkar/deepfake-generalization](https://huggingface.co/spaces/vaibhavshiroorkar/deepfake-generalization). Expect it to withhold a verdict, or get it wrong, on most clips from outside its training data.
 
 ## History
 
@@ -21,12 +23,17 @@ Legacy team numbers used different splits. They are never mixed with new results
 
 ## Results
 
-A face model that scores 0.999 ROC AUC on its own test set drops to 0.67 on Celeb-DF.
-On FakeAVCeleb, file-level cues alone separate real from fake: leading digital silence predicts fake audio at about 0.99 AUC, and the video codec predicts fake video at about 0.97. The current study ([P-001](results/preregistration/P-001-shortcut-neutral-av-study.md)) removes these cues from training and test data before measuring anything.
-Historical fusion comparisons found no cross-corpus gain. Their fold checkpoints used outer-holdout labels for epoch selection, so that conclusion needs a nested cross-fitting rerun.
-The historical DF26 Perception Encoder score of 0.7527 used the wrong input normalization, so corrected performance is unknown.
+Each finding links to the results folder that holds its numbers.
 
-The [paper, report, slides and poster](deliverables/README.md) fill every number from `results/numbers.json`, which is built from the committed result files. The [handbook](docs/HANDBOOK.md) says what is measured, what went wrong and what runs next. Older measured claims are in [findings](docs/research/findings.md) and [result traceability](docs/research/result-traceability.md).
+- **The benchmarks leak their labels through their files.** File details alone nearly separate real from fake on FakeAVCeleb and HiFi-AVDF. After neutralization that ceiling falls on every corpus, but on FakeAVCeleb it misses the preregistered bar (H1 not met). See [`results/shortcut-audit/`](results/shortcut-audit/).
+- **The lip-sync path reads lip-voice agreement.** On neutral FakeAVCeleb it clears the file-cue ceiling, and its errors follow each manipulation's mechanism. See [`results/p001-sync/`](results/p001-sync/README.md).
+- **It transfers poorly.** On the locked corpora it stays above chance but far below its home score. It is near or below chance on generators that make sound and picture together. See [`results/p001-sync-targets/`](results/p001-sync-targets/README.md).
+- **Real-only calibration controls false alarms.** The carried-over threshold flags a large share of real clips. A threshold set from 200 real clips holds the rate near 5%, at a large cost in recall. See [`results/p001-h4/`](results/p001-h4/README.md).
+- **Fusion against visual-only (H2)** is running. Its rules were fixed in advance in amendment A8.
+
+Three protocol flaws were found by checks during the study and fixed in the open, as amendments A9 and A10 and handbook mistake 67. The results from before each fix are kept.
+
+The [paper, report, slides and poster](deliverables/README.md) take every number from `results/numbers.json`, which is built from the committed result files. The [final summary](docs/FINAL.md) is the short version. The [handbook](docs/HANDBOOK.md) holds what was measured, every mistake, and the history. Claims from the older study are in [findings](docs/research/findings.md) and [result traceability](docs/research/result-traceability.md).
 
 ## Documents
 

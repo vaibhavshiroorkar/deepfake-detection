@@ -14,7 +14,6 @@ Two chains run as detached processes. Each resumes from its own log if stopped. 
 
 ## 2. While the chains run (Claude)
 
-- Update the README Results section to the P-001 study. It still leads with older numbers.
 - Label the main claims in `FINAL.md` and the handbook as verified, assumed, false or unknown.
 - Fill the pending entries in [FINAL.md](FINAL.md); update handbook section 5.1b and the project log.
 - Run the full test suite once the CPU is free.
