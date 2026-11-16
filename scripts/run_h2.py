@@ -92,9 +92,18 @@ def main(argv: list[str] | None = None) -> int:
             "validation_clips": len(clips),
         }
 
-    report = {"amendment": "A8", "seeds": list(SEEDS), "weights": weights, "targets": {}}
+    report = {"amendment": "A8", "seeds": list(SEEDS), "weights": weights, "targets": {}, "not_scored_yet": []}
     for part in H2_TARGETS + REPORTED:
-        loaded = {seed: load(part, seed, args) for seed in SEEDS}
+        try:
+            loaded = {seed: load(part, seed, args) for seed in SEEDS}
+        except FileNotFoundError:
+            # A Holm target must exist. A reported-only target may arrive later; the
+            # report says so, and running again once it is scored adds it unchanged.
+            if part in H2_TARGETS:
+                raise
+            report["not_scored_yet"].append(part)
+            print(f"{part}: not scored yet, left out of this report")
+            continue
         # The shared bootstrap needs every seed on the same clips, so keep the clips all seeds scored.
         common = sorted(set.intersection(*(set(loaded[s][0]) for s in SEEDS)))
         if not common:
@@ -123,7 +132,7 @@ def main(argv: list[str] | None = None) -> int:
     report["holm"] = {t: {"p_one_sided": family[t], "rejected_at_0.05": rejected[t]} for t in H2_TARGETS}
     report["h2_success"] = sum(rejected.values()) >= 2
     (args.output / "h2.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    for t in H2_TARGETS + REPORTED:
+    for t in report["targets"]:
         r = report["targets"][t]
         print(f"{t:22} diff {r['estimate']:+.4f} [{r['lower']:+.4f}, {r['upper']:+.4f}] p={r['p_one_sided']:.3f} "
               f"clips={r['clips']}")

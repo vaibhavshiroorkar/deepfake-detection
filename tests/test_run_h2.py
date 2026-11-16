@@ -64,3 +64,25 @@ def test_run_h2_end_to_end(tmp_path):
     assert dfdc["estimate"] > 0
     assert set(report["holm"]) == {"test-identity-strict", "dfdc", "lavdf-window"}
     assert (out / "fusion-hifiavdf-seed43-predictions.csv").exists()
+
+
+def test_a_reported_target_not_scored_yet_is_skipped_not_fatal(tmp_path):
+    parts = ("val", "test", "test-identity-strict", "dfdc", "lavdf-test", "lavdf-window")   # no hifiavdf yet
+    _fixture(tmp_path, parts)
+    out = tmp_path / "out"
+    code = _load().main(["--branch-dir", str(tmp_path / "branches"), "--sync-dir", str(tmp_path / "sync"),
+                         "--sync-targets", str(tmp_path / "targets"), "--output", str(out), "--samples", "50"])
+    assert code == 0
+    report = json.loads((out / "h2.json").read_text())
+    assert "hifiavdf" not in report["targets"]
+    assert report["not_scored_yet"] == ["hifiavdf"]
+    assert set(report["holm"]) == {"test-identity-strict", "dfdc", "lavdf-window"}
+
+
+def test_a_missing_holm_target_is_fatal(tmp_path):
+    parts = ("val", "test", "test-identity-strict", "lavdf-test", "lavdf-window", "hifiavdf")  # no dfdc
+    _fixture(tmp_path, parts)
+    import pytest
+    with pytest.raises(FileNotFoundError):
+        _load().main(["--branch-dir", str(tmp_path / "branches"), "--sync-dir", str(tmp_path / "sync"),
+                      "--sync-targets", str(tmp_path / "targets"), "--output", str(tmp_path / "out"), "--samples", "10"])

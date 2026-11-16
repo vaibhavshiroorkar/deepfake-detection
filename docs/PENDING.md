@@ -10,7 +10,8 @@ Two chains run as detached processes. Each resumes from its own log if stopped. 
 | Chain | Log | What it does | Expected finish |
 |---|---|---|---|
 | Resume 2 | `runs/p001-resume2.log` | Visual and audio training, 3 seeds each (visual seed 17 done at 12:47) | Mon 11-16, evening |
-| H2 | `runs/p001-h2.log` | Caches the three targets, scores them with each visual and audio model as it lands, then runs the fusion test (amendment A8) | Late Mon or early Tue |
+| H2 | `runs/p001-h2.log` | Relaunched 14:18 for speed. Caches DFDC and LAV-DF (three shards each), runs H2 on its Holm family as soon as they are scored, then adds HiFi-AVDF (reported only) when it is cached | Family: Tue morning; with HiFi-AVDF: Tue afternoon |
+| A11 | `runs/p001-a11.log` | Waits for the P-001 models, then trains and scores CLIP and XLS-R (exploratory) | Tue; stop rule 17 November, 23:59 |
 
 ## 2. While the chains run (Claude)
 
