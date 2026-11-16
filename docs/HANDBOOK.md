@@ -1116,10 +1116,10 @@ uncommitted working tree unless marked open.
 
 #### 67. Neutral clips could have less video than audio
 
-- **What went wrong:** Neutralizer v4 checks that a clip has 3.00 s of sound, but not 3.00 s of video. In a few HiFi-AVDF clips the video ends first, so muxing with `-shortest` leaves windows of 10 to 41 lip frames instead of 50. The sync scorer stacked windows of every length and failed.
+- **What went wrong:** Neutralizer v4 checks that a clip has 3.00 s of sound, but not 3.00 s of video. In a few HiFi-AVDF clips the source video ends before the 3.00 s span, and muxing with `-shortest` cuts the audio with it, so the whole output is 0.4 to 2.6 s long. Their windows hold 10 to 41 lip frames instead of 50. The sync scorer stacked windows of every length and failed.
 - **How it was caught:** Scoring HiFi-AVDF stopped with "all input arrays must have the same shape" on 2026-11-16, and H4 found no predictions.
 - **What it cost:** About 20 minutes, and one rerun of the HiFi-AVDF scoring. No result had been read.
-- **Fix:** `load_windows` leaves out and counts any window shorter than 50 frames, as it already did for windows without a face. HiFi-AVDF lost 4 windows. FakeAVCeleb has none (0 of 40,566), so the trained models and the in-domain results are unchanged. A regression test covers it. The neutralizer should also refuse clips with less than 3.00 s of video; that is listed in `docs/PENDING.md`.
+- **Fix:** `load_windows` leaves out and counts any window shorter than 50 frames, as it already did for windows without a face. HiFi-AVDF lost 4 windows. FakeAVCeleb has none (0 of 40,566), so the trained models and the in-domain results are unchanged. A regression test covers it. The neutralizer should also refuse clips with less than 3.00 s of video; that is listed in `docs/PENDING.md`. The P-002 ingestion check `full_span` now fails any corpus with such clips. A first version compared video with audio and passed these clips, because `-shortest` makes both streams the same short length.
 - **Source:** `scripts/train_sync_path.py`; `tests/test_sync_load_windows.py`; `runs/p001-2day.log`.
 
 #### 68. The fixed window missed LAV-DF's edits

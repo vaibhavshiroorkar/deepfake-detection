@@ -16,11 +16,8 @@ import json
 from collections import Counter
 from pathlib import Path
 
-MIN_OVERLAP_SEC = 0.04          # one video frame at 25 fps
-
-
-def overlap(start: float, end: float, periods: list[list[float]]) -> float:
-    return sum(max(0.0, min(end, b) - max(start, a)) for a, b in periods)
+from deepfake_detection.data.ingestion_checks import FRAME_SEC as MIN_OVERLAP_SEC
+from deepfake_detection.data.ingestion_checks import overlap
 
 
 def window_label(row: dict, meta: dict, cut: dict) -> dict:

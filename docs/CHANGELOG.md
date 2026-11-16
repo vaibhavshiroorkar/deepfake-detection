@@ -27,6 +27,11 @@ Experiment numbers are not repeated here. They live in `results/` and the docume
 - `docs/FINAL.md` is complete except H2. Every main claim is labelled verified (with its results folder) or assumed (with what would test it).
 - Handbook section 5.1c and the project log record the target results, H4, A9, A10 and the 11-16 decisions.
 - Handbook section 5 opens with a table of how sure each part is (verified, assumed, not results).
+- P-002 ingestion checks (`data/ingestion_checks.py`, `scripts/check_ingestion.py`, with tests): face coverage, full span, label in window, shortcut ceiling. On the P-001 data they fail exactly where the hand-found problems were:
+  - DFDC face coverage is 0.28 before A10 and 0.936 after;
+  - LAV-DF label in window is 0.537;
+  - HiFi-AVDF full span is 0.999;
+  - the FakeAVCeleb ceiling is 0.632.
 - The poster build stops when a column overflows, instead of writing a file PowerPoint calls corrupted.
 
 ## 0.3.0 - 2026-11-16: neutral protocol, sync path, deliverable builders
