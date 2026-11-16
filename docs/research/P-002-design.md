@@ -67,8 +67,8 @@ In order of how much each one costs:
    - Train a temporal head on top.
    - A clip's score is its strongest window (max or top-k), not the mean, so a one-word edit counts.
 5. **Stronger paths, mostly frozen foundation features.**
-   - **Visual:** frozen CLIP ViT-L/14 or DINOv2/v3 per-frame features, then a light temporal head.
-   - **Audio:** an XLS-R or WavLM-Large front end with an AASIST-style head.
+   - **Visual:** CLIP ViT-L/14 with LayerNorm-only tuning, then a light temporal head. Chosen in [P-002 backbones](P-002-backbones.md).
+   - **Audio:** a frozen XLS-R front end with a weighted sum of layers and an AASIST-style head. Chosen in the same record.
    - **Lip-sync:** AV-HuBERT Large, real-only, at the window level.
    - **A fourth path for joint generators:** an audio-visual model fine-tuned on segment labels, in the AVFF style, so the system has a path that does not depend on mismatch.
 6. **Fusion and attribution.**
@@ -81,6 +81,7 @@ In order of how much each one costs:
    - Cache embeddings, not pixels.
    - Shard by corpus.
    - Train the large-data stages on a rented GPU node if local time is too long; budget it before starting.
+   - AV-Deepfake1M++ is 1.46 TB and this PC has about 519 GB free: plan a stratified subset or an external disk before requesting the download.
 9. **Baselines on the same protocol:** AVH-Align, HAVIC, AVFF if code is available, and a CLIP linear probe. A claim of better performance is valid only against these, on the same splits.
 
 ## Order and size

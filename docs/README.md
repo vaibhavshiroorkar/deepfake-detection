@@ -44,6 +44,7 @@ One chapter per pipeline stage, written 2026-10-29, from the [chapter index](han
 - [Findings](research/findings.md)
 - [Corpora](research/datasets.md)
 - [P-002 design](research/P-002-design.md): how to rebuild for maximum performance after P-001
+- [P-002 backbones](research/P-002-backbones.md): the visual and audio backbones chosen for P-002, with evidence
 - [Paper](../deliverables/paper/paper.tex) and [report](../deliverables/report/report.tex)
 
 ## Decisions and project controls
