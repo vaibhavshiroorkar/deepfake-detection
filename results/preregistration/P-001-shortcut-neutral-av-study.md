@@ -142,3 +142,17 @@ The 2-day window became 3 days (11-16 to 11-18), so H2 runs now instead of in th
 - **Decision.** The one-sided p-value is the share of resamples with a mean difference at or below 0. Holm at 0.05 runs across the three H2 targets {DFDC, LAV-DF test, FakeAVCeleb test-strict}. H2 holds if at least 2 of the 3 survive. H4 is a bar check with no p-value, so the Holm family is H2's three targets; this narrows the earlier "H2 to H4" wording. HiFi-AVDF gets the same statistic, outside the success rule.
 - **Dropped for this window.** The StreamFusion MLP (secondary) is not run.
 - **Targets** are cached with the training preprocessing hash and scored by frozen checkpoints with their validation threshold files. They never fit, select or calibrate anything.
+
+## Amendment A9, 2026-11-16, after the LAV-DF sync and H4 results were read, and before any H2 result exists
+
+**What was found.** Neutralizer v4 keeps a fixed 3.00 s from the first sound. LAV-DF edits single words inside longer recordings, so the kept window often misses the edit. Of the 2,823 fake clips in the neutral LAV-DF test sample, 1,307 (46%) contain no manipulated time inside the kept window, 407 contain part of it, and 1,109 contain all of it (from `metadata.min.json` `fake_periods` and the neutralizer's cut log). Under the file label, the 1,307 are real footage labelled fake. FakeAVCeleb, DFDC and HiFi-AVDF manipulate whole clips and are not affected.
+
+**Change.**
+
+- **Window label for LAV-DF.** A neutral LAV-DF clip is fake if its kept window overlaps manipulated time by at least one video frame (0.04 s). Its video and audio labels follow `modify_video` and `modify_audio` under the same rule. Everything else about the clip is unchanged.
+- **Primary for H2.** H2 on LAV-DF uses the window label. No H2 result exists yet, so this is decided before H2 is read.
+- **Sync path and H4 on LAV-DF.** The file-label results were read before this amendment. Both are reported: the file label as preregistered, and the window label as a disclosed correction. Neither replaces the other in the record.
+- **Audit.** The neutral LAV-DF shortcut audit is run under both labels.
+- **Not changed.** Splits, models, thresholds, the calibration draw, and every other target.
+
+**Why it was missed.** The cut log records each clip's offset, and A3 sampled LAV-DF by recording, but no check compared the kept window with the edit times. Handbook mistake 68 records it.
