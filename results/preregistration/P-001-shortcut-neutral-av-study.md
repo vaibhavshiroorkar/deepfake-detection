@@ -168,3 +168,29 @@ The 2-day window became 3 days (11-16 to 11-18), so H2 runs now instead of in th
 - **Training data unchanged.** The trained sync models are not retrained. FakeAVCeleb windows that fail the bar are not re-extracted; the models stay frozen.
 - **Reporting.** The DFDC, LAV-DF and HiFi-AVDF sync and H4 results before A10 stay on record. Results after A10 are reported as the corrected version, with coverage per target. H2, which has not run, uses the A10 features.
 - **H4 on DFDC.** Our DFDC subset has 194 real clips, fewer than the 200 that H4's calibration needs, so H4 still does not run on DFDC.
+
+## Amendment A11, 2026-11-16, before any upgraded model exists: an exploratory backbone test
+
+**Why.** A literature check for P-002 ([P-002 backbones](../../docs/research/P-002-backbones.md)) found published evidence that two frozen foundation backbones transfer far better than P-001's:
+- CLIP ViT-L/14 for faces;
+- XLS-R for speech. In one benchmark, the wav2vec 2.0 Base front end used by P-001's audio path scores near chance on In-the-Wild.
+
+That evidence comes from raw files, which carry the shortcuts P-001 measured. This amendment asks whether the advantage survives on shortcut-neutral data. The idea came after P-001's visual and sync results were read. Every result under A11 is therefore **exploratory**: it supports no preregistered claim, and none of H1 to H4 changes.
+
+**What runs.**
+
+- **Visual:** CLIP ViT-L/14 (`timm` `vit_large_patch14_clip_224.openai`), frozen. A GRU head goes over 16 frames, through `ddf train visual-stream`. The cached frames are ImageNet-normalized, so they are converted to CLIP's own normalization before the encoder. A test checks the conversion.
+- **Audio:** XLS-R 300M (`facebook/wav2vec2-xls-r-300m`), frozen for every epoch, with the existing attentive-pooling head, through `ddf train audio`.
+- **Everything else as P-001:**
+  - the same thinned training partition, validation and test splits, caches and preprocessing hash;
+  - three seeds (17, 29, 43);
+  - thresholds on validation;
+  - the same locked targets, scored by frozen models;
+  - the same identity-bootstrap intervals.
+- **Deviations from the published methods,** fixed now: no LayerNorm tuning for CLIP, and no weighted sum of XLS-R layers. Both are reported as such.
+
+**Reported.**
+- Each upgraded path against its P-001 counterpart, on the identity-strict test and on each locked target, with paired identity-bootstrap intervals.
+- No fusion is refit with the upgraded paths for the submission.
+
+**Stop rule.** If the upgraded models are not scored on all three targets by 17 November, 23:59, A11 is reported as not completed. The submission does not wait for it.
