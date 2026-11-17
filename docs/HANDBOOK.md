@@ -1096,7 +1096,7 @@ uncommitted working tree unless marked open.
 - **How it was caught:** The process list on 2026-11-15 showed two neutralizer trees with the same arguments.
 - **What it cost:** One partial HiFi-AVDF neutralization, deleted and redone. No result was read from it.
 - **Fix:** Stop the whole process tree, and check the process list before any relaunch. One chain owns each output: the resume chain no longer neutralizes DFDC or the LAV-DF test sample.
-- **Source:** `runs/p001-2day.sh`, `runs/p001-resume2.sh` (git-ignored); this entry.
+- **Source:** `runs/p001-2day.sh`, `runs/p001-resume2.sh`; this entry.
 
 #### 65. Resume skipped a half-written video
 

@@ -1933,10 +1933,11 @@ A model that had learned a shortcut would not need to follow this order. A
 codec or silence cue attaches to a file pipeline, not to how much the lips and
 sound disagree. The sync path never saw a fake and never saw a label during
 training, so it had no way to learn which pipeline made which fake. Its errors
-fall exactly where its design says they should: on fakes that leave the
-lip-sound match intact. A complete detector needs a second path for those, the
-visual path that P-001 includes and that this version has not yet run on
-neutral data.
+fall where its design says they should: on fakes that leave the lip-sound
+match intact. This order is evidence that the path reads lip and audio
+agreement, not proof; the caveat below gives the main alternative. A complete
+detector needs a second path for face swaps. That is the visual path, which
+Chapter~\ref{ch:h2} tests.
 
 The same order holds on the identity-strict subset
 (Table~\ref{tab:sync-methods-strict}).
@@ -1990,9 +1991,7 @@ differently. That is the question H4 asks, in the next chapter.
 
 This chapter tests the frozen sync path on data it never saw, and tests
 whether a threshold set from real clips of a new domain holds its
-false-positive rate. The runs follow the two-day plan recorded in the project
-log. The tables in this chapter are filled in from the result files as each
-stage finishes.
+false-positive rate.
 
 \section{Setup}
 
@@ -2134,7 +2133,8 @@ real speech.
 The sync path keeps some signal on every target, but far less than on
 FakeAVCeleb, where it was trained. On LAV-DF it clears the neutral ceiling
 under both labels. On DFDC, where every fake keeps its original voice, it sits
-just above the ceiling of {{audit.dfdc.neutral.clip}}. On HiFi-AVDF it falls
+just above the ceiling of {{audit.dfdc.neutral.clip}}, and the seed-17
+interval includes it. On HiFi-AVDF it falls
 below the neutral ceiling of {{audit.hifiavdf.neutral.clip}}, so the bitrate
 left after cleaning says more about the label than the lips do.
 
@@ -2258,7 +2258,7 @@ fewer real clips will also catch fewer fakes. With $n_{\mathrm{cal}} = 200$ and 
 settings, the umbrella rule picks a higher rank than the conformal rule, so it
 is the more conservative of the two.
 
-Three limits apply to any reading of this table. The guarantees assume that
+Three limits apply to any reading of this table. First, the guarantees assume that
 the calibration clips and the scored clips come from the same distribution.
 Within one corpus that is reasonable. Across shifts inside a corpus it may not
 hold. Second, each row uses one random calibration draw. The marginal
@@ -2285,8 +2285,8 @@ catches {{h4.hifiavdf-seed17.conformal_real_only.tpr|pct}} of HiFi-AVDF fakes
 and {{h4.lavdf-test-seed17.conformal_real_only.tpr|pct}} of LAV-DF fakes at
 seed 17. Real-only calibration fixes the operating point. It cannot add signal
 the detector does not have. A deployed system would need a stronger detector
-under the same calibration, which is what the fusion of Chapter~\ref{ch:h2}
-tests.
+under the same calibration. Chapter~\ref{ch:h2} tests whether fusing the
+paths gives one.
 
 %
 \chapter{Fusion Against Visual-Only (H2)}
@@ -2382,8 +2382,9 @@ gets the same statistic, outside the rule.
     \label{fig:h2}
 \end{figure}
 
-Table~\ref{tab:h2} and Figure~\ref{fig:h2} give the result. By the
-preregistered rule, H2 holds: \textbf{{{h2.success}}}. The seed-17
+Table~\ref{tab:h2} and Figure~\ref{fig:h2} give the result. FakeAVCeleb and
+LAV-DF survive Holm correction and DFDC does not, so H2 holds by its
+preregistered rule. The seed-17
 fusion weights on the standardized logits are {{h2.weights.seed17.visual}}
 (visual), {{h2.weights.seed17.audio}} (audio) and {{h2.weights.seed17.sync}}
 (sync).
@@ -2406,7 +2407,7 @@ fusion weights on the standardized logits are {{h2.weights.seed17.visual}}
     \end{tabular}
 \end{table}
 
-H2 holds by its rule, but the result is weaker than the verdict suggests.
+The result is weaker than the verdict suggests.
 Two checks, run after the verdict and so exploratory, find that no target
 shows fusion improving on fakes the visual path can see
 (Table~\ref{tab:h2levels}).
@@ -2420,7 +2421,7 @@ falls from {{h2.test-identity-strict.estimate}} to between
 {{h2.test-identity-strict.without_cloned_voice.min}} and
 {{h2.test-identity-strict.without_cloned_voice.max}} per seed.
 
-\textbf{LAV-DF.} The visual path ranks every fake type below the real clips
+\textbf{LAV-DF.} The visual path ranks every fake type below the original real files
 (AUC {{visual.lavdf-test.type.min}} to {{visual.lavdf-test.type.max}}),
 including clips whose video was never edited
 ({{visual.lavdf-test.type.RealVideo-FakeAudio.min}} to
@@ -2433,7 +2434,10 @@ statistics of the face frames the path sees: sharpness, high frequencies,
 blockiness, brightness, contrast and motion. None explains it. Each separates
 the two groups at AUC {{a13.lavdf.auc_min}} to {{a13.lavdf.auc_max}}, and all
 six together reach {{a13.lavdf.all_six}}, against the path's
-{{a13.lavdf.visual}}. Fusion beats this reversed baseline but trails
+{{a13.lavdf.visual}}. Its pooled AUC in Table~\ref{tab:h2levels} is higher,
+though still below chance, because the window label counts as real the clips
+cut from fake files with no edit in the window, and the path scores those as
+low as the fakes. Fusion beats this reversed baseline but trails
 the audio path and the sync path alone in every seed. Its weights were fit on
 FakeAVCeleb, where the visual path is strong. Section~\ref{sec:a12} tests
 whether that is to blame.
@@ -2538,8 +2542,9 @@ on the same clips.
 \end{table}
 
 \textbf{XLS-R.} It matches the P-001 audio path in-domain and is worse on
-LAV-DF and HiFi-AVDF, where it reaches {{a11.xlsr-vs-audio.hifiavdf.auc_new}}
-against {{a11.xlsr-vs-audio.hifiavdf.auc_old}}.
+LAV-DF and HiFi-AVDF. On HiFi-AVDF it reaches
+{{a11.xlsr-vs-audio.hifiavdf.auc_new}} against
+{{a11.xlsr-vs-audio.hifiavdf.auc_old}}.
 
 \textbf{CLIP.} It falls to {{a11.clip-vs-visual.test-identity-strict.auc_new}}
 in-domain and to {{a11.clip-vs-visual.hifiavdf.auc_new}} on HiFi-AVDF. Its one
@@ -2635,8 +2640,6 @@ LAV-DF and HiFi-AVDF only.
 \subsection{Other limits}
 
 \begin{itemize}
-    \item \textbf{One training corpus.} The sync head trains on the real
-    FakeAVCeleb clips of the training identities only, which is a small set.
     \item \textbf{Neutralization may remove real evidence.} Re-encoding can
     blur fine blending artifacts, and cutting edge silence can remove a real
     generator trace. We have not yet measured what neutralization costs a
@@ -2667,9 +2670,9 @@ order:
     \item Write the full paper.
 \end{enumerate}
 
-The two-day results stay valid in the full run. It reuses the same frozen
-sync models, neutral copies and splits. When new results arrive, the
-deliverables are rebuilt from the larger result file, so no number is copied
+The results in this report stay valid in the full run. It reuses the same
+frozen sync models, neutral copies and splits. When new results arrive, the
+deliverables are rebuilt from the larger result file, so no result is copied
 by hand.
 
 Two further checks would close open objections. One is to measure the cost of
@@ -2749,10 +2752,25 @@ interpreter. Each command line is wrapped for the page.
     {\small\ttfamily\raggedright .venv/Scripts/python.exe scripts/train\_sync\_path.py -{}-features runs/avhubert-fakeavceleb-neutral -{}-split-dir runs/p001/split -{}-output runs/p001/sync\par}
 \end{enumerate}
 
-The cross-corpus and false-alarm steps of Chapter~\ref{ch:crosscorpus} are in
-the script \texttt{runs/p001-2day.sh}. It neutralizes each target, extracts
-features, scores the frozen heads, evaluates them with receipts, runs
-\texttt{scripts/run\_h4.py}, and audits the neutral copies.
+The later stages run from driver scripts in \texttt{runs/}, the only files
+tracked in that folder:
+
+\begin{itemize}
+    \item \texttt{runs/p001-2day.sh}: the cross-corpus and false-alarm steps
+    of Chapter~\ref{ch:crosscorpus}. It neutralizes each target, extracts
+    features, scores the frozen heads, evaluates them with receipts, runs
+    \texttt{scripts/run\_h4.py}, and audits the neutral copies.
+    \item \texttt{runs/p001-a10.sh}: the second face locator of amendment A10,
+    and the rescoring that follows it.
+    \item \texttt{scripts/run\_p001\_branches.sh}: the visual and audio paths.
+    \item \texttt{runs/p001-h2.sh}: target caching and
+    \texttt{scripts/run\_h2.py} for Chapter~\ref{ch:h2}.
+    \item \texttt{runs/p001-a11.sh} and \texttt{runs/p001-a13-a14.sh}: the
+    exploratory amendments A11, A13 and A14; \texttt{scripts/run\_a12.py}
+    runs A12 from the H2 logits.
+    \item \texttt{runs/p001-finalize.sh}: copies the outputs into
+    \texttt{results/} and rebuilds every number, figure and deliverable.
+\end{itemize}
 
 \section{Results Layout}
 
@@ -2768,8 +2786,15 @@ features, scores the frozen heads, evaluates them with receipts, runs
     per-clip predictions for each set and seed. It also holds the validation
     thresholds with the clip ids that chose them, the selection record in
     \texttt{training.json}, and the receipts.
-    \item \texttt{runs/} is not tracked. It holds large intermediate files:
-    neutral clips, features and checkpoints.
+    \item \texttt{results/p001-sync-targets/} and \texttt{results/p001-h4/}
+    hold the cross-corpus scores and H4; the \texttt{-pre-a10} folders keep
+    the versions from before amendment A10.
+    \item \texttt{results/p001-branches/} and \texttt{results/p001-h2/} hold
+    the visual and audio paths and the H2 fusion, and
+    \texttt{results/p001-a11/} to \texttt{results/p001-a14/} the exploratory
+    checks.
+    \item Apart from its driver scripts, \texttt{runs/} is not tracked. It
+    holds large intermediate files: neutral clips, features and checkpoints.
 \end{itemize}
 
 \section{Receipts}

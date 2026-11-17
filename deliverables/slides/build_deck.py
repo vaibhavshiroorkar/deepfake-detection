@@ -380,8 +380,9 @@ def build(draft: bool) -> int:
     card(s, col_x(8), Y0, span_w(4), H0, [
         ("h", "Seed 17, test AUC"),
         ("b", "Voice cloning: {{sync.test.seed17.method.rtvc}}", 16),
-        ("b", "Wav2Lip: {{sync.test.seed17.method.wav2lip}}", 16),
         ("b", "FaceSwap + Wav2Lip: {{sync.test.seed17.method.faceswap-wav2lip}}", 16),
+        ("b", "FSGAN + Wav2Lip: {{sync.test.seed17.method.fsgan-wav2lip}}", 16),
+        ("b", "Wav2Lip: {{sync.test.seed17.method.wav2lip}}", 16),
         ("b", "FSGAN: {{sync.test.seed17.method.fsgan}}", 16),
         ("b", "FaceSwap: {{sync.test.seed17.method.faceswap}}", 16),
     ], name="card_methods")
@@ -455,7 +456,9 @@ def build(draft: bool) -> int:
               "the visual path was trained never to flag: without them the gain is "
               "{{h2.test-identity-strict.without_cloned_voice.min}} to {{h2.test-identity-strict.without_cloned_voice.max}}. "
               "On LAV-DF the visual path is below chance, at {{h2.lavdf-window.auc.visual.min}} to "
-              "{{h2.lavdf-window.auc.visual.max}}, even on clips whose video was never edited. So it reads some "
+              "{{h2.lavdf-window.auc.visual.max}}, and on clips whose video was never edited it sits at "
+              "{{visual.lavdf-test.type.RealVideo-FakeAudio.min}} to {{visual.lavdf-test.type.RealVideo-FakeAudio.max}} "
+              "against the original real files. So it reads some "
               "difference between LAV-DF's real and fake files, not the edit. Fusion beats that reversed path but still "
               "trails the audio path and the sync path alone. On DFDC, the fair target, fusion adds nothing. "
               "HiFi-AVDF repeats the LAV-DF pattern. So an audio path catches audio fakes a visual path cannot; "
@@ -472,7 +475,7 @@ def build(draft: bool) -> int:
     y = Y0 + th + 150000
     card(s, col_x(0), y, span_w(6), BOT - y, [
         ("h", "Verdict"),
-        ("p", "By the preregistered rule, H2 holds: **{{h2.success}}**. But the FakeAVCeleb gain is only the "
+        ("p", "FakeAVCeleb and LAV-DF survive Holm, so **H2 holds** by its rule. But the FakeAVCeleb gain is only the "
               "cloned-voice clips, and on LAV-DF the visual path is below chance.", 16),
     ], name="card_h2")
     card(s, col_x(6), y, span_w(6), BOT - y, [
@@ -486,8 +489,11 @@ def build(draft: bool) -> int:
               "Audio-visual benchmarks leak their labels through their files, and a detector score on them means little "
               "until it is set beside the file-cue ceiling. Our cleaning lowers the FakeAVCeleb ceiling a lot but misses "
               "the preregistered bar, and we report that. The real-only sync path clears the neutral ceiling and its "
-              "errors follow the mechanism. The fusion test was fixed before any branch was trained, and we report it either "
-              "way. Next come modality prediction and the published baselines, AVH-Align and HAVIC, on the same protocol.",
+              "errors follow the mechanism. On corpora it never saw it stays above chance but falls to "
+              "{{sync.dfdc.seed17.auc}} to {{sync.lavdf-window.seed29.auc}}. A threshold set from 200 real target clips "
+              "holds false alarms near 5 percent on HiFi-AVDF, but then catches few fakes. Fusion passes its "
+              "preregistered test only through fakes the visual path cannot see; no fixed fusion transferred between "
+              "corpora (A12), and stronger frozen backbones did not transfer better on cleaned data (A11). Next come modality prediction and the published baselines, AVH-Align and HAVIC, on the same protocol.",
               "Benchmarks leak labels through files. Compare every score with the shortcut ceiling.")
     card(s, col_x(0), Y0, span_w(6), H0, [
         ("h", "Limitations"),
@@ -505,7 +511,7 @@ def build(draft: bool) -> int:
         ("n", "3.  A real-only lip-sync detector, measured after cleaning", 16),
         ("n", "4.  A false-alarm test from real clips only", 16),
         ("n", "5.  A preregistered fusion test (H2)", 16),
-        ("s", "Hypotheses were committed before the runs. Every number has a receipt.", 16),
+        ("s", "Hypotheses were committed before the runs. Every evaluation has a receipt.", 16),
     ], name="card_contrib")
 
     # divider ---------------------------------------------------------------------------------------------
@@ -522,11 +528,11 @@ def build(draft: bool) -> int:
               "neutral data, so git order proves the order. Every change is a dated amendment committed before the run it "
               "affects. Every evaluation writes a receipt with its command and the hashes of its inputs, code and outputs, "
               "and rerunning the same code verifies the outputs instead of overwriting them.",
-              "Hypotheses before runs, amendments before changes, a receipt for every number.")
+              "Hypotheses before runs, amendments before changes, a receipt for every evaluation.")
     rows = [["H1", "Neutral FakeAVCeleb clip ceiling at most 0.60", "Not met: {{audit.fakeavceleb.neutral.clip}}"],
-            ["H2", "Fusion beats visual-only on 2 of 3 targets, after Holm", "Holds: {{h2.success}}"],
+            ["H2", "Fusion beats visual-only on 2 of 3 targets, after Holm", "Holds"],
             ["H3", "Predict the manipulated modality across corpora", "Next stage"],
-            ["H4", "Real-only conformal FPR at most 0.07 on every target", "Running"]]
+            ["H4", "Real-only conformal FPR at most 0.07 on every target", "Met on HiFi-AVDF and LAV-DF (file label); DFDC too small"]]
     d.add_table(s, L, Y0, [900000, 6000000, W - 6900000], ["Test", "Bar", "Status"], T_rows(rows, n), size=18,
                 bold_first_col=True, fill=H0)
 
@@ -537,7 +543,7 @@ def build(draft: bool) -> int:
               "Six of the logged mistakes that would have changed a result.")
     rows = [["Identity leak in FF++", "Donor faces crossed train and test", "Split by connected identity component"],
             ["Test-set selection", "An ensemble was picked on a test set", "Select on validation only"],
-            ["Fixed 0.5 threshold", "Meaningless on 10:1 fake-heavy data", "Validation threshold file, overlap refused"],
+            ["Fixed 0.5 threshold", "Meaningless on fake-heavy data", "Validation threshold file, overlap refused"],
             ["Neutralizer v1", "Re-mux put silence back on face swaps", "Version 4 works on the samples"],
             ["LAV-DF window audit", "One file supplied both labels", "Audit per file"],
             ["Two writers", "Two runs wrote the same outputs", "One chain per output; resume by cut log"]]
@@ -566,7 +572,7 @@ def build(draft: bool) -> int:
               "DeepSpeak v2 and KoDF have been requested for the next stage.",
               "One training corpus, three locked targets, four more requested.")
     rows = [["FakeAVCeleb", "Train, validate, test", "{{neutral.fakeavceleb.kept|int}} neutral clips"],
-            ["LAV-DF", "Locked target", "{{audit.lavdf.raw.clips|int}} files, sampled by recording"],
+            ["LAV-DF", "Locked target", "{{audit.lavdf.neutral.clips|int}} files from {{audit.lavdf.neutral.census.RealVideo-RealAudio.clips|int}} recordings"],
             ["DFDC", "Locked target", "{{audit.dfdc.raw.clips|int}} clips, no fake audio"],
             ["HiFi-AVDF", "Locked target", "{{audit.hifiavdf.raw.clips|int}} clips, six generators"],
             ["AV-Deepfake1M, 1M++, DeepSpeak v2, KoDF", "Requested", "Next stage"]]

@@ -13,7 +13,8 @@ htmlcov/
 /cache/
 /checkpoints/
 /artifacts/
-/runs/
+/runs/*
+!/runs/p001-*.sh
 mlflow.db
 /mlartifacts/
 /mlruns/
