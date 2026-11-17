@@ -9,7 +9,15 @@ Internal and external examiners sit together. First priority: a live demonstrati
 
 The demo, the PPT, the overnight checks and `docs/SECURITY.md` are done and merged into `main` (changelog). The demo runs from the home PC and is opened on the laptop through Tailscale (decided by Vaibhav 11-17).
 
-**Claude:**
+**Claude, the 18th (decided by Vaibhav 11-18, 04:00):**
+
+1. Reframe the paper, report and slides around **what survives the upload**: platforms re-encode videos, which destroys the file clues benchmarks leak; our cleaning simulates that, and we measure what still works. The file audit becomes the motivation, not the headline.
+2. One new stage figure, drawn to read as designed, not generated: file audit, cleaning, face, voice, lip sync, comparison with real clips, answer. Used in the paper, report and slides.
+3. Restructure the paper into the standard order (Introduction, Related work, Method by stage, Setup, Results, Discussion and limitations, Conclusion), with the title *What Survives the Upload? Evaluating Audio-Visual Deepfake Detectors After Removing File Shortcuts*. Same numbers and claims, moved and reworded. Keep H1 to H4; move amendment numbers to an appendix table; name exploratory checks by content.
+4. The report gets the same treatment: reframed, amendment numbers out of the running text, the new figure. The report and PPT keep the registered project title.
+5. Rebuild everything and check: 0 missing numbers, every reference resolves.
+
+**Claude, also:**
 
 - On request: answer Overleaf compile errors; adjust slides or the demo after Vaibhav's review and rehearsal.
 - Small: the drop zone's focus ring is clipped at the right edge at phone width.
