@@ -1,0 +1,39 @@
+{
+ "amendment": "A17",
+ "exploratory": true,
+ "vox2": {
+  "source": "https://huggingface.co/datasets/yangwang825/vox2-veri-3s",
+  "sha256": {
+   "train.csv": "aebcb2780f388dad9415b49bdd8b50ae665c215c87f98caf0db8cd130584d985",
+   "test.csv": "5edac79a2e0f3e56fcc51c67044a30a6c1acf245a3292fce27a1d2657e660249"
+  }
+ },
+ "vox2_speakers": {
+  "dev": 5994,
+  "test": 118
+ },
+ "fakeavceleb_sources": {
+  "dev": 500,
+  "test": 0,
+  "neither": 0
+ },
+ "fakeavceleb_test_partition": {
+  "dev": {
+   "clips": 2993,
+   "identities": 75,
+   "identities_with_real_clips": 75
+  },
+  "test": {
+   "clips": 0,
+   "identities": 0,
+   "identities_with_real_clips": 0
+  },
+  "neither": {
+   "clips": 0,
+   "identities": 0,
+   "identities_with_real_clips": 0
+  }
+ },
+ "lavdf": "unknown: no speaker ids",
+ "auc_by_group": "not reported: fewer than 5 identities with real clips in dev or test"
+}
