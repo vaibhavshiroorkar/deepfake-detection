@@ -459,7 +459,7 @@ def build(draft: bool) -> int:
               "difference between LAV-DF's real and fake files, not the edit. Fusion beats that reversed path but still "
               "trails the audio path and the sync path alone. On DFDC, the fair target, fusion adds nothing. "
               "HiFi-AVDF repeats the LAV-DF pattern. So an audio path catches audio fakes a visual path cannot; "
-              "that is all H2 shows. These two checks ran after the verdict, so they are exploratory.",
+              "that is all H2 shows. These two checks ran after the verdict, so they are exploratory. Amendment A12 then refit the fusion on the other corpora. On DFDC and HiFi-AVDF even a fusion fit on the target's own labels does not beat the best single path, and the best path changes by corpus, so no fixed fusion of these paths transfers.",
               "Fused by a model fixed in advance. Does it beat the visual path on new corpora?")
     rows = [[name, n(f"{{{{h2.{k}.clips|int}}}}"),
              n(f"{{{{h2.{k}.estimate}}}} [{{{{h2.{k}.lower}}}}, {{{{h2.{k}.upper}}}}]"), n(f"{{{{h2.{k}.p}}}}"),

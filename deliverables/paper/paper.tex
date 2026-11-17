@@ -757,8 +757,8 @@ includes clips whose video was never edited
 difference between LAV-DF's real and fake files that is not the face edit,
 and reads it backwards. What that difference is, we do not know; the file-cue
 audit reads metadata and cannot see it. Fusion beats this reversed baseline
-but trails the audio and sync paths alone in every seed, likely because its
-weights were fit on FakeAVCeleb.
+but trails the audio and sync paths alone in every seed.
+Section~\ref{sec:a12} tests whether its FakeAVCeleb weights are to blame.
 
 On DFDC, the one target where the visual path is fair, every clip in our
 subset has real audio and fusion adds nothing. HiFi-AVDF, reported outside the
@@ -771,6 +771,49 @@ and 43.
 So H2 shows that an audio path catches audio fakes a visual path cannot. It
 does not show that fusion improves detection, or that it transfers to a new
 corpus.
+
+\subsection{Exploratory: a fusion fit on other corpora (A12)}
+\label{sec:a12}
+
+Amendment A12, fixed after H2 was read, refits the same fusion in two ways
+from the same logits. The \textit{leave-one-out} fusion is fit on the other two
+targets and never sees the one it scores. The \textit{upper bound} is a
+5-fold cross-fit by identity on the target itself. It uses the target's labels,
+so it is not a detector; it shows whether the three paths hold any
+complementary information there (Table~\ref{tab:a12}).
+
+\begin{table*}[htbp]
+\caption{A12 (exploratory): ROC-AUC on the clip label, mean of three seeds}
+\label{tab:a12}
+\centering
+\begin{tabular}{lrrrrrr}
+\toprule
+Target & Visual & Audio & Sync & A8 fusion & Leave one out & Upper bound \\
+\midrule
+DFDC & {{a12.dfdc.auc.visual}} & {{a12.dfdc.auc.audio}} & {{a12.dfdc.auc.sync}} & {{a12.dfdc.auc.a8}} & {{a12.dfdc.auc.leave_one_out}} & {{a12.dfdc.auc.upper_bound}} \\
+LAV-DF, window & {{a12.lavdf-window.auc.visual}} & {{a12.lavdf-window.auc.audio}} & {{a12.lavdf-window.auc.sync}} & {{a12.lavdf-window.auc.a8}} & {{a12.lavdf-window.auc.leave_one_out}} & {{a12.lavdf-window.auc.upper_bound}} \\
+HiFi-AVDF & {{a12.hifiavdf.auc.visual}} & {{a12.hifiavdf.auc.audio}} & {{a12.hifiavdf.auc.sync}} & {{a12.hifiavdf.auc.a8}} & {{a12.hifiavdf.auc.leave_one_out}} & {{a12.hifiavdf.auc.upper_bound}} \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+On DFDC and HiFi-AVDF even the upper bound does not beat the best single
+path: {{a12.dfdc.upper_bound-minus-visual.estimate}}
+[{{a12.dfdc.upper_bound-minus-visual.lower}},
+{{a12.dfdc.upper_bound-minus-visual.upper}}] over the visual path on DFDC, and
+{{a12.hifiavdf.upper_bound-minus-audio.estimate}}
+[{{a12.hifiavdf.upper_bound-minus-audio.lower}},
+{{a12.hifiavdf.upper_bound-minus-audio.upper}}] over the audio path on
+HiFi-AVDF. There, no weighting of these paths helps. On LAV-DF the upper bound
+beats the audio path by {{a12.lavdf-window.upper_bound-minus-audio.estimate}},
+and the leave-one-out fusion beats the A8 fusion by
+{{a12.lavdf-window.leave_one_out-minus-a8.estimate}}, but it still trails the
+audio path ({{a12.lavdf-window.leave_one_out-minus-audio.estimate}}). The best
+path changes with the corpus: visual on DFDC, audio on the other two. So weights
+fit on some corpora point the wrong way on the next, and on DFDC the
+leave-one-out fusion falls to {{a12.dfdc.auc.leave_one_out}}, below chance.
+The FakeAVCeleb weights explain part of the LAV-DF loss, but the larger problem
+is that no fixed fusion of these paths transfers between these corpora.
 
 \section{Limitations}
 

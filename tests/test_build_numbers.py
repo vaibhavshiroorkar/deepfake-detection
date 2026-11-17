@@ -117,3 +117,20 @@ def test_h2_checks_split_the_gains_by_manipulation_type(tmp_path):
     assert numbers["visual.lavdf-test.seed17.type.FakeVideo-RealAudio"]["value"] == 0.5
     assert numbers["visual.lavdf-test.type.RealVideo-FakeAudio.max"]["value"] == 0.0
     assert numbers["visual.lavdf-test.type.max"]["value"] == 0.5
+
+
+def test_a12_keys(tmp_path):
+    module = _module(tmp_path)
+    out = tmp_path / "results" / "p001-a12"
+    out.mkdir(parents=True)
+    diff = {"estimate": -0.2291, "lower": -0.274, "upper": -0.182, "per_seed": [-0.3, -0.15, -0.24]}
+    (out / "a12.json").write_text(json.dumps({"targets": {"dfdc": {
+        "clips": 2786,
+        "auc": {"leave_one_out": [0.4, 0.5, 0.53], "visual": [0.7, 0.69, 0.71]},
+        "differences": {"leave_one_out-minus-visual": diff}}}}))
+    numbers: dict = {}
+    module.a12(numbers)
+    assert numbers["a12.dfdc.auc.leave_one_out"]["value"] == 0.477
+    assert numbers["a12.dfdc.leave_one_out-minus-visual.estimate"]["value"] == -0.229
+    assert numbers["a12.dfdc.leave_one_out-minus-visual.lower"]["value"] == -0.274
+    assert numbers["a12.dfdc.clips"]["value"] == 2786

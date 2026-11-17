@@ -25,6 +25,7 @@ The differences hide their levels. Each path's AUC on the clip label, over the s
 | HiFi-AVDF (reported) | 0.541, 0.548 | 0.682, 0.709 | 0.561, 0.574 | 0.587, 0.614 |
 
 - **FakeAVCeleb:** the whole gain is the cloned-voice clips. The visual path scores 0.99 on its own video label but 0.90 on the clip label. Without the 68 cloned-voice clips the gain is +0.001 to +0.004 per seed (post-hoc check, exploratory).
+- **Why fusion fails on new corpora** is tested in [`results/p001-a12`](../p001-a12/README.md): the paths carry no complementary information on DFDC and HiFi-AVDF, and fusion weights do not transfer between corpora.
 - **LAV-DF:** the visual path ranks every fake type below the reals (0.175 to 0.267), including clips whose video was never edited (0.175 to 0.243; post-hoc check, exploratory). So it reads some difference between LAV-DF's real and fake files that is not the edit; what that is, is unknown. Fusion beats this reversed baseline. Fusion still trails the audio path and the sync path alone in every seed. Its weights come from FakeAVCeleb, where the visual path is strong, which is the likely reason (assumed, not tested).
 - **DFDC:** every clip in our subset has real audio. The audio path is near chance and fusion adds nothing.
 - **HiFi-AVDF:** the LAV-DF pattern again. Fusion beats a visual path near chance but trails the audio path alone in every seed.

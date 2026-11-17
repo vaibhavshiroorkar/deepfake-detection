@@ -35,7 +35,6 @@ Stop rule: if the upgraded models are not scored on all three targets by 17 Nove
 
 Chosen 11-17 with Vaibhav, to use the 18th and 19th; the submission is on the 20th, morning. Designs fixed in [P-001](../results/preregistration/P-001-shortcut-neutral-av-study.md) before any result. Stop rule: 19 November, 18:00. The 19th stays a buffer for Vaibhav's review.
 
-- A12, fusion fit on other corpora: leave-one-corpus-out fusion and an in-target upper bound, from the existing logits. CPU, minutes. Today, while A11 runs.
 - A13, what the visual path reads on LAV-DF: six frame statistics on the cached face frames, real against unedited-video fakes. Reads every LAV-DF cache file, so tonight, after A11.
 - A14, leftover audio cue on FakeAVCeleb: rescore the frozen audio models with loudness levelled and edges cut. Uses the GPU, so after A11; the 18th.
 - Fold the three results into the paper, report, notes and `docs/FINAL.md`, through `numbers.json`. The 18th.

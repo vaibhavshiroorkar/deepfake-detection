@@ -249,6 +249,22 @@ def h2_checks(numbers: dict) -> None:
         _put_range(numbers, "visual.lavdf-test.type", [v for values in by_type.values() for v in values], source)
 
 
+def a12(numbers: dict) -> None:
+    """A12 (exploratory): fusion fit on other corpora. AUC as the mean over seeds, and each paired
+    difference with its identity-bootstrap interval: a12.{target}.{first}-minus-{second}.*"""
+    path = RESULTS / "p001-a12" / "a12.json"
+    if not path.exists():
+        return
+    report = json.loads(path.read_text(encoding="utf-8"))
+    for target, result in report["targets"].items():
+        _put(numbers, f"a12.{target}.clips", result["clips"], path)
+        for name, values in result["auc"].items():
+            _put(numbers, f"a12.{target}.auc.{name}", round(sum(values) / len(values), 3), path)
+        for name, diff in result["differences"].items():
+            for field in ("estimate", "lower", "upper"):
+                _put(numbers, f"a12.{target}.{name}.{field}", round(diff[field], 3), path)
+
+
 def main() -> int:
     numbers: dict = {}
     audits(numbers)
@@ -260,6 +276,7 @@ def main() -> int:
     h2(numbers)
     h2_levels(numbers)
     h2_checks(numbers)
+    a12(numbers)
     out = RESULTS / "numbers.json"
     out.write_text(json.dumps(dict(sorted(numbers.items())), indent=1) + "\n", encoding="utf-8")
     print(f"{len(numbers)} numbers -> {_rel(out)}")
