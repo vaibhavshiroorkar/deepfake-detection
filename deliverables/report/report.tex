@@ -2352,6 +2352,8 @@ fusion weights on the standardized logits are {{h2.weights.seed17.visual}}
         FakeAVCeleb, strict & {{h2.test-identity-strict.auc.visual.min}}, {{h2.test-identity-strict.auc.visual.max}} & {{h2.test-identity-strict.auc.audio.min}}, {{h2.test-identity-strict.auc.audio.max}} & {{h2.test-identity-strict.auc.sync.min}}, {{h2.test-identity-strict.auc.sync.max}} & {{h2.test-identity-strict.auc.fusion.min}}, {{h2.test-identity-strict.auc.fusion.max}} \\
         DFDC & {{h2.dfdc.auc.visual.min}}, {{h2.dfdc.auc.visual.max}} & {{h2.dfdc.auc.audio.min}}, {{h2.dfdc.auc.audio.max}} & {{h2.dfdc.auc.sync.min}}, {{h2.dfdc.auc.sync.max}} & {{h2.dfdc.auc.fusion.min}}, {{h2.dfdc.auc.fusion.max}} \\
         LAV-DF, window & {{h2.lavdf-window.auc.visual.min}}, {{h2.lavdf-window.auc.visual.max}} & {{h2.lavdf-window.auc.audio.min}}, {{h2.lavdf-window.auc.audio.max}} & {{h2.lavdf-window.auc.sync.min}}, {{h2.lavdf-window.auc.sync.max}} & {{h2.lavdf-window.auc.fusion.min}}, {{h2.lavdf-window.auc.fusion.max}} \\
+        \midrule
+        HiFi-AVDF (reported) & {{h2.hifiavdf.auc.visual.min}}, {{h2.hifiavdf.auc.visual.max}} & {{h2.hifiavdf.auc.audio.min}}, {{h2.hifiavdf.auc.audio.max}} & {{h2.hifiavdf.auc.sync.min}}, {{h2.hifiavdf.auc.sync.max}} & {{h2.hifiavdf.auc.fusion.min}}, {{h2.hifiavdf.auc.fusion.max}} \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -2373,6 +2375,10 @@ We have not tested this explanation.
 
 \textbf{DFDC.} Every clip in our subset has real audio. On the clip label the
 audio path is near chance, the sync path is weak, and fusion adds nothing.
+
+\textbf{HiFi-AVDF.} Reported outside the rule, it repeats the LAV-DF
+pattern. Fusion gains {{h2.hifiavdf.estimate}} over a visual path near
+chance, but trails the audio path alone in every seed.
 
 \textbf{Stability.} The size of the gain depends on the seed, and so do the
 weights: the audio weight is {{h2.weights.seed17.audio}},

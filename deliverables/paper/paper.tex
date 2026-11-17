@@ -730,6 +730,8 @@ Target & Visual & Audio & Sync & Fusion \\
 FakeAVCeleb, strict & {{h2.test-identity-strict.auc.visual.min}}, {{h2.test-identity-strict.auc.visual.max}} & {{h2.test-identity-strict.auc.audio.min}}, {{h2.test-identity-strict.auc.audio.max}} & {{h2.test-identity-strict.auc.sync.min}}, {{h2.test-identity-strict.auc.sync.max}} & {{h2.test-identity-strict.auc.fusion.min}}, {{h2.test-identity-strict.auc.fusion.max}} \\
 DFDC & {{h2.dfdc.auc.visual.min}}, {{h2.dfdc.auc.visual.max}} & {{h2.dfdc.auc.audio.min}}, {{h2.dfdc.auc.audio.max}} & {{h2.dfdc.auc.sync.min}}, {{h2.dfdc.auc.sync.max}} & {{h2.dfdc.auc.fusion.min}}, {{h2.dfdc.auc.fusion.max}} \\
 LAV-DF, window & {{h2.lavdf-window.auc.visual.min}}, {{h2.lavdf-window.auc.visual.max}} & {{h2.lavdf-window.auc.audio.min}}, {{h2.lavdf-window.auc.audio.max}} & {{h2.lavdf-window.auc.sync.min}}, {{h2.lavdf-window.auc.sync.max}} & {{h2.lavdf-window.auc.fusion.min}}, {{h2.lavdf-window.auc.fusion.max}} \\
+\midrule
+HiFi-AVDF (reported) & {{h2.hifiavdf.auc.visual.min}}, {{h2.hifiavdf.auc.visual.max}} & {{h2.hifiavdf.auc.audio.min}}, {{h2.hifiavdf.auc.audio.max}} & {{h2.hifiavdf.auc.sync.min}}, {{h2.hifiavdf.auc.sync.max}} & {{h2.hifiavdf.auc.fusion.min}}, {{h2.hifiavdf.auc.fusion.max}} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -744,7 +746,9 @@ chance, so fusion beats a reversed baseline. It still trails the audio path and
 the sync path alone in every seed, likely because its weights were fit on
 FakeAVCeleb, where the visual path is strong. On DFDC every clip in our subset
 has real audio, the audio path is near chance on the clip label, and fusion
-adds nothing. The size of the gain depends on the seed, and so do the weights:
+adds nothing. HiFi-AVDF, reported outside the rule, repeats the LAV-DF
+pattern: fusion gains {{h2.hifiavdf.estimate}} over a visual path near chance,
+but trails the audio path alone in every seed. The size of the gain depends on the seed, and so do the weights:
 the audio weight is {{h2.weights.seed17.audio}}, {{h2.weights.seed29.audio}}
 and {{h2.weights.seed43.audio}} for seeds 17, 29 and 43. So H2 supports
 adding the audio and sync paths to a visual detector. It does not show that

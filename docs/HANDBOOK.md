@@ -1167,6 +1167,14 @@ uncommitted working tree unless marked open.
 - **Also found:** `Start-Process bash -ArgumentList '-c', '...'` joins its arguments with spaces, so `bash -c` got only the first word and exited silently. Pass one string with the command in quotes: `-ArgumentList "-c `"...`""`.
 - **Source:** `runs/p001-h2.log`, `runs/p001-a11.log`, `runs/p001/a11/logs/train-clip-seed17.log`; Windows System log, 2026-11-17 00:13.
 
+#### 72. The H2 family run and the full run shared one output folder
+
+- **What went wrong:** `runs/p001-h2.sh` wrote both H2 runs to `runs/p001/h2/` under different receipt names. When the full run (with HiFi-AVDF) started, `scripts/research_artifacts.py` found an output with no matching receipt and refused to overwrite it. The script has no `set -e`, so it logged "h2 chain done" anyway, and A11 started.
+- **How it was caught:** The traceback in `runs/p001-h2.log`, read when the chain finished on 2026-11-17 at 05:36.
+- **What it cost:** Nothing. The receipt check did its job: the family run, which made the H2 decision, stayed untouched.
+- **Fix:** The full run writes to `runs/p001/h2-full/` with receipt `h2-full`. Its family targets, Holm decision, weights and the 15 shared prediction files match the family run byte for byte. `runs/p001-finalize.sh` copies the full run when it exists. Two runs of one stage get two output folders.
+- **Source:** `runs/p001-h2.log`; `results/p001-h2/receipts/`.
+
 ## 7. What a hard reviewer would say
 
 These are the strongest objections we expect, with our current answer. "Open" means we have no answer yet and the paper must not pretend otherwise.

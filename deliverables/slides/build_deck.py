@@ -455,6 +455,7 @@ def build(draft: bool) -> int:
               "trained on. On LAV-DF the visual path is below chance, at {{h2.lavdf-window.auc.visual.min}} to "
               "{{h2.lavdf-window.auc.visual.max}}, and fusion still trails the audio path and the sync path alone, "
               "likely because its weights come from FakeAVCeleb. On DFDC every clip has real audio and fusion adds nothing. "
+              "HiFi-AVDF repeats the LAV-DF pattern: fusion beats a visual path near chance but trails audio alone. "
               "So adding audio and sync helps, but this fusion does not transfer. A fusion that can drop a path is "
               "future work.",
               "Fused by a model fixed in advance. Does it beat the visual path on new corpora?")

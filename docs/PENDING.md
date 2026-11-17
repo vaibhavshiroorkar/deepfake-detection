@@ -5,12 +5,11 @@ The reasons behind each item are in the [project log](PROJECT-LOG.md). The rules
 
 ## 1. Running now
 
-Two chains run as detached processes, strictly one after the other (handbook mistake 71). Each resumes from its own log if stopped. Do not restart or shut down the PC while they run. The H2 Holm-family result is done (11-16, 22:56).
+One chain runs as a detached process (handbook mistake 71). Do not restart or shut down the PC while it runs. The H2 chain is done, HiFi-AVDF included (11-17, 05:36).
 
 | Chain | Log | What it does | Expected finish |
 |---|---|---|---|
-| H2 | `runs/p001-h2.log` | Restarted 11-17 01:14 after the second hang. Caches HiFi-AVDF alone at four shards (373 of 3,809 clips were cached), scores the six P-001 models on it, and runs H2 again with it (reported only) | About 07:45 Tue (measured at 530 clips an hour in the first minutes) |
-| A11 | `runs/p001-a11.log` | Waits for "h2 chain done", then trains and scores CLIP and XLS-R (exploratory), three seeds each | Tue evening; stop rule 17 November, 23:59 |
+| A11 | `runs/p001-a11.log` | Started 11-17 05:36, alone on the GPU. Trains and scores CLIP and XLS-R (exploratory), three seeds each | About 14:00 to 15:00 Tue (assumed); stop rule 17 November, 23:59 |
 | Monitor | `runs/p001/logs/resources.log` | Free RAM, GPU memory, power and temperature, once a minute. Stops after A11 | With A11 |
 
 ## 2. While the chains run (Claude)
@@ -34,7 +33,6 @@ Stop rule: if the upgraded models are not scored on all three targets by 17 Nove
 
 ## 3. When H2 finishes (Claude)
 
-- When the H2 chain logs "h2 chain done": rerun `runs/p001-finalize.sh` (it recopies `results/p001-branches/` and `results/p001-h2/` with HiFi-AVDF), copy the final `h2.json` receipt into `results/p001-h2/receipts/`, add the HiFi-AVDF rows to both READMEs, and add one sentence on HiFi-AVDF to the H2 interpretation in the paper, report and notes.
 - Cut version 1.0.0 at the final-year submission: changelog heading, `pyproject.toml`, tag `v1.0.0`.
 - Rename the package from `deepfake-generalization` (its old folder name) to `deepfake-detection` in `pyproject.toml` and `uv.lock`, and reinstall. This waits until no chain is running, because the reinstall rewrites the environment the chains use.
 - Reorganize `scripts/` into `p001/` (current study), `data/` (fetching and manifests) and `legacy/` (the September to October pipeline). This waits until no chain is running, because the chains call scripts by path.

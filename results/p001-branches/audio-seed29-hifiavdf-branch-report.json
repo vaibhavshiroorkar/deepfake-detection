@@ -1,0 +1,108 @@
+{
+  "branch": "audio",
+  "checkpoint_run_id": "p001-audio-seed29",
+  "checkpoint_sha256": "109fd920e8e8410d6ba5aacc74b5ad3a69836194181480eb0fa42dedecd01a32",
+  "class_balance": {
+    "fake": 1500,
+    "minimum_rows_per_class": 10,
+    "ranking_metrics_reliable": true,
+    "real": 2284
+  },
+  "confusion": {
+    "false_negative": 722,
+    "false_positive": 483,
+    "true_negative": 1801,
+    "true_positive": 778
+  },
+  "coverage": {
+    "abstained_by_reason": {},
+    "abstained_rows": 0,
+    "abstention_rate": 0.0,
+    "manifest_rows": 3784,
+    "scored_rows": 3784
+  },
+  "dataset": "HiFi-AVDF",
+  "detection_rate": 0.5186666666666667,
+  "evidence_scope": "generalization_cross_corpus",
+  "fixed_threshold": 0.7027939260005951,
+  "loss": 0.6668544827505599,
+  "metrics": {
+    "balanced_accuracy": 0.6535977816695855,
+    "brier": 0.2315268129256969,
+    "eer": 0.334938704028021,
+    "expected_calibration_error": 0.1488410803180751,
+    "f1": 0.563563926113727,
+    "fnr": 0.48133333333333334,
+    "fpr": 0.21147110332749564,
+    "fpr_at_95_tpr": 0.8353765323992994,
+    "pr_auc": 0.6266723813844843,
+    "precision": 0.6169706582077716,
+    "recall": 0.5186666666666667,
+    "roc_auc": 0.7193651488616463
+  },
+  "per_manipulation_type": {
+    "FakeVideo-FakeAudio": {
+      "accuracy": 0.5186666666666667,
+      "mean_probability": 0.6379776762407273,
+      "rows": 1500
+    },
+    "FakeVideo-RealAudio": {
+      "accuracy": 0.7791878172588832,
+      "mean_probability": 0.44296111858586973,
+      "rows": 394
+    },
+    "RealVideo-RealAudio": {
+      "accuracy": 0.7904761904761904,
+      "mean_probability": 0.4373182951132693,
+      "rows": 1890
+    }
+  },
+  "per_method": {
+    "kling2.5": {
+      "accuracy": 0.8133333333333334,
+      "mean_probability": 0.7874199572867817,
+      "rows": 225
+    },
+    "pixverseV5": {
+      "accuracy": 0.4253246753246753,
+      "mean_probability": 0.6234446509450964,
+      "rows": 308
+    },
+    "real": {
+      "accuracy": 0.7904761904761904,
+      "mean_probability": 0.4373182951132693,
+      "rows": 1890
+    },
+    "seedance1.0": {
+      "accuracy": 0.7791878172588832,
+      "mean_probability": 0.44296111858586973,
+      "rows": 394
+    },
+    "sora2": {
+      "accuracy": 0.46153846153846156,
+      "mean_probability": 0.5980079031835955,
+      "rows": 364
+    },
+    "veo3.1": {
+      "accuracy": 0.4440894568690096,
+      "mean_probability": 0.5626997538506032,
+      "rows": 313
+    },
+    "wan2.5": {
+      "accuracy": 0.5413793103448276,
+      "mean_probability": 0.6688833509186476,
+      "rows": 290
+    }
+  },
+  "preprocessing_hash": "5f2954fbda2cd643b4da48b8a526b0aa3d9ad831033ac8d22704d78d885df7d1",
+  "rows": 3784,
+  "threshold_source": {
+    "file": "runs\\p001\\evaluation\\audio-seed29-threshold.json",
+    "kind": "selected",
+    "objective": "balanced_accuracy",
+    "selection_rows": 3104,
+    "split": "val",
+    "value": 0.7027939260005951
+  },
+  "trained_on_split_hash": "6310dfa0225b0e1978a662df8c3acef9505e2bd7f451e9f49a4e7ed8e2e8db00"
+}

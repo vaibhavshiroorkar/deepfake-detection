@@ -211,6 +211,38 @@
       ],
       "clips_scored_by_every_seed": 2993
     },
+    "hifiavdf": {
+      "estimate": 0.05586089935752647,
+      "per_seed": [
+        0.05590151915860364,
+        0.04558052172950766,
+        0.06610065718446811
+      ],
+      "lower": 0.04948820805468567,
+      "upper": 0.06251563690464476,
+      "p_one_sided": 0.0,
+      "successful_samples": 1000,
+      "clips": 3485,
+      "identities": 1829,
+      "coverage": [
+        {
+          "seed": 17,
+          "scored_by_all": 3485,
+          "scored_by_sync": 3739
+        },
+        {
+          "seed": 29,
+          "scored_by_all": 3485,
+          "scored_by_sync": 3739
+        },
+        {
+          "seed": 43,
+          "scored_by_all": 3485,
+          "scored_by_sync": 3739
+        }
+      ],
+      "clips_scored_by_every_seed": 3485
+    },
     "lavdf-test": {
       "estimate": 0.12308079853415084,
       "per_seed": [
@@ -244,9 +276,7 @@
       "clips_scored_by_every_seed": 3686
     }
   },
-  "not_scored_yet": [
-    "hifiavdf"
-  ],
+  "not_scored_yet": [],
   "holm": {
     "test-identity-strict": {
       "p_one_sided": 0.0,
