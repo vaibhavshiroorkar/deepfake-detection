@@ -8,6 +8,7 @@ Experiment numbers are not repeated here. They live in `results/` and the docume
 
 ## Unreleased
 
+- Paper abstract and conclusion, and the report's conclusion, state the cross-corpus, H4, H2, A11 and A12 results; the abstract is 244 words.
 - The package is `deepfake-detection` (was `deepfake-generalization`, the old folder name) in `pyproject.toml`, `uv.lock` and the local tracking tag. The lock's 189 dependencies are unchanged; the environment was reinstalled with `uv sync --inexact` and keeps torch 2.12.1+cu130. The full suite still passes (870, 1 skipped). The Hugging Face Space and model repositories keep their old names.
 - Site: removed the decoration and slogan copy (pill badge, gradient headline, background glow, glowing brand dot, gradient panels, uppercase labels, step boxes, "X. Not Y." headline, punchlines, and a claim that every number links to a result). `docs/DESIGN.md` updated to match.
 - Full test suite on 11-17, after every run finished: 870 passed, 1 skipped, 0 failed (`runs/pytest-full-1117.log`).

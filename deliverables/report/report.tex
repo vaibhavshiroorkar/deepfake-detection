@@ -2663,8 +2663,7 @@ weak cues added together. DFDC barely leaks. A detector score on any of these
 corpora means little until it is set beside the shortcut ceiling of the same
 data.
 
-Removing those cues is harder than it looks. Our first neutralizer put the
-shortcut back through hidden AAC padding. The final version brought the
+Our first neutralizer put the shortcut back through hidden AAC padding. The final version brought the
 FakeAVCeleb ceiling down to {{audit.fakeavceleb.neutral.clip}}. That missed the
 bar we set in advance, and we report it as a miss. Cleaning also refused
 {{neutral.fakeavceleb.refused|int}} short clips, all of them generated speech.
@@ -2677,6 +2676,21 @@ Its pattern across methods matches its mechanism. It catches cloned voices
 best and plain face swaps least. Its weak point is false alarms at a carried-over
 threshold, which Chapter~\ref{ch:crosscorpus} addresses with thresholds set
 from real clips of each new domain.
+
+On corpora it never saw, the detector stays above chance but falls far: its
+AUC lies between {{sync.dfdc.seed17.auc}} and
+{{sync.lavdf-window.seed29.auc}} on DFDC, LAV-DF and HiFi-AVDF. A threshold set
+from 200 real clips of the new corpus brings false alarms on HiFi-AVDF to
+{{h4.hifiavdf-seed43.conformal_real_only.fpr}} to
+{{h4.hifiavdf-seed17.conformal_real_only.fpr}}, from
+{{h4.hifiavdf-seed43.source_validation.fpr}} to
+{{h4.hifiavdf-seed17.source_validation.fpr}}, but it then catches few fakes.
+
+Fusing the visual, audio and sync paths passes its preregistered test
+(Chapter~\ref{ch:h2}). The gain comes from fakes the visual path cannot see,
+and on LAV-DF from a visual path that the files invert. No fixed fusion of these
+paths transferred between corpora, and stronger frozen backbones did not
+transfer better on the cleaned data.
 
 The earlier phases of this project produced many strong numbers that did not
 survive scrutiny. This version produces fewer numbers, and each one comes with
