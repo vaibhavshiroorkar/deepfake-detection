@@ -152,3 +152,41 @@ def test_a11_keys_and_skipped_sets(tmp_path):
     assert numbers["a11.clip-vs-visual.test-identity-strict.seeds"]["value"] == 3
     assert numbers["a11.xlsr-vs-audio.dfdc.skipped"]["value"] == "one class in the set"
     assert "a11.xlsr-vs-audio.dfdc.estimate" not in numbers
+
+
+def test_a13_keys(tmp_path):
+    module = _module(tmp_path)
+    out = tmp_path / "results" / "p001-a13"
+    out.mkdir(parents=True)
+    stat = {"auc": 0.4543, "interval": [0.442, 0.464], "spearman_with_visual": 0.0123, "candidate": False}
+    (out / "a13.json").write_text(json.dumps({
+        "lavdf_unedited_video_fakes_vs_reals": {"clips": 1936, "statistics": {"sharpness": stat},
+                                                "all_six_cross_fit_auc": 0.5641, "visual_path_auc": 0.1962}}))
+    numbers: dict = {}
+    module.a13(numbers)
+    assert numbers["a13.lavdf.sharpness.auc"]["value"] == 0.454
+    assert numbers["a13.lavdf.sharpness.low"]["value"] == 0.442
+    assert numbers["a13.lavdf.sharpness.rho"]["value"] == 0.01
+    assert numbers["a13.lavdf.sharpness.candidate"]["value"] == "no"
+    assert numbers["a13.lavdf.all_six"]["value"] == 0.564
+    assert numbers["a13.lavdf.visual"]["value"] == 0.196
+    assert numbers["a13.lavdf.auc_min"]["value"] == 0.454
+    assert numbers["a13.lavdf.auc_max"]["value"] == 0.454
+
+
+def test_a14_keys_reuse_the_metrics_reader(tmp_path):
+    module = _module(tmp_path)
+    out = tmp_path / "results" / "p001-a14"
+    out.mkdir(parents=True)
+    report = {"overall": {"metrics": {"roc_auc": 0.9401, "fpr": 0.1, "balanced_accuracy": 0.9}, "total": 495, "scored": 495},
+              "confidence_intervals": {"roc_auc": {"lower": 0.91, "upper": 0.97}}}
+    (out / "audio-seed29-test-identity-strict-both-metrics.json").write_text(json.dumps(report))
+    numbers: dict = {}
+    module.a14(numbers)
+    assert numbers["a14.test-identity-strict.both.seed29.auc"]["value"] == 0.94
+    assert numbers["a14.test-identity-strict.both.seed29.auc_low"]["value"] == 0.91
+    (out / "audio-seed29-test-identity-strict-none-metrics.json").write_text(json.dumps(report))
+    numbers = {}
+    module.a14(numbers)
+    # "none" is the unperturbed rerun, so it stays out of the perturbed range.
+    assert numbers["a14.test-identity-strict.perturbed_min"]["value"] == 0.94

@@ -2399,8 +2399,13 @@ including clips whose video was never edited
 {{visual.lavdf-test.type.RealVideo-FakeAudio.max}}). A path that reacted to
 face edits would score those near 0.5. So it reacts to some difference
 between LAV-DF's real and fake files that is not the edit, and reads it
-backwards. What that difference is, we do not know: the file-cue audit reads
-metadata and cannot see it. Fusion beats this reversed baseline but trails
+backwards. What that difference is, we do not know. The file-cue audit reads
+metadata and cannot see it. Amendment A13 (exploratory) measured six
+statistics of the face frames the path sees: sharpness, high frequencies,
+blockiness, brightness, contrast and motion. None explains it. Each separates
+the two groups at AUC {{a13.lavdf.auc_min}} to {{a13.lavdf.auc_max}}, and all
+six together reach {{a13.lavdf.all_six}}, against the path's
+{{a13.lavdf.visual}}. Fusion beats this reversed baseline but trails
 the audio path and the sync path alone in every seed. Its weights were fit on
 FakeAVCeleb, where the visual path is strong. Section~\ref{sec:a12} tests
 whether that is to blame.
@@ -2554,6 +2559,14 @@ It comes from millisecond differences at clip ends and from loudness after
 AAC encoding. Any claim about which modality was faked must be read beside
 this number. It also leaves room for the sync path's success on cloned voices
 to come partly from audio properties (Chapter~\ref{ch:sync}).
+
+Amendment A14 (exploratory) checked whether the audio path relies on those two
+cues. With every clip's loudness levelled and 250~ms cut from each edge, its
+AUC on the identity-strict test stays between
+{{a14.test-identity-strict.perturbed_min}} and
+{{a14.test-identity-strict.perturbed_max}} across the three seeds. So the
+named cues do not drive the audio path. Cues the audit did not name are not
+covered.
 
 \subsection{Refusals}
 

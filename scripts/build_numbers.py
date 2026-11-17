@@ -284,6 +284,48 @@ def a11(numbers: dict) -> None:
         _put(numbers, f"{key}.seeds", len(result["seeds"]), path)
 
 
+def a13(numbers: dict) -> None:
+    """A13 (exploratory): frame statistics, real clips against video fakes. a13.{lavdf|fakeavceleb}.{stat}.*"""
+    path = RESULTS / "p001-a13" / "a13.json"
+    if not path.exists():
+        return
+    names = {"lavdf_unedited_video_fakes_vs_reals": "lavdf", "fakeavceleb_video_fakes_vs_reals": "fakeavceleb"}
+    for block, result in json.loads(path.read_text(encoding="utf-8")).items():
+        if block not in names:
+            continue
+        key = f"a13.{names[block]}"
+        for stat, entry in result["statistics"].items():
+            _put(numbers, f"{key}.{stat}.auc", round(entry["auc"], 3), path)
+            _put(numbers, f"{key}.{stat}.low", round(entry["interval"][0], 3), path)
+            _put(numbers, f"{key}.{stat}.high", round(entry["interval"][1], 3), path)
+            if "spearman_with_visual" in entry:
+                _put(numbers, f"{key}.{stat}.rho", round(entry["spearman_with_visual"], 2), path)
+                _put(numbers, f"{key}.{stat}.candidate", _yes(entry["candidate"]), path)
+        aucs = [round(entry["auc"], 3) for entry in result["statistics"].values()]
+        _put(numbers, f"{key}.auc_min", min(aucs), path)
+        _put(numbers, f"{key}.auc_max", max(aucs), path)
+        _put(numbers, f"{key}.all_six", round(result["all_six_cross_fit_auc"], 3), path)
+        if "visual_path_auc" in result:
+            _put(numbers, f"{key}.visual", round(result["visual_path_auc"], 3), path)
+
+
+def a14(numbers: dict) -> None:
+    """A14 (exploratory): the audio path under audio perturbations. a14.{part}.{kind}.seed{S}.*"""
+    directory = RESULTS / "p001-a14"
+    if not directory.exists():
+        return
+    perturbed: dict[str, list[float]] = {}
+    for path in sorted(directory.glob("audio-seed*-metrics.json")):
+        seed, rest = path.stem.removeprefix("audio-seed").removesuffix("-metrics").split("-", 1)
+        part, kind = rest.rsplit("-", 1)
+        metrics_file(numbers, f"a14.{part}.{kind}.seed{seed}", path)
+        if kind != "none":           # "none" is the unperturbed rerun
+            perturbed.setdefault(part, []).append(numbers[f"a14.{part}.{kind}.seed{seed}.auc"]["value"])
+    for part, values in perturbed.items():
+        _put(numbers, f"a14.{part}.perturbed_min", min(values), directory / f"audio-seed*-{part}-*-metrics.json")
+        _put(numbers, f"a14.{part}.perturbed_max", max(values), directory / f"audio-seed*-{part}-*-metrics.json")
+
+
 def main() -> int:
     numbers: dict = {}
     audits(numbers)
@@ -297,6 +339,8 @@ def main() -> int:
     h2_checks(numbers)
     a12(numbers)
     a11(numbers)
+    a13(numbers)
+    a14(numbers)
     out = RESULTS / "numbers.json"
     out.write_text(json.dumps(dict(sorted(numbers.items())), indent=1) + "\n", encoding="utf-8")
     print(f"{len(numbers)} numbers -> {_rel(out)}")

@@ -1,0 +1,233 @@
+{
+  "confidence_intervals": {
+    "balanced_accuracy": {
+      "estimate": 0.9993256911665542,
+      "lower": 0.9981844259829254,
+      "successful_samples": 1000,
+      "upper": 1.0
+    },
+    "brier": {
+      "estimate": 0.0006271425788016583,
+      "lower": 1.5876697610185784e-06,
+      "successful_samples": 1000,
+      "upper": 0.0017014848480327706
+    },
+    "eer": {
+      "estimate": 0.0006743088334457692,
+      "lower": 0.0,
+      "successful_samples": 1000,
+      "upper": 0.0021755684789425966
+    },
+    "expected_calibration_error": {
+      "estimate": 0.000712166334939913,
+      "lower": 0.0003241566689102399,
+      "successful_samples": 1000,
+      "upper": 0.0017934347485989031
+    },
+    "f1": {
+      "estimate": 0.9993252361673415,
+      "lower": 0.9981811236782929,
+      "successful_samples": 1000,
+      "upper": 1.0
+    },
+    "fnr": {
+      "estimate": 0.0013486176668914363,
+      "lower": 0.0,
+      "successful_samples": 1000,
+      "upper": 0.00363114803414906
+    },
+    "fpr": {
+      "estimate": 0.0,
+      "lower": 0.0,
+      "successful_samples": 1000,
+      "upper": 0.0
+    },
+    "fpr_at_95_tpr": {
+      "estimate": 0.0,
+      "lower": 0.0,
+      "successful_samples": 1000,
+      "upper": 0.0
+    },
+    "pr_auc": {
+      "estimate": 0.9999590033894802,
+      "lower": 0.9998440351412626,
+      "successful_samples": 1000,
+      "upper": 1.0
+    },
+    "precision": {
+      "estimate": 1.0,
+      "lower": 1.0,
+      "successful_samples": 1000,
+      "upper": 1.0
+    },
+    "recall": {
+      "estimate": 0.9986513823331086,
+      "lower": 0.9963688519658509,
+      "successful_samples": 1000,
+      "upper": 1.0
+    },
+    "roc_auc": {
+      "estimate": 0.99995713003443,
+      "lower": 0.9998402756649594,
+      "successful_samples": 1000,
+      "upper": 1.0
+    }
+  },
+  "fusion_vs_visual_auc": null,
+  "gender": {
+    "unknown": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": {
+        "balanced_accuracy": 0.9993256911665542,
+        "brier": 0.0006271425788016583,
+        "eer": 0.0006743088334457692,
+        "expected_calibration_error": 0.000712166334939913,
+        "f1": 0.9993252361673415,
+        "fnr": 0.0013486176668914363,
+        "fpr": 0.0,
+        "fpr_at_95_tpr": 0.0,
+        "pr_auc": 0.9999590033894802,
+        "precision": 1.0,
+        "recall": 0.9986513823331086,
+        "roc_auc": 0.99995713003443
+      },
+      "scored": 2993,
+      "total": 2993
+    }
+  },
+  "macro_method_roc_auc": 0.9999533899128003,
+  "overall": {
+    "abstained": 0,
+    "coverage": 1.0,
+    "metrics": {
+      "balanced_accuracy": 0.9993256911665542,
+      "brier": 0.0006271425788016583,
+      "eer": 0.0006743088334457692,
+      "expected_calibration_error": 0.000712166334939913,
+      "f1": 0.9993252361673415,
+      "fnr": 0.0013486176668914363,
+      "fpr": 0.0,
+      "fpr_at_95_tpr": 0.0,
+      "pr_auc": 0.9999590033894802,
+      "precision": 1.0,
+      "recall": 0.9986513823331086,
+      "roc_auc": 0.99995713003443
+    },
+    "scored": 2993,
+    "total": 2993
+  },
+  "per_method": {
+    "faceswap-wav2lip": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": {
+        "balanced_accuracy": 0.998533724340176,
+        "brier": 0.0005449078215949521,
+        "eer": 0.0029325513196480912,
+        "expected_calibration_error": 0.0003494916409058382,
+        "f1": 0.9985315712187959,
+        "fnr": 0.002932551319648094,
+        "fpr": 0.0,
+        "fpr_at_95_tpr": 0.0,
+        "pr_auc": 0.9993557781998027,
+        "precision": 1.0,
+        "recall": 0.9970674486803519,
+        "roc_auc": 0.9998135596512011
+      },
+      "scored": 1851,
+      "total": 1851
+    },
+    "fsgan-wav2lip": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": {
+        "balanced_accuracy": 1.0,
+        "brier": 4.735631269410348e-06,
+        "eer": 0.0,
+        "expected_calibration_error": 0.0003873521647865421,
+        "f1": 1.0,
+        "fnr": 0.0,
+        "fpr": 0.0,
+        "fpr_at_95_tpr": 0.0,
+        "pr_auc": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "roc_auc": 1.0
+      },
+      "scored": 1969,
+      "total": 1969
+    },
+    "rtvc": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": {
+        "balanced_accuracy": 1.0,
+        "brier": 5.823269653324147e-06,
+        "eer": 0.0,
+        "expected_calibration_error": 0.0003635318429730573,
+        "f1": 1.0,
+        "fnr": 0.0,
+        "fpr": 0.0,
+        "fpr_at_95_tpr": 0.0,
+        "pr_auc": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "roc_auc": 1.0
+      },
+      "scored": 1578,
+      "total": 1578
+    },
+    "wav2lip": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": {
+        "balanced_accuracy": 0.9991869918699188,
+        "brier": 0.00041286902834213653,
+        "eer": 0.0,
+        "expected_calibration_error": 0.00032214787905790693,
+        "f1": 0.9991863303498779,
+        "fnr": 0.0016260162601626016,
+        "fpr": 0.0,
+        "fpr_at_95_tpr": 0.0,
+        "pr_auc": 0.9999999999999999,
+        "precision": 1.0,
+        "recall": 0.9983739837398374,
+        "roc_auc": 1.0
+      },
+      "scored": 2125,
+      "total": 2125
+    }
+  },
+  "race": {
+    "unknown": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": {
+        "balanced_accuracy": 0.9993256911665542,
+        "brier": 0.0006271425788016583,
+        "eer": 0.0006743088334457692,
+        "expected_calibration_error": 0.000712166334939913,
+        "f1": 0.9993252361673415,
+        "fnr": 0.0013486176668914363,
+        "fpr": 0.0,
+        "fpr_at_95_tpr": 0.0,
+        "pr_auc": 0.9999590033894802,
+        "precision": 1.0,
+        "recall": 0.9986513823331086,
+        "roc_auc": 0.99995713003443
+      },
+      "scored": 2993,
+      "total": 2993
+    }
+  },
+  "threshold": 0.9644157886505127,
+  "threshold_source": {
+    "file": "runs\\p001\\evaluation\\audio-seed17-threshold.json",
+    "kind": "selected",
+    "objective": "balanced_accuracy",
+    "selection_rows": 3104,
+    "split": "val",
+    "value": 0.9644157886505127
+  }
+}

@@ -41,6 +41,11 @@
         <h3>Combining the checks beats the face check alone</h3>
         <p>It passes the preregistered rule: +{{ n("h2.test-identity-strict.estimate") }} on FakeAVCeleb and +{{ n("h2.lavdf-window.estimate") }} on LAV-DF; +{{ n("h2.dfdc.estimate") }} on DFDC (not significant). But without the cloned-voice clips, which the face check was never trained to flag, the FakeAVCeleb gain is {{ n("h2.test-identity-strict.without_cloned_voice.min") }} to {{ n("h2.test-identity-strict.without_cloned_voice.max") }}. On LAV-DF the face check scores even fakes with untouched video below the real clips ({{ n("visual.lavdf-test.type.RealVideo-FakeAudio.min") }} to {{ n("visual.lavdf-test.type.RealVideo-FakeAudio.max") }}), so the gain is over a broken baseline. A combination fitted on other datasets fell to {{ n("a12.dfdc.auc.leave_one_out") }} on DFDC. That is why this site shows the three checks side by side instead of merging them.</p>
       </article>
+      <article class="res">
+        <div class="res-head"><span class="mono">A11 to A14</span><span class="tag">Exploratory</span></div>
+        <h3>Four checks added after the main results</h3>
+        <p>Stronger frozen models (CLIP for faces, XLS-R for voices) did not transfer better once the file clues were gone: on HiFi-AVDF, {{ n("a11.clip-vs-visual.hifiavdf.auc_new") }} and {{ n("a11.xlsr-vs-audio.hifiavdf.auc_new") }}. No fixed way of combining the checks carried over between datasets. Six simple frame measures do not explain what the face check reads on LAV-DF (together {{ n("a13.lavdf.all_six") }}). And the voice check does not lean on loudness or clip edges: with both removed it stays at {{ n("a14.test-identity-strict.perturbed_min") }} or above.</p>
+      </article>
     </div>
   </section>
 

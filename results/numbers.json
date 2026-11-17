@@ -507,6 +507,1350 @@
   "value": 0.436,
   "source": "results/p001-a12/a12.json"
  },
+ "a13.fakeavceleb.all_six": {
+  "value": 0.589,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.auc_max": {
+  "value": 0.594,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.auc_min": {
+  "value": 0.448,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.blockiness.auc": {
+  "value": 0.594,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.blockiness.candidate": {
+  "value": "no",
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.blockiness.high": {
+  "value": 0.645,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.blockiness.low": {
+  "value": 0.543,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.blockiness.rho": {
+  "value": 0.17,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.brightness.auc": {
+  "value": 0.464,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.brightness.candidate": {
+  "value": "no",
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.brightness.high": {
+  "value": 0.494,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.brightness.low": {
+  "value": 0.425,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.brightness.rho": {
+  "value": -0.11,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.contrast.auc": {
+  "value": 0.479,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.contrast.candidate": {
+  "value": "no",
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.contrast.high": {
+  "value": 0.511,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.contrast.low": {
+  "value": 0.444,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.contrast.rho": {
+  "value": -0.11,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.high_frequency.auc": {
+  "value": 0.484,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.high_frequency.candidate": {
+  "value": "no",
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.high_frequency.high": {
+  "value": 0.513,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.high_frequency.low": {
+  "value": 0.453,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.high_frequency.rho": {
+  "value": -0.12,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.sharpness.auc": {
+  "value": 0.448,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.sharpness.candidate": {
+  "value": "no",
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.sharpness.high": {
+  "value": 0.48,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.sharpness.low": {
+  "value": 0.406,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.sharpness.rho": {
+  "value": -0.15,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.temporal.auc": {
+  "value": 0.509,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.temporal.candidate": {
+  "value": "no",
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.temporal.high": {
+  "value": 0.546,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.temporal.low": {
+  "value": 0.472,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.temporal.rho": {
+  "value": -0.15,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.fakeavceleb.visual": {
+  "value": 0.989,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.all_six": {
+  "value": 0.564,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.auc_max": {
+  "value": 0.52,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.auc_min": {
+  "value": 0.45,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.blockiness.auc": {
+  "value": 0.52,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.blockiness.candidate": {
+  "value": "no",
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.blockiness.high": {
+  "value": 0.536,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.blockiness.low": {
+  "value": 0.503,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.blockiness.rho": {
+  "value": -0.05,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.brightness.auc": {
+  "value": 0.505,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.brightness.candidate": {
+  "value": "no",
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.brightness.high": {
+  "value": 0.517,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.brightness.low": {
+  "value": 0.495,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.brightness.rho": {
+  "value": 0.02,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.contrast.auc": {
+  "value": 0.492,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.contrast.candidate": {
+  "value": "no",
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.contrast.high": {
+  "value": 0.502,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.contrast.low": {
+  "value": 0.481,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.contrast.rho": {
+  "value": 0.08,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.high_frequency.auc": {
+  "value": 0.5,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.high_frequency.candidate": {
+  "value": "no",
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.high_frequency.high": {
+  "value": 0.511,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.high_frequency.low": {
+  "value": 0.488,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.high_frequency.rho": {
+  "value": -0.04,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.sharpness.auc": {
+  "value": 0.454,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.sharpness.candidate": {
+  "value": "no",
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.sharpness.high": {
+  "value": 0.464,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.sharpness.low": {
+  "value": 0.442,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.sharpness.rho": {
+  "value": 0.01,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.temporal.auc": {
+  "value": 0.45,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.temporal.candidate": {
+  "value": "no",
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.temporal.high": {
+  "value": 0.462,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.temporal.low": {
+  "value": 0.438,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.temporal.rho": {
+  "value": 0.22,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a13.lavdf.visual": {
+  "value": 0.196,
+  "source": "results/p001-a13/a13.json"
+ },
+ "a14.test-identity-strict.both.seed17.auc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed17.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed17.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed17.balanced_accuracy": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed17.fpr": {
+  "value": 0.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed17.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed17.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed17.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed17.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed17.n": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed17.scored": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed29.auc": {
+  "value": 0.94,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed29.auc_high": {
+  "value": 0.963,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed29.auc_low": {
+  "value": 0.916,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed29.balanced_accuracy": {
+  "value": 0.862,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed29.fpr": {
+  "value": 0.2,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed29.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed29.method.fsgan-wav2lip": {
+  "value": 0.924,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed29.method.rtvc": {
+  "value": 0.93,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed29.method.wav2lip": {
+  "value": 0.946,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed29.n": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed29.scored": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed43.auc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed43.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed43.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed43.balanced_accuracy": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed43.fpr": {
+  "value": 0.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed43.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed43.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed43.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed43.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed43.n": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.both.seed43.scored": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-both-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed17.auc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed17.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed17.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed17.balanced_accuracy": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed17.fpr": {
+  "value": 0.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed17.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed17.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed17.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed17.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed17.n": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed17.scored": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed29.auc": {
+  "value": 0.933,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed29.auc_high": {
+  "value": 0.958,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed29.auc_low": {
+  "value": 0.905,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed29.balanced_accuracy": {
+  "value": 0.87,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed29.fpr": {
+  "value": 0.16,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed29.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed29.method.fsgan-wav2lip": {
+  "value": 0.892,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed29.method.rtvc": {
+  "value": 0.934,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed29.method.wav2lip": {
+  "value": 0.933,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed29.n": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed29.scored": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed43.auc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed43.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed43.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed43.balanced_accuracy": {
+  "value": 0.997,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed43.fpr": {
+  "value": 0.006,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed43.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed43.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed43.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed43.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed43.n": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.edges.seed43.scored": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-edges-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed17.auc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed17.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed17.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed17.balanced_accuracy": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed17.fpr": {
+  "value": 0.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed17.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed17.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed17.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed17.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed17.n": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed17.scored": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed29.auc": {
+  "value": 0.946,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed29.auc_high": {
+  "value": 0.967,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed29.auc_low": {
+  "value": 0.922,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed29.balanced_accuracy": {
+  "value": 0.85,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed29.fpr": {
+  "value": 0.206,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed29.method.faceswap-wav2lip": {
+  "value": 0.978,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed29.method.fsgan-wav2lip": {
+  "value": 0.921,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed29.method.rtvc": {
+  "value": 0.943,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed29.method.wav2lip": {
+  "value": 0.95,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed29.n": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed29.scored": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed43.auc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed43.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed43.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed43.balanced_accuracy": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed43.fpr": {
+  "value": 0.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed43.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed43.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed43.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed43.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed43.n": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.loudness.seed43.scored": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-loudness-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed17.auc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed17.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed17.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed17.balanced_accuracy": {
+  "value": 0.997,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed17.fpr": {
+  "value": 0.006,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed17.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed17.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed17.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed17.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed17.n": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed17.scored": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed17-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed29.auc": {
+  "value": 0.952,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed29.auc_high": {
+  "value": 0.971,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed29.auc_low": {
+  "value": 0.931,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed29.balanced_accuracy": {
+  "value": 0.869,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed29.fpr": {
+  "value": 0.145,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed29.method.faceswap-wav2lip": {
+  "value": 0.999,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed29.method.fsgan-wav2lip": {
+  "value": 0.918,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed29.method.rtvc": {
+  "value": 0.954,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed29.method.wav2lip": {
+  "value": 0.951,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed29.n": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed29.scored": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed29-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed43.auc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed43.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed43.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed43.balanced_accuracy": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed43.fpr": {
+  "value": 0.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed43.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed43.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed43.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed43.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed43.n": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.none.seed43.scored": {
+  "value": 495,
+  "source": "results/p001-a14/audio-seed43-test-identity-strict-none-metrics.json"
+ },
+ "a14.test-identity-strict.perturbed_max": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed*-test-identity-strict-*-metrics.json"
+ },
+ "a14.test-identity-strict.perturbed_min": {
+  "value": 0.933,
+  "source": "results/p001-a14/audio-seed*-test-identity-strict-*-metrics.json"
+ },
+ "a14.test.both.seed17.auc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-both-metrics.json"
+ },
+ "a14.test.both.seed17.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-both-metrics.json"
+ },
+ "a14.test.both.seed17.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-both-metrics.json"
+ },
+ "a14.test.both.seed17.balanced_accuracy": {
+  "value": 0.999,
+  "source": "results/p001-a14/audio-seed17-test-both-metrics.json"
+ },
+ "a14.test.both.seed17.fpr": {
+  "value": 0.0,
+  "source": "results/p001-a14/audio-seed17-test-both-metrics.json"
+ },
+ "a14.test.both.seed17.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-both-metrics.json"
+ },
+ "a14.test.both.seed17.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-both-metrics.json"
+ },
+ "a14.test.both.seed17.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-both-metrics.json"
+ },
+ "a14.test.both.seed17.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-both-metrics.json"
+ },
+ "a14.test.both.seed17.n": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed17-test-both-metrics.json"
+ },
+ "a14.test.both.seed17.scored": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed17-test-both-metrics.json"
+ },
+ "a14.test.both.seed29.auc": {
+  "value": 0.949,
+  "source": "results/p001-a14/audio-seed29-test-both-metrics.json"
+ },
+ "a14.test.both.seed29.auc_high": {
+  "value": 0.959,
+  "source": "results/p001-a14/audio-seed29-test-both-metrics.json"
+ },
+ "a14.test.both.seed29.auc_low": {
+  "value": 0.937,
+  "source": "results/p001-a14/audio-seed29-test-both-metrics.json"
+ },
+ "a14.test.both.seed29.balanced_accuracy": {
+  "value": 0.864,
+  "source": "results/p001-a14/audio-seed29-test-both-metrics.json"
+ },
+ "a14.test.both.seed29.fpr": {
+  "value": 0.207,
+  "source": "results/p001-a14/audio-seed29-test-both-metrics.json"
+ },
+ "a14.test.both.seed29.method.faceswap-wav2lip": {
+  "value": 0.946,
+  "source": "results/p001-a14/audio-seed29-test-both-metrics.json"
+ },
+ "a14.test.both.seed29.method.fsgan-wav2lip": {
+  "value": 0.951,
+  "source": "results/p001-a14/audio-seed29-test-both-metrics.json"
+ },
+ "a14.test.both.seed29.method.rtvc": {
+  "value": 0.923,
+  "source": "results/p001-a14/audio-seed29-test-both-metrics.json"
+ },
+ "a14.test.both.seed29.method.wav2lip": {
+  "value": 0.95,
+  "source": "results/p001-a14/audio-seed29-test-both-metrics.json"
+ },
+ "a14.test.both.seed29.n": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed29-test-both-metrics.json"
+ },
+ "a14.test.both.seed29.scored": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed29-test-both-metrics.json"
+ },
+ "a14.test.both.seed43.auc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-both-metrics.json"
+ },
+ "a14.test.both.seed43.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-both-metrics.json"
+ },
+ "a14.test.both.seed43.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-both-metrics.json"
+ },
+ "a14.test.both.seed43.balanced_accuracy": {
+  "value": 0.999,
+  "source": "results/p001-a14/audio-seed43-test-both-metrics.json"
+ },
+ "a14.test.both.seed43.fpr": {
+  "value": 0.0,
+  "source": "results/p001-a14/audio-seed43-test-both-metrics.json"
+ },
+ "a14.test.both.seed43.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-both-metrics.json"
+ },
+ "a14.test.both.seed43.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-both-metrics.json"
+ },
+ "a14.test.both.seed43.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-both-metrics.json"
+ },
+ "a14.test.both.seed43.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-both-metrics.json"
+ },
+ "a14.test.both.seed43.n": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed43-test-both-metrics.json"
+ },
+ "a14.test.both.seed43.scored": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed43-test-both-metrics.json"
+ },
+ "a14.test.edges.seed17.auc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed17.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed17.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed17.balanced_accuracy": {
+  "value": 0.999,
+  "source": "results/p001-a14/audio-seed17-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed17.fpr": {
+  "value": 0.0,
+  "source": "results/p001-a14/audio-seed17-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed17.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed17.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed17.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed17.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed17.n": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed17-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed17.scored": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed17-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed29.auc": {
+  "value": 0.949,
+  "source": "results/p001-a14/audio-seed29-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed29.auc_high": {
+  "value": 0.96,
+  "source": "results/p001-a14/audio-seed29-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed29.auc_low": {
+  "value": 0.937,
+  "source": "results/p001-a14/audio-seed29-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed29.balanced_accuracy": {
+  "value": 0.878,
+  "source": "results/p001-a14/audio-seed29-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed29.fpr": {
+  "value": 0.165,
+  "source": "results/p001-a14/audio-seed29-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed29.method.faceswap-wav2lip": {
+  "value": 0.949,
+  "source": "results/p001-a14/audio-seed29-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed29.method.fsgan-wav2lip": {
+  "value": 0.954,
+  "source": "results/p001-a14/audio-seed29-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed29.method.rtvc": {
+  "value": 0.931,
+  "source": "results/p001-a14/audio-seed29-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed29.method.wav2lip": {
+  "value": 0.947,
+  "source": "results/p001-a14/audio-seed29-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed29.n": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed29-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed29.scored": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed29-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed43.auc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed43.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed43.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed43.balanced_accuracy": {
+  "value": 0.996,
+  "source": "results/p001-a14/audio-seed43-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed43.fpr": {
+  "value": 0.006,
+  "source": "results/p001-a14/audio-seed43-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed43.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed43.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed43.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed43.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed43.n": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed43-test-edges-metrics.json"
+ },
+ "a14.test.edges.seed43.scored": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed43-test-edges-metrics.json"
+ },
+ "a14.test.loudness.seed17.auc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed17.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed17.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed17.balanced_accuracy": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed17.fpr": {
+  "value": 0.0,
+  "source": "results/p001-a14/audio-seed17-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed17.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed17.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed17.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed17.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed17.n": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed17-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed17.scored": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed17-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed29.auc": {
+  "value": 0.959,
+  "source": "results/p001-a14/audio-seed29-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed29.auc_high": {
+  "value": 0.97,
+  "source": "results/p001-a14/audio-seed29-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed29.auc_low": {
+  "value": 0.946,
+  "source": "results/p001-a14/audio-seed29-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed29.balanced_accuracy": {
+  "value": 0.882,
+  "source": "results/p001-a14/audio-seed29-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed29.fpr": {
+  "value": 0.191,
+  "source": "results/p001-a14/audio-seed29-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed29.method.faceswap-wav2lip": {
+  "value": 0.959,
+  "source": "results/p001-a14/audio-seed29-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed29.method.fsgan-wav2lip": {
+  "value": 0.962,
+  "source": "results/p001-a14/audio-seed29-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed29.method.rtvc": {
+  "value": 0.937,
+  "source": "results/p001-a14/audio-seed29-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed29.method.wav2lip": {
+  "value": 0.959,
+  "source": "results/p001-a14/audio-seed29-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed29.n": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed29-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed29.scored": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed29-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed43.auc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed43.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed43.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed43.balanced_accuracy": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed43.fpr": {
+  "value": 0.0,
+  "source": "results/p001-a14/audio-seed43-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed43.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed43.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed43.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed43.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed43.n": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed43-test-loudness-metrics.json"
+ },
+ "a14.test.loudness.seed43.scored": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed43-test-loudness-metrics.json"
+ },
+ "a14.test.none.seed17.auc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-none-metrics.json"
+ },
+ "a14.test.none.seed17.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-none-metrics.json"
+ },
+ "a14.test.none.seed17.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-none-metrics.json"
+ },
+ "a14.test.none.seed17.balanced_accuracy": {
+  "value": 0.998,
+  "source": "results/p001-a14/audio-seed17-test-none-metrics.json"
+ },
+ "a14.test.none.seed17.fpr": {
+  "value": 0.003,
+  "source": "results/p001-a14/audio-seed17-test-none-metrics.json"
+ },
+ "a14.test.none.seed17.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-none-metrics.json"
+ },
+ "a14.test.none.seed17.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-none-metrics.json"
+ },
+ "a14.test.none.seed17.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-none-metrics.json"
+ },
+ "a14.test.none.seed17.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed17-test-none-metrics.json"
+ },
+ "a14.test.none.seed17.n": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed17-test-none-metrics.json"
+ },
+ "a14.test.none.seed17.scored": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed17-test-none-metrics.json"
+ },
+ "a14.test.none.seed29.auc": {
+  "value": 0.964,
+  "source": "results/p001-a14/audio-seed29-test-none-metrics.json"
+ },
+ "a14.test.none.seed29.auc_high": {
+  "value": 0.973,
+  "source": "results/p001-a14/audio-seed29-test-none-metrics.json"
+ },
+ "a14.test.none.seed29.auc_low": {
+  "value": 0.954,
+  "source": "results/p001-a14/audio-seed29-test-none-metrics.json"
+ },
+ "a14.test.none.seed29.balanced_accuracy": {
+  "value": 0.896,
+  "source": "results/p001-a14/audio-seed29-test-none-metrics.json"
+ },
+ "a14.test.none.seed29.fpr": {
+  "value": 0.139,
+  "source": "results/p001-a14/audio-seed29-test-none-metrics.json"
+ },
+ "a14.test.none.seed29.method.faceswap-wav2lip": {
+  "value": 0.964,
+  "source": "results/p001-a14/audio-seed29-test-none-metrics.json"
+ },
+ "a14.test.none.seed29.method.fsgan-wav2lip": {
+  "value": 0.968,
+  "source": "results/p001-a14/audio-seed29-test-none-metrics.json"
+ },
+ "a14.test.none.seed29.method.rtvc": {
+  "value": 0.948,
+  "source": "results/p001-a14/audio-seed29-test-none-metrics.json"
+ },
+ "a14.test.none.seed29.method.wav2lip": {
+  "value": 0.963,
+  "source": "results/p001-a14/audio-seed29-test-none-metrics.json"
+ },
+ "a14.test.none.seed29.n": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed29-test-none-metrics.json"
+ },
+ "a14.test.none.seed29.scored": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed29-test-none-metrics.json"
+ },
+ "a14.test.none.seed43.auc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-none-metrics.json"
+ },
+ "a14.test.none.seed43.auc_high": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-none-metrics.json"
+ },
+ "a14.test.none.seed43.auc_low": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-none-metrics.json"
+ },
+ "a14.test.none.seed43.balanced_accuracy": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-none-metrics.json"
+ },
+ "a14.test.none.seed43.fpr": {
+  "value": 0.0,
+  "source": "results/p001-a14/audio-seed43-test-none-metrics.json"
+ },
+ "a14.test.none.seed43.method.faceswap-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-none-metrics.json"
+ },
+ "a14.test.none.seed43.method.fsgan-wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-none-metrics.json"
+ },
+ "a14.test.none.seed43.method.rtvc": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-none-metrics.json"
+ },
+ "a14.test.none.seed43.method.wav2lip": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed43-test-none-metrics.json"
+ },
+ "a14.test.none.seed43.n": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed43-test-none-metrics.json"
+ },
+ "a14.test.none.seed43.scored": {
+  "value": 2993,
+  "source": "results/p001-a14/audio-seed43-test-none-metrics.json"
+ },
+ "a14.test.perturbed_max": {
+  "value": 1.0,
+  "source": "results/p001-a14/audio-seed*-test-*-metrics.json"
+ },
+ "a14.test.perturbed_min": {
+  "value": 0.949,
+  "source": "results/p001-a14/audio-seed*-test-*-metrics.json"
+ },
  "audio.dfdc.seed17.n": {
   "value": 3032,
   "source": "results/p001-branches/audio-seed17-dfdc-metrics.json"

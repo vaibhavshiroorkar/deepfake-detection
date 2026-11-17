@@ -1,0 +1,233 @@
+{
+  "confidence_intervals": {
+    "balanced_accuracy": {
+      "estimate": 0.8498642533936651,
+      "lower": 0.8143512011244569,
+      "successful_samples": 1000,
+      "upper": 0.8832290383532319
+    },
+    "brier": {
+      "estimate": 0.15111351402377593,
+      "lower": 0.12483674309248341,
+      "successful_samples": 1000,
+      "upper": 0.17516861686243101
+    },
+    "eer": {
+      "estimate": 0.14117647058823535,
+      "lower": 0.10497237569060769,
+      "successful_samples": 1000,
+      "upper": 0.175005664652568
+    },
+    "expected_calibration_error": {
+      "estimate": 0.18341180485757916,
+      "lower": 0.1537576934278204,
+      "successful_samples": 1000,
+      "upper": 0.22293077718517304
+    },
+    "f1": {
+      "estimate": 0.7877237851662404,
+      "lower": 0.7409278449433889,
+      "successful_samples": 1000,
+      "upper": 0.8329280964256026
+    },
+    "fnr": {
+      "estimate": 0.09411764705882353,
+      "lower": 0.05054775280898877,
+      "successful_samples": 1000,
+      "upper": 0.14285714285714285
+    },
+    "fpr": {
+      "estimate": 0.20615384615384616,
+      "lower": 0.1536035761543283,
+      "successful_samples": 1000,
+      "upper": 0.26648291365152427
+    },
+    "fpr_at_95_tpr": {
+      "estimate": 0.2523076923076923,
+      "lower": 0.1692667671665036,
+      "successful_samples": 1000,
+      "upper": 0.40683848183367227
+    },
+    "pr_auc": {
+      "estimate": 0.9037908703918909,
+      "lower": 0.8500306860477933,
+      "successful_samples": 1000,
+      "upper": 0.945019701387265
+    },
+    "precision": {
+      "estimate": 0.6968325791855203,
+      "lower": 0.6324786324786325,
+      "successful_samples": 1000,
+      "upper": 0.758155895757859
+    },
+    "recall": {
+      "estimate": 0.9058823529411765,
+      "lower": 0.8571428571428571,
+      "successful_samples": 1000,
+      "upper": 0.9494522471910112
+    },
+    "roc_auc": {
+      "estimate": 0.94620814479638,
+      "lower": 0.921824703418333,
+      "successful_samples": 1000,
+      "upper": 0.9671961365146775
+    }
+  },
+  "fusion_vs_visual_auc": null,
+  "gender": {
+    "unknown": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": {
+        "balanced_accuracy": 0.8498642533936651,
+        "brier": 0.15111351402377593,
+        "eer": 0.14117647058823535,
+        "expected_calibration_error": 0.18341180485757916,
+        "f1": 0.7877237851662404,
+        "fnr": 0.09411764705882353,
+        "fpr": 0.20615384615384616,
+        "fpr_at_95_tpr": 0.2523076923076923,
+        "pr_auc": 0.9037908703918909,
+        "precision": 0.6968325791855203,
+        "recall": 0.9058823529411765,
+        "roc_auc": 0.94620814479638
+      },
+      "scored": 495,
+      "total": 495
+    }
+  },
+  "macro_method_roc_auc": 0.9479408123992303,
+  "overall": {
+    "abstained": 0,
+    "coverage": 1.0,
+    "metrics": {
+      "balanced_accuracy": 0.8498642533936651,
+      "brier": 0.15111351402377593,
+      "eer": 0.14117647058823535,
+      "expected_calibration_error": 0.18341180485757916,
+      "f1": 0.7877237851662404,
+      "fnr": 0.09411764705882353,
+      "fpr": 0.20615384615384616,
+      "fpr_at_95_tpr": 0.2523076923076923,
+      "pr_auc": 0.9037908703918909,
+      "precision": 0.6968325791855203,
+      "recall": 0.9058823529411765,
+      "roc_auc": 0.94620814479638
+    },
+    "scored": 495,
+    "total": 495
+  },
+  "per_method": {
+    "faceswap-wav2lip": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": {
+        "balanced_accuracy": 0.8969230769230769,
+        "brier": 0.21038635648767967,
+        "eer": 0.036923076923076927,
+        "expected_calibration_error": 0.3479314781838295,
+        "f1": 0.12987012987012986,
+        "fnr": 0.0,
+        "fpr": 0.20615384615384616,
+        "fpr_at_95_tpr": 0.036923076923076927,
+        "pr_auc": 0.423109243697479,
+        "precision": 0.06944444444444445,
+        "recall": 1.0,
+        "roc_auc": 0.9778461538461539
+      },
+      "scored": 330,
+      "total": 330
+    },
+    "fsgan-wav2lip": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": {
+        "balanced_accuracy": 0.796923076923077,
+        "brier": 0.20851312512816347,
+        "eer": 0.19999999999999996,
+        "expected_calibration_error": 0.33920311877754195,
+        "f1": 0.18823529411764706,
+        "fnr": 0.2,
+        "fpr": 0.20615384615384616,
+        "fpr_at_95_tpr": 0.38769230769230767,
+        "pr_auc": 0.37765886533236165,
+        "precision": 0.10666666666666667,
+        "recall": 0.8,
+        "roc_auc": 0.9212307692307692
+      },
+      "scored": 335,
+      "total": 335
+    },
+    "rtvc": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": {
+        "balanced_accuracy": 0.8528054298642533,
+        "brier": 0.1826068655134697,
+        "eer": 0.14153846153846153,
+        "expected_calibration_error": 0.267573806345842,
+        "f1": 0.6294416243654822,
+        "fnr": 0.08823529411764706,
+        "fpr": 0.20615384615384616,
+        "fpr_at_95_tpr": 0.28307692307692306,
+        "pr_auc": 0.8073432590069383,
+        "precision": 0.4806201550387597,
+        "recall": 0.9117647058823529,
+        "roc_auc": 0.9426244343891403
+      },
+      "scored": 393,
+      "total": 393
+    },
+    "wav2lip": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": {
+        "balanced_accuracy": 0.8509460654288241,
+        "brier": 0.17435083899255785,
+        "eer": 0.13793103448275867,
+        "expected_calibration_error": 0.2507699599525738,
+        "f1": 0.6781115879828327,
+        "fnr": 0.09195402298850575,
+        "fpr": 0.20615384615384616,
+        "fpr_at_95_tpr": 0.24615384615384617,
+        "pr_auc": 0.8529171424621306,
+        "precision": 0.541095890410959,
+        "recall": 0.9080459770114943,
+        "roc_auc": 0.9500618921308577
+      },
+      "scored": 412,
+      "total": 412
+    }
+  },
+  "race": {
+    "unknown": {
+      "abstained": 0,
+      "coverage": 1.0,
+      "metrics": {
+        "balanced_accuracy": 0.8498642533936651,
+        "brier": 0.15111351402377593,
+        "eer": 0.14117647058823535,
+        "expected_calibration_error": 0.18341180485757916,
+        "f1": 0.7877237851662404,
+        "fnr": 0.09411764705882353,
+        "fpr": 0.20615384615384616,
+        "fpr_at_95_tpr": 0.2523076923076923,
+        "pr_auc": 0.9037908703918909,
+        "precision": 0.6968325791855203,
+        "recall": 0.9058823529411765,
+        "roc_auc": 0.94620814479638
+      },
+      "scored": 495,
+      "total": 495
+    }
+  },
+  "threshold": 0.7027939260005951,
+  "threshold_source": {
+    "file": "runs\\p001\\evaluation\\audio-seed29-threshold.json",
+    "kind": "selected",
+    "objective": "balanced_accuracy",
+    "selection_rows": 3104,
+    "split": "val",
+    "value": 0.7027939260005951
+  }
+}

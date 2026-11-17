@@ -760,8 +760,13 @@ includes clips whose video was never edited
 ({{visual.lavdf-test.type.RealVideo-FakeAudio.min}} to
 {{visual.lavdf-test.type.RealVideo-FakeAudio.max}}). So it reacts to some
 difference between LAV-DF's real and fake files that is not the face edit,
-and reads it backwards. What that difference is, we do not know; the file-cue
-audit reads metadata and cannot see it. Fusion beats this reversed baseline
+and reads it backwards. What that difference is, we do not know. The file-cue
+audit reads metadata and cannot see it, and six frame statistics (sharpness,
+high frequencies, blockiness, brightness, contrast, motion; amendment A13,
+exploratory) do not explain it either: each separates the two groups at AUC
+{{a13.lavdf.auc_min}} to {{a13.lavdf.auc_max}}, all six together at
+{{a13.lavdf.all_six}}, against the path's {{a13.lavdf.visual}}. Fusion beats
+this reversed baseline
 but trails the audio and sync paths alone in every seed.
 Section~\ref{sec:a12} tests whether its FakeAVCeleb weights are to blame.
 
@@ -873,6 +878,11 @@ encoding, but the test was defined on all cues, and it failed.
 copies is {{audit.fakeavceleb.neutral.audio}}. It comes from small edge
 differences and from loudness after AAC encoding. It weakens any claim about
 audio, including part of the voice-cloning row in Table~\ref{tab:methods}.
+The audio path does not rely on those two cues, though. With loudness levelled
+and 250~ms cut from each edge (amendment A14, exploratory), its
+identity-strict AUC stays between {{a14.test-identity-strict.perturbed_min}}
+and {{a14.test-identity-strict.perturbed_max}}. Cues the audit did not name are
+not covered.
 
 \textit{Cleaning refuses clips.} The {{neutral.fakeavceleb.refused|int}}
 refused clips are all generated speech, so the neutral data are not a random

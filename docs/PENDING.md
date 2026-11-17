@@ -5,12 +5,7 @@ The reasons behind each item are in the [project log](PROJECT-LOG.md). The rules
 
 ## 1. Running now
 
-One chain runs as a detached process (handbook mistake 71). Do not restart or shut down the PC while it runs. The H2 chain is done, HiFi-AVDF included (11-17, 05:36).
-
-| Chain | Log | What it does | Expected finish |
-|---|---|---|---|
-| A13, A14 | `runs/p001-a13-a14.log` | Started after A11 finished (14:57): A13 (frame statistics, CPU) and A14 (audio rescoring, GPU), one at a time. Scripts and tests are ready | About 1 to 2 h after A11 (assumed) |
-| Monitor | `runs/p001/logs/resources.log` | Free RAM, GPU memory, power and temperature, once a minute. Stops after A11 | With A11 |
+Nothing. Every P-001 run and amendments A11 to A14 finished on 11-17 (the last at 15:13). The GPU is free.
 
 ## 2. While the chains run (Claude)
 
@@ -28,9 +23,6 @@ Chosen 11-16: prepare the rebuild now, with no GPU and no change to anything H2 
 
 Chosen 11-17 with Vaibhav, to use the 18th and 19th; the submission is on the 20th, morning. Designs fixed in [P-001](../results/preregistration/P-001-shortcut-neutral-av-study.md) before any result. Stop rule: 19 November, 18:00. The 19th stays a buffer for Vaibhav's review.
 
-- A13, what the visual path reads on LAV-DF: six frame statistics on the cached face frames, real against unedited-video fakes. Reads every LAV-DF cache file, so tonight, after A11.
-- A14, leftover audio cue on FakeAVCeleb: rescore the frozen audio models with loudness levelled and edges cut. Uses the GPU, so after A11; the 18th.
-- Fold the three results into the paper, report, notes and `docs/FINAL.md`, through `numbers.json`. The 18th.
 - A hard-reviewer pass over the paper and report against `numbers.json`, and the slide-1 layout warning. The 19th, morning.
 
 ## 3. When H2 finishes (Claude)

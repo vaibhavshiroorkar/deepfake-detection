@@ -1,0 +1,128 @@
+{
+ "amendment": "A13",
+ "exploratory": true,
+ "lavdf_unedited_video_fakes_vs_reals": {
+  "clips": 1936,
+  "positives": 938,
+  "statistics": {
+   "sharpness": {
+    "auc": 0.4535136370822669,
+    "interval": [
+     0.4419395527794909,
+     0.46392050457772
+    ],
+    "spearman_with_visual": 0.009280214709543596,
+    "candidate": false
+   },
+   "high_frequency": {
+    "auc": 0.4995908661673026,
+    "interval": [
+     0.4877661148288007,
+     0.5107178940761342
+    ],
+    "spearman_with_visual": -0.03849198931001038,
+    "candidate": false
+   },
+   "blockiness": {
+    "auc": 0.5198018638556431,
+    "interval": [
+     0.5030601318072092,
+     0.5357772150220693
+    ],
+    "spearman_with_visual": -0.0549434266180286,
+    "candidate": false
+   },
+   "brightness": {
+    "auc": 0.5051168434950926,
+    "interval": [
+     0.4948120298817406,
+     0.516529048062159
+    ],
+    "spearman_with_visual": 0.018301058805765692,
+    "candidate": false
+   },
+   "contrast": {
+    "auc": 0.4916442693489324,
+    "interval": [
+     0.48097523329781394,
+     0.5017698508963937
+    ],
+    "spearman_with_visual": 0.07977354045388643,
+    "candidate": false
+   },
+   "temporal": {
+    "auc": 0.4502384299515876,
+    "interval": [
+     0.438146129719177,
+     0.4617796582542712
+    ],
+    "spearman_with_visual": 0.21776740206757914,
+    "candidate": false
+   }
+  },
+  "all_six_cross_fit_auc": 0.5635311133995069,
+  "visual_path_auc": 0.19649640432250426
+ },
+ "fakeavceleb_video_fakes_vs_reals": {
+  "clips": 427,
+  "positives": 352,
+  "statistics": {
+   "sharpness": {
+    "auc": 0.44823863636363637,
+    "interval": [
+     0.4059177294323581,
+     0.4801598422808614
+    ],
+    "spearman_with_visual": -0.15472024529598508,
+    "candidate": false
+   },
+   "high_frequency": {
+    "auc": 0.4839962121212122,
+    "interval": [
+     0.4526245504958012,
+     0.5131135126347083
+    ],
+    "spearman_with_visual": -0.11733212101324086,
+    "candidate": false
+   },
+   "blockiness": {
+    "auc": 0.5935037878787878,
+    "interval": [
+     0.5434403576466682,
+     0.6446618488748003
+    ],
+    "spearman_with_visual": 0.17051703915735839,
+    "candidate": false
+   },
+   "brightness": {
+    "auc": 0.4638068181818182,
+    "interval": [
+     0.42467729688085404,
+     0.49440089475280563
+    ],
+    "spearman_with_visual": -0.11477980599230668,
+    "candidate": false
+   },
+   "contrast": {
+    "auc": 0.47926136363636357,
+    "interval": [
+     0.44357528316860256,
+     0.5110690703329591
+    ],
+    "spearman_with_visual": -0.11046480756178235,
+    "candidate": false
+   },
+   "temporal": {
+    "auc": 0.5090340909090909,
+    "interval": [
+     0.47248724599896064,
+     0.5462676604112229
+    ],
+    "spearman_with_visual": -0.14509330577200977,
+    "candidate": false
+   }
+  },
+  "all_six_cross_fit_auc": 0.5892613636363636,
+  "visual_path_auc": 0.988844696969697
+ }
+}

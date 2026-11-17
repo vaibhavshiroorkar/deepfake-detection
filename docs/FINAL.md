@@ -121,6 +121,10 @@ H2 holds by its rule (two of three), but no target shows fusion improving on fak
 
 **Stronger backbones (A11, exploratory).** Verified: `results/p001-a11/`. Frozen CLIP and XLS-R, trained like the P-001 paths on cleaned data, do not transfer better. CLIP minus visual: -0.125 in-domain, +0.008 on DFDC, -0.039 on HiFi-AVDF, and +0.159 on LAV-DF only up to 0.536, near chance. XLS-R minus audio: -0.008 in-domain, -0.020 on LAV-DF, -0.049 on HiFi-AVDF. Published gains came from raw files; under our recipe they do not survive the shortcut control.
 
+**What the visual path reads on LAV-DF (A13, exploratory).** Verified: `results/p001-a13/`. Six frame statistics (sharpness, high frequencies, blockiness, brightness, contrast, motion) separate LAV-DF real clips from unedited-video fakes at AUC 0.450 to 0.520, and 0.564 together, against the path's 0.196. No candidate by the rule fixed in A13, so the difference stays unexplained.
+
+**Leftover audio cue (A14, exploratory).** Verified: `results/p001-a14/`. With loudness levelled and 250 ms cut from each edge, the audio path's identity-strict AUC stays between 0.933 and 1.000. The two cues the audit names do not drive it; cues it did not name are not covered.
+
 ## Limitations
 
 - **One training corpus.** FakeAVCeleb is from 2021, with about 500 real videos, and the sync path learned from about 350 speakers. The results show how a detector trained this way transfers, not that every detector fails.
