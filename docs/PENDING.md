@@ -7,9 +7,6 @@ The reasons behind each item are in the [project log](PROJECT-LOG.md). The rules
 
 Nothing. Every P-001 run and amendments A11 to A14 finished on 11-17 (the last at 15:13). The GPU is free.
 
-## 2. While the chains run (Claude)
-
-
 ## 2b. P-002 preparation, alongside (Claude)
 
 Chosen 11-16: prepare the rebuild now, with no GPU and no change to anything H2 uses; build it after the submission. Design: [P-002 design](research/P-002-design.md).
