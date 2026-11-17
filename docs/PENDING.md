@@ -5,7 +5,16 @@ The reasons behind each item are in the [project log](PROJECT-LOG.md). The rules
 
 ## 1. Running now
 
-Nothing. Every P-001 run and amendments A11 to A14 finished on 11-17 (the last at 15:13). The GPU is free.
+## 2. Overnight 11-17 to 11-18: amendments A15 to A19, exploratory (Claude)
+
+Chosen by Vaibhav on 11-17 at 20:20, to run while he sleeps. Restore point: tag `pre-overnight`. Stop rule: 18 November, 08:00; whatever has not finished is recorded as unfinished, not rushed. Each check is fixed in P-001 before its result exists, H1 to H4 keep their verdicts, and results go into the paper and report as short exploratory notes.
+
+- A15: H3 in one direction (FakeAVCeleb to LAV-DF), from the committed visual and audio predictions.
+- A16: the lip-sync mechanism test: shift or swap the audio of real test clips and check that the sync score rises.
+- A17: speaker overlap between FakeAVCeleb or LAV-DF and AV-HuBERT's pretraining speakers.
+- A18: H1 again with a fixed video bitrate instead of fixed quality.
+- A19: the AVH-Align baseline on the cleaned data, only if its released code fits; otherwise record why.
+- Then: the paper and report notes, rebuilt deliverables, and a morning summary for Vaibhav.
 
 ## 2b. P-002 preparation, alongside (Claude)
 

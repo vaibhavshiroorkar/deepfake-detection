@@ -230,3 +230,42 @@ The P-001 audio path scores 0.952 to 1.000 on the FakeAVCeleb test, while the ne
 - **Reading, fixed now.** If AUC under both perturbations stays at 0.95 or above, the named cues do not drive the score. If it falls toward the 0.793 ceiling or below, part of the score came from them. Cues the audit did not name are not covered.
 
 **Stop rule.** A12 to A14 are dropped from the submission if not finished by 19 November, 18:00.
+
+## Amendments A15 to A18, 2026-11-17, 20:40, before any of their results exists: four exploratory checks run overnight
+
+**Why.** Vaibhav chose these on 11-17 to close four gaps the paper names: H3 has not run, the sync mechanism is "evidence, not proof", speaker overlap with AV-HuBERT's pretraining is unmeasured, and H1 missed its bar with video bitrate as the leading residual cue. Every result under A15 to A18 is **exploratory**: none of H1 to H4 changes its verdict, and no threshold, model or earlier result is refit on what they find. Stop rule: 18 November, 08:00; anything unfinished is reported as unfinished.
+
+### A15: H3 in one direction, FakeAVCeleb to LAV-DF
+
+H3 needs both directions. The reverse needs models trained on LAV-DF, whose train partition is not yet neutralized, so A15 runs only FakeAVCeleb to LAV-DF and H3 stays **not run** as preregistered.
+
+- **The two binary heads** are the P-001 visual path (trained on the video label) and audio path (trained on the audio label), at each seed's FakeAVCeleb validation threshold, as committed in `results/p001-branches/*-lavdf-test-predictions.csv` (`predicted`). Nothing is refit or rethresholded.
+- **Data.** LAV-DF test, clips scored by both heads. Labels per stream from the window manifest (A9, `data/manifests/lavdf-test-window.csv`, primary) and from the file labels (secondary).
+- **Statistic.** Macro-F1 = the mean of F1(visual head, video label) and F1(audio head, audio label), per seed, then the mean over seeds.
+- **Baseline, the clip-label-only predictor:** it marks both streams fake exactly when the clip is fake, using the true clip label. It is generous, since it knows which clips are fake; the heads must beat it by saying *which* stream.
+- **Reported:** both macro-F1 values, their difference per seed and as the mean over seeds with a 95% interval from 1,000 bootstrap resamples of LAV-DF original recordings (seed 17), the one-sided share of resamples at or below 0, and each head's F1, precision and recall per stream.
+- **Reading, fixed now.** The direction transfers if the mean difference is above 0 and its interval excludes 0. Otherwise it does not.
+
+### A16: does the sync score move when the audio is moved?
+
+The paper reads the sync path's per-method order as evidence that it measures lip and audio agreement. A16 tests that on real clips directly.
+
+- **Clips.** Every real (RealVideo-RealAudio) clip of the neutral FakeAVCeleb test partition whose 2 s window at 0 s has a face in at least 80% of its 50 frames.
+- **Conditions, fixed now.** Lips always from 0 to 2 s. Audio from: 0 to 2 s (original); shifted later by 0.04, 0.08, 0.20, 0.40 and 0.80 s; and swapped, taking the 0 to 2 s audio of another real test clip with a different source identity, assigned by a derangement drawn with seed 17.
+- **Scoring.** The frozen AV-HuBERT Base and the three P-001 sync heads, features cast to float16 as in the feature cache, window misfit as in P-001.
+- **Reported, per condition:** AUC of manipulated against original windows per seed and as the mean over seeds with a 1,000-resample identity bootstrap (seed 17), and the share of clips whose misfit rises.
+- **Reading, fixed now.** The score moves with the mechanism if the mean AUC interval lies above 0.5 for the 0.20, 0.40 and 0.80 s shifts and the swap, and the mean AUC at 0.20 s is above that at 0.04 s. Shifts of 0.20 to 0.80 s and swaps resemble the head's training negatives (5 to 20 frames, other clips), so they test the trained objective on unseen people; 0.04 and 0.08 s lie outside it. A16 does not test whether the voice-cloning row also carries the residual audio cue.
+
+### A17: speaker overlap with AV-HuBERT's pretraining
+
+- **Source of the split.** VoxCeleb2's dev and test speaker lists, taken from the public `yangwang825/vox2-veri-3s` dataset on Hugging Face, because the official metadata now needs a login. Its counts match the published split (5,994 dev and 118 test speakers, 36,237 test utterances). The file hashes are recorded with the result.
+- **Assumption, stated now.** AV-HuBERT Base was pretrained on LRS3 and the English part of VoxCeleb2 dev, so a VoxCeleb2 test speaker was never in pretraining and a dev speaker may have been.
+- **Reported:** how many of FakeAVCeleb's 500 source identities, and how many of its neutral test clips, belong to VoxCeleb2 dev, test or neither. LAV-DF has no speaker ids, so its overlap is reported as unknown.
+- **Only if** at least 5 FakeAVCeleb test identities with real clips fall in each of dev and test: the sync path's test AUC on clips of each group, with identity-bootstrap intervals, as a description, not a test. Otherwise only the counts are reported.
+
+### A18: H1 again with a fixed video bitrate
+
+- **Change.** Neutralizer v4 with one difference: the video is encoded at a constant 160 kb/s (x264 `-b:v`, `-minrate` and `-maxrate` 160k, `-bufsize` 160k, `nal-hrd=cbr`) instead of constant quality (CRF 23). 160 kb/s is the median video bitrate of the v4 copies (157 kb/s). Everything else is v4. The copies are written beside v4 and replace nothing.
+- **Data.** All of FakeAVCeleb, as H1. The 600-clip check sample runs first as a smoke test. If the full set cannot be neutralized and audited by 05:00, only the check sample is reported, labelled as such.
+- **Reported:** the shortcut ceiling on the clip, video and audio labels with `scripts/shortcut_audit.py`, unchanged, the strongest single cues, and the clips refused.
+- **Reading, fixed now.** If the clip-label ceiling is at most 0.60, a fixed bitrate removes the residual that made H1 miss; if not, something besides bitrate remains and the audit names it. H1's preregistered verdict stays "not met" either way.
