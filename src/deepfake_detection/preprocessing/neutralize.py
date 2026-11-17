@@ -69,6 +69,9 @@ class NeutralSettings:
     silence_dbfs: float = SILENCE_DBFS
     # Every neutral clip is exactly this long; shorter clips are refused.
     fixed_seconds: float = 3.0
+    # None keeps v4's constant quality (crf). A value such as "160k" encodes the video at that
+    # constant bitrate instead (P-001 amendment A18, exploratory).
+    video_bitrate: str | None = None
     version: int = VERSION
 
     def as_dict(self) -> dict[str, object]:
@@ -133,6 +136,13 @@ def _video_filter(settings: NeutralSettings) -> str:
     return ",".join([*steps, f"fps={settings.fps}", "format=yuv420p"])
 
 
+def _rate_control(settings: NeutralSettings) -> list[str]:
+    if settings.video_bitrate is None:
+        return ["-crf", str(settings.crf)]
+    rate = settings.video_bitrate
+    return ["-b:v", rate, "-minrate", rate, "-maxrate", rate, "-bufsize", rate, "-x264-params", "nal-hrd=cbr"]
+
+
 def ffmpeg_command(
     source: Path, target: Path, start: float, end: float, audio_wav: Path | None, settings: NeutralSettings
 ) -> list[str]:
@@ -145,7 +155,7 @@ def ffmpeg_command(
     command += [
         "-map_metadata", "-1", "-map", "0:v:0",
         "-vf", _video_filter(settings),
-        "-c:v", "libx264", "-preset", settings.preset, "-crf", str(settings.crf), "-bf", "0",
+        "-c:v", "libx264", "-preset", settings.preset, *_rate_control(settings), "-bf", "0",
     ]
     if audio_wav is not None:
         command += ["-map", "1:a:0", "-c:a", "aac", "-b:a", settings.audio_bitrate, "-shortest"]

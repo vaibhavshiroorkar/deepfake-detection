@@ -146,3 +146,14 @@ def test_a_fixed_size_scales_every_clip_to_one_frame() -> None:
     assert video_filter.startswith("scale=1280:720") and "pad" not in video_filter
     plain = ffmpeg_command(Path("a.mp4"), Path("b.mp4"), 0.0, 3.0, None, NeutralSettings())
     assert "scale" not in plain[plain.index("-vf") + 1]
+
+
+def test_a_fixed_video_bitrate_replaces_constant_quality() -> None:
+    """P-001 amendment A18: the same neutralizer, encoding video at one constant bitrate."""
+    fixed = ffmpeg_command(Path("a.mp4"), Path("b.mp4"), 0.0, 3.0, None, NeutralSettings(video_bitrate="160k"))
+    assert "-crf" not in fixed
+    for flag in ("-b:v", "-minrate", "-maxrate", "-bufsize"):
+        assert fixed[fixed.index(flag) + 1] == "160k"
+    assert "nal-hrd=cbr" in fixed[fixed.index("-x264-params") + 1]
+    plain = ffmpeg_command(Path("a.mp4"), Path("b.mp4"), 0.0, 3.0, None, NeutralSettings())
+    assert "-crf" in plain and "-b:v" not in plain       # v4 itself is unchanged

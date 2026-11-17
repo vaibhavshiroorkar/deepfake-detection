@@ -38,8 +38,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--manifest-out", type=Path, required=True)
     parser.add_argument("--workers", type=int, default=12)
     parser.add_argument("--size", help="one frame size for the corpus, WxH (stretched)")
+    parser.add_argument("--video-bitrate", help="constant video bitrate such as 160k instead of crf (P-001 A18)")
     arguments = parser.parse_args(argv)
-    settings = NeutralSettings(size=arguments.size)
+    settings = NeutralSettings(size=arguments.size, video_bitrate=arguments.video_bitrate)
 
     with arguments.manifest.open(newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)
