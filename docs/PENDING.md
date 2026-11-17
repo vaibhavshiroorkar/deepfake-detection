@@ -24,7 +24,6 @@ Chosen 11-17 with Vaibhav, to use the 18th and 19th; the submission is on the 20
 ## 3. When H2 finishes (Claude)
 
 - Cut version 1.0.0 at the final-year submission: changelog heading, `pyproject.toml`, tag `v1.0.0`.
-- Rename the package from `deepfake-generalization` (its old folder name) to `deepfake-detection` in `pyproject.toml` and `uv.lock`, and reinstall. This waits until no chain is running, because the reinstall rewrites the environment the chains use.
 - Reorganize `scripts/` into `p001/` (current study), `data/` (fetching and manifests) and `legacy/` (the September to October pipeline). This waits until no chain is running, because the chains call scripts by path.
 
 ## 4. Vaibhav

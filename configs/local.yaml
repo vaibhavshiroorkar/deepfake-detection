@@ -6,5 +6,5 @@ tracking:
   experiment_name: local-smoke
   run_name: fusion-smoke-seed17
   tags:
-    project: deepfake-generalization
+    project: deepfake-detection
     environment: local

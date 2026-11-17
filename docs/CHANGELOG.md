@@ -8,6 +8,7 @@ Experiment numbers are not repeated here. They live in `results/` and the docume
 
 ## Unreleased
 
+- The package is `deepfake-detection` (was `deepfake-generalization`, the old folder name) in `pyproject.toml`, `uv.lock` and the local tracking tag. The lock's 189 dependencies are unchanged; the environment was reinstalled with `uv sync --inexact` and keeps torch 2.12.1+cu130. The full suite still passes (870, 1 skipped). The Hugging Face Space and model repositories keep their old names.
 - Site: removed the decoration and slogan copy (pill badge, gradient headline, background glow, glowing brand dot, gradient panels, uppercase labels, step boxes, "X. Not Y." headline, punchlines, and a claim that every number links to a result). `docs/DESIGN.md` updated to match.
 - Full test suite on 11-17, after every run finished: 870 passed, 1 skipped, 0 failed (`runs/pytest-full-1117.log`).
 - A13 and A14 done (15:13), inside their stop rule (`results/p001-a13/`, `results/p001-a14/`, readers in `build_numbers.py` with tests). A13: no frame statistic explains what the visual path reads on LAV-DF (each 0.450 to 0.520, all six 0.564, against 0.196). A14: the audio path does not rely on loudness or clip edges (0.933 to 1.000 with both removed). In the paper, report, `docs/FINAL.md`, the results READMEs and the site's Research page.
