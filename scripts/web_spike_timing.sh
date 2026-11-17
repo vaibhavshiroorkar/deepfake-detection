@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # Website milestone 1 spike: two neutral FakeAVCeleb test clips through every P-001 check on CPU,
 # with 2 threads to approximate a 2-vCPU Hugging Face Space. Times each stage.
+# CUDA is hidden with -1: on Windows an empty CUDA_VISIBLE_DEVICES is dropped and the GPU stays
+# visible. scripts/extract_avhubert_features.py moves AV-HuBERT to cuda unconditionally, so with
+# the GPU hidden that stage fails; its CPU cost was measured separately (project log, 11-17).
 set -uo pipefail
 cd "$(dirname "$0")/.."
 S=${1:?usage: web_spike_timing.sh ABSOLUTE_WORKDIR (holding neutral.csv and neutral.cuts.csv from scripts/neutralize_dataset.py)}
-export CUDA_VISIBLE_DEVICES="" OMP_NUM_THREADS=2 MKL_NUM_THREADS=2
+export CUDA_VISIBLE_DEVICES=-1 OMP_NUM_THREADS=2 MKL_NUM_THREADS=2
 PY=.venv/Scripts/python.exe
 DDF=("$PY" -m deepfake_detection.cli)
 PREP=$($PY -c "import json;print(json.load(open('runs/p001/cache-audit.json'))['preprocessing_hash'])")
