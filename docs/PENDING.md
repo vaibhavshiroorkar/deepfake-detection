@@ -19,7 +19,7 @@ Internal and external examiners sit together. First priority: a live demonstrati
 3. **Overnight results** (A15 to A19, A18 still running): their notes wait on branch `overnight-notes`.
 4. `docs/SECURITY.md`, short, since the demo takes uploads.
 
-**Deferred until after the 20th:** the Docker image and Hugging Face Space, the admin carry-over, retiring the old in-browser demo, renaming the Streamlit dashboard, the deep wording pass and the comparison tables (unless time is left on the 19th).
+**Deferred until after the 20th:** before any public hosting, the hardening listed in `docs/SECURITY.md` (time and memory limits on every FFmpeg call, an allowlist unpickler for AV-HuBERT, an admin review, uploads in a container); the Docker image and Hugging Face Space, the admin carry-over, retiring the old in-browser demo, renaming the Streamlit dashboard, the deep wording pass and the comparison tables (unless time is left on the 19th).
 
 **Vaibhav:**
 

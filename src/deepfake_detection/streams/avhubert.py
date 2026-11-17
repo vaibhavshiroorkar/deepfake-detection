@@ -317,8 +317,9 @@ class _FairseqStub:
 
 
 class _Unpickler(pickle.Unpickler):
-    # Only fairseq's own classes are replaced. Everything else resolves
-    # normally, so a checkpoint asking for anything unexpected still fails.
+    # Only fairseq's own classes are replaced. Everything else resolves normally, so this is
+    # not a sandbox: any importable name loads. Load only a file whose hash is checked
+    # (webapp/scorer.py verified_avhubert; docs/SECURITY.md).
     def find_class(self, module: str, name: str):
         if module.startswith("fairseq."):
             return _FairseqStub

@@ -104,3 +104,12 @@ def test_warm_loads_the_scorer_once_before_any_upload(tmp_path) -> None:
     assert made == [1]
     assert _finished(detector, detector.submit(_upload(tmp_path)))["status"] == "done"
     assert made == [1]
+
+
+def test_a_tampered_avhubert_file_is_refused_before_it_is_unpickled(tmp_path) -> None:
+    from deepfake_detection.webapp.scorer import verified_avhubert
+
+    fake = tmp_path / "base_vox_iter5.pt"
+    fake.write_bytes(b"not the released checkpoint")
+    with pytest.raises(RuntimeError, match="SHA-256"):
+        verified_avhubert(fake)

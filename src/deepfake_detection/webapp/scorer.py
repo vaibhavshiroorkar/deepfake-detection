@@ -29,12 +29,24 @@ from deepfake_detection.paths import PROJECT_ROOT
 from deepfake_detection.webapp.calibration import check_score
 
 P001_PREPROCESSING_HASH = "5f2954fbda2cd643b4da48b8a526b0aa3d9ad831033ac8d22704d78d885df7d1"
+# The released AV-HuBERT Base checkpoint. Its loader unpickles with weights_only=False, so a changed
+# file could run code: it is refused unless it is exactly this file (docs/SECURITY.md).
+AVHUBERT_SHA256 = "dee8b0651dbea3a21cda0f2c52b956e3a878d5f6ee503d427d6a4044bb95c9cc"
 SEEDS = (17, 29, 43)
 SYNC_STARTS = (0.0, 1.0)        # P-001 amendment A4: two 2 s windows of a 3.00 s neutral clip
 MIN_FACE = 0.8                  # as scripts/train_sync_path.py
 WINDOW_FRAMES = 50
 HOP = 640                       # 16 kHz samples per 25 fps frame
 BRANCH_VIEW = {"face": ("visual", "visual_view"), "voice": ("audio", "audio_view")}
+
+
+def verified_avhubert(path: Path) -> Path:
+    """`path`, after checking it is the released checkpoint. Raises before anything is unpickled."""
+    from deepfake_detection.digest import file_sha256
+
+    if file_sha256(path) != AVHUBERT_SHA256:
+        raise RuntimeError(f"{path} does not have the released AV-HuBERT SHA-256; refusing to load it")
+    return path
 
 
 class ClipRefused(ValueError):
@@ -91,7 +103,7 @@ class Scorer:
         self.models = _Models(
             preprocessor=build_preprocessor(code_version="p001", device=device),
             branches=branches,
-            avhubert=load_avhubert(root / "models" / "avhubert" / "base_vox_iter5.pt").to(device).eval(),
+            avhubert=load_avhubert(verified_avhubert(root / "models" / "avhubert" / "base_vox_iter5.pt")).to(device).eval(),
             heads=heads,
         )
 
