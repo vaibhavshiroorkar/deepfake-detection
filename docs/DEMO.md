@@ -59,4 +59,4 @@ Then open "How sure?" on any result: it says how often real clips get this flag 
 
 ## The PPT
 
-`deliverables/build/Deepfake_Detection_Presentation.pdf` and `.pptx`, in the college's order: title, introduction, need, literature review, three methodology slides, three results slides, discussion and future scope, conclusions, awards and publications, bibliography. Detailed slides follow as backup.
+`deliverables/build/Deepfake_Detection_Presentation.pdf` and `.pptx`: exactly the college's 13 slides (title, introduction, need, literature review, three on methodology, two on results, discussion and future scope, conclusions, awards and publications, bibliography). Each slide states one point in its headline and shows it with one visual; what to say is in the speaker notes.
