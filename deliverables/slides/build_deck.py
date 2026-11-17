@@ -185,7 +185,7 @@ def build(draft: bool) -> int:
                   "2025 Internet Crime Report counts almost 900 million dollars of AI-related scam losses in the United "
                   "States in one year, and Deloitte expects fraud losses enabled by generative AI there to grow from 12.3 "
                   "to 40 billion dollars between 2023 and 2027. India has required platforms to label synthetic media since "
-                  "February 2026. Detectors are needed, and the tests used to judge them must be trusted.")
+                  "February 2026. Detectors are needed, and so are tests that show whether a detector really works.")
         headline(s, "Deepfakes now cost real money, and the law has begun to respond")
         data = CategoryChartData()
         data.categories = ["2023", "2027 (projected)"]
