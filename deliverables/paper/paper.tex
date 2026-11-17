@@ -169,7 +169,7 @@ MRDF~\cite{mrdf} uses per-modality labels as regularizers and argues that
 clip-level labels harm fused learning, with in-dataset evidence. A
 per-modality head is therefore not new. Our preregistration includes a test of
 whether such predictions transfer between FakeAVCeleb and LAV-DF under
-shortcut control. It is not finished, and this paper does not report it.
+shortcut control. Only one direction has run (Section~\ref{sec:overnight}).
 
 \textit{False-alarm control.} Split conformal p-values on an inlier reference
 set~\cite{bates2023} and the Neyman-Pearson umbrella
@@ -468,7 +468,9 @@ A detector that learned a generator's file habits would have no reason to
 rank the methods this way. This order is evidence that the path reads lip and
 audio agreement. It is not proof. The residual audio cue from H1 sits on
 generated speech, which is also where voice cloning lives, so part of that
-row may come from the residual cue.
+row may come from the residual cue. A direct test supports the mechanism:
+moving the audio of real clips raises the misfit
+(Section~\ref{sec:overnight}).
 
 \section{Cross-Corpus and False-Alarm Results}
 \label{sec:cross}
@@ -874,6 +876,52 @@ LayerNorm tuning for CLIP, no weighted sum of XLS-R layers), so a published
 recipe might do better. Under ours, the advantage measured on raw files does
 not survive the shortcut control.
 
+\section{Exploratory: Four Gaps Checked (A15 to A19)}
+\label{sec:overnight}
+
+Four more checks were fixed as dated amendments before their results existed.
+None changes a verdict.
+
+\textit{The sync mechanism (A16).} On all {{a16.clips}} real FakeAVCeleb test
+clips we kept the lips and moved the audio. Against the original window, the
+misfit separates audio moved by one frame at AUC {{a16.shift004.auc}}
+[{{a16.shift004.low}}, {{a16.shift004.high}}], by 0.2~s at {{a16.shift020.auc}},
+and another person's audio at {{a16.swap.auc}}. Shifts of one and two frames
+are smaller than any the head saw in training. The test does not cover cloned
+voices, which are new audio rather than moved audio.
+
+\textit{Which stream was faked, one direction (A15).} The visual and audio
+paths act as video-fake and audio-fake heads on LAV-DF, at their FakeAVCeleb
+thresholds. Their macro-F1 is {{a15.window.heads.min}} to
+{{a15.window.heads.max}}, against {{a15.window.baseline}} for a predictor that
+marks both streams fake whenever the clip is fake: a difference of
+{{a15.window.estimate}} [{{a15.window.lower}}, {{a15.window.upper}}]. The video
+head's precision ({{a15.window.video.seed17.precision}} at seed 17) is below
+the share of edited videos. The audio head is precise but, at its source
+threshold, recalls {{a15.window.audio.seed43.recall}} to
+{{a15.window.audio.seed17.recall}} of audio fakes at seeds 43 and 17. The
+reverse direction needs models trained on LAV-DF, so H3 has still not run.
+
+\textit{Speaker overlap (A17).} All {{a17.sources.dev}} FakeAVCeleb source
+identities are VoxCeleb2 dev speakers, and none are test speakers. AV-HuBERT
+pretrained on the English part of VoxCeleb2 dev, so every FakeAVCeleb speaker
+may have been heard by the frozen encoder. No unseen speaker exists in this
+corpus to measure the effect.
+
+\textit{A published method on our protocol (A19).} We retrained AVH-Align's
+head, loss and score~\cite{smeu2025} on our real training windows and frozen
+features. It does not beat our sync path on any set. It is worse on the
+identity-strict test ({{a19.test-identity-strict.minus_sync.estimate}}
+[{{a19.test-identity-strict.minus_sync.lower}},
+{{a19.test-identity-strict.minus_sync.upper}}]), DFDC
+({{a19.dfdc.minus_sync.estimate}}) and HiFi-AVDF
+({{a19.hifiavdf.minus_sync.estimate}}), narrowly worse on LAV-DF under the
+file label ({{a19.lavdf-test.minus_sync.estimate}}), and level under the window
+label ({{a19.lavdf-window.minus_sync.estimate}}) and on the full test set. On DFDC and HiFi-AVDF it
+scores {{a19.dfdc.auc}} and {{a19.hifiavdf.auc}}. The published system, with
+fine-tuned AV-HuBERT Large features, was not run: that checkpoint is not
+available to us.
+
 \section{Limitations}
 
 \textit{H1 missed its bar.} The neutral FakeAVCeleb ceiling is
@@ -895,10 +943,10 @@ not covered.
 refused clips are all generated speech, so the neutral data are not a random
 subset of the raw data.
 
-\textit{No baselines yet.} The modality-prediction test (H3) is not finished.
-The StreamFusion model, our secondary fusion, was not run. AVH-Align
-and HAVIC have not been run on our protocol, so this paper makes no
-comparison with them.
+\textit{Few baselines.} H3 has run in one direction only (A15). The
+StreamFusion model, our secondary fusion, was not run. AVH-Align's method ran
+on our protocol (A19), but not its published system, and HAVIC has not been
+run.
 
 \textit{One training corpus.} Every model learns from FakeAVCeleb alone: about
 500 real videos from 2021, with crude fakes, and about 350 speakers for the
@@ -907,10 +955,11 @@ transfers once the shortcuts are gone, not that every detector fails. Training
 on several corpora with one held out at a time would test whether more variety
 helps.
 
-\textit{Possible speaker overlap.} FakeAVCeleb, LAV-DF and AV-HuBERT's
-pretraining data share speaker sources (VoxCeleb2 and LRS3). Some cross-corpus
-signal may come from the encoder having heard a speaker before. We have not
-measured this.
+\textit{Speaker overlap.} Every FakeAVCeleb speaker is in VoxCeleb2 dev,
+which AV-HuBERT pretrained on (A17). LAV-DF is also built from VoxCeleb2 but
+has no speaker ids. Some signal may come from the encoder having heard a
+speaker before; with no unseen speaker in FakeAVCeleb, we cannot measure how
+much.
 
 \textit{DFDC is too small for H4.} Our DFDC subset has
 {{audit.dfdc.raw.census.RealVideo-RealAudio.clips|int}} real clips, fewer than
