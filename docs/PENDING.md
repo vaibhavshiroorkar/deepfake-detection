@@ -71,6 +71,7 @@ Stop rule: if the upgraded models are not scored on all three targets by 17 Nove
 The full design, with what to keep, what to replace and why, is in [P-002 design](research/P-002-design.md). The items below are its first steps.
 
 - Leave-one-corpus-out training as the main protocol: train on every corpus but one, test on the one left out, and rotate. It keeps every test unseen and adds training variety. It needs a new preregistration first, because LAV-DF and DFDC would stop being locked targets.
+- Find what the P-001 visual path reads on LAV-DF. It scores fakes whose video was never edited below the reals (0.175 to 0.243), so some pixel-level difference separates LAV-DF's real and fake files. Compare frame statistics (sharpness, compression, resolution) of real and real-video fake clips. Until then, LAV-DF results for any visual model carry this caveat.
 - H3: predict which modality was faked, with reverse models trained on LAV-DF (amendment A2).
 - AVH-Align and HAVIC baselines on the same protocol.
 - The StreamFusion MLP, the secondary fusion that A8 dropped for the 3-day window.
