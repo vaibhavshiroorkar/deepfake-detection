@@ -3,6 +3,33 @@
 Everything still open, in the order it will happen. A finished item moves to the Unreleased section of the [changelog](CHANGELOG.md).
 The reasons behind each item are in the [project log](PROJECT-LOG.md). The rules for each test are in [P-001](../results/preregistration/P-001-shortcut-neutral-av-study.md).
 
+## 0. Exhibition on 20 November (priorities set by the college, 11-17)
+
+Internal and external examiners sit together. First priority: a live demonstration of the working project. Second: the PPT in the college's 13-slide structure. Third: the guide-approved report and its printout. Fourth: the certificate on bond paper for the external examiner's signature. The White Book can follow later.
+
+**Claude, in this order:**
+
+1. **The live demo** (first priority). The website detector already works end to end on this PC (checked 11-17).
+   - One command that starts the site and loads the models at start, so the first check is not slow, and works offline.
+   - A demo clip set: real clips and one fake per FakeAVCeleb method, plus HiFi-AVDF examples, re-encoded to H.264 so browsers play them, for local use only (not published). Each clip run once beforehand, so the outcome on the day is known.
+   - `docs/DEMO.md`: the steps, what to say at each step, timings, and what to do if something fails.
+   - A fallback: a screen recording of a full demo run and screenshots, in case the PC fails on the day.
+   - Fix the drop zone's focus ring, clipped at phone width.
+2. **The PPT in the college structure**, on a branch for review: 1 Title; 2 Introduction; 3 Need (statistics and news with sources); 4 Literature review; 5 to 7 Methodology (hardware and software, the pipeline flowchart, experimental details); 8 and 9 Results with images and graphs; 10 Discussion and future scope; 11 Conclusions; 12 Awards, publications and copyright (none yet; state the planned paper); 13 Bibliography. The current slides become backup.
+3. **Overnight results** (A15 to A19, A18 still running): their notes wait on branch `overnight-notes`.
+4. `docs/SECURITY.md`, short, since the demo takes uploads.
+
+**Deferred until after the 20th:** the Docker image and Hugging Face Space, the admin carry-over, retiring the old in-browser demo, renaming the Streamlit dashboard, the deep wording pass and the comparison tables (unless time is left on the 19th).
+
+**Vaibhav:**
+
+1. **Decide the demo machine** by the 18th: this PC, or a laptop. A laptop needs the repository, the models (about 5 GB) and the Python environment; I write the setup steps if so.
+2. Approve the "Need" slide's statistics and news items.
+3. Say whether there is anything for slide 12 (awards, publications, copyright). Nothing is known so far.
+4. Compile `report.zip` and `paper.zip` on Overleaf; get the report approved by the guide; print it; spiral-bind one copy if the guide verifies it.
+5. Print the report's certificate page on bond paper, after checking its names, and get the external examiner's signature on the 20th.
+6. Practise the demo once on the 19th with `docs/DEMO.md`, and the talk once with the speaker notes.
+
 ## 1. Running now
 
 ## 2. Overnight 11-17 to 11-18: amendments A15 to A19, exploratory (Claude)
@@ -20,12 +47,11 @@ Chosen 11-16: prepare the rebuild now, with no GPU and no change to anything H2 
 - AV-Deepfake1M++: size (1.46 TB) and licence (gated EULA) are checked; the metadata format is still unknown. Decide on a stratified subset or an external disk, since this PC has about 519 GB free. Follow up on access.
 - Confirm the assumed licences in `docs/research/P-002-backbones.md` (CLIP, XLS-R) before P-002 uses them.
 
-## 2c. The 18th: documentation day, with Vaibhav (decided 11-17 in a side chat; the 19th is for study)
+## 2c. The 18th, after the exhibition work in section 0 (decided 11-17 in a side chat; the 19th is for study)
 
 - Read the overnight results (A15 to A19) and decide whether their notes go into the paper, report and slides. The wording waits on branch `overnight-notes`, not on `main`.
-- A deep wording pass on the paper, report and slide notes: rhythm, groups of three, restated points, build-ups. Words only, never claims or numbers; rebuild every deliverable after. The word scan is already clean apart from two "not only X" lines in the report.
-- Comparison tables drafted in the side chat on 11-17: a protocol table (who trains on fakes, splits by person, cleans training and test data, controls false alarms, preregisters) and two score tables (raw files as papers report them, cleaned files under our protocol), each read against the file-cue ceiling. Every competitor cell was read from arXiv HTML pages and must be checked against the PDF before it goes into the report's literature chapter or a backup slide. Draft: the side chat's transcript.
-- `docs/SECURITY.md`, and a check of `README.md`, `docs/FINAL.md` and the handbook for stale numbers and links.
+- If time is left: a deep wording pass on the paper, report and slide notes (words only, never claims or numbers), and the comparison tables drafted in the side chat (protocol table, raw and cleaned score tables). Every competitor cell must be checked against the paper's PDF first.
+- A check of `README.md`, `docs/FINAL.md` and the handbook for stale numbers and links.
 
 ## 3. When H2 finishes (Claude)
 
@@ -49,7 +75,7 @@ Chosen 11-16: prepare the rebuild now, with no GPU and no change to anything H2 
 
 - The web app becomes the main site: Home with a hero, Detector, How it works, Research, About us, Contact (a form, sent through Resend to Vaibhav's mail), plus the hidden Admin page. Everything on the current site carries over and gets updated to P-001; Vaibhav decides later what to drop.
 - Build approach: evolve the current FastAPI web app (approach A). Host it on a Hugging Face Docker Space (free CPU Basic: 2 vCPU, 16 GB, sleeps after 48 h idle). Check on Vaibhav's account that free Docker Spaces still work; fall back to this PC with a temporary link.
-- Frontend built 11-17 (see the changelog), spike, calibration, detector backend and result card done 11-17 (changelog). Still open, in the order of the [website design](superpowers/specs/2026-11-17-website-design.md): the admin carry-over (including a switch to turn the detector off), `docs/SECURITY.md`, the Docker image and the Hugging Face Space. Small: the drop zone's focus ring is clipped at the right edge at phone width.
+- Frontend built 11-17 (see the changelog), spike, calibration, detector backend and result card done 11-17 (changelog). Still open, after the 20th (section 0 takes the demo work first): the admin carry-over (including a switch to turn the detector off), the Docker image and the Hugging Face Space.
 - Vaibhav: decide the sample clips. FakeAVCeleb clips probably cannot be shown publicly; record your own (with consent for a fake version), or launch without samples.
 - The detector runs the P-001 pipeline on an upload: neutralize, the three paths, and the threshold.
 - Retire the old in-browser demo: `hosting/browser/`, `docs/hosting.md`, the README link. Vaibhav deletes the Space on Hugging Face if he wants it gone.
