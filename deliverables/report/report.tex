@@ -663,11 +663,25 @@ of frozen AV-HuBERT features. It never sees a fake. Its test AUC is
 {{sync.test.seed43.auc}} at three training seeds. Its scores follow the
 mechanism it was built for: voice cloning is caught best, and face swaps that
 keep the original lips and voice are caught least. Its weak point is false
-alarms at a threshold carried over from validation. We therefore compare that
-threshold with thresholds set from real clips of each new domain, and we score
-the frozen detector on LAV-DF, DFDC and HiFi-AVDF. All hypotheses were written
-down and committed before the runs. Every number in this report is filled in
-from a committed result file.
+alarms at a threshold carried over from validation. On LAV-DF, DFDC and
+HiFi-AVDF, which it never saw, its AUC falls to between
+{{sync.dfdc.seed17.auc}} and {{sync.lavdf-window.seed29.auc}}. A threshold set
+from 200 real clips of the new corpus flags
+{{h4.hifiavdf-seed43.conformal_real_only.fpr}} to
+{{h4.hifiavdf-seed17.conformal_real_only.fpr}} of real HiFi-AVDF clips,
+against {{h4.hifiavdf-seed43.source_validation.fpr}} to
+{{h4.hifiavdf-seed17.source_validation.fpr}} with the threshold carried over
+from training, but it then catches few fakes.
+
+A late fusion of visual, audio and sync paths passes its preregistered test
+against the visual path alone. Its gain comes from fakes the visual path cannot
+see, and on LAV-DF from a visual path that ranks fakes below chance. In
+exploratory checks, no fixed fusion of these paths transferred between
+corpora, and stronger frozen backbones (CLIP and XLS-R) did not transfer
+better on the cleaned data. All hypotheses were written
+down and committed before the runs. Every result in this report is filled in
+from a committed result file. A few counts that explain amendments A9 and A10
+are quoted from those dated amendments.
 
 \clearpage
 
@@ -839,11 +853,17 @@ fifth is the preregistered fusion test.
     of the same copies. Its per-method scores follow the mechanism.
     \item \textbf{False-alarm control.} A threshold calibrated on real clips of
     the new domain, set against the threshold carried over from training, on
-    LAV-DF and HiFi-AVDF.
+    LAV-DF and HiFi-AVDF. On HiFi-AVDF the real-only threshold flags
+    {{h4.hifiavdf-seed43.conformal_real_only.fpr}} to
+    {{h4.hifiavdf-seed17.conformal_real_only.fpr}} of real clips, against
+    {{h4.hifiavdf-seed43.source_validation.fpr}} to
+    {{h4.hifiavdf-seed17.source_validation.fpr}} with the carried-over one.
+    It meets the preregistered bar on HiFi-AVDF and on LAV-DF under the file
+    label in every seed. The cost is recall.
     \item \textbf{The fusion test.} Visual, audio and sync paths fused by a
     model fixed in advance, against the visual path alone, on DFDC, LAV-DF and
-    the identity-strict FakeAVCeleb test. By the preregistered rule, H2 holds:
-    {{h2.success}}. But no target shows fusion improving on fakes the visual
+    the identity-strict FakeAVCeleb test. H2 holds by its preregistered rule.
+    But no target shows fusion improving on fakes the visual
     path can see (Chapter~\ref{ch:h2} gives the checks).
 \end{enumerate}
 
@@ -863,7 +883,9 @@ version. Chapter~\ref{ch:audit} describes the data and the shortcut audit.
 Chapter~\ref{ch:protocol} describes the shortcut-neutral protocol, including
 the failed first attempt. Chapter~\ref{ch:sync} describes the real-only sync
 path and its in-domain results. Chapter~\ref{ch:crosscorpus} covers the
-cross-corpus tests and false-alarm control. Chapter~\ref{ch:future} lists the
+cross-corpus tests and false-alarm control. Chapter~\ref{ch:h2} runs the
+preregistered fusion test and the exploratory checks that followed it.
+Chapter~\ref{ch:future} lists the
 limitations and the plan for the full run, and Chapter~\ref{ch:conclusions}
 closes the report. Appendix~\ref{app:repro} gives the commands to reproduce
 every result.
@@ -1171,8 +1193,8 @@ metric we report. Every claim uses three seeds and reports their spread.
 Cross-corpus results are the headline, not in-domain ones. Locked targets are
 refused in code for training, selection and calibration. Thresholds come from
 validation, with a record of the clips that chose them. Each hypothesis is
-committed alone, before its run. And every number in a deliverable is filled
-in from a result file, so no number can be typed by hand.
+committed alone, before its run. And every result in a deliverable is filled
+in from a result file, so no result can be typed by hand.
 
 The biggest change is the first step. Before any model is trained, we now
 measure what file cues alone can do. That step is the subject of the next
@@ -1339,9 +1361,12 @@ Section~\ref{sec:refusals} discusses.
 The silence cue rides on the fake audio track. Clips with generated speech end
 with a long stretch of digital silence, while real clips end almost at once.
 They also start with a short stretch of silence that real clips lack. This
-matches what Smeu et al.\ found for the leading edge~\cite{smeu2025}. The
-trailing edge is the stronger of the two on our copy, and the test-time fix in
-the literature does not touch it.
+matches what Smeu et al.\ found for the leading edge~\cite{smeu2025}. On the
+audio label the leading edge is the stronger cue
+({{audit.fakeavceleb.raw.cue.audio.leading_silence_ms}} as a single cue,
+against {{audit.fakeavceleb.raw.cue.audio.trailing_silence_ms}} for the
+trailing edge). The trailing edge still carries the label, and the test-time
+fix in the literature does not touch it.
 
 \subsection{LAV-DF}
 
@@ -1464,9 +1489,9 @@ existed. Table~\ref{tab:hypotheses} lists the four tests.
         \textbf{ID} & \textbf{Test} & \textbf{Success} & \textbf{Status} \\
         \midrule
         H1 & Shortcut ceiling on neutral copies, clip label, all cues, grouped five-fold & AUC at most 0.60 on each training corpus & Run; not met \\
-        H2 & Fusion minus visual-only ROC-AUC, paired, mean of three seeds & Interval above 0 on at least two of DFDC, LAV-DF test and FakeAVCeleb strict test & See Chapter~\ref{ch:h2} \\
+        H2 & Fusion minus visual-only ROC-AUC, paired, mean of three seeds & Holm-corrected one-sided $p$ below 0.05 on at least two of DFDC, LAV-DF test and FakeAVCeleb strict test (amendment A8) & Holds by its rule; see Chapter~\ref{ch:h2} \\
         H3 & Manipulated-modality macro-F1, trained on FakeAVCeleb and tested on LAV-DF, and the reverse & Both directions above the clip-label baseline & Not run \\
-        H4 & Realized FPR with a real-only conformal threshold, $\alpha = 0.05$, $n_{\mathrm{cal}} = 200$ real target clips & FPR at most 0.07 on every target & See Chapter~\ref{ch:crosscorpus} \\
+        H4 & Realized FPR with a real-only conformal threshold, $\alpha = 0.05$, $n_{\mathrm{cal}} = 200$ real target clips & FPR at most 0.07 on every target & Met on HiFi-AVDF and LAV-DF (file label) in every seed; DFDC too small; see Chapter~\ref{ch:crosscorpus} \\
         \bottomrule
     \end{tabularx}
 \end{table}
@@ -1483,7 +1508,7 @@ other tests still run and carry that caveat.
 
 \subsection{Amendments}
 
-The plan changed seven times. Each change is a dated amendment at the end of
+The plan changed fourteen times. Each change is a dated amendment at the end of
 the file, committed before the result it could affect. Nothing above an
 amendment is edited. Table~\ref{tab:amendments} summarizes them.
 
@@ -1505,6 +1530,9 @@ amendment is edited. Table~\ref{tab:amendments} summarizes them.
         A7 & 15 Nov & One frame size per corpus, because HiFi-AVDF frame size follows the label \\
         A8 & 16 Nov & Before any visual or audio model existed: how the H2 fusion is fit (logistic regression on validation, cross-fitted by identity) and tested (mean of three seeds, shared identity bootstrap, Holm over three targets) \\
         A9 & 16 Nov & After the LAV-DF sync and H4 results were read, before H2: LAV-DF clips are also labelled by their kept window, because 46\% of fake clips have no edited time in it. Both labels are reported; H2 uses the window label \\
+        A10 & 16 Nov & After the DFDC sync result was read, before H2: the face is located with a second detector before landmarking, because DFDC faces are small in full-HD frames. Both versions are kept \\
+        A11 & 16 Nov & Exploratory, before either model existed: frozen CLIP ViT-L/14 and XLS-R paths trained on the same cleaned data, splits and seeds, compared with the P-001 paths \\
+        A12 to A14 & 17 Nov & Exploratory, after H2 was read: a fusion fit on other corpora (A12), frame statistics behind the visual path on LAV-DF (A13), and the audio path with loudness levelled and edges cut (A14). No verdict changes \\
         \bottomrule
     \end{tabularx}
 \end{table}
@@ -2337,11 +2365,11 @@ gets the same statistic, outside the rule.
         \toprule
         \textbf{Target} & \textbf{Clips} & \textbf{Mean [95\%]} & \textbf{$p$} & \textbf{Holm} \\
         \midrule
-        FakeAVCeleb, strict & {{h2.test-identity-strict.clips|int}} & {{h2.test-identity-strict.estimate}} [{{h2.test-identity-strict.lower}}, {{h2.test-identity-strict.upper}}] & {{h2.test-identity-strict.p}} & {{h2.test-identity-strict.holm}} \\
-        DFDC & {{h2.dfdc.clips|int}} & {{h2.dfdc.estimate}} [{{h2.dfdc.lower}}, {{h2.dfdc.upper}}] & {{h2.dfdc.p}} & {{h2.dfdc.holm}} \\
-        LAV-DF test & {{h2.lavdf-window.clips|int}} & {{h2.lavdf-window.estimate}} [{{h2.lavdf-window.lower}}, {{h2.lavdf-window.upper}}] & {{h2.lavdf-window.p}} & {{h2.lavdf-window.holm}} \\
+        FakeAVCeleb, strict & {{h2.test-identity-strict.clips|int}} & {{h2.test-identity-strict.estimate}} [{{h2.test-identity-strict.lower}}, {{h2.test-identity-strict.upper}}] & {{h2.test-identity-strict.p|p}} & {{h2.test-identity-strict.holm}} \\
+        DFDC & {{h2.dfdc.clips|int}} & {{h2.dfdc.estimate}} [{{h2.dfdc.lower}}, {{h2.dfdc.upper}}] & {{h2.dfdc.p|p}} & {{h2.dfdc.holm}} \\
+        LAV-DF test & {{h2.lavdf-window.clips|int}} & {{h2.lavdf-window.estimate}} [{{h2.lavdf-window.lower}}, {{h2.lavdf-window.upper}}] & {{h2.lavdf-window.p|p}} & {{h2.lavdf-window.holm}} \\
         \midrule
-        HiFi-AVDF & {{h2.hifiavdf.clips|int}} & {{h2.hifiavdf.estimate}} [{{h2.hifiavdf.lower}}, {{h2.hifiavdf.upper}}] & {{h2.hifiavdf.p}} & n/a \\
+        HiFi-AVDF & {{h2.hifiavdf.clips|int}} & {{h2.hifiavdf.estimate}} [{{h2.hifiavdf.lower}}, {{h2.hifiavdf.upper}}] & {{h2.hifiavdf.p|p}} & n/a \\
         \bottomrule
     \end{tabular}
 \end{table}

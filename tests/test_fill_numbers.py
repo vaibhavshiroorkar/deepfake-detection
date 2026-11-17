@@ -21,5 +21,12 @@ def test_a_missing_number_stops_the_build() -> None:
         fill_numbers.fill("{{a.auc}} and {{b.auc}}", NUMBERS)
 
 
+def test_a_bootstrap_p_of_zero_prints_as_a_bound() -> None:
+    # 1,000 resamples cannot show p = 0, only p below 1/1,000.
+    numbers = {"z.p": {"value": 0.0, "source": "x"}, "y.p": {"value": 0.305, "source": "x"}}
+    assert fill_numbers.fill("{{z.p|p}} and {{y.p|p}}", numbers) == "<0.001 and 0.305"
+    assert fill_numbers.fill("{{z.p|p}}", numbers, latex=True) == "$<$0.001"
+
+
 def test_percent_is_escaped_for_latex() -> None:
     assert fill_numbers.fill("{{a.fpr|pct}} flagged", NUMBERS, latex=True) == "27\\% flagged"

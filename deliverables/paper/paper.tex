@@ -339,8 +339,8 @@ quality setting, mux the audio as AAC, and strip container metadata.
 Fixing the length removes duration as a cue. Starting at the first sound
 removes leading silence. HiFi-AVDF also gets one frame size, the native size
 of its real clips, because frame size follows its labels. We first checked
-version 4 on a sample of 150 clips per category that is used for nothing else
-(Table~\ref{tab:h1}, check row).
+version 4 on a sample of 150 clips per category that is used for nothing else.
+The check row of Table~\ref{tab:h1} counts the clips it kept.
 
 \subsection{H1 result}
 
@@ -431,7 +431,8 @@ the same picture. Every interval lies above the neutral shortcut ceiling of
 cues alone can on the same copies. The operating point is weaker than the
 ranking. At the threshold chosen on validation, the false-positive rate on
 real test clips lies between {{sync.test.seed43.fpr}} and
-{{sync.test.seed17.fpr}}. That false-alarm rate is the problem our fourth
+{{sync.test.seed17.fpr}}. The identity-strict subset keeps every real test
+clip, so its FPR is the same. That false-alarm rate is the problem our fourth
 contribution addresses.
 
 \subsection{Per-method results}
@@ -549,7 +550,8 @@ has to come from what is left in the pixels and the sound.
 \textit{Reading.} The sync path keeps some signal on every target, but far
 less than in its own domain. On LAV-DF it clears the neutral ceiling under
 both labels. On DFDC, where every fake keeps its original voice, it sits just
-above the ceiling of {{audit.dfdc.neutral.clip}}. On HiFi-AVDF it falls below
+above the ceiling of {{audit.dfdc.neutral.clip}}, and the seed-17 interval
+includes it. On HiFi-AVDF it falls below
 the neutral ceiling of {{audit.hifiavdf.neutral.clip}}: the bitrate left
 after neutralization says more about the label than the lips do. The
 per-generator rows explain why. PixVerse~V5 is caught best
@@ -703,11 +705,11 @@ three rows}
 \toprule
 Target & Clips & Seed 17 & Seed 29 & Seed 43 & Mean [95\%] & $p$ & Holm \\
 \midrule
-FakeAVCeleb test, strict & {{h2.test-identity-strict.clips|int}} & {{h2.test-identity-strict.seed17}} & {{h2.test-identity-strict.seed29}} & {{h2.test-identity-strict.seed43}} & {{h2.test-identity-strict.estimate}} [{{h2.test-identity-strict.lower}}, {{h2.test-identity-strict.upper}}] & {{h2.test-identity-strict.p}} & {{h2.test-identity-strict.holm}} \\
-DFDC & {{h2.dfdc.clips|int}} & {{h2.dfdc.seed17}} & {{h2.dfdc.seed29}} & {{h2.dfdc.seed43}} & {{h2.dfdc.estimate}} [{{h2.dfdc.lower}}, {{h2.dfdc.upper}}] & {{h2.dfdc.p}} & {{h2.dfdc.holm}} \\
-LAV-DF test, window & {{h2.lavdf-window.clips|int}} & {{h2.lavdf-window.seed17}} & {{h2.lavdf-window.seed29}} & {{h2.lavdf-window.seed43}} & {{h2.lavdf-window.estimate}} [{{h2.lavdf-window.lower}}, {{h2.lavdf-window.upper}}] & {{h2.lavdf-window.p}} & {{h2.lavdf-window.holm}} \\
+FakeAVCeleb test, strict & {{h2.test-identity-strict.clips|int}} & {{h2.test-identity-strict.seed17}} & {{h2.test-identity-strict.seed29}} & {{h2.test-identity-strict.seed43}} & {{h2.test-identity-strict.estimate}} [{{h2.test-identity-strict.lower}}, {{h2.test-identity-strict.upper}}] & {{h2.test-identity-strict.p|p}} & {{h2.test-identity-strict.holm}} \\
+DFDC & {{h2.dfdc.clips|int}} & {{h2.dfdc.seed17}} & {{h2.dfdc.seed29}} & {{h2.dfdc.seed43}} & {{h2.dfdc.estimate}} [{{h2.dfdc.lower}}, {{h2.dfdc.upper}}] & {{h2.dfdc.p|p}} & {{h2.dfdc.holm}} \\
+LAV-DF test, window & {{h2.lavdf-window.clips|int}} & {{h2.lavdf-window.seed17}} & {{h2.lavdf-window.seed29}} & {{h2.lavdf-window.seed43}} & {{h2.lavdf-window.estimate}} [{{h2.lavdf-window.lower}}, {{h2.lavdf-window.upper}}] & {{h2.lavdf-window.p|p}} & {{h2.lavdf-window.holm}} \\
 \midrule
-HiFi-AVDF (reported) & {{h2.hifiavdf.clips|int}} & {{h2.hifiavdf.seed17}} & {{h2.hifiavdf.seed29}} & {{h2.hifiavdf.seed43}} & {{h2.hifiavdf.estimate}} [{{h2.hifiavdf.lower}}, {{h2.hifiavdf.upper}}] & {{h2.hifiavdf.p}} & n/a \\
+HiFi-AVDF (reported) & {{h2.hifiavdf.clips|int}} & {{h2.hifiavdf.seed17}} & {{h2.hifiavdf.seed29}} & {{h2.hifiavdf.seed43}} & {{h2.hifiavdf.estimate}} [{{h2.hifiavdf.lower}}, {{h2.hifiavdf.upper}}] & {{h2.hifiavdf.p|p}} & n/a \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -720,9 +722,9 @@ with its 95\% identity-bootstrap interval, and each seed as a dot
 \label{fig:h2}
 \end{figure}
 
-Table~\ref{tab:h2} and Fig.~\ref{fig:h2} give the result. By the
-preregistered rule, H2 holds:
-\textbf{{{h2.success}}}. The seed-17 fusion weights on the standardized logits
+Table~\ref{tab:h2} and Fig.~\ref{fig:h2} give the result. FakeAVCeleb and
+LAV-DF survive Holm correction and DFDC does not, so H2 holds by its
+preregistered rule. The seed-17 fusion weights on the standardized logits
 are {{h2.weights.seed17.visual}} (visual), {{h2.weights.seed17.audio}} (audio)
 and {{h2.weights.seed17.sync}} (sync).
 
@@ -745,7 +747,7 @@ HiFi-AVDF (reported) & {{h2.hifiavdf.auc.visual.min}}, {{h2.hifiavdf.auc.visual.
 \end{tabular}
 \end{table}
 
-H2 holds by its rule, but the result is weaker than the verdict suggests.
+The result is weaker than the verdict suggests.
 Two checks, run after the verdict and so exploratory, find that no target
 shows fusion improving on fakes the visual path can see
 (Table~\ref{tab:h2levels}).
@@ -756,7 +758,7 @@ Without them, the gain falls from {{h2.test-identity-strict.estimate}} to
 between {{h2.test-identity-strict.without_cloned_voice.min}} and
 {{h2.test-identity-strict.without_cloned_voice.max}} per seed.
 
-On LAV-DF the visual path ranks every fake type below the real clips
+On LAV-DF the visual path ranks every fake type below the original real files
 (AUC {{visual.lavdf-test.type.min}} to {{visual.lavdf-test.type.max}}). That
 includes clips whose video was never edited
 ({{visual.lavdf-test.type.RealVideo-FakeAudio.min}} to
@@ -767,9 +769,11 @@ audit reads metadata and cannot see it, and six frame statistics (sharpness,
 high frequencies, blockiness, brightness, contrast, motion; amendment A13,
 exploratory) do not explain it either: each separates the two groups at AUC
 {{a13.lavdf.auc_min}} to {{a13.lavdf.auc_max}}, all six together at
-{{a13.lavdf.all_six}}, against the path's {{a13.lavdf.visual}}. Fusion beats
-this reversed baseline
-but trails the audio and sync paths alone in every seed.
+{{a13.lavdf.all_six}}, against the path's {{a13.lavdf.visual}}. Its pooled AUC
+in Table~\ref{tab:h2levels} is higher, though still below chance, because the
+window label counts as real the clips cut from fake files with no edit in the
+window, and the path scores those as low as the fakes. Fusion beats this
+reversed baseline but trails the audio and sync paths alone in every seed.
 Section~\ref{sec:a12} tests whether its FakeAVCeleb weights are to blame.
 
 On DFDC, the one target where the visual path is fair, every clip in our
@@ -856,8 +860,9 @@ HiFi-AVDF & {{a11.clip-vs-visual.hifiavdf.estimate}} [{{a11.clip-vs-visual.hifia
 \end{table}
 
 On cleaned data neither backbone transfers better. XLS-R matches the P-001
-audio path in-domain and is worse on LAV-DF and HiFi-AVDF, where it reaches
-{{a11.xlsr-vs-audio.hifiavdf.auc_new}} against {{a11.xlsr-vs-audio.hifiavdf.auc_old}}.
+audio path in-domain and is worse on LAV-DF and HiFi-AVDF. On HiFi-AVDF it
+reaches {{a11.xlsr-vs-audio.hifiavdf.auc_new}} against
+{{a11.xlsr-vs-audio.hifiavdf.auc_old}}.
 CLIP falls to {{a11.clip-vs-visual.test-identity-strict.auc_new}} in-domain
 and to {{a11.clip-vs-visual.hifiavdf.auc_new}} on HiFi-AVDF. Its one gain, on
 LAV-DF, takes it to {{a11.clip-vs-visual.lavdf-test.auc_new}}: near chance,

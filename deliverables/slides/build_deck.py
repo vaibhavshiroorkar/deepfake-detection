@@ -462,7 +462,7 @@ def build(draft: bool) -> int:
               "that is all H2 shows. These two checks ran after the verdict, so they are exploratory. Amendment A12 then refit the fusion on the other corpora. On DFDC and HiFi-AVDF even a fusion fit on the target's own labels does not beat the best single path, and the best path changes by corpus, so no fixed fusion of these paths transfers.",
               "Fused by a model fixed in advance. Does it beat the visual path on new corpora?")
     rows = [[name, n(f"{{{{h2.{k}.clips|int}}}}"),
-             n(f"{{{{h2.{k}.estimate}}}} [{{{{h2.{k}.lower}}}}, {{{{h2.{k}.upper}}}}]"), n(f"{{{{h2.{k}.p}}}}"),
+             n(f"{{{{h2.{k}.estimate}}}} [{{{{h2.{k}.lower}}}}, {{{{h2.{k}.upper}}}}]"), n(f"{{{{h2.{k}.p|p}}}}"),
              "n/a" if k == "hifiavdf" else n(f"{{{{h2.{k}.holm}}}}")]
             for name, k in [("FakeAVCeleb, strict", "test-identity-strict"), ("DFDC", "dfdc"),
                             ("LAV-DF, window label", "lavdf-window"), ("HiFi-AVDF (reported)", "hifiavdf")]]
