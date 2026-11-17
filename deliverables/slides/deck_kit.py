@@ -24,6 +24,8 @@ NSMAP = {"a": "http://schemas.openxmlformats.org/drawingml/2006/main",
          "p": "http://schemas.openxmlformats.org/presentationml/2006/main"}
 # Diagram fills, the same as the figures of the paper and the report.
 F_BLUE, F_GREEN, F_ORANGE, F_RED, F_GREY, F_WHITE = "DDE7F4", "D8EBD8", "FBE8C8", "F6D9D7", "ECEFF3", "FFFFFF"
+# The face, voice and lip-sync checks, in the same tints as the figures (scripts/make_figures.py).
+F_FACE, F_VOICE, F_SYNC = "E8F0FB", "FDEEE7", "E3F5EE"
 EDGE = "8496B0"
 TOKEN = re.compile(r"(\*\*.+?\*\*|\[pending\])")
 CELL_MX, CELL_MY = 70000, 35000
