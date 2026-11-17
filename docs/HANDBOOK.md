@@ -1175,6 +1175,14 @@ uncommitted working tree unless marked open.
 - **Fix:** The full run writes to `runs/p001/h2-full/` with receipt `h2-full`. Its family targets, Holm decision, weights and the 15 shared prediction files match the family run byte for byte. `runs/p001-finalize.sh` copies the full run when it exists. Two runs of one stage get two output folders.
 - **Source:** `runs/p001-h2.log`; `results/p001-h2/receipts/`.
 
+#### 73. The A11 script asked XLS-R for 99 frozen epochs out of 6
+
+- **What went wrong:** `runs/p001-a11.sh` passed `--freeze-epochs 99` to mean "frozen for every epoch". The trainer rejects a freeze count longer than the run (`--epochs 6`), so all three XLS-R runs failed in seconds on 2026-11-17 at 14:12. The script then logged "a11 done", which started the A13 and A14 chain.
+- **How it was caught:** The waiter on the A11 log woke on the "failed" lines; the traceback named the check.
+- **What it cost:** About two minutes of compute, and a restart of the A13 and A14 chain before it had read anything. The three CLIP models were kept.
+- **Fix:** `--freeze-epochs 6`, which the trainer reads as frozen for the whole run. The script now keeps a model already scored on every target, and ends with "a11 done v2", which the A13 and A14 chain waits for. A run script's flags are now checked against `--help` before a long run.
+- **Source:** `runs/p001-a11.log`, `runs/p001/a11/logs/train-xlsr-seed17.log`.
+
 ## 7. What a hard reviewer would say
 
 These are the strongest objections we expect, with our current answer. "Open" means we have no answer yet and the paper must not pretend otherwise.

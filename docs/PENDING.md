@@ -9,8 +9,8 @@ One chain runs as a detached process (handbook mistake 71). Do not restart or sh
 
 | Chain | Log | What it does | Expected finish |
 |---|---|---|---|
-| A11 | `runs/p001-a11.log` | Started 11-17 05:36, alone on the GPU. Trains and scores CLIP and XLS-R (exploratory), three seeds each | About 14:00 to 15:00 Tue (assumed); stop rule 17 November, 23:59 |
-| A13, A14 | `runs/p001-a13-a14.log` | Waits for "a11 done", then A13 (frame statistics, CPU) and A14 (audio rescoring, GPU), one at a time. Scripts and tests are ready | About 1 to 2 h after A11 (assumed) |
+| A11 | `runs/p001-a11.log` | CLIP done (three seeds, scored). XLS-R restarted 14:14 after handbook mistake 73; epoch 1 took under 5 minutes | About 16:30 Tue (measured on epoch 1); stop rule 17 November, 23:59 |
+| A13, A14 | `runs/p001-a13-a14.log` | Waits for "a11 done v2", then A13 (frame statistics, CPU) and A14 (audio rescoring, GPU), one at a time. Scripts and tests are ready | About 1 to 2 h after A11 (assumed) |
 | Monitor | `runs/p001/logs/resources.log` | Free RAM, GPU memory, power and temperature, once a minute. Stops after A11 | With A11 |
 
 ## 2. While the chains run (Claude)
