@@ -1,0 +1,104 @@
+{
+  "branch": "audio",
+  "checkpoint_run_id": "p001-a11-xlsr-seed17",
+  "checkpoint_sha256": "9c1d9cc2b8adf854cf9d9dd30591cbc2bdf26374a2b7f9bc67cfbd418c3ea9f0",
+  "class_balance": {
+    "fake": 1500,
+    "minimum_rows_per_class": 10,
+    "ranking_metrics_reliable": true,
+    "real": 2284
+  },
+  "confusion": {
+    "false_negative": 1500,
+    "false_positive": 0,
+    "true_negative": 2284,
+    "true_positive": 0
+  },
+  "coverage": {
+    "abstained_by_reason": {},
+    "abstained_rows": 0,
+    "abstention_rate": 0.0,
+    "manifest_rows": 3784,
+    "scored_rows": 3784
+  },
+  "dataset": "HiFi-AVDF",
+  "detection_rate": 0.0,
+  "evidence_scope": "development_validation",
+  "fixed_threshold": 0.5,
+  "loss": 1.7373177202509018,
+  "metrics": {
+    "balanced_accuracy": 0.5,
+    "brier": 0.38527647440707224,
+    "eer": 0.36646234676007006,
+    "expected_calibration_error": 0.3846025874739292,
+    "f1": 0.0,
+    "fnr": 1.0,
+    "fpr": 0.0,
+    "fpr_at_95_tpr": 0.8480735551663747,
+    "pr_auc": 0.5979259112253067,
+    "precision": 0.0,
+    "recall": 0.0,
+    "roc_auc": 0.6910105078809107
+  },
+  "per_manipulation_type": {
+    "FakeVideo-FakeAudio": {
+      "accuracy": 0.0,
+      "mean_probability": 0.014265552818154295,
+      "rows": 1500
+    },
+    "FakeVideo-RealAudio": {
+      "accuracy": 1.0,
+      "mean_probability": 0.010014262142576997,
+      "rows": 394
+    },
+    "RealVideo-RealAudio": {
+      "accuracy": 1.0,
+      "mean_probability": 0.010222148405949748,
+      "rows": 1890
+    }
+  },
+  "per_method": {
+    "kling2.5": {
+      "accuracy": 0.0,
+      "mean_probability": 0.019108674722827144,
+      "rows": 225
+    },
+    "pixverseV5": {
+      "accuracy": 0.0,
+      "mean_probability": 0.015440481849462277,
+      "rows": 308
+    },
+    "real": {
+      "accuracy": 1.0,
+      "mean_probability": 0.010222148405949748,
+      "rows": 1890
+    },
+    "seedance1.0": {
+      "accuracy": 1.0,
+      "mean_probability": 0.010014262142576997,
+      "rows": 394
+    },
+    "sora2": {
+      "accuracy": 0.0,
+      "mean_probability": 0.012593380233098927,
+      "rows": 364
+    },
+    "veo3.1": {
+      "accuracy": 0.0,
+      "mean_probability": 0.010852535613797629,
+      "rows": 313
+    },
+    "wan2.5": {
+      "accuracy": 0.0,
+      "mean_probability": 0.015042672251704439,
+      "rows": 290
+    }
+  },
+  "preprocessing_hash": "5f2954fbda2cd643b4da48b8a526b0aa3d9ad831033ac8d22704d78d885df7d1",
+  "rows": 3784,
+  "threshold_source": {
+    "kind": "fixed",
+    "value": 0.5
+  },
+  "trained_on_split_hash": "6310dfa0225b0e1978a662df8c3acef9505e2bd7f451e9f49a4e7ed8e2e8db00"
+}

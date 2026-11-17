@@ -9,8 +9,7 @@ One chain runs as a detached process (handbook mistake 71). Do not restart or sh
 
 | Chain | Log | What it does | Expected finish |
 |---|---|---|---|
-| A11 | `runs/p001-a11.log` | CLIP done (three seeds, scored). XLS-R restarted 14:14 after handbook mistake 73; epoch 1 took under 5 minutes | About 16:30 Tue (measured on epoch 1); stop rule 17 November, 23:59 |
-| A13, A14 | `runs/p001-a13-a14.log` | Waits for "a11 done v2", then A13 (frame statistics, CPU) and A14 (audio rescoring, GPU), one at a time. Scripts and tests are ready | About 1 to 2 h after A11 (assumed) |
+| A13, A14 | `runs/p001-a13-a14.log` | Started after A11 finished (14:57): A13 (frame statistics, CPU) and A14 (audio rescoring, GPU), one at a time. Scripts and tests are ready | About 1 to 2 h after A11 (assumed) |
 | Monitor | `runs/p001/logs/resources.log` | Free RAM, GPU memory, power and temperature, once a minute. Stops after A11 | With A11 |
 
 ## 2. While the chains run (Claude)
@@ -24,13 +23,6 @@ Chosen 11-16: prepare the rebuild now, with no GPU and no change to anything H2 
 - Freeze P-002 (`results/preregistration/P-002-draft.md`, now drafted) after the baselines are reproduced: set the bars of Q1 to Q6, then rename it to `P-002.md` and mark it frozen, before any P-002 model is trained.
 - AV-Deepfake1M++: size (1.46 TB) and licence (gated EULA) are checked; the metadata format is still unknown. Decide on a stratified subset or an external disk, since this PC has about 519 GB free. Follow up on access.
 - Confirm the assumed licences in `docs/research/P-002-backbones.md` (CLIP, XLS-R) before P-002 uses them.
-
-## 2c. Amendment A11, the exploratory backbone test (Claude)
-
-Stop rule: if the upgraded models are not scored on all three targets by 17 November, 23:59, A11 is reported as not completed.
-
-- `runs/p001-a11.sh` (log `runs/p001-a11.log`) runs it all once the whole H2 chain is done, HiFi-AVDF included: it trains CLIP (`ddf train visual-stream --backbone clip --freeze-backbone`) and XLS-R (`ddf train audio --audio-model facebook/wav2vec2-xls-r-300m`, frozen for every epoch) at three seeds. Choose thresholds on validation and score the identity-strict test and the targets.
-- Compare each with its P-001 path (`scripts/compare_a11.py`, ready and tested; paired identity bootstrap), and add an exploratory section to the paper and report.
 
 ## 2d. Amendments A12 to A14, three exploratory checks (Claude)
 

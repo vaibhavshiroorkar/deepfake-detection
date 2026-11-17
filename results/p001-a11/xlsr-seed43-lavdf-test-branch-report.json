@@ -1,0 +1,94 @@
+{
+  "branch": "audio",
+  "checkpoint_run_id": "p001-a11-xlsr-seed43",
+  "checkpoint_sha256": "157ea4822b26b22d7915c1997cd66b8d2408e8ad79c46d9d0825b639275ad21b",
+  "class_balance": {
+    "fake": 1877,
+    "minimum_rows_per_class": 10,
+    "ranking_metrics_reliable": true,
+    "real": 1946
+  },
+  "confusion": {
+    "false_negative": 1877,
+    "false_positive": 0,
+    "true_negative": 1946,
+    "true_positive": 0
+  },
+  "coverage": {
+    "abstained_by_reason": {},
+    "abstained_rows": 0,
+    "abstention_rate": 0.0,
+    "manifest_rows": 3823,
+    "scored_rows": 3823
+  },
+  "dataset": "LAV-DF",
+  "detection_rate": 0.0,
+  "evidence_scope": "development_validation",
+  "fixed_threshold": 0.5,
+  "loss": 1.8578830453821293,
+  "metrics": {
+    "balanced_accuracy": 0.5,
+    "brier": 0.46522326981367146,
+    "eer": 0.41502397442727756,
+    "expected_calibration_error": 0.4662454839312992,
+    "f1": 0.0,
+    "fnr": 1.0,
+    "fpr": 0.0,
+    "fpr_at_95_tpr": 0.9244604316546763,
+    "pr_auc": 0.5746582733687722,
+    "precision": 0.0,
+    "recall": 0.0,
+    "roc_auc": 0.608109691560246
+  },
+  "per_manipulation_type": {
+    "FakeVideo-FakeAudio": {
+      "accuracy": 0.0,
+      "mean_probability": 0.026893727166285956,
+      "rows": 937
+    },
+    "FakeVideo-RealAudio": {
+      "accuracy": 1.0,
+      "mean_probability": 0.027348648388052937,
+      "rows": 946
+    },
+    "RealVideo-FakeAudio": {
+      "accuracy": 0.0,
+      "mean_probability": 0.0273250825009606,
+      "rows": 940
+    },
+    "RealVideo-RealAudio": {
+      "accuracy": 1.0,
+      "mean_probability": 0.01778669364983216,
+      "rows": 1000
+    }
+  },
+  "per_method": {
+    "lavdf-FakeVideo-FakeAudio": {
+      "accuracy": 0.0,
+      "mean_probability": 0.026893727166285956,
+      "rows": 937
+    },
+    "lavdf-FakeVideo-RealAudio": {
+      "accuracy": 1.0,
+      "mean_probability": 0.027348648388052937,
+      "rows": 946
+    },
+    "lavdf-RealVideo-FakeAudio": {
+      "accuracy": 0.0,
+      "mean_probability": 0.0273250825009606,
+      "rows": 940
+    },
+    "lavdf-RealVideo-RealAudio": {
+      "accuracy": 1.0,
+      "mean_probability": 0.01778669364983216,
+      "rows": 1000
+    }
+  },
+  "preprocessing_hash": "5f2954fbda2cd643b4da48b8a526b0aa3d9ad831033ac8d22704d78d885df7d1",
+  "rows": 3823,
+  "threshold_source": {
+    "kind": "fixed",
+    "value": 0.5
+  },
+  "trained_on_split_hash": "6310dfa0225b0e1978a662df8c3acef9505e2bd7f451e9f49a4e7ed8e2e8db00"
+}

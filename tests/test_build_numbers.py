@@ -134,3 +134,21 @@ def test_a12_keys(tmp_path):
     assert numbers["a12.dfdc.leave_one_out-minus-visual.estimate"]["value"] == -0.229
     assert numbers["a12.dfdc.leave_one_out-minus-visual.lower"]["value"] == -0.274
     assert numbers["a12.dfdc.clips"]["value"] == 2786
+
+
+def test_a11_keys_and_skipped_sets(tmp_path):
+    module = _module(tmp_path)
+    out = tmp_path / "results" / "p001-a11"
+    out.mkdir(parents=True)
+    diff = {"estimate": -0.1254, "lower": -0.158, "upper": -0.091}
+    (out / "compare.json").write_text(json.dumps({"results": {
+        "clip-vs-visual.test-identity-strict": {"seeds": [17, 29, 43], "clips": 495,
+            "auc_new": [0.86, 0.87, 0.862], "auc_old": [0.989, 0.988, 0.99], "difference": diff},
+        "xlsr-vs-audio.dfdc": {"skipped": "one class in the set"}}}))
+    numbers: dict = {}
+    module.a11(numbers)
+    assert numbers["a11.clip-vs-visual.test-identity-strict.auc_new"]["value"] == 0.864
+    assert numbers["a11.clip-vs-visual.test-identity-strict.estimate"]["value"] == -0.125
+    assert numbers["a11.clip-vs-visual.test-identity-strict.seeds"]["value"] == 3
+    assert numbers["a11.xlsr-vs-audio.dfdc.skipped"]["value"] == "one class in the set"
+    assert "a11.xlsr-vs-audio.dfdc.estimate" not in numbers

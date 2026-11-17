@@ -265,6 +265,25 @@ def a12(numbers: dict) -> None:
                 _put(numbers, f"a12.{target}.{name}.{field}", round(diff[field], 3), path)
 
 
+def a11(numbers: dict) -> None:
+    """A11 (exploratory): each upgraded path against its P-001 counterpart, paired by clip.
+    a11.{new}-vs-{old}.{part}.auc_new / auc_old (means over seeds), .estimate/.lower/.upper, .seeds;
+    a set with one class records .skipped instead."""
+    path = RESULTS / "p001-a11" / "compare.json"
+    if not path.exists():
+        return
+    for name, result in json.loads(path.read_text(encoding="utf-8"))["results"].items():
+        key = f"a11.{name}"
+        if "skipped" in result:
+            _put(numbers, f"{key}.skipped", result["skipped"], path)
+            continue
+        for side in ("auc_new", "auc_old"):
+            _put(numbers, f"{key}.{side}", round(sum(result[side]) / len(result[side]), 3), path)
+        for field in ("estimate", "lower", "upper"):
+            _put(numbers, f"{key}.{field}", round(result["difference"][field], 3), path)
+        _put(numbers, f"{key}.seeds", len(result["seeds"]), path)
+
+
 def main() -> int:
     numbers: dict = {}
     audits(numbers)
@@ -277,6 +296,7 @@ def main() -> int:
     h2_levels(numbers)
     h2_checks(numbers)
     a12(numbers)
+    a11(numbers)
     out = RESULTS / "numbers.json"
     out.write_text(json.dumps(dict(sorted(numbers.items())), indent=1) + "\n", encoding="utf-8")
     print(f"{len(numbers)} numbers -> {_rel(out)}")

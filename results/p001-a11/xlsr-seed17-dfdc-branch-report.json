@@ -1,0 +1,66 @@
+{
+  "branch": "audio",
+  "checkpoint_run_id": "p001-a11-xlsr-seed17",
+  "checkpoint_sha256": "9c1d9cc2b8adf854cf9d9dd30591cbc2bdf26374a2b7f9bc67cfbd418c3ea9f0",
+  "class_balance": {
+    "fake": 0,
+    "minimum_rows_per_class": 10,
+    "ranking_metrics_reliable": false,
+    "real": 3032
+  },
+  "confusion": {
+    "false_negative": 0,
+    "false_positive": 0,
+    "true_negative": 3032,
+    "true_positive": 0
+  },
+  "coverage": {
+    "abstained_by_reason": {},
+    "abstained_rows": 0,
+    "abstention_rate": 0.0,
+    "manifest_rows": 3032,
+    "scored_rows": 3032
+  },
+  "dataset": "DFDC",
+  "evidence_scope": "development_validation",
+  "fixed_threshold": 0.5,
+  "loss": 0.00846086532899761,
+  "metrics": null,
+  "per_manipulation_type": {
+    "FakeVideo-RealAudio": {
+      "accuracy": 1.0,
+      "mean_probability": 0.008426930375857945,
+      "rows": 2838
+    },
+    "RealVideo-RealAudio": {
+      "accuracy": 1.0,
+      "mean_probability": 0.008324642929718974,
+      "rows": 194
+    }
+  },
+  "per_method": {
+    "dfdc-swap": {
+      "accuracy": 1.0,
+      "mean_probability": 0.008426930375857945,
+      "rows": 2838
+    },
+    "real": {
+      "accuracy": 1.0,
+      "mean_probability": 0.008324642929718974,
+      "rows": 194
+    }
+  },
+  "preprocessing_hash": "5f2954fbda2cd643b4da48b8a526b0aa3d9ad831033ac8d22704d78d885df7d1",
+  "rows": 3032,
+  "single_class": {
+    "class": "real",
+    "mean_probability": 0.008420385598631374,
+    "note": "Only one class is present, so ranking metrics such as ROC-AUC are undefined and are not reported.",
+    "specificity": 1.0
+  },
+  "threshold_source": {
+    "kind": "fixed",
+    "value": 0.5
+  },
+  "trained_on_split_hash": "6310dfa0225b0e1978a662df8c3acef9505e2bd7f451e9f49a4e7ed8e2e8db00"
+}

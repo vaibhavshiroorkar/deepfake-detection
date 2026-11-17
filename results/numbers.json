@@ -1,4 +1,176 @@
 {
+ "a11.clip-vs-visual.dfdc.auc_new": {
+  "value": 0.704,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.dfdc.auc_old": {
+  "value": 0.697,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.dfdc.estimate": {
+  "value": 0.008,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.dfdc.lower": {
+  "value": -0.03,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.dfdc.seeds": {
+  "value": 3,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.dfdc.upper": {
+  "value": 0.048,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.hifiavdf.auc_new": {
+  "value": 0.508,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.hifiavdf.auc_old": {
+  "value": 0.547,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.hifiavdf.estimate": {
+  "value": -0.039,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.hifiavdf.lower": {
+  "value": -0.054,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.hifiavdf.seeds": {
+  "value": 3,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.hifiavdf.upper": {
+  "value": -0.024,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.lavdf-test.auc_new": {
+  "value": 0.536,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.lavdf-test.auc_old": {
+  "value": 0.377,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.lavdf-test.estimate": {
+  "value": 0.159,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.lavdf-test.lower": {
+  "value": 0.149,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.lavdf-test.seeds": {
+  "value": 3,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.lavdf-test.upper": {
+  "value": 0.169,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.test-identity-strict.auc_new": {
+  "value": 0.864,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.test-identity-strict.auc_old": {
+  "value": 0.989,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.test-identity-strict.estimate": {
+  "value": -0.125,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.test-identity-strict.lower": {
+  "value": -0.158,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.test-identity-strict.seeds": {
+  "value": 3,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.clip-vs-visual.test-identity-strict.upper": {
+  "value": -0.091,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.dfdc.skipped": {
+  "value": "one class in the set",
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.hifiavdf.auc_new": {
+  "value": 0.693,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.hifiavdf.auc_old": {
+  "value": 0.742,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.hifiavdf.estimate": {
+  "value": -0.049,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.hifiavdf.lower": {
+  "value": -0.065,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.hifiavdf.seeds": {
+  "value": 3,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.hifiavdf.upper": {
+  "value": -0.033,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.lavdf-test.auc_new": {
+  "value": 0.605,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.lavdf-test.auc_old": {
+  "value": 0.626,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.lavdf-test.estimate": {
+  "value": -0.02,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.lavdf-test.lower": {
+  "value": -0.031,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.lavdf-test.seeds": {
+  "value": 3,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.lavdf-test.upper": {
+  "value": -0.01,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.test-identity-strict.auc_new": {
+  "value": 0.976,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.test-identity-strict.auc_old": {
+  "value": 0.984,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.test-identity-strict.estimate": {
+  "value": -0.008,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.test-identity-strict.lower": {
+  "value": -0.02,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.test-identity-strict.seeds": {
+  "value": 3,
+  "source": "results/p001-a11/compare.json"
+ },
+ "a11.xlsr-vs-audio.test-identity-strict.upper": {
+  "value": 0.003,
+  "source": "results/p001-a11/compare.json"
+ },
  "a12.dfdc.auc.a8": {
   "value": 0.706,
   "source": "results/p001-a12/a12.json"

@@ -2476,6 +2476,51 @@ these corpora. A fusion that decides per clip which path to trust, and paths
 trained on several corpora, are part of the full run
 (Chapter~\ref{ch:future}).
 
+\section{Exploratory: Stronger Frozen Backbones (A11)}
+\label{sec:a11}
+
+Published work reports that frozen CLIP ViT-L/14 features transfer far better
+for faces, and XLS-R far better for speech, than the backbones P-001 uses. That
+evidence comes from raw files, which carry the shortcuts this study measured.
+Amendment A11 was fixed before either model existed. It trains both frozen on
+the same cleaned data, splits and seeds, and compares each with its P-001 path
+on the same clips.
+
+\begin{table}[htbp]
+    \centering
+    \caption{A11 (exploratory): new path minus P-001 path, ROC-AUC on each
+    path's own label, mean of three seeds with a 95\% identity-bootstrap
+    interval}
+    \label{tab:a11}
+    \begin{tabular}{lll}
+        \toprule
+        Set & CLIP minus visual & XLS-R minus audio \\
+        \midrule
+        FakeAVCeleb, strict & {{a11.clip-vs-visual.test-identity-strict.estimate}} [{{a11.clip-vs-visual.test-identity-strict.lower}}, {{a11.clip-vs-visual.test-identity-strict.upper}}] & {{a11.xlsr-vs-audio.test-identity-strict.estimate}} [{{a11.xlsr-vs-audio.test-identity-strict.lower}}, {{a11.xlsr-vs-audio.test-identity-strict.upper}}] \\
+        DFDC & {{a11.clip-vs-visual.dfdc.estimate}} [{{a11.clip-vs-visual.dfdc.lower}}, {{a11.clip-vs-visual.dfdc.upper}}] & one class \\
+        LAV-DF test & {{a11.clip-vs-visual.lavdf-test.estimate}} [{{a11.clip-vs-visual.lavdf-test.lower}}, {{a11.clip-vs-visual.lavdf-test.upper}}] & {{a11.xlsr-vs-audio.lavdf-test.estimate}} [{{a11.xlsr-vs-audio.lavdf-test.lower}}, {{a11.xlsr-vs-audio.lavdf-test.upper}}] \\
+        HiFi-AVDF & {{a11.clip-vs-visual.hifiavdf.estimate}} [{{a11.clip-vs-visual.hifiavdf.lower}}, {{a11.clip-vs-visual.hifiavdf.upper}}] & {{a11.xlsr-vs-audio.hifiavdf.estimate}} [{{a11.xlsr-vs-audio.hifiavdf.lower}}, {{a11.xlsr-vs-audio.hifiavdf.upper}}] \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\textbf{XLS-R.} It matches the P-001 audio path in-domain and is worse on
+LAV-DF and HiFi-AVDF, where it reaches {{a11.xlsr-vs-audio.hifiavdf.auc_new}}
+against {{a11.xlsr-vs-audio.hifiavdf.auc_old}}.
+
+\textbf{CLIP.} It falls to {{a11.clip-vs-visual.test-identity-strict.auc_new}}
+in-domain and to {{a11.clip-vs-visual.hifiavdf.auc_new}} on HiFi-AVDF. Its one
+gain, on LAV-DF, takes it to {{a11.clip-vs-visual.lavdf-test.auc_new}}: near
+chance, where the P-001 visual path is inverted
+({{a11.clip-vs-visual.lavdf-test.auc_old}}). So CLIP does not read the
+difference between LAV-DF's real and fake files that inverts the P-001 path,
+but it does not detect LAV-DF's fakes either.
+
+\textbf{Reading.} Our recipe differs from the published ones: no LayerNorm
+tuning for CLIP, and no weighted sum of XLS-R layers. A published recipe might
+do better. Under ours, the advantage measured on raw files does not survive the
+shortcut control.
+
 %
 \chapter{Limitations and Future Scope}
 \label{ch:future}
