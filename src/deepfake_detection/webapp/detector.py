@@ -38,8 +38,15 @@ class Detector:
         self._jobs: dict[str, dict] = {}
         self._done: dict[str, threading.Event] = {}
         self._lock = threading.Lock()
+        self._load_lock = threading.Lock()
         self._queue: queue.Queue[tuple[str, Path]] = queue.Queue()
         threading.Thread(target=self._work, name="detector", daemon=True).start()
+
+    def warm(self) -> None:
+        """Load the models now, so the first upload is not slow. Safe to call more than once."""
+        with self._load_lock:
+            if self._scorer is None:
+                self._scorer = self._make_scorer()
 
     def submit(self, upload: Path) -> str:
         """Queue an upload the server has already checked against the clip rules. Takes ownership of the file."""
@@ -86,8 +93,7 @@ class Detector:
             result: dict
             try:
                 workdir.mkdir(parents=True, exist_ok=True)
-                if self._scorer is None:
-                    self._scorer = self._make_scorer()
+                self.warm()
                 report = self._scorer.score(upload, workdir, progress=lambda stage, job=job: self._set(job, stage=stage))
                 result = {"status": "done", "outcome": self._outcome(report)}
             except ClipRefused as error:

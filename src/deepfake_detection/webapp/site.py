@@ -131,10 +131,13 @@ def check_clip_rules(info: dict) -> float:
 # Detector -----------------------------------------------------------------------------------------
 
 def make_scorer():
-    """The P-001 scorer. Loading takes about a minute, so it happens on the first upload, not at start."""
+    """The P-001 scorer. Loading takes about a minute: on the first upload, or at start with --preload-detector.
+
+    CPU by default, the path checked against the study's scores; DDF_SCORER_DEVICE=cuda for a faster demo.
+    """
     from deepfake_detection.webapp.scorer import Scorer
 
-    return Scorer(device="cpu")
+    return Scorer(device=os.environ.get("DDF_SCORER_DEVICE", "cpu"))
 
 
 @lru_cache(maxsize=1)

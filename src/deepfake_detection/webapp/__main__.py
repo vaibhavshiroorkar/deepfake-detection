@@ -20,7 +20,16 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Load the ensemble at start-up so the first analysis is not slow.",
     )
+    parser.add_argument(
+        "--preload-detector",
+        action="store_true",
+        help="Load the P-001 detector's models at start-up, so the first check on /check is not slow.",
+    )
     arguments = parser.parse_args(argv)
+    if arguments.preload_detector:
+        from .site import detector
+
+        detector().warm()
     registry = Registry(device=arguments.device)
     if arguments.preload:
         registry.ensemble()

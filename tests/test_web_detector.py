@@ -94,3 +94,13 @@ def test_one_job_runs_and_three_wait_then_the_detector_is_busy(tmp_path) -> None
 def test_an_unknown_job_has_no_status(tmp_path) -> None:
     detector = Detector(lambda: FakeScorer(), _calibration(), workroot=tmp_path / "work")
     assert detector.status("nope") is None
+
+
+def test_warm_loads_the_scorer_once_before_any_upload(tmp_path) -> None:
+    made = []
+    detector = Detector(lambda: made.append(1) or FakeScorer(), _calibration(), workroot=tmp_path / "work")
+    detector.warm()
+    detector.warm()
+    assert made == [1]
+    assert _finished(detector, detector.submit(_upload(tmp_path)))["status"] == "done"
+    assert made == [1]
