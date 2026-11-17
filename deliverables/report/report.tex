@@ -1965,9 +1965,10 @@ One caveat applies. The audio label on the neutral copies keeps a residual
 ceiling of {{audit.fakeavceleb.neutral.audio}}. The sync path reads audio, so
 in principle part of its misfit on cloned voices could come from audio
 properties rather than from the lips. Real-only training makes this less
-likely, because nothing in training rewards it. It does not rule it out. A
-direct test would shift or swap the audio of real clips at test time and
-check that the score moves as the mechanism predicts.
+likely, because nothing in training rewards it. It does not rule it out.
+Amendment A16 tested the mechanism directly: moving the audio of real clips
+raises the misfit, even by one frame (Section~\ref{sec:overnight}). It did not
+test cloned voices, which are new audio rather than moved audio.
 
 \section{The Weak Point: False Alarms}
 
@@ -2559,6 +2560,103 @@ tuning for CLIP, and no weighted sum of XLS-R layers. A published recipe might
 do better. Under ours, the advantage measured on raw files does not survive the
 shortcut control.
 
+\section{Exploratory: Four Gaps Checked (A15 to A19)}
+\label{sec:overnight}
+
+Four further checks were fixed as dated amendments before their results
+existed, to close gaps this report names. None changes a verdict.
+
+\subsection{The sync mechanism (A16)}
+
+On all {{a16.clips}} real FakeAVCeleb test clips we kept the lips at 0 to 2~s
+and moved only the audio, then scored the window with the frozen sync heads
+(Table~\ref{tab:a16}).
+
+\begin{table}[htbp]
+    \centering
+    \caption{A16 (exploratory): the misfit of moved audio against the original window, mean of three seeds with a 95\% identity-bootstrap interval}
+    \label{tab:a16}
+    \begin{tabular}{lll}
+        \toprule
+        \textbf{Audio} & \textbf{AUC [95\%]} & \textbf{Clips whose misfit rose} \\
+        \midrule
+        1 frame later (0.04 s) & {{a16.shift004.auc}} [{{a16.shift004.low}}, {{a16.shift004.high}}] & {{a16.shift004.rising.min}} to {{a16.shift004.rising.max}} \\
+        2 frames later (0.08 s) & {{a16.shift008.auc}} [{{a16.shift008.low}}, {{a16.shift008.high}}] & {{a16.shift008.rising.min}} to {{a16.shift008.rising.max}} \\
+        0.20 s later & {{a16.shift020.auc}} [{{a16.shift020.low}}, {{a16.shift020.high}}] & {{a16.shift020.rising.min}} to {{a16.shift020.rising.max}} \\
+        0.40 s later & {{a16.shift040.auc}} [{{a16.shift040.low}}, {{a16.shift040.high}}] & {{a16.shift040.rising.min}} to {{a16.shift040.rising.max}} \\
+        0.80 s later & {{a16.shift080.auc}} [{{a16.shift080.low}}, {{a16.shift080.high}}] & {{a16.shift080.rising.min}} to {{a16.shift080.rising.max}} \\
+        Another person's audio & {{a16.swap.auc}} [{{a16.swap.low}}, {{a16.swap.high}}] & {{a16.swap.rising.min}} to {{a16.swap.rising.max}} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The score moves with the mechanism, which passes the rule fixed in A16. Shifts
+of one and two frames are smaller than any the head saw in training, and they
+still raise the misfit, though far less. The larger shifts and the swap
+resemble the training negatives, so they confirm the trained objective on
+people the head never saw.
+
+\subsection{Which stream was faked, one direction (A15)}
+
+H3 asks whether a model can say which stream was faked, in both directions
+between FakeAVCeleb and LAV-DF. The reverse direction needs models trained on
+LAV-DF, so H3 has still not run. A15 runs FakeAVCeleb to LAV-DF. The visual
+and audio paths act as video-fake and audio-fake heads at their FakeAVCeleb
+thresholds. The baseline marks both streams fake whenever the clip is fake.
+
+The heads reach a macro-F1 of {{a15.window.heads.min}} to
+{{a15.window.heads.max}} under the window label, against
+{{a15.window.baseline}} for the baseline: a difference of
+{{a15.window.estimate}} [{{a15.window.lower}}, {{a15.window.upper}}]. The
+direction does not transfer. The video head is worse than guessing: its
+precision ({{a15.window.video.seed17.precision}} at seed 17) is below the
+share of clips whose video was edited. The audio head is precise when it fires
+but recalls only {{a15.window.audio.seed43.recall}} to
+{{a15.window.audio.seed17.recall}} of audio fakes at seeds 43 and 17. Its
+ranking is fair (Chapter~\ref{ch:h2}), so the loss is in the threshold carried
+over from FakeAVCeleb, as with the sync path in H4.
+
+\subsection{Speaker overlap (A17)}
+
+VoxCeleb2's dev and test speaker lists, checked against the published split,
+place all {{a17.sources.dev}} FakeAVCeleb source identities in VoxCeleb2 dev
+and none in test. AV-HuBERT pretrained on the English part of VoxCeleb2 dev,
+so every FakeAVCeleb speaker may have been heard by the frozen encoder. No
+unseen speaker exists in this corpus, so the effect cannot be measured here.
+LAV-DF is also built from VoxCeleb2 but has no speaker ids.
+
+\subsection{A published method on our protocol (A19)}
+
+AVH-Align~\cite{smeu2025} is the closest published method. Its released
+weights need features from a fine-tuned AV-HuBERT Large checkpoint that is not
+available to us, so the published system was not run. Instead we retrained its
+head, loss and score, changed only in input width, on the same real windows and
+frozen features as our sync path (Table~\ref{tab:a19}).
+
+\begin{table}[htbp]
+    \centering
+    \caption{A19 (exploratory): AVH-Align's method against the P-001 sync path on the same clips, mean of three seeds with 95\% identity-bootstrap intervals}
+    \label{tab:a19}
+    \begin{tabular}{lrll}
+        \toprule
+        \textbf{Set} & \textbf{Clips} & \textbf{AVH-Align [95\%]} & \textbf{Minus sync path [95\%]} \\
+        \midrule
+        FakeAVCeleb test & {{a19.test.clips|int}} & {{a19.test.auc}} [{{a19.test.low}}, {{a19.test.high}}] & {{a19.test.minus_sync.estimate}} [{{a19.test.minus_sync.lower}}, {{a19.test.minus_sync.upper}}] \\
+        FakeAVCeleb, strict & {{a19.test-identity-strict.clips|int}} & {{a19.test-identity-strict.auc}} [{{a19.test-identity-strict.low}}, {{a19.test-identity-strict.high}}] & {{a19.test-identity-strict.minus_sync.estimate}} [{{a19.test-identity-strict.minus_sync.lower}}, {{a19.test-identity-strict.minus_sync.upper}}] \\
+        LAV-DF, file label & {{a19.lavdf-test.clips|int}} & {{a19.lavdf-test.auc}} [{{a19.lavdf-test.low}}, {{a19.lavdf-test.high}}] & {{a19.lavdf-test.minus_sync.estimate}} [{{a19.lavdf-test.minus_sync.lower}}, {{a19.lavdf-test.minus_sync.upper}}] \\
+        LAV-DF, window label & {{a19.lavdf-window.clips|int}} & {{a19.lavdf-window.auc}} [{{a19.lavdf-window.low}}, {{a19.lavdf-window.high}}] & {{a19.lavdf-window.minus_sync.estimate}} [{{a19.lavdf-window.minus_sync.lower}}, {{a19.lavdf-window.minus_sync.upper}}] \\
+        DFDC & {{a19.dfdc.clips|int}} & {{a19.dfdc.auc}} [{{a19.dfdc.low}}, {{a19.dfdc.high}}] & {{a19.dfdc.minus_sync.estimate}} [{{a19.dfdc.minus_sync.lower}}, {{a19.dfdc.minus_sync.upper}}] \\
+        HiFi-AVDF & {{a19.hifiavdf.clips|int}} & {{a19.hifiavdf.auc}} [{{a19.hifiavdf.low}}, {{a19.hifiavdf.high}}] & {{a19.hifiavdf.minus_sync.estimate}} [{{a19.hifiavdf.minus_sync.lower}}, {{a19.hifiavdf.minus_sync.upper}}] \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+It does not beat the sync path on any set: it is worse on four and level on
+two. On DFDC and HiFi-AVDF it is near chance. A different real-only alignment
+head does not fix transfer. This compares two heads on our features and data,
+not the published system, which was trained on 45,000 real AV-Deepfake1M
+videos.
+
 %
 \chapter{Limitations and Future Scope}
 \label{ch:future}
@@ -2610,14 +2708,16 @@ clips.
 
 \subsection{Parts of the study that have not run}
 
-Two parts of the preregistered study have not run in this version, and the
+Two parts of the preregistered study are incomplete in this version, and the
 secondary fusion model was dropped for the deadline window (amendment A8):
 
 \begin{itemize}
-    \item \textbf{Modality prediction (H3).} The test of whether a model can
-    say which stream was faked, across FakeAVCeleb and LAV-DF, has not run.
-    \item \textbf{Baselines.} AVH-Align~\cite{smeu2025} and
-    HAVIC~\cite{havic} have not been run on our protocol. HAVIC's released
+    \item \textbf{Modality prediction (H3).} Only the direction from
+    FakeAVCeleb to LAV-DF has run, as exploratory amendment A15, and it does
+    not transfer. The reverse needs models trained on LAV-DF.
+    \item \textbf{Baselines.} AVH-Align's method has run on our protocol
+    (A19), but not its published system. HAVIC~\cite{havic} has not been
+    run. HAVIC's released
     weights can be scored on HiFi-AVDF, DFDC and LAV-DF. They cannot be scored
     fairly on our FakeAVCeleb test, because HAVIC was fine-tuned on a random,
     ungrouped FakeAVCeleb split and has almost certainly seen our test
@@ -2626,10 +2726,12 @@ secondary fusion model was dropped for the deadline window (amendment A8):
 
 \subsection{Speaker overlap with AV-HuBERT pretraining}
 
-AV-HuBERT was pretrained on LRS3 and VoxCeleb2. FakeAVCeleb and LAV-DF draw on
-similar sources. Some of the sync path's signal on these corpora may come from
-the encoder having heard these speakers before. We have not yet checked the
-pretraining lists against our test speakers.
+AV-HuBERT was pretrained on LRS3 and VoxCeleb2. Amendment A17 found every
+FakeAVCeleb speaker in VoxCeleb2 dev, the part used for pretraining, and none
+in VoxCeleb2 test. LAV-DF is also built from VoxCeleb2 but has no speaker ids.
+Some of the sync path's signal may come from the encoder having heard these
+speakers before. With no unseen speaker in FakeAVCeleb, its size cannot be
+measured here.
 
 \subsection{Too few real clips in DFDC for H4}
 
@@ -2664,7 +2766,8 @@ order:
     \item Run the StreamFusion model, the secondary fusion, against the
     logistic fusion of H2.
     \item Train the reverse models on LAV-DF and run H3 in both directions.
-    \item Run the AVH-Align and HAVIC baselines on our protocol.
+    \item Run HAVIC, and AVH-Align's published system with fine-tuned
+    AV-HuBERT Large features, on our protocol.
     \item Add AV-Deepfake1M and KoDF if access arrives. Both were requested,
     along with AV-Deepfake1M++ and DeepSpeak v2.
     \item Write the full paper.
@@ -2675,11 +2778,10 @@ frozen sync models, neutral copies and splits. When new results arrive, the
 deliverables are rebuilt from the larger result file, so no result is copied
 by hand.
 
-Two further checks would close open objections. One is to measure the cost of
-neutralization on LAV-DF: train and test on raw files, then on neutral files,
-where the codec does not follow the label. The other is to test the sync
-mechanism directly, by shifting or swapping the audio of real clips at test
-time and checking that the score moves.
+One further check would close an open objection: measure the cost of
+neutralization on LAV-DF, by training and testing on raw files, then on
+neutral files, where the codec does not follow the label. The direct test of
+the sync mechanism has run (A16).
 
 %
 \chapter{Conclusion}
