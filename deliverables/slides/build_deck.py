@@ -161,8 +161,8 @@ def build(draft: bool) -> int:
                   "generative model. A face can be swapped or its mouth redrawn, a voice can be cloned, and in the hardest "
                   "cases both are faked so that the lips still follow the words. Detectors that read both the picture and "
                   "the sound score close to perfect on their own benchmark datasets, partly because the fake files were "
-                  "saved differently from the real ones. Every platform re-encodes what you upload, which wipes those file "
-                  "clues out. So the question is what still works after an upload.")
+                  "saved differently from the real ones. Most platforms re-encode what you upload, which would wipe most of those "
+                  "file clues out. So the question is what still works after an upload.")
         headline(s, "Platforms re-encode every upload. What still works after that?")
         box_h = 2500000
         for k, (head, text, fill) in enumerate([("Face", "swapped, or the mouth redrawn", F_FACE),

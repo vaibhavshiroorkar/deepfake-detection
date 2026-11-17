@@ -13,8 +13,7 @@
 % Every measured number is a double-brace placeholder, filled from
 % results/numbers.json by scripts/fill_numbers.py. The keys are listed in
 % deliverables/NUMBER_KEYS.md. Compile the filled copy, not this source.
-% The pct style prints a bare percent sign, which LaTeX reads as a comment,
-% so this file never uses it.
+% The pct style prints an escaped percent sign, so it is safe in LaTeX.
 
 \begin{document}
 
@@ -50,18 +49,17 @@ tejashree@somaiya.edu}
 
 \begin{abstract}
 Audio-visual deepfake detectors score close to perfect on their benchmarks and
-fail on video from elsewhere. Part of the reason is that benchmark labels leak
-through the files. In FakeAVCeleb, real clips are H.264 with AAC audio, cloned
-voices are stored as MP3, and most face swaps as MPEG-4. A classifier that
+fail elsewhere, partly because benchmark labels leak through the files. In FakeAVCeleb, real clips are H.264 with AAC audio, cloned voices over real
+video are stored as MP3, and most face swaps as MPEG-4. A classifier that
 reads only file metadata and the silence at each end of the audio predicts the
 label at {{audit.fakeavceleb.raw.clip}} AUC, and at {{audit.hifiavdf.raw.clip}}
-on HiFi-AVDF, made with six commercial video generators.
-Social platforms re-encode every upload, which wipes out exactly these clues.
-So we clean every clip the way an upload would: one codec, three seconds from
+on HiFi-AVDF.
+Most platforms re-encode uploads,
+which would wipe out most of these clues, so we clean every clip the way an upload would: one codec, three seconds from
 the first sound, one loudness level, dither. Cleaning lowers the
 FakeAVCeleb file-clue score to {{audit.fakeavceleb.neutral.clip}}, still above
-our preregistered bar of 0.60, and a fixed bitrate does not close the gap. We
-then measure what survives. A lip-sync check trained on real videos only
+our preregistered bar of 0.60, and a fixed bitrate does not close the gap. A lip-sync
+check trained on real videos only
 scores {{sync.test.seed17.auc}} to {{sync.test.seed29.auc}} after cleaning. It
 catches cloned voices best and plain face swaps least, and its score rises
 when the audio of a real clip is moved. On three corpora it never saw, it
@@ -69,9 +67,10 @@ falls to {{sync.dfdc.seed17.auc}} to {{sync.lavdf-window.seed29.auc}}. A
 threshold set from 200 real clips of a new corpus brings false alarms on
 HiFi-AVDF from between {{h4.hifiavdf-seed43.source_validation.fpr}} and
 {{h4.hifiavdf-seed17.source_validation.fpr}} to near 0.05, but then catches
-few fakes. Combining face, voice and lip-sync checks passes its preregistered
-test only through fakes the face check cannot see, and no fixed combination
-transfers between corpora.
+few fakes. Combining face, voice and lip-sync checks passes its preregistered test, but
+only through fakes the face check cannot see and, on LAV-DF, over a face
+check that ranks fakes below chance; no fixed combination transfers between
+corpora.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -83,15 +82,15 @@ false-alarm control, preregistration.
 
 Open a real clip from FakeAVCeleb~\cite{fakeavceleb}, the most used
 audio-visual deepfake benchmark, and its video is H.264 with AAC audio. Open a
-clip with a cloned voice and the audio is MP3. Open a face swap and the video
+clip with a cloned voice over real video and the audio is MP3. Open a face swap and the video
 is, nine times in ten, MPEG-4. A model never needs to look at a face to tell
 them apart. A gradient-boosted classifier given only file metadata and the
 silence at each end of the audio scores {{audit.fakeavceleb.raw.clip}} AUC.
 
 That number matters because of what happens to a video on its way to a
-viewer. Messaging apps and social platforms re-encode it, trim it and change
-its loudness. Every clue the classifier above relies on is gone after the
-upload. A detector that learned those clues scores near perfect on the
+viewer. Messaging apps and social platforms usually re-encode it, and many trim it or
+change its loudness. Most of the clues the classifier above relies on would
+not survive that. A detector that learned those clues scores near perfect on the
 benchmark and then meets videos where the clues do not exist. Its benchmark score alone cannot show
 whether it learned the fake or the file.
 
@@ -145,9 +144,13 @@ The audit reads each clip's container and stream metadata and the edges of its
 audio track, and nothing else: video and audio codec, bitrates, frame size,
 frame rate, sample rate, duration, digital silence at the start and the end,
 and loudness. Gradient-boosted trees given all of these are scored out of fold
-over five folds grouped by person. We call that score the file-clue score of a
+over five folds grouped by person (by real and generated pair on HiFi-AVDF;
+LAV-DF is audited per file). We call that score the file-clue score of a
 corpus. A detector on that corpus has to beat it, not 0.5, before its result
-can be credited to the content. We compute it for three labels: real or fake,
+can be credited to the content. We audit all of FakeAVCeleb, a sample of {{audit.lavdf.raw.clips|int}}
+LAV-DF files, a {{audit.dfdc.raw.clips|int}}-clip DFDC subset and all
+{{audit.hifiavdf.raw.clips|int}} HiFi-AVDF clips. We compute it for three
+labels: real or fake,
 fake video, and fake audio.
 
 \subsection{Cleaning as a simulated upload}
@@ -245,8 +248,8 @@ from 1,000 bootstrap resamples of people, not clips.
 \textit{Preregistered tests.} Four tests were written down with their pass
 marks before any model was trained on cleaned data (Table~\ref{tab:tests}).
 Every later change to the plan was dated and written down before the run it
-affected; the Appendix lists them. Checks added after a result was read are
-called exploratory and change no verdict.
+affected; the Appendix lists them. Checks outside the original plan are called exploratory and change no
+verdict.
 
 \begin{table}[htbp]
 \caption{The four preregistered tests and their outcomes}
@@ -259,8 +262,10 @@ Test & Pass mark & Outcome \\
 \midrule
 H1 & File-clue score after cleaning at most 0.60 & Not met \\
 H2 & Combining checks beats the face check on 2 of 3 corpora, after Holm & Holds \\
-H3 & Saying which stream was faked transfers both ways between corpora & One way only \\
-H4 & Real-only threshold keeps false alarms at most 0.07 on every corpus & Met \\
+H3 & Saying which stream was faked transfers both ways between corpora & Not run; one
+way exploratory, did not transfer \\
+H4 & Real-only threshold keeps false alarms at most 0.07 on every corpus & Met (DFDC too
+small to test) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -308,7 +313,7 @@ Fake video, fake audio & {{audit.fakeavceleb.raw.census.FakeVideo-FakeAudio.clip
 
 Table~\ref{tab:ceiling} gives the file-clue scores. The FakeAVCeleb label can
 be read from its files (Table~\ref{tab:census}): every real clip is H.264 with
-AAC, cloned speech is almost all MP3, and most face swaps and every clip with
+AAC, cloned speech over real video is almost all MP3, and most face swaps and every clip with
 both streams faked are MPEG-4 Part~2. Clips with generated audio also start and
 end with digital silence, while real clips start with room noise. To our
 knowledge, neither the MP3 track nor the per-category codec split has been
@@ -319,9 +324,11 @@ generator writes its files its own way. Real clips share one frame size and
 five of the six generators write another; Sora~2 and Veo~3.1 write every clip
 at one fixed length; Seedance writes at a much higher bitrate; Kling and
 Seedance start with digital silence. LAV-DF has no codec clue, since every
-category is H.264 with AAC, but weak clues add up: audio bitrate, trailing
-silence and duration. DFDC is close to clean on these clues, which may be one
-reason detectors trained on FakeAVCeleb fall to chance there.
+category is H.264 with AAC, but weak clues add up: audio bitrate, trailing silence and duration. Cleaning
+fixes the first two. On whole files duration would still leak, because
+LAV-DF's edits change a file's length; our checks read fixed windows and
+never see it. DFDC is close to clean on these clues, which may be one
+reason detectors trained on FakeAVCeleb fall toward chance there.
 
 \subsection{What cleaning leaves}
 \label{sec:left}
@@ -649,11 +656,13 @@ HiFi-AVDF & {{a12.hifiavdf.auc.visual}} & {{a12.hifiavdf.auc.audio}} & {{a12.hif
 \end{table*}
 
 The face and voice checks score near perfect on their own labels at home
-(Table~\ref{tab:branches}). H2 asks whether combining all three beats the face
-check alone on new data, on the real-or-fake label, as the mean over seeds with
+(Table~\ref{tab:branches}). H2 asks whether combining all three beats the face check alone on the identity-strict FakeAVCeleb test, DFDC and
+LAV-DF, on the real-or-fake label, as the mean over seeds with
 one shared bootstrap of people and a Holm correction over three corpora. It
 holds by that rule: FakeAVCeleb and LAV-DF survive the correction and DFDC does
-not (Table~\ref{tab:h2}, Fig.~\ref{fig:h2}).
+not (Table~\ref{tab:h2}, Fig.~\ref{fig:h2}). The seed-17 weights on the
+standardized logits are {{h2.weights.seed17.visual}} (face),
+{{h2.weights.seed17.audio}} (voice) and {{h2.weights.seed17.sync}} (lip sync).
 
 The result is weaker than the verdict sounds, and checks run after it show
 why (Table~\ref{tab:h2levels}). On FakeAVCeleb the whole gain comes from
@@ -675,8 +684,12 @@ AUC in Table~\ref{tab:h2levels} is higher, though still below chance, because
 the window label counts as real the clips cut from fake files with no edit in
 the window, and the check scores those as low as the fakes. The combination
 beats this reversed check but trails the voice and lip-sync checks alone. On
-DFDC every clip has real audio and combining adds nothing. HiFi-AVDF, outside
-the test, repeats the LAV-DF pattern.
+DFDC every clip has real audio and combining adds nothing. On HiFi-AVDF,
+outside the test, combining gains {{h2.hifiavdf.estimate}} over a face check
+near chance but trails the voice check alone. The weights also move with the
+seed: the voice weight is {{h2.weights.seed17.audio}},
+{{h2.weights.seed29.audio}} and {{h2.weights.seed43.audio}} for seeds 17, 29
+and 43.
 
 Is the problem that the weights were fit on FakeAVCeleb? We refit the same
 combination on the other two corpora, and an upper bound on each corpus's own
@@ -758,7 +771,9 @@ face and voice checks reach a macro-F1 of {{a15.window.heads.min}} to
 {{a15.window.heads.max}} on LAV-DF, against {{a15.window.baseline}} for a
 predictor that marks both streams fake whenever the clip is fake: a difference
 of {{a15.window.estimate}} [{{a15.window.lower}}, {{a15.window.upper}}]. The
-face head does worse than guessing; the voice head is precise when it fires
+face head does worse than guessing: its precision
+({{a15.window.video.seed17.precision}} at seed 17) is below the share of
+edited videos; the voice head is precise when it fires
 but, at its training threshold, finds only {{a15.window.audio.seed43.recall}} to
 {{a15.window.audio.seed17.recall}} of audio fakes.
 
@@ -812,10 +827,14 @@ audio-visual video detector moved across corpora.
 Benchmark scores near 0.99 sit right at what file details alone give, so they
 cannot show that a detector sees the fake. Once uploads are simulated, a
 detector trained on one corpus keeps a real but modest signal and loses most of
-it on new data. The lip-sync check is the part that survives best at home and
-the part that fails most clearly on modern generators, which make lips and
-voice together. We read that as a limit of the lip-mismatch idea, not only of
+it on new data. The lip-sync check beats the cleaned file clues without ever seeing a fake,
+yet on Sora~2, whose tool makes lips and voice together, it falls below
+chance. We read that as a limit of the lip-mismatch idea, not only of
 our model.
+
+\textit{A simulated upload, not a real one.} Our cleaning imitates what an
+upload does to a file. We did not pass clips through a real platform, whose
+pipeline may keep some clues (our own cleaning keeps bitrate) or remove more.
 
 \textit{H1 missed its bar.} The cleaned FakeAVCeleb score is
 {{audit.fakeavceleb.neutral.clip}} against a preregistered 0.60, and a fixed
@@ -857,9 +876,10 @@ and cleaning the files as an upload would brings that down to
 modest. A lip-sync check trained on real videos reads real lip and voice
 agreement and beats the cleaned files at home, but falls to between
 {{sync.dfdc.seed17.auc}} and {{sync.lavdf-window.seed29.auc}} on corpora it
-never saw. Real clips from a new source can hold its false alarms near the
-target, not its catch rate, and no fixed combination of face, voice and lip-sync
-checks transfers between corpora. We suggest reporting every audio-visual
+never saw. Real clips from a new source can hold its false alarms near the target, not
+its catch rate. Combining face, voice and lip-sync checks passes its test only
+through fakes the face check cannot see and a face check that LAV-DF reverses,
+and no fixed combination transfers between corpora. We suggest reporting every audio-visual
 benchmark result beside the file-clue score of the same data, and testing
 detectors on files that have been through an upload.
 
@@ -869,8 +889,11 @@ detectors on files that have been through an upload.
 
 The plan (P-001) was registered on 2026-11-13, before any model was trained
 or scored on cleaned data. Each change below was dated and committed before
-the run it affected. ``Read'' marks a change made after a related result was
-seen; those runs are exploratory unless the change only added a label.
+the run it affected. ``Read'' marks a change made after a related result was seen. The changes
+marked exploratory produce exploratory results. A4 (the final cleaning, after
+the first failed H1) and A10 (the DFDC face fix) set the method of
+preregistered runs that had not yet happened, as P-001 requires; A9 adds a
+second LAV-DF label beside the first.
 
 \begin{table}[htbp]
 \caption{Changes to the preregistered plan}

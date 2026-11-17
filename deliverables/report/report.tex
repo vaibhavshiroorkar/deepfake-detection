@@ -642,7 +642,8 @@ and fail on video from anywhere else. This report asks why, and what still
 works once that reason is removed.
 
 Part of the answer is in the files. In FakeAVCeleb, the most used benchmark,
-every real clip is H.264 video with AAC audio, cloned voices are stored as MP3,
+every real clip is H.264 video with AAC audio, cloned voices over real video
+are stored as MP3,
 and most face swaps as MPEG-4. A classifier that never sees a face or hears a
 voice, and reads only file details and the silence at each end of the audio,
 predicts real or fake at an AUC of {{audit.fakeavceleb.raw.clip}}. HiFi-AVDF,
@@ -650,8 +651,8 @@ made with six commercial video generators, reaches {{audit.hifiavdf.raw.clip}}
 from export settings alone. LAV-DF reaches {{audit.lavdf.raw.clip}} from weak
 clues added together, and DFDC {{audit.dfdc.raw.clip}}.
 
-Social platforms re-encode, trim and level every video that is uploaded, and
-that wipes out exactly these clues. So we clean every clip the way an upload
+Most social platforms re-encode uploads, and many trim them or level their
+loudness, which would wipe out most of these clues. So we clean every clip the way an upload
 would: one codec, three seconds from the first sound, one loudness level and a
 little dither. Our first cleaning step put a clue back through hidden AAC
 padding ({{audit.fakeavceleb.v1.clip}}). The final one lowers the FakeAVCeleb
@@ -669,8 +670,9 @@ corpus brings false alarms on HiFi-AVDF from between
 {{h4.hifiavdf-seed43.source_validation.fpr}} and
 {{h4.hifiavdf-seed17.source_validation.fpr}} down to near 0.05, but then
 catches few fakes. Combining face, voice and lip-sync checks passes its
-preregistered test only through fakes the face check cannot see, and no fixed
-combination transfers between corpora. All four tests were written down
+preregistered test, but only through fakes the face check cannot see and, on
+LAV-DF, over a face check that ranks fakes below chance. No fixed combination
+transfers between corpora. All four tests were written down
 before the runs, and every number here is filled in from a committed result
 file.
 
@@ -779,14 +781,14 @@ else they often fall to chance. Our own earlier models did the same
 
 Here is one reason. Open a real clip from FakeAVCeleb~\cite{fakeavceleb}, the
 most used audio-visual benchmark, and it is H.264 video with AAC audio. Open a
-clip with a cloned voice and the audio is MP3. Open a face swap and the video
+clip with a cloned voice over real video and the audio is MP3. Open a face swap and the video
 is, nine times in ten, MPEG-4. A model never needs to look at a face to tell
 them apart. Geirhos et al.\ call this shortcut learning~\cite{shortcut}: the
 model learns a clue that happens to follow the label instead of the thing the
 label is about.
 
 That clue does not survive the trip to a viewer. Messaging apps and social
-platforms re-encode every upload, trim it and change its loudness. A detector
+platforms usually re-encode an upload, and many trim it or change its loudness. A detector
 that learned the file scores near perfect on the benchmark and then meets
 videos in which the clue no longer exists. Its benchmark score alone cannot show
 whether it learned the fake or the file.
@@ -916,9 +918,9 @@ compared directly to measure sync.
 \subsection{What these papers have in common}
 
 Reproducible baselines with official code and weights exist for AVH-Align,
-HAVIC, RealForensics, LipForensics, AVAD and SpeechForensics. We have not run
-any of them on our protocol yet. Chapter~\ref{ch:future} lists this as a
-limitation. A fair comparison needs the baseline run on the same neutral data,
+HAVIC, RealForensics, LipForensics, AVAD and SpeechForensics. Of these, only AVH-Align's method has run on our protocol, retrained on
+our data (Section~\ref{sec:r-further}); Chapter~\ref{ch:future} lists the
+rest as a limitation. A fair comparison needs the baseline run on the same neutral data,
 not a number quoted from its paper.
 
 \section{Dataset Shortcuts}
@@ -987,8 +989,8 @@ learning, because a unimodal feature is pushed toward a label that belongs to
 the other modality. Its evidence is in-dataset only.
 
 No paper we found reports transfer of modality prediction between FakeAVCeleb
-and LAV-DF, or does it under shortcut control. We planned this test as H3. It
-has not run in this version.
+and LAV-DF, or does it under shortcut control. We planned this test as H3. Only one direction has run in this version, as
+an exploratory check (Section~\ref{sec:r-further}).
 
 \section{Controlling False Alarms}
 
@@ -1456,8 +1458,8 @@ Every choice below was fixed on 16 November, before any face or voice checkpoint
 
 In the study, the answer is a yes or no at one of the thresholds above, and
 every result is reported as a ranking measure (AUC) as well, which needs no
-threshold. The demonstration website turns the same scores into three answers
-for a visitor: signs of manipulation, can't tell, or no signs. It compares a
+threshold. The demonstration website turns the same scores into four answers for a
+visitor: signs of manipulation, can't tell, no signs, or can't check (when none of the three checks can run on the clip). It compares a
 clip's scores with the scores of real clips pooled from all four corpora. It
 is a demonstration of the method, not part of the evaluation.
 
@@ -1600,7 +1602,7 @@ existed. Table~\ref{tab:hypotheses} lists the four tests.
         \midrule
         H1 & Shortcut ceiling on neutral copies, clip label, all cues, grouped five-fold & AUC at most 0.60 on each training corpus & Run; not met \\
         H2 & Fusion minus visual-only ROC-AUC, paired, mean of three seeds & Holm-corrected one-sided $p$ below 0.05 on at least two of DFDC, LAV-DF test and FakeAVCeleb strict test (amendment A8) & Holds by its rule; see Section~\ref{sec:r-combine} \\
-        H3 & Manipulated-modality macro-F1, trained on FakeAVCeleb and tested on LAV-DF, and the reverse & Both directions above the clip-label baseline & Not run \\
+        H3 & Manipulated-modality macro-F1, trained on FakeAVCeleb and tested on LAV-DF, and the reverse & Both directions above the clip-label baseline & Not run; one direction run as an exploratory check, which did not transfer \\
         H4 & Realized FPR with a real-only conformal threshold, $\alpha = 0.05$, $n_{\mathrm{cal}} = 200$ real target clips & FPR at most 0.07 on every target & Met on HiFi-AVDF and LAV-DF (file label) in every seed; DFDC too small; see Section~\ref{sec:r-h4} \\
         \bottomrule
     \end{tabularx}
@@ -1751,7 +1753,7 @@ the video codec. The strongest single cue for the audio label is the length of
 the leading silence.
 
 Table~\ref{tab:census-fakeavceleb} shows why. Every real clip is H.264 video
-with AAC audio. Almost every cloned-voice clip stores its audio as MP3. Most
+with AAC audio. Almost every cloned-voice clip with real video stores its audio as MP3. Most
 FakeVideo-RealAudio clips, and every FakeVideo-FakeAudio clip, use MPEG-4 Part 2
 video. A detector trained on these files can learn the encoder instead of the
 face. Two of these cues have not been reported for this dataset before: the MP3
@@ -2181,8 +2183,7 @@ uses the test sample. The two populations overlap but are not identical.
 \subsection{Sync Path Across Corpora}
 
 Table~\ref{tab:cross-corpus} gives the frozen sync path's results on each
-target, for each seed. Figure~\ref{fig:cross-corpus} plots the AUC per target,
-with HiFi-AVDF also split by generator.
+target, for each seed. Figure~\ref{fig:cross-corpus} plots the AUC per target.
 
 \begin{table}[ht]
     \centering
@@ -2215,7 +2216,7 @@ with HiFi-AVDF also split by generator.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.9\textwidth,keepaspectratio]{fig_cross_corpus.png}
-    \caption{Frozen sync path AUC per target corpus and per HiFi-AVDF generator, three seeds.}
+    \caption{Frozen sync path AUC per target corpus, three seeds.}
     \label{fig:cross-corpus}
 \end{figure}
 
@@ -2679,20 +2680,19 @@ their own they cannot show that a detector sees the fake. Once uploads are
 simulated, a detector trained on one corpus keeps a real but modest signal,
 and loses most of it on new data.
 
-The lip-sync check shows both sides of this. It is the part that survives
-cleaning best at home: it beats the cleaned file clues, and it reacts to audio
-moved by a single frame. It is also the part that fails most clearly on modern
-generators. Tools such as Sora~2 and Veo~3.1 make picture and sound together,
-so their lips and voice already agree. We read that as a limit of the
+The lip-sync check shows both sides of this. It beats the cleaned file clues without ever
+seeing a fake, and it reacts to audio moved by a single frame. Yet on Sora~2
+it falls below chance and on Veo~3.1 it sits near it: these tools make
+picture and sound together, so their lips and voice already agree. We read that as a limit of the
 lip-mismatch idea, not only of our model.
 
 The threshold result is the most practical one. A platform cannot label the
 fakes in its own traffic, but it has plenty of real videos. Two hundred of
-them were enough to put false alarms back near the target on both corpora we
-could test. They could not make the detector catch more fakes.
+them were enough to put false alarms back near the target on both corpora we could test, under the labels fixed in advance. They could not make the detector catch more fakes.
 
 The combination result is a warning about reading one verdict. H2 passed by
-its rule, yet the gain came from fakes the face check was never meant to see,
+its rule, yet the gain came from fakes the face check was never meant to see and,
+on LAV-DF, from a face check that ranks fakes below chance,
 and no fixed weighting of the three checks transferred between corpora.
 
 \section{Limitations}
@@ -2776,6 +2776,10 @@ LAV-DF and HiFi-AVDF only.
 \subsection{Other limits}
 
 \begin{itemize}
+    \item \textbf{A simulated upload, not a real one.} Our cleaning imitates
+    what an upload does to a file. We did not pass clips through a real
+    platform, whose pipeline may keep some clues (our own cleaning keeps
+    bitrate) or remove more.
     \item \textbf{Neutralization may remove real evidence.} Re-encoding can
     blur fine blending artifacts, and cutting edge silence can remove a real
     generator trace. We have not yet measured what neutralization costs a
