@@ -36,6 +36,12 @@ MIN_SECONDS, MAX_SECONDS = 3.0, 60.0
 EXTENSIONS = {".mp4", ".mov", ".webm"}
 CONTACT_LIMIT = 5                    # messages per address per hour
 UPLOAD_LIMIT = 10                    # uploads per address per hour
+
+
+def upload_limit() -> int:
+    """Uploads per address per hour. DDF_UPLOAD_LIMIT raises it for a private demo, where every request can
+    arrive through one local proxy and so share one address."""
+    return int(os.environ.get("DDF_UPLOAD_LIMIT", UPLOAD_LIMIT))
 CALIBRATION = PROJECT_ROOT / "results" / "web-calibration.json"
 RESEND_URL = "https://api.resend.com/emails"
 
@@ -232,7 +238,7 @@ def send_contact(name: str, email: str, message: str) -> None:
 def register(app: FastAPI) -> None:
     env = _environment()
     contact_limit = RateLimiter(CONTACT_LIMIT)
-    upload_limit = RateLimiter(UPLOAD_LIMIT)
+    uploads = RateLimiter(upload_limit())
 
     @app.middleware("http")
     async def revalidate_html(request: Request, call_next):
@@ -260,7 +266,7 @@ def register(app: FastAPI) -> None:
     @app.post("/api/check")
     async def check(request: Request, file: UploadFile = File(...)) -> JSONResponse:
         client = request.client.host if request.client else "unknown"
-        if not upload_limit.allow(client):
+        if not uploads.allow(client):
             return JSONResponse({"status": "rejected", "reason": "Too many videos from here. Try again in an hour."},
                                 status_code=429)
         suffix = Path(file.filename or "").suffix.lower()

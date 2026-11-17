@@ -169,3 +169,10 @@ def test_present_names_every_raised_check_in_plain_english():
     assert two["summary"].startswith("The face and lip-sync checks scored")
     one = site.present({"kind": "signs", "raised": ["voice"], "checks": checks, "trace": {}})
     assert one["summary"].startswith("The voice check scored")
+
+
+def test_the_upload_limit_can_be_raised_for_a_private_demo(monkeypatch):
+    monkeypatch.setenv("DDF_UPLOAD_LIMIT", "500")
+    assert site.upload_limit() == 500
+    monkeypatch.delenv("DDF_UPLOAD_LIMIT")
+    assert site.upload_limit() == site.UPLOAD_LIMIT
