@@ -5,39 +5,27 @@ The reasons behind each item are in the [project log](PROJECT-LOG.md). The rules
 
 ## 0. Exhibition on 20 November (priorities set by the college, 11-17)
 
-Internal and external examiners sit together. First priority: a live demonstration of the working project. Second: the PPT in the college's 13-slide structure. Third: the guide-approved report and its printout. Fourth: the certificate on bond paper for the external examiner's signature. The White Book can follow later.
+Internal and external examiners sit together. First priority: a live demonstration of the working project. Second: the PPT in the college's structure. Third: the guide-approved report and its printout. Fourth: the certificate on bond paper for the external examiner's signature. The White Book can follow later.
 
-**Claude, in this order:**
+The demo, the PPT, the overnight checks and `docs/SECURITY.md` are done and merged into `main` (changelog). The demo runs from the home PC and is opened on the laptop through Tailscale (decided by Vaibhav 11-17).
 
-1. **The live demo** (first priority). The website detector already works end to end on this PC (checked 11-17).
-   - One command that starts the site and loads the models at start, so the first check is not slow, and works offline.
-   - A demo clip set: real clips and one fake per FakeAVCeleb method, plus HiFi-AVDF examples, re-encoded to H.264 so browsers play them, for local use only (not published). Each clip run once beforehand, so the outcome on the day is known.
-   - `docs/DEMO.md`: the steps, what to say at each step, timings, and what to do if something fails.
-   - A fallback: a screen recording of a full demo run and screenshots, in case the PC fails on the day.
-   - Fix the drop zone's focus ring, clipped at phone width.
-2. **The PPT in the college structure**, on a branch for review: 1 Title; 2 Introduction; 3 Need (statistics and news with sources); 4 Literature review; 5 to 7 Methodology (hardware and software, the pipeline flowchart, experimental details); 8 and 9 Results with images and graphs; 10 Discussion and future scope; 11 Conclusions; 12 Awards, publications and copyright (none yet; state the planned paper); 13 Bibliography. The current slides become backup.
-3. **Overnight results** (A15 to A19, A18 still running): their notes wait on branch `overnight-notes`.
-4. `docs/SECURITY.md`, short, since the demo takes uploads.
+**Claude:**
+
+- On request: answer Overleaf compile errors; adjust slides or the demo after Vaibhav's review and rehearsal.
+- Small: the drop zone's focus ring is clipped at the right edge at phone width.
 
 **Deferred until after the 20th:** before any public hosting, the hardening listed in `docs/SECURITY.md` (time and memory limits on every FFmpeg call, an allowlist unpickler for AV-HuBERT, an admin review, uploads in a container); the Docker image and Hugging Face Space, the admin carry-over, retiring the old in-browser demo, renaming the Streamlit dashboard, the deep wording pass and the comparison tables (unless time is left on the 19th).
 
-**Vaibhav:**
+**Vaibhav, the 18th:**
 
-1. **Decide the demo machine** by the 18th: this PC, or a laptop. A laptop needs the repository, the models (about 5 GB) and the Python environment; I write the setup steps if so.
-2. Approve the "Need" slide's statistics and news items.
-3. Say whether there is anything for slide 12 (awards, publications, copyright). Nothing is known so far.
-4. Compile `report.zip` and `paper.zip` on Overleaf; get the report approved by the guide; print it; spiral-bind one copy if the guide verifies it.
-5. Print the report's certificate page on bond paper, after checking its names, and get the external examiner's signature on the 20th.
-6. Practise the demo once on the 19th with `docs/DEMO.md`, and the talk once with the speaker notes.
+1. Set up the demo once (`docs/DEMO.md`): Tailscale on the PC and the laptop with one account; the PC never sleeps and Windows Update is paused for a week; the 7 demo clips copied to the laptop (`data/demo/upload` and `data/demo/watch`); one test from outside the house.
+2. Check the rebuilt deliverables: the PPT (`deliverables/build/Deepfake_Detection_Presentation.pdf`), the overnight results in the paper and report, and the "Need" slide's four sourced figures.
+3. Compile `report.zip` and `paper.zip` on Overleaf; get the report approved by the guide; print it; spiral-bind one copy if the guide verifies it.
+4. Check the names on the report's certificate page and print it on bond paper.
 
-## 1. Running now
+**Vaibhav, the 19th:** rehearse the demo once with `docs/DEMO.md`, and the talk once with the speaker notes.
 
-## 2. Overnight 11-17 to 11-18: amendments A15 to A19, exploratory (Claude)
-
-Chosen by Vaibhav on 11-17 at 20:20, to run while he sleeps. Restore point: tag `pre-overnight`. Stop rule: 18 November, 08:00; whatever has not finished is recorded as unfinished, not rushed. Each check is fixed in P-001 before its result exists, and H1 to H4 keep their verdicts. A15, A16, A17 and A19 are done (changelog). Their paper and report notes wait on branch `overnight-notes` for Vaibhav's review; main is unchanged.
-
-- A18: H1 again with a fixed video bitrate instead of fixed quality. Running detached (`runs/p001-a18.sh`, log `runs/p001-a18.log`); audit expected around 01:00. Then its README, its paragraph on branch `overnight-notes`, and a rebuild.
-- Then: the slide and poster notes on `overnight-notes`, rebuilt deliverables, and a morning summary for Vaibhav in the session chat.
+**Vaibhav, the 20th:** before leaving home run `scripts/demo_host.ps1 -Action start` and `-Action status`, and note the address; carry the report printout, the spiral-bound copy, the certificate and the laptop; get the external examiner's signature.
 
 ## 2b. P-002 preparation, alongside (Claude)
 
@@ -49,7 +37,7 @@ Chosen 11-16: prepare the rebuild now, with no GPU and no change to anything H2 
 
 ## 2c. The 18th, after the exhibition work in section 0 (decided 11-17 in a side chat; the 19th is for study)
 
-- Read the overnight results (A15 to A19) and decide whether their notes go into the paper, report and slides. The wording waits on branch `overnight-notes`, not on `main`.
+- Read the overnight results (A15 to A19), now in the paper, report and a backup slide on `main` (merged 11-17 at Vaibhav's request). To undo them: the tag `pre-overnight`.
 - If time is left: a deep wording pass on the paper, report and slide notes (words only, never claims or numbers), and the comparison tables drafted in the side chat (protocol table, raw and cleaned score tables). Every competitor cell must be checked against the paper's PDF first.
 - A check of `README.md`, `docs/FINAL.md` and the handbook for stale numbers and links.
 
