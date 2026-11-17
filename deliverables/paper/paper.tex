@@ -148,7 +148,12 @@ DeepFake Doctor~\cite{deepfakedoctor} confirmed the silence cue, showed that
 FakeAVCeleb's leave-one-out protocol leaks Wav2Lip content, and proposed an
 identity split and temporal jittering. For generated images, Grommelt et
 al.~\cite{grommelt} showed that JPEG compression and image size follow the
-label.
+label. Pagon et al.~\cite{pagon2026} ask what deepfake benchmarks measure,
+with linear probes on frozen self-supervised features. They audit video,
+image and audio benchmarks, but no audio-visual corpus and no file cues.
+DFD-Lab~\cite{dfdlab2026} trains three audio-visual detectors on
+FakeAVCeleb and reports AUROC near 0.5 on a filtered Deepfake-Eval-2024
+subset, with no shortcut control.
 We found no published per-category codec census for an audio-visual deepfake
 corpus, no classifier trained on container metadata alone, and no
 neutralization applied to training and test data that covers codec, both
@@ -906,6 +911,12 @@ Workshop}, 2021.
 \bibitem{deepfakedoctor} M. Klemt, C. Segna, and A. Rohrbach, ``DeepFake
 Doctor: Diagnosing and treating audio-video fake detection,''
 arXiv:2506.05851, 2025.
+\bibitem{pagon2026} S. Pagon, Y. Shen, V. Asnani, and F. Liu, ``What do
+deepfake benchmarks measure? An audit using frozen self-supervised
+representations,'' arXiv:2606.26384, 2026.
+\bibitem{dfdlab2026} J. Rybarczyk, M. Roszkowski, and J. Komorowski,
+``DFD-Lab: A modular audio-visual deepfake detection pipeline,''
+arXiv:2609.23830, 2026.
 \bibitem{grommelt} P. Grommelt \textit{et al.}, ``Fake or JPEG? Revealing
 common biases in generated image detection datasets,'' arXiv:2403.17608,
 2024.

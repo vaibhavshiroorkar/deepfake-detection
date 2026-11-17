@@ -1,6 +1,6 @@
 # AV deepfake novelty check
 
-Checked 2026-11-13. Source notes are in [related-work/](related-work/). Each entry
+Checked 2026-11-13; rechecked 2026-11-17 (see the end). Source notes are in [related-work/](related-work/). Each entry
 there carries its URL and the table its number came from. Numbers below are as the papers
 report them. We have not reproduced them.
 
@@ -57,3 +57,15 @@ Baselines we can reproduce: AVH-Align, HAVIC, RealForensics (MIT, with training 
 - We found no paper called Mamba-AVGuard.
 - We opened the PGA-G manuscript and the Mahdaoui results only at record level.
 - Some tables in Boldisor et al. 2026 look wrong. Check the PDF before citing them.
+
+## Recheck, 2026-11-17
+
+Six web searches on the novelty claims: codec and metadata shortcuts in audio-visual corpora, LAV-DF bias, HiFi-AVDF audits, cross-corpus fusion, and neutralization of training and test data. Five 2026 papers were new to these notes. None takes a core claim: the codec census, the metadata-only classifier and the joint neutralization still look unpublished. Web search is not exhaustive, and preprints from the last few weeks may not be indexed yet, so these claims stay **assumed**.
+
+| Paper | What it does | Overlap with us |
+|---|---|---|
+| [Pagon et al., arXiv 2606.26384](https://arxiv.org/abs/2606.26384), June 2026 | Asks what deepfake benchmarks measure, with linear probes on frozen self-supervised features. Audits AIGVDBench, Celeb-DF++, ASVspoof2019 LA and MLAAD | Same question, different method. No audio-visual corpus, no file cues. Cited in the paper and report |
+| [DFD-Lab, arXiv 2609.23830](https://arxiv.org/abs/2609.23830), Sep 2026 | Three audio-visual detectors trained on FakeAVCeleb score AUROC 0.46 to 0.54 on filtered Deepfake-Eval-2024 | Consistent with our transfer results. No shortcut control, no single-modality baselines. Cited |
+| [BabelFake, arXiv 2610.06339](https://arxiv.org/abs/2610.06339), Oct 2026 | Multilingual audio-visual benchmark. Real clips standardized to H.264 and AAC; durations matched | A new corpus, not an audit or neutralization of existing ones. Whether the fakes share the container is not stated in the part read |
+| [MADBench, arXiv 2608.09593](https://arxiv.org/abs/2608.09593), Aug 2026 | Speech and background-audio manipulation, scored separately | Audio only; no shortcut audit |
+| [Yermakov et al., arXiv 2605.10334](https://arxiv.org/abs/2605.10334), May 2026 (v2 withdrawn) | Frame detectors mostly detect alpha-blending traces | Image compositing only. Context for A13, not overlap |

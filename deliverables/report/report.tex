@@ -234,6 +234,18 @@
   booktitle = {Proc. ICCV},
   year      = {2025}
 }
+@misc{pagon2026,
+  author = {S. Pagon and Y. Shen and V. Asnani and F. Liu},
+  title  = {What do deepfake benchmarks measure? {An} audit using frozen self-supervised representations},
+  note   = {arXiv:2606.26384},
+  year   = {2026}
+}
+@misc{dfdlab2026,
+  author = {J. Rybarczyk and M. Roszkowski and J. Komorowski},
+  title  = {{DFD-Lab}: A modular audio-visual deepfake detection pipeline},
+  note   = {arXiv:2609.23830},
+  year   = {2026}
+}
 @misc{deepfakedoctor,
   author = {M. Klemt and C. Segna and A. Rohrbach},
   title  = {{DeepFake} {Doctor}: Diagnosing and treating audio-video fake detection},
@@ -938,6 +950,13 @@ DeepSpeak v1. It showed that random temporal jitter of the input window
 removes most of the reliance. It also found that FakeAVCeleb's original
 leave-one-method-out protocol leaks Wav2Lip content between training and test,
 and it proposed an identity split and method-family splits instead.
+
+Pagon et al.~\cite{pagon2026} ask what deepfake benchmarks measure. A linear
+probe on frozen self-supervised features comes close to bespoke detectors on
+video, image and audio benchmarks. They audit no audio-visual corpus and no
+file cues. DFD-Lab~\cite{dfdlab2026} trains three audio-visual detectors on
+FakeAVCeleb and reports AUROC near 0.5 on a filtered Deepfake-Eval-2024
+subset, with no shortcut control. Both point the same way as our results.
 
 \subsection{Silence in speech anti-spoofing}
 
