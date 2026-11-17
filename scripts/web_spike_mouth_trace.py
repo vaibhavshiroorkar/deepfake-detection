@@ -13,7 +13,13 @@ import mediapipe as mp
 import numpy as np
 from mediapipe.tasks.python import BaseOptions, vision
 
-from deepfake_detection.avsync.mouth import DEFAULT_MODEL, FPS, LEFT_EYE, RIGHT_EYE, read_window
+from deepfake_detection.avsync.mouth import (
+    DEFAULT_MODEL,
+    FPS,
+    LEFT_EYE,
+    RIGHT_EYE,
+    read_window,
+)
 
 N, SECONDS, HOP = 20, 2.0, 640
 
@@ -55,7 +61,7 @@ def main() -> None:
     test = {r["clip_id"] for r in csv.DictReader(open("runs/p001/split/test.csv", encoding="utf-8"))}
     rows = [r for r in csv.DictReader(open("data/manifests/fakeavceleb-neutral.csv", encoding="utf-8"))
             if r["clip_id"] in test]
-    rng = random.Random(17)
+    rng = random.Random(17)  # noqa: S311 - a fixed clip sample, not a secret
     for kind in ("RealVideo-RealAudio", "RealVideo-FakeAudio"):
         group = [r for r in rows if r["manipulation_type"] == kind]
         rs = []
