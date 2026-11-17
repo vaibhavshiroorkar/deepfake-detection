@@ -64,7 +64,8 @@ Chosen 11-17 with Vaibhav, to use the 18th and 19th; the submission is on the 20
 
 - The web app becomes the main site: Home with a hero, Detector, How it works, Research, About us, Contact (a form, sent through Resend to Vaibhav's mail), plus the hidden Admin page. Everything on the current site carries over and gets updated to P-001; Vaibhav decides later what to drop.
 - Build approach: evolve the current FastAPI web app (approach A). Host it on a Hugging Face Docker Space (free CPU Basic: 2 vCPU, 16 GB, sleeps after 48 h idle). Check on Vaibhav's account that free Docker Spaces still work; fall back to this PC with a temporary link.
-- Approve the [website design](superpowers/specs/2026-11-17-website-design.md) (Vaibhav), then write the build plan. Design chosen 11-17: the original direction B with v2's useful parts ([`docs/DESIGN.md`](DESIGN.md)); the detector gives three outcomes plus "can't check". Build after the submission on 11-20.
+- Frontend built 11-17 (see the changelog). Still open, in the order of the [website design](superpowers/specs/2026-11-17-website-design.md): connect the P-001 scorer to `/api/check` (spike first: time one clip on CPU, test the mouth-opening measure), the calibration file and outcome logic, the result trace, the admin carry-over, `docs/SECURITY.md`, the Docker image and the Hugging Face Space. Waits for the GPU (after A11, A13, A14).
+- Vaibhav: decide the sample clips. FakeAVCeleb clips probably cannot be shown publicly; record your own (with consent for a fake version), or launch without samples.
 - The detector runs the P-001 pipeline on an upload: neutralize, the three paths, and the threshold.
 - Retire the old in-browser demo: `hosting/browser/`, `docs/hosting.md`, the README link. Vaibhav deletes the Space on Hugging Face if he wants it gone.
 - Keep the Streamlit dashboard as the teaching and experiment tool, rename it, and update its pages to the P-001 pipeline.

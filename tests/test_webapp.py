@@ -73,7 +73,7 @@ def upload(client, name="clip.mp4", data=b"not really a video", **fields):
 
 def test_the_page_and_its_assets_are_served(client):
     http, _, _ = client
-    assert "Is this video a deepfake?" in http.get("/").text
+    assert "Is this video a deepfake?" in http.get("/classic").text
     assert http.get("/static/app.js").status_code == 200
     assert http.get("/static/vendor/katex/katex.min.js").status_code == 200
 

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block main %}
+<div class="wrap">
+  <section class="page-head">
+    <h1 class="h1-sm">About us</h1>
+    <p class="lede">We built Deepfake Check as our final-year project at K. J. Somaiya School of Engineering. We wanted a detector that tells people what it actually knows, because most of them sound more certain than they are.</p>
+  </section>
+  <section class="block" aria-labelledby="team-title">
+    <h2 id="team-title">The team</h2>
+    <div class="people">
+      <div class="person"><h3>Vaibhav Shiroorkar</h3><p class="mono small">Student</p></div>
+      <div class="person"><h3>Adithya Jithesh</h3><p class="mono small">Student</p></div>
+      <div class="person"><h3>Shivansh Gupta</h3><p class="mono small">Student</p></div>
+      <div class="person guide"><h3>Dr. Tejashree Phatak</h3><p class="mono small">Guide</p></div>
+    </div>
+  </section>
+  <section class="block" aria-labelledby="why-title">
+    <h2 id="why-title">Why it exists</h2>
+    <p class="intro">Fake videos of real people are easy to make and hard to spot. Detectors that score near perfect in papers often fail on real footage, partly because the benchmarks leak their answers through the files. We measured that leak, removed it, and kept the parts that still work. When this site is unsure, it says so.</p>
+    <p><a class="btn ghost" href="/research">Read the research</a></p>
+  </section>
+</div>
+{% endblock %}

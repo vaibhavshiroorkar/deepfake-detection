@@ -1,0 +1,11 @@
+{# The upload and result card, shared by Home and /check. site.js drives it. #}
+<div class="detector" data-detector>
+  <label class="drop" data-drop>
+    <input type="file" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm" data-file>
+    <strong>Drop a video here, or choose one</strong>
+    <span>One person speaking to the camera. MP4, MOV or WebM, 3 to 60 seconds, up to 90 MB.</span>
+    <span class="mono small">Checked on our server, then deleted.</span>
+  </label>
+  <p class="status mono" data-status role="status" aria-live="polite"></p>
+  <div class="result" data-result hidden></div>
+</div>

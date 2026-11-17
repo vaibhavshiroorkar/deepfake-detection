@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block main %}
+<div class="wrap">
+  <section class="page-head">
+    <h1 class="h1-sm">Check a video</h1>
+    <p class="lede">One person speaking to the camera works best. The first three seconds after the speech starts are checked.</p>
+  </section>
+  <div class="check-layout">
+    {% include "_detector.html" %}
+    <aside class="side" aria-labelledby="answers-title">
+      <h2 id="answers-title" class="h3">The four answers</h2>
+      <dl class="answers">
+        <dt class="ans-signs">Signs of manipulation</dt><dd>At least one check scored higher than about 95 in 100 real clips. It names which one.</dd>
+        <dt>Can't tell</dt><dd>Unusual, but not unusual enough to flag.</dd>
+        <dt>No signs found</dt><dd>Nothing stood out. Not proof the video is real.</dd>
+        <dt>Can't check</dt><dd>No steady face, no speech, or the clip broke a rule. It says which.</dd>
+      </dl>
+      <p class="small">How each answer is reached is on <a href="/how-it-works#answer">How it works</a>.</p>
+    </aside>
+  </div>
+</div>
+{% endblock %}

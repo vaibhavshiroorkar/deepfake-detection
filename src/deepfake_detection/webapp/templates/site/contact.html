@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% set form = form|default({"name": "", "email": "", "message": ""}) %}
+{% block main %}
+<div class="wrap">
+  <section class="page-head">
+    <h1 class="h1-sm">Contact</h1>
+    <p class="lede">Questions about the research, a clip the checks got wrong, or a dataset we should test on. We read everything.</p>
+  </section>
+  <section class="block narrow">
+    {% if sent|default(false) %}
+    <p class="notice ok" role="status">Thanks, your message was sent. We will reply to the email you gave.</p>
+    {% else %}
+    {% if error|default(false) %}<p class="notice" role="alert">{{ error }}</p>{% endif %}
+    <form class="form" method="post" action="/contact">
+      <label>Name<input name="name" required maxlength="120" autocomplete="name" value="{{ form.name }}"></label>
+      <label>Email<input name="email" type="email" required maxlength="200" autocomplete="email" value="{{ form.email }}"></label>
+      <label>Message<textarea name="message" required minlength="10" maxlength="4000" rows="7">{{ form.message }}</textarea></label>
+      <label class="hp" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>
+      <button class="btn primary" type="submit">Send</button>
+    </form>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

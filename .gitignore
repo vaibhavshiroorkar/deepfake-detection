@@ -20,3 +20,4 @@ mlflow.db
 /models/
 .env
 /.superpowers/
+.playwright-mcp/

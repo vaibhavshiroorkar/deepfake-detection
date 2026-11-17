@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block main %}
+<div class="wrap">
+  <section class="page-head">
+    <h1 class="h1-sm">How it works</h1>
+    <p class="lede">Four steps: clean the file, run three checks, place each score against real clips, and answer only as far as the evidence goes.</p>
+  </section>
+
+  <section class="block" aria-labelledby="clean-title">
+    <h2 id="clean-title"><span class="step mono">1</span>Clean the file first</h2>
+    <p class="intro">Research datasets leak their labels through the file: fake voices saved in a different format, silence at the start of generated speech, clip lengths that differ. A detector can learn those instead of the face. So every clip, including yours, is rewritten the same way before any check sees it: one codec, a fixed 3.00 s span from the first sound, one loudness, and a little noise to hide digital silence.</p>
+    <figure class="panel">
+      <figcaption class="lbl mono">How much the file alone gives away, before and after cleaning (AUC)</figcaption>
+      <div class="dumbbell">
+        {% for row in ceilings %}
+        {% set raw = ((row.raw - 0.5) / 0.5 * 100)|round(1) %}{% set clean = ((row.clean - 0.5) / 0.5 * 100)|round(1) %}
+        <div class="db-row">
+          <span class="db-name">{{ row.name }}</span>
+          <span class="db-track"><span class="db-seg" style="left:{{ clean }}%;width:{{ (raw - clean)|round(1) }}%"></span><span class="db-dot clean" style="left:{{ clean }}%"></span><span class="db-dot raw" style="left:{{ raw }}%"></span></span>
+          <span class="db-vals mono">{{ "%.3f"|format(row.raw) }} to {{ "%.3f"|format(row.clean) }}</span>
+        </div>
+        {% endfor %}
+        <div class="db-axis mono small"><span></span><span class="db-ticks"><span>0.5 (chance)</span><span>0.75</span><span>1.0</span></span><span></span></div>
+      </div>
+      <p class="key small"><span class="k raw">Raw files</span><span class="k clean">After cleaning</span></p>
+      <p class="small">Cleaning has a cost: it refused {{ n("neutral.fakeavceleb.refused") }} FakeAVCeleb clips that were too short, all of them generated speech.</p>
+    </figure>
+  </section>
+
+  <section class="block" aria-labelledby="checks-title">
+    <h2 id="checks-title"><span class="step mono">2</span>Three checks</h2>
+    <div class="checks3">
+      <div class="check3 face"><h3>Face</h3><p>A face model (EfficientNet with a short-term memory over 16 frames) trained to spot face swaps and re-rendered mouths.</p></div>
+      <div class="check3 voice"><h3>Voice</h3><p>A speech model (wav2vec 2.0) trained to spot cloned and synthetic voices.</p></div>
+      <div class="check3 sync"><h3>Lip sync</h3><p>AV-HuBERT, a model that reads lips and hears speech, with a small head trained on real clips only. It scores how far the mouth and the sound fall out of step.</p></div>
+    </div>
+    <p class="intro">Each check was trained three times with different random seeds; the answer uses the average of the three.</p>
+  </section>
+
+  <section class="block" aria-labelledby="trace-title">
+    <h2 id="trace-title">What the lip-sync check sees</h2>
+    <p class="intro">An illustration, not a real clip. When someone speaks, the mouth opens as the sound gets loud. In a dubbed clip the two drift apart.</p>
+    <figure class="scope panel">
+      <svg data-trace viewBox="0 0 560 250" role="img" aria-label="Speech loudness and mouth opening over two seconds"></svg>
+      <div class="legend">
+        <span class="key"><span class="k sound">Speech loudness</span><span class="k face">Mouth opening</span></span>
+        <span class="toggle" role="group" aria-label="Example clip">
+          <button type="button" aria-pressed="true" data-mode="real">Real clip</button>
+          <button type="button" aria-pressed="false" data-mode="fake">Dubbed clip</button>
+        </span>
+      </div>
+      <figcaption class="readout" data-readout>In a real clip, the mouth opens when the sound gets loud.</figcaption>
+    </figure>
+  </section>
+
+  <section class="block" id="answer" aria-labelledby="answer-title">
+    <h2 id="answer-title"><span class="step mono">3</span>Place each score against real clips</h2>
+    <p class="intro">A raw score means little on its own. Each check's score is compared with the same check's scores on thousands of real clips from four research datasets: "higher than 97 in 100 real clips". The clip's overall reading is its most unusual check.</p>
+    <h2 class="h2-sub"><span class="step mono">4</span>Answer only as far as the evidence goes</h2>
+    <dl class="answers wide">
+      <dt class="ans-signs">Signs of manipulation</dt><dd>Higher than about 95 in 100 real clips. Set this way, about 5 in 100 real clips get flagged. The answer names the check that raised it.</dd>
+      <dt>Can't tell</dt><dd>Higher than 80 in 100 real clips, but under the flag line.</dd>
+      <dt>No signs found</dt><dd>Below that. The checks miss many fakes from generators they never saw, so this is not proof.</dd>
+      <dt>Can't check</dt><dd>No steady face, no speech, or the clip broke a rule.</dd>
+    </dl>
+  </section>
+</div>
+{% endblock %}

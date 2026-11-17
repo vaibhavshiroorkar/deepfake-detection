@@ -21,7 +21,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.types import ASGIApp, Receive, Scope, Send
 
-from . import content, results, settings
+from . import content, results, settings, site
 from .engines import MODELS, Registry
 
 STATIC = Path(__file__).parent / "static"
@@ -133,9 +133,12 @@ def create_app(registry: Registry | None = None) -> FastAPI:
         ):
             raise HTTPException(401, "Wrong or missing admin token")
 
-    @app.get("/", response_class=HTMLResponse)
+    # The September app moved here on 2026-11-17 when the public site took over "/".
+    @app.get("/classic", response_class=HTMLResponse)
     def index() -> FileResponse:
         return FileResponse(STATIC / "index.html")
+
+    site.register(app)
 
     @app.get("/admin", response_class=HTMLResponse)
     def admin_page() -> FileResponse:
