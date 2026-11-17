@@ -182,7 +182,8 @@ def present(outcome: dict) -> dict:
               for name, c in outcome.get("checks", {}).items()}
     kind = outcome["kind"]
     if kind == "signs":
-        names = " and ".join(CHECK_NAMES[n] for n in outcome["raised"])
+        words = [CHECK_NAMES[n] for n in outcome["raised"]]
+        names = words[0] if len(words) == 1 else ", ".join(words[:-1]) + " and " + words[-1]
         noun = "checks" if len(outcome["raised"]) > 1 else "check"
         summary = f"The {names} {noun} scored higher than almost every real clip we calibrated on."
     elif kind == "cant_tell":

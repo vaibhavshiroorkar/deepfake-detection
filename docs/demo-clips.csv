@@ -1,0 +1,34 @@
+file,corpus,type,truth,outcome,raised,face,voice,sync
+FakeAVCeleb_real_A__id07161__00159.mp4,FakeAVCeleb,real,real,no_signs,,0.257,0.718,0.559
+FakeAVCeleb_real_A__id00188__00020.mp4,FakeAVCeleb,real,real,no_signs,,0.443,0.050,0.251
+FakeAVCeleb_real_A__id03940__00025.mp4,FakeAVCeleb,real,real,cant_tell,,0.060,0.389,0.981
+FakeAVCeleb_cloned-voice_B__id00946__00126_fake.mp4,FakeAVCeleb,cloned voice,fake,signs,voice+sync,0.425,1.000,0.955
+FakeAVCeleb_cloned-voice_B__id06061__00002_fake.mp4,FakeAVCeleb,cloned voice,fake,signs,voice+sync,0.370,1.000,0.990
+FakeAVCeleb_cloned-voice_B__id00841__00078_fake.mp4,FakeAVCeleb,cloned voice,fake,signs,voice+sync,0.132,1.000,0.963
+FakeAVCeleb_face-swap_C__id06268__00159_0.mp4,FakeAVCeleb,face swap,fake,no_signs,,0.909,0.307,0.349
+FakeAVCeleb_face-swap_C__id07161__00159_id07195_wXqfHGtaBn4_faceswap.mp4,FakeAVCeleb,face swap,fake,cant_tell,,0.975,0.738,0.707
+FakeAVCeleb_face-swap_C__id01102__00197_id01051_jPxk6s6FM6Y_faceswap.mp4,FakeAVCeleb,face swap,fake,no_signs,,0.854,0.487,0.234
+FakeAVCeleb_FSGAN-face-swap_C__id06060__00219_id06388_AtidJ-WlONc.mp4,FakeAVCeleb,FSGAN face swap,fake,signs,face,0.997,0.230,0.764
+FakeAVCeleb_FSGAN-face-swap_C__id00088__00005_id00060_gZ4RkcQ0SXE.mp4,FakeAVCeleb,FSGAN face swap,fake,signs,face+sync,0.992,0.124,0.971
+FakeAVCeleb_FSGAN-face-swap_C__id01452__00001_id00944_DiW5D62667U.mp4,FakeAVCeleb,FSGAN face swap,fake,no_signs,,0.885,0.006,0.843
+FakeAVCeleb_lip-sync-Wav2Lip_C__id00841__00078_id00835_wavtolip.mp4,FakeAVCeleb,lip sync (Wav2Lip),fake,no_signs,,0.848,0.439,0.822
+FakeAVCeleb_lip-sync-Wav2Lip_C__id06060__00219_id06066_wavtolip.mp4,FakeAVCeleb,lip sync (Wav2Lip),fake,cant_tell,,0.946,0.755,0.927
+FakeAVCeleb_lip-sync-Wav2Lip_C__id06443__00232_id09181_wavtolip.mp4,FakeAVCeleb,lip sync (Wav2Lip),fake,signs,face+sync,0.991,0.641,0.991
+FakeAVCeleb_face-swap-+-Wav2Lip-cloned-voice_D__id01075__00160_3_id00616_wavtolip.mp4,FakeAVCeleb,"face swap + Wav2Lip, cloned voice",fake,signs,face+voice,0.988,1.000,0.651
+FakeAVCeleb_face-swap-+-Wav2Lip-cloned-voice_D__id00395__00420_id00823_KgExwCvgrUk_faceswap_id00897_wavtolip.mp4,FakeAVCeleb,"face swap + Wav2Lip, cloned voice",fake,signs,face+voice+sync,0.998,1.000,0.994
+FakeAVCeleb_face-swap-+-Wav2Lip-cloned-voice_D__id06594__00002_id01589_wavtolip.mp4,FakeAVCeleb,"face swap + Wav2Lip, cloned voice",fake,signs,face+voice,0.975,1.000,0.436
+HiFi-AVDF_real_hifiavdf__veo3.1__246.mp4,HiFi-AVDF,real,real,no_signs,,0.512,0.781,0.875
+HiFi-AVDF_real_hifiavdf__wan2.5__1062.mp4,HiFi-AVDF,real,real,cant_tell,,0.287,0.970,0.953
+HiFi-AVDF_real_hifiavdf__veo3.1__336.mp4,HiFi-AVDF,real,real,no_signs,,0.829,0.519,
+HiFi-AVDF_generated-pixverseV5_hifiavdf__pixverseV5__1803_generated.mp4,HiFi-AVDF,generated (pixverseV5),fake,cant_tell,,0.384,0.949,0.603
+HiFi-AVDF_generated-pixverseV5_hifiavdf__pixverseV5__1668_generated.mp4,HiFi-AVDF,generated (pixverseV5),fake,no_signs,,0.836,0.289,0.890
+HiFi-AVDF_generated-pixverseV5_hifiavdf__pixverseV5__1880_generated.mp4,HiFi-AVDF,generated (pixverseV5),fake,cant_tell,,0.321,0.868,0.981
+HiFi-AVDF_generated-sora2_hifiavdf__sora2__1265_generated.mp4,HiFi-AVDF,generated (sora2),fake,cant_tell,,0.321,0.980,0.853
+HiFi-AVDF_generated-sora2_hifiavdf__sora2__1305_generated.mp4,HiFi-AVDF,generated (sora2),fake,no_signs,,0.102,0.321,0.117
+HiFi-AVDF_generated-sora2_hifiavdf__sora2__1334_generated.mp4,HiFi-AVDF,generated (sora2),fake,no_signs,,0.230,0.699,0.223
+HiFi-AVDF_generated-veo3.1_hifiavdf__veo3.1__308_generated.mp4,HiFi-AVDF,generated (veo3.1),fake,no_signs,,0.526,0.311,0.315
+HiFi-AVDF_generated-veo3.1_hifiavdf__veo3.1__503_generated.mp4,HiFi-AVDF,generated (veo3.1),fake,cant_tell,,0.276,0.769,0.943
+HiFi-AVDF_generated-veo3.1_hifiavdf__veo3.1__517_generated.mp4,HiFi-AVDF,generated (veo3.1),fake,signs,voice,0.618,0.985,0.326
+HiFi-AVDF_generated-kling2.5_hifiavdf__kling2.5__206_generated.mp4,HiFi-AVDF,generated (kling2.5),fake,signs,face+voice,0.989,0.991,0.909
+HiFi-AVDF_generated-kling2.5_hifiavdf__kling2.5__176_generated.mp4,HiFi-AVDF,generated (kling2.5),fake,no_signs,,0.688,0.899,0.442
+HiFi-AVDF_generated-kling2.5_hifiavdf__kling2.5__54_generated.mp4,HiFi-AVDF,generated (kling2.5),fake,cant_tell,,0.756,0.975,0.151

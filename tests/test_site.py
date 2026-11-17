@@ -176,3 +176,9 @@ def test_the_upload_limit_can_be_raised_for_a_private_demo(monkeypatch):
     assert site.upload_limit() == 500
     monkeypatch.delenv("DDF_UPLOAD_LIMIT")
     assert site.upload_limit() == site.UPLOAD_LIMIT
+
+
+def test_present_lists_three_raised_checks_with_commas():
+    checks = {n: {"percentile": 0.99, "reason": None} for n in ("face", "voice", "sync")}
+    three = site.present({"kind": "signs", "raised": ["face", "voice", "sync"], "checks": checks, "trace": {}})
+    assert three["summary"].startswith("The face, voice and lip-sync checks scored")
