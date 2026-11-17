@@ -8,6 +8,7 @@ Experiment numbers are not repeated here. They live in `results/` and the docume
 
 ## Unreleased
 
+- Two post-hoc checks on H2 (exploratory, `h2_checks` in `scripts/build_numbers.py`, with a test). Without the cloned-voice clips the FakeAVCeleb gain is +0.001 to +0.004. On LAV-DF the visual path scores even unedited-video fakes below the reals (0.175 to 0.243), so it reads a file difference, not the edit. The abstract, the H2 sections, the report summary, the slide verdict and notes, the poster, both READMEs and `docs/FINAL.md` now say H2 passes its rule but shows no gain on fakes the visual path can see.
 - H2 ran on its Holm family on 11-16 at 22:56, and its preregistered rule says "H2 holds". Fusion minus visual-only: FakeAVCeleb strict +0.088, LAV-DF (window label) +0.170, DFDC +0.003 (p = 0.305). Output in `runs/p001/h2/`; HiFi-AVDF is not in it yet.
 - H2 with HiFi-AVDF (reported only): +0.056 [+0.049, +0.063] on 3,485 clips. Fusion beats a visual path near chance but trails the audio path alone, as on LAV-DF. Added to the H2 tables, the interpretation, the notes, `docs/FINAL.md` and both READMEs. The full run's family targets match the family run byte for byte (handbook mistake 72).
 - H2 results committed: `results/p001-h2/` (fusion predictions, `h2.json`, receipt) and `results/p001-branches/` (the six visual and audio models on the test set and the targets, with identity-bootstrap intervals), each with a README.

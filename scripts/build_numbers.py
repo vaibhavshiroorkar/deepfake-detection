@@ -198,6 +198,57 @@ def h2_levels(numbers: dict) -> None:
             _put(numbers, f"h2.{target}.auc.{name}.max", max(values), source)
 
 
+def _rows(path: Path) -> list[dict]:
+    with path.open(encoding="utf-8", newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
+def _put_range(numbers: dict, key: str, values: list[float], source: Path) -> None:
+    _put(numbers, f"{key}.min", min(values), source)
+    _put(numbers, f"{key}.max", max(values), source)
+
+
+def h2_checks(numbers: dict) -> None:
+    """Post-hoc checks on H2, run after its verdict (exploratory).
+
+    1. The FakeAVCeleb gain with the cloned-voice clips (real video, fake audio) left out. The visual
+       path is trained never to flag those, so any gain on them comes by construction.
+    2. The visual path on each LAV-DF fake type against the reals, on its own predictions. A type
+       whose video is untouched should sit near 0.5 if the path reacts to face edits.
+    """
+    h2_dir, branch_dir = RESULTS / "p001-h2", RESULTS / "p001-branches"
+    cloned = "RealVideo-FakeAudio"
+    gains = []
+    for path in sorted(h2_dir.glob("fusion-test-identity-strict-seed*-predictions.csv")):
+        seed = path.stem.removesuffix("-predictions").rsplit("-seed", 1)[1]
+        types_file = branch_dir / f"visual-seed{seed}-test-identity-strict-predictions.csv"
+        types = {row["clip_id"]: row["manipulation_type"] for row in _rows(types_file)}
+        rows = _rows(path)
+        kept = [row for row in rows if types[row["clip_id"]] != cloned]
+        for name, subset in (("diff_all", rows), ("diff_without_cloned_voice", kept)):
+            labels = [int(row["label"]) for row in subset]
+            diff = _auc(labels, [float(r["fusion"]) for r in subset]) - _auc(labels, [float(r["visual_logit"]) for r in subset])
+            _put(numbers, f"h2.test-identity-strict.seed{seed}.{name}", round(diff, 3), path)
+        gains.append(numbers[f"h2.test-identity-strict.seed{seed}.diff_without_cloned_voice"]["value"])
+    if gains:
+        _put_range(numbers, "h2.test-identity-strict.without_cloned_voice", gains, h2_dir / "fusion-test-identity-strict-seed*-predictions.csv")
+    by_type: dict[str, list[float]] = {}
+    for path in sorted(branch_dir.glob("visual-seed*-lavdf-test-predictions.csv")):
+        seed = path.stem.removeprefix("visual-seed").split("-", 1)[0]
+        rows = _rows(path)
+        reals = [float(r["probability"]) for r in rows if r["manipulation_type"] == "RealVideo-RealAudio"]
+        for kind in sorted({r["manipulation_type"] for r in rows} - {"RealVideo-RealAudio"}):
+            fakes = [float(r["probability"]) for r in rows if r["manipulation_type"] == kind]
+            value = round(_auc([0] * len(reals) + [1] * len(fakes), reals + fakes), 3)
+            _put(numbers, f"visual.lavdf-test.seed{seed}.type.{kind}", value, path)
+            by_type.setdefault(kind, []).append(value)
+    source = branch_dir / "visual-seed*-lavdf-test-predictions.csv"
+    for kind, values in by_type.items():
+        _put_range(numbers, f"visual.lavdf-test.type.{kind}", values, source)
+    if by_type:
+        _put_range(numbers, "visual.lavdf-test.type", [v for values in by_type.values() for v in values], source)
+
+
 def main() -> int:
     numbers: dict = {}
     audits(numbers)
@@ -208,6 +259,7 @@ def main() -> int:
     branches(numbers)
     h2(numbers)
     h2_levels(numbers)
+    h2_checks(numbers)
     out = RESULTS / "numbers.json"
     out.write_text(json.dumps(dict(sorted(numbers.items())), indent=1) + "\n", encoding="utf-8")
     print(f"{len(numbers)} numbers -> {_rel(out)}")

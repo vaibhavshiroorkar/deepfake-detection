@@ -86,3 +86,34 @@ def test_h2_levels_give_each_path_auc_on_the_clip_label(tmp_path):
     assert numbers["h2.dfdc.seed29.auc.audio"]["value"] == 1.0
     assert numbers["h2.dfdc.auc.visual.min"]["value"] == 0.25
     assert numbers["h2.dfdc.auc.sync.max"]["value"] == 0.5
+
+
+def test_h2_checks_split_the_gains_by_manipulation_type(tmp_path):
+    # Post-hoc checks on H2: the FakeAVCeleb gain without the cloned-voice clips, and the visual
+    # path on each LAV-DF fake type against the reals.
+    module = _module(tmp_path)
+    h2 = tmp_path / "results" / "p001-h2"
+    branches = tmp_path / "results" / "p001-branches"
+    h2.mkdir(parents=True)
+    branches.mkdir(parents=True)
+    (h2 / "fusion-test-identity-strict-seed17-predictions.csv").write_text(
+        "clip_id,label,source,fusion,visual_logit,audio_logit,sync_logit\n"
+        "r1,0,s,0.1,0,0,0\nr2,0,s,0.2,1,0,0\nf1,1,s,0.9,2,0,0\nf2,1,s,0.8,3,0,0\nc1,1,s,0.7,-1,0,0\n")
+    types = "clip_id,label,probability,predicted,source,manipulation_type,method\n"
+    (branches / "visual-seed17-test-identity-strict-predictions.csv").write_text(
+        types + "r1,0,0.1,0,s,RealVideo-RealAudio,real\nr2,0,0.2,0,s,RealVideo-RealAudio,real\n"
+        "f1,1,0.9,1,s,FakeVideo-RealAudio,fsgan\nf2,1,0.8,1,s,FakeVideo-FakeAudio,wav2lip\n"
+        "c1,0,0.1,0,s,RealVideo-FakeAudio,rtvc\n")
+    (branches / "visual-seed17-lavdf-test-predictions.csv").write_text(
+        types + "a,0,0.6,1,s,RealVideo-RealAudio,x\nb,0,0.8,1,s,RealVideo-RealAudio,x\n"
+        "c,1,0.1,0,s,RealVideo-FakeAudio,x\nd,1,0.7,1,s,FakeVideo-RealAudio,x\n")
+    numbers: dict = {}
+    module.h2_checks(numbers)
+    # All clips: fusion 1.0, visual 4/6 (c1 ranks below both reals); without c1 both are 1.0.
+    assert numbers["h2.test-identity-strict.seed17.diff_all"]["value"] == 0.333
+    assert numbers["h2.test-identity-strict.seed17.diff_without_cloned_voice"]["value"] == 0.0
+    assert numbers["h2.test-identity-strict.without_cloned_voice.max"]["value"] == 0.0
+    assert numbers["visual.lavdf-test.seed17.type.RealVideo-FakeAudio"]["value"] == 0.0
+    assert numbers["visual.lavdf-test.seed17.type.FakeVideo-RealAudio"]["value"] == 0.5
+    assert numbers["visual.lavdf-test.type.RealVideo-FakeAudio.max"]["value"] == 0.0
+    assert numbers["visual.lavdf-test.type.max"]["value"] == 0.5

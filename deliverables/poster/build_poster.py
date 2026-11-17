@@ -186,7 +186,7 @@ def build(draft: bool) -> int:
     _, th = d.add_table(s, colx(1), y, [int(CW * 0.36), int(CW * 0.44), CW - int(CW * 0.80)],
                         ["Target", "Gain [95%]", "Holm"], rows, size=SZ_S, bold_first_col=True, pad=int(0.08 * IN))
     y += th + int(0.3 * IN)
-    d.add_text(s, colx(1), y, CW, int(0.8 * IN), T([("p", "**H2 holds: {{h2.success}}**", SZ_B)]), "h2_verdict")
+    d.add_text(s, colx(1), y, CW, int(0.8 * IN), T([("p", "**H2 holds: {{h2.success}}**, but no target shows a gain on fakes the visual path can see", SZ_B)]), "h2_verdict")
     y += int(0.8 * IN) + GAP
     if PH - FOOT_H - y - GAP > int(2 * IN):      # the pipeline figure only where it fits
         figure(1, y, "fig_pipeline.png", "Pipeline from clip to score", max_h=PH - FOOT_H - y - GAP)

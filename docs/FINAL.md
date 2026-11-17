@@ -117,7 +117,7 @@ At these thresholds the sync path catches only 5 to 11% of fakes. DFDC is not ru
 | LAV-DF, window label | +0.170 [+0.156, +0.183] | 0.37 to 0.41 | 0.50 to 0.62 | yes |
 | HiFi-AVDF (reported) | +0.056 [+0.049, +0.063] | 0.54 to 0.55 | 0.59 to 0.61 | n/a |
 
-H2 holds by its rule (two of three). The gain on FakeAVCeleb is the cloned-voice clips the visual path never trained on. On LAV-DF the visual path is below chance, and fusion trails the audio path (0.63 to 0.85) and the sync path (0.64 to 0.66) alone in every seed (verified). That its FakeAVCeleb-fit weights cause this is assumed; fitting the fusion on a held-out corpus would test it. HiFi-AVDF, reported outside the rule, repeats the LAV-DF pattern: fusion trails the audio path alone (0.68 to 0.71) in every seed (verified).
+H2 holds by its rule (two of three), but no target shows fusion improving on fakes the visual path can see. Two post-hoc checks (exploratory, verified in `scripts/build_numbers.py`): without the cloned-voice clips the FakeAVCeleb gain is +0.001 to +0.004; on LAV-DF the visual path scores even unedited-video fakes at 0.175 to 0.243, so it reads a real-versus-fake file difference that is not the edit (what it is: unknown). On LAV-DF the visual path is below chance, and fusion trails the audio path (0.63 to 0.85) and the sync path (0.64 to 0.66) alone in every seed (verified). That its FakeAVCeleb-fit weights cause this is assumed; fitting the fusion on a held-out corpus would test it. HiFi-AVDF, reported outside the rule, repeats the LAV-DF pattern: fusion trails the audio path alone (0.68 to 0.71) in every seed (verified).
 
 ## Limitations
 

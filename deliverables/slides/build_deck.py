@@ -451,13 +451,15 @@ def build(draft: bool) -> int:
               "is AUC of the fusion minus AUC of the visual path, on the clip label, averaged over three seeds, with one "
               "identity bootstrap shared by the seeds. Holm correction runs over DFDC, LAV-DF and the identity-strict "
               "FakeAVCeleb test, and H2 holds if two of the three survive. HiFi-AVDF is reported outside the rule. "
-              "It holds, but read the levels. On FakeAVCeleb the gain is the cloned-voice clips the visual path never "
-              "trained on. On LAV-DF the visual path is below chance, at {{h2.lavdf-window.auc.visual.min}} to "
-              "{{h2.lavdf-window.auc.visual.max}}, and fusion still trails the audio path and the sync path alone, "
-              "likely because its weights come from FakeAVCeleb. On DFDC every clip has real audio and fusion adds nothing. "
-              "HiFi-AVDF repeats the LAV-DF pattern: fusion beats a visual path near chance but trails audio alone. "
-              "So adding audio and sync helps, but this fusion does not transfer. A fusion that can drop a path is "
-              "future work.",
+              "It holds, but it is weaker than it looks. On FakeAVCeleb the whole gain is the cloned-voice clips, which "
+              "the visual path was trained never to flag: without them the gain is "
+              "{{h2.test-identity-strict.without_cloned_voice.min}} to {{h2.test-identity-strict.without_cloned_voice.max}}. "
+              "On LAV-DF the visual path is below chance, at {{h2.lavdf-window.auc.visual.min}} to "
+              "{{h2.lavdf-window.auc.visual.max}}, even on clips whose video was never edited. So it reads some "
+              "difference between LAV-DF's real and fake files, not the edit. Fusion beats that reversed path but still "
+              "trails the audio path and the sync path alone. On DFDC, the fair target, fusion adds nothing. "
+              "HiFi-AVDF repeats the LAV-DF pattern. So an audio path catches audio fakes a visual path cannot; "
+              "that is all H2 shows. These two checks ran after the verdict, so they are exploratory.",
               "Fused by a model fixed in advance. Does it beat the visual path on new corpora?")
     rows = [[name, n(f"{{{{h2.{k}.clips|int}}}}"),
              n(f"{{{{h2.{k}.estimate}}}} [{{{{h2.{k}.lower}}}}, {{{{h2.{k}.upper}}}}]"), n(f"{{{{h2.{k}.p}}}}"),
@@ -470,7 +472,8 @@ def build(draft: bool) -> int:
     y = Y0 + th + 150000
     card(s, col_x(0), y, span_w(6), BOT - y, [
         ("h", "Verdict"),
-        ("p", "By the preregistered rule, H2 holds: **{{h2.success}}**.", 16),
+        ("p", "By the preregistered rule, H2 holds: **{{h2.success}}**. But the FakeAVCeleb gain is only the "
+              "cloned-voice clips, and on LAV-DF the visual path is below chance.", 16),
     ], name="card_h2")
     card(s, col_x(6), y, span_w(6), BOT - y, [
         ("h", "Fusion weights, seed 17"),

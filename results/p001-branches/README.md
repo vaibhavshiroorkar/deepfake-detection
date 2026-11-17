@@ -20,7 +20,7 @@ ROC-AUC on each path's own label, with 95% identity-bootstrap intervals (1,000 r
 
 ## Reading
 
-- **The visual path is below chance on LAV-DF** in every seed. It ranks LAV-DF fakes as more real than LAV-DF reals. Why is unknown; LAV-DF fakes keep most of the original face and edit a few words, unlike FakeAVCeleb's face swaps.
+- **The visual path is below chance on LAV-DF** in every seed, on every fake type, including clips whose video was never edited (0.175 to 0.243 against the reals). So it reads some difference between LAV-DF's real and fake files that is not the face edit, and reads it backwards. What that difference is, is unknown; the file-cue audit reads metadata and cannot see pixels.
 - **The visual path is near chance on HiFi-AVDF**, whose fakes come from text-to-video generators rather than face swaps.
 - **The audio path scores 0.72 to 0.76 on HiFi-AVDF**, above that corpus's neutral audio-label file-cue ceiling of 0.636. Whether it detects generated speech or a cue the ceiling did not measure is unknown.
 - **The audio path has no DFDC result.** Every clip in our DFDC subset has real audio, so the audio-label set has one class and no AUC.

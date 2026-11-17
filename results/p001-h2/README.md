@@ -24,13 +24,13 @@ The differences hide their levels. Each path's AUC on the clip label, over the s
 | LAV-DF test, window label | 0.369, 0.410 | 0.632, 0.848 | 0.635, 0.658 | 0.503, 0.622 |
 | HiFi-AVDF (reported) | 0.541, 0.548 | 0.682, 0.709 | 0.561, 0.574 | 0.587, 0.614 |
 
-- **FakeAVCeleb:** the gain is mostly the cloned-voice clips. The visual path scores 0.99 on its own video label but 0.90 on the clip label, and fusion recovers the fakes it was never trained to see.
-- **LAV-DF:** the visual path is below chance, so fusion beats a reversed baseline. Fusion still trails the audio path and the sync path alone in every seed. Its weights come from FakeAVCeleb, where the visual path is strong, which is the likely reason (assumed, not tested).
+- **FakeAVCeleb:** the whole gain is the cloned-voice clips. The visual path scores 0.99 on its own video label but 0.90 on the clip label. Without the 68 cloned-voice clips the gain is +0.001 to +0.004 per seed (post-hoc check, exploratory).
+- **LAV-DF:** the visual path ranks every fake type below the reals (0.175 to 0.267), including clips whose video was never edited (0.175 to 0.243; post-hoc check, exploratory). So it reads some difference between LAV-DF's real and fake files that is not the edit; what that is, is unknown. Fusion beats this reversed baseline. Fusion still trails the audio path and the sync path alone in every seed. Its weights come from FakeAVCeleb, where the visual path is strong, which is the likely reason (assumed, not tested).
 - **DFDC:** every clip in our subset has real audio. The audio path is near chance and fusion adds nothing.
 - **HiFi-AVDF:** the LAV-DF pattern again. Fusion beats a visual path near chance but trails the audio path alone in every seed.
 - **Stability:** the audio weight is 6.19, 0.48 and 2.62 across seeds, and the LAV-DF gain ranges from +0.09 to +0.21.
 
-So H2 supports adding the audio and sync paths to a visual detector. It does not show that this fusion transfers to a new corpus.
+So H2 holds by its rule, but no target shows fusion improving on fakes the visual path can see. It shows that an audio path catches audio fakes a visual path cannot. It does not show that fusion improves detection, or that it transfers to a new corpus. The checks are in `scripts/build_numbers.py` (`h2_checks`).
 
 ## Files
 
