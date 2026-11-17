@@ -54,20 +54,22 @@ benchmarks and fail on clips from elsewhere. We show that part of that
 benchmark accuracy comes from how the files were made. A classifier that reads
 only file metadata and audio edges predicts the FakeAVCeleb label at
 {{audit.fakeavceleb.raw.clip}} AUC and the HiFi-AVDF label at
-{{audit.hifiavdf.raw.clip}}. In FakeAVCeleb, generated speech is stored as MP3
-where real audio is AAC, and most face swaps are MPEG-4 where real clips are
-H.264. Each HiFi-AVDF generator writes its own frame size, length or bitrate. We build a protocol that removes these cues: one codec, a
-fixed 3.00~s span from the first sound, one loudness level, and dither. A first
-version failed: re-muxing exposed hidden AAC padding. The final version
-lowers the FakeAVCeleb ceiling to {{audit.fakeavceleb.neutral.clip}}, which
+{{audit.hifiavdf.raw.clip}}: codecs, lengths and frame sizes follow the
+label. We remove these cues with one codec, a fixed 3.00~s span from the first
+sound, one loudness level, and dither. This lowers the FakeAVCeleb ceiling to
+{{audit.fakeavceleb.neutral.clip}}, which
 misses our preregistered bar of 0.60. We then train a lip-sync detector on real clips only, with frozen AV-HuBERT features. Its test
 AUC is {{sync.test.seed17.auc}}, {{sync.test.seed29.auc}} and
 {{sync.test.seed43.auc}} over three seeds. Its scores follow the mechanism:
 voice cloning is caught best, and face swaps that keep the original lips
-least. We also test whether a threshold set from real target clips
-controls false alarms on new corpora, and whether late fusion of visual,
-audio and sync paths beats the visual path alone across corpora. Fusion
-changes AUC by {{h2.dfdc.estimate}} on DFDC and {{h2.lavdf-window.estimate}} on
+least. On three corpora it never saw, its AUC falls to between
+{{sync.dfdc.seed17.auc}} and {{sync.lavdf-window.seed29.auc}}. A threshold
+set from 200 real clips of a new corpus flags {{h4.hifiavdf-seed43.conformal_real_only.fpr}}
+to {{h4.hifiavdf-seed17.conformal_real_only.fpr}} of real HiFi-AVDF clips,
+against {{h4.hifiavdf-seed43.source_validation.fpr}} to
+{{h4.hifiavdf-seed17.source_validation.fpr}} with the training threshold, but
+then catches few fakes. Late fusion of the visual, audio and sync paths
+changes AUC over the visual path alone by {{h2.dfdc.estimate}} on DFDC and {{h2.lavdf-window.estimate}} on
 LAV-DF, and passes its preregistered rule. But the LAV-DF gain is over a
 visual path that ranks fakes below chance, and the FakeAVCeleb gain comes only
 from cloned-voice clips the visual path cannot see.
@@ -917,15 +919,21 @@ perfect separation. Codec, audio format, clip length, frame size and edge
 silence each tell a classifier which pipeline made the clip. A detector score
 on these corpora means little until it is set beside that ceiling.
 
-Removing the cues is harder than it looks. Our first neutralizer re-introduced
-leading silence through AAC priming. The final version lowers the FakeAVCeleb
-ceiling to {{audit.fakeavceleb.neutral.clip}}, which still misses our
-preregistered bar. We report the residual and the clips it removes.
+Our first neutralizer re-introduced leading silence through AAC priming. The
+final version lowers the FakeAVCeleb ceiling to
+{{audit.fakeavceleb.neutral.clip}}, which still misses our preregistered bar.
+We report the residual and the clips it removes.
 
 A lip-sync detector trained only on real clips scores above that ceiling on
-the neutral copies. Its per-method scores follow what each method does to the
-lips and the voice. The cross-corpus and false-alarm tests in
-Section~\ref{sec:cross} show how far that holds on corpora it has never seen. We suggest
+the neutral copies, and its per-method scores follow what each method does to
+the lips and the voice. On corpora it never saw it stays above chance but falls
+far (Section~\ref{sec:cross}). A threshold set from real clips of the new
+corpus keeps false alarms near the target, at the cost of recall.
+
+Fusing the three paths passes its preregistered test, but only through fakes
+the visual path cannot see or a visual path that the LAV-DF files invert. No
+fixed fusion of these paths transferred between corpora (A12), and stronger
+frozen backbones did not transfer better on cleaned data (A11). We suggest
 that every audio-visual benchmark result be reported beside a shortcut
 ceiling, and with the clips that cleaning removed.
 
