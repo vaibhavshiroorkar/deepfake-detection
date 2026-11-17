@@ -162,13 +162,13 @@ def build(draft: bool) -> int:
             ("n", "3.  Detect fakes from lip and sound agreement, trained on real clips only.", 16),
             ("n", "4.  Hold the false-alarm rate on a new corpus with real clips only (H4).", 16),
             ("n", "5.  Test whether fusion beats the visual path alone (H2).", 16),
-            ("s", "H3 (which stream was faked) is the next stage.", 16),
+            ("s", "H3 (which stream was faked) has run in one direction only.", 16),
         ], name="card_objectives")
         card(s, col_x(7), Y0 + 800000, span_w(5), H0 - 800000, [
             ("h", "Not claimed"),
             ("b", "A new network architecture", 16),
-            ("b", "Modality prediction (H3)", 16),
-            ("b", "A comparison with AVH-Align or HAVIC, which we have not yet run on our protocol", 16),
+            ("b", "Modality prediction (H3): one direction run, and it does not transfer", 16),
+            ("b", "A comparison with published systems: only AVH-Align's method was retrained on our protocol", 16),
         ], name="card_notclaimed")
 
     def s_literature():
@@ -485,6 +485,21 @@ def build(draft: bool) -> int:
                   "{{h2.weights.seed17.sync}}, on standardized logits.", 16),
         ], name="card_weights")
 
+    def s_overnight():
+        s = slide("Four gaps checked (A15 to A19)",
+                  "These checks were fixed as dated amendments before their results existed, and none changes a verdict. "
+                  "Moving the audio of real clips raises the lip-sync misfit, so the check really reads lip and voice "
+                  "agreement. Saying which stream was faked does not transfer from FakeAVCeleb to LAV-DF. Every FakeAVCeleb "
+                  "speaker is in AV-HuBERT's pretraining data. AVH-Align's method, retrained on our protocol, does not "
+                  "beat our lip-sync check on any set.",
+                  "Exploratory checks, each fixed before its result.")
+        rows = [["A16: move the audio of real clips", "Misfit rises: AUC {{a16.shift004.auc}} at one frame, {{a16.shift020.auc}} at 0.2 s, {{a16.swap.auc}} with another voice"],
+                ["A15: which stream was faked (H3, one way)", "Does not transfer: macro-F1 {{a15.window.heads.min}} to {{a15.window.heads.max}} against {{a15.window.baseline}}"],
+                ["A17: speakers in AV-HuBERT's pretraining", "All {{a17.sources.dev}} FakeAVCeleb speakers are in VoxCeleb2 dev"],
+                ["A19: AVH-Align's method on our protocol", "Never better: {{a19.dfdc.minus_sync.estimate}} on DFDC, {{a19.hifiavdf.minus_sync.estimate}} on HiFi-AVDF, {{a19.lavdf-window.minus_sync.estimate}} (level) on LAV-DF"]]
+        d.add_table(s, L, Y0, [4300000, W - 4300000], ["Check", "Result"], T_rows(rows, n), size=18, max_h=H0,
+                    bold_first_col=True, fill=H0)
+
     def s_old_conclusion():
         s = slide("Limitations and conclusion",
                   "Audio-visual benchmarks leak their labels through their files, and a detector score on them means little "
@@ -501,9 +516,9 @@ def build(draft: bool) -> int:
             ("b", "H1 missed its bar: {{audit.fakeavceleb.neutral.clip}} against 0.60", 16),
             ("b", "A residual audio cue: ceiling {{audit.fakeavceleb.neutral.audio}}", 16),
             ("b", "Cleaning refuses {{neutral.fakeavceleb.refused|int}} generated-speech clips", 16),
-            ("b", "No published baselines yet; H3 not run", 16),
+            ("b", "One published method run on our protocol; H3 in one direction only", 16),
             ("b", "One training corpus: FakeAVCeleb, 2021, about 500 real videos", 16),
-            ("b", "Possible speaker overlap with AV-HuBERT pretraining", 16),
+            ("b", "Every FakeAVCeleb speaker is in AV-HuBERT's pretraining data", 16),
         ], name="card_limits")
         card(s, col_x(6), Y0, span_w(6), H0, [
             ("h", "Contributions"),
@@ -536,7 +551,7 @@ def build(draft: bool) -> int:
                   "Hypotheses before runs, amendments before changes, a receipt for every evaluation.")
         rows = [["H1", "Neutral FakeAVCeleb clip ceiling at most 0.60", "Not met: {{audit.fakeavceleb.neutral.clip}}"],
                 ["H2", "Fusion beats visual-only on 2 of 3 targets, after Holm", "Holds"],
-                ["H3", "Predict the manipulated modality across corpora", "Next stage"],
+                ["H3", "Predict the manipulated modality across corpora", "One direction only (A15): does not transfer"],
                 ["H4", "Real-only conformal FPR at most 0.07 on every target", "Met on HiFi-AVDF and LAV-DF (file label); DFDC too small"]]
         d.add_table(s, L, Y0, [900000, 6000000, W - 6900000], ["Test", "Bar", "Status"], T_rows(rows, n), size=18,
                     bold_first_col=True, fill=H0)
@@ -680,7 +695,7 @@ def build(draft: bool) -> int:
             ("h", "Future scope"),
             ("b", "Train on several corpora, one held out at a time (preregistration P-002)", 16),
             ("b", "H3 in both directions: say which stream was faked", 16),
-            ("b", "Published baselines (AVH-Align, HAVIC) on the cleaned data", 16),
+            ("b", "HAVIC and AVH-Align's published system on the cleaned data", 16),
             ("b", "New corpora when access arrives: AV-Deepfake1M, KoDF, DeepSpeak", 16),
             ("b", "Host the website so anyone can check a clip", 16),
         ], name="card_future")
@@ -704,23 +719,15 @@ def build(draft: bool) -> int:
 
     def s_awards():
         s = slide("Awards, publications and copyright",
-                  "We have no awards or publications yet. The study was preregistered, so its hypotheses and every change "
-                  "to them are dated in the repository. We plan to submit the audit and the cleaning protocol as a paper, "
-                  "with the baselines run on our protocol. The code is copyrighted to the team lead with all rights "
-                  "reserved; no copyright has been registered.",
-                  "None yet. A paper is planned after the baselines run.")
-        card(s, col_x(0), Y0, span_w(6), H0, [
-            ("h", "Awards and publications"),
-            ("b", "No awards or publications yet", 18),
-            ("b", "Planned: a paper on the file-cue audit and the cleaning protocol, for ICASSP or Interspeech 2027, or a CVPR or ICCV forensics workshop", 18),
-            ("b", "Research paper draft in IEEE format, submitted with this project", 18),
-        ], name="card_awards")
-        card(s, col_x(6), Y0, span_w(6), H0, [
-            ("h", "Copyright and openness"),
-            ("b", "Code: copyright 2026 Vaibhav Shiroorkar, all rights reserved; no copyright registered", 18),
-            ("b", "Preregistration P-001 and its amendments are dated in the repository", 18),
-            ("b", "No dataset is redistributed; each corpus keeps its own research-only terms", 18),
-        ], name="card_copyright")
+                  "We have no awards, publications or registered copyright for this project. The research paper written "
+                  "for it is submitted with the project report. We plan to submit the file-cue audit and the cleaning "
+                  "protocol to a conference after more baselines run.",
+                  "None so far.")
+        rows = [["Awards", "None"],
+                ["Publications", "None yet. The research paper is submitted with this report; a conference submission "
+                                 "is planned (ICASSP or Interspeech 2027, or a CVPR or ICCV forensics workshop)"],
+                ["Copyright", "None registered"]]
+        d.add_table(s, L, Y0, [2600000, W - 2600000], ["Item", "Status"], rows, size=20, bold_first_col=True, fill=H0)
 
     def s_bibliography():
         s = slide("Bibliography",
@@ -750,7 +757,7 @@ def build(draft: bool) -> int:
     for make in (s_title, s_intro, s_need, s_literature, s_hardware, s_flowchart, s_experiment, s_audit,
                  s_sync_results, s_cross_corpus, s_discussion, s_conclusions, s_awards, s_bibliography,
                  s_divider, s_census, s_hifi, s_neutralizer, s_h1, s_sync_method, s_per_method, s_h4, s_h2,
-                 s_old_conclusion, s_b1, s_b2, s_b3, s_b4):
+                 s_overnight, s_old_conclusion, s_b1, s_b2, s_b3, s_b4):
         make()
 
     # save ----------------------------------------------------------------------------------------------------
