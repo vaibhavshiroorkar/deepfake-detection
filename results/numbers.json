@@ -1851,6 +1851,650 @@
   "value": 0.949,
   "source": "results/p001-a14/audio-seed*-test-*-metrics.json"
  },
+ "a15.file.audio.baseline.f1": {
+  "value": 0.798,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.audio.baseline.precision": {
+  "value": 0.665,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.audio.baseline.recall": {
+  "value": 1.0,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.audio.seed17.f1": {
+  "value": 0.111,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.audio.seed17.precision": {
+  "value": 0.888,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.audio.seed17.recall": {
+  "value": 0.059,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.audio.seed29.f1": {
+  "value": 0.379,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.audio.seed29.precision": {
+  "value": 0.574,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.audio.seed29.recall": {
+  "value": 0.283,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.audio.seed43.f1": {
+  "value": 0.093,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.audio.seed43.precision": {
+  "value": 0.939,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.audio.seed43.recall": {
+  "value": 0.049,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.baseline": {
+  "value": 0.799,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.clips": {
+  "value": 3815,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.estimate": {
+  "value": -0.509,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.heads.max": {
+  "value": 0.403,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.heads.min": {
+  "value": 0.185,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.lower": {
+  "value": -0.523,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.upper": {
+  "value": -0.496,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.video.baseline.f1": {
+  "value": 0.8,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.video.baseline.precision": {
+  "value": 0.667,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.video.baseline.recall": {
+  "value": 1.0,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.video.seed17.f1": {
+  "value": 0.259,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.video.seed17.precision": {
+  "value": 0.32,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.video.seed17.recall": {
+  "value": 0.217,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.video.seed29.f1": {
+  "value": 0.427,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.video.seed29.precision": {
+  "value": 0.416,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.video.seed29.recall": {
+  "value": 0.439,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.video.seed43.f1": {
+  "value": 0.47,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.video.seed43.precision": {
+  "value": 0.434,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.file.video.seed43.recall": {
+  "value": 0.513,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.audio.baseline.f1": {
+  "value": 0.8,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.audio.baseline.precision": {
+  "value": 0.666,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.audio.baseline.recall": {
+  "value": 1.0,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.audio.seed17.f1": {
+  "value": 0.191,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.audio.seed17.precision": {
+  "value": 0.864,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.audio.seed17.recall": {
+  "value": 0.107,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.audio.seed29.f1": {
+  "value": 0.388,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.audio.seed29.precision": {
+  "value": 0.406,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.audio.seed29.recall": {
+  "value": 0.372,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.audio.seed43.f1": {
+  "value": 0.163,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.audio.seed43.precision": {
+  "value": 0.918,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.audio.seed43.recall": {
+  "value": 0.089,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.baseline": {
+  "value": 0.8,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.clips": {
+  "value": 3815,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.estimate": {
+  "value": -0.532,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.heads.max": {
+  "value": 0.353,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.heads.min": {
+  "value": 0.2,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.lower": {
+  "value": -0.549,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.upper": {
+  "value": -0.516,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.video.baseline.f1": {
+  "value": 0.8,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.video.baseline.precision": {
+  "value": 0.667,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.video.baseline.recall": {
+  "value": 1.0,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.video.seed17.f1": {
+  "value": 0.21,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.video.seed17.precision": {
+  "value": 0.188,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.video.seed17.recall": {
+  "value": 0.238,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.video.seed29.f1": {
+  "value": 0.317,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.video.seed29.precision": {
+  "value": 0.239,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.video.seed29.recall": {
+  "value": 0.47,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.video.seed43.f1": {
+  "value": 0.335,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.video.seed43.precision": {
+  "value": 0.244,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a15.window.video.seed43.recall": {
+  "value": 0.537,
+  "source": "results/p001-a15/a15.json"
+ },
+ "a16.clips": {
+  "value": 75,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift004.auc": {
+  "value": 0.559,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift004.high": {
+  "value": 0.6,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift004.low": {
+  "value": 0.524,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift004.rising.max": {
+  "value": 0.79,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift004.rising.min": {
+  "value": 0.72,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift008.auc": {
+  "value": 0.666,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift008.high": {
+  "value": 0.719,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift008.low": {
+  "value": 0.613,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift008.rising.max": {
+  "value": 0.8,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift008.rising.min": {
+  "value": 0.8,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift020.auc": {
+  "value": 0.899,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift020.high": {
+  "value": 0.947,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift020.low": {
+  "value": 0.848,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift020.rising.max": {
+  "value": 0.95,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift020.rising.min": {
+  "value": 0.93,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift040.auc": {
+  "value": 0.983,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift040.high": {
+  "value": 0.994,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift040.low": {
+  "value": 0.968,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift040.rising.max": {
+  "value": 1.0,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift040.rising.min": {
+  "value": 1.0,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift080.auc": {
+  "value": 0.984,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift080.high": {
+  "value": 0.995,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift080.low": {
+  "value": 0.967,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift080.rising.max": {
+  "value": 0.96,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.shift080.rising.min": {
+  "value": 0.95,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.swap.auc": {
+  "value": 0.989,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.swap.high": {
+  "value": 0.997,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.swap.low": {
+  "value": 0.978,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.swap.rising.max": {
+  "value": 1.0,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a16.swap.rising.min": {
+  "value": 0.99,
+  "source": "results/p001-a16/a16.json"
+ },
+ "a17.sources.dev": {
+  "value": 500,
+  "source": "results/p001-a17/a17.json"
+ },
+ "a17.sources.neither": {
+  "value": 0,
+  "source": "results/p001-a17/a17.json"
+ },
+ "a17.sources.test": {
+  "value": 0,
+  "source": "results/p001-a17/a17.json"
+ },
+ "a17.test_clips.dev": {
+  "value": 2993,
+  "source": "results/p001-a17/a17.json"
+ },
+ "a17.test_clips.neither": {
+  "value": 0,
+  "source": "results/p001-a17/a17.json"
+ },
+ "a17.test_clips.test": {
+  "value": 0,
+  "source": "results/p001-a17/a17.json"
+ },
+ "a17.vox2.dev": {
+  "value": 5994,
+  "source": "results/p001-a17/a17.json"
+ },
+ "a17.vox2.test": {
+  "value": 118,
+  "source": "results/p001-a17/a17.json"
+ },
+ "a19.dfdc.auc": {
+  "value": 0.519,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.dfdc.clips": {
+  "value": 2908,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.dfdc.high": {
+  "value": 0.549,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.dfdc.low": {
+  "value": 0.488,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.dfdc.minus_sync.estimate": {
+  "value": -0.046,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.dfdc.minus_sync.lower": {
+  "value": -0.066,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.dfdc.minus_sync.upper": {
+  "value": -0.025,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.dfdc.reading": {
+  "value": "worse",
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.dfdc.sync.max": {
+  "value": 0.575,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.dfdc.sync.min": {
+  "value": 0.553,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.hifiavdf.auc": {
+  "value": 0.536,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.hifiavdf.clips": {
+  "value": 3739,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.hifiavdf.high": {
+  "value": 0.554,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.hifiavdf.low": {
+  "value": 0.521,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.hifiavdf.minus_sync.estimate": {
+  "value": -0.03,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.hifiavdf.minus_sync.lower": {
+  "value": -0.041,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.hifiavdf.minus_sync.upper": {
+  "value": -0.02,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.hifiavdf.reading": {
+  "value": "worse",
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.hifiavdf.sync.max": {
+  "value": 0.572,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.hifiavdf.sync.min": {
+  "value": 0.559,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-test.auc": {
+  "value": 0.604,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-test.clips": {
+  "value": 3693,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-test.high": {
+  "value": 0.621,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-test.low": {
+  "value": 0.589,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-test.minus_sync.estimate": {
+  "value": -0.009,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-test.minus_sync.lower": {
+  "value": -0.018,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-test.minus_sync.upper": {
+  "value": -0.001,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-test.reading": {
+  "value": "worse",
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-test.sync.max": {
+  "value": 0.622,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-test.sync.min": {
+  "value": 0.597,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-window.auc": {
+  "value": 0.655,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-window.clips": {
+  "value": 3693,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-window.high": {
+  "value": 0.682,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-window.low": {
+  "value": 0.629,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-window.minus_sync.estimate": {
+  "value": 0.007,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-window.minus_sync.lower": {
+  "value": -0.008,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-window.minus_sync.upper": {
+  "value": 0.023,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-window.reading": {
+  "value": "not different",
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-window.sync.max": {
+  "value": 0.657,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.lavdf-window.sync.min": {
+  "value": 0.634,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test-identity-strict.auc": {
+  "value": 0.765,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test-identity-strict.clips": {
+  "value": 495,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test-identity-strict.high": {
+  "value": 0.817,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test-identity-strict.low": {
+  "value": 0.705,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test-identity-strict.minus_sync.estimate": {
+  "value": -0.035,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test-identity-strict.minus_sync.lower": {
+  "value": -0.053,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test-identity-strict.minus_sync.upper": {
+  "value": -0.016,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test-identity-strict.reading": {
+  "value": "worse",
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test-identity-strict.sync.max": {
+  "value": 0.81,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test-identity-strict.sync.min": {
+  "value": 0.78,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test.auc": {
+  "value": 0.778,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test.clips": {
+  "value": 2993,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test.high": {
+  "value": 0.83,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test.low": {
+  "value": 0.72,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test.minus_sync.estimate": {
+  "value": -0.018,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test.minus_sync.lower": {
+  "value": -0.038,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test.minus_sync.upper": {
+  "value": 0.001,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test.reading": {
+  "value": "not different",
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test.sync.max": {
+  "value": 0.809,
+  "source": "results/p001-a19/a19.json"
+ },
+ "a19.test.sync.min": {
+  "value": 0.775,
+  "source": "results/p001-a19/a19.json"
+ },
  "audio.dfdc.seed17.n": {
   "value": 3032,
   "source": "results/p001-branches/audio-seed17-dfdc-metrics.json"
@@ -2730,6 +3374,262 @@
  "audit.dfdc.raw.video": {
   "value": 0.588,
   "source": "results/shortcut-audit/dfdc/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.audio": {
+  "value": 0.74,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.census.FakeVideo-FakeAudio.audio_codec.aac": {
+  "value": 134,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.census.FakeVideo-FakeAudio.clips": {
+  "value": 134,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.census.FakeVideo-FakeAudio.video_codec.h264": {
+  "value": 134,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.census.FakeVideo-RealAudio.audio_codec.aac": {
+  "value": 150,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.census.FakeVideo-RealAudio.clips": {
+  "value": 150,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.census.FakeVideo-RealAudio.video_codec.h264": {
+  "value": 150,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.census.RealVideo-FakeAudio.audio_codec.aac": {
+  "value": 137,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.census.RealVideo-FakeAudio.clips": {
+  "value": 137,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.census.RealVideo-FakeAudio.video_codec.h264": {
+  "value": 137,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.census.RealVideo-RealAudio.audio_codec.aac": {
+  "value": 150,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.census.RealVideo-RealAudio.clips": {
+  "value": 150,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.census.RealVideo-RealAudio.video_codec.h264": {
+  "value": 150,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.clip": {
+  "value": 0.594,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.clips": {
+  "value": 571,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.audio.audio_bitrate": {
+  "value": 0.557,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.audio.audio_codec": {
+  "value": 0.454,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.audio.audio_sample_rate": {
+  "value": 0.5,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.audio.container": {
+  "value": 0.454,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.audio.duration": {
+  "value": 0.5,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.audio.fps": {
+  "value": 0.5,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.audio.has_audio": {
+  "value": 0.454,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.audio.height": {
+  "value": 0.503,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.audio.leading_silence_ms": {
+  "value": 0.576,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.audio.loudness_db": {
+  "value": 0.594,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.audio.overall_bitrate": {
+  "value": 0.578,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.audio.pixel_format": {
+  "value": 0.454,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.audio.trailing_silence_ms": {
+  "value": 0.661,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.audio.video_bitrate": {
+  "value": 0.578,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.audio.video_codec": {
+  "value": 0.454,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.audio.width": {
+  "value": 0.503,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.clip.audio_bitrate": {
+  "value": 0.534,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.clip.audio_codec": {
+  "value": 0.466,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.clip.audio_sample_rate": {
+  "value": 0.5,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.clip.container": {
+  "value": 0.466,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.clip.duration": {
+  "value": 0.5,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.clip.fps": {
+  "value": 0.5,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.clip.has_audio": {
+  "value": 0.466,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.clip.height": {
+  "value": 0.503,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.clip.leading_silence_ms": {
+  "value": 0.54,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.clip.loudness_db": {
+  "value": 0.584,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.clip.overall_bitrate": {
+  "value": 0.536,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.clip.pixel_format": {
+  "value": 0.466,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.clip.trailing_silence_ms": {
+  "value": 0.618,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.clip.video_bitrate": {
+  "value": 0.615,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.clip.video_codec": {
+  "value": 0.466,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.clip.width": {
+  "value": 0.503,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.video.audio_bitrate": {
+  "value": 0.513,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.video.audio_codec": {
+  "value": 0.463,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.video.audio_sample_rate": {
+  "value": 0.5,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.video.container": {
+  "value": 0.463,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.video.duration": {
+  "value": 0.5,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.video.fps": {
+  "value": 0.5,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.video.has_audio": {
+  "value": 0.463,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.video.height": {
+  "value": 0.503,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.video.leading_silence_ms": {
+  "value": 0.501,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.video.loudness_db": {
+  "value": 0.509,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.video.overall_bitrate": {
+  "value": 0.56,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.video.pixel_format": {
+  "value": 0.463,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.video.trailing_silence_ms": {
+  "value": 0.502,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.video.video_bitrate": {
+  "value": 0.649,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.video.video_codec": {
+  "value": 0.463,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.cue.video.width": {
+  "value": 0.503,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
+ },
+ "audit.fakeavceleb.cbrcheck.video": {
+  "value": 0.504,
+  "source": "results/shortcut-audit/fakeavceleb-neutral-cbr-check/summary.json"
  },
  "audit.fakeavceleb.neutral.audio": {
   "value": 0.793,

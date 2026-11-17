@@ -190,3 +190,66 @@ def test_a14_keys_reuse_the_metrics_reader(tmp_path):
     module.a14(numbers)
     # "none" is the unperturbed rerun, so it stays out of the perturbed range.
     assert numbers["a14.test-identity-strict.perturbed_min"]["value"] == 0.94
+
+
+def _write(tmp_path, folder, name, data):
+    out = tmp_path / "results" / folder
+    out.mkdir(parents=True, exist_ok=True)
+    (out / name).write_text(json.dumps(data))
+
+
+def test_a15_keys(tmp_path):
+    module = _module(tmp_path)
+    stream = {"17": {"f1": 0.21, "precision": 0.188, "recall": 0.238}, "baseline": {"f1": 0.8, "precision": 0.667, "recall": 1.0}}
+    label = {"clips": 3815, "identities": 999, "macro_f1_heads": {"17": 0.2004, "29": 0.3527, "43": 0.2491},
+             "macro_f1_baseline": 0.8001, "difference": {"estimate": -0.5321, "lower": -0.549, "upper": -0.516, "p_one_sided": 1.0},
+             "per_stream": {"video": stream, "audio": stream}}
+    _write(tmp_path, "p001-a15", "a15.json", {"labels": {"window": label}})
+    numbers: dict = {}
+    module.a15(numbers)
+    assert numbers["a15.window.clips"]["value"] == 3815
+    assert numbers["a15.window.heads.min"]["value"] == 0.2
+    assert numbers["a15.window.heads.max"]["value"] == 0.353
+    assert numbers["a15.window.baseline"]["value"] == 0.8
+    assert numbers["a15.window.estimate"]["value"] == -0.532
+    assert numbers["a15.window.video.seed17.precision"]["value"] == 0.188
+
+
+def test_a16_keys(tmp_path):
+    module = _module(tmp_path)
+    cond = {"mean_auc": 0.8991, "lower": 0.848, "upper": 0.947,
+            "per_seed": {"17": {"auc": 0.898, "share_rising": 0.93}, "29": {"auc": 0.895, "share_rising": 0.95}}}
+    _write(tmp_path, "p001-a16", "a16.json", {"clips": 75, "identities": 75, "conditions": {"shift 0.20 s": cond, "swap": cond}})
+    numbers: dict = {}
+    module.a16(numbers)
+    assert numbers["a16.clips"]["value"] == 75
+    assert numbers["a16.shift020.auc"]["value"] == 0.899
+    assert numbers["a16.swap.low"]["value"] == 0.848
+    assert numbers["a16.shift020.rising.min"]["value"] == 0.93
+
+
+def test_a17_keys(tmp_path):
+    module = _module(tmp_path)
+    _write(tmp_path, "p001-a17", "a17.json", {"vox2_speakers": {"dev": 5994, "test": 118},
+                                               "fakeavceleb_sources": {"dev": 500, "test": 0, "neither": 0},
+                                               "fakeavceleb_test_partition": {"dev": {"clips": 2993}}})
+    numbers: dict = {}
+    module.a17(numbers)
+    assert numbers["a17.sources.dev"]["value"] == 500
+    assert numbers["a17.sources.test"]["value"] == 0
+    assert numbers["a17.vox2.test"]["value"] == 118
+    assert numbers["a17.test_clips.dev"]["value"] == 2993
+
+
+def test_a19_keys(tmp_path):
+    module = _module(tmp_path)
+    entry = {"clips": 2908, "auc": {"17": 0.487, "29": 0.551}, "auc_sync": {"17": 0.553, "29": 0.575},
+             "mean_auc": 0.5191, "lower": 0.488, "upper": 0.549,
+             "minus_sync": {"estimate": -0.0461, "lower": -0.066, "upper": -0.025, "p_one_sided": 1.0}}
+    _write(tmp_path, "p001-a19", "a19.json", {"sets": {"dfdc": entry}})
+    numbers: dict = {}
+    module.a19(numbers)
+    assert numbers["a19.dfdc.auc"]["value"] == 0.519
+    assert numbers["a19.dfdc.minus_sync.estimate"]["value"] == -0.046
+    assert numbers["a19.dfdc.minus_sync.upper"]["value"] == -0.025
+    assert numbers["a19.dfdc.reading"]["value"] == "worse"

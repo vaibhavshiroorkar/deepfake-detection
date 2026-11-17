@@ -32,7 +32,9 @@ def audits(numbers: dict) -> None:
              "lavdf-files": "lavdf.raw", "dfdc": "dfdc.raw", "hifiavdf": "hifiavdf.raw",
              "hifiavdf-neutral": "hifiavdf.neutral", "dfdc-neutral": "dfdc.neutral",
              "lavdf-test-neutral": "lavdf.neutral",
-             "lavdf-window-neutral": "lavdf.window"}   # LAV-DF by window label (A9)
+             "lavdf-window-neutral": "lavdf.window",   # LAV-DF by window label (A9)
+             "fakeavceleb-neutral-cbr-check": "fakeavceleb.cbrcheck",   # A18, check sample
+             "fakeavceleb-neutral-cbr": "fakeavceleb.cbr"}              # A18, all of FakeAVCeleb
     for folder, key in names.items():
         path = RESULTS / "shortcut-audit" / folder / "summary.json"
         if not path.exists():
@@ -326,6 +328,76 @@ def a14(numbers: dict) -> None:
         _put(numbers, f"a14.{part}.perturbed_max", max(values), directory / f"audio-seed*-{part}-*-metrics.json")
 
 
+def _load(folder: str, name: str) -> tuple[dict | None, Path]:
+    path = RESULTS / folder / name
+    return (json.loads(path.read_text(encoding="utf-8")) if path.exists() else None), path
+
+
+def a15(numbers: dict) -> None:
+    """A15 (exploratory): H3 one direction. a15.{label}.{heads.min|heads.max|baseline|estimate|...}"""
+    report, path = _load("p001-a15", "a15.json")
+    if report is None:
+        return
+    for label, r in report["labels"].items():
+        key = f"a15.{label}"
+        _put(numbers, f"{key}.clips", r["clips"], path)
+        _put_range(numbers, f"{key}.heads", [round(v, 3) for v in r["macro_f1_heads"].values()], path)
+        _put(numbers, f"{key}.baseline", round(r["macro_f1_baseline"], 3), path)
+        for name in ("estimate", "lower", "upper"):
+            _put(numbers, f"{key}.{name}", round(r["difference"][name], 3), path)
+        for stream, rows in r["per_stream"].items():
+            for seed, values in rows.items():
+                name = seed if seed == "baseline" else f"seed{seed}"
+                for metric, value in values.items():
+                    _put(numbers, f"{key}.{stream}.{name}.{metric}", round(value, 3), path)
+
+
+def a16(numbers: dict) -> None:
+    """A16 (exploratory): sync score with moved audio. a16.{shift004|...|swap}.{auc|low|high|rising.*}"""
+    report, path = _load("p001-a16", "a16.json")
+    if report is None:
+        return
+    _put(numbers, "a16.clips", report["clips"], path)
+    for condition, r in report["conditions"].items():
+        key = "a16." + ("swap" if condition == "swap" else "shift" + condition.split()[1].replace(".", ""))
+        _put(numbers, f"{key}.auc", round(r["mean_auc"], 3), path)
+        _put(numbers, f"{key}.low", round(r["lower"], 3), path)
+        _put(numbers, f"{key}.high", round(r["upper"], 3), path)
+        _put_range(numbers, f"{key}.rising", [round(v["share_rising"], 2) for v in r["per_seed"].values()], path)
+
+
+def a17(numbers: dict) -> None:
+    """A17 (exploratory): FakeAVCeleb speakers in VoxCeleb2 dev and test. a17.sources.*, a17.vox2.*"""
+    report, path = _load("p001-a17", "a17.json")
+    if report is None:
+        return
+    for group, count in report["fakeavceleb_sources"].items():
+        _put(numbers, f"a17.sources.{group}", count, path)
+    for group, count in report["vox2_speakers"].items():
+        _put(numbers, f"a17.vox2.{group}", count, path)
+    for group, entry in report["fakeavceleb_test_partition"].items():
+        _put(numbers, f"a17.test_clips.{group}", entry["clips"], path)
+
+
+def a19(numbers: dict) -> None:
+    """A19 (exploratory): AVH-Align's method against the sync path. a19.{set}.{auc|minus_sync.*|reading}"""
+    report, path = _load("p001-a19", "a19.json")
+    if report is None:
+        return
+    for name, r in report["sets"].items():
+        key = f"a19.{name}"
+        _put(numbers, f"{key}.clips", r["clips"], path)
+        _put(numbers, f"{key}.auc", round(r["mean_auc"], 3), path)
+        _put(numbers, f"{key}.low", round(r["lower"], 3), path)
+        _put(numbers, f"{key}.high", round(r["upper"], 3), path)
+        _put_range(numbers, f"{key}.sync", [round(v, 3) for v in r["auc_sync"].values()], path)
+        diff = r["minus_sync"]
+        for part in ("estimate", "lower", "upper"):
+            _put(numbers, f"{key}.minus_sync.{part}", round(diff[part], 3), path)
+        reading = "better" if diff["lower"] > 0 else "worse" if diff["upper"] < 0 else "not different"
+        _put(numbers, f"{key}.reading", reading, path)
+
+
 def main() -> int:
     numbers: dict = {}
     audits(numbers)
@@ -341,6 +413,10 @@ def main() -> int:
     a11(numbers)
     a13(numbers)
     a14(numbers)
+    a15(numbers)
+    a16(numbers)
+    a17(numbers)
+    a19(numbers)
     out = RESULTS / "numbers.json"
     out.write_text(json.dumps(dict(sorted(numbers.items())), indent=1) + "\n", encoding="utf-8")
     print(f"{len(numbers)} numbers -> {_rel(out)}")
