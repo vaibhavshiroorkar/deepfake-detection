@@ -24,6 +24,13 @@ Chosen 11-16: prepare the rebuild now, with no GPU and no change to anything H2 
 - AV-Deepfake1M++: size (1.46 TB) and licence (gated EULA) are checked; the metadata format is still unknown. Decide on a stratified subset or an external disk, since this PC has about 519 GB free. Follow up on access.
 - Confirm the assumed licences in `docs/research/P-002-backbones.md` (CLIP, XLS-R) before P-002 uses them.
 
+## 2c. The 18th: documentation day, with Vaibhav (decided 11-17 in a side chat; the 19th is for study)
+
+- Read the overnight results (A15 to A19) and decide whether their notes go into the paper, report and slides. The wording waits on branch `overnight-notes`, not on `main`.
+- A deep wording pass on the paper, report and slide notes: rhythm, groups of three, restated points, build-ups. Words only, never claims or numbers; rebuild every deliverable after. The word scan is already clean apart from two "not only X" lines in the report.
+- Comparison tables drafted in the side chat on 11-17: a protocol table (who trains on fakes, splits by person, cleans training and test data, controls false alarms, preregisters) and two score tables (raw files as papers report them, cleaned files under our protocol), each read against the file-cue ceiling. Every competitor cell was read from arXiv HTML pages and must be checked against the PDF before it goes into the report's literature chapter or a backup slide. Draft: the side chat's transcript.
+- `docs/SECURITY.md`, and a check of `README.md`, `docs/FINAL.md` and the handbook for stale numbers and links.
+
 ## 3. When H2 finishes (Claude)
 
 - Cut version 1.0.0 at the final-year submission: changelog heading, `pyproject.toml`, tag `v1.0.0`.
