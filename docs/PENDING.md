@@ -19,7 +19,7 @@ Chosen 11-16: prepare the rebuild now, with no GPU and no change to anything H2 
 
 Chosen 11-17 with Vaibhav, to use the 18th and 19th; the submission is on the 20th, morning. Designs fixed in [P-001](../results/preregistration/P-001-shortcut-neutral-av-study.md) before any result. Stop rule: 19 November, 18:00. The 19th stays a buffer for Vaibhav's review.
 
-- Hard-reviewer pass, continued: a full read of the paper and report body, the slides and poster, and the slide-1 layout warning. Done 11-17: both conclusions and the abstract now state every main result (H4, cross-corpus, H2, A11, A12), the abstract is under 250 words (244), and both documents are free of dashes and filler. The 18th.
+- Hard-reviewer pass, continued: a full read of the paper and report body, and the slides. Done 11-17: the poster fits again (the layout warning was the poster's conclusion box; the conclusion now states the transfer findings, and the H4 rules box is one paragraph); both conclusions and the abstract now state every main result (H4, cross-corpus, H2, A11, A12), the abstract is under 250 words (244), and both documents are free of dashes and filler. The 18th.
 
 ## 3. When H2 finishes (Claude)
 

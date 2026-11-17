@@ -186,8 +186,8 @@ def build(draft: bool) -> int:
     _, th = d.add_table(s, colx(1), y, [int(CW * 0.36), int(CW * 0.44), CW - int(CW * 0.80)],
                         ["Target", "Gain [95%]", "Holm"], rows, size=SZ_S, bold_first_col=True, pad=int(0.08 * IN))
     y += th + int(0.3 * IN)
-    d.add_text(s, colx(1), y, CW, int(0.8 * IN), T([("p", "**H2 holds: {{h2.success}}**, but no target shows a gain on fakes the visual path can see", SZ_B)]), "h2_verdict")
-    y += int(0.8 * IN) + GAP
+    d.add_text(s, colx(1), y, CW, int(1.2 * IN), T([("p", "**H2 holds: {{h2.success}}**, but no target shows a gain on fakes the visual path can see", SZ_B)]), "h2_verdict")
+    y += int(1.2 * IN) + GAP
     if PH - FOOT_H - y - GAP > int(2 * IN):      # the pipeline figure only where it fits
         figure(1, y, "fig_pipeline.png", "Pipeline from clip to score", max_h=PH - FOOT_H - y - GAP)
 
@@ -221,16 +221,14 @@ def build(draft: bool) -> int:
     y = figure(2, y, "fig_cross_corpus.png", "Sync path AUC on each locked target",
                keys=("sync.hifiavdf.seed17.auc",), max_h=int(6 * IN))
     y = section(2, y, None, "False-alarm rules (H4)", [
-        ("p", "200 real target clips set the threshold; no fake label is read.", SZ_S),
-        ("p", "Conformal: the k-th smallest real score, k = ceil((n + 1)(1 - alpha)).", SZ_S),
-        ("p", "Umbrella: the smallest rank with P(FPR > alpha) at most delta.", SZ_S),
-        ("p", "Bar: realized FPR at most 0.07 on every target.", SZ_S),
+        ("p", "200 real target clips set the threshold; no fake label is read. Conformal rule: the k-th smallest "
+              "real score, k = ceil((n + 1)(1 - alpha)). Bar: realized FPR at most 0.07 on every target.", SZ_S),
     ])
     y = figure(2, y, "fig_h4.png", "Realized FPR and TPR of the three threshold rules",
                keys=("h4.hifiavdf-seed17.conformal_real_only.fpr",), max_h=int(6 * IN))
     section(2, y, PH - FOOT_H - y - GAP, "Conclusion", [
-        ("p", "Benchmarks leak labels through their files. Compare every detector score with the shortcut ceiling. "
-              "Hypotheses were committed before the runs, and every number has a receipt.", SZ_B),
+        ("p", "Benchmarks leak labels through their files, so compare every detector score with the shortcut "
+              "ceiling. Once the leaks were removed, neither fusion nor stronger backbones transferred better.", SZ_S),
     ])
 
     # footer band
