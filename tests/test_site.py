@@ -116,3 +116,10 @@ def test_rate_limiter_allows_up_to_the_limit_per_hour():
     assert not limiter.allow("a", now=2)
     assert limiter.allow("b", now=2)
     assert limiter.allow("a", now=3602)
+
+
+@pytest.mark.parametrize("route", ["/", "/check", "/classic"])
+def test_html_pages_tell_the_browser_to_revalidate(client, route):
+    # The old app served "/" as a file with no Cache-Control, so browsers kept showing it from cache
+    # after "/" became the new site. Every HTML page must make the browser check with the server.
+    assert client.get(route).headers.get("cache-control") == "no-cache"

@@ -168,6 +168,15 @@ def register(app: FastAPI) -> None:
     env = _environment()
     contact_limit = RateLimiter(CONTACT_LIMIT)
 
+    @app.middleware("http")
+    async def revalidate_html(request: Request, call_next):
+        # The old "/" was a static file with no Cache-Control, and browsers kept showing it from cache
+        # after "/" became this site. Pages change with every result, so the browser always asks.
+        response = await call_next(request)
+        if response.headers.get("content-type", "").startswith("text/html"):
+            response.headers["Cache-Control"] = "no-cache"
+        return response
+
     def render(template: str, title: str, path: str, **extra) -> HTMLResponse:
         page = env.get_template(template).render(title=title, path=path, ceilings=ceilings(), **extra)
         return HTMLResponse(page)
