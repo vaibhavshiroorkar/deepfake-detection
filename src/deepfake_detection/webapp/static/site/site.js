@@ -53,17 +53,67 @@
     if (data.status === "rejected") {
       card.classList.add("cant");
       card.append(el("p", "outcome cant", "Can't check"), el("p", "", data.reason));
-    } else if (data.status === "not_scored") {
-      card.append(el("p", "outcome pending", "Not scored yet"), el("p", "", data.reason), checkRows(null));
+    } else if (data.status === "busy" || data.status === "error" || data.status === "unknown") {
+      card.classList.add("cant");
+      card.append(el("p", "outcome cant", data.status === "busy" ? "Busy" : "Not checked"), el("p", "", data.reason));
     } else {
       const o = OUTCOMES[data.outcome] || OUTCOMES.cant_check;
       card.classList.add(o.cls);
       card.append(el("p", "outcome " + o.cls, o.text));
       if (data.summary) card.append(el("p", "", data.summary));
       card.append(checkRows(data.checks));
+      const trace = traceView(data.trace);
+      if (trace) card.append(trace);
       if (data.how_sure) card.append(el("p", "sure", data.how_sure));
     }
     card.hidden = false;
+  }
+
+  /* The trace: speech loudness over the first 2 s, and the lip-sync misfit of each 2 s window. */
+  function traceView(trace) {
+    if (!trace || !trace.loudness_db || !trace.loudness_db.length) return null;
+    const ns = "http://www.w3.org/2000/svg", W = 300, H = 60;
+    const values = trace.loudness_db, lo = Math.min(...values), hi = Math.max(...values, lo + 1);
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.setAttribute("class", "trace");
+    svg.setAttribute("preserveAspectRatio", "none");
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", "Speech loudness over the first 2 seconds of the cleaned clip");
+    const line = document.createElementNS(ns, "polyline");
+    line.setAttribute("points", values.map((v, i) =>
+      `${(i / (values.length - 1) * W).toFixed(1)},${(H - 4 - (v - lo) / (hi - lo) * (H - 8)).toFixed(1)}`).join(" "));
+    line.setAttribute("fill", "none");
+    line.setAttribute("stroke", "var(--sound)");
+    line.setAttribute("stroke-width", "2");
+    line.setAttribute("vector-effect", "non-scaling-stroke");
+    svg.append(line);
+    const box = el("figure", "tracebox");
+    box.append(svg);
+    const windows = (trace.windows || []).map((w) =>
+      `${w.start.toFixed(0)} to ${(w.start + 2).toFixed(0)} s: misfit ${w.misfit.toFixed(2)}`);
+    box.append(el("figcaption", "small", "Speech loudness, first 2 s. Lip-sync misfit per window (higher is worse): "
+      + (windows.length ? windows.join("; ") : "not measured") + "."));
+    return box;
+  }
+
+  const STAGES = { received: "Received. Waiting for the detector", cleaning: "Cleaning the clip",
+    "finding the face": "Finding the face", scoring: "Scoring", done: "Done" };
+  const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  async function follow(status, job) {
+    for (let tries = 0; tries < 400; tries++) {
+      await pause(1500);
+      const response = await fetch("/api/check/" + job);
+      const data = await response.json();
+      if (data.status === "waiting" || data.status === "running") {
+        const ahead = data.ahead ? ` (${data.ahead} ahead of you)` : "";
+        status.textContent = (STAGES[data.stage] || "Working") + ahead + "...";
+        continue;
+      }
+      return data;
+    }
+    return { status: "error", reason: "The check took too long. Please try again later." };
   }
 
   async function submit(root, file) {
@@ -80,7 +130,11 @@
     body.append("file", file);
     try {
       const response = await fetch("/api/check", { method: "POST", body });
-      const data = await response.json().catch(() => ({ status: "rejected", reason: "The server sent an unreadable answer." }));
+      let data = await response.json().catch(() => ({ status: "rejected", reason: "The server sent an unreadable answer." }));
+      if (data.status === "queued") {
+        status.textContent = STAGES.received + "...";
+        data = await follow(status, data.job);
+      }
       status.textContent = "";
       render(card, data);
     } catch (error) {

@@ -180,3 +180,8 @@ footer.footer { border-top: 1px solid var(--line); padding: 26px 0 44px; color: 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 .scope { max-width: 820px; }
 .checks3 + .intro { margin-top: 16px; }
+
+/* the result trace: loudness line and per-window lip-sync misfit */
+.tracebox { margin: 14px 0 0; }
+.tracebox .trace { width: 100%; height: 60px; display: block; border-bottom: 1px solid var(--line); }
+.tracebox figcaption { margin-top: 6px; color: var(--muted); }

@@ -1,8 +1,9 @@
 """The public site: pages rendered from templates, with every number read from numbers.json.
 
-The design is `docs/DESIGN.md`; the structure is the 2026-11-17 website design spec. The P-001
-detector is not connected yet, so an upload is checked against the clip rules, deleted, and
-answered honestly as "not scored yet" rather than with an invented result.
+The design is `docs/DESIGN.md`; the structure is the 2026-11-17 website design spec. An upload
+is checked against the clip rules, then queued for the P-001 detector (`detector.py`), which
+scores it with the three checks (`scorer.py`), places the scores among real calibration clips
+(`calibration.py`) and deletes every file before the result can be read.
 """
 
 from __future__ import annotations
@@ -24,6 +25,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
 from deepfake_detection.paths import PROJECT_ROOT
+from deepfake_detection.webapp.detector import Detector
 
 NUMBERS = PROJECT_ROOT / "results" / "numbers.json"
 TEMPLATES = Path(__file__).parent / "templates" / "site"
@@ -33,6 +35,8 @@ MAX_UPLOAD_MB = 90
 MIN_SECONDS, MAX_SECONDS = 3.0, 60.0
 EXTENSIONS = {".mp4", ".mov", ".webm"}
 CONTACT_LIMIT = 5                    # messages per address per hour
+UPLOAD_LIMIT = 10                    # uploads per address per hour
+CALIBRATION = PROJECT_ROOT / "results" / "web-calibration.json"
 RESEND_URL = "https://api.resend.com/emails"
 
 PAGES = {
@@ -124,6 +128,64 @@ def check_clip_rules(info: dict) -> float:
     return duration
 
 
+# Detector -----------------------------------------------------------------------------------------
+
+def make_scorer():
+    """The P-001 scorer. Loading takes about a minute, so it happens on the first upload, not at start."""
+    from deepfake_detection.webapp.scorer import Scorer
+
+    return Scorer(device="cpu")
+
+
+@lru_cache(maxsize=1)
+def calibration():
+    from deepfake_detection.webapp.calibration import Calibration
+
+    return Calibration.from_json(CALIBRATION.read_text(encoding="utf-8"))
+
+
+@lru_cache(maxsize=1)
+def detector():
+    # Looked up at call time, so a test can replace make_scorer before the first job.
+    return Detector(lambda: make_scorer(), calibration())
+
+
+CHECK_NAMES = {"face": "face", "voice": "voice", "sync": "lip-sync"}
+
+
+def how_sure() -> str:
+    """The false-alarm and catch rates on the calibration sets, from the calibration file itself."""
+    caught = []
+    for corpus, sides in calibration().meta["outcomes"].items():
+        fakes = sides.get("fake", {})
+        if sum(fakes.values()):
+            caught.append((fakes.get("signs", 0) / sum(fakes.values()), corpus))
+    low, high = min(caught), max(caught)
+    return (f"On the four test sets we calibrated on, about 5 in 100 real clips get this flag. The same "
+            f"threshold catches {low[0]:.0%} of fakes on {low[1]} and {high[0]:.0%} on {high[1]}: few from "
+            f"sources the models never trained on. For a video from anywhere else, 5 in 100 is an estimate.")
+
+
+def present(outcome: dict) -> dict:
+    """The detector's outcome in the shape the page draws: whole-number percentiles and plain sentences."""
+    checks = {name: {"percentile": None if c["percentile"] is None else min(99, int(c["percentile"] * 100)),
+                     "raised": name in outcome.get("raised", []), "reason": c["reason"]}
+              for name, c in outcome.get("checks", {}).items()}
+    kind = outcome["kind"]
+    if kind == "signs":
+        names = " and ".join(CHECK_NAMES[n] for n in outcome["raised"])
+        noun = "checks" if len(outcome["raised"]) > 1 else "check"
+        summary = f"The {names} {noun} scored higher than almost every real clip we calibrated on."
+    elif kind == "cant_tell":
+        summary = "One check scored higher than most real clips, but not high enough to flag the video."
+    elif kind == "no_signs":
+        summary = "No check scored unusually high compared with real clips. That is not proof the video is real."
+    else:
+        summary = outcome.get("reason", "The video could not be checked.")
+    return {"status": "done", "outcome": kind, "summary": summary, "checks": checks,
+            "trace": outcome.get("trace", {}), "how_sure": how_sure() if kind != "cant_check" else ""}
+
+
 # Contact ------------------------------------------------------------------------------------------
 
 EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -167,6 +229,7 @@ def send_contact(name: str, email: str, message: str) -> None:
 def register(app: FastAPI) -> None:
     env = _environment()
     contact_limit = RateLimiter(CONTACT_LIMIT)
+    upload_limit = RateLimiter(UPLOAD_LIMIT)
 
     @app.middleware("http")
     async def revalidate_html(request: Request, call_next):
@@ -192,7 +255,11 @@ def register(app: FastAPI) -> None:
                           response_class=HTMLResponse, include_in_schema=False)
 
     @app.post("/api/check")
-    async def check(file: UploadFile = File(...)) -> JSONResponse:
+    async def check(request: Request, file: UploadFile = File(...)) -> JSONResponse:
+        client = request.client.host if request.client else "unknown"
+        if not upload_limit.allow(client):
+            return JSONResponse({"status": "rejected", "reason": "Too many videos from here. Try again in an hour."},
+                                status_code=429)
         suffix = Path(file.filename or "").suffix.lower()
         if suffix not in EXTENSIONS:
             return JSONResponse({"status": "rejected", "reason": "Use an MP4, MOV or WebM file."}, status_code=400)
@@ -207,19 +274,31 @@ def register(app: FastAPI) -> None:
                         return JSONResponse({"status": "rejected", "reason": f"The file is over {MAX_UPLOAD_MB} MB."},
                                             status_code=413)
                     handle.write(chunk)
-            duration = check_clip_rules(probe(path))
+            check_clip_rules(probe(path))
+            job = detector().submit(path)          # the detector owns the file from here and deletes it
         except ClipRejected as error:
+            path.unlink(missing_ok=True)
             return JSONResponse({"status": "rejected", "reason": str(error)}, status_code=400)
         except subprocess.TimeoutExpired:
-            return JSONResponse({"status": "rejected", "reason": "Reading the file took too long."}, status_code=400)
-        finally:
             path.unlink(missing_ok=True)
-        return JSONResponse({
-            "status": "not_scored",
-            "duration": round(duration, 1),
-            "reason": "The clip passed the upload checks and was deleted. The P-001 detector is being "
-                      "connected, so it was not scored yet.",
-        })
+            return JSONResponse({"status": "rejected", "reason": "Reading the file took too long."}, status_code=400)
+        except Detector.Busy:              # the detector already deleted the file
+            return JSONResponse({"status": "busy", "reason": "The detector is busy. Try again in a minute."},
+                                status_code=503)
+        except BaseException:
+            path.unlink(missing_ok=True)
+            raise
+        return JSONResponse({"status": "queued", "job": job}, status_code=202)
+
+    @app.get("/api/check/{job}")
+    def check_status(job: str) -> JSONResponse:
+        state = detector().status(job) if re.fullmatch(r"[0-9a-f]{32}", job) else None
+        if state is None:
+            return JSONResponse({"status": "unknown", "reason": "This check has expired or never existed."},
+                                status_code=404)
+        if state["status"] == "done":
+            return JSONResponse(present(state["outcome"]))
+        return JSONResponse(state)
 
     @app.post("/contact", response_class=HTMLResponse)
     def contact(request: Request, name: str = Form(""), email: str = Form(""), message: str = Form(""),

@@ -1,0 +1,113 @@
+"""The upload queue: one clip scored at a time, a few waiting, every file deleted after.
+
+A visitor's upload becomes a job. One worker thread scores jobs in order, so the
+models are loaded once and two uploads never compete for the CPU. The page polls
+the job's status, which names the stage it is in. The upload and every derived
+file are deleted before the result becomes visible, and on any error.
+"""
+
+from __future__ import annotations
+
+import logging
+import queue
+import shutil
+import tempfile
+import threading
+import time
+import uuid
+from collections.abc import Callable
+from pathlib import Path
+
+from deepfake_detection.webapp.calibration import Calibration
+from deepfake_detection.webapp.scorer import ClipRefused
+
+log = logging.getLogger(__name__)
+KEEP_SECONDS = 15 * 60          # a finished job's result stays readable this long
+
+
+class Detector:
+    class Busy(RuntimeError):
+        """Too many uploads are waiting."""
+
+    def __init__(self, make_scorer: Callable[[], object], calibration: Calibration, *,
+                 workroot: Path | None = None, waiting: int = 3) -> None:
+        self._make_scorer, self._scorer = make_scorer, None
+        self.calibration = calibration
+        self._workroot = Path(workroot or tempfile.gettempdir()) / "deepfake-check"
+        self._capacity = 1 + waiting
+        self._jobs: dict[str, dict] = {}
+        self._done: dict[str, threading.Event] = {}
+        self._lock = threading.Lock()
+        self._queue: queue.Queue[tuple[str, Path]] = queue.Queue()
+        threading.Thread(target=self._work, name="detector", daemon=True).start()
+
+    def submit(self, upload: Path) -> str:
+        """Queue an upload the server has already checked against the clip rules. Takes ownership of the file."""
+        with self._lock:
+            self._expire()
+            active = sum(job["status"] in ("waiting", "running") for job in self._jobs.values())
+            if active >= self._capacity:
+                upload.unlink(missing_ok=True)
+                raise Detector.Busy("busy")
+            job = uuid.uuid4().hex
+            self._jobs[job] = {"status": "waiting", "stage": "received", "finished": None}
+            self._done[job] = threading.Event()
+        self._queue.put((job, upload))
+        return job
+
+    def status(self, job: str) -> dict | None:
+        with self._lock:
+            state = self._jobs.get(job)
+            if state is None:
+                return None
+            ahead = sum(1 for other, s in self._jobs.items() if s["status"] == "waiting" and other < job) \
+                if state["status"] == "waiting" else 0
+            return {k: v for k, v in state.items() if k != "finished"} | ({"ahead": ahead} if ahead else {})
+
+    def wait(self, job: str, timeout: float | None = None) -> bool:
+        event = self._done.get(job)
+        return event.wait(timeout) if event else False
+
+    def _set(self, job: str, **values) -> None:
+        with self._lock:
+            self._jobs[job].update(values)
+
+    def _expire(self) -> None:
+        now = time.monotonic()
+        for job in [j for j, s in self._jobs.items() if s["finished"] and now - s["finished"] > KEEP_SECONDS]:
+            del self._jobs[job]
+            self._done.pop(job, None)
+
+    def _work(self) -> None:
+        while True:
+            job, upload = self._queue.get()
+            self._set(job, status="running", stage="cleaning")
+            workdir = self._workroot / job
+            result: dict
+            try:
+                workdir.mkdir(parents=True, exist_ok=True)
+                if self._scorer is None:
+                    self._scorer = self._make_scorer()
+                report = self._scorer.score(upload, workdir, progress=lambda stage, job=job: self._set(job, stage=stage))
+                result = {"status": "done", "outcome": self._outcome(report)}
+            except ClipRefused as error:
+                result = {"status": "done", "outcome": {"kind": "cant_check", "reason": str(error)}}
+            except Exception:  # noqa: BLE001 - any failure must still delete the files and answer the page
+                log.exception("scoring job %s failed", job)
+                result = {"status": "error", "reason": "The check failed on our side. Please try again later."}
+            finally:
+                upload.unlink(missing_ok=True)
+                shutil.rmtree(workdir, ignore_errors=True)
+            self._set(job, **result, stage="done", finished=time.monotonic())
+            self._done[job].set()
+
+    def _outcome(self, report) -> dict:
+        decision = self.calibration.decide(report.scores())
+        checks = {name: {"percentile": decision.percentiles[name], "reason": result.reason}
+                  for name, result in report.checks.items()}
+        outcome = {"kind": decision.kind, "combined": decision.combined, "raised": decision.raised,
+                   "checks": checks, "trace": report.trace}
+        if decision.kind == "cant_check":
+            outcome["reason"] = "Neither the face nor the voice could be checked: " + "; ".join(
+                r for r in (c["reason"] for c in checks.values()) if r)
+        return outcome

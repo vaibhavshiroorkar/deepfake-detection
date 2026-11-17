@@ -78,19 +78,57 @@ def test_upload_rejects_a_file_that_is_not_a_video(client):
     assert "could not be read" in response.json()["reason"]
 
 
-@pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="needs ffmpeg")
-def test_a_valid_clip_is_answered_as_not_scored_and_deleted(client, tmp_path, monkeypatch):
+class _FakeScorer:
+    """Stands in for the P-001 scorer, so the site tests never load a model."""
+
+    def __init__(self):
+        self.seen = []
+
+    def score(self, upload, workdir, progress=lambda stage: None):
+        from deepfake_detection.webapp.scorer import CheckResult, ScoreReport
+
+        self.seen.append(upload)
+        progress("scoring")
+        checks = {"face": CheckResult((0.9999,) * 3), "voice": CheckResult((0.01,) * 3),
+                  "sync": CheckResult(None, "no face in the mouth window")}
+        return ScoreReport(checks, {"loudness_db": [-30.0] * 50, "windows": []})
+
+
+def _clip(tmp_path):
     clip = tmp_path / "clip.mp4"
     subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "testsrc=size=160x120:rate=25", "-f", "lavfi",
                     "-i", "sine=frequency=440", "-t", "4", "-shortest", "-pix_fmt", "yuv420p", str(clip)], check=True)
-    seen = []
-    real_probe = site.probe
-    monkeypatch.setattr(site, "probe", lambda path: seen.append(path) or real_probe(path))
-    response = client.post("/api/check", files={"file": ("clip.mp4", clip.read_bytes(), "video/mp4")})
-    body = response.json()
-    assert response.status_code == 200 and body["status"] == "not_scored"
-    assert body["duration"] == pytest.approx(4.0, abs=0.2)
-    assert not seen[0].exists()          # the upload is deleted before the answer is sent
+    return clip
+
+
+@pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="needs ffmpeg")
+def test_a_valid_clip_is_scored_through_a_job_and_deleted(monkeypatch, tmp_path):
+    fake = _FakeScorer()
+    monkeypatch.setattr(site, "make_scorer", lambda: fake)
+    client = TestClient(create_app(_Registry()))
+    response = client.post("/api/check", files={"file": ("clip.mp4", _clip(tmp_path).read_bytes(), "video/mp4")})
+    assert response.status_code == 202 and response.json()["status"] == "queued"
+    job = response.json()["job"]
+    site.detector().wait(job, timeout=10)
+    body = client.get(f"/api/check/{job}").json()
+    assert body["status"] == "done" and body["outcome"] == "signs"
+    assert body["checks"]["face"]["raised"] is True
+    assert body["checks"]["sync"] == {"percentile": None, "raised": False, "reason": "no face in the mouth window"}
+    assert "5 in 100" in body["how_sure"]
+    assert not fake.seen[0].exists()        # the upload is gone once the result can be read
+
+
+def test_an_unknown_job_is_not_found(client):
+    assert client.get("/api/check/" + "0" * 32).status_code == 404
+
+
+def test_present_turns_percentiles_into_whole_numbers_below_100():
+    outcome = {"kind": "cant_tell", "raised": [], "checks": {"face": {"percentile": 0.9995, "reason": None},
+               "voice": {"percentile": 0.12, "reason": None}, "sync": {"percentile": None, "reason": "x"}},
+               "trace": {}}
+    shown = site.present(outcome)
+    assert shown["checks"]["face"]["percentile"] == 99 and shown["checks"]["voice"]["percentile"] == 12
+    assert shown["outcome"] == "cant_tell" and shown["summary"]
 
 
 def test_contact_honeypot_pretends_success_without_sending(client, monkeypatch):
@@ -123,3 +161,11 @@ def test_html_pages_tell_the_browser_to_revalidate(client, route):
     # The old app served "/" as a file with no Cache-Control, so browsers kept showing it from cache
     # after "/" became the new site. Every HTML page must make the browser check with the server.
     assert client.get(route).headers.get("cache-control") == "no-cache"
+
+
+def test_present_names_every_raised_check_in_plain_english():
+    checks = {n: {"percentile": 0.99, "reason": None} for n in ("face", "voice", "sync")}
+    two = site.present({"kind": "signs", "raised": ["face", "sync"], "checks": checks, "trace": {}})
+    assert two["summary"].startswith("The face and lip-sync checks scored")
+    one = site.present({"kind": "signs", "raised": ["voice"], "checks": checks, "trace": {}})
+    assert one["summary"].startswith("The voice check scored")
