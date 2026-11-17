@@ -10,6 +10,7 @@ One chain runs as a detached process (handbook mistake 71). Do not restart or sh
 | Chain | Log | What it does | Expected finish |
 |---|---|---|---|
 | A11 | `runs/p001-a11.log` | Started 11-17 05:36, alone on the GPU. Trains and scores CLIP and XLS-R (exploratory), three seeds each | About 14:00 to 15:00 Tue (assumed); stop rule 17 November, 23:59 |
+| A13, A14 | `runs/p001-a13-a14.log` | Waits for "a11 done", then A13 (frame statistics, CPU) and A14 (audio rescoring, GPU), one at a time. Scripts and tests are ready | About 1 to 2 h after A11 (assumed) |
 | Monitor | `runs/p001/logs/resources.log` | Free RAM, GPU memory, power and temperature, once a minute. Stops after A11 | With A11 |
 
 ## 2. While the chains run (Claude)
@@ -29,7 +30,7 @@ Chosen 11-16: prepare the rebuild now, with no GPU and no change to anything H2 
 Stop rule: if the upgraded models are not scored on all three targets by 17 November, 23:59, A11 is reported as not completed.
 
 - `runs/p001-a11.sh` (log `runs/p001-a11.log`) runs it all once the whole H2 chain is done, HiFi-AVDF included: it trains CLIP (`ddf train visual-stream --backbone clip --freeze-backbone`) and XLS-R (`ddf train audio --audio-model facebook/wav2vec2-xls-r-300m`, frozen for every epoch) at three seeds. Choose thresholds on validation and score the identity-strict test and the targets.
-- Compare each with its P-001 path (paired identity bootstrap), and add an exploratory section to the paper and report.
+- Compare each with its P-001 path (`scripts/compare_a11.py`, ready and tested; paired identity bootstrap), and add an exploratory section to the paper and report.
 
 ## 2d. Amendments A12 to A14, three exploratory checks (Claude)
 
