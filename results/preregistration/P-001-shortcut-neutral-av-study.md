@@ -269,3 +269,18 @@ The paper reads the sync path's per-method order as evidence that it measures li
 - **Data.** All of FakeAVCeleb, as H1. The 600-clip check sample runs first as a smoke test. If the full set cannot be neutralized and audited by 05:00, only the check sample is reported, labelled as such.
 - **Reported:** the shortcut ceiling on the clip, video and audio labels with `scripts/shortcut_audit.py`, unchanged, the strongest single cues, and the clips refused.
 - **Reading, fixed now.** If the clip-label ceiling is at most 0.60, a fixed bitrate removes the residual that made H1 miss; if not, something besides bitrate remains and the audit names it. H1's preregistered verdict stays "not met" either way.
+
+## Amendment A19, 2026-11-17, 21:15, before any A19 model exists: AVH-Align's method on our protocol (exploratory)
+
+**Why.** The paper compares with no published baseline. AVH-Align (Smeu et al., CVPR 2025; code `bit-ml/AVH-Align` at commit `55401de`, CC BY-NC-SA 4.0) is the closest published method: a real-only alignment model on frozen AV-HuBERT features.
+
+**What cannot be run.** The released weights expect features from `self_large_vox_433h.pt` (AV-HuBERT Large fine-tuned on LRS3) and AVH-Align's own mouth preprocessing. That checkpoint is not here, and our Large checkpoint is pretrained only. So the published model is **not** evaluated.
+
+**What runs instead: AVH-Align's head, loss and score, retrained on our protocol.**
+- **Model.** Their `FusionModel` unchanged except the input width: 768 (our AV-HuBERT Base lips-only and audio-only passes) instead of 1024.
+- **Data.** Exactly the real FakeAVCeleb training and validation windows the P-001 sync path used (`load_windows`, face in 80% of frames, 50 frames), seeds 17, 29 and 43.
+- **Training, as their code.** Features L2-normalized per frame. For each lips frame, the audio frames 15 either side (zeros outside the 2 s window, where theirs uses the video's edges). Loss: minus the log-softmax at the true offset, summed. Adam, learning rate 1e-5, batch 1,024, ReduceLROnPlateau (factor 0.1, patience 5), early stopping after 10 epochs without a lower real validation loss, at most 500 epochs; the epoch with the lowest real validation loss is kept.
+- **Score, as their code.** Per window, the log-sum-exp over frames of minus the aligned-pair output; a clip's score is the mean over its windows (P-001's rule).
+- **Sets.** FakeAVCeleb test and identity-strict test, LAV-DF test (file and window labels), DFDC and HiFi-AVDF, from the existing feature caches, on the clips the P-001 sync path scored.
+- **Reported:** AUC per seed and as the mean over seeds with a 95% identity-bootstrap interval; the difference against the P-001 sync path on the same clips, mean over seeds with one identity bootstrap shared by the seeds (1,000 resamples, seed 17, `mean_seed_difference`).
+- **Reading, fixed now.** On each set, AVH-Align's method is better if the mean difference is above 0 with an interval that excludes 0, worse if below with an interval that excludes 0, and not different otherwise. This compares two heads on the same features and data, not the published system.
