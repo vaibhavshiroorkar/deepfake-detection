@@ -194,3 +194,39 @@ That evidence comes from raw files, which carry the shortcuts P-001 measured. Th
 - No fusion is refit with the upgraded paths for the submission.
 
 **Stop rule.** If the upgraded models are not scored on all three targets by 17 November, 23:59, A11 is reported as not completed. The submission does not wait for it.
+
+## Amendments A12 to A14, 2026-11-17, after the H2 results and the two post-hoc H2 checks were read: three exploratory checks
+
+**Why.** H2 holds by its rule, but two checks run after the verdict showed that no target shows fusion improving on fakes the visual path can see ([`results/p001-h2`](../p001-h2/README.md)). Three questions follow, each fixed here before its result exists. Every result under A12 to A14 is **exploratory**: none of H1 to H4 changes, and no threshold, model or verdict is refit on what they find.
+
+### A12: does a fusion fit on other corpora transfer?
+
+The paper says the A8 fusion trails single paths on LAV-DF and HiFi-AVDF *likely because* its weights were fit on FakeAVCeleb. A12 tests that guess with the branch logits that already exist (`runs/p001/h2-full/`).
+
+- **Leave one corpus out.** For each target T in DFDC, LAV-DF (window label) and HiFi-AVDF: fit the A8 fusion (`fit_fusion`, unchanged) on the pooled clips of the other two targets, on the clip label, and score T. No corpus weighting.
+- **Upper bound, not a detector.** On each T, 5-fold fusion cross-fit by identity on T itself (`cross_fit_scores`, unchanged). It uses T's labels, so it only shows whether the three paths hold complementary information on T.
+- **Reported, per seed and as a mean over seeds with the A8 identity bootstrap (1,000 resamples, seed 17):** AUC of the leave-one-out fusion, of the upper bound, of the A8 fusion and of each single path on the same clips; the difference leave-one-out minus A8 fusion and leave-one-out minus each single path.
+- **Reading, fixed now.** If the upper bound does not beat the best single path, the paths carry no complementary information on T and no weighting helps. If it does and the leave-one-out fusion comes close to it, the A8 weights were the problem. If it does and the leave-one-out fusion does not, transfer of fusion weights between corpora fails.
+
+### A13: what does the visual path read on LAV-DF?
+
+The P-001 visual path scores LAV-DF fakes whose video was never edited below the real clips (0.175 to 0.243). A13 measures what differs between those two groups in the frames the path sees.
+
+- **Data.** The cached `visual_view` (16 face frames, converted back from ImageNet normalization) of every scored LAV-DF test clip in two groups: RealVideo-RealAudio and RealVideo-FakeAudio. FakeAVCeleb identity-strict test (real against FakeVideo clips) is measured the same way, to show which direction the path learned.
+- **Six statistics per clip, fixed now:** sharpness (mean variance of the Laplacian), high-frequency share (spectral energy above half the Nyquist frequency), 8x8 blockiness (mean jump across 8-pixel boundaries over mean jump elsewhere), mean brightness, contrast (standard deviation of luminance), and temporal change (mean absolute difference between consecutive frames).
+- **Reported:** for each statistic, the AUC separating the two groups with an identity-bootstrap interval, and its Spearman correlation with the visual path's probability (mean of three seeds) within the real-video clips; a logistic regression on all six, cross-fit by identity, as the share of the group difference these statistics can explain.
+- **Reading, fixed now.** A statistic is a candidate only if its group AUC lies outside 0.4 to 0.6 and its correlation with the visual score is at least 0.3 in size. A candidate is a description, not a cause. If none qualifies, the difference is reported as unexplained.
+
+### A14: how much of the audio path's FakeAVCeleb score is a leftover file cue?
+
+The P-001 audio path scores 0.952 to 1.000 on the FakeAVCeleb test, while the neutral audio-label file-cue ceiling is 0.793. The shortcut audit names two remaining audio cues: loudness after AAC encoding and small differences at the clip edges.
+
+- **Perturbations of the cached `audio_view`, applied at scoring time to the frozen P-001 audio models, fixed now:**
+  - loudness: every clip's valid samples scaled to the same RMS level (-23 dBFS);
+  - edges: 250 ms cut from both ends of the valid samples, then zero-padded back to the cached length;
+  - both together.
+- **Data:** FakeAVCeleb identity-strict test and full test, audio label, three seeds.
+- **Reported:** AUC per seed under each perturbation, with identity-bootstrap intervals, beside the unperturbed AUC.
+- **Reading, fixed now.** If AUC under both perturbations stays at 0.95 or above, the named cues do not drive the score. If it falls toward the 0.793 ceiling or below, part of the score came from them. Cues the audit did not name are not covered.
+
+**Stop rule.** A12 to A14 are dropped from the submission if not finished by 19 November, 18:00.

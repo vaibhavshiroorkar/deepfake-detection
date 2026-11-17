@@ -31,6 +31,16 @@ Stop rule: if the upgraded models are not scored on all three targets by 17 Nove
 - `runs/p001-a11.sh` (log `runs/p001-a11.log`) runs it all once the whole H2 chain is done, HiFi-AVDF included: it trains CLIP (`ddf train visual-stream --backbone clip --freeze-backbone`) and XLS-R (`ddf train audio --audio-model facebook/wav2vec2-xls-r-300m`, frozen for every epoch) at three seeds. Choose thresholds on validation and score the identity-strict test and the targets.
 - Compare each with its P-001 path (paired identity bootstrap), and add an exploratory section to the paper and report.
 
+## 2d. Amendments A12 to A14, three exploratory checks (Claude)
+
+Chosen 11-17 with Vaibhav, to use the 18th and 19th; the submission is on the 20th, morning. Designs fixed in [P-001](../results/preregistration/P-001-shortcut-neutral-av-study.md) before any result. Stop rule: 19 November, 18:00. The 19th stays a buffer for Vaibhav's review.
+
+- A12, fusion fit on other corpora: leave-one-corpus-out fusion and an in-target upper bound, from the existing logits. CPU, minutes. Today, while A11 runs.
+- A13, what the visual path reads on LAV-DF: six frame statistics on the cached face frames, real against unedited-video fakes. Reads every LAV-DF cache file, so tonight, after A11.
+- A14, leftover audio cue on FakeAVCeleb: rescore the frozen audio models with loudness levelled and edges cut. Uses the GPU, so after A11; the 18th.
+- Fold the three results into the paper, report, notes and `docs/FINAL.md`, through `numbers.json`. The 18th.
+- A hard-reviewer pass over the paper and report against `numbers.json`, and the slide-1 layout warning. The 19th, morning.
+
 ## 3. When H2 finishes (Claude)
 
 - Cut version 1.0.0 at the final-year submission: changelog heading, `pyproject.toml`, tag `v1.0.0`.
@@ -71,7 +81,6 @@ Stop rule: if the upgraded models are not scored on all three targets by 17 Nove
 The full design, with what to keep, what to replace and why, is in [P-002 design](research/P-002-design.md). The items below are its first steps.
 
 - Leave-one-corpus-out training as the main protocol: train on every corpus but one, test on the one left out, and rotate. It keeps every test unseen and adds training variety. It needs a new preregistration first, because LAV-DF and DFDC would stop being locked targets.
-- Find what the P-001 visual path reads on LAV-DF. It scores fakes whose video was never edited below the reals (0.175 to 0.243), so some pixel-level difference separates LAV-DF's real and fake files. Compare frame statistics (sharpness, compression, resolution) of real and real-video fake clips. Until then, LAV-DF results for any visual model carry this caveat.
 - H3: predict which modality was faked, with reverse models trained on LAV-DF (amendment A2).
 - AVH-Align and HAVIC baselines on the same protocol.
 - The StreamFusion MLP, the secondary fusion that A8 dropped for the 3-day window.
