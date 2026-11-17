@@ -8,6 +8,7 @@ Experiment numbers are not repeated here. They live in `results/` and the docume
 
 ## Unreleased
 
+- Full test suite on 11-17, after every run finished: 870 passed, 1 skipped, 0 failed (`runs/pytest-full-1117.log`).
 - A13 and A14 done (15:13), inside their stop rule (`results/p001-a13/`, `results/p001-a14/`, readers in `build_numbers.py` with tests). A13: no frame statistic explains what the visual path reads on LAV-DF (each 0.450 to 0.520, all six 0.564, against 0.196). A14: the audio path does not rely on loudness or clip edges (0.933 to 1.000 with both removed). In the paper, report, `docs/FINAL.md`, the results READMEs and the site's Research page.
 - Every HTML page now sends `Cache-Control: no-cache`, so browsers stop showing the old cached home page (with a test).
 - A11 done inside its stop rule (14:57): frozen CLIP and XLS-R, three seeds each, compared with their P-001 paths (`scripts/compare_a11.py`, with tests; `results/p001-a11/`). Neither transfers better on cleaned data; CLIP's LAV-DF gain only reaches chance. New section and table in the paper and report, a line in `docs/FINAL.md`, and `a11.*` keys in `numbers.json` (tested).

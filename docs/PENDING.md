@@ -9,7 +9,6 @@ Nothing. Every P-001 run and amendments A11 to A14 finished on 11-17 (the last a
 
 ## 2. While the chains run (Claude)
 
-- Run the full test suite once the CPU is free.
 
 ## 2b. P-002 preparation, alongside (Claude)
 
