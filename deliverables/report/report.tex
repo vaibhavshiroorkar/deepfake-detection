@@ -637,51 +637,42 @@ have not been properly cited or from whom proper permission is not sought.
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
 
-Audio-visual deepfake detectors report high accuracy on their own benchmarks
-and fail on clips from anywhere else. This report asks how much of that
-benchmark accuracy comes from how the files were made, rather than from what
-they show. We audit four corpora with classifiers that see only file metadata
-and the edges of the audio track. On FakeAVCeleb these cues alone predict the
-real-or-fake label at an AUC of {{audit.fakeavceleb.raw.clip}}. Generated
-voices are stored as MP3 where real voices are AAC. Most face swaps are
-MPEG-4 Part 2 where real clips are H.264. Generated speech also carries digital
-silence at its edges. LAV-DF reaches {{audit.lavdf.raw.clip}} from weak cues
-combined, DFDC reaches {{audit.dfdc.raw.clip}}, and HiFi-AVDF, built with six
-commercial generators, reaches {{audit.hifiavdf.raw.clip}}.
+Audio-visual deepfake detectors score close to perfect on their own benchmarks
+and fail on video from anywhere else. This report asks why, and what still
+works once that reason is removed.
 
-We then build a shortcut-neutral protocol. Every clip gets one codec, a fixed
-3.00 s span that starts at the first sound, a fixed loudness and a low level of
-dither. Our first version failed, with a ceiling of
-{{audit.fakeavceleb.v1.clip}}, because re-muxing exposed hidden AAC padding.
-The final version lowers the FakeAVCeleb ceiling to
-{{audit.fakeavceleb.neutral.clip}}. That misses our preregistered bar of 0.60,
-and we report it as a miss.
+Part of the answer is in the files. In FakeAVCeleb, the most used benchmark,
+every real clip is H.264 video with AAC audio, cloned voices are stored as MP3,
+and most face swaps as MPEG-4. A classifier that never sees a face or hears a
+voice, and reads only file details and the silence at each end of the audio,
+predicts real or fake at an AUC of {{audit.fakeavceleb.raw.clip}}. HiFi-AVDF,
+made with six commercial video generators, reaches {{audit.hifiavdf.raw.clip}}
+from export settings alone. LAV-DF reaches {{audit.lavdf.raw.clip}} from weak
+clues added together, and DFDC {{audit.dfdc.raw.clip}}.
 
-On the neutral copies we train a lip-sync detector on real clips only, on top
-of frozen AV-HuBERT features. It never sees a fake. Its test AUC is
-{{sync.test.seed17.auc}}, {{sync.test.seed29.auc}} and
-{{sync.test.seed43.auc}} at three training seeds. Its scores follow the
-mechanism it was built for: voice cloning is caught best, and face swaps that
-keep the original lips and voice are caught least. Its weak point is false
-alarms at a threshold carried over from validation. On LAV-DF, DFDC and
-HiFi-AVDF, which it never saw, its AUC falls to between
-{{sync.dfdc.seed17.auc}} and {{sync.lavdf-window.seed29.auc}}. A threshold set
-from 200 real clips of the new corpus flags
-{{h4.hifiavdf-seed43.conformal_real_only.fpr}} to
-{{h4.hifiavdf-seed17.conformal_real_only.fpr}} of real HiFi-AVDF clips,
-against {{h4.hifiavdf-seed43.source_validation.fpr}} to
-{{h4.hifiavdf-seed17.source_validation.fpr}} with the threshold carried over
-from training, but it then catches few fakes.
+Social platforms re-encode, trim and level every video that is uploaded, and
+that wipes out exactly these clues. So we clean every clip the way an upload
+would: one codec, three seconds from the first sound, one loudness level and a
+little dither. Our first cleaning step put a clue back through hidden AAC
+padding ({{audit.fakeavceleb.v1.clip}}). The final one lowers the FakeAVCeleb
+score to {{audit.fakeavceleb.neutral.clip}}. That misses the bar of 0.60 we set
+in advance, and we report it as a miss.
 
-A late fusion of visual, audio and sync paths passes its preregistered test
-against the visual path alone. Its gain comes from fakes the visual path cannot
-see, and on LAV-DF from a visual path that ranks fakes below chance. In
-exploratory checks, no fixed fusion of these paths transferred between
-corpora, and stronger frozen backbones (CLIP and XLS-R) did not transfer
-better on the cleaned data. All hypotheses were written
-down and committed before the runs. Every result in this report is filled in
-from a committed result file. A few counts that explain amendments A9 and A10
-are quoted from those dated amendments.
+Then we measure what survives. A lip-sync check trained on real videos only
+scores {{sync.test.seed17.auc}} to {{sync.test.seed29.auc}} on the cleaned test
+set, above what the cleaned files give away. It catches cloned voices best and
+plain face swaps least, as its design predicts, and its score rises when the
+audio of a real clip is moved by a single frame. On LAV-DF, DFDC and HiFi-AVDF,
+which it never saw, it falls to between {{sync.dfdc.seed17.auc}} and
+{{sync.lavdf-window.seed29.auc}}. A threshold set from 200 real clips of a new
+corpus brings false alarms on HiFi-AVDF from between
+{{h4.hifiavdf-seed43.source_validation.fpr}} and
+{{h4.hifiavdf-seed17.source_validation.fpr}} down to near 0.05, but then
+catches few fakes. Combining face, voice and lip-sync checks passes its
+preregistered test only through fakes the face check cannot see, and no fixed
+combination transfers between corpora. All four tests were written down
+before the runs, and every number here is filled in from a committed result
+file.
 
 \clearpage
 
@@ -734,10 +725,10 @@ Claude (Anthropic) assisted with implementation, analysis and documentation. All
     \textbf{Term} & \textbf{Meaning} \\
     \midrule
     AUC (ROC-AUC)       & Area under the receiver operating characteristic curve: the chance that a random fake scores higher than a random real clip. 0.5 is guessing and 1.0 is perfect \\
-    Shortcut            & A cue that predicts the label in a dataset but is not the manipulation itself, such as the video codec \\
+    Shortcut, clue      & A cue that predicts the label in a dataset but is not the manipulation itself, such as the video codec \\
     Cue-only classifier & A classifier that sees only file metadata and audio-edge measurements, never a face or a voice \\
-    Shortcut ceiling    & The out-of-fold AUC of a gradient-boosted model given all cues at once. A detector must beat it to show it sees the manipulation \\
-    Neutralization      & Re-encoding every clip the same way, cutting it to a fixed span and fixing its loudness, so file cues carry no label \\
+    Shortcut ceiling, file-clue score & The out-of-fold AUC of a gradient-boosted model given all cues at once. A detector must beat it to show it sees the manipulation \\
+    Neutralization, cleaning & Re-encoding every clip the same way, as an upload would, cutting it to a fixed span and fixing its loudness, so file cues carry no label \\
     Neutralizer v1, v4  & The first, failed version of our neutralizer, and the version used for every result \\
     Refusal             & A clip the neutralizer does not keep because it has less than 3.00 s of sound \\
     RVRA, RVFA, FVRA, FVFA & FakeAVCeleb categories: real or fake video (RV, FV) crossed with real or fake audio (RA, FA) \\
@@ -779,113 +770,90 @@ Claude (Anthropic) assisted with implementation, analysis and documentation. All
 
 A deepfake is a video in which the face, the voice or both have been made or
 changed by a generative model. Audio-visual deepfakes are the hardest case for
-a viewer. A cloned voice can be laid over a real face. A real voice can drive a
-generated mouth. A face swap can keep the original speech. Detectors that read
-both the picture and the sound were built to catch all of these.
+a viewer: a cloned voice laid over a real face, a real voice driving a
+generated mouth, or a swapped face that keeps the original speech. Detectors
+that read both the picture and the sound were built to catch all of these. On
+their own benchmarks they report AUC values near 0.99. On video from anywhere
+else they often fall to chance. Our own earlier models did the same
+(Chapter~\ref{ch:history}).
 
-On their own benchmarks these detectors report AUC values in the high 0.90s.
-On clips from other sources they often fall toward chance. Our own earlier
-models showed the same pattern, as Chapter~\ref{ch:history} describes. The
-usual explanation is that the detector has not seen enough kinds of fakes. This
-report tests a simpler one. The benchmark files may carry the label in how they
-were made: which codec wrote them, how long they are, and whether the audio
-starts with digital silence. A model can learn those traces instead of the
-manipulation. Geirhos et al. call this shortcut learning~\cite{shortcut}.
+Here is one reason. Open a real clip from FakeAVCeleb~\cite{fakeavceleb}, the
+most used audio-visual benchmark, and it is H.264 video with AAC audio. Open a
+clip with a cloned voice and the audio is MP3. Open a face swap and the video
+is, nine times in ten, MPEG-4. A model never needs to look at a face to tell
+them apart. Geirhos et al.\ call this shortcut learning~\cite{shortcut}: the
+model learns a clue that happens to follow the label instead of the thing the
+label is about.
 
-If that explanation is right, three things follow. First, a classifier that
-never looks at a face or listens to a voice should score almost as well as a
-real detector. Second, a detector trained and tested on copies with those
-traces removed should score lower, and the drop shows how much was shortcut.
-Third, a detector that cannot learn the generator's habits, because it never
-sees a fake, should still work if it reads a real signal. This report measures
-all three.
+That clue does not survive the trip to a viewer. Messaging apps and social
+platforms re-encode every upload, trim it and change its loudness. A detector
+that learned the file scores near perfect on the benchmark and then meets
+videos in which the clue no longer exists. Its benchmark score cannot say
+which of the two it learned: the fake, or the file.
 
-\section{Objectives of This Version}
+So this report asks what survives the upload. We clean every clip the way an
+upload would, on training and test data alike. We measure how much of the
+label the cleaned files still give away. Then we test which detectors still
+work, and how they behave on data they never saw.
 
-This version of the project has four objectives. Each one is a measurement
-that we report whether it comes out well or badly.
+\section{Objectives}
+
+Each objective is a measurement that we report whether it comes out well or
+badly.
 
 \begin{enumerate}
-    \item \textbf{A shortcut census.} Measure how well file metadata and audio
-    edges alone predict the label on FakeAVCeleb~\cite{fakeavceleb},
-    LAV-DF~\cite{lavdf}, DFDC~\cite{dfdc} and HiFi-AVDF~\cite{havic}.
-    \item \textbf{A shortcut-neutral protocol.} Build copies of the data in
-    which those cues carry as little label information as we can manage. Test
-    the result against a bar we set before the run, and report what is left.
-    \item \textbf{A lip-sync detector trained on real clips only.} Score it on
-    the neutral copies, by manipulation method, and check whether its pattern
-    of successes matches the mechanism it was built to read.
-    \item \textbf{False-alarm control from real clips only.} Compare a
-    threshold carried over from training with thresholds calibrated on real
-    clips from each new domain.
+    \item \textbf{Measure what the files give away.} How well do file details
+    and audio edges alone predict the label on FakeAVCeleb, LAV-DF~\cite{lavdf},
+    DFDC~\cite{dfdc} and HiFi-AVDF~\cite{havic}?
+    \item \textbf{Clean like an upload.} Build copies of the data in which
+    those clues carry as little of the label as we can manage, and test the
+    result against a bar set before the run.
+    \item \textbf{Test a check that cannot learn the file.} Train a lip-sync
+    check on real clips only, score it on the cleaned data, and see whether its
+    errors match what each manipulation does to the lips.
+    \item \textbf{Test what happens on new data.} Score the frozen checks on
+    three corpora they never saw, set false-alarm thresholds from real clips
+    alone, and test whether combining face, voice and lip-sync checks helps.
 \end{enumerate}
-
-The original study plan, preregistration P-001, also includes two further
-tests. One asks whether fusing visual, audio and sync paths beats the visual
-path alone (H2). The other asks whether a model can say which stream was faked
-across corpora (H3). H2 runs in this version, under rules fixed before any
-visual or audio model existed (Chapter~\ref{ch:h2}). H3 has not run;
-Chapter~\ref{ch:future} states this as a limitation and gives the plan to
-finish it.
 
 \section{Contributions}
 
-The report makes five claims. The first four match the four objectives; the
-fifth is the preregistered fusion test.
-
 \begin{enumerate}
-    \item \textbf{The census.} On FakeAVCeleb the shortcut ceiling is
-    {{audit.fakeavceleb.raw.clip}}. Fake audio is MP3 where real audio is AAC.
-    Most face swaps are MPEG-4 Part 2 where real clips are H.264. Generated
-    speech starts and ends with digital silence. LAV-DF reaches
-    {{audit.lavdf.raw.clip}} from weak cues combined. DFDC is close to clean at
-    {{audit.dfdc.raw.clip}}. HiFi-AVDF reaches {{audit.hifiavdf.raw.clip}}
-    from frame size, fixed clip lengths, bitrate, edge silence and sample rate.
-    \item \textbf{The protocol.} One codec, a fixed 3.00 s span from the first
-    sound, a fixed loudness, and dither. Naive cleaning fails
-    ({{audit.fakeavceleb.v1.clip}}). Our final version lowers the ceiling to
-    {{audit.fakeavceleb.neutral.clip}}. We report that residual and the clips
-    that cleaning removes.
-    \item \textbf{The real-only sync path.} A lip-sync detector never sees a
-    fake. On neutral FakeAVCeleb it reaches a test AUC of
-    {{sync.test.seed17.auc}}, {{sync.test.seed29.auc}} and
-    {{sync.test.seed43.auc}} at three seeds. That is above the shortcut ceiling
-    of the same copies. Its per-method scores follow the mechanism.
-    \item \textbf{False-alarm control.} A threshold calibrated on real clips of
-    the new domain, set against the threshold carried over from training, on
-    LAV-DF and HiFi-AVDF. On HiFi-AVDF the real-only threshold flags
-    {{h4.hifiavdf-seed43.conformal_real_only.fpr}} to
-    {{h4.hifiavdf-seed17.conformal_real_only.fpr}} of real clips, against
-    {{h4.hifiavdf-seed43.source_validation.fpr}} to
-    {{h4.hifiavdf-seed17.source_validation.fpr}} with the carried-over one.
-    It meets the preregistered bar on HiFi-AVDF and on LAV-DF under the file
-    label in every seed. The cost is recall.
-    \item \textbf{The fusion test.} Visual, audio and sync paths fused by a
-    model fixed in advance, against the visual path alone, on DFDC, LAV-DF and
-    the identity-strict FakeAVCeleb test. H2 holds by its preregistered rule.
-    But no target shows fusion improving on fakes the visual
-    path can see (Chapter~\ref{ch:h2} gives the checks).
+    \item \textbf{A file audit of four corpora}
+    (Section~\ref{sec:r-files}). File details alone predict real or fake at
+    {{audit.fakeavceleb.raw.clip}} on FakeAVCeleb and
+    {{audit.hifiavdf.raw.clip}} on HiFi-AVDF, with a codec count per category
+    and the file habits of each HiFi-AVDF generator.
+    \item \textbf{Cleaning as a simulated upload} (Section~\ref{sec:m-clean}
+    and Section~\ref{sec:r-h1}). One codec, three seconds from the first sound,
+    one loudness level, dither. A naive first version put the clue back
+    ({{audit.fakeavceleb.v1.clip}}); the final one leaves
+    {{audit.fakeavceleb.neutral.clip}}, short of our bar.
+    \item \textbf{A lip-sync check that never sees a fake}
+    (Section~\ref{sec:r-home}). After cleaning it beats the file clues, its
+    errors follow what each manipulation does to the lips, and moving the audio
+    of a real clip raises its score.
+    \item \textbf{What happens on new data} (Sections~\ref{sec:r-new}
+    to~\ref{sec:r-combine}). The check weakens on three unseen corpora; real
+    clips from the new source fix its false alarms but not its misses; and
+    combining it with face and voice checks passes its test without
+    transferring.
 \end{enumerate}
 
-We do not claim a new architecture. Fusion of audio and video is not new, and
-neither is training a sync model on real clips. We also do not compare our
-numbers with published numbers from other protocols. Those numbers come from
-data that carries the shortcuts this report measures, so the comparison would
-not be fair.
+We do not claim a new architecture. Combining audio and video is not new, and
+neither is training a lip-sync model on real clips only. We also do not set
+our numbers beside published ones from other protocols: those come from files
+that carry the clues this report measures.
 
 \section{How This Report Is Organized}
 
-Chapter~\ref{ch:literature} reviews audio-visual detectors, known dataset
-shortcuts, prior work on predicting the faked modality, and methods for
-controlling false alarms. Chapter~\ref{ch:history} gives a short and honest
-account of the project's earlier phases and the mistakes that shaped this
-version. Chapter~\ref{ch:audit} describes the data and the shortcut audit.
-Chapter~\ref{ch:protocol} describes the shortcut-neutral protocol, including
-the failed first attempt. Chapter~\ref{ch:sync} describes the real-only sync
-path and its in-domain results. Chapter~\ref{ch:crosscorpus} covers the
-cross-corpus tests and false-alarm control. Chapter~\ref{ch:h2} runs the
-preregistered fusion test and the exploratory checks that followed it.
-Chapter~\ref{ch:future} lists the
+Chapter~\ref{ch:literature} reviews detectors, known dataset shortcuts,
+predicting which stream was faked, and false-alarm control.
+Chapter~\ref{ch:history} tells the project's earlier phases and the mistakes
+that shaped this version. Chapter~\ref{ch:method} describes the method stage
+by stage. Chapter~\ref{ch:setup} gives the data, the splits and the four tests
+we committed to in advance. Chapter~\ref{ch:results} gives the results in the
+order of the story above. Chapter~\ref{ch:future} discusses them, with the
 limitations and the plan for the full run, and Chapter~\ref{ch:conclusions}
 closes the report. Appendix~\ref{app:repro} gives the commands to reproduce
 every result.
@@ -1155,7 +1123,7 @@ scripts, so git could not show they came first.
 \section{The Audit of 13 November}
 
 On 13 November we ran a dedicated shortcut audit on FakeAVCeleb
-(Chapter~\ref{ch:audit}). File metadata and audio edges alone predicted the
+(Section~\ref{sec:r-files}). File metadata and audio edges alone predicted the
 labels. The same day we found other faults. The test suite had silently
 stopped running after the repository was renamed. A file name in FakeAVCeleb's
 metadata had been parsed as a person, so the identity-strict test contained no
@@ -1197,63 +1165,36 @@ committed alone, before its run. And every result in a deliverable is filled
 in from a result file, so no result can be typed by hand.
 
 The biggest change is the first step. Before any model is trained, we now
-measure what file cues alone can do. That step is the subject of the next
-chapter.
+measure what file cues alone can do. Chapter~\ref{ch:method} describes that step.
 
 %
-\chapter{Data and the Shortcut Audit}
-\label{ch:audit}
+\chapter{Method}
+\label{ch:method}
 
-\section{The Corpora}
+Figure~\ref{fig:pipeline} shows the method in five stages. A video comes in
+(stage 1), is cleaned the way an upload would clean it (stage 2), is checked
+by three independent paths (stage 3), and each score is compared with the
+scores of real videos (stage 4) to give an answer (stage 5). The file audit
+sits above the stages. It is an evaluation step: it measures how much the
+original and the cleaned files give away on their own, and every detector
+result is read against it.
 
-Table~\ref{tab:corpora} lists the four corpora and their roles. FakeAVCeleb is
-the only training corpus. The other three are locked test sets: the code
-refuses them for training, model selection and threshold choice.
-
-\begin{table}[ht]
+\begin{figure}[htbp]
     \centering
-    \small
-    \caption{The four corpora used in this version. Audited counts are the files read by the shortcut audit.}
-    \label{tab:corpora}
-    \begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}Xr@{}}
-        \toprule
-        \textbf{Corpus} & \textbf{Role} & \textbf{Clips audited} \\
-        \midrule
-        FakeAVCeleb v1.2~\cite{fakeavceleb} & Training (real clips only, for the sync path), validation and in-domain test & {{audit.fakeavceleb.raw.clips|int}} \\
-        LAV-DF~\cite{lavdf} & Locked cross-corpus test. The audit reads a stratified sample of files & {{audit.lavdf.raw.clips|int}} \\
-        DFDC subset~\cite{dfdc} & Locked cross-corpus test & {{audit.dfdc.raw.clips|int}} \\
-        HiFi-AVDF~\cite{havic} & Locked test on six commercial generators & {{audit.hifiavdf.raw.clips|int}} \\
-        \bottomrule
-    \end{tabularx}
-\end{table}
+    \includegraphics[width=\textwidth,keepaspectratio]{fig_pipeline.png}
+    \caption{The method in five stages. The file audit measures what file
+    details alone reveal, on the original files and after cleaning.}
+    \label{fig:pipeline}
+\end{figure}
 
-\textbf{FakeAVCeleb} has four categories. RealVideo-RealAudio (RVRA) clips are
-genuine. RealVideo-FakeAudio (RVFA) clips carry a cloned voice. FakeVideo-RealAudio
-(FVRA) clips have a swapped or lip-synced face over real speech.
-FakeVideo-FakeAudio (FVFA) clips change both. The manipulation methods are
-FaceSwap, FSGAN, Wav2Lip, their combinations, and RTVC for voice cloning. The
-corpus has about {{audit.fakeavceleb.raw.census.RealVideo-RealAudio.clips|int}}
-real videos and many times more fakes.
+\section{Stage 1: Input}
 
-\textbf{LAV-DF} edits a few words inside a longer real recording, in the audio,
-the video or both. For the sync tests we sample it by original recording
-(P-001 amendment A3). Each of 1,000 sampled originals comes with all its
-edits, 3,823 files in total. Real and fake clips therefore share speaker, room
-and camera.
+The input is a video of one person speaking, with sound. In the study the
+videos come from the four corpora of Chapter~\ref{ch:setup}. On the
+demonstration website, a visitor uploads one.
 
-\textbf{DFDC} is the existing {{audit.dfdc.raw.clips|int}}-clip subset used
-throughout the project. It has
-{{audit.dfdc.raw.census.RealVideo-RealAudio.clips|int}} real clips and
-{{audit.dfdc.raw.census.FakeVideo-RealAudio.clips|int}} fakes. It has clip
-labels only.
-
-\textbf{HiFi-AVDF} pairs each of
-{{audit.hifiavdf.raw.census.RealVideo-RealAudio.clips|int}} real videos with a
-generated copy. The copies come from six commercial generators: Kling 2.5,
-PixVerse V5, Seedance 1.0, Sora 2, Veo 3.1 and Wan 2.5. It is public. We added it as a
-locked target in P-001 amendment A5.
-
-\section{The Audit Method}
+\section{The File Audit}
+\label{sec:m-audit}
 
 The audit asks one question: how well can a classifier predict the label if it
 never sees a face or hears a voice? The script
@@ -1292,7 +1233,487 @@ The ceiling is the bar for every detector on the same data. A detector that
 scores below it has not shown that it reads anything the file does not
 already give away.
 
-\section{Results}
+\section{Stage 2: Cleaning Like an Upload}
+\label{sec:m-clean}
+
+Cleaning has one job: after it, two clips should differ only in what they show
+and say, not in how their files were made. It took two attempts.
+
+\subsection{Neutralizer v1, and Why It Failed}
+
+The first neutralizer re-encoded every clip to H.264 and AAC, cut its start
+with an ffmpeg input seek, and normalized loudness with ffmpeg's
+\texttt{loudnorm} filter. It looked correct. We then ran preregistered test H1:
+the same shortcut audit, on the neutral copies.
+
+The ceiling on the clip label was {{audit.fakeavceleb.v1.clip}}, far above the
+bar of 0.60. The audio label stayed at {{audit.fakeavceleb.v1.audio}}. The
+cause was subtle. AAC encoders add a short block of priming samples at the
+start of a track. Our sources had been encoded by different tools, so their
+priming differed. When v1 re-muxed each clip, it exposed that padding
+differently per source. Face-swapped clips gained a short stretch of leading
+silence that real clips did not. Duration and trailing silence also still
+differed by class. The cleaning step had put the shortcut back in a new form.
+
+The cost was one full neutralization run and the feature extraction already
+started on it. No model was trained on v1 copies. We recorded the failure as a dated change to the plan and kept its audit in
+\texttt{results/shortcut-audit/fakeavceleb-neutral-v1/}.
+
+\subsection{Neutralizer v4}
+
+The final neutralizer, in
+\texttt{src/deepfake\_detection/preprocessing/neutralize.py}, avoids every step
+where an encoder can leave its own trace on the audio edges:
+
+\begin{enumerate}
+    \item \textbf{Decode the audio once} and handle it as samples in numpy.
+    Cut on sample indices, not with a container seek.
+    \item \textbf{Start at the first sound,} and start the cut on a whole video
+    frame so audio and video stay aligned.
+    \item \textbf{Keep exactly 3.00 s.} Every clip has the same length, so
+    duration carries nothing. A clip with less than 3.00 s of sound is
+    refused.
+    \item \textbf{Scale to a fixed level} of $-23$~dBFS RMS.
+    \item \textbf{Add dither} at $-66$~dBFS. Speech synthesizers leave exact
+    digital zeros in pauses, and real recordings never do. Dither removes
+    that difference.
+    \item \textbf{Re-encode} to H.264 at 25 fps with constant quality (CRF 23)
+    and AAC audio at 16 kHz, and strip all metadata.
+    \item \textbf{Fix one frame size per corpus}, equal to the
+    native size of the corpus's real clips.
+\end{enumerate}
+
+A regression test builds two sources with different encoders and requires the
+neutral copies to have identical audio edges. Before running v4 on everything,
+we checked it on a 600-clip sample, 150 per category, drawn once and used for
+nothing else. On the {{audit.fakeavceleb.v4check.clips|int}} clips it kept,
+the ceilings were {{audit.fakeavceleb.v4check.clip}} (clip),
+{{audit.fakeavceleb.v4check.video}} (video) and
+{{audit.fakeavceleb.v4check.audio}} (audio).
+
+\section{Stage 3: Three Checks}
+\label{sec:m-checks}
+
+Each cleaned clip is scored by three paths that look at different evidence.
+The face and voice checks are trained classifiers. The lip-sync check is
+trained on real clips only.
+
+\subsection{Face and voice checks}
+
+The visual path is EfficientNet-B0~\cite{efficientnet} with a GRU over face
+frames, trained on the video label. The audio path is Wav2Vec2
+Base~\cite{wav2vec2} with attentive pooling, trained on the audio label. Both
+train on the neutral FakeAVCeleb training partition, thinned to three
+video-fake clips per real-video clip, at seeds 17, 29 and 43.
+Each picks its epoch and its threshold on validation.
+
+\subsection{The lip-sync check}
+\label{sec:m-sync}
+
+A lip-sync detector asks one question: do the lips match the sound? Many
+audio-visual fakes break that match. A cloned voice laid over a real face says
+words the lips never formed. A generated mouth driven by audio rarely tracks it
+perfectly.
+
+We train the sync path on real clips only, for one reason. A model that never
+sees a fake cannot learn what a particular generator's files look like. It can
+only learn what real speech looks like, and flag clips that depart from it. On
+data that still carries a residual shortcut, that is the safest design we
+know. AVH-Align~\cite{smeu2025} showed the same idea holds up when the silence
+shortcut is removed.
+
+Each clip then goes through these steps:
+
+\begin{enumerate}
+    \item \textbf{Neutral clip.} Each clip comes from neutralizer v4: 3.00 s,
+    25 fps video, 16 kHz audio.
+    \item \textbf{Mouth crops.} MediaPipe's Face Landmarker finds facial
+    landmarks in every frame. A similarity transform levels the eye line,
+    scales the distance between the eyes to a fixed value, and puts the mouth
+    centre in the middle of the crop. Angle, scale and centre are smoothed over
+    neighbouring frames so the crop does not jitter. The result is an 88 by 88
+    grey crop per frame, the input AV-HuBERT expects.
+    \item \textbf{Windows.} Each clip gives two 2-second windows, starting at
+    0 s and 1 s. A window needs a face in at least 80\% of its frames.
+    \item \textbf{Frozen AV-HuBERT.} AV-HuBERT Base~\cite{avhubert} encodes
+    each window twice: once with lips only (audio zeroed) and once with audio
+    only. Each pass gives 50 frames of 768-dimensional features. The encoder
+    is never trained.
+    \item \textbf{Alignment head.} A small network scores each pair of lip and
+    audio frames at the same instant.
+    \item \textbf{Clip score.} The mean misfit over frames and windows.
+\end{enumerate}
+
+\subsubsection{The Alignment Head}
+
+For a lips feature $l$ and an audio feature $a$ at the same frame, the head
+builds the vector $[l, a, l \odot a, |l - a|]$. It applies layer
+normalization, a linear layer to 256 units, a GELU and a final linear layer to
+one logit $g$. A high logit means the two frames belong together.
+
+\paragraph{Training loss}
+
+The head trains on real clips only, with a binary cross-entropy loss. Each
+batch has three kinds of pair:
+
+\begin{itemize}
+    \item \textbf{Aligned:} lips and audio from the same instant of the same
+    real clip. Target 1.
+    \item \textbf{Shifted:} the same lips with the audio rolled by a random 5
+    to 20 frames, which is 200 to 800 ms. Target 0.
+    \item \textbf{Foreign:} the same lips with audio from another clip in the
+    batch. Target 0.
+\end{itemize}
+
+The loss is the mean of the positive and negative terms, weighted equally.
+Shifted pairs teach the head about timing. Foreign pairs teach it about
+content: the right sounds for the mouth shapes. Training uses AdamW with a
+learning rate of $10^{-3}$ and weight decay of $10^{-4}$ for 10 epochs, at
+seeds 17, 29 and 43.
+
+\paragraph{Epoch selection}
+
+We keep the epoch with the lowest alignment loss on real validation clips. No
+fake label is read during training or selection. Fake labels are read only
+when the frozen head scores the validation and test sets. This rule matters.
+In the project's earlier phases, selection on the wrong quantity kept a
+below-chance checkpoint (Chapter~\ref{ch:history}).
+
+\paragraph{Clip score}
+
+A window's score is its mean misfit over aligned frames,
+\[
+    s_{\mathrm{window}} = \frac{1}{T} \sum_{t=1}^{T} -\log \sigma(g_t),
+\]
+where $\sigma$ is the logistic function and $T = 50$. A clip's score $s$ is the
+mean over its windows. For the evaluation tools we report $1 - e^{-s}$, which
+lies in $[0, 1)$ and keeps the order of the scores. AUC is therefore unchanged.
+The score is not a calibrated probability.
+
+\section{Stage 4: Comparing With Real Clips}
+\label{sec:m-compare}
+
+A score becomes a decision through a threshold. This stage sets that
+threshold in three ways, and combines the three checks into one score.
+
+\subsection{Threshold from validation}
+
+A threshold of 0.5 means nothing on data where fakes far outnumber real clips.
+Our thresholds maximize balanced accuracy on the validation split. The command
+\texttt{ddf threshold} writes the threshold together with the ids of the clips
+that chose it. The command \texttt{ddf evaluate} refuses to run if any of those
+clips is in the set being evaluated. A threshold can therefore never be chosen
+on the clips it scores.
+
+\subsection{Thresholds from real clips only}
+
+For each target and seed, \texttt{scripts/run\_h4.py} compares three rules.
+
+\begin{enumerate}
+    \item \textbf{Source threshold.} The threshold chosen on FakeAVCeleb
+    validation, applied unchanged. This is what a deployed detector would do.
+    \item \textbf{Real-only conformal threshold.} A random set of
+    $n_{\mathrm{cal}} = 200$ real target clips is set aside, using a seed
+    fixed in P-001. The threshold is the score at rank
+    $\lceil (n_{\mathrm{cal}}+1)(1-\alpha) \rceil$ among them, with
+    $\alpha = 0.05$. For a new real clip from the same distribution, the
+    chance of being flagged is then at most $\alpha$ on
+    average~\cite{bates2023}.
+    \item \textbf{Real-only umbrella threshold.} The Neyman-Pearson umbrella
+    rule~\cite{tong2018} picks the lowest of the same real scores that is safe
+    to use. Safe means its false-positive rate exceeds $\alpha$ with
+    probability at most $\delta$. We use $\alpha = \delta = 0.05$. This is a stronger guarantee: it
+    holds for this calibration draw with high probability, not only on
+    average. It needs at least $\lceil \log\delta / \log(1-\alpha) \rceil = 59$
+    real clips.
+\end{enumerate}
+
+No fake label is read to set any of these thresholds. All three are then
+scored on the target clips that were not used for calibration. The
+preregistered success rule is a realized FPR of at most $\alpha + 0.02 = 0.07$
+with the conformal threshold, on every target.
+
+\subsection{Combining the three checks}
+
+Every choice below was fixed on 16 November, before any face or voice checkpoint existed:
+
+\begin{itemize}
+    \item \textbf{Inputs.} Each path's logit for the clip. The sync logit is the
+    logit of its probability. Each logit is standardized on the fit set.
+    \item \textbf{Fit set.} FakeAVCeleb validation. Training clips are left out,
+    because each path was fit on them and their logits are in-sample.
+    Validation chose each path's epoch and threshold and nothing else.
+    \item \textbf{Model.} Logistic regression, L2, $C = 1$, balanced class
+    weights. Nothing is tuned.
+    \item \textbf{Out-of-fold scores.} The fusion's own validation scores, which
+    set its threshold, come from 5-fold cross-fitting grouped by identity. The
+    model applied elsewhere is refit on all of validation.
+    \item \textbf{Coverage.} A clip counts only if all three paths score it. The
+    visual path is compared on exactly the same clips.
+\end{itemize}
+
+\section{Stage 5: The Answer}
+
+In the study, the answer is a yes or no at one of the thresholds above, and
+every result is reported as a ranking measure (AUC) as well, which needs no
+threshold. The demonstration website turns the same scores into three answers
+for a visitor: signs of manipulation, can't tell, or no signs. It compares a
+clip's scores with the scores of real clips pooled from all four corpora. It
+is a demonstration of the method, not part of the evaluation.
+
+%
+\chapter{Experimental Setup}
+\label{ch:setup}
+
+This chapter gives the data, how it is split, the rules that keep a test set
+honest, and the four tests we wrote down before any run. It is the only
+chapter that names the dated changes to the plan by number.
+
+\section{The Corpora}
+
+Table~\ref{tab:corpora} lists the four corpora and their roles. FakeAVCeleb is
+the only training corpus. The other three are locked test sets: the code
+refuses them for training, model selection and threshold choice.
+
+\begin{table}[ht]
+    \centering
+    \small
+    \caption{The four corpora used in this version. Audited counts are the files read by the shortcut audit.}
+    \label{tab:corpora}
+    \begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}Xr@{}}
+        \toprule
+        \textbf{Corpus} & \textbf{Role} & \textbf{Clips audited} \\
+        \midrule
+        FakeAVCeleb v1.2~\cite{fakeavceleb} & Training (real clips only, for the sync path), validation and in-domain test & {{audit.fakeavceleb.raw.clips|int}} \\
+        LAV-DF~\cite{lavdf} & Locked cross-corpus test. The audit reads a stratified sample of files & {{audit.lavdf.raw.clips|int}} \\
+        DFDC subset~\cite{dfdc} & Locked cross-corpus test & {{audit.dfdc.raw.clips|int}} \\
+        HiFi-AVDF~\cite{havic} & Locked test on six commercial generators & {{audit.hifiavdf.raw.clips|int}} \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\textbf{FakeAVCeleb} has four categories. RealVideo-RealAudio (RVRA) clips are
+genuine. RealVideo-FakeAudio (RVFA) clips carry a cloned voice. FakeVideo-RealAudio
+(FVRA) clips have a swapped or lip-synced face over real speech.
+FakeVideo-FakeAudio (FVFA) clips change both. The manipulation methods are
+FaceSwap, FSGAN, Wav2Lip, their combinations, and RTVC for voice cloning. The
+corpus has about {{audit.fakeavceleb.raw.census.RealVideo-RealAudio.clips|int}}
+real videos and many times more fakes.
+
+\textbf{LAV-DF} edits a few words inside a longer real recording, in the audio,
+the video or both. For the sync tests we sample it by original recording. Each of 1,000 sampled originals comes with all its
+edits, 3,823 files in total. Real and fake clips therefore share speaker, room
+and camera.
+
+\textbf{DFDC} is the existing {{audit.dfdc.raw.clips|int}}-clip subset used
+throughout the project. It has
+{{audit.dfdc.raw.census.RealVideo-RealAudio.clips|int}} real clips and
+{{audit.dfdc.raw.census.FakeVideo-RealAudio.clips|int}} fakes. It has clip
+labels only.
+
+\textbf{HiFi-AVDF} pairs each of
+{{audit.hifiavdf.raw.census.RealVideo-RealAudio.clips|int}} real videos with a
+generated copy. The copies come from six commercial generators: Kling 2.5,
+PixVerse V5, Seedance 1.0, Sora 2, Veo 3.1 and Wan 2.5. It is public. We added it as a locked target after the plan was registered (Table~\ref{tab:amendments}).
+
+\section{Identity-Disjoint Splits}
+
+FakeAVCeleb is split 70/15/15 by source identity, with seed 17. A model that
+sees the same face in training and test can learn the face, so no person
+appears in two partitions. FakeAVCeleb's identity graph is fully connected:
+every person also appears as the target of someone else's fake. So beside
+every in-domain number we also report an identity-strict subset. It keeps only
+test clips whose every named person belongs to the test partition.
+
+We fixed one bug in this step. FakeAVCeleb's metadata puts the file name
+\texttt{fake.mp4} in the target column for every RealVideo-FakeAudio row. Our
+earlier code read that as a person, and the strict subset dropped the whole
+category. Targets that end in a file extension are now ignored.
+
+\section{Locked Test Sets}
+
+LAV-DF test, DFDC and HiFi-AVDF are locked. The module
+\texttt{src/deepfake\_detection/data/guards.py} refuses them for training,
+model selection and threshold choice. The single exception is H4, which by
+design draws real calibration clips from the target. In earlier phases DFDC was
+not locked and chose two models (Chapter~\ref{ch:history}). The lock exists so
+that cannot happen again.
+
+\section{Scoring the Unseen Corpora}
+\label{sec:s-targets}
+
+Nothing is retrained for these tests. The three lip-sync heads of Section~\ref{sec:m-sync}, one per seed, are frozen. Each target corpus goes
+through the same steps as FakeAVCeleb:
+
+\begin{enumerate}
+    \item neutralizer v4, with one frame size per corpus (1280x720 for
+    HiFi-AVDF);
+    \item MediaPipe mouth crops and frozen AV-HuBERT features, two 2-second
+    windows per clip;
+    \item scoring by each frozen head;
+    \item evaluation at the source threshold chosen on FakeAVCeleb
+    validation, with 1,000 bootstrap resamples for the interval;
+    \item a shortcut audit of the neutral copies, so each result sits beside
+    the ceiling of the same data.
+\end{enumerate}
+
+The targets are the LAV-DF test sample (1,000 original recordings with all
+their edits, 3,823 files), the DFDC subset, and HiFi-AVDF. All three are
+locked. They train, select and calibrate nothing, except that H4 draws real
+calibration clips from the target by design.
+
+LAV-DF needs two labels. The neutral copy keeps 3.00 s from the first sound,
+but LAV-DF edits single words anywhere in a longer recording. In 1,307 of the
+2,823 fake clips, the kept window contains no edited time at all, so under the
+file label they are real footage labelled fake. We found this after reading
+the file-label results for the sync path and H4. Amendment A9 adds a window
+label: a clip is fake if its kept window overlaps edited time by at least one
+frame. Every LAV-DF result below is reported under both labels. H2, which had
+not run, uses the window label.
+
+\section{Receipts}
+
+Every evaluation leaves a receipt: the exact command, and SHA-256 hashes of its
+inputs, its code and its outputs. A receipt lets anyone check that a committed
+number came from the committed files. Receipts were added during this study.
+The sync feature extraction and training ran before they existed, so those two
+stages have none. Their outputs are still committed, with per-clip predictions,
+so every metric can be recomputed.
+
+\section{Preregistration P-001}
+\label{sec:s-prereg}
+
+On 13 November 2026, before any model in this study was trained, we wrote down
+four questions, the test for each, and the rule for success or failure. We
+committed that file, \texttt{results/preregistration/P-001-shortcut-neutral-av-study.md},
+on its own. Git order therefore shows what was decided before any result
+existed. Table~\ref{tab:hypotheses} lists the four tests.
+
+\begin{table}[ht]
+    \centering
+    \small
+    \caption{The four preregistered tests of P-001. Intervals are 95\%, from 1,000 bootstrap resamples of source identity.}
+    \label{tab:hypotheses}
+    \begin{tabularx}{\textwidth}{@{}l >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3.6cm} >{\raggedright\arraybackslash}p{2.6cm}@{}}
+        \toprule
+        \textbf{ID} & \textbf{Test} & \textbf{Success} & \textbf{Status} \\
+        \midrule
+        H1 & Shortcut ceiling on neutral copies, clip label, all cues, grouped five-fold & AUC at most 0.60 on each training corpus & Run; not met \\
+        H2 & Fusion minus visual-only ROC-AUC, paired, mean of three seeds & Holm-corrected one-sided $p$ below 0.05 on at least two of DFDC, LAV-DF test and FakeAVCeleb strict test (amendment A8) & Holds by its rule; see Section~\ref{sec:r-combine} \\
+        H3 & Manipulated-modality macro-F1, trained on FakeAVCeleb and tested on LAV-DF, and the reverse & Both directions above the clip-label baseline & Not run \\
+        H4 & Realized FPR with a real-only conformal threshold, $\alpha = 0.05$, $n_{\mathrm{cal}} = 200$ real target clips & FPR at most 0.07 on every target & Met on HiFi-AVDF and LAV-DF (file label) in every seed; DFDC too small; see Section~\ref{sec:r-h4} \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+P-001 also fixed the model choices in advance, so no test set could choose
+them. The visual path is EfficientNet-B0 with a GRU~\cite{efficientnet}. The
+audio path is Wav2Vec2 Base~\cite{wav2vec2} with attentive pooling. The sync
+path is frozen AV-HuBERT Base~\cite{avhubert} with an alignment head trained on
+real clips only. Fusion is logistic regression on out-of-fold path logits. No
+ensembles across seeds or architectures appear in primary results. A Holm
+correction applies to H2's three targets (amendment A8 narrowed it from "H2 to
+H4", because H4 is a bar check with no $p$-value). H1 is a precondition: if it fails, the
+other tests still run and carry that caveat.
+
+\subsection{Amendments}
+
+The plan changed nineteen times. Each change is a dated amendment at the end of
+the file, committed before the result it could affect. Nothing above an
+amendment is edited. Table~\ref{tab:amendments} summarizes them.
+
+\begin{table}[ht]
+    \centering
+    \small
+    \caption{Amendments to P-001. Each was committed before the result it could affect.}
+    \label{tab:amendments}
+    \begin{tabularx}{\textwidth}{@{}l l >{\raggedright\arraybackslash}X@{}}
+        \toprule
+        \textbf{ID} & \textbf{Date} & \textbf{Change and reason} \\
+        \midrule
+        A1 & 13 Nov & Training fakes thinned to three per real-video clip; audio path at three seeds; sync windows defined; LAV-DF audited per file, because a window manifest lets one file supply both labels \\
+        A2 & 13 Nov & Primary models train on FakeAVCeleb only. The first draft used LAV-DF for both training and testing, which contradicted the cross-corpus tests \\
+        A3 & 13 Nov & LAV-DF sampled by original recording: 1,000 originals (3,823 files) for test, so each real clip sits beside its own edits \\
+        A4 & 13 Nov & After H1 attempt 1 failed: neutralizer v4, with fixed 3.00 s clips and dither. Sync windows become 2 s at 0 and 1 s \\
+        A5 & 15 Nov & HiFi-AVDF added as a locked target, audited raw and neutral before scoring. HAVIC weights may be scored on it, but not on our FakeAVCeleb test \\
+        A6 & 15 Nov & KoDF, AV-Deepfake1M and AV-Deepfake1M++ become locked targets if access arrives; late data is scored only by frozen models \\
+        A7 & 15 Nov & One frame size per corpus, because HiFi-AVDF frame size follows the label \\
+        A8 & 16 Nov & Before any visual or audio model existed: how the H2 fusion is fit (logistic regression on validation, cross-fitted by identity) and tested (mean of three seeds, shared identity bootstrap, Holm over three targets) \\
+        A9 & 16 Nov & After the LAV-DF sync and H4 results were read, before H2: LAV-DF clips are also labelled by their kept window, because 46\% of fake clips have no edited time in it. Both labels are reported; H2 uses the window label \\
+        A10 & 16 Nov & After the DFDC sync result was read, before H2: the face is located with a second detector before landmarking, because DFDC faces are small in full-HD frames. Both versions are kept \\
+        A11 & 16 Nov & Exploratory, before either model existed: frozen CLIP ViT-L/14 and XLS-R paths trained on the same cleaned data, splits and seeds, compared with the P-001 paths \\
+        A12 to A14 & 17 Nov & Exploratory, after H2 was read: a fusion fit on other corpora (A12), frame statistics behind the visual path on LAV-DF (A13), and the audio path with loudness levelled and edges cut (A14). No verdict changes \\
+        A15 to A18 & 17 Nov & Exploratory, before their results existed: H3 in one direction (A15), the sync score with moved audio (A16), speaker overlap with AV-HuBERT pretraining (A17), H1 with a fixed video bitrate (A18) \\
+        A19 & 17 Nov & Exploratory, before any model existed: AVH-Align's head, loss and score retrained on our data \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+Amendment A2 deserves a note. The first draft of P-001 listed LAV-DF train as
+training data and also used LAV-DF test as a cross-corpus target. A model
+trained on LAV-DF cannot give a cross-corpus result on LAV-DF. We found the
+contradiction while planning the runs, before any result was read.
+
+\subsection{How H2 and H4 are scored}
+
+The label is the clip label: a clip is fake if either stream is fake. For each
+target and seed, the statistic is AUC(fusion) minus AUC(visual). H2 uses the
+mean of the three seeds. Its interval comes from 1,000 bootstrap resamples of
+identities, and each resample is applied to all three seeds at once. The
+one-sided $p$-value is the share of resamples with a mean at or below zero.
+Holm correction at 0.05 runs over three targets: DFDC, LAV-DF test and the
+identity-strict FakeAVCeleb test. H2 holds if at least two survive. HiFi-AVDF
+gets the same statistic, outside the rule.
+
+H4 runs on LAV-DF test and HiFi-AVDF. It does not run on DFDC. Our DFDC subset
+has only {{audit.dfdc.raw.census.RealVideo-RealAudio.clips|int}} real clips,
+fewer than the 200 needed for calibration plus any held-out real clips to
+score.
+
+\section{How the Numbers Are Computed, and What Changed}
+
+Numbers in this report are not directly comparable with numbers from the
+project's earlier phases. Table~\ref{tab:changes} lists what changed in the
+computation and why. None of these changes was chosen after seeing the result
+it affects.
+
+\begin{table}[ht]
+    \centering
+    \footnotesize
+    \caption{Changes to how numbers are computed, from section 5.3 of the project handbook.}
+    \label{tab:changes}
+    \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{2.2cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3.0cm} >{\raggedright\arraybackslash}p{3.2cm}@{}}
+        \toprule
+        \textbf{What} & \textbf{Before} & \textbf{Now} & \textbf{Why} & \textbf{Effect on comparison} \\
+        \midrule
+        EER & Nearest ROC point to FPR = FNR & Linear interpolation where FPR = FNR & The nearest point can be several points off on small sets & Old EERs can differ, most on small sets \\
+        Decision threshold & Fixed 0.5 & Maximum balanced accuracy on validation; clip ids recorded; overlap refused & 0.5 means nothing on fake-heavy data & Old FPR, FNR and balanced accuracy are not comparable \\
+        FF++ split & Grouped by source identity & Grouped by connected identity component & Donor faces crossed train and test & Old FF++ in-domain numbers were optimistic \\
+        Identity-strict subset & A file name read as a person & File names are not identities & The old strict test had no RVFA clips & Old strict numbers covered three of four categories \\
+        Input data & Raw files & Neutralizer v4 & Raw files leak the label ({{audit.fakeavceleb.raw.clip}}) & Neutral and raw numbers measure different things; {{neutral.fakeavceleb.refused|int}} short generated-speech clips refused \\
+        Sync clip score & Not used & Mean window misfit $s$, reported as $1 - e^{-s}$ & Puts the score in $[0, 1)$ & Monotone, so AUC is unchanged; not a calibrated probability \\
+        Shortcut ceiling & Did not exist & Gradient-boosted trees on file and audio-edge cues, five folds grouped by identity & The bar any detector must beat & Single-cue AUCs are slightly optimistic; the ceiling is out-of-fold \\
+        False-alarm threshold (H4) & Did not exist & Split conformal rank $\lceil (n+1)(1-\alpha) \rceil$; Neyman-Pearson umbrella for $(\alpha, \delta)$ & Source thresholds break under shift & Standard published methods~\cite{bates2023,tong2018}, not new maths \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+Some things did not change. ROC-AUC is computed the same way. Intervals are
+95\%, from 1,000 bootstrap resamples of identities, not clips~\cite{bootstrap}.
+Clips of one person are not independent, so resampling clips would give
+intervals that are too narrow. Every trained model uses three seeds, 17, 29
+and 43.
+%
+\chapter{Results}
+\label{ch:results}
+
+The results follow the story of Chapter~\ref{ch:introduction}: what the files
+give away, what cleaning leaves, how the lip-sync check does at home, how it
+does on data it never saw, how false alarms behave there, whether combining
+the checks helps, and a set of further checks.
+
+\section{What the Files Give Away}
+\label{sec:r-files}
 
 Table~\ref{tab:ceilings} gives the ceilings on the raw files.
 Figure~\ref{fig:census} shows the raw and neutral ceilings side by side for
@@ -1317,7 +1738,7 @@ each corpus.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.85\textwidth,keepaspectratio]{fig_census.png}
-    \caption{Shortcut ceiling per corpus, on raw files and on neutral copies. The dashed line marks the preregistered bar of 0.60.}
+    \caption{Shortcut ceiling (file-clue score) per corpus, on the original files and after cleaning. The dashed line marks the preregistered bar of 0.60.}
     \label{fig:census}
 \end{figure}
 
@@ -1441,12 +1862,12 @@ lists the per-generator properties recorded in the audit summary.
 
 None of these is a property of the generated pixels. A fixed clip length is a
 product setting. A frame size of 1920x1080 against 1280x720 is an export
-choice. Before any model scored HiFi-AVDF, we added amendment A7 to P-001: each
+choice. Before any model scored HiFi-AVDF, we changed the plan: each
 corpus is resampled to one frame size, the native size of its real clips.
 HiFi-AVDF is stretched to 1280x720. The fixed 3.00 s clip span of the
 neutralizer removes the length cue.
 
-\section{What the Audit Shows}
+\subsection{What the Audit Shows}
 
 Three points follow from this chapter.
 
@@ -1460,183 +1881,8 @@ Three points follow from this chapter.
     we found no published audio-visual detector that reports one.
 \end{enumerate}
 
-%
-\chapter{The Shortcut-Neutral Protocol}
-\label{ch:protocol}
-
-Chapter~\ref{ch:audit} showed that the raw files give the label away. This
-chapter describes the protocol we built so that a result on our data means
-something. It has six parts: a preregistration, identity-disjoint splits,
-locked test sets, thresholds chosen on validation, receipts for every
-evaluation, and neutral copies of the data. The last part took two attempts,
-and the first one failed.
-
-\section{Preregistration P-001}
-
-On 13 November 2026, before any model in this study was trained, we wrote down
-four questions, the test for each, and the rule for success or failure. We
-committed that file, \texttt{results/preregistration/P-001-shortcut-neutral-av-study.md},
-on its own. Git order therefore shows what was decided before any result
-existed. Table~\ref{tab:hypotheses} lists the four tests.
-
-\begin{table}[ht]
-    \centering
-    \small
-    \caption{The four preregistered tests of P-001. Intervals are 95\%, from 1,000 bootstrap resamples of source identity.}
-    \label{tab:hypotheses}
-    \begin{tabularx}{\textwidth}{@{}l >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3.6cm} >{\raggedright\arraybackslash}p{2.6cm}@{}}
-        \toprule
-        \textbf{ID} & \textbf{Test} & \textbf{Success} & \textbf{Status} \\
-        \midrule
-        H1 & Shortcut ceiling on neutral copies, clip label, all cues, grouped five-fold & AUC at most 0.60 on each training corpus & Run; not met \\
-        H2 & Fusion minus visual-only ROC-AUC, paired, mean of three seeds & Holm-corrected one-sided $p$ below 0.05 on at least two of DFDC, LAV-DF test and FakeAVCeleb strict test (amendment A8) & Holds by its rule; see Chapter~\ref{ch:h2} \\
-        H3 & Manipulated-modality macro-F1, trained on FakeAVCeleb and tested on LAV-DF, and the reverse & Both directions above the clip-label baseline & Not run \\
-        H4 & Realized FPR with a real-only conformal threshold, $\alpha = 0.05$, $n_{\mathrm{cal}} = 200$ real target clips & FPR at most 0.07 on every target & Met on HiFi-AVDF and LAV-DF (file label) in every seed; DFDC too small; see Chapter~\ref{ch:crosscorpus} \\
-        \bottomrule
-    \end{tabularx}
-\end{table}
-
-P-001 also fixed the model choices in advance, so no test set could choose
-them. The visual path is EfficientNet-B0 with a GRU~\cite{efficientnet}. The
-audio path is Wav2Vec2 Base~\cite{wav2vec2} with attentive pooling. The sync
-path is frozen AV-HuBERT Base~\cite{avhubert} with an alignment head trained on
-real clips only. Fusion is logistic regression on out-of-fold path logits. No
-ensembles across seeds or architectures appear in primary results. A Holm
-correction applies to H2's three targets (amendment A8 narrowed it from "H2 to
-H4", because H4 is a bar check with no $p$-value). H1 is a precondition: if it fails, the
-other tests still run and carry that caveat.
-
-\subsection{Amendments}
-
-The plan changed fourteen times. Each change is a dated amendment at the end of
-the file, committed before the result it could affect. Nothing above an
-amendment is edited. Table~\ref{tab:amendments} summarizes them.
-
-\begin{table}[ht]
-    \centering
-    \small
-    \caption{Amendments to P-001. Each was committed before the result it could affect.}
-    \label{tab:amendments}
-    \begin{tabularx}{\textwidth}{@{}l l >{\raggedright\arraybackslash}X@{}}
-        \toprule
-        \textbf{ID} & \textbf{Date} & \textbf{Change and reason} \\
-        \midrule
-        A1 & 13 Nov & Training fakes thinned to three per real-video clip; audio path at three seeds; sync windows defined; LAV-DF audited per file, because a window manifest lets one file supply both labels \\
-        A2 & 13 Nov & Primary models train on FakeAVCeleb only. The first draft used LAV-DF for both training and testing, which contradicted the cross-corpus tests \\
-        A3 & 13 Nov & LAV-DF sampled by original recording: 1,000 originals (3,823 files) for test, so each real clip sits beside its own edits \\
-        A4 & 13 Nov & After H1 attempt 1 failed: neutralizer v4, with fixed 3.00 s clips and dither. Sync windows become 2 s at 0 and 1 s \\
-        A5 & 15 Nov & HiFi-AVDF added as a locked target, audited raw and neutral before scoring. HAVIC weights may be scored on it, but not on our FakeAVCeleb test \\
-        A6 & 15 Nov & KoDF, AV-Deepfake1M and AV-Deepfake1M++ become locked targets if access arrives; late data is scored only by frozen models \\
-        A7 & 15 Nov & One frame size per corpus, because HiFi-AVDF frame size follows the label \\
-        A8 & 16 Nov & Before any visual or audio model existed: how the H2 fusion is fit (logistic regression on validation, cross-fitted by identity) and tested (mean of three seeds, shared identity bootstrap, Holm over three targets) \\
-        A9 & 16 Nov & After the LAV-DF sync and H4 results were read, before H2: LAV-DF clips are also labelled by their kept window, because 46\% of fake clips have no edited time in it. Both labels are reported; H2 uses the window label \\
-        A10 & 16 Nov & After the DFDC sync result was read, before H2: the face is located with a second detector before landmarking, because DFDC faces are small in full-HD frames. Both versions are kept \\
-        A11 & 16 Nov & Exploratory, before either model existed: frozen CLIP ViT-L/14 and XLS-R paths trained on the same cleaned data, splits and seeds, compared with the P-001 paths \\
-        A12 to A14 & 17 Nov & Exploratory, after H2 was read: a fusion fit on other corpora (A12), frame statistics behind the visual path on LAV-DF (A13), and the audio path with loudness levelled and edges cut (A14). No verdict changes \\
-        \bottomrule
-    \end{tabularx}
-\end{table}
-
-Amendment A2 deserves a note. The first draft of P-001 listed LAV-DF train as
-training data and also used LAV-DF test as a cross-corpus target. A model
-trained on LAV-DF cannot give a cross-corpus result on LAV-DF. We found the
-contradiction while planning the runs, before any result was read.
-
-\section{Identity-Disjoint Splits}
-
-FakeAVCeleb is split 70/15/15 by source identity, with seed 17. A model that
-sees the same face in training and test can learn the face, so no person
-appears in two partitions. FakeAVCeleb's identity graph is fully connected:
-every person also appears as the target of someone else's fake. So beside
-every in-domain number we also report an identity-strict subset. It keeps only
-test clips whose every named person belongs to the test partition.
-
-We fixed one bug in this step. FakeAVCeleb's metadata puts the file name
-\texttt{fake.mp4} in the target column for every RealVideo-FakeAudio row. Our
-earlier code read that as a person, and the strict subset dropped the whole
-category. Targets that end in a file extension are now ignored.
-
-\section{Locked Test Sets}
-
-LAV-DF test, DFDC and HiFi-AVDF are locked. The module
-\texttt{src/deepfake\_detection/data/guards.py} refuses them for training,
-model selection and threshold choice. The single exception is H4, which by
-design draws real calibration clips from the target. In earlier phases DFDC was
-not locked and chose two models (Chapter~\ref{ch:history}). The lock exists so
-that cannot happen again.
-
-\section{Thresholds From Validation}
-
-A threshold of 0.5 means nothing on data where fakes far outnumber real clips.
-Our thresholds maximize balanced accuracy on the validation split. The command
-\texttt{ddf threshold} writes the threshold together with the ids of the clips
-that chose it. The command \texttt{ddf evaluate} refuses to run if any of those
-clips is in the set being evaluated. A threshold can therefore never be chosen
-on the clips it scores.
-
-\section{Receipts}
-
-Every evaluation leaves a receipt: the exact command, and SHA-256 hashes of its
-inputs, its code and its outputs. A receipt lets anyone check that a committed
-number came from the committed files. Receipts were added during this study.
-The sync feature extraction and training ran before they existed, so those two
-stages have none. Their outputs are still committed, with per-clip predictions,
-so every metric can be recomputed.
-
-\section{Neutralizer v1, and Why It Failed}
-
-The first neutralizer re-encoded every clip to H.264 and AAC, cut its start
-with an ffmpeg input seek, and normalized loudness with ffmpeg's
-\texttt{loudnorm} filter. It looked correct. We then ran preregistered test H1:
-the same shortcut audit, on the neutral copies.
-
-The ceiling on the clip label was {{audit.fakeavceleb.v1.clip}}, far above the
-bar of 0.60. The audio label stayed at {{audit.fakeavceleb.v1.audio}}. The
-cause was subtle. AAC encoders add a short block of priming samples at the
-start of a track. Our sources had been encoded by different tools, so their
-priming differed. When v1 re-muxed each clip, it exposed that padding
-differently per source. Face-swapped clips gained a short stretch of leading
-silence that real clips did not. Duration and trailing silence also still
-differed by class. The cleaning step had put the shortcut back in a new form.
-
-The cost was one full neutralization run and the feature extraction already
-started on it. No model was trained on v1 copies. We recorded the failure in
-amendment A4 and kept its audit in
-\texttt{results/shortcut-audit/fakeavceleb-neutral-v1/}.
-
-\section{Neutralizer v4}
-
-The final neutralizer, in
-\texttt{src/deepfake\_detection/preprocessing/neutralize.py}, avoids every step
-where an encoder can leave its own trace on the audio edges:
-
-\begin{enumerate}
-    \item \textbf{Decode the audio once} and handle it as samples in numpy.
-    Cut on sample indices, not with a container seek.
-    \item \textbf{Start at the first sound,} and start the cut on a whole video
-    frame so audio and video stay aligned.
-    \item \textbf{Keep exactly 3.00 s.} Every clip has the same length, so
-    duration carries nothing. A clip with less than 3.00 s of sound is
-    refused.
-    \item \textbf{Scale to a fixed level} of $-23$~dBFS RMS.
-    \item \textbf{Add dither} at $-66$~dBFS. Speech synthesizers leave exact
-    digital zeros in pauses, and real recordings never do. Dither removes
-    that difference.
-    \item \textbf{Re-encode} to H.264 at 25 fps with constant quality (CRF 23)
-    and AAC audio at 16 kHz, and strip all metadata.
-    \item \textbf{Fix one frame size per corpus} (amendment A7), equal to the
-    native size of the corpus's real clips.
-\end{enumerate}
-
-A regression test builds two sources with different encoders and requires the
-neutral copies to have identical audio edges. Before running v4 on everything,
-we checked it on a 600-clip sample, 150 per category, drawn once and used for
-nothing else. On the {{audit.fakeavceleb.v4check.clips|int}} clips it kept,
-the ceilings were {{audit.fakeavceleb.v4check.clip}} (clip),
-{{audit.fakeavceleb.v4check.video}} (video) and
-{{audit.fakeavceleb.v4check.audio}} (audio).
-
-\section{H1: Attempts and Result}
+\section{What Cleaning Leaves (H1)}
+\label{sec:r-h1}
 
 Table~\ref{tab:h1} gives all three H1 measurements, and
 Figure~\ref{fig:h1} plots them.
@@ -1661,7 +1907,7 @@ Figure~\ref{fig:h1} plots them.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.85\textwidth,keepaspectratio]{fig_h1.png}
-    \caption{Shortcut ceiling on FakeAVCeleb across neutralizer attempts, for the clip, video and audio labels. The dashed line is the preregistered bar.}
+    \caption{Shortcut ceiling (file-clue score) on FakeAVCeleb across cleaning attempts, for the clip, video and audio labels. The dashed line is the preregistered bar.}
     \label{fig:h1}
 \end{figure}
 
@@ -1682,7 +1928,21 @@ It comes mainly from millisecond differences at the clip ends and from
 loudness after AAC encoding. This residual matters for any claim about which
 modality was faked, and P-001 requires us to report it beside H3.
 
-\section{The Refusals Selection Effect}
+\subsection{A fixed bitrate instead}
+
+Video bitrate was the leading clue left after cleaning. As an exploratory
+check, we re-encoded all of FakeAVCeleb at a constant 160~kb/s, the median of
+the cleaned copies, instead of a constant quality, and audited it again. The
+clip-label score falls only from {{audit.fakeavceleb.neutral.clip}} to
+{{audit.fakeavceleb.cbr.clip}}, still above the bar of 0.60. The video-label
+score falls from {{audit.fakeavceleb.neutral.video}} to
+{{audit.fakeavceleb.cbr.video}}, but the audio-label score rises from
+{{audit.fakeavceleb.neutral.audio}} to {{audit.fakeavceleb.cbr.audio}}. The
+encoder overshoots its target by a few percent on busier content, and that
+overshoot still follows the label; trailing silence and loudness after AAC
+encoding remain. A fixed bitrate is not enough to meet H1.
+
+\subsection{The Refusals Selection Effect}
 \label{sec:refusals}
 
 Neutralizer v4 refuses any clip with less than 3.00 s of sound. On FakeAVCeleb
@@ -1703,136 +1963,8 @@ neutralize'' is itself a cue. A system that refused short clips would
 implicitly flag generated speech. We do not use refusals as a signal. We
 report the refusal count beside every result on these copies.
 
-\section{How the Numbers Are Computed, and What Changed}
-
-Numbers in this report are not directly comparable with numbers from the
-project's earlier phases. Table~\ref{tab:changes} lists what changed in the
-computation and why. None of these changes was chosen after seeing the result
-it affects.
-
-\begin{table}[ht]
-    \centering
-    \footnotesize
-    \caption{Changes to how numbers are computed, from section 5.3 of the project handbook.}
-    \label{tab:changes}
-    \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.0cm} >{\raggedright\arraybackslash}p{2.2cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3.0cm} >{\raggedright\arraybackslash}p{3.2cm}@{}}
-        \toprule
-        \textbf{What} & \textbf{Before} & \textbf{Now} & \textbf{Why} & \textbf{Effect on comparison} \\
-        \midrule
-        EER & Nearest ROC point to FPR = FNR & Linear interpolation where FPR = FNR & The nearest point can be several points off on small sets & Old EERs can differ, most on small sets \\
-        Decision threshold & Fixed 0.5 & Maximum balanced accuracy on validation; clip ids recorded; overlap refused & 0.5 means nothing on fake-heavy data & Old FPR, FNR and balanced accuracy are not comparable \\
-        FF++ split & Grouped by source identity & Grouped by connected identity component & Donor faces crossed train and test & Old FF++ in-domain numbers were optimistic \\
-        Identity-strict subset & A file name read as a person & File names are not identities & The old strict test had no RVFA clips & Old strict numbers covered three of four categories \\
-        Input data & Raw files & Neutralizer v4 & Raw files leak the label ({{audit.fakeavceleb.raw.clip}}) & Neutral and raw numbers measure different things; {{neutral.fakeavceleb.refused|int}} short generated-speech clips refused \\
-        Sync clip score & Not used & Mean window misfit $s$, reported as $1 - e^{-s}$ & Puts the score in $[0, 1)$ & Monotone, so AUC is unchanged; not a calibrated probability \\
-        Shortcut ceiling & Did not exist & Gradient-boosted trees on file and audio-edge cues, five folds grouped by identity & The bar any detector must beat & Single-cue AUCs are slightly optimistic; the ceiling is out-of-fold \\
-        False-alarm threshold (H4) & Did not exist & Split conformal rank $\lceil (n+1)(1-\alpha) \rceil$; Neyman-Pearson umbrella for $(\alpha, \delta)$ & Source thresholds break under shift & Standard published methods~\cite{bates2023,tong2018}, not new maths \\
-        \bottomrule
-    \end{tabularx}
-\end{table}
-
-Some things did not change. ROC-AUC is computed the same way. Intervals are
-95\%, from 1,000 bootstrap resamples of identities, not clips~\cite{bootstrap}.
-Clips of one person are not independent, so resampling clips would give
-intervals that are too narrow. Every trained model uses three seeds, 17, 29
-and 43.
-
-%
-\chapter{The Real-Only Sync Path}
-\label{ch:sync}
-
-\section{Why a Real-Only Sync Path}
-
-A lip-sync detector asks one question: do the lips match the sound? Many
-audio-visual fakes break that match. A cloned voice laid over a real face says
-words the lips never formed. A generated mouth driven by audio rarely tracks it
-perfectly.
-
-We train the sync path on real clips only, for one reason. A model that never
-sees a fake cannot learn what a particular generator's files look like. It can
-only learn what real speech looks like, and flag clips that depart from it. On
-data that still carries a residual shortcut, that is the safest design we
-know. AVH-Align~\cite{smeu2025} showed the same idea holds up when the silence
-shortcut is removed.
-
-\section{Pipeline}
-
-Figure~\ref{fig:pipeline} shows the full method.
-
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.95\textwidth,keepaspectratio]{fig_pipeline.png}
-    \caption{Method overview. Each clip is neutralized, cut into mouth crops and audio, encoded by frozen AV-HuBERT, scored by an alignment head trained on real clips only, and thresholded either on source validation or on real target clips.}
-    \label{fig:pipeline}
-\end{figure}
-
-\begin{enumerate}
-    \item \textbf{Neutral clip.} Each clip comes from neutralizer v4: 3.00 s,
-    25 fps video, 16 kHz audio.
-    \item \textbf{Mouth crops.} MediaPipe's Face Landmarker finds facial
-    landmarks in every frame. A similarity transform levels the eye line,
-    scales the distance between the eyes to a fixed value, and puts the mouth
-    centre in the middle of the crop. Angle, scale and centre are smoothed over
-    neighbouring frames so the crop does not jitter. The result is an 88 by 88
-    grey crop per frame, the input AV-HuBERT expects.
-    \item \textbf{Windows.} Each clip gives two 2-second windows, starting at
-    0 s and 1 s. A window needs a face in at least 80\% of its frames.
-    \item \textbf{Frozen AV-HuBERT.} AV-HuBERT Base~\cite{avhubert} encodes
-    each window twice: once with lips only (audio zeroed) and once with audio
-    only. Each pass gives 50 frames of 768-dimensional features. The encoder
-    is never trained.
-    \item \textbf{Alignment head.} A small network scores each pair of lip and
-    audio frames at the same instant.
-    \item \textbf{Clip score.} The mean misfit over frames and windows.
-\end{enumerate}
-
-\section{The Alignment Head}
-
-For a lips feature $l$ and an audio feature $a$ at the same frame, the head
-builds the vector $[l, a, l \odot a, |l - a|]$. It applies layer
-normalization, a linear layer to 256 units, a GELU and a final linear layer to
-one logit $g$. A high logit means the two frames belong together.
-
-\subsection{Training loss}
-
-The head trains on real clips only, with a binary cross-entropy loss. Each
-batch has three kinds of pair:
-
-\begin{itemize}
-    \item \textbf{Aligned:} lips and audio from the same instant of the same
-    real clip. Target 1.
-    \item \textbf{Shifted:} the same lips with the audio rolled by a random 5
-    to 20 frames, which is 200 to 800 ms. Target 0.
-    \item \textbf{Foreign:} the same lips with audio from another clip in the
-    batch. Target 0.
-\end{itemize}
-
-The loss is the mean of the positive and negative terms, weighted equally.
-Shifted pairs teach the head about timing. Foreign pairs teach it about
-content: the right sounds for the mouth shapes. Training uses AdamW with a
-learning rate of $10^{-3}$ and weight decay of $10^{-4}$ for 10 epochs, at
-seeds 17, 29 and 43.
-
-\subsection{Epoch selection}
-
-We keep the epoch with the lowest alignment loss on real validation clips. No
-fake label is read during training or selection. Fake labels are read only
-when the frozen head scores the validation and test sets. This rule matters.
-In the project's earlier phases, selection on the wrong quantity kept a
-below-chance checkpoint (Chapter~\ref{ch:history}).
-
-\subsection{Clip score}
-
-A window's score is its mean misfit over aligned frames,
-\[
-    s_{\mathrm{window}} = \frac{1}{T} \sum_{t=1}^{T} -\log \sigma(g_t),
-\]
-where $\sigma$ is the logistic function and $T = 50$. A clip's score $s$ is the
-mean over its windows. For the evaluation tools we report $1 - e^{-s}$, which
-lies in $[0, 1)$ and keeps the order of the scores. AUC is therefore unchanged.
-The score is not a calibrated probability.
-
-\section{In-Domain Results}
+\section{The Lip-Sync Check at Home}
+\label{sec:r-home}
 
 Table~\ref{tab:sync-indomain} gives the results on neutral FakeAVCeleb. Every
 clip in every set had a usable window, so coverage is complete.
@@ -1883,7 +2015,7 @@ the sync path's result. This comparison matters more than the raw AUC: a
 detector on raw FakeAVCeleb would have to beat {{audit.fakeavceleb.raw.clip}}
 to show the same thing.
 
-\section{Results by Manipulation Method}
+\subsection{Results by Manipulation Method}
 
 The strongest evidence that the sync path reads lip and audio agreement comes
 from its pattern across methods. Table~\ref{tab:sync-methods} gives test AUC
@@ -1936,8 +2068,7 @@ training, so it had no way to learn which pipeline made which fake. Its errors
 fall where its design says they should: on fakes that leave the lip-sound
 match intact. This order is evidence that the path reads lip and audio
 agreement, not proof; the caveat below gives the main alternative. A complete
-detector needs a second path for face swaps. That is the visual path, which
-Chapter~\ref{ch:h2} tests.
+detector needs a second path for face swaps. That is the face check, which Section~\ref{sec:r-combine} tests.
 
 The same order holds on the identity-strict subset
 (Table~\ref{tab:sync-methods-strict}).
@@ -1966,11 +2097,42 @@ ceiling of {{audit.fakeavceleb.neutral.audio}}. The sync path reads audio, so
 in principle part of its misfit on cloned voices could come from audio
 properties rather than from the lips. Real-only training makes this less
 likely, because nothing in training rewards it. It does not rule it out.
-Amendment A16 tested the mechanism directly: moving the audio of real clips
-raises the misfit, even by one frame (Section~\ref{sec:overnight}). It did not
-test cloned voices, which are new audio rather than moved audio.
+Section~\ref{sec:r-moved} tests the mechanism directly: moving the audio of real clips raises the misfit, even by one frame. That test does not cover cloned voices, which are new audio rather than moved audio.
 
-\section{The Weak Point: False Alarms}
+\subsection{Moving the audio of real clips}
+\label{sec:r-moved}
+
+The ranking by method is evidence, not proof, so we tested the mechanism
+directly. On all {{a16.clips}} real FakeAVCeleb test clips we kept the lips at
+0 to 2~s and moved only the audio, then scored the window with the frozen
+heads (Table~\ref{tab:a16}). This check was written down before its result
+existed.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Exploratory: the misfit of moved audio against the original window, mean of three seeds with a 95\% identity-bootstrap interval}
+    \label{tab:a16}
+    \begin{tabular}{lll}
+        \toprule
+        \textbf{Audio} & \textbf{AUC [95\%]} & \textbf{Clips whose misfit rose} \\
+        \midrule
+        1 frame later (0.04 s) & {{a16.shift004.auc}} [{{a16.shift004.low}}, {{a16.shift004.high}}] & {{a16.shift004.rising.min}} to {{a16.shift004.rising.max}} \\
+        2 frames later (0.08 s) & {{a16.shift008.auc}} [{{a16.shift008.low}}, {{a16.shift008.high}}] & {{a16.shift008.rising.min}} to {{a16.shift008.rising.max}} \\
+        0.20 s later & {{a16.shift020.auc}} [{{a16.shift020.low}}, {{a16.shift020.high}}] & {{a16.shift020.rising.min}} to {{a16.shift020.rising.max}} \\
+        0.40 s later & {{a16.shift040.auc}} [{{a16.shift040.low}}, {{a16.shift040.high}}] & {{a16.shift040.rising.min}} to {{a16.shift040.rising.max}} \\
+        0.80 s later & {{a16.shift080.auc}} [{{a16.shift080.low}}, {{a16.shift080.high}}] & {{a16.shift080.rising.min}} to {{a16.shift080.rising.max}} \\
+        Another person's audio & {{a16.swap.auc}} [{{a16.swap.low}}, {{a16.swap.high}}] & {{a16.swap.rising.min}} to {{a16.swap.rising.max}} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+The score moves with the mechanism, which passes the rule fixed in advance. Shifts
+of one and two frames are smaller than any the head saw in training, and they
+still raise the misfit, though far less. The larger shifts and the swap
+resemble the training negatives, so they confirm the trained objective on
+people the head never saw.
+
+\subsection{The Weak Point: False Alarms}
 
 The sync path ranks clips well, but its threshold flags many real clips. At
 the threshold chosen on validation, the false-positive rate on real test clips
@@ -1986,47 +2148,10 @@ seed to seed. A deployed detector would face a worse version of the problem.
 It would carry this threshold to new footage whose real clips score
 differently. That is the question H4 asks, in the next chapter.
 
-%
-\chapter{Cross-Corpus Evaluation and False-Alarm Control}
-\label{ch:crosscorpus}
+\section{On Data It Never Saw}
+\label{sec:r-new}
 
-This chapter tests the frozen sync path on data it never saw, and tests
-whether a threshold set from real clips of a new domain holds its
-false-positive rate.
-
-\section{Setup}
-
-Nothing is retrained for these tests. The three sync heads from
-Chapter~\ref{ch:sync}, one per seed, are frozen. Each target corpus goes
-through the same steps as FakeAVCeleb:
-
-\begin{enumerate}
-    \item neutralizer v4, with one frame size per corpus (1280x720 for
-    HiFi-AVDF);
-    \item MediaPipe mouth crops and frozen AV-HuBERT features, two 2-second
-    windows per clip;
-    \item scoring by each frozen head;
-    \item evaluation at the source threshold chosen on FakeAVCeleb
-    validation, with 1,000 bootstrap resamples for the interval;
-    \item a shortcut audit of the neutral copies, so each result sits beside
-    the ceiling of the same data.
-\end{enumerate}
-
-The targets are the LAV-DF test sample (1,000 original recordings with all
-their edits, 3,823 files), the DFDC subset, and HiFi-AVDF. All three are
-locked. They train, select and calibrate nothing, except that H4 draws real
-calibration clips from the target by design.
-
-LAV-DF needs two labels. The neutral copy keeps 3.00 s from the first sound,
-but LAV-DF edits single words anywhere in a longer recording. In 1,307 of the
-2,823 fake clips, the kept window contains no edited time at all, so under the
-file label they are real footage labelled fake. We found this after reading
-the file-label results for the sync path and H4. Amendment A9 adds a window
-label: a clip is fake if its kept window overlaps edited time by at least one
-frame. Every LAV-DF result below is reported under both labels. H2, which had
-not run, uses the window label.
-
-\section{Shortcut Ceilings of the Target Copies}
+\subsection{Shortcut Ceilings of the Target Copies}
 
 Table~\ref{tab:target-ceilings} gives the ceiling of each target on raw files
 and on its neutral copy. A cross-corpus AUC should be read against the neutral
@@ -2053,7 +2178,7 @@ ceiling of the same corpus, not against 0.5.
 The LAV-DF raw audit used a stratified sample of files, and the neutral audit
 uses the test sample. The two populations overlap but are not identical.
 
-\section{Sync Path Across Corpora}
+\subsection{Sync Path Across Corpora}
 
 Table~\ref{tab:cross-corpus} gives the frozen sync path's results on each
 target, for each seed. Figure~\ref{fig:cross-corpus} plots the AUC per target,
@@ -2100,7 +2225,7 @@ are mainly face swaps, the case the sync path catches least in-domain. HiFi-AVDF
 together. The FPR column shows how the source threshold behaves on each new
 domain.
 
-\subsection{HiFi-AVDF by generator}
+\subsubsection{HiFi-AVDF by generator}
 
 Table~\ref{tab:hifi-generators} splits the HiFi-AVDF result by generator. Each
 generator's clips are ranked against all real HiFi-AVDF clips.
@@ -2129,7 +2254,7 @@ never saw any of them, nor any fake at all. Its result on each one measures
 how well that generator matches lip motion to speech, as judged by a model of
 real speech.
 
-\subsection{What the results show}
+\subsubsection{What the results show}
 
 The sync path keeps some signal on every target, but far less than on
 FakeAVCeleb, where it was trained. On LAV-DF it clears the neutral ceiling
@@ -2147,15 +2272,15 @@ together, so lips and voice already match. On Sora 2 the generated clips look
 more in sync than the real ones. A detector built on lip-voice mismatch has
 nothing to find there. That is a limit of the idea, not only of our model.
 
-\subsection{Coverage, before and after amendment A10}
+\subsubsection{Coverage, and a second face detector}
 
 The face landmarker first found a face in only 2,110 of 6,064 DFDC windows,
 because DFDC faces are small in full-HD frames. The sync path then scored 921
-DFDC clips, 67 of them real. Amendment A10 locates the face with a second
+DFDC clips, 67 of them real. A dated change to the plan locates the face with a second
 detector first, only for windows that fall below the face bar. DFDC coverage
 rose to {{sync.dfdc.seed17.scored|int}} clips, and HiFi-AVDF to
 {{sync.hifiavdf.seed17.scored|int}}. AUC changed little; the intervals
-narrowed. The tables show the results after A10. Both versions are in
+narrowed. The tables show the results after this change. Both versions are in
 \texttt{results/}.
 
 Two smaller gaps remain. HiFi-AVDF has
@@ -2166,52 +2291,14 @@ neutral clips also have less video than audio, so some of their windows hold
 fewer than 50 frames. Those windows are left out and counted, as windows
 without a face already were.
 
-\section{H4: False-Alarm Control From Real Clips}
-
-\subsection{The question}
+\section{False Alarms on New Data (H4)}
+\label{sec:r-h4}
 
 A deployed detector is usually tuned once, on the data it was built with, and
 then run on new footage. If the new footage's real clips score differently,
 the false-alarm rate changes and nobody notices. H4 asks whether a threshold
 set from real clips of the new domain holds the false-positive rate where the
 carried-over threshold does not.
-
-\subsection{Three threshold rules}
-
-For each target and seed, \texttt{scripts/run\_h4.py} compares three rules.
-
-\begin{enumerate}
-    \item \textbf{Source threshold.} The threshold chosen on FakeAVCeleb
-    validation, applied unchanged. This is what a deployed detector would do.
-    \item \textbf{Real-only conformal threshold.} A random set of
-    $n_{\mathrm{cal}} = 200$ real target clips is set aside, using a seed
-    fixed in P-001. The threshold is the score at rank
-    $\lceil (n_{\mathrm{cal}}+1)(1-\alpha) \rceil$ among them, with
-    $\alpha = 0.05$. For a new real clip from the same distribution, the
-    chance of being flagged is then at most $\alpha$ on
-    average~\cite{bates2023}.
-    \item \textbf{Real-only umbrella threshold.} The Neyman-Pearson umbrella
-    rule~\cite{tong2018} picks the lowest of the same real scores that is safe
-    to use. Safe means its false-positive rate exceeds $\alpha$ with
-    probability at most $\delta$. We use $\alpha = \delta = 0.05$. This is a stronger guarantee: it
-    holds for this calibration draw with high probability, not only on
-    average. It needs at least $\lceil \log\delta / \log(1-\alpha) \rceil = 59$
-    real clips.
-\end{enumerate}
-
-No fake label is read to set any of these thresholds. All three are then
-scored on the target clips that were not used for calibration. The
-preregistered success rule is a realized FPR of at most $\alpha + 0.02 = 0.07$
-with the conformal threshold, on every target.
-
-\subsection{Targets}
-
-H4 runs on LAV-DF test and HiFi-AVDF. It does not run on DFDC. Our DFDC subset
-has only {{audit.dfdc.raw.census.RealVideo-RealAudio.clips|int}} real clips,
-fewer than the 200 needed for calibration plus any held-out real clips to
-score.
-
-\subsection{Results}
 
 Table~\ref{tab:h4} gives the realized false-positive and true-positive rates
 of each rule, and Figure~\ref{fig:h4} plots the false-positive rates.
@@ -2265,7 +2352,7 @@ Within one corpus that is reasonable. Across shifts inside a corpus it may not
 hold. Second, each row uses one random calibration draw. The marginal
 conformal guarantee holds on average over draws, so one draw can land above
 $\alpha$ by chance. Third, H4 is a bar check, not a $p$-value test, so it sits
-outside the Holm correction, which amendment A8 limits to H2's three targets.
+outside the Holm correction, which covers only H2's three targets.
 
 \subsection{What H4 shows}
 
@@ -2275,8 +2362,7 @@ conformal threshold brings the false-positive rate back near $\alpha$. H4 is
 met on HiFi-AVDF in all three seeds, and on LAV-DF under the preregistered
 file label in all three seeds.
 
-Under the window label, which amendment A9 added after these results were
-read, two of the three LAV-DF seeds land above the bar. The window label turns
+Under the window label, which was added after these results were read, two of the three LAV-DF seeds land above the bar. The window label turns
 clips cut from edited recordings into real clips. The calibration reals and
 the scored reals may then no longer share one distribution, which is the
 assumption the guarantee needs.
@@ -2286,27 +2372,15 @@ catches {{h4.hifiavdf-seed17.conformal_real_only.tpr|pct}} of HiFi-AVDF fakes
 and {{h4.lavdf-test-seed17.conformal_real_only.tpr|pct}} of LAV-DF fakes at
 seed 17. Real-only calibration fixes the operating point. It cannot add signal
 the detector does not have. A deployed system would need a stronger detector
-under the same calibration. Chapter~\ref{ch:h2} tests whether fusing the
-paths gives one.
+under the same calibration. Section~\ref{sec:r-combine} tests whether combining the checks gives one.
 
-%
-\chapter{Fusion Against Visual-Only (H2)}
-\label{ch:h2}
+\section{Combining the Three Checks (H2)}
+\label{sec:r-combine}
 
-The first plan of this project fused three paths and expected the fusion to
-beat any single path. The root study found no such gain across corpora, and
-its fusion numbers turned out to be compromised (Chapter~\ref{ch:history}). This chapter runs
-the comparison again, on neutral data, under rules fixed before any visual or
-audio model existed.
-
-\section{The Visual and Audio Paths}
-
-The visual path is EfficientNet-B0~\cite{efficientnet} with a GRU over face
-frames, trained on the video label. The audio path is Wav2Vec2
-Base~\cite{wav2vec2} with attentive pooling, trained on the audio label. Both
-train on the neutral FakeAVCeleb training partition, thinned to three
-video-fake clips per real-video clip (amendment A1), at seeds 17, 29 and 43.
-Each picks its epoch and its threshold on validation.
+The face and voice checks score near perfect on their own labels at home
+(Table~\ref{tab:branches}). H2 then compares the combination of all three
+checks with the face check alone, under the rules of
+Section~\ref{sec:s-prereg}.
 
 \begin{table}[htbp]
     \centering
@@ -2323,39 +2397,6 @@ Each picks its epoch and its threshold on validation.
         \bottomrule
     \end{tabular}
 \end{table}
-
-\section{How the Fusion Is Fit}
-
-Amendment A8 fixed every choice below on 16 November, before any visual or
-audio checkpoint existed:
-
-\begin{itemize}
-    \item \textbf{Inputs.} Each path's logit for the clip. The sync logit is the
-    logit of its probability. Each logit is standardized on the fit set.
-    \item \textbf{Fit set.} FakeAVCeleb validation. Training clips are left out,
-    because each path was fit on them and their logits are in-sample.
-    Validation chose each path's epoch and threshold and nothing else.
-    \item \textbf{Model.} Logistic regression, L2, $C = 1$, balanced class
-    weights. Nothing is tuned.
-    \item \textbf{Out-of-fold scores.} The fusion's own validation scores, which
-    set its threshold, come from 5-fold cross-fitting grouped by identity. The
-    model applied elsewhere is refit on all of validation.
-    \item \textbf{Coverage.} A clip counts only if all three paths score it. The
-    visual path is compared on exactly the same clips.
-\end{itemize}
-
-\section{The Test}
-
-The label is the clip label: a clip is fake if either stream is fake. For each
-target and seed, the statistic is AUC(fusion) minus AUC(visual). H2 uses the
-mean of the three seeds. Its interval comes from 1,000 bootstrap resamples of
-identities, and each resample is applied to all three seeds at once. The
-one-sided $p$-value is the share of resamples with a mean at or below zero.
-Holm correction at 0.05 runs over three targets: DFDC, LAV-DF test and the
-identity-strict FakeAVCeleb test. H2 holds if at least two survive. HiFi-AVDF
-gets the same statistic, outside the rule.
-
-\section{Result}
 
 \begin{table}[htbp]
     \centering
@@ -2430,7 +2471,7 @@ including clips whose video was never edited
 face edits would score those near 0.5. So it reacts to some difference
 between LAV-DF's real and fake files that is not the edit, and reads it
 backwards. What that difference is, we do not know. The file-cue audit reads
-metadata and cannot see it. Amendment A13 (exploratory) measured six
+metadata and cannot see it. An exploratory check measured six
 statistics of the face frames the path sees: sharpness, high frequencies,
 blockiness, brightness, contrast and motion. None explains it. Each separates
 the two groups at AUC {{a13.lavdf.auc_min}} to {{a13.lavdf.auc_max}}, and all
@@ -2459,10 +2500,10 @@ So H2 shows that an audio path catches audio fakes a visual path cannot. It
 does not show that fusion improves detection, or that it transfers to a new
 corpus.
 
-\section{Exploratory: A Fusion Fit on Other Corpora (A12)}
+\subsection{Exploratory: A Combination Fit on Other Corpora}
 \label{sec:a12}
 
-Amendment A12 was fixed after H2 was read and before this result existed. It
+This check was fixed after H2 was read and before its result existed. It
 refits the same fusion, from the same logits, in two ways:
 \begin{itemize}
     \item \textbf{Leave one out:} fit on the other two targets, then score the
@@ -2474,11 +2515,11 @@ refits the same fusion, from the same logits, in two ways:
 
 \begin{table}[htbp]
     \centering
-    \caption{A12 (exploratory): ROC-AUC on the clip label, mean of three seeds}
+    \caption{Exploratory: ROC-AUC on the clip label of each check, the preregistered combination, one fit on the other two corpora, and an upper bound; mean of three seeds}
     \label{tab:a12}
     \begin{tabular}{lrrrrrr}
         \toprule
-        Target & Visual & Audio & Sync & A8 & Leave one out & Upper bound \\
+        Target & Face & Voice & Lip sync & Prereg. & Other corpora & Upper bound \\
         \midrule
         DFDC & {{a12.dfdc.auc.visual}} & {{a12.dfdc.auc.audio}} & {{a12.dfdc.auc.sync}} & {{a12.dfdc.auc.a8}} & {{a12.dfdc.auc.leave_one_out}} & {{a12.dfdc.auc.upper_bound}} \\
         LAV-DF & {{a12.lavdf-window.auc.visual}} & {{a12.lavdf-window.auc.audio}} & {{a12.lavdf-window.auc.sync}} & {{a12.lavdf-window.auc.a8}} & {{a12.lavdf-window.auc.leave_one_out}} & {{a12.lavdf-window.auc.upper_bound}} \\
@@ -2500,7 +2541,7 @@ HiFi-AVDF. No weighting of these paths helps there.
 {{a12.lavdf-window.upper_bound-minus-audio.estimate}}
 [{{a12.lavdf-window.upper_bound-minus-audio.lower}},
 {{a12.lavdf-window.upper_bound-minus-audio.upper}}], so the paths do
-complement each other a little. The leave-one-out fusion beats the A8 fusion
+complement each other a little. The leave-one-out fusion beats the preregistered fusion
 by {{a12.lavdf-window.leave_one_out-minus-a8.estimate}}, so weights from other
 corpora help. It still trails the audio path
 ({{a12.lavdf-window.leave_one_out-minus-audio.estimate}}).
@@ -2514,19 +2555,26 @@ these corpora. A fusion that decides per clip which path to trust, and paths
 trained on several corpora, are part of the full run
 (Chapter~\ref{ch:future}).
 
-\section{Exploratory: Stronger Frozen Backbones (A11)}
+\section{Further Checks}
+\label{sec:r-further}
+
+Each check in this section was written down before its result existed. None
+was part of the original plan, so all are exploratory, and none changes a
+verdict.
+
+\subsection{Exploratory: Stronger Frozen Backbones}
 \label{sec:a11}
 
 Published work reports that frozen CLIP ViT-L/14 features transfer far better
 for faces, and XLS-R far better for speech, than the backbones P-001 uses. That
 evidence comes from raw files, which carry the shortcuts this study measured.
-Amendment A11 was fixed before either model existed. It trains both frozen on
+This check was fixed before either model existed. It trains both frozen on
 the same cleaned data, splits and seeds, and compares each with its P-001 path
 on the same clips.
 
 \begin{table}[htbp]
     \centering
-    \caption{A11 (exploratory): new path minus P-001 path, ROC-AUC on each
+    \caption{Exploratory: new path minus P-001 path, ROC-AUC on each
     path's own label, mean of three seeds with a 95\% identity-bootstrap
     interval}
     \label{tab:a11}
@@ -2560,86 +2608,7 @@ tuning for CLIP, and no weighted sum of XLS-R layers. A published recipe might
 do better. Under ours, the advantage measured on raw files does not survive the
 shortcut control.
 
-\section{Exploratory: Five Gaps Checked (A15 to A19)}
-\label{sec:overnight}
-
-Five further checks were fixed as dated amendments before their results
-existed, to close gaps this report names. None changes a verdict.
-
-\subsection{The sync mechanism (A16)}
-
-On all {{a16.clips}} real FakeAVCeleb test clips we kept the lips at 0 to 2~s
-and moved only the audio, then scored the window with the frozen sync heads
-(Table~\ref{tab:a16}).
-
-\begin{table}[htbp]
-    \centering
-    \caption{A16 (exploratory): the misfit of moved audio against the original window, mean of three seeds with a 95\% identity-bootstrap interval}
-    \label{tab:a16}
-    \begin{tabular}{lll}
-        \toprule
-        \textbf{Audio} & \textbf{AUC [95\%]} & \textbf{Clips whose misfit rose} \\
-        \midrule
-        1 frame later (0.04 s) & {{a16.shift004.auc}} [{{a16.shift004.low}}, {{a16.shift004.high}}] & {{a16.shift004.rising.min}} to {{a16.shift004.rising.max}} \\
-        2 frames later (0.08 s) & {{a16.shift008.auc}} [{{a16.shift008.low}}, {{a16.shift008.high}}] & {{a16.shift008.rising.min}} to {{a16.shift008.rising.max}} \\
-        0.20 s later & {{a16.shift020.auc}} [{{a16.shift020.low}}, {{a16.shift020.high}}] & {{a16.shift020.rising.min}} to {{a16.shift020.rising.max}} \\
-        0.40 s later & {{a16.shift040.auc}} [{{a16.shift040.low}}, {{a16.shift040.high}}] & {{a16.shift040.rising.min}} to {{a16.shift040.rising.max}} \\
-        0.80 s later & {{a16.shift080.auc}} [{{a16.shift080.low}}, {{a16.shift080.high}}] & {{a16.shift080.rising.min}} to {{a16.shift080.rising.max}} \\
-        Another person's audio & {{a16.swap.auc}} [{{a16.swap.low}}, {{a16.swap.high}}] & {{a16.swap.rising.min}} to {{a16.swap.rising.max}} \\
-        \bottomrule
-    \end{tabular}
-\end{table}
-
-The score moves with the mechanism, which passes the rule fixed in A16. Shifts
-of one and two frames are smaller than any the head saw in training, and they
-still raise the misfit, though far less. The larger shifts and the swap
-resemble the training negatives, so they confirm the trained objective on
-people the head never saw.
-
-\subsection{Which stream was faked, one direction (A15)}
-
-H3 asks whether a model can say which stream was faked, in both directions
-between FakeAVCeleb and LAV-DF. The reverse direction needs models trained on
-LAV-DF, so H3 has still not run. A15 runs FakeAVCeleb to LAV-DF. The visual
-and audio paths act as video-fake and audio-fake heads at their FakeAVCeleb
-thresholds. The baseline marks both streams fake whenever the clip is fake.
-
-The heads reach a macro-F1 of {{a15.window.heads.min}} to
-{{a15.window.heads.max}} under the window label, against
-{{a15.window.baseline}} for the baseline: a difference of
-{{a15.window.estimate}} [{{a15.window.lower}}, {{a15.window.upper}}]. The
-direction does not transfer. The video head is worse than guessing: its
-precision ({{a15.window.video.seed17.precision}} at seed 17) is below the
-share of clips whose video was edited. The audio head is precise when it fires
-but recalls only {{a15.window.audio.seed43.recall}} to
-{{a15.window.audio.seed17.recall}} of audio fakes at seeds 43 and 17. Its
-ranking is fair (Chapter~\ref{ch:h2}), so the loss is in the threshold carried
-over from FakeAVCeleb, as with the sync path in H4.
-
-\subsection{Speaker overlap (A17)}
-
-VoxCeleb2's dev and test speaker lists, checked against the published split,
-place all {{a17.sources.dev}} FakeAVCeleb source identities in VoxCeleb2 dev
-and none in test. AV-HuBERT pretrained on the English part of VoxCeleb2 dev,
-so every FakeAVCeleb speaker may have been heard by the frozen encoder. No
-unseen speaker exists in this corpus, so the effect cannot be measured here.
-LAV-DF is also built from VoxCeleb2 but has no speaker ids.
-
-\subsection{H1 with a fixed bitrate (A18)}
-
-Video bitrate was the leading cue left after cleaning (Chapter~\ref{ch:protocol}).
-A18 re-encoded all of FakeAVCeleb at a constant 160~kb/s, the median of the v4
-copies, instead of a constant quality, and audited it again. The clip-label
-ceiling falls only from {{audit.fakeavceleb.neutral.clip}} to
-{{audit.fakeavceleb.cbr.clip}}, still above the bar of 0.60. The video-label
-ceiling falls from {{audit.fakeavceleb.neutral.video}} to
-{{audit.fakeavceleb.cbr.video}}, but the audio-label ceiling rises from
-{{audit.fakeavceleb.neutral.audio}} to {{audit.fakeavceleb.cbr.audio}}. The
-encoder overshoots its target by a few percent on busier content, and that
-overshoot still follows the label; trailing silence and loudness after AAC
-encoding remain. A fixed bitrate is not enough to meet H1.
-
-\subsection{A published method on our protocol (A19)}
+\subsection{A published method on our protocol}
 
 AVH-Align~\cite{smeu2025} is the closest published method. Its released
 weights need features from a fine-tuned AV-HuBERT Large checkpoint that is not
@@ -2649,7 +2618,7 @@ frozen features as our sync path (Table~\ref{tab:a19}).
 
 \begin{table}[htbp]
     \centering
-    \caption{A19 (exploratory): AVH-Align's method against the P-001 sync path on the same clips, mean of three seeds with 95\% identity-bootstrap intervals}
+    \caption{Exploratory: AVH-Align's method against the P-001 sync path on the same clips, mean of three seeds with 95\% identity-bootstrap intervals}
     \label{tab:a19}
     \begin{tabular}{lrll}
         \toprule
@@ -2671,9 +2640,60 @@ head does not fix transfer. This compares two heads on our features and data,
 not the published system, which was trained on 45,000 real AV-Deepfake1M
 videos.
 
+\subsection{Which stream was faked, one direction}
+
+H3 asks whether a model can say which stream was faked, in both directions
+between FakeAVCeleb and LAV-DF. The reverse direction needs models trained on
+LAV-DF, so H3 has still not run. This check runs FakeAVCeleb to LAV-DF. The visual
+and audio paths act as video-fake and audio-fake heads at their FakeAVCeleb
+thresholds. The baseline marks both streams fake whenever the clip is fake.
+
+The heads reach a macro-F1 of {{a15.window.heads.min}} to
+{{a15.window.heads.max}} under the window label, against
+{{a15.window.baseline}} for the baseline: a difference of
+{{a15.window.estimate}} [{{a15.window.lower}}, {{a15.window.upper}}]. The
+direction does not transfer. The video head is worse than guessing: its
+precision ({{a15.window.video.seed17.precision}} at seed 17) is below the
+share of clips whose video was edited. The audio head is precise when it fires
+but recalls only {{a15.window.audio.seed43.recall}} to
+{{a15.window.audio.seed17.recall}} of audio fakes at seeds 43 and 17. Its
+ranking is fair (Section~\ref{sec:r-combine}), so the loss is in the threshold carried
+over from FakeAVCeleb, as with the sync path in H4.
+
+\subsection{Speaker overlap}
+
+VoxCeleb2's dev and test speaker lists, checked against the published split,
+place all {{a17.sources.dev}} FakeAVCeleb source identities in VoxCeleb2 dev
+and none in test. AV-HuBERT pretrained on the English part of VoxCeleb2 dev,
+so every FakeAVCeleb speaker may have been heard by the frozen encoder. No
+unseen speaker exists in this corpus, so the effect cannot be measured here.
+LAV-DF is also built from VoxCeleb2 but has no speaker ids.
 %
-\chapter{Limitations and Future Scope}
+\chapter{Discussion, Limitations and Future Scope}
 \label{ch:future}
+
+\section{What the Results Mean}
+
+Benchmark scores near 0.99 sit right at what file details alone give, so on
+their own they cannot show that a detector sees the fake. Once uploads are
+simulated, a detector trained on one corpus keeps a real but modest signal,
+and loses most of it on new data.
+
+The lip-sync check shows both sides of this. It is the part that survives
+cleaning best at home: it beats the cleaned file clues, and it reacts to audio
+moved by a single frame. It is also the part that fails most clearly on modern
+generators. Tools such as Sora~2 and Veo~3.1 make picture and sound together,
+so their lips and voice already agree. We read that as a limit of the
+lip-mismatch idea, not only of our model.
+
+The threshold result is the most practical one. A platform cannot label the
+fakes in its own traffic, but it has plenty of real videos. Two hundred of
+them were enough to put false alarms back near the target on both corpora we
+could test. They could not make the detector catch more fakes.
+
+The combination result is a warning about reading one verdict. H2 passed by
+its rule, yet the gain came from fakes the face check was never meant to see,
+and no fixed weighting of the three checks transferred between corpora.
 
 \section{Limitations}
 
@@ -2703,9 +2723,9 @@ The ceiling on the audio label stays at {{audit.fakeavceleb.neutral.audio}}.
 It comes from millisecond differences at clip ends and from loudness after
 AAC encoding. Any claim about which modality was faked must be read beside
 this number. It also leaves room for the sync path's success on cloned voices
-to come partly from audio properties (Chapter~\ref{ch:sync}).
+to come partly from audio properties (Section~\ref{sec:r-home}).
 
-Amendment A14 (exploratory) checked whether the audio path relies on those two
+An exploratory check tested whether the audio path relies on those two
 cues. With every clip's loudness levelled and 250~ms cut from each edge, its
 AUC on the identity-strict test stays between
 {{a14.test-identity-strict.perturbed_min}} and
@@ -2723,14 +2743,14 @@ clips.
 \subsection{Parts of the study that have not run}
 
 Two parts of the preregistered study are incomplete in this version, and the
-secondary fusion model was dropped for the deadline window (amendment A8):
+secondary fusion model was dropped for the deadline window:
 
 \begin{itemize}
     \item \textbf{Modality prediction (H3).} Only the direction from
-    FakeAVCeleb to LAV-DF has run, as exploratory amendment A15, and it does
+    FakeAVCeleb to LAV-DF has run, as an exploratory check (Section~\ref{sec:r-further}), and it does
     not transfer. The reverse needs models trained on LAV-DF.
     \item \textbf{Baselines.} AVH-Align's method has run on our protocol
-    (A19), but not its published system. HAVIC~\cite{havic} has not been
+    (Section~\ref{sec:r-further}), but not its published system. HAVIC~\cite{havic} has not been
     run. HAVIC's released
     weights can be scored on HiFi-AVDF, DFDC and LAV-DF. They cannot be scored
     fairly on our FakeAVCeleb test, because HAVIC was fine-tuned on a random,
@@ -2740,7 +2760,7 @@ secondary fusion model was dropped for the deadline window (amendment A8):
 
 \subsection{Speaker overlap with AV-HuBERT pretraining}
 
-AV-HuBERT was pretrained on LRS3 and VoxCeleb2. Amendment A17 found every
+AV-HuBERT was pretrained on LRS3 and VoxCeleb2. An exploratory check found every
 FakeAVCeleb speaker in VoxCeleb2 dev, the part used for pretraining, and none
 in VoxCeleb2 test. LAV-DF is also built from VoxCeleb2 but has no speaker ids.
 Some of the sync path's signal may come from the encoder having heard these
@@ -2795,20 +2815,18 @@ by hand.
 One further check would close an open objection: measure the cost of
 neutralization on LAV-DF, by training and testing on raw files, then on
 neutral files, where the codec does not follow the label. The direct test of
-the sync mechanism has run (A16).
-
+the sync mechanism has run (Section~\ref{sec:r-moved}).
 %
 \chapter{Conclusion}
 \label{ch:conclusions}
 
-We set out to measure how much of audio-visual deepfake benchmark accuracy
-comes from how the files were made. On FakeAVCeleb, file metadata and audio
-edges alone predict the label at {{audit.fakeavceleb.raw.clip}}. HiFi-AVDF, a
-modern set of six commercial generators, reaches
-{{audit.hifiavdf.raw.clip}} from export settings alone. LAV-DF leaks through
-weak cues added together. DFDC barely leaks. A detector score on any of these
-corpora means little until it is set beside the shortcut ceiling of the same
-data.
+We set out to measure what survives an upload. Most of what audio-visual
+deepfake benchmarks reward does not. On FakeAVCeleb, file details and audio
+edges alone predict the label at {{audit.fakeavceleb.raw.clip}}. HiFi-AVDF,
+six modern commercial generators, reaches {{audit.hifiavdf.raw.clip}} from
+export settings alone. LAV-DF leaks through weak clues added together, and
+DFDC barely leaks. A detector score on any of these corpora means little until
+it is set beside the file-clue score of the same data.
 
 Our first neutralizer put the shortcut back through hidden AAC padding. The final version brought the
 FakeAVCeleb ceiling down to {{audit.fakeavceleb.neutral.clip}}. That missed the
@@ -2821,7 +2839,7 @@ and {{sync.test.seed43.auc}} at three seeds. All three sit above the ceiling of
 the same data.
 Its pattern across methods matches its mechanism. It catches cloned voices
 best and plain face swaps least. Its weak point is false alarms at a carried-over
-threshold, which Chapter~\ref{ch:crosscorpus} addresses with thresholds set
+threshold, which Section~\ref{sec:r-h4} addresses with thresholds set
 from real clips of each new domain.
 
 On corpora it never saw, the detector stays above chance but falls far: its
@@ -2834,7 +2852,7 @@ from 200 real clips of the new corpus brings false alarms on HiFi-AVDF to
 {{h4.hifiavdf-seed17.source_validation.fpr}}, but it then catches few fakes.
 
 Fusing the visual, audio and sync paths passes its preregistered test
-(Chapter~\ref{ch:h2}). The gain comes from fakes the visual path cannot see,
+(Section~\ref{sec:r-combine}). The gain comes from fakes the visual path cannot see,
 and on LAV-DF from a visual path that the files invert. No fixed fusion of these
 paths transferred between corpora, and stronger frozen backbones did not
 transfer better on the cleaned data.
@@ -2843,7 +2861,6 @@ The earlier phases of this project produced many strong numbers that did not
 survive scrutiny. This version produces fewer numbers, and each one comes with
 the data that could explain it away. The main lesson is a working habit: before
 training a detector, measure what the files alone can do.
-
 %
 \appendix
 \chapter{Reproducibility}
@@ -2851,7 +2868,7 @@ training a detector, measure what the files alone can do.
 
 \section{Commands}
 
-Every result in Chapters~\ref{ch:audit} to~\ref{ch:sync} can be rebuilt with
+Every result in Chapters~\ref{ch:method} to~\ref{ch:results} can be rebuilt with
 the commands below, run from the repository root with the project's own Python
 interpreter. Each command line is wrapped for the page.
 
@@ -2873,17 +2890,16 @@ tracked in that folder:
 
 \begin{itemize}
     \item \texttt{runs/p001-2day.sh}: the cross-corpus and false-alarm steps
-    of Chapter~\ref{ch:crosscorpus}. It neutralizes each target, extracts
+    of Sections~\ref{sec:r-new} and~\ref{sec:r-h4}. It neutralizes each target, extracts
     features, scores the frozen heads, evaluates them with receipts, runs
     \texttt{scripts/run\_h4.py}, and audits the neutral copies.
-    \item \texttt{runs/p001-a10.sh}: the second face locator of amendment A10,
+    \item \texttt{runs/p001-a10.sh}: the second face locator for DFDC,
     and the rescoring that follows it.
     \item \texttt{scripts/run\_p001\_branches.sh}: the visual and audio paths.
     \item \texttt{runs/p001-h2.sh}: target caching and
-    \texttt{scripts/run\_h2.py} for Chapter~\ref{ch:h2}.
+    \texttt{scripts/run\_h2.py} for Section~\ref{sec:r-combine}.
     \item \texttt{runs/p001-a11.sh} and \texttt{runs/p001-a13-a14.sh}: the
-    exploratory amendments A11, A13 and A14; \texttt{scripts/run\_a12.py}
-    runs A12 from the H2 logits.
+    exploratory checks on backbones, LAV-DF frame statistics and the audio clue; \texttt{scripts/run\_a12.py} runs the combination check from the H2 logits.
     \item \texttt{runs/p001-finalize.sh}: copies the outputs into
     \texttt{results/} and rebuilds every number, figure and deliverable.
 \end{itemize}
@@ -2904,7 +2920,7 @@ tracked in that folder:
     \texttt{training.json}, and the receipts.
     \item \texttt{results/p001-sync-targets/} and \texttt{results/p001-h4/}
     hold the cross-corpus scores and H4; the \texttt{-pre-a10} folders keep
-    the versions from before amendment A10.
+    the versions from before the second face locator.
     \item \texttt{results/p001-branches/} and \texttt{results/p001-h2/} hold
     the visual and audio paths and the H2 fusion, and
     \texttt{results/p001-a11/} to \texttt{results/p001-a14/} the exploratory
@@ -2938,3 +2954,4 @@ stops the build, so the report can never ship with a gap or a stale value.
 \bibliography{references}
 
 \end{document}
+
