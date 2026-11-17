@@ -486,7 +486,7 @@ def build(draft: bool) -> int:
         ], name="card_weights")
 
     def s_overnight():
-        s = slide("Four gaps checked (A15 to A19)",
+        s = slide("Five gaps checked (A15 to A19)",
                   "These checks were fixed as dated amendments before their results existed, and none changes a verdict. "
                   "Moving the audio of real clips raises the lip-sync misfit, so the check really reads lip and voice "
                   "agreement. Saying which stream was faked does not transfer from FakeAVCeleb to LAV-DF. Every FakeAVCeleb "
@@ -496,6 +496,7 @@ def build(draft: bool) -> int:
         rows = [["A16: move the audio of real clips", "Misfit rises: AUC {{a16.shift004.auc}} at one frame, {{a16.shift020.auc}} at 0.2 s, {{a16.swap.auc}} with another voice"],
                 ["A15: which stream was faked (H3, one way)", "Does not transfer: macro-F1 {{a15.window.heads.min}} to {{a15.window.heads.max}} against {{a15.window.baseline}}"],
                 ["A17: speakers in AV-HuBERT's pretraining", "All {{a17.sources.dev}} FakeAVCeleb speakers are in VoxCeleb2 dev"],
+                ["A18: H1 with a fixed bitrate", "Ceiling {{audit.fakeavceleb.cbr.clip}} (was {{audit.fakeavceleb.neutral.clip}}): still above 0.60"],
                 ["A19: AVH-Align's method on our protocol", "Never better: {{a19.dfdc.minus_sync.estimate}} on DFDC, {{a19.hifiavdf.minus_sync.estimate}} on HiFi-AVDF, {{a19.lavdf-window.minus_sync.estimate}} (level) on LAV-DF"]]
         d.add_table(s, L, Y0, [4300000, W - 4300000], ["Check", "Result"], T_rows(rows, n), size=18, max_h=H0,
                     bold_first_col=True, fill=H0)

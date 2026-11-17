@@ -876,10 +876,10 @@ LayerNorm tuning for CLIP, no weighted sum of XLS-R layers), so a published
 recipe might do better. Under ours, the advantage measured on raw files does
 not survive the shortcut control.
 
-\section{Exploratory: Four Gaps Checked (A15 to A19)}
+\section{Exploratory: Five Gaps Checked (A15 to A19)}
 \label{sec:overnight}
 
-Four more checks were fixed as dated amendments before their results existed.
+Five more checks were fixed as dated amendments before their results existed.
 None changes a verdict.
 
 \textit{The sync mechanism (A16).} On all {{a16.clips}} real FakeAVCeleb test
@@ -908,6 +908,13 @@ pretrained on the English part of VoxCeleb2 dev, so every FakeAVCeleb speaker
 may have been heard by the frozen encoder. No unseen speaker exists in this
 corpus to measure the effect.
 
+\textit{H1 with a fixed bitrate (A18).} Video bitrate was the leading cue left
+after cleaning. Re-encoding all of FakeAVCeleb at a constant 160~kb/s instead of
+a constant quality lowers the clip-label ceiling only from
+{{audit.fakeavceleb.neutral.clip}} to {{audit.fakeavceleb.cbr.clip}}, still
+above 0.60. The encoder overshoots its target slightly on busier content, and
+the overshoot still follows the label; trailing silence and loudness remain.
+
 \textit{A published method on our protocol (A19).} We retrained AVH-Align's
 head, loss and score~\cite{smeu2025} on our real training windows and frozen
 features. It does not beat our sync path on any set. It is worse on the
@@ -927,7 +934,8 @@ available to us.
 \textit{H1 missed its bar.} The neutral FakeAVCeleb ceiling is
 {{audit.fakeavceleb.neutral.clip}} against a preregistered 0.60. Video
 bitrate remains as a cue. It follows image content under constant-quality
-encoding, but the test was defined on all cues, and it failed.
+encoding, but the test was defined on all cues, and it failed. A fixed bitrate
+does not fix it either (A18).
 
 \textit{A residual audio cue remains.} The audio-label ceiling on the neutral
 copies is {{audit.fakeavceleb.neutral.audio}}. It comes from small edge

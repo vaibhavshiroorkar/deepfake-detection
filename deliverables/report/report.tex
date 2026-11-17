@@ -2560,10 +2560,10 @@ tuning for CLIP, and no weighted sum of XLS-R layers. A published recipe might
 do better. Under ours, the advantage measured on raw files does not survive the
 shortcut control.
 
-\section{Exploratory: Four Gaps Checked (A15 to A19)}
+\section{Exploratory: Five Gaps Checked (A15 to A19)}
 \label{sec:overnight}
 
-Four further checks were fixed as dated amendments before their results
+Five further checks were fixed as dated amendments before their results
 existed, to close gaps this report names. None changes a verdict.
 
 \subsection{The sync mechanism (A16)}
@@ -2624,6 +2624,20 @@ and none in test. AV-HuBERT pretrained on the English part of VoxCeleb2 dev,
 so every FakeAVCeleb speaker may have been heard by the frozen encoder. No
 unseen speaker exists in this corpus, so the effect cannot be measured here.
 LAV-DF is also built from VoxCeleb2 but has no speaker ids.
+
+\subsection{H1 with a fixed bitrate (A18)}
+
+Video bitrate was the leading cue left after cleaning (Chapter~\ref{ch:protocol}).
+A18 re-encoded all of FakeAVCeleb at a constant 160~kb/s, the median of the v4
+copies, instead of a constant quality, and audited it again. The clip-label
+ceiling falls only from {{audit.fakeavceleb.neutral.clip}} to
+{{audit.fakeavceleb.cbr.clip}}, still above the bar of 0.60. The video-label
+ceiling falls from {{audit.fakeavceleb.neutral.video}} to
+{{audit.fakeavceleb.cbr.video}}, but the audio-label ceiling rises from
+{{audit.fakeavceleb.neutral.audio}} to {{audit.fakeavceleb.cbr.audio}}. The
+encoder overshoots its target by a few percent on busier content, and that
+overshoot still follows the label; trailing silence and loudness after AAC
+encoding remain. A fixed bitrate is not enough to meet H1.
 
 \subsection{A published method on our protocol (A19)}
 
