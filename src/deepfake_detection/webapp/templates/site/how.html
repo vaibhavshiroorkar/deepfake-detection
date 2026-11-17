@@ -3,14 +3,14 @@
 <div class="wrap">
   <section class="page-head">
     <h1 class="h1-sm">How it works</h1>
-    <p class="lede">Four steps: clean the file, run three checks, place each score against real clips, and answer only as far as the evidence goes.</p>
+    <p class="lede">The clip is cleaned, checked three ways, and each score is compared with scores from real clips.</p>
   </section>
 
   <section class="block" aria-labelledby="clean-title">
-    <h2 id="clean-title"><span class="step mono">1</span>Clean the file first</h2>
+    <h2 id="clean-title">Cleaning the file</h2>
     <p class="intro">Research datasets leak their labels through the file: fake voices saved in a different format, silence at the start of generated speech, clip lengths that differ. A detector can learn those instead of the face. So every clip, including yours, is rewritten the same way before any check sees it: one codec, a fixed 3.00 s span from the first sound, one loudness, and a little noise to hide digital silence.</p>
     <figure class="panel">
-      <figcaption class="lbl mono">How much the file alone gives away, before and after cleaning (AUC)</figcaption>
+      <figcaption class="lbl">How well file details alone separate real from fake, before and after cleaning (AUC)</figcaption>
       <div class="dumbbell">
         {% for row in ceilings %}
         {% set raw = ((row.raw - 0.5) / 0.5 * 100)|round(1) %}{% set clean = ((row.clean - 0.5) / 0.5 * 100)|round(1) %}
@@ -28,7 +28,7 @@
   </section>
 
   <section class="block" aria-labelledby="checks-title">
-    <h2 id="checks-title"><span class="step mono">2</span>Three checks</h2>
+    <h2 id="checks-title">The three checks</h2>
     <div class="checks3">
       <div class="check3 face"><h3>Face</h3><p>A face model (EfficientNet with a short-term memory over 16 frames) trained to spot face swaps and re-rendered mouths.</p></div>
       <div class="check3 voice"><h3>Voice</h3><p>A speech model (wav2vec 2.0) trained to spot cloned and synthetic voices.</p></div>
@@ -54,9 +54,9 @@
   </section>
 
   <section class="block" id="answer" aria-labelledby="answer-title">
-    <h2 id="answer-title"><span class="step mono">3</span>Place each score against real clips</h2>
+    <h2 id="answer-title">Comparing with real clips</h2>
     <p class="intro">A raw score means little on its own. Each check's score is compared with the same check's scores on thousands of real clips from four research datasets: "higher than 97 in 100 real clips". The clip's overall reading is its most unusual check.</p>
-    <h2 class="h2-sub"><span class="step mono">4</span>Answer only as far as the evidence goes</h2>
+    <h2 class="h2-sub">How the answer is chosen</h2>
     <dl class="answers wide">
       <dt class="ans-signs">Signs of manipulation</dt><dd>Higher than about 95 in 100 real clips. Set this way, about 5 in 100 real clips get flagged. The answer names the check that raised it.</dd>
       <dt>Can't tell</dt><dd>Higher than 80 in 100 real clips, but under the flag line.</dd>

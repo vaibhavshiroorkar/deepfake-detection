@@ -36,7 +36,7 @@ CONTACT_LIMIT = 5                    # messages per address per hour
 RESEND_URL = "https://api.resend.com/emails"
 
 PAGES = {
-    "/": ("home.html", "Detect the fake, not the file format"),
+    "/": ("home.html", "Check a video"),
     "/check": ("check.html", "Check a video"),
     "/how-it-works": ("how.html", "How it works"),
     "/research": ("research.html", "Research"),

@@ -29,7 +29,7 @@
       <article class="res hold">
         <div class="res-head"><span class="mono">Sync</span><span class="tag">Works, then fades</span></div>
         <h3>A lip-sync check trained on real clips only</h3>
-        <p>AUC {{ seeds("sync.test-identity-strict.seed{}.auc") }} on FakeAVCeleb speakers it never saw. On new datasets: LAV-DF {{ seeds("sync.lavdf-window.seed{}.auc") }}, DFDC {{ seeds("sync.dfdc.seed{}.auc") }}, HiFi-AVDF {{ seeds("sync.hifiavdf.seed{}.auc") }}. Above chance everywhere, far below its home score.</p>
+        <p>AUC {{ seeds("sync.test-identity-strict.seed{}.auc") }} on FakeAVCeleb speakers it never saw. On new datasets: LAV-DF {{ seeds("sync.lavdf-window.seed{}.auc") }}, DFDC {{ seeds("sync.dfdc.seed{}.auc") }}, HiFi-AVDF {{ seeds("sync.hifiavdf.seed{}.auc") }}. That is above chance on every dataset, but well below its score on familiar data.</p>
       </article>
       <article class="res hold">
         <div class="res-head"><span class="mono">H4</span><span class="tag">Mostly met</span></div>
@@ -62,7 +62,7 @@
 
   <section class="block" aria-labelledby="prior-title">
     <h2 id="prior-title">Prior work</h2>
-    <p class="intro">The leading-silence shortcut was found by Smeu et al. (CVPR 2025) and confirmed by DeepFake Doctor (2025), which also proposed splitting by identity. Training a sync model on real clips only follows AVH-Align. HiFi-AVDF comes from HAVIC (CVPR 2026). What this study adds: a codec census, a file-only classifier, cleaning applied to both training and test data, and an honest measurement of what transfers.</p>
+    <p class="intro">The leading-silence shortcut was found by Smeu et al. (CVPR 2025) and confirmed by DeepFake Doctor (2025), which also proposed splitting by identity. Training a sync model on real clips only follows AVH-Align. HiFi-AVDF comes from HAVIC (CVPR 2026). This study adds a codec census, a classifier that uses file details only, and cleaning applied to training and test data together.</p>
   </section>
 </div>
 {% endblock %}

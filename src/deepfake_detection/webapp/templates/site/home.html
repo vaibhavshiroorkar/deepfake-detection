@@ -2,28 +2,27 @@
 {% block main %}
 <div class="wrap">
   <section class="hero">
-    <span class="pill mono">P-001 / preregistered / every number has a receipt</span>
-    <h1>Detect the fake. <span>Not the file format.</span></h1>
-    <p class="lede">Upload a clip of one person speaking. Three checks look at the face, the voice, and whether the lips match the sound. You see what each one found, and how sure the answer is.</p>
+    <h1>Is this video real?</h1>
+    <p class="lede">Upload a clip of one person talking. The site checks the face, the voice and the lip movement, then shows what it found and how far you can trust that.</p>
     {% include "_detector.html" %}
   </section>
 
   <section class="block" aria-labelledby="checks-title">
-    <h2 id="checks-title">Three checks, read side by side</h2>
-    <p class="intro">Each check scores the clip on its own. You see all three, so you can tell which one raised a flag.</p>
+    <h2 id="checks-title">What gets checked</h2>
+    <p class="intro">Each check gives its own score, and the result shows all three.</p>
     <div class="checks3">
       <div class="check3 face"><h3>Face</h3><p>Looks for the blending and texture that face swaps leave, frame by frame.</p></div>
       <div class="check3 voice"><h3>Voice</h3><p>Listens for the patterns of cloned or synthetic speech.</p></div>
-      <div class="check3 sync"><h3>Lip sync</h3><p>Asks whether the mouth moves with the sound. Trained on real clips only, so it never learned one generator's habits.</p></div>
+      <div class="check3 sync"><h3>Lip sync</h3><p>Checks whether the mouth moves with the sound. It was trained on real clips only.</p></div>
     </div>
   </section>
 
   <section class="block" aria-labelledby="findings-title">
-    <h2 id="findings-title">Why most detectors look better than they are</h2>
-    <p class="intro">The research behind the checks. Every number links back to a result in the project.</p>
+    <h2 id="findings-title">What the research found</h2>
+    <p class="intro">Results from the study behind the site. The <a href="/research">research page</a> has the details.</p>
     <div class="bento">
       <div class="b big">
-        <div class="lbl mono">The shortcut</div>
+        <div class="lbl">File details alone</div>
         <div class="stat bad mono">{{ n("audit.fakeavceleb.raw.clip") }}</div>
         <p>AUC from file details alone on FakeAVCeleb: codec, length and silence, without looking at a face or hearing a voice. Chance is 0.5.</p>
         <div class="bars">
@@ -33,35 +32,35 @@
         </div>
       </div>
       <div class="b mid">
-        <div class="lbl mono">After cleaning</div>
+        <div class="lbl">After cleaning</div>
         <div class="stat ok mono">{{ n("audit.hifiavdf.neutral.clip") }}</div>
         <p>HiFi-AVDF's file-clue ceiling, down from {{ n("audit.hifiavdf.raw.clip") }}. One codec, a fixed length, one loudness for every clip.</p>
       </div>
       <div class="b mid">
-        <div class="lbl mono">False alarms, controlled</div>
+        <div class="lbl">False alarms</div>
         <div class="stat ok mono">{{ pct_range("h4.hifiavdf-seed{}.conformal_real_only.fpr") }}</div>
         <p>Of real HiFi-AVDF clips flagged, with a threshold set from 200 real clips of that source. The threshold carried over from training flagged {{ pct_range("h4.hifiavdf-seed{}.source_validation.fpr") }}.</p>
       </div>
       <div class="b sm">
-        <div class="lbl mono">Lip sync, familiar data</div>
+        <div class="lbl">Lip sync, familiar data</div>
         <div class="stat mono">{{ seeds("sync.test-identity-strict.seed{}.auc", 2) }}</div>
         <p>AUC on FakeAVCeleb speakers it never trained on.</p>
       </div>
       <div class="b sm">
-        <div class="lbl mono">Lip sync, new data</div>
+        <div class="lbl">Lip sync, new data</div>
         <div class="stat mono">{{ seeds("sync.hifiavdf.seed{}.auc", 2) }}</div>
         <p>AUC on HiFi-AVDF, from newer generators.</p>
       </div>
       <div class="b sm">
-        <div class="lbl mono">On Sora 2</div>
+        <div class="lbl">Sora 2 clips</div>
         <div class="stat mono">{{ n("sync.hifiavdf.seed17.method.sora2", 2) }}</div>
-        <p>Below chance (seed 17): its lips already match the voice.</p>
+        <p>Below chance (seed 17). Sora 2 makes the lips and voice together, so they already match.</p>
       </div>
     </div>
   </section>
 
   <section class="block callout" aria-labelledby="limits-title">
-    <h2 id="limits-title">Read this before trusting an answer</h2>
+    <h2 id="limits-title">Limits</h2>
     <ul>
       <li>"No signs found" is not proof a video is real. On footage unlike the training data, the checks miss many fakes.</li>
       <li>About 5 in 100 real clips get flagged. That rate was measured on four research datasets; for anything else it is an estimate.</li>

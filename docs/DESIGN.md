@@ -30,25 +30,24 @@ Rules:
 - "No signs found" is never green. It uses `--text` on a `--panel` with an `--accent` outline, because it is not a clean bill of health.
 - Body text keeps at least 4.5:1 contrast on its background; mono labels at least 3:1.
 
-Original B's background glow (`radial-gradient` at the top right) and the gradient headline span stay.
+No decoration that carries no information (removed 2026-11-17 at Vaibhav's request): no background glow, no gradient text, no pill badge, no glow on the brand, no gradient panels, no uppercase letter-spaced labels, no numbered step boxes. Copy is plain: no slogans, no punchlines, nothing the page cannot back up.
 
 ## Type
 
 - **Geist** (400, 500, 600, 700) for text and headings; **Geist Mono** (400, 500) for numbers, labels and scores. Both from Google Fonts with `display=swap`, as in original B.
-- Headline: `clamp(42px, 6vw, 76px)`, weight 700, letter-spacing `-0.035em`, the second line in the teal-to-blue gradient (`--accent` to `#93c5fd`).
-- Body 16px / 1.55. Lede 19px in `--muted`. Labels 12px mono, uppercase, letter-spacing `0.12em`.
-- Big numbers ("stat"): 54px, weight 600, mono figures.
+- Headline: `clamp(38px, 5vw, 60px)`, weight 700, plain `--text`.
+- Body 16px / 1.55. Lede 19px in `--muted`. Labels 14px, sentence case, `--muted`.
+- Big numbers ("stat"): 40px (30px in small cells), weight 600, mono figures.
 
 ## Layout
 
 - Max width 1180px, side padding 28px (16px under 600px).
-- The bento grid: 6 columns, 14px gaps, cells with 14px radius, a 1px `--line` border and the panel gradient. Cells span 2, 3 or 6 columns.
+- The bento grid: 6 columns, 14px gaps, cells with 14px radius, a 1px `--line` border and a flat `--panel` fill. Cells span 2, 3 or 6 columns.
 - Under 860px: one column, the nav collapses to a menu button, bento cells stack, and no page scrolls sideways.
 
 ## Components
 
-- **Nav:** brand dot and name, five text links, one teal "Check a video" button.
-- **Pill:** the mono line above the headline (`P-001 / preregistered / every number has a receipt`).
+- **Nav:** the name as plain text, five text links, one teal "Check a video" button.
 - **Buttons:** primary (teal fill, dark text) and ghost (outline). One primary per screen.
 - **Drop zone:** dashed border, the file rules underneath, keyboard-operable (a real file input behind it).
 - **Check row:** the check's name in its colour (face blue, voice amber, lip-sync teal), its score in mono, and a bar showing where the score sits against real clips.
