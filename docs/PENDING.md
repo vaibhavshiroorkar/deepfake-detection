@@ -7,14 +7,10 @@ The reasons behind each item are in the [project log](PROJECT-LOG.md). The rules
 
 ## 2. Overnight 11-17 to 11-18: amendments A15 to A19, exploratory (Claude)
 
-Chosen by Vaibhav on 11-17 at 20:20, to run while he sleeps. Restore point: tag `pre-overnight`. Stop rule: 18 November, 08:00; whatever has not finished is recorded as unfinished, not rushed. Each check is fixed in P-001 before its result exists, H1 to H4 keep their verdicts, and results go into the paper and report as short exploratory notes.
+Chosen by Vaibhav on 11-17 at 20:20, to run while he sleeps. Restore point: tag `pre-overnight`. Stop rule: 18 November, 08:00; whatever has not finished is recorded as unfinished, not rushed. Each check is fixed in P-001 before its result exists, and H1 to H4 keep their verdicts. A15, A16, A17 and A19 are done (changelog). Their paper and report notes wait on branch `overnight-notes` for Vaibhav's review; main is unchanged.
 
-- A15: H3 in one direction (FakeAVCeleb to LAV-DF), from the committed visual and audio predictions.
-- A16: the lip-sync mechanism test: shift or swap the audio of real test clips and check that the sync score rises.
-- A17: speaker overlap between FakeAVCeleb or LAV-DF and AV-HuBERT's pretraining speakers.
-- A18: H1 again with a fixed video bitrate instead of fixed quality.
-- A19: the AVH-Align baseline on the cleaned data, only if its released code fits; otherwise record why.
-- Then: the paper and report notes, rebuilt deliverables, and a morning summary for Vaibhav.
+- A18: H1 again with a fixed video bitrate instead of fixed quality. Running detached (`runs/p001-a18.sh`, log `runs/p001-a18.log`); audit expected around 01:00. Then its README, its paragraph on branch `overnight-notes`, and a rebuild.
+- Then: the slide and poster notes on `overnight-notes`, rebuilt deliverables, and a morning summary for Vaibhav in the session chat.
 
 ## 2b. P-002 preparation, alongside (Claude)
 
