@@ -74,8 +74,10 @@ switch ($Action) {
     "stop" {
         $running = Get-Running
         if (Test-Path $Tailscale) {
-            & $Tailscale funnel --https=443 off 2>$null | Out-Null     # whichever was on: public first, then private
-            & $Tailscale serve --https=443 off 2>$null | Out-Null
+            # Whichever was on, public first, then private; turning off one that is already off is not an error.
+            foreach ($mode in "funnel", "serve") {
+                try { & $Tailscale $mode --https=443 off 2>$null | Out-Null } catch { }
+            }
         }
         if ($running) {
             & taskkill /PID $running.pid /T /F | Out-Null       # the server and any ffmpeg it started
