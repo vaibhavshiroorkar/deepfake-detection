@@ -30,9 +30,15 @@ def test_every_page_renders_with_no_template_left_over(client, route):
 
 
 def test_home_takes_its_numbers_from_numbers_json(client):
-    text = client.get("/").text
-    assert site.number("audit.fakeavceleb.raw.clip") in text
-    assert site.seed_range("sync.test-identity-strict.seed{}.auc", 2) in text
+    # Home speaks to visitors: how often it is right on clips it never saw. The dataset findings live on
+    # the research page.
+    home = client.get("/").text
+    assert site.percent("web.outcomes.fakeavceleb.fake.caught") in home
+    assert site.percent("web.outcomes.hifiavdf.real.flagged") in home
+    assert site.number("audit.fakeavceleb.raw.clip") not in home
+    research = client.get("/research").text
+    assert site.number("audit.fakeavceleb.raw.clip") in research
+    assert site.seed_range("sync.test-identity-strict.seed{}.auc", 2) in research
 
 
 def test_the_old_app_moved_to_classic(client):
@@ -543,3 +549,10 @@ def test_present_passes_the_timeline_and_the_lines_through():
     assert shown["timeline"] == timeline
     assert shown["lines"] == {"flag": 0.982, "lower": 0.928}
     assert shown["checks"]["face"]["score"] == 0.5
+
+
+def test_the_detector_lives_on_the_check_page_not_the_home_page(client):
+    home = client.get("/").text
+    assert "data-detector" not in home
+    assert 'href="/check"' in home
+    assert "data-detector" in client.get("/check").text

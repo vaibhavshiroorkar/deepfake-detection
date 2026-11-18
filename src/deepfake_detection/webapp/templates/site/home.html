@@ -3,60 +3,52 @@
 <div class="wrap">
   <section class="hero">
     <h1>Is this video real?</h1>
-    <p class="lede">Upload a clip of one person talking. The site checks the face, the voice and the lip movement, then shows what it found and how far you can trust that.</p>
-    {% include "_detector.html" %}
+    <p class="lede">A final-year research project on audio-visual deepfakes. Three trained models check the face, the voice and the lip movement of a talking-head video, and the site says what they found and how far you can trust it.</p>
+    <div class="hero-actions">
+      <a class="btn primary" href="/check">Check a video</a>
+      <a class="btn ghost" href="/how-it-works">How it works</a>
+    </div>
   </section>
 
-  <section class="block" aria-labelledby="checks-title">
-    <h2 id="checks-title">What gets checked</h2>
-    <p class="intro">Each check gives its own score, and the result shows all three.</p>
+  <section class="block" aria-labelledby="steps-title">
+    <h2 id="steps-title">How it works</h2>
     <div class="checks3">
-      <div class="check3 face"><h3>Face</h3><p>Looks for the blending and texture that face swaps leave, frame by frame.</p></div>
-      <div class="check3 voice"><h3>Voice</h3><p>Listens for the patterns of cloned or synthetic speech.</p></div>
-      <div class="check3 sync"><h3>Lip sync</h3><p>Checks whether the mouth moves with the sound. It was trained on real clips only.</p></div>
+      <div class="check3"><h3>1. Give it a video</h3><p>Upload a clip of one person talking, or record one with your camera or microphone. A voice recording or a picture works too.</p></div>
+      <div class="check3"><h3>2. Three models check it</h3><p>One looks at the face, one listens to the voice, and one checks whether the lips move with the words. The whole video is checked, three seconds at a time.</p></div>
+      <div class="check3"><h3>3. You get a plain answer</h3><p>Signs of manipulation, can't tell, or no signs found, with each model's score and a timeline showing which moment stood out.</p></div>
     </div>
   </section>
 
-  <section class="block" aria-labelledby="findings-title">
-    <h2 id="findings-title">What the research found</h2>
-    <p class="intro">Results from the study behind the site. The <a href="/research">research page</a> has the details.</p>
+  <section class="block" aria-labelledby="good-title">
+    <h2 id="good-title">How well it works</h2>
+    <p class="intro">Measured on clips the models never trained on, with the same thresholds the site uses.</p>
     <div class="bento">
-      <div class="b big">
-        <div class="lbl">File details alone</div>
-        <div class="stat bad mono">{{ n("audit.fakeavceleb.raw.clip") }}</div>
-        <p>AUC from file details alone on FakeAVCeleb: codec, length and silence, without looking at a face or hearing a voice. Chance is 0.5.</p>
-        <div class="bars">
-          {% for row in ceilings %}
-          <div class="bar mono"><span class="bar-name">{{ row.name }}</span><span class="track"><i style="width:{{ (row.raw * 100)|round(1) }}%"></i></span><span>{{ "%.3f"|format(row.raw) }}</span></div>
-          {% endfor %}
-        </div>
+      <div class="b mid">
+        <div class="lbl">Fakes of the kinds it learned</div>
+        <div class="stat ok mono">{{ pct("web.outcomes.fakeavceleb.fake.caught") }}</div>
+        <p>caught, on people it never saw: face swaps, redrawn mouths and cloned voices.</p>
       </div>
       <div class="b mid">
-        <div class="lbl">After cleaning</div>
-        <div class="stat ok mono">{{ n("audit.hifiavdf.neutral.clip") }}</div>
-        <p>HiFi-AVDF's file-clue ceiling, down from {{ n("audit.hifiavdf.raw.clip") }}. One codec, a fixed length, one loudness for every clip.</p>
+        <div class="lbl">Fakes from newer tools and other sources</div>
+        <div class="stat bad mono">{{ pct("web.outcomes.dfdc.fake.caught") }} to {{ pct("web.outcomes.lavdf.fake.caught") }}</div>
+        <p>caught. This is the hard part: it misses most fakes made in ways it has not seen.</p>
       </div>
       <div class="b mid">
-        <div class="lbl">False alarms</div>
-        <div class="stat ok mono">{{ pct_range("h4.hifiavdf-seed{}.conformal_real_only.fpr") }}</div>
-        <p>Of real HiFi-AVDF clips flagged, with a threshold set from 200 real clips of that source. The threshold carried over from training flagged {{ pct_range("h4.hifiavdf-seed{}.source_validation.fpr") }}.</p>
+        <div class="lbl">Real videos wrongly flagged</div>
+        <div class="stat mono">{{ pct("web.outcomes.fakeavceleb.real.flagged") }} to {{ pct("web.outcomes.hifiavdf.real.flagged") }}</div>
+        <p>depending on where the video comes from; about 5 in 100 on average.</p>
       </div>
-      <div class="b sm">
-        <div class="lbl">Lip sync, familiar data</div>
-        <div class="stat mono">{{ seeds("sync.test-identity-strict.seed{}.auc", 2) }}</div>
-        <p>AUC on FakeAVCeleb speakers it never trained on.</p>
-      </div>
-      <div class="b sm">
-        <div class="lbl">Lip sync, new data</div>
-        <div class="stat mono">{{ seeds("sync.hifiavdf.seed{}.auc", 2) }}</div>
-        <p>AUC on HiFi-AVDF, from newer generators.</p>
-      </div>
-      <div class="b sm">
-        <div class="lbl">Sora 2 clips</div>
-        <div class="stat mono">{{ n("sync.hifiavdf.seed17.method.sora2", 2) }}</div>
-        <p>Below chance (seed 17). Sora 2 makes the lips and voice together, so they already match.</p>
+      <div class="b mid">
+        <div class="lbl">Telling a fake from a real clip</div>
+        <div class="stat ok mono">{{ pct("h2.test-identity-strict.auc.fusion.min") }} to {{ pct("h2.test-identity-strict.auc.fusion.max") }}</div>
+        <p>of the time, shown one real and one fake clip of the kinds it learned, the three models together pick the fake.</p>
       </div>
     </div>
+  </section>
+
+  <section class="block" aria-labelledby="private-title">
+    <h2 id="private-title">Your video stays private</h2>
+    <p class="intro">Your video is checked on our computer and deleted before you see the answer. Nothing is kept or shared.</p>
   </section>
 
   <section class="block callout" aria-labelledby="limits-title">

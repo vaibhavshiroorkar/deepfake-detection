@@ -49,6 +49,48 @@
     </div>
   </section>
 
+  <section class="block" aria-labelledby="findings-title">
+    <h2 id="findings-title">What the research found</h2>
+    <p class="intro">Results from the study behind the site.</p>
+    <div class="bento">
+      <div class="b big">
+        <div class="lbl">File details alone</div>
+        <div class="stat bad mono">{{ n("audit.fakeavceleb.raw.clip") }}</div>
+        <p>AUC from file details alone on FakeAVCeleb: codec, length and silence, without looking at a face or hearing a voice. Chance is 0.5.</p>
+        <div class="bars">
+          {% for row in ceilings %}
+          <div class="bar mono"><span class="bar-name">{{ row.name }}</span><span class="track"><i style="width:{{ (row.raw * 100)|round(1) }}%"></i></span><span>{{ "%.3f"|format(row.raw) }}</span></div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="b mid">
+        <div class="lbl">After cleaning</div>
+        <div class="stat ok mono">{{ n("audit.hifiavdf.neutral.clip") }}</div>
+        <p>HiFi-AVDF's file-clue ceiling, down from {{ n("audit.hifiavdf.raw.clip") }}. One codec, a fixed length, one loudness for every clip.</p>
+      </div>
+      <div class="b mid">
+        <div class="lbl">False alarms</div>
+        <div class="stat ok mono">{{ pct_range("h4.hifiavdf-seed{}.conformal_real_only.fpr") }}</div>
+        <p>Of real HiFi-AVDF clips flagged, with a threshold set from 200 real clips of that source. The threshold carried over from training flagged {{ pct_range("h4.hifiavdf-seed{}.source_validation.fpr") }}.</p>
+      </div>
+      <div class="b sm">
+        <div class="lbl">Lip sync, familiar data</div>
+        <div class="stat mono">{{ seeds("sync.test-identity-strict.seed{}.auc", 2) }}</div>
+        <p>AUC on FakeAVCeleb speakers it never trained on.</p>
+      </div>
+      <div class="b sm">
+        <div class="lbl">Lip sync, new data</div>
+        <div class="stat mono">{{ seeds("sync.hifiavdf.seed{}.auc", 2) }}</div>
+        <p>AUC on HiFi-AVDF, from newer generators.</p>
+      </div>
+      <div class="b sm">
+        <div class="lbl">Sora 2 clips</div>
+        <div class="stat mono">{{ n("sync.hifiavdf.seed17.method.sora2", 2) }}</div>
+        <p>Below chance (seed 17). Sora 2 makes the lips and voice together, so they already match.</p>
+      </div>
+    </div>
+  </section>
+
   <section class="block callout" id="limits" aria-labelledby="limits-title">
     <h2 id="limits-title">Limits</h2>
     <ul>

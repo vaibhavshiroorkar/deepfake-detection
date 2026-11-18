@@ -57,7 +57,7 @@ PICTURE_CALIBRATION = PROJECT_ROOT / "results" / "web-calibration-picture.json"
 RESEND_URL = "https://api.resend.com/emails"
 
 PAGES = {
-    "/": ("home.html", "Check a video"),
+    "/": ("home.html", "Home"),
     "/check": ("check.html", "Check a video"),
     "/how-it-works": ("how.html", "How it works"),
     "/research": ("research.html", "Research"),
