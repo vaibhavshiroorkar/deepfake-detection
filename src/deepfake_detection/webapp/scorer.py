@@ -84,6 +84,9 @@ class ScoreReport:
     trace: dict = field(default_factory=dict)
     start: float = 0.0
     end: float = 3.0
+    explain: dict = field(
+        default_factory=dict
+    )  # the face heatmaps (webapp.explain), when the face was scored
 
     def scores(self) -> dict[str, float | None]:
         return {name: result.score for name, result in self.checks.items()}
@@ -172,7 +175,12 @@ class Scorer:
             progress("cleaning" + step)
             neutral = self._neutralize(upload, part_dir / "neutral.mp4", start)
             progress("finding the face" + step)
-            checks = self._face_and_voice(neutral, part_dir / "cache")
+            checks, explained = self._face_and_voice(
+                neutral,
+                part_dir / "cache",
+                offset=start,
+                top=1 if mode == "picture" else 3,
+            )
             progress("scoring" + step)
             if mode == "video":
                 sync, trace = self._sync(neutral)
@@ -185,7 +193,11 @@ class Scorer:
                 )
                 sync, trace = unused, {"loudness_db": [], "windows": []}
                 checks["face" if mode == "voice" else "voice"] = unused
-            reports.append(ScoreReport({**checks, "sync": sync}, trace, start, end))
+            if mode == "voice":
+                explained = {}
+            reports.append(
+                ScoreReport({**checks, "sync": sync}, trace, start, end, explained)
+            )
             shutil.rmtree(part_dir, ignore_errors=True)  # keep at most one part on disk
         return reports
 
@@ -202,8 +214,9 @@ class Scorer:
         return target
 
     def _face_and_voice(
-        self, neutral: Path, cache_root: Path
-    ) -> dict[str, CheckResult]:
+        self, neutral: Path, cache_root: Path, offset: float = 0.0, top: int = 3
+    ) -> tuple[dict[str, CheckResult], dict]:
+        """The face and voice checks of one cleaned part, and the face heatmaps (empty with no face)."""
         from deepfake_detection.data.datasets import (
             CachedBranchDataset,
             collate_branch_items,
@@ -235,6 +248,7 @@ class Scorer:
         path = store.save(prepared, dataset=record.dataset)
         views = store.available_views(path)
         out = {}
+        explained = {}
         for check, (branch, view) in BRANCH_VIEW.items():
             if view not in views:
                 out[check] = CheckResult(
@@ -260,7 +274,24 @@ class Scorer:
                     ).logits
                     probs.append(float(torch.sigmoid(logits).reshape(-1)[0]))
             out[check] = CheckResult(tuple(probs))
-        return out
+            if check == "face":
+                explained = self._explain_face(
+                    batch.values.to(self.device), neutral, offset, top
+                )
+        return out, explained
+
+    def _explain_face(
+        self, frames: torch.Tensor, neutral: Path, offset: float, top: int
+    ) -> dict:
+        """Grad-CAM on the face crops, with each crop's time: the preprocessor spreads them evenly over the part."""
+        from deepfake_detection.views.timeline import uniform_timestamps
+        from deepfake_detection.webapp.explain import explain_face
+
+        duration = self.models.preprocessor.decoder.probe(neutral).duration_sec
+        times = uniform_timestamps(duration_sec=duration, count=frames.shape[1])
+        return explain_face(
+            self.models.branches["face"], frames, times, offset=offset, top=top
+        )
 
     def _sync(self, neutral: Path) -> tuple[CheckResult, dict]:
         from deepfake_detection.avsync.features import encode, prepare_window

@@ -1,311 +1,71 @@
-# Shortcut-Neutral Audio-Visual Deepfake Detection
+# Multimodal Audio-Visual Deepfake Detection
 
-Audio-visual deepfake detectors score near perfect on their own benchmark and fail on video from elsewhere. This project shows that part of that benchmark score comes from how the files were made, not from the manipulation. It then measures detectors again with those file cues removed.
+A final-year project that checks a talking-head video for signs of a deepfake. Three trained models look at it: one at the face, one at the voice, and one at whether the lips move with the words. The website gives a plain answer and shows each model's score along the video.
 
-The current study is [P-001](results/preregistration/P-001-shortcut-neutral-av-study.md). It has four steps:
+**Website:** https://vaibhavshiroorkar.github.io/deepfake-detection/ (the detector runs on our own PC, so it answers only while that PC is on).
 
-1. **Audit.** A classifier that reads only file details (codec, bitrate, frame size, duration, edge silence) measures how much of each corpus's label it can predict.
-2. **Neutralize.** Every clip gets one codec, a fixed 3.00 s span from the first sound, one loudness and a noise floor. The audit is then run again.
-3. **Detect.** Three paths score each clip: visual artifacts, audio spoofing, and lip-voice agreement. The lip-sync path learns from real clips only. A fusion of the three is tested against the visual path alone.
-4. **Control false alarms.** A threshold set from real clips of a new corpus is tested against the threshold carried over from training.
+By Vaibhav Shiroorkar, Adithya Jithesh and Shivansh Gupta, guided by Dr. Tejashree Phatak, K. J. Somaiya School of Engineering. Equal credit; see [AUTHORS.md](AUTHORS.md).
 
-Models train on FakeAVCeleb only. LAV-DF, DFDC and HiFi-AVDF are locked: they never train, tune or choose anything.
+## What it does
 
-A browser demo of an earlier face model runs at [huggingface.co/spaces/vaibhavshiroorkar/deepfake-generalization](https://huggingface.co/spaces/vaibhavshiroorkar/deepfake-generalization). Expect it to withhold a verdict, or get it wrong, on most clips from outside its training data.
+1. **You give it a video**, a voice recording or a picture: upload a file, or record with your camera or microphone.
+2. **It reads the file for AI labels.** Some generators write a tag saying the file is AI-made. If one is there, the answer is decided.
+3. **It checks the whole video, 3 seconds at a time.** Each part is cleaned to one format first, so the models judge the content and not how the file was saved.
+4. **Three models score each part:**
+   - Face: EfficientNet-B0 with a GRU over 16 face crops.
+   - Voice: Wav2Vec2 Base.
+   - Lip sync: AV-HuBERT features with a head trained on real clips only.
+5. **You get an answer:** signs of manipulation, can't tell, or no signs found. The page also shows each model's score against the flag line, and a timeline coloured part by part.
 
-## History
+A score of 0.97 means the clip looked more unusual than 97 in 100 real clips. It is not a 97% chance of being fake. The flag line sits where about 5 in 100 real clips cross it.
 
-This repository is one project. It absorbed the team final-year project by Shivansh Gupta, Vaibhav Shiroorkar and Adithya Jithesh, supervised by Dr. Tejashree Phatak. Its full history was imported, and the submitted tree stays reachable at the tag `team/submission-final`. Its sealed results, ledger and data log are kept in [`results/legacy-team/`](results/legacy-team/README.md). Its AV-HuBERT port and real-only alignment heads now live in `src/deepfake_detection/avsync/`.
+## How well it works
 
-Vaibhav Shiroorkar, Shivansh Gupta and Adithya Jithesh share equal credit, one third each, across all work and deliverables. Author order does not imply rank. See [authors and equal credit](AUTHORS.md).
+All three models trained on FakeAVCeleb only. The other datasets were held back for testing. On clips the models never saw, with the website's own thresholds:
 
-Legacy team numbers used different splits. They are never mixed with new results without a new logged run.
+| Test set | Fakes caught | Real clips wrongly flagged |
+|---|---|---|
+| FakeAVCeleb (new speakers) | 75% | 1% |
+| LAV-DF | 37% | 8% |
+| HiFi-AVDF (newer generators) | 23% | 9% |
+| DFDC | 4% | 2% |
 
-## Results
+It works on the kinds of fake it learned and misses most others. The voice model has only heard FakeAVCeleb's real speech, so a real voice recorded on a laptop or phone can score high. Full numbers are in [docs/FINAL.md](docs/FINAL.md), and every number in the paper and report comes from [results/numbers.json](results/numbers.json).
 
-Each finding links to the results folder that holds its numbers.
+## The research behind it
 
-- **The benchmarks leak their labels through their files.** File details alone nearly separate real from fake on FakeAVCeleb and HiFi-AVDF. After neutralization that ceiling falls on every corpus, but on FakeAVCeleb it misses the preregistered bar (H1 not met). See [`results/shortcut-audit/`](results/shortcut-audit/).
-- **The lip-sync path reads lip-voice agreement.** On neutral FakeAVCeleb it clears the file-cue ceiling, and its errors follow each manipulation's mechanism. See [`results/p001-sync/`](results/p001-sync/README.md).
-- **It transfers poorly.** On the locked corpora it stays above chance but far below its home score. It is near or below chance on generators that make sound and picture together. See [`results/p001-sync-targets/`](results/p001-sync-targets/README.md).
-- **Real-only calibration controls false alarms.** The carried-over threshold flags a large share of real clips. A threshold set from 200 real clips holds the rate near 5%, at a large cost in recall. See [`results/p001-h4/`](results/p001-h4/README.md).
-- **Fusion against visual-only (H2)** is running. Its rules were fixed in advance in amendment A8.
+The study ([P-001](results/preregistration/P-001-shortcut-neutral-av-study.md)) found that public deepfake datasets leak their labels through file details. Codec, length and silence alone nearly separate real from fake on FakeAVCeleb. So every clip is cleaned to one format before any model sees it. The results:
 
-Three protocol flaws were found by checks during the study and fixed in the open, as amendments A9 and A10 and handbook mistake 67. The results from before each fix are kept.
+- [File-detail audit](results/shortcut-audit/): what file details alone can predict, before and after cleaning.
+- [Lip-sync model](results/p001-sync/README.md) and [how it transfers](results/p001-sync-targets/README.md).
+- [False alarms](results/p001-h4/README.md): a threshold set from real clips of a new source keeps false alarms near 5%.
 
-The [paper, report, slides and poster](deliverables/README.md) take every number from `results/numbers.json`, which is built from the committed result files. The [final summary](docs/FINAL.md) is the short version. The [handbook](docs/HANDBOOK.md) holds what was measured, every mistake, and the history. Claims from the older study are in [findings](docs/research/findings.md) and [result traceability](docs/research/result-traceability.md).
+The [paper, report, slides and poster](deliverables/README.md) are built from these results.
 
-## Documents
+## Run it
 
-- [Final project summary](docs/FINAL.md): the short, clean version of the project.
-- [Pending work](docs/PENDING.md): everything still open, in order.
-- [Project log](docs/PROJECT-LOG.md): decisions and the reasons for them.
-- [Project handbook](docs/HANDBOOK.md): start here. What the project is, what it measured, every mistake from the first commit on, what to do next, and the paper plan.
-- [Deliverables](deliverables/README.md): the paper, report, slides and poster, and how to rebuild them.
-- [Research design](docs/research-design.md): question, protocol, ablations, and exit criteria.
-- [Data card](docs/data-card.md): data contract, split policy, risks, and handling rules.
-- [Model selection](docs/model-selection.md): controlled component comparisons and selection rules.
-- [Reproducibility](docs/reproducibility.md): required run metadata and local tracking.
-- [License and use terms](LICENSE.md): code terms, and the terms of each dataset.
-- [Related work](docs/research/related-work.md): what is new here, and what is already published.
-- [Model card](docs/model-card.md): what the system is, what it measures, and why it should not be deployed.
-- [Threat model](docs/threat-model.md): supported threats, failure modes, and claim limits.
-- [Dashboard](docs/dashboard.md): the two halves of the dashboard and how state crosses pages.
-- [Web app](#web-app): the user-facing upload page, its admin settings, and the PDF report.
-- [Obstacles](docs/obstacles.md): known traps by area, and how each was resolved.
-- [Changelog](docs/CHANGELOG.md): finished work, by version.
-
-## Quick start
-
-Install Python 3.11 through 3.13, FFmpeg, and `uv`. Then run:
+Install Python 3.11 to 3.13, FFmpeg and [uv](https://docs.astral.sh/uv/). Use `cu130` instead of `cpu` on an NVIDIA GPU.
 
 ```powershell
-uv sync --extra cpu --extra ml --extra media --extra dashboard --group dev
-uv run pytest
-uv run ddf --help
-```
-
-Use the `cu130` extra instead of `cpu` on a compatible NVIDIA system. Do not install both extras together.
-
-## Local tracked smoke
-
-From the repository root, run the local smoke fixture and then start the local
-MLflow UI. Use the installed executable so `uv` does not change the CUDA
-environment while starting the server:
-
-```powershell
-uv sync --extra media --extra tracking
-uv run --extra media --extra tracking ddf run --root . --config configs/local.yaml --config configs/smoke.yaml
-$researchRoot = (Get-Location).Path.Replace('\', '/')
-.\.venv\Scripts\mlflow.exe server `
-  --backend-store-uri "sqlite:///$researchRoot/mlflow.db" `
-  --default-artifact-root "file:///$researchRoot/mlartifacts" `
-  --host 127.0.0.1 `
-  --port 5000
-```
-
-The smoke metrics are software fixture evidence. They are not research
-findings. Open `http://127.0.0.1:5000`, then select an experiment and run.
-
-## Workflow
-
-Normalize and audit source metadata:
-
-```powershell
-uv run ddf manifest build `
-  --input data\FakeAVCeleb_v1.2\full_manifest.csv `
-  --output artifacts\manifest.csv `
-  --audit artifacts\manifest-audit.json `
-  --dataset FakeAVCeleb
-```
-
-Create the frozen source-disjoint protocol:
-
-```powershell
-uv run ddf split build `
-  --manifest artifacts\manifest.csv `
-  --output-dir artifacts\splits `
-  --dataset FakeAVCeleb `
-  --seed 20260824
-```
-
-The command writes full train, validation, and test manifests. It also writes identity-strict stress subsets and `audit.json`. Commit the split manifests only after the team freezes the research protocol.
-
-Build all branch views:
-
-```powershell
-uv run ddf cache build `
-  --manifest artifacts\manifest.csv `
-  --dataset-root data\FakeAVCeleb_v1.2 `
-  --cache-root C:\deepfake-cache `
-  --index artifacts\cache-index.csv `
-  --audit artifacts\cache-audit.json `
-  --dataset FakeAVCeleb `
-  --device cuda `
-  --code-version v1
-```
-
-The command returns exit code 2 when any clip fails. It still writes the successful index and a failure record. The audit records fusion-ready coverage, each quality blocker, and the global preprocessing hash. Pass that hash to every branch training command.
-
-The default remains MTCNN, greedy IoU tracking, and box-relative mouth crops.
-The landmark and YuNet variants are explicit configurations:
-
-```powershell
-uv run --extra media --extra tracking ddf run --root . `
-  --config configs/local.yaml `
-  --config configs/detectors/mtcnn-landmark.yaml
-uv run ddf detector fetch-yunet `
-  --report runs/detector/yunet-asset.json
-uv run --extra media --extra tracking ddf run --root . `
-  --config configs/local.yaml `
-  --config configs/detectors/yunet-landmark.yaml
-```
-
-Edit private data and cache paths locally before running these configurations.
-The reviewed detector workflow is documented in
-[the CLI reference](docs/reference/cli.md). Fixture smoke evidence tests the
-software path only. It cannot select a detector, tracker, or crop mode.
-
-Train the visual and audio branches with `ddf train visual` and `ddf train audio`. Train the alignment model with `ddf train sync`. Run `uv run ddf train <branch> --help` for the complete arguments.
-
-Build source-grouped cross-fitting manifests from the frozen training partition only. Never cross-fit over validation or test identities. Train each branch on every fold's training manifest. Export only its held-out rows to one dedicated out-of-fold store:
-
-```powershell
-uv run ddf features export `
-  --manifest artifacts\fold-0-holdout.csv `
-  --cache-index artifacts\cache-index.csv `
-  --cache-root C:\deepfake-cache `
-  --feature-store artifacts\oof-features.parquet `
-  --report artifacts\fold-0-features.json `
-  --dataset FakeAVCeleb `
-  --run-id fold-0 `
-  --partition-role oof `
-  --visual-checkpoint checkpoints\fold-0-visual.pt `
-  --audio-checkpoint checkpoints\fold-0-audio.pt `
-  --sync-checkpoint checkpoints\fold-0-sync.pt `
-  --device cuda
-```
-
-Repeat this for each fold. Do not put training-set predictions into the out-of-fold store.
-
-Fit late fusion from out-of-fold feature rows:
-
-```powershell
-uv run ddf train fusion `
-  --feature-store artifacts\oof-features.parquet `
-  --output checkpoints\fusion.joblib `
-  --metadata artifacts\fusion.json
-```
-
-Use `--branches` for branch and pair ablations. Use `--model mlp` for the small MLP ablation. Logistic fusion over all three branches is the primary model.
-
-Export the locked validation or test features to a separate store. Use the matching partition role. Then score every row:
-
-```powershell
-uv run ddf features score `
-  --feature-store artifacts\test-features.parquet `
-  --fusion-model checkpoints\fusion.joblib `
-  --output artifacts\test-predictions.csv
-```
-
-Missing evidence produces a blank fusion probability. The visual probability remains available when its branch succeeded.
-
-Choose the decision threshold from validation predictions:
-
-```powershell
-uv run ddf threshold `
-  --predictions artifacts\validation-predictions.csv `
-  --output artifacts\threshold.json
-```
-
-Freeze that output before test evaluation. Then evaluate a locked prediction CSV:
-
-```powershell
-uv run ddf evaluate `
-  --predictions artifacts\test-predictions.csv `
-  --output artifacts\test-metrics.json `
-  --threshold <validation-threshold>
-```
-
-Blank probability values count as abstentions. They remain in the coverage denominator. Add a `visual_probability` column to run the paired fusion comparison.
-
-Run one video after all four model artifacts exist:
-
-```powershell
-uv run ddf predict video.mp4 `
-  --visual-checkpoint checkpoints\visual.pt `
-  --audio-checkpoint checkpoints\audio.pt `
-  --sync-checkpoint checkpoints\sync.pt `
-  --fusion-model checkpoints\fusion.joblib `
-  --output artifacts\prediction.json `
-  --threshold <validation-threshold> `
-  --code-version v1 `
-  --device cuda
-```
-
-Only load fusion files created by this project. Joblib files can execute code during loading.
-
-## Dashboard
-
-The dashboard is a teaching tool. Its pages walk a clip through the pipeline a
-stage at a time with models you configure, and report what each stage measured.
-It issues no verdict; the [web app](#web-app) does.
-
-Sidebar order: Overview, Preprocessing, Streams (with Visual, Lip-Sync and
-Emotion under it), Fusion, Audio branch, Sync branch, Experiments,
-Explainability, and Documentation. Fusion reads the trained head and reports its
-in-domain and DFDC verdicts side by side. The Audio and Sync branch pages state
-the trained branches' results but load no checkpoint.
-
-Start it from the repository root:
-
-```powershell
-uv run streamlit run src\deepfake_detection\dashboard\app.py --server.address 127.0.0.1
-```
-
-Open `http://127.0.0.1:8501`. The server binds to the local host.
-[docs/dashboard.md](docs/dashboard.md) covers the layout and the state rules.
-The pages need no checkpoint and no data, and report their empty state when a
-local artifact is absent rather than inventing a result.
-
-## Web app
-
-The web app is for people who want a verdict, not the pipeline. Upload a clip,
-pick a model, and get a probability. The app also shows what the chosen
-threshold did on test footage with known answers. Its other tabs hold the math,
-every measured result, the comparison with prior work, and the failures.
-
-```powershell
-uv sync --extra cu130 --extra ml --extra media --extra web --group dev
-uv run python scripts/score_visual_ensemble.py
+uv sync --extra cpu --extra ml --extra media --extra web --group dev
 uv run ddf-web --preload
 ```
 
-Open `http://127.0.0.1:8000`. The server binds to the local host.
+Open http://127.0.0.1:8000. The trained checkpoints and datasets are not in Git; [docs/DEMO.md](docs/DEMO.md) lists what the website needs and how to put it online through Tailscale Funnel. [docs/SECURITY.md](docs/SECURITY.md) covers what running it publicly exposes.
 
-[Public demo hosting](docs/hosting.md) covers the in-browser demo, the GPU PC
-setup with a temporary HTTPS link, the isolated model runtime, and the start
-and stop commands.
-
-- **Default model:** the visual ensemble. It averages the logits of the six
-  final visual checkpoints in `runs\program-20260906\checkpoints`, EfficientNet-B0
-  and ConvNeXt-Tiny at seeds 17, 29 and 43. It reads DFDC ROC-AUC 0.7739
-  against 0.7151 for the average single seed. That gain is DFDC only: on
-  Celeb-DF it is level with the seed-17 model, and on MNW at 0.5 it catches
-  fewer fakes. The other choices are the seed-17 visual model and the
-  five-stream fusion head `runs\design-b-20260910\checkpoints\gate-fusion.pt`,
-  scored by `scripts/score_gate_fusion.py`.
-- **Unfamiliar footage:** the DINOv3 density check in
-  `runs\probe-20260914\authenticity-density.npz` holds back the verdict on
-  footage unlike the training data. Users can turn this off for one check.
-- **Admin page:** set `DDF_ADMIN_TOKEN` before starting the server, then open
-  `/admin`. It chooses which models users see, the default and locked
-  threshold, the familiarity check and the upload limit. It writes
-  `configs\webapp.yaml`. Without the variable the admin routes are off.
-- **PDF report:** `uv run python scripts/build_report.py` writes
-  `dist\final-report.pdf` through headless Edge or Chrome. The app serves it at
-  `/report.pdf`.
-
-## Repository rules
-
-- Keep raw media, caches, checkpoints, and run outputs outside Git.
-- Keep detector review images, annotations, and model binaries outside Git and
-  MLflow.
-- Use cue-specific labels for branch training.
-- Use the global clip label only for fusion.
-- Never balance validation or test data.
-- Freeze thresholds before running the final test set.
-- Train fusion only from out-of-fold branch predictions.
-- Record every seed, split hash, preprocessing hash, and checkpoint hash.
-- Treat a negative fusion result as a valid result.
-
-## Tests
-
-Run the complete suite:
+## Test it
 
 ```powershell
 uv run pytest
-uv run ddf-docs
 ```
 
-The media integration test needs FFmpeg. It skips when FFmpeg is unavailable.
+FFmpeg-based tests skip when FFmpeg is missing.
+
+## More
+
+- [Handbook](docs/HANDBOOK.md): the entry point for the whole project, including every mistake and how it was caught.
+- [Research workflow](docs/workflow.md): commands for data, training, fusion and evaluation, plus the research dashboard.
+- [Pending work](docs/PENDING.md) and [changelog](docs/CHANGELOG.md).
+- [Decision log](docs/PROJECT-LOG.md), [data card](docs/data-card.md) and [model card](docs/model-card.md).
+- [Licence and dataset terms](LICENSE.md). The datasets may not be redistributed.
+- The October team project's history stays reachable at the tag `team/submission-final`, and its results are in [results/legacy-team/](results/legacy-team/README.md).

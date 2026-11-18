@@ -70,6 +70,7 @@ class FakeScorer:
                     {"loudness_db": [], "windows": []},
                     start=3.0 * i,
                     end=3.0 * i + 3,
+                    explain={"frames": [{"time": 3.0 * i + 1}], "summary": f"part {i}"},
                 )
             )
         return reports
@@ -268,3 +269,16 @@ def test_the_outcome_carries_every_part_and_the_lines_it_was_judged_by(
     assert timeline[0]["checks"]["sync"] is None
     flag, lower = calibration.limits(3)
     assert outcome["lines"] == {"flag": flag, "lower": lower}
+
+
+def test_the_outcome_explains_the_part_where_the_face_scored_highest(tmp_path) -> None:
+    calm = {"face": (0.5,) * 3, "voice": (0.5,) * 3, "sync": None}
+    odd = {"face": (0.999,) * 3, "voice": (0.5,) * 3, "sync": None}
+    detector = Detector(
+        lambda: FakeScorer(parts=[calm, odd, calm]),
+        _calibration(),
+        workroot=tmp_path / "work",
+    )
+    outcome = _finished(detector, detector.submit(_upload(tmp_path)))["outcome"]
+    assert outcome["explain"]["summary"] == "part 1"
+    assert outcome["explain"]["frames"][0]["time"] == 4.0

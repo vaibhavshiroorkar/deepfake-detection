@@ -548,6 +548,16 @@ def test_present_passes_the_timeline_and_the_lines_through():
     )
     assert shown["timeline"] == timeline
     assert shown["lines"] == {"flag": 0.982, "lower": 0.928}
+    explained = site.present(
+        {
+            "kind": "no_signs",
+            "raised": [],
+            "checks": checks,
+            "trace": {},
+            "explain": {"frames": [], "summary": "s"},
+        }
+    )
+    assert explained["explain"] == {"frames": [], "summary": "s"}
     assert shown["checks"]["face"]["score"] == 0.5
 
 

@@ -194,6 +194,7 @@ class Detector:
             "file_check": labels,
             "timeline": timeline,
             "lines": {"flag": flag, "lower": lower},
+            "explain": _face_explanation(reports),
         }
         if labels:
             outcome["kind"], outcome["raised"] = "signs", ["file", *decision.raised]
@@ -203,3 +204,15 @@ class Detector:
                 + "; ".join(r for r in (c["reason"] for c in checks.values()) if r)
             )
         return outcome
+
+
+def _face_explanation(reports) -> dict:
+    """The heatmaps of the part where the face model scored highest: the face evidence the visitor should see."""
+    scored = [
+        r
+        for r in reports
+        if r.explain and r.checks.get("face") and r.checks["face"].score is not None
+    ]
+    if not scored:
+        return {}
+    return max(scored, key=lambda r: r.checks["face"].score).explain

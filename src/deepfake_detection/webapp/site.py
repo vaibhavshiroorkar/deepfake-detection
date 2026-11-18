@@ -405,6 +405,7 @@ def present(outcome: dict) -> dict:
         "file_check": labels,
         "checks": checks,
         "timeline": outcome.get("timeline", []),
+        "explain": outcome.get("explain", {}),
         "lines": outcome.get("lines"),
         "trace": outcome.get("trace", {}),
         "how_sure": how_sure(outcome.get("input", "video"))
