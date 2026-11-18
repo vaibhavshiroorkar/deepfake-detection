@@ -178,7 +178,12 @@ def celebdf() -> list[dict]:
     return out
 
 
-DF26_VOICED = ("Grok_Imagine", "Kling_3.0", "Veo_3.1", "Wan_2.6")  # generators that make sound
+DF26_VOICED = (
+    "Grok_Imagine",
+    "Kling_3.0",
+    "Veo_3.1",
+    "Wan_2.6",
+)  # generators that make sound
 
 
 def df26(kind: str) -> list[dict]:
@@ -208,7 +213,6 @@ def df26(kind: str) -> list[dict]:
         fakes = [i for i in items if i["generator"] == g]
         out += _sample(fakes, 20 if kind == "picture" else 40, f"{name}-{g}")
     for i in out:
-        i["group"] = f"{i['group']}"
         del i["generator"]
     return out
 

@@ -59,7 +59,7 @@ Open http://127.0.0.1:8000. The trained checkpoints and datasets are not in Git;
 uv run pytest
 ```
 
-FFmpeg-based tests skip when FFmpeg is missing.
+FFmpeg-based tests skip when FFmpeg is missing. Before a push, `bash scripts/ci_local.sh` runs every CI step (lint, format, lock, docs, tests, browser test, smoke run). The `pre-push` hook in `.githooks/` runs it on every push once the clone uses it: `git config core.hooksPath .githooks`.
 
 ## More
 
