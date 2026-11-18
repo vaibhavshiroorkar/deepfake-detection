@@ -76,6 +76,34 @@ def draw(per_side: int, seed: int = 17) -> list[dict]:
     return chosen
 
 
+SCORES = (
+    ROOT / "runs" / "picture-calibration" / "scores.jsonl"
+)  # one line per clip, so a crash loses one clip
+
+
+def frame_time(path: Path) -> float:
+    """FRAME_AT, or the middle of the video when it is shorter: a few cleaned clips hold less video than audio."""
+    run = subprocess.run(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "stream=duration",
+            "-of",
+            "csv=p=0",
+            str(path),
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    duration = float(run.stdout.strip() or 0)
+    return min(FRAME_AT, duration / 2)
+
+
 def main() -> int:
     from deepfake_detection.cli.common import _git_commit
     from deepfake_detection.webapp import site
@@ -89,7 +117,26 @@ def main() -> int:
     scorer = Scorer(device=arguments.device)
     rows, skipped = [], 0
     clips = draw(arguments.per_side)
+    SCORES.parent.mkdir(parents=True, exist_ok=True)
+    done = {}
+    if SCORES.exists():
+        for line in SCORES.read_text(encoding="utf-8").splitlines():
+            entry = json.loads(line)
+            done[entry["clip_id"]] = entry
     for i, clip in enumerate(clips):
+        if clip["clip_id"] in done:
+            face = done[clip["clip_id"]]["face"]
+            if face is None:
+                skipped += 1
+            else:
+                rows.append(
+                    {
+                        "corpus": clip["corpus"],
+                        "label": clip["label"],
+                        "scores": {"face": face, "voice": None, "sync": None},
+                    }
+                )
+            continue
         with tempfile.TemporaryDirectory() as work:
             work = Path(work)
             jpg = work / "picture.jpg"
@@ -100,13 +147,15 @@ def main() -> int:
                     "error",
                     "-y",
                     "-ss",
-                    str(FRAME_AT),
+                    f"{frame_time(clip['path']):.3f}",
                     "-i",
                     str(clip["path"]),
                     "-frames:v",
                     "1",
                     "-q:v",
                     "2",
+                    "-pix_fmt",
+                    "yuvj420p",
                     str(jpg),
                 ],
                 check=True,
@@ -118,9 +167,10 @@ def main() -> int:
                     mode="picture",
                 )
             except ClipRefused:
-                skipped += 1
-                continue
-        face = parts[0].scores()["face"]
+                parts = None
+        face = parts[0].scores()["face"] if parts else None
+        with open(SCORES, "a", encoding="utf-8") as f:
+            f.write(json.dumps({"clip_id": clip["clip_id"], "face": face}) + "\n")
         if face is None:
             skipped += 1
             continue
