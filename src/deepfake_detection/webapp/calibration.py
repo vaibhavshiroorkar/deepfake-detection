@@ -101,6 +101,9 @@ class Calibration:
     combined: Reference | None = (
         None  # the real clips' combined percentiles, for videos in parts
     )
+    # Lines measured on real videos checked in parts: {parts: (flag, lower)}. They replace the Bonferroni
+    # bound, which assumes a video's parts are unrelated and so sets the line far too high.
+    parts_lines: dict[int, tuple[float, float]] | None = None
 
     def percentiles(self, scores: dict[str, float | None]) -> dict[str, float | None]:
         return {
@@ -114,6 +117,10 @@ class Calibration:
         """The flag line and the "can't tell" line for a video checked in `parts` parts."""
         if parts <= 1:
             return self.threshold, self.lower
+        if self.parts_lines:
+            counts = sorted(self.parts_lines)
+            at_least = [n for n in counts if n >= parts]
+            return self.parts_lines[at_least[0] if at_least else counts[-1]]
         if self.combined is None:
             raise ValueError(
                 "a video in parts needs the combined reference; rebuild the calibration file"
@@ -172,6 +179,10 @@ class Calibration:
                 "values": list(self.combined.values),
                 "weights": list(self.combined.weights),
             }
+        if self.parts_lines:
+            data["parts_lines"] = {
+                str(n): list(v) for n, v in sorted(self.parts_lines.items())
+            }
         return json.dumps(data, indent=1)
 
     @classmethod
@@ -190,6 +201,9 @@ class Calibration:
             None
             if combined is None
             else Reference(tuple(combined["values"]), tuple(combined["weights"])),
+            {int(n): (float(v[0]), float(v[1])) for n, v in data["parts_lines"].items()}
+            if data.get("parts_lines")
+            else None,
         )
 
 

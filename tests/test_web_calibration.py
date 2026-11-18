@@ -201,3 +201,27 @@ def test_a_calibration_can_be_built_for_the_face_check_alone() -> None:
     assert again.decide({"face": 150.0, "voice": None, "sync": None}) == built.decide(
         {"face": 150.0, "voice": None, "sync": None}
     )
+
+
+def test_measured_lines_for_videos_in_parts_replace_the_bonferroni_bound() -> None:
+    c = _with_combined()
+    measured = cal.Calibration(
+        c.references,
+        c.threshold,
+        c.lower,
+        combined=c.combined,
+        parts_lines={2: (0.985, 0.94), 4: (0.988, 0.95)},
+    )
+    assert measured.limits(1) == (0.95, 0.8)  # one part: the single-clip lines
+    assert measured.limits(2) == (0.985, 0.94)
+    assert measured.limits(3) == (
+        0.988,
+        0.95,
+    )  # between measured counts: the next measured one up
+    assert measured.limits(9) == (
+        0.988,
+        0.95,
+    )  # beyond the data: the largest count measured
+    assert measured.limits(9) < c.limits(9)  # easier to reach than the Bonferroni bound
+    again = cal.Calibration.from_json(measured.to_json())
+    assert again.limits(3) == measured.limits(3)
