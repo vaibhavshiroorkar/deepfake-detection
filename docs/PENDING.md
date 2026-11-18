@@ -9,7 +9,7 @@ Internal and external examiners sit together. First priority: a live demonstrati
 
 The demo, the PPT, the overnight checks and `docs/SECURITY.md` are done and merged into `main` (changelog). The demo runs from the home PC and is opened on the laptop through Tailscale (decided by Vaibhav 11-17).
 
-**Claude, the 18th:** the deliverables remake and the report in the college format are done (changelog). Vaibhav: upload `report.zip` and `paper.zip` to Overleaf (the report compiles locally with Tectonic, 106 pages), and confirm the paper title with the guide.
+**Claude, the 18th:** the deliverables remake and the report in the college format are done (changelog). Vaibhav: upload `report.zip` and `paper.zip` to Overleaf (both compile locally with Tectonic: report 105 pages, paper 9), and confirm the new paper title with the guide: "Multimodal Audio-Visual Deepfake Detection: Face, Voice and Real-Only Lip-Sync Models Tested Without File Shortcuts".
 
 **Claude, the 18th (decided by Vaibhav 11-18, in this order):**
 
