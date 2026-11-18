@@ -13,13 +13,12 @@ The demo, the PPT, the overnight checks and `docs/SECURITY.md` are done and merg
 
 **Claude, the 18th (decided by Vaibhav 11-18, in this order):**
 
-1. Re-run the 7 demo clips with whole-video checking and update `docs/DEMO.md` (timings and expected answers were measured on one 3-second part).
-2. Measure the face check on photographs and the voice check on voice recordings before trusting those answers (the website says they are outside the study).
+1. Picture calibration (`scripts/build_picture_calibration.py`, running on the GPU): a real face picture scored above 99 in 100 real video clips, so pictures get their own reference and are refused until it exists. When it is built: check its false-alarm and catch rates, recheck a real face picture, then commit it with `docs/DEMO.md` and `docs/demo-clips.csv` (already rescored with whole-video checking: Wav2Lip clip now "can't tell") and update the report's picture paragraph.
+2. Measure the voice model on today's voice recordings before trusting voice-only answers beyond a rough guide.
 
 **Claude, also:**
 
 - On request: answer Overleaf compile errors; adjust slides or the demo after Vaibhav's review and rehearsal.
-- Small: the drop zone's focus ring is clipped at the right edge at phone width.
 
 **Deferred until after the 20th:** before any public hosting, the hardening listed in `docs/SECURITY.md` (time and memory limits on every FFmpeg call, an allowlist unpickler for AV-HuBERT, an admin review, uploads in a container); the Docker image and Hugging Face Space, the admin carry-over, retiring the old in-browser demo, renaming the Streamlit dashboard, the deep wording pass and the comparison tables (unless time is left on the 19th).
 
