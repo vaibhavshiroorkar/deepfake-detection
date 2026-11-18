@@ -109,6 +109,10 @@ class Scorer:
         from deepfake_detection.streams.avhubert import load_avhubert
 
         self.device = device
+        # check -> {name: model}: extra models scored on the same batch as the check's own model
+        self.extra: dict[str, dict] = {}
+        # check -> model that replaces the study's three seeds for that check (the website's v2 models)
+        self.replace: dict[str, object] = {}
         checkpoints = root / "runs" / "p001" / "checkpoints"
         branches = {
             check: [
@@ -266,14 +270,20 @@ class Scorer:
                 preprocessing_hash=P001_PREPROCESSING_HASH,
             )[0]
             batch = collate_branch_items([item])
-            probs = []
-            with torch.inference_mode():
-                for model in self.models.branches[check]:
-                    logits = audio_forward(
-                        model, batch.values.to(self.device), batch.valid_samples
-                    ).logits
-                    probs.append(float(torch.sigmoid(logits).reshape(-1)[0]))
-            out[check] = CheckResult(tuple(probs))
+            if check in self.replace:
+                out[check] = CheckResult((self.replace[check](batch),))
+            else:
+                probs = []
+                with torch.inference_mode():
+                    for model in self.models.branches[check]:
+                        logits = audio_forward(
+                            model, batch.values.to(self.device), batch.valid_samples
+                        ).logits
+                        probs.append(float(torch.sigmoid(logits).reshape(-1)[0]))
+                out[check] = CheckResult(tuple(probs))
+            # Candidate models see the very batch the current model saw, so a comparison is fair.
+            for name, candidate in self.extra.get(check, {}).items():
+                out[name] = CheckResult((candidate(batch),))
             if check == "face":
                 explained = self._explain_face(
                     batch.values.to(self.device), neutral, offset, top
@@ -289,6 +299,11 @@ class Scorer:
 
         duration = self.models.preprocessor.decoder.probe(neutral).duration_sec
         times = uniform_timestamps(duration_sec=duration, count=frames.shape[1])
+        live = self.replace.get("face")
+        if live is not None:  # heatmaps must explain the model that scored the face
+            return explain_face(
+                None, frames, times, offset=offset, top=top, maps=live.saliency
+            )
         return explain_face(
             self.models.branches["face"], frames, times, offset=offset, top=top
         )
