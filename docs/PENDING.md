@@ -13,10 +13,9 @@ The demo, the PPT, the overnight checks and `docs/SECURITY.md` are done and merg
 
 **Claude, the 18th (decided by Vaibhav 11-18, in this order):**
 
-1. Website file check first: look for provenance tags AI tools write on purpose (C2PA, a generator's name). A tag gives "signs of manipulation" with the tag as evidence; no tag says nothing. First inspect the HiFi-AVDF clips for which tags exist. Codec, bitrate and length are not evidence (the file audit shows they describe the dataset).
-2. Website live input beside drag and drop: camera video, microphone voice, or a camera picture. A voice recording runs only the voice check, a picture only the face check. Audio and image files are accepted by drag and drop too.
-3. Re-run the 7 demo clips with whole-video checking and update `docs/DEMO.md` (timings and expected answers were measured on one 3-second part).
-4. After 1 to 3: update the paper, the report's website sections and the PPT where the website changed; push after each step.
+1. Website live input beside drag and drop: camera video, microphone voice, or a camera picture. A voice recording runs only the voice check, a picture only the face check. Audio and image files are accepted by drag and drop too.
+2. Re-run the 7 demo clips with whole-video checking and update `docs/DEMO.md` (timings and expected answers were measured on one 3-second part).
+3. After 1 and 2: update the paper, the report's website sections and the PPT where the website changed; push after each step.
 
 **Claude, also:**
 

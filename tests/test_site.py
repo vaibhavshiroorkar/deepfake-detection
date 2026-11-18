@@ -192,3 +192,13 @@ def test_present_says_which_part_of_a_long_video_decided():
     one = site.present({"kind": "no_signs", "raised": [], "checks": checks, "trace": {},
                         "parts": 1, "part": {"start": 0.52, "end": 3.52}})
     assert one["where"] == "The video has 3 seconds of sound, checked as one part (0:00 to 0:03)."
+
+
+def test_present_puts_a_file_label_first_in_plain_words():
+    checks = {"face": {"percentile": 0.5, "reason": None}}
+    shown = site.present({"kind": "signs", "raised": ["file"], "checks": checks, "trace": {},
+                          "file_check": ["an AIGC label marking the file as AI-generated content"]})
+    assert shown["summary"].startswith("The file carries an AIGC label")
+    assert shown["file_check"] == ["an AIGC label marking the file as AI-generated content"]
+    plain = site.present({"kind": "no_signs", "raised": [], "checks": checks, "trace": {}, "file_check": []})
+    assert plain["file_check"] == []

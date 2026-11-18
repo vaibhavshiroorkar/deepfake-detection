@@ -136,3 +136,20 @@ def test_a_video_where_no_part_can_be_checked_says_why(tmp_path) -> None:
     detector = Detector(lambda: FakeScorer(parts=[empty, empty]), _calibration(), workroot=tmp_path / "work")
     outcome = _finished(detector, detector.submit(_upload(tmp_path)))["outcome"]
     assert outcome["kind"] == "cant_check" and "not checked" in outcome["reason"]
+
+
+def test_an_ai_label_in_the_file_decides_and_is_shown_first(tmp_path) -> None:
+    calm = {"face": (0.5,) * 3, "voice": (0.5,) * 3, "sync": None}
+    detector = Detector(lambda: FakeScorer(calm), _calibration(), workroot=tmp_path / "work",
+                        read_labels=lambda path: ["an AIGC label marking the file as AI-generated content"])
+    outcome = _finished(detector, detector.submit(_upload(tmp_path)))["outcome"]
+    assert outcome["kind"] == "signs"
+    assert outcome["raised"][0] == "file"
+    assert outcome["file_check"] == ["an AIGC label marking the file as AI-generated content"]
+
+
+def test_no_label_changes_nothing(tmp_path) -> None:
+    calm = {"face": (0.5,) * 3, "voice": (0.5,) * 3, "sync": None}
+    detector = Detector(lambda: FakeScorer(calm), _calibration(), workroot=tmp_path / "work", read_labels=lambda path: [])
+    outcome = _finished(detector, detector.submit(_upload(tmp_path)))["outcome"]
+    assert outcome["kind"] != "signs" and outcome["file_check"] == []

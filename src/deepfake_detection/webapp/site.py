@@ -197,7 +197,14 @@ def present(outcome: dict) -> dict:
                      "raised": name in outcome.get("raised", []), "reason": c["reason"]}
               for name, c in outcome.get("checks", {}).items()}
     kind = outcome["kind"]
-    if kind == "signs":
+    labels = outcome.get("file_check") or []
+    if labels:
+        summary = (f"The file carries {' and '.join(labels)}. AI tools write such labels on purpose, "
+                   "so this is strong evidence on its own.")
+        checks_raised = [n for n in outcome["raised"] if n != "file"]
+        if checks_raised:
+            summary += " The " + " and ".join(CHECK_NAMES[n] for n in checks_raised) + " checks also flagged it."
+    elif kind == "signs":
         words = [CHECK_NAMES[n] for n in outcome["raised"]]
         names = words[0] if len(words) == 1 else ", ".join(words[:-1]) + " and " + words[-1]
         noun = "checks" if len(outcome["raised"]) > 1 else "check"
@@ -208,7 +215,8 @@ def present(outcome: dict) -> dict:
         summary = "No check scored unusually high compared with real clips. That is not proof the video is real."
     else:
         summary = outcome.get("reason", "The video could not be checked.")
-    return {"status": "done", "outcome": kind, "summary": summary, "where": where(outcome), "checks": checks,
+    return {"status": "done", "outcome": kind, "summary": summary, "where": where(outcome), "file_check": labels,
+            "checks": checks,
             "trace": outcome.get("trace", {}), "how_sure": how_sure() if kind != "cant_check" else ""}
 
 

@@ -61,6 +61,9 @@
       card.classList.add(o.cls);
       card.append(el("p", "outcome " + o.cls, o.text));
       if (data.summary) card.append(el("p", "", data.summary));
+      if (data.file_check && data.file_check.length) {
+        card.append(el("p", "filecheck", "File check: " + data.file_check.join("; ") + "."));
+      }
       if (data.where) card.append(el("p", "where", data.where));
       card.append(checkRows(data.checks));
       const trace = traceView(data.trace);
@@ -98,7 +101,8 @@
     return box;
   }
 
-  const STAGES = { received: "Received. Waiting for the detector", cleaning: "Cleaning the clip",
+  const STAGES = { received: "Received. Waiting for the detector", "file check": "Reading the file for AI labels",
+    cleaning: "Cleaning the clip",
     "finding the face": "Finding the face", scoring: "Scoring", done: "Done" };
   const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 

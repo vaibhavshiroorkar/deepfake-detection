@@ -18,6 +18,7 @@ import uuid
 from collections.abc import Callable
 from pathlib import Path
 
+from deepfake_detection.webapp import provenance
 from deepfake_detection.webapp.calibration import Calibration
 from deepfake_detection.webapp.scorer import ClipRefused
 
@@ -30,8 +31,10 @@ class Detector:
         """Too many uploads are waiting."""
 
     def __init__(self, make_scorer: Callable[[], object], calibration: Calibration, *,
-                 workroot: Path | None = None, waiting: int = 3) -> None:
+                 workroot: Path | None = None, waiting: int = 3,
+                 read_labels: Callable[[Path], list[str]] | None = None) -> None:
         self._make_scorer, self._scorer = make_scorer, None
+        self._read_labels = read_labels or provenance.read
         self.calibration = calibration
         self._workroot = Path(workroot or tempfile.gettempdir()) / "deepfake-check"
         self._capacity = 1 + waiting
@@ -93,9 +96,11 @@ class Detector:
             result: dict
             try:
                 workdir.mkdir(parents=True, exist_ok=True)
+                self._set(job, stage="file check")
+                labels = self._read_labels(upload)
                 self.warm()
                 report = self._scorer.score(upload, workdir, progress=lambda stage, job=job: self._set(job, stage=stage))
-                result = {"status": "done", "outcome": self._outcome(report)}
+                result = {"status": "done", "outcome": self._outcome(report, labels)}
             except ClipRefused as error:
                 result = {"status": "done", "outcome": {"kind": "cant_check", "reason": str(error)}}
             except Exception:  # noqa: BLE001 - any failure must still delete the files and answer the page
@@ -107,15 +112,20 @@ class Detector:
             self._set(job, **result, stage="done", finished=time.monotonic())
             self._done[job].set()
 
-    def _outcome(self, reports) -> dict:
-        """One outcome from the reports of every part; the part that decided supplies the details."""
+    def _outcome(self, reports, labels: list[str]) -> dict:
+        """One outcome from the file check and the reports of every part; the part that decided supplies the details.
+
+        An AI label in the file is decisive on its own: the answer is "signs", with "file" named first.
+        """
         decision = self.calibration.decide_parts([r.scores() for r in reports])
         report = reports[decision.part if decision.part is not None else 0]
         checks = {name: {"percentile": decision.percentiles[name], "reason": result.reason}
                   for name, result in report.checks.items()}
         outcome = {"kind": decision.kind, "combined": decision.combined, "raised": decision.raised,
                    "checks": checks, "trace": report.trace, "parts": len(reports),
-                   "part": {"start": report.start, "end": report.end}}
+                   "part": {"start": report.start, "end": report.end}, "file_check": labels}
+        if labels:
+            outcome["kind"], outcome["raised"] = "signs", ["file", *decision.raised]
         if decision.kind == "cant_check":
             outcome["reason"] = "Neither the face nor the voice could be checked: " + "; ".join(
                 r for r in (c["reason"] for c in checks.values()) if r)
