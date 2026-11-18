@@ -574,6 +574,38 @@ PARTS_SHOWN = (
 )  # a 60 s upload, the site's longest, has at most 20 parts
 
 
+def _outcomes(numbers: dict, prefix: str, outcomes: dict, path: Path) -> None:
+    """Clips per corpus and side, and the share flagged (real) or caught (fake)."""
+    for corpus, sides in outcomes.items():
+        name = corpus.lower().replace("-", "")
+        for side, counts in sides.items():
+            clips = sum(counts.values())
+            _put(numbers, f"{prefix}.{name}.{side}.clips", clips, path)
+            share = round(counts.get("signs", 0) / clips, 3)
+            _put(
+                numbers,
+                f"{prefix}.{name}.{side}.{'flagged' if side == 'real' else 'caught'}",
+                share,
+                path,
+            )
+
+
+def picture(numbers: dict) -> None:
+    """How the face model's picture lines do on still frames of the four test sets."""
+    path = RESULTS / "web-calibration-picture.json"
+    if not path.exists():
+        return
+    meta = json.loads(path.read_text(encoding="utf-8"))["meta"]
+    outcomes = meta["outcomes"]
+    _outcomes(numbers, "web.picture.outcomes", outcomes, path)
+    real = [sides["real"] for sides in outcomes.values() if "real" in sides]
+    frames = sum(sum(c.values()) for c in real)
+    flagged = sum(c.get("signs", 0) for c in real)
+    _put(numbers, "web.picture.real.frames", frames, path)
+    _put(numbers, "web.picture.real.flagged", round(flagged / frames, 3), path)
+    _put(numbers, "web.picture.no_face", meta["no_face"], path)
+
+
 def website(numbers: dict) -> None:
     """The website's flag and unsure lines per number of parts, and its measured speed per part."""
     import sys
@@ -587,18 +619,7 @@ def website(numbers: dict) -> None:
         flag, unsure = calibration.limits(parts)
         _put(numbers, f"web.limit.parts{parts}.flag", round(flag, 3), path)
         _put(numbers, f"web.limit.parts{parts}.unsure", round(unsure, 3), path)
-    for corpus, sides in calibration.meta.get("outcomes", {}).items():
-        name = corpus.lower().replace("-", "")
-        for side, counts in sides.items():
-            clips = sum(counts.values())
-            _put(numbers, f"web.outcomes.{name}.{side}.clips", clips, path)
-            share = round(counts.get("signs", 0) / clips, 3)
-            _put(
-                numbers,
-                f"web.outcomes.{name}.{side}.{'flagged' if side == 'real' else 'caught'}",
-                share,
-                path,
-            )
+    _outcomes(numbers, "web.outcomes", calibration.meta.get("outcomes", {}), path)
     timing = RESULTS / "web-timing.json"
     if not timing.exists():
         return
@@ -647,6 +668,7 @@ def main() -> int:
     a17(numbers)
     a19(numbers)
     website(numbers)
+    picture(numbers)
     file_check(numbers)
     out = RESULTS / "numbers.json"
     out.write_text(

@@ -3404,6 +3404,20 @@ sound. The checks that do not run say so on the card (``not used for a voice
 recording'' or ``for a picture''), and the lines are those of a one-model
 reading. Voice recordings and pictures can also be dropped as files.
 
+A picture gets its own lines. The face model learned from moving video, so
+a still real face can look unusual to it: before this calibration, one real
+FakeAVCeleb frame scored above 99 in 100 real video clips. The picture lines
+come from still frames of the four test sets: one frame at 1.0\,s of each
+drawn clip, saved as a JPEG and sent through the website's own picture path
+(\texttt{scripts/build\_picture\_calibration.py}). In
+{{web.picture.no_face|int}} frames no face was found. Of
+{{web.picture.real.frames|int}} real frames, {{web.picture.real.flagged|pct}}
+were flagged, but not evenly: {{web.picture.outcomes.lavdf.real.flagged|pct}} on
+LAV-DF and none on the other three sets. The same lines catch
+{{web.picture.outcomes.fakeavceleb.fake.caught|pct}} of FakeAVCeleb fake frames,
+{{web.picture.outcomes.lavdf.fake.caught|pct}} on LAV-DF and none on DFDC or
+HiFi-AVDF. A picture's answer is therefore a rough guide, and the card says so.
+
 Recordings from a browser are re-encoded before they are checked, because
 their WebM files often carry no length, which the upload rules need.
 

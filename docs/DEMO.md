@@ -58,7 +58,7 @@ Each outcome below was measured on 11-18 with whole-video checking, on the PC's 
 
 Then open "How sure?" on any result: it says how often real clips get this flag (about 5 in 100) and how few fakes from new sources it catches.
 
-**Recording on the spot:** below the drop box, Record video, Record voice and Take a picture use the laptop's camera and microphone (the browser asks once). A voice runs only the voice check; a picture only the face check. Measured 11-18 on a real person: their voice gave no signs and a cloned voice gave signs. Pictures are refused until their own calibration is built, because a still frame judged against video looked fake.
+**Recording on the spot:** below the drop box, Record video, Record voice and Take a picture use the laptop's camera and microphone (the browser asks once). A voice runs only the voice check; a picture only the face check. Measured 11-18 on a real person: their voice gave no signs and a cloned voice gave signs. Pictures have their own calibration since 11-19 (`results/web-calibration-picture.json`), because a still frame judged against video looked fake. Checked 11-19 on frames of the demo clips: the three real faces gave no signs; of four face-swap frames, three gave signs and one can't tell. A picture is a rough guide: on still frames the face model catches about a third of FakeAVCeleb fakes and none from DFDC or HiFi-AVDF, so show the video demo first.
 
 **If an examiner wants to try their own video:** record 5 to 10 seconds of one person talking to the camera on a phone, send it to the laptop, and upload it. Expect "no signs found" or "can't tell". The video is deleted right after the check.
 

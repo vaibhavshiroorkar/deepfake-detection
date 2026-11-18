@@ -462,3 +462,39 @@ def test_file_check_keys_count_labelled_fakes_and_reals(tmp_path):
     assert numbers["web.provenance.fakes.share"]["value"] == 0.4
     assert numbers["web.provenance.real.labelled"]["value"] == 0
     assert numbers["web.provenance.real.files"]["value"] == 10
+
+
+def test_picture_keys_come_from_the_picture_calibration(tmp_path):
+    from deepfake_detection.webapp import calibration as cal
+
+    module = _module(tmp_path)
+    (tmp_path / "results").mkdir()
+    ref = cal.Reference.from_scores([float(i) for i in range(10)], [1] * 10)
+    built = cal.Calibration(
+        {"face": ref},
+        0.95,
+        0.8,
+        meta={
+            "no_face": 3,
+            "outcomes": {
+                "LAV-DF": {
+                    "real": {"no_signs": 15, "signs": 5},
+                    "fake": {"signs": 1, "no_signs": 9},
+                }
+            },
+        },
+    )
+    (tmp_path / "results" / "web-calibration-picture.json").write_text(
+        built.to_json(), encoding="utf-8"
+    )
+    numbers: dict = {}
+    module.picture(numbers)
+    assert numbers["web.picture.outcomes.lavdf.real.flagged"]["value"] == 0.25
+    assert numbers["web.picture.outcomes.lavdf.fake.caught"]["value"] == 0.1
+    assert numbers["web.picture.real.frames"]["value"] == 20
+    assert numbers["web.picture.real.flagged"]["value"] == 0.25
+    assert numbers["web.picture.no_face"]["value"] == 3
+    assert (
+        numbers["web.picture.no_face"]["source"]
+        == "results/web-calibration-picture.json"
+    )

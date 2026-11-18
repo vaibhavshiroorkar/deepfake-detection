@@ -9059,6 +9059,82 @@
   "value": 0.076,
   "source": "results/web-calibration.json"
  },
+ "web.picture.no_face": {
+  "value": 42,
+  "source": "results/web-calibration-picture.json"
+ },
+ "web.picture.outcomes.dfdc.fake.caught": {
+  "value": 0.0,
+  "source": "results/web-calibration-picture.json"
+ },
+ "web.picture.outcomes.dfdc.fake.clips": {
+  "value": 92,
+  "source": "results/web-calibration-picture.json"
+ },
+ "web.picture.outcomes.dfdc.real.clips": {
+  "value": 94,
+  "source": "results/web-calibration-picture.json"
+ },
+ "web.picture.outcomes.dfdc.real.flagged": {
+  "value": 0.0,
+  "source": "results/web-calibration-picture.json"
+ },
+ "web.picture.outcomes.fakeavceleb.fake.caught": {
+  "value": 0.351,
+  "source": "results/web-calibration-picture.json"
+ },
+ "web.picture.outcomes.fakeavceleb.fake.clips": {
+  "value": 97,
+  "source": "results/web-calibration-picture.json"
+ },
+ "web.picture.outcomes.fakeavceleb.real.clips": {
+  "value": 74,
+  "source": "results/web-calibration-picture.json"
+ },
+ "web.picture.outcomes.fakeavceleb.real.flagged": {
+  "value": 0.0,
+  "source": "results/web-calibration-picture.json"
+ },
+ "web.picture.outcomes.hifiavdf.fake.caught": {
+  "value": 0.0,
+  "source": "results/web-calibration-picture.json"
+ },
+ "web.picture.outcomes.hifiavdf.fake.clips": {
+  "value": 92,
+  "source": "results/web-calibration-picture.json"
+ },
+ "web.picture.outcomes.hifiavdf.real.clips": {
+  "value": 86,
+  "source": "results/web-calibration-picture.json"
+ },
+ "web.picture.outcomes.hifiavdf.real.flagged": {
+  "value": 0.0,
+  "source": "results/web-calibration-picture.json"
+ },
+ "web.picture.outcomes.lavdf.fake.caught": {
+  "value": 0.14,
+  "source": "results/web-calibration-picture.json"
+ },
+ "web.picture.outcomes.lavdf.fake.clips": {
+  "value": 100,
+  "source": "results/web-calibration-picture.json"
+ },
+ "web.picture.outcomes.lavdf.real.clips": {
+  "value": 98,
+  "source": "results/web-calibration-picture.json"
+ },
+ "web.picture.outcomes.lavdf.real.flagged": {
+  "value": 0.194,
+  "source": "results/web-calibration-picture.json"
+ },
+ "web.picture.real.flagged": {
+  "value": 0.054,
+  "source": "results/web-calibration-picture.json"
+ },
+ "web.picture.real.frames": {
+  "value": 352,
+  "source": "results/web-calibration-picture.json"
+ },
  "web.provenance.fakes.files": {
   "value": 1905,
   "source": "results/web-provenance.json"

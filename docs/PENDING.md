@@ -13,12 +13,10 @@ The demo, the PPT, the overnight checks and `docs/SECURITY.md` are done and merg
 
 **Claude, the 18th (decided by Vaibhav 11-18, in this order):**
 
-1. Picture calibration (`scripts/build_picture_calibration.py`, running on the GPU): a real face picture scored above 99 in 100 real video clips, so pictures get their own reference and are refused until it exists. When it is built: check its false-alarm and catch rates, recheck a real face picture, then commit it with `docs/DEMO.md` and `docs/demo-clips.csv` (already rescored with whole-video checking: Wav2Lip clip now "can't tell") and update the report's picture paragraph.
-2. Measure the voice model on today's voice recordings before trusting voice-only answers beyond a rough guide.
+1. Measure the voice model on today's voice recordings before trusting voice-only answers beyond a rough guide.
+2. Public site hardening, before it is left public unattended (`docs/SECURITY.md`): per-visitor rate limits behind the Funnel proxy, memory limits on FFmpeg, uploads in a container without `data/`. Until then `-Public` only while someone watches.
 
-3. Public site hardening, before it is left public unattended (`docs/SECURITY.md`): per-visitor rate limits behind the Funnel proxy, memory limits on FFmpeg, uploads in a container without `data/`. Until then `-Public` only while someone watches.
-
-4. Check the study's cleaned clips for the same assumption: `neutralize_clip(start=None)` judges "enough sound" from the container's length, so a source whose audio ends early could have given a cleaned clip under 3.00 s. Count cleaned clips shorter than 3.00 s in `data/neutral`; if any, say so in the report's limitations.
+3. Check the study's cleaned clips for the same assumption: `neutralize_clip(start=None)` judges "enough sound" from the container's length, so a source whose audio ends early could have given a cleaned clip under 3.00 s. Count cleaned clips shorter than 3.00 s in `data/neutral`; if any, say so in the report's limitations.
 
 **Claude, also:**
 
