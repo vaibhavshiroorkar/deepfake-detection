@@ -282,7 +282,9 @@ def build(draft: bool) -> int:
                   "training and test. Three other datasets were locked away and used only for testing: LAV-DF, where "
                   "single words are edited; DFDC, with face swaps; and HiFi-AVDF, made by six commercial video generators. "
                   "The tests and their pass marks were written down before any run, as preregistration P-001. Each model "
-                  "was trained three times with different random seeds.")
+                  "was trained three times with different random seeds. The project ran from July: the preprocessing, "
+                  "training and evaluation code was built from August to October, and the final preregistered study "
+                  "ran on it in November.")
         headline(s, "Trained on one dataset, then tested on three it never saw")
         lh = 2600000
         d.dbox(s, col_x(0), Y0 + 150000, span_w(4), lh,

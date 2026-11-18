@@ -2413,9 +2413,10 @@ in front of a user, and how the code was built and tested.
 \section{Project Plan}
 \label{sec:m-plan}
 
-The project began on 4 July 2026 and reached its present form in November.
-Table~\ref{tab:phases} lists its phases. Section~\ref{ch:history} explains
-why each phase ended.
+The project ran from 4 July to 18 November 2026, about four and a half
+months. Table~\ref{tab:phases} lists its phases, and
+Table~\ref{tab:months} shows the work month by month, from the project's git
+history. Section~\ref{ch:history} explains why each phase ended.
 
 \begin{table}[ht]
     \centering
@@ -2436,7 +2437,32 @@ why each phase ended.
     \end{tabularx}
 \end{table}
 
-The study itself ran to a short plan fixed by the submission deadline. On 13
+\begin{table}[ht]
+    \centering
+    \small
+    \caption{The work month by month: commits to the project repository, and the parts of the code first added that month that the final study still uses.}
+    \label{tab:months}
+    \begin{tabularx}{\textwidth}{@{}l r >{\raggedright\arraybackslash}X@{}}
+        \toprule
+        \textbf{Month} & \textbf{Commits} & \textbf{Built that month, and still used} \\
+        \midrule
+        July & 47 & Face cropping and the first visual models (from 4 July); the lip-sync idea, first as attention between lip and audio features (9 July), then a separate mouth branch (23 July); a dashboard to inspect clips \\
+        August & 58 & A restart from a new root commit (24 August): cached preprocessing checked by configuration hash, the training engines, the evaluation tools, and the fusion and inference modules \\
+        September & 117 & The full pipeline over four datasets with cross-modal streams (9 September); the rule in the data layer that refuses locked test sets (9 September); the first tests of whether fusion beats the best single stream \\
+        October & 192 & The team project with sealed test splits; the first web server (22 October); the branch registry, the \texttt{ddf} command line and the AV-HuBERT loader (27 October); data import for more corpora \\
+        November (to the 18th) & 181 & The file audit and the cleaning step (13 November), the lip-sync head trained on AV-HuBERT features, the preregistered study P-001, the public website, and the deliverables \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+About 70\% of the project's 595 commits came before November. The final study
+could run in a few days because it stood on that base: its preprocessing,
+training, evaluation, fusion, data and test-set code were built between August
+and October, and the lip-sync model grew out of an idea first tried in July.
+November added the parts that answer this report's question: the audit, the
+cleaning step, the real-only lip-sync head and the preregistered tests.
+
+The final study itself ran to a short plan fixed by the submission deadline. On 13
 November the team set a budget of about three days of GPU time, enough for
 three seeds of every model. On 15 November the plan was cut to two days, which
 dropped the fusion test H2. On 16 November it was extended to three days,
