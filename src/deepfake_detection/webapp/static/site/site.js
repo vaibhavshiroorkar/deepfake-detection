@@ -31,28 +31,138 @@
     return node;
   };
 
-  function checkRows(checks) {
+  const fmt = (x) => x.toFixed(2);
+  const clock = (s) => Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0");
+
+  function checkRows(checks, lines) {
     const box = el("div", "checks");
+    const flag = lines ? lines.flag : null;
     for (const [key, label] of CHECKS) {
       const c = (checks || {})[key];
+      const score = c && c.score != null ? c.score : null;
       const row = el("div", "crow " + key + (c && c.raised ? " raised" : ""));
       row.append(el("span", "cname", label));
       const track = el("span", "ctrack");
       const fill = el("i");
-      fill.style.width = c && c.percentile != null ? c.percentile + "%" : "0%";
+      fill.style.width = score != null ? score * 100 + "%" : "0%";
       track.append(fill);
+      if (flag != null) {
+        const tick = el("b", "flagtick");
+        tick.style.left = flag * 100 + "%";
+        track.append(tick);
+      }
       row.append(track);
-      row.append(el("span", "cval mono", c && c.percentile != null ? (c.percentile / 100).toFixed(2) : "not checked"));
+      row.append(el("span", "cval mono", score != null ? fmt(score) : "not checked"));
       if (c && c.reason) row.title = c.reason;
       box.append(row);
     }
-    // The bars are a share of real clips, not a probability of fake: say so where people read the numbers.
-    box.append(el("p", "scale small", "Each number is the share of real clips this video scored higher than: "
-      + "0.66 means more unusual than 66 in 100 real clips. It is not a chance of being fake."));
+    if (flag != null) {
+      box.append(el("p", "scale small", "Scores run from 0 to 1. The video is flagged when a model crosses the flag "
+        + "line at " + fmt(flag) + " (the mark on each bar), set so that about 5 in 100 real videos cross it; from "
+        + fmt(lines.lower) + " the answer is can't tell. A score is not a chance of being fake."));
+    }
     return box;
   }
 
-  function render(card, data) {
+  /* Preview of the visitor's own file, with a timeline coloured part by part: hold or drag on it to see the
+     scores of the 3-second part under the cursor. The file never leaves the browser again. */
+  function partAt(timeline, time) {
+    let found = null;
+    for (const part of timeline) if (part.start <= time && time < part.end) found = part;
+    if (found) return found;
+    return timeline.reduce((best, p) =>
+      Math.abs((p.start + p.end) / 2 - time) < Math.abs((best.start + best.end) / 2 - time) ? p : best);
+  }
+
+  function level(reading, lines) {
+    if (reading == null) return "none";
+    if (reading >= lines.flag) return "flag";
+    return reading >= lines.lower ? "unsure" : "ok";
+  }
+
+  function preview(file, data) {
+    const timeline = data.timeline || [];
+    const lines = data.lines;
+    const box = el("figure", "preview");
+    const kind = (file.type || "").split("/")[0];
+    const url = URL.createObjectURL(file);
+    let media = null;
+    if (kind === "image") {
+      const img = el("img");
+      img.src = url;
+      img.alt = "The picture that was checked";
+      box.append(img);
+    } else {
+      media = el(kind === "audio" || data.where && data.where.startsWith("A voice") ? "audio" : "video");
+      media.src = url;
+      media.controls = true;
+      media.playsInline = true;
+      media.preload = "metadata";
+      box.append(media);
+    }
+    if (!timeline.length || !lines || kind === "image") return box;
+    const end = Math.max(...timeline.map((p) => p.end));
+    const bar = el("div", "timeline");
+    bar.setAttribute("role", "slider");
+    bar.setAttribute("aria-label", "Scores along the video; hold or drag to see a part's scores");
+    bar.tabIndex = 0;
+    for (const part of timeline) {
+      const seg = el("span", "seg " + level(part.reading, lines));
+      seg.style.left = part.start / end * 100 + "%";
+      seg.style.width = (part.end - part.start) / end * 100 + "%";
+      bar.append(seg);
+    }
+    const cursor = el("i", "cursor");
+    bar.append(cursor);
+    const readout = el("p", "readout mono");
+    const show = (time) => {
+      time = Math.min(Math.max(time, 0), end);
+      cursor.style.left = time / end * 100 + "%";
+      const part = partAt(timeline, time);
+      const names = { face: "face", voice: "voice", sync: "lip sync" };
+      const scores = Object.entries(part.checks).filter(([, v]) => v != null)
+        .map(([k, v]) => names[k] + " " + fmt(v)).join(", ");
+      readout.textContent = clock(time) + "  part " + clock(part.start) + " to " + clock(part.end) + ": "
+        + (scores || "no model could run") + (part.reading != null
+          ? "  (flag line " + fmt(lines.flag) + ")" : "");
+      bar.setAttribute("aria-valuetext", readout.textContent);
+    };
+    const fromPointer = (event) => {
+      const rect = bar.getBoundingClientRect();
+      const time = (event.clientX - rect.left) / rect.width * end;
+      show(time);
+      if (media && Number.isFinite(media.duration)) media.currentTime = Math.min(time, media.duration);
+    };
+    // While held, the readout follows the finger; the video's own time updates lag behind a seek and would
+    // snap it back to where the video was.
+    let held = false;
+    bar.addEventListener("pointerdown", (event) => {
+      held = true;
+      fromPointer(event);
+      try { bar.setPointerCapture(event.pointerId); } catch (error) { /* keep scrubbing without capture */ }
+    });
+    bar.addEventListener("pointermove", (event) => { if (held) fromPointer(event); });
+    const release = () => { held = false; };
+    bar.addEventListener("pointerup", release);
+    bar.addEventListener("pointercancel", release);
+    bar.addEventListener("keydown", (event) => {
+      const now = media ? media.currentTime : 0;
+      const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+      if (!step) return;
+      event.preventDefault();
+      if (media) media.currentTime = Math.min(Math.max(now + step, 0), end);
+      show(now + step);
+    });
+    if (media) media.addEventListener("timeupdate", () => { if (!held) show(media.currentTime); });
+    const legend = el("p", "legend small");
+    legend.append(el("span", "key ok", "below " + fmt(lines.lower)), el("span", "key unsure", "can't tell"),
+      el("span", "key flag", "flag line " + fmt(lines.flag)), el("span", "key none", "not scored"));
+    box.append(bar, readout, legend);
+    show(0);
+    return box;
+  }
+
+  function render(card, data, file) {
     card.replaceChildren();
     card.className = "result";
     if (data.status === "rejected") {
@@ -70,7 +180,8 @@
         card.append(el("p", "filecheck", "File check: " + data.file_check.join("; ") + "."));
       }
       if (data.where) card.append(el("p", "where", data.where));
-      card.append(checkRows(data.checks));
+      if (file && data.outcome !== "cant_check") card.append(preview(file, data));
+      card.append(checkRows(data.checks, data.lines));
       const trace = traceView(data.trace);
       if (trace) card.append(trace);
       if (data.how_sure) card.append(el("p", "sure", data.how_sure));
@@ -149,7 +260,7 @@
         data = await follow(status, data.job);
       }
       status.textContent = "";
-      render(card, data);
+      render(card, data, file);
     } catch (error) {
       status.textContent = "";
       render(card, { status: "rejected", reason: API

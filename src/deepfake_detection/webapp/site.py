@@ -364,6 +364,7 @@ def present(outcome: dict) -> dict:
             "percentile": None
             if c["percentile"] is None
             else min(99, int(c["percentile"] * 100)),
+            "score": None if c["percentile"] is None else round(c["percentile"], 3),
             "raised": name in outcome.get("raised", []),
             "reason": c["reason"],
         }
@@ -403,6 +404,8 @@ def present(outcome: dict) -> dict:
         "where": where(outcome),
         "file_check": labels,
         "checks": checks,
+        "timeline": outcome.get("timeline", []),
+        "lines": outcome.get("lines"),
         "trace": outcome.get("trace", {}),
         "how_sure": how_sure(outcome.get("input", "video"))
         if kind != "cant_check"

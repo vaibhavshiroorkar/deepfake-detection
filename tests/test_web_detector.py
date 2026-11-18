@@ -243,3 +243,28 @@ def test_a_picture_is_judged_against_the_picture_calibration(tmp_path) -> None:
     )["outcome"]
     video = _finished(detector, detector.submit(_upload(tmp_path, "b.mp4")))["outcome"]
     assert picture["kind"] == "no_signs" and video["kind"] == "signs"
+
+
+def test_the_outcome_carries_every_part_and_the_lines_it_was_judged_by(
+    tmp_path,
+) -> None:
+    calm = {"face": (0.5,) * 3, "voice": (0.5,) * 3, "sync": None}
+    odd = {"face": (0.999,) * 3, "voice": (0.5,) * 3, "sync": None}
+    calibration = _calibration()
+    detector = Detector(
+        lambda: FakeScorer(parts=[calm, odd, calm]),
+        calibration,
+        workroot=tmp_path / "work",
+    )
+    outcome = _finished(detector, detector.submit(_upload(tmp_path)))["outcome"]
+    timeline = outcome["timeline"]
+    assert [(p["start"], p["end"]) for p in timeline] == [
+        (0.0, 3.0),
+        (3.0, 6.0),
+        (6.0, 9.0),
+    ]
+    assert timeline[1]["reading"] > timeline[0]["reading"]
+    assert timeline[1]["checks"]["face"] > timeline[0]["checks"]["face"]
+    assert timeline[0]["checks"]["sync"] is None
+    flag, lower = calibration.limits(3)
+    assert outcome["lines"] == {"flag": flag, "lower": lower}

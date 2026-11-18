@@ -181,6 +181,7 @@ def test_a_valid_clip_is_scored_through_a_job_and_deleted(monkeypatch, tmp_path)
     assert body["checks"]["face"]["raised"] is True
     assert body["checks"]["sync"] == {
         "percentile": None,
+        "score": None,
         "raised": False,
         "reason": "no face in the mouth window",
     }
@@ -517,3 +518,28 @@ def test_how_sure_for_a_picture_speaks_of_pictures():
     if site.picture_calibration() is None:
         pytest.skip("no picture calibration built")
     assert "pictures" in site.how_sure("picture")
+
+
+def test_present_passes_the_timeline_and_the_lines_through():
+    checks = {"face": {"percentile": 0.5, "reason": None}}
+    timeline = [
+        {
+            "start": 0.0,
+            "end": 3.0,
+            "reading": 0.5,
+            "checks": {"face": 0.5, "voice": None, "sync": None},
+        }
+    ]
+    shown = site.present(
+        {
+            "kind": "no_signs",
+            "raised": [],
+            "checks": checks,
+            "trace": {},
+            "timeline": timeline,
+            "lines": {"flag": 0.982, "lower": 0.928},
+        }
+    )
+    assert shown["timeline"] == timeline
+    assert shown["lines"] == {"flag": 0.982, "lower": 0.928}
+    assert shown["checks"]["face"]["score"] == 0.5

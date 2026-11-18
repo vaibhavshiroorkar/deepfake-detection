@@ -159,9 +159,25 @@ class Detector:
 
         An AI label in the file is decisive on its own: the answer is "signs", with "file" named first.
         """
-        decision = self._calibrations.get(mode, self.calibration).decide_parts(
-            [r.scores() for r in reports]
-        )
+        calibration = self._calibrations.get(mode, self.calibration)
+        decision = calibration.decide_parts([r.scores() for r in reports])
+        checked = sum(p is not None for p in decision.parts)
+        flag, lower = calibration.limits(max(checked, 1))
+        # Every part's scores, so the page can colour a timeline and show the score under the cursor.
+        timeline = []
+        for r, reading in zip(reports, decision.parts, strict=True):
+            per_model = calibration.percentiles(r.scores())
+            timeline.append(
+                {
+                    "start": r.start,
+                    "end": r.end,
+                    "reading": None if reading is None else round(reading, 3),
+                    "checks": {
+                        k: None if v is None else round(v, 3)
+                        for k, v in per_model.items()
+                    },
+                }
+            )
         report = reports[decision.part if decision.part is not None else 0]
         checks = {
             name: {"percentile": decision.percentiles[name], "reason": result.reason}
@@ -176,6 +192,8 @@ class Detector:
             "parts": len(reports),
             "part": {"start": report.start, "end": report.end},
             "file_check": labels,
+            "timeline": timeline,
+            "lines": {"flag": flag, "lower": lower},
         }
         if labels:
             outcome["kind"], outcome["raised"] = "signs", ["file", *decision.raised]
