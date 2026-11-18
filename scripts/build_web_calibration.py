@@ -10,6 +10,10 @@ sync prediction files, which list every clip of a set, scored or not.
 
 These clips are test data in the paper. The site uses them only to place a score, and the file
 says so. Writes results/web-calibration.json.
+
+With --choice results/web-models.json, the face and voice scores of the models it puts live replace
+the study's, read from results/v2-eval/cache-scores.csv (scripts/score_v2_cache.py, the same cleaned
+clips), and the file goes where the choice names it. The lip-sync scores stay the study's.
 """
 
 from __future__ import annotations
@@ -84,15 +88,54 @@ def rows_for(corpus: str, branch_set: str, sync_stem: str, sources: dict) -> lis
     for clip, row in sync[0].items():
         scores = {check: _score(tables, clip) for check, tables in branches.items()}
         scores["sync"] = _score(sync, clip)
-        rows.append({"corpus": corpus, "label": int(row["label"]), "scores": scores})
+        rows.append(
+            {
+                "corpus": corpus,
+                "clip_id": clip,
+                "label": int(row["label"]),
+                "scores": scores,
+            }
+        )
     return rows
 
 
+def replace_scores(rows: list[dict], choice: dict, sources: dict) -> None:
+    """Put the chosen models' cache scores in place of the study's face and voice scores."""
+    path = RESULTS / "v2-eval" / "cache-scores.csv"
+    by_clip = {(r["corpus"], r["clip_id"]): r for r in _read_rows(path, sources)}
+    for row in rows:
+        cached = by_clip.get((row["corpus"], row["clip_id"]))
+        for check in ("face", "voice"):
+            if check not in choice:
+                continue
+            value = None if cached is None else cached.get(choice[check]["column"], "")
+            row["scores"][check] = float(value) if value else None
+
+
+def _read_rows(path: Path, sources: dict) -> list[dict]:
+    sources[str(path.relative_to(ROOT).as_posix())] = hashlib.sha256(
+        path.read_bytes()
+    ).hexdigest()
+    with open(path, encoding="utf-8", newline="") as f:
+        return list(csv.DictReader(f))
+
+
 def main() -> int:
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--choice", type=Path, default=None)
+    arguments = parser.parse_args()
     sources: dict[str, str] = {}
     rows = [
         r for corpus, (b, s) in CORPORA.items() for r in rows_for(corpus, b, s, sources)
     ]
+    output = OUTPUT
+    choice = None
+    if arguments.choice is not None:
+        choice = json.loads(arguments.choice.read_text(encoding="utf-8"))
+        replace_scores(rows, choice, sources)
+        output = ROOT / choice["calibration"]["video"]
     calibration, summary = build(rows)
     coverage = {
         c: {
@@ -113,11 +156,13 @@ def main() -> int:
         "outcomes": summary,
         "sources": sources,
     }
+    if choice is not None:
+        meta["models"] = {c: choice[c] for c in ("face", "voice") if c in choice}
     data = json.loads(calibration.to_json())
     data["meta"] = meta
-    OUTPUT.write_text(json.dumps(data, indent=1) + "\n", encoding="utf-8")
+    output.write_text(json.dumps(data, indent=1) + "\n", encoding="utf-8")
     print(
-        f"threshold {calibration.threshold:.4f}, can't tell above {calibration.lower:.4f} -> {OUTPUT.relative_to(ROOT)}"
+        f"threshold {calibration.threshold:.4f}, can't tell above {calibration.lower:.4f} -> {output.relative_to(ROOT)}"
     )
     print(json.dumps({"coverage": coverage, "outcomes": summary}, indent=1))
     return 0
