@@ -42,8 +42,9 @@ jobs:
           Expand-Archive "$env:RUNNER_TEMP/ffmpeg.zip" -DestinationPath "$env:RUNNER_TEMP/ffmpeg"
           $bin = (Get-ChildItem "$env:RUNNER_TEMP/ffmpeg" -Recurse -Filter ffprobe.exe | Select-Object -First 1).DirectoryName
           Add-Content $env:GITHUB_PATH $bin
-          & "$bin/ffprobe.exe" -version | Select-Object -First 1
+          $version = & "$bin/ffprobe.exe" -version
           if ($LASTEXITCODE -ne 0) { exit 1 }
+          $version[0]
       - name: Install
         # `dashboard` is needed for the tests to actually run rather than skip.
         # The dashboard tests guard themselves with `importorskip("streamlit")`,
