@@ -38,11 +38,11 @@ jobs:
         shell: pwsh
         run: |
           $url = "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip"
-          Invoke-WebRequest $url -OutFile "$env:RUNNER_TEMPfmpeg.zip"
-          Expand-Archive "$env:RUNNER_TEMPfmpeg.zip" -DestinationPath "$env:RUNNER_TEMPfmpeg"
-          $bin = (Get-ChildItem "$env:RUNNER_TEMPfmpeg" -Recurse -Filter ffprobe.exe | Select-Object -First 1).DirectoryName
+          Invoke-WebRequest $url -OutFile "$env:RUNNER_TEMP/ffmpeg.zip"
+          Expand-Archive "$env:RUNNER_TEMP/ffmpeg.zip" -DestinationPath "$env:RUNNER_TEMP/ffmpeg"
+          $bin = (Get-ChildItem "$env:RUNNER_TEMP/ffmpeg" -Recurse -Filter ffprobe.exe | Select-Object -First 1).DirectoryName
           Add-Content $env:GITHUB_PATH $bin
-          & "$binfprobe.exe" -version | Select-Object -First 1
+          & "$bin/ffprobe.exe" -version | Select-Object -First 1
           if ($LASTEXITCODE -ne 0) { exit 1 }
       - name: Install
         # `dashboard` is needed for the tests to actually run rather than skip.
