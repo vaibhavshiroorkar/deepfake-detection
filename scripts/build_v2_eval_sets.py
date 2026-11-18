@@ -178,6 +178,61 @@ def celebdf() -> list[dict]:
     return out
 
 
+DF26_VOICED = ("Grok_Imagine", "Kling_3.0", "Veo_3.1", "Wan_2.6")  # generators that make sound
+
+
+def df26(kind: str) -> list[dict]:
+    """DF26 (2026 generators, evaluation only): real footage and its image- or text-to-video fakes.
+
+    Faces: 150 real and 20 from each of the 10 generators. Voices: 150 real and 40 from each generator
+    that makes its own sound. The group is the real clip a fake was made from, so pairs stay together.
+    """
+    rows = _rows(DATA / "DF26" / "metadata" / "videos.csv")
+    name = "df26face" if kind == "picture" else "df26voice"
+    items = [
+        {
+            "set": name,
+            "kind": kind,
+            "label": 0 if r["generator"] == "real" else 1,
+            "path": str(Path("data") / "DF26" / r["video_path"]),
+            "group": Path(r["paired_real_path"]).stem,
+            "generator": r["generator"],
+        }
+        for r in rows
+    ]
+    out = _sample([i for i in items if i["label"] == 0], 150, f"{name}-real")
+    generators = sorted({i["generator"] for i in items if i["label"] == 1})
+    if kind == "voice":
+        generators = [g for g in generators if g in DF26_VOICED]
+    for g in generators:
+        fakes = [i for i in items if i["generator"] == g]
+        out += _sample(fakes, 20 if kind == "picture" else 40, f"{name}-{g}")
+    for i in out:
+        i["group"] = f"{i['group']}"
+        del i["generator"]
+    return out
+
+
+def veo3() -> list[dict]:
+    """The project's Veo 3 clips (data/generated): 100 real and 100 Veo 3 fakes, voice only."""
+    raw = DATA / "generated" / "raw"
+    items = [
+        {
+            "set": "veo3voice",
+            "kind": "voice",
+            "label": label,
+            "path": str(p.relative_to(ROOT)),
+            "group": p.stem,
+        }
+        for label, folder in ((0, raw / "real"), (1, raw / "fake" / "veo3"))
+        for p in sorted(folder.glob("*.mp4"))
+    ]
+    out = []
+    for label in (0, 1):
+        out += _sample([i for i in items if i["label"] == label], 100, f"veo3-{label}")
+    return out
+
+
 def main() -> int:
     itw_items, held = itw()
     items = (
@@ -187,6 +242,9 @@ def main() -> int:
         + ffpp()
         + celebdf()
         + fav("video_fake", "picture", "favface")
+        + df26("picture")
+        + df26("voice")
+        + veo3()
     )
     missing = [i["path"] for i in items if not (ROOT / i["path"]).is_file()]
     if missing:
