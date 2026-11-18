@@ -42,10 +42,13 @@
       fill.style.width = c && c.percentile != null ? c.percentile + "%" : "0%";
       track.append(fill);
       row.append(track);
-      row.append(el("span", "cval mono", c && c.percentile != null ? c.percentile + "th" : "not checked"));
+      row.append(el("span", "cval mono", c && c.percentile != null ? (c.percentile / 100).toFixed(2) : "not checked"));
       if (c && c.reason) row.title = c.reason;
       box.append(row);
     }
+    // The bars are a share of real clips, not a probability of fake: say so where people read the numbers.
+    box.append(el("p", "scale small", "Each number is the share of real clips this video scored higher than: "
+      + "0.66 means more unusual than 66 in 100 real clips. It is not a chance of being fake."));
     return box;
   }
 

@@ -202,3 +202,4 @@ footer.footer { border-top: 1px solid var(--line); padding: 26px 0 44px; color: 
 .live video { width: 100%; max-width: 420px; border-radius: 12px; background: #000; }
 .live-actions { display: flex; gap: 8px; }
 .live[hidden], .live video[hidden] { display: none; }   /* display:grid above would otherwise override hidden */
+.scale { margin-top: 8px; color: var(--muted); }
