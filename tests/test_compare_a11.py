@@ -25,7 +25,9 @@ def test_pairs_by_clip_id_whatever_the_row_order(tmp_path):
     old = [("d", 1, 0.1), ("c", 1, 0.3), ("b", 0, 0.2), ("a", 0, 0.4)]
     _write(tmp_path / "new" / "clip-seed17-dfdc-predictions.csv", new)
     _write(tmp_path / "old" / "visual-seed17-dfdc-predictions.csv", old)
-    result = module.compare_part(tmp_path / "new", tmp_path / "old", "clip", "visual", "dfdc", samples=50)
+    result = module.compare_part(
+        tmp_path / "new", tmp_path / "old", "clip", "visual", "dfdc", samples=50
+    )
     assert result["seeds"] == [17]
     assert result["auc_new"] == [1.0]
     assert result["auc_old"] == [0.25]
@@ -37,7 +39,9 @@ def test_one_class_set_is_skipped_with_a_reason(tmp_path):
     rows = [("a", 0, 0.1), ("b", 0, 0.2)]
     _write(tmp_path / "new" / "xlsr-seed17-dfdc-predictions.csv", rows)
     _write(tmp_path / "old" / "audio-seed17-dfdc-predictions.csv", rows)
-    result = module.compare_part(tmp_path / "new", tmp_path / "old", "xlsr", "audio", "dfdc", samples=50)
+    result = module.compare_part(
+        tmp_path / "new", tmp_path / "old", "xlsr", "audio", "dfdc", samples=50
+    )
     assert result == {"skipped": "one class in the set"}
 
 
@@ -47,5 +51,7 @@ def test_a_seed_with_no_new_model_is_left_out(tmp_path):
     for seed in (17, 29):
         _write(tmp_path / "old" / f"visual-seed{seed}-dfdc-predictions.csv", rows)
     _write(tmp_path / "new" / "clip-seed17-dfdc-predictions.csv", rows)
-    result = module.compare_part(tmp_path / "new", tmp_path / "old", "clip", "visual", "dfdc", samples=50)
+    result = module.compare_part(
+        tmp_path / "new", tmp_path / "old", "clip", "visual", "dfdc", samples=50
+    )
     assert result["seeds"] == [17]

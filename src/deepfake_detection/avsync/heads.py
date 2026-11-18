@@ -10,6 +10,7 @@ frame carries the fused feature, both single-modality features, their cosine
 and their absolute difference; attention pooling over the 50 frames lets a
 short edit dominate the window, then a linear layer gives the logit.
 """
+
 from __future__ import annotations
 
 import torch
@@ -25,7 +26,12 @@ def pair_features(lips: Tensor, audio: Tensor) -> Tensor:
 class AlignmentHead(nn.Module):
     def __init__(self, width: int = 768, hidden: int = 256) -> None:
         super().__init__()
-        self.net = nn.Sequential(nn.LayerNorm(4 * width), nn.Linear(4 * width, hidden), nn.GELU(), nn.Linear(hidden, 1))
+        self.net = nn.Sequential(
+            nn.LayerNorm(4 * width),
+            nn.Linear(4 * width, hidden),
+            nn.GELU(),
+            nn.Linear(hidden, 1),
+        )
 
     def forward(self, lips: Tensor, audio: Tensor) -> Tensor:
         """Logit that the frames belong together, shape [...]."""
@@ -37,7 +43,9 @@ class AlignmentHead(nn.Module):
 
 
 class WindowHead(nn.Module):
-    def __init__(self, width: int = 768, hidden: int = 256, dropout: float = 0.1) -> None:
+    def __init__(
+        self, width: int = 768, hidden: int = 256, dropout: float = 0.1
+    ) -> None:
         super().__init__()
         self.frame = nn.Sequential(
             nn.LayerNorm(3 * width + width + 1),
@@ -51,6 +59,8 @@ class WindowHead(nn.Module):
     def forward(self, fused: Tensor, lips: Tensor, audio: Tensor) -> Tensor:
         """[B, T, width] three times to logits [B]."""
         cosine = F.cosine_similarity(lips, audio, dim=-1).unsqueeze(-1)
-        frames = self.frame(torch.cat([fused, lips, audio, (lips - audio).abs(), cosine], dim=-1))
+        frames = self.frame(
+            torch.cat([fused, lips, audio, (lips - audio).abs(), cosine], dim=-1)
+        )
         weights = torch.softmax(self.attend(frames), dim=1)
         return self.out((weights * frames).sum(dim=1)).squeeze(-1)

@@ -38,6 +38,7 @@ def test_cross_fit_never_scores_an_identity_it_trained_on(monkeypatch):
     labels, groups, x = _data()
     seen = []
     import deepfake_detection.fusion.h2 as h2
+
     real_fit = h2.fit_fusion
 
     def spy(logits, fold_labels):
@@ -71,5 +72,9 @@ def test_seeds_must_cover_the_same_clips():
 
 def test_holm_step_down():
     assert holm({"a": 0.01, "b": 0.02, "c": 0.04}) == {"a": True, "b": True, "c": True}
-    assert holm({"a": 0.01, "b": 0.03, "c": 0.04}) == {"a": True, "b": False, "c": False}
+    assert holm({"a": 0.01, "b": 0.03, "c": 0.04}) == {
+        "a": True,
+        "b": False,
+        "c": False,
+    }
     assert holm({"a": 0.2, "b": 0.001, "c": 0.5}) == {"a": False, "b": True, "c": False}

@@ -21,7 +21,9 @@ import torch
 
 
 def _trainer():
-    spec = importlib.util.spec_from_file_location("train_sync_path", Path(__file__).with_name("train_sync_path.py"))
+    spec = importlib.util.spec_from_file_location(
+        "train_sync_path", Path(__file__).with_name("train_sync_path.py")
+    )
     module = importlib.util.module_from_spec(spec)
     sys.modules["train_sync_path"] = module
     spec.loader.exec_module(module)
@@ -48,11 +50,20 @@ def main(argv: list[str] | None = None) -> int:
         kind = row.get("manipulation_type", "")
         row.setdefault("video_fake", str(int(kind.startswith("FakeVideo-"))))
         row.setdefault("audio_fake", str(int(kind.endswith("-FakeAudio"))))
-        row.setdefault("clip_fake", str(int(row["video_fake"] == "1" or row["audio_fake"] == "1")))
+        row.setdefault(
+            "clip_fake", str(int(row["video_fake"] == "1" or row["audio_fake"] == "1"))
+        )
     owners, lips, audio = trainer.load_windows(arguments.features, clips)
-    print(f"{arguments.name}: {len(clips)} clips, {len(owners)} usable windows", flush=True)
+    print(
+        f"{arguments.name}: {len(clips)} clips, {len(owners)} usable windows",
+        flush=True,
+    )
     for seed in arguments.seeds:
-        state = torch.load(arguments.checkpoints / f"sync-seed{seed}.pt", map_location="cpu", weights_only=True)
+        state = torch.load(
+            arguments.checkpoints / f"sync-seed{seed}.pt",
+            map_location="cpu",
+            weights_only=True,
+        )
         head = AlignmentHead(width=lips.shape[-1]).to(arguments.device)
         head.load_state_dict(state["state_dict"])
         head.eval()

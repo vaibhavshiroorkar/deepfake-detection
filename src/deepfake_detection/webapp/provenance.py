@@ -18,7 +18,7 @@ import subprocess
 from pathlib import Path
 
 AI_SOURCE_TYPE = b"digitalsourcetype/trainedAlgorithmicMedia"
-MAX_BYTES = 128 << 20          # uploads are capped well below this; read no more than it
+MAX_BYTES = 128 << 20  # uploads are capped well below this; read no more than it
 
 
 def labels_from_tags(tags: dict[str, str]) -> list[str]:
@@ -44,8 +44,22 @@ def labels_from_bytes(data: bytes) -> list[str]:
 
 
 def _tags(path: Path) -> dict[str, str]:
-    run = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format_tags:stream_tags", "-of", "json", str(path)],
-                         capture_output=True, text=True, timeout=20, check=False)
+    run = subprocess.run(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format_tags:stream_tags",
+            "-of",
+            "json",
+            str(path),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
     data = json.loads(run.stdout or "{}")
     tags = dict(data.get("format", {}).get("tags", {}))
     for stream in data.get("streams", []):

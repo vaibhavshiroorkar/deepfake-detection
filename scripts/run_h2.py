@@ -34,25 +34,44 @@ from deepfake_detection.fusion.h2 import (  # noqa: E402
 )
 
 SEEDS = (17, 29, 43)
-H2_TARGETS = ("test-identity-strict", "dfdc", "lavdf-window")    # the Holm family (A8; LAV-DF by window label, A9)
-REPORTED = ("test", "hifiavdf", "lavdf-test")                     # same statistic, outside the rule
+H2_TARGETS = (
+    "test-identity-strict",
+    "dfdc",
+    "lavdf-window",
+)  # the Holm family (A8; LAV-DF by window label, A9)
+REPORTED = ("test", "hifiavdf", "lavdf-test")  # same statistic, outside the rule
 # The window label (A9) changes labels only; the visual and audio scores are those of the same clips.
 BRANCH_PART = {"lavdf-window": "lavdf-test"}
 
 
 def read(path: Path) -> dict[str, dict]:
     with path.open(newline="", encoding="utf-8") as handle:
-        return {row["clip_id"]: row for row in csv.DictReader(handle) if row.get("probability", "").strip()}
+        return {
+            row["clip_id"]: row
+            for row in csv.DictReader(handle)
+            if row.get("probability", "").strip()
+        }
 
 
-def load(part: str, seed: int, args) -> tuple[list[str], np.ndarray, np.ndarray, np.ndarray, int]:
-    sync_dir = args.sync_dir if part in ("val", "test", "test-identity-strict") else args.sync_targets
+def load(
+    part: str, seed: int, args
+) -> tuple[list[str], np.ndarray, np.ndarray, np.ndarray, int]:
+    sync_dir = (
+        args.sync_dir
+        if part in ("val", "test", "test-identity-strict")
+        else args.sync_targets
+    )
     sync = read(sync_dir / f"sync-{part}-seed{seed}-predictions.csv")
     branch_part = BRANCH_PART.get(part, part)
     visual = read(args.branch_dir / f"visual-seed{seed}-{branch_part}-predictions.csv")
     audio = read(args.branch_dir / f"audio-seed{seed}-{branch_part}-predictions.csv")
     clips = sorted(set(sync) & set(visual) & set(audio))
-    x = np.column_stack([logit([float(src[c]["probability"]) for c in clips]) for src in (visual, audio, sync)])
+    x = np.column_stack(
+        [
+            logit([float(src[c]["probability"]) for c in clips])
+            for src in (visual, audio, sync)
+        ]
+    )
     labels = np.array([int(sync[c]["label"]) for c in clips])
     groups = np.array([sync[c]["source"] for c in clips])
     return clips, labels, groups, x, len(sync)
@@ -70,9 +89,13 @@ def balanced_threshold(labels: np.ndarray, scores: np.ndarray) -> float:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--branch-dir", type=Path, default=ROOT / "runs/p001/evaluation")
+    parser.add_argument(
+        "--branch-dir", type=Path, default=ROOT / "runs/p001/evaluation"
+    )
     parser.add_argument("--sync-dir", type=Path, default=ROOT / "results/p001-sync")
-    parser.add_argument("--sync-targets", type=Path, default=ROOT / "results/p001-sync-targets")
+    parser.add_argument(
+        "--sync-targets", type=Path, default=ROOT / "results/p001-sync-targets"
+    )
     parser.add_argument("--output", type=Path, default=ROOT / "results/p001-h2")
     parser.add_argument("--samples", type=int, default=1000)
     args = parser.parse_args(argv)
@@ -87,12 +110,19 @@ def main(argv: list[str] | None = None) -> int:
             "branches": list(BRANCHES),
             "coef": fusions[seed].model.coef_[0].tolist(),
             "intercept": float(fusions[seed].model.intercept_[0]),
-            "mean": fusions[seed].mean.tolist(), "scale": fusions[seed].scale.tolist(),
+            "mean": fusions[seed].mean.tolist(),
+            "scale": fusions[seed].scale.tolist(),
             "threshold_from_oof_validation": balanced_threshold(labels, oof),
             "validation_clips": len(clips),
         }
 
-    report = {"amendment": "A8", "seeds": list(SEEDS), "weights": weights, "targets": {}, "not_scored_yet": []}
+    report = {
+        "amendment": "A8",
+        "seeds": list(SEEDS),
+        "weights": weights,
+        "targets": {},
+        "not_scored_yet": [],
+    }
     for part in H2_TARGETS + REPORTED:
         try:
             loaded = {seed: load(part, seed, args) for seed in SEEDS}
@@ -107,7 +137,9 @@ def main(argv: list[str] | None = None) -> int:
         # The shared bootstrap needs every seed on the same clips, so keep the clips all seeds scored.
         common = sorted(set.intersection(*(set(loaded[s][0]) for s in SEEDS)))
         if not common:
-            raise SystemExit(f"{part}: no clip is scored by all three paths in every seed")
+            raise SystemExit(
+                f"{part}: no clip is scored by all three paths in every seed"
+            )
         pairs, coverage = [], []
         for seed in SEEDS:
             clips, labels, groups, x, n_sync = loaded[seed]
@@ -116,12 +148,34 @@ def main(argv: list[str] | None = None) -> int:
             labels, groups, x = labels[keep], groups[keep], x[keep]
             fused = fusions[seed].score(x)
             pairs.append(SeedPair(labels, groups, fused, x[:, 0]))
-            coverage.append({"seed": seed, "scored_by_all": len(clips), "scored_by_sync": n_sync})
-            with (args.output / f"fusion-{part}-seed{seed}-predictions.csv").open("w", newline="", encoding="utf-8") as h:
+            coverage.append(
+                {"seed": seed, "scored_by_all": len(clips), "scored_by_sync": n_sync}
+            )
+            with (args.output / f"fusion-{part}-seed{seed}-predictions.csv").open(
+                "w", newline="", encoding="utf-8"
+            ) as h:
                 w = csv.writer(h)
-                w.writerow(["clip_id", "label", "source", "fusion", "visual_logit", "audio_logit", "sync_logit"])
+                w.writerow(
+                    [
+                        "clip_id",
+                        "label",
+                        "source",
+                        "fusion",
+                        "visual_logit",
+                        "audio_logit",
+                        "sync_logit",
+                    ]
+                )
                 for i, c in enumerate(common):
-                    w.writerow([c, labels[i], groups[i], f"{fused[i]:.6f}", *(f"{v:.6f}" for v in x[i])])
+                    w.writerow(
+                        [
+                            c,
+                            labels[i],
+                            groups[i],
+                            f"{fused[i]:.6f}",
+                            *(f"{v:.6f}" for v in x[i]),
+                        ]
+                    )
         result = mean_seed_difference(pairs, samples=args.samples)
         result["coverage"] = coverage
         result["clips_scored_by_every_seed"] = len(common)
@@ -129,13 +183,20 @@ def main(argv: list[str] | None = None) -> int:
 
     family = {t: report["targets"][t]["p_one_sided"] for t in H2_TARGETS}
     rejected = holm(family)
-    report["holm"] = {t: {"p_one_sided": family[t], "rejected_at_0.05": rejected[t]} for t in H2_TARGETS}
+    report["holm"] = {
+        t: {"p_one_sided": family[t], "rejected_at_0.05": rejected[t]}
+        for t in H2_TARGETS
+    }
     report["h2_success"] = sum(rejected.values()) >= 2
-    (args.output / "h2.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    (args.output / "h2.json").write_text(
+        json.dumps(report, indent=2) + "\n", encoding="utf-8"
+    )
     for t in report["targets"]:
         r = report["targets"][t]
-        print(f"{t:22} diff {r['estimate']:+.4f} [{r['lower']:+.4f}, {r['upper']:+.4f}] p={r['p_one_sided']:.3f} "
-              f"clips={r['clips']}")
+        print(
+            f"{t:22} diff {r['estimate']:+.4f} [{r['lower']:+.4f}, {r['upper']:+.4f}] p={r['p_one_sided']:.3f} "
+            f"clips={r['clips']}"
+        )
     print("H2 holds" if report["h2_success"] else "H2 does not hold")
     return 0
 

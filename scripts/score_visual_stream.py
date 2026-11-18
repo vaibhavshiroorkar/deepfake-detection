@@ -68,21 +68,45 @@ def main(argv: list[str] | None = None) -> int:
 
     records = load_manifest(args.manifest, dataset=args.dataset).records
     by_clip = {r.clip_id: r for r in records}
-    dataset = CachedBranchDataset(records=records, cache_index=read_cache_index(args.cache_index),
-                                  cache_store=CacheStore(args.cache_root), branch="visual",
-                                  preprocessing_hash=args.preprocessing_hash)
-    loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collate_branch_items)
+    dataset = CachedBranchDataset(
+        records=records,
+        cache_index=read_cache_index(args.cache_index),
+        cache_store=CacheStore(args.cache_root),
+        branch="visual",
+        preprocessing_hash=args.preprocessing_hash,
+    )
+    loader = DataLoader(
+        dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
+        collate_fn=collate_branch_items,
+    )
 
     rows = []
     for batch in loader:
-        with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=args.device.startswith("cuda")):
+        with torch.autocast(
+            device_type="cuda",
+            dtype=torch.float16,
+            enabled=args.device.startswith("cuda"),
+        ):
             logits, _ = model(batch.values.to(args.device))
-        for clip_id, label, probability in zip(batch.clip_ids, batch.labels.int().tolist(),
-                                               torch.sigmoid(logits.float()).cpu().tolist(), strict=True):
+        for clip_id, label, probability in zip(
+            batch.clip_ids,
+            batch.labels.int().tolist(),
+            torch.sigmoid(logits.float()).cpu().tolist(),
+            strict=True,
+        ):
             record = by_clip[clip_id]
-            rows.append({"clip_id": clip_id, "label": label, "probability": probability,
-                         "source": record.source, "manipulation_type": record.manipulation_type,
-                         "method": record.method})
+            rows.append(
+                {
+                    "clip_id": clip_id,
+                    "label": label,
+                    "probability": probability,
+                    "source": record.source,
+                    "manipulation_type": record.manipulation_type,
+                    "method": record.method,
+                }
+            )
     if not rows:
         raise SystemExit("no clip was scored")
     args.output.parent.mkdir(parents=True, exist_ok=True)

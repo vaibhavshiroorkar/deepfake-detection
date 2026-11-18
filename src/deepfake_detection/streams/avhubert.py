@@ -114,7 +114,9 @@ class _ResEncoder(nn.Module):
 
 
 class _SubModel(nn.Module):
-    def __init__(self, input_dim: int, width: int, resnet: nn.Module | None = None) -> None:
+    def __init__(
+        self, input_dim: int, width: int, resnet: nn.Module | None = None
+    ) -> None:
         super().__init__()
         self.resnet = resnet
         self.proj = nn.Linear(input_dim, width)

@@ -38,7 +38,7 @@ def test_edges_cut_250_ms_at_each_end_and_shrink_the_valid_count():
     # The valid count must shrink, or the model would read the new zeros as audio: digital silence,
     # the very edge cue A14 removes.
     assert n == valid - 2 * 4000
-    assert np.array_equal(out[:n], wave[4000:valid - 4000])
+    assert np.array_equal(out[:n], wave[4000 : valid - 4000])
     assert not out[n:].any()
     assert out.shape == wave.shape
 

@@ -93,7 +93,13 @@ line-length = 88
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "I", "B", "S", "UP"]
-ignore = ["S101"]
+# S603/S607: every subprocess call runs ffmpeg or ffprobe with an argument list and no shell, so nothing is
+# parsed by a shell; the executables are found on PATH by design (docs/SECURITY.md covers the FFmpeg inputs).
+ignore = ["S101", "S603", "S607"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI declares upload and form parameters as call defaults; that is its API, not a shared mutable default.
+extend-immutable-calls = ["fastapi.File", "fastapi.Form"]
 
 [tool.uv]
 conflicts = [[{ extra = "cpu" }, { extra = "cu130" }]]

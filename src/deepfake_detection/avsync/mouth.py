@@ -14,6 +14,7 @@ parameter, chosen on development clips by `scripts/av/tune_mouth_crop.py`.
     read_window(path, start, seconds)   frames [T, H, W, 3] RGB uint8 at 25 fps, audio float32
     MouthCropper(model).lips(frames)    [T, 88, 88] float32 normalised, plus a found mask
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -38,12 +39,17 @@ def probe(path: str | Path) -> _VideoInfo:
     """Frame size from the header; no frame is decoded."""
     capture = cv2.VideoCapture(str(path))
     try:
-        info = _VideoInfo(int(capture.get(cv2.CAP_PROP_FRAME_WIDTH)), int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+        info = _VideoInfo(
+            int(capture.get(cv2.CAP_PROP_FRAME_WIDTH)),
+            int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT)),
+        )
     finally:
         capture.release()
     if info.width <= 0 or info.height <= 0:
         raise RuntimeError(f"cannot read the frame size of {path}")
     return info
+
+
 CROP = 96
 DEFAULT_EYE_PX = 64.0
 DEFAULT_SMOOTH = 12
@@ -56,7 +62,9 @@ LEFT_EYE = (362, 263)
 MOUTH = (61, 291, 13, 14)
 
 
-def read_window(path: str | Path, start: float, seconds: float) -> tuple[np.ndarray, np.ndarray]:
+def read_window(
+    path: str | Path, start: float, seconds: float
+) -> tuple[np.ndarray, np.ndarray]:
     """`seconds` of video from `start`, resampled by ffmpeg to 25 fps and 16 kHz mono.
 
     Both streams are cut with the same input seek, so frame k and audio sample
@@ -65,20 +73,54 @@ def read_window(path: str | Path, start: float, seconds: float) -> tuple[np.ndar
     info = probe(path)
     seek = ["-ss", f"{start:.3f}", "-t", f"{seconds:.3f}", "-i", str(path)]
     video = subprocess.run(
-        ["ffmpeg", "-v", "error", "-nostdin", *seek, "-an", "-r", str(FPS),
-         "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1"],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-nostdin",
+            *seek,
+            "-an",
+            "-r",
+            str(FPS),
+            "-f",
+            "rawvideo",
+            "-pix_fmt",
+            "rgb24",
+            "pipe:1",
+        ],
+        capture_output=True,
     )
     if video.returncode != 0:
-        raise RuntimeError(f"ffmpeg failed on {path}: {video.stderr.decode(errors='replace')[:300]}")
-    frames = np.frombuffer(video.stdout, np.uint8).reshape(-1, info.height, info.width, 3)
+        raise RuntimeError(
+            f"ffmpeg failed on {path}: {video.stderr.decode(errors='replace')[:300]}"
+        )
+    frames = np.frombuffer(video.stdout, np.uint8).reshape(
+        -1, info.height, info.width, 3
+    )
     audio = subprocess.run(
-        ["ffmpeg", "-v", "error", "-nostdin", *seek, "-vn", "-map", "0:a:0?", "-ac", "1",
-         "-ar", str(SAMPLE_RATE), "-f", "f32le", "pipe:1"],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-nostdin",
+            *seek,
+            "-vn",
+            "-map",
+            "0:a:0?",
+            "-ac",
+            "1",
+            "-ar",
+            str(SAMPLE_RATE),
+            "-f",
+            "f32le",
+            "pipe:1",
+        ],
+        capture_output=True,
     )
     if audio.returncode != 0:
-        raise RuntimeError(f"ffmpeg failed on {path}: {audio.stderr.decode(errors='replace')[:300]}")
+        raise RuntimeError(
+            f"ffmpeg failed on {path}: {audio.stderr.decode(errors='replace')[:300]}"
+        )
     return frames, np.frombuffer(audio.stdout, np.float32).copy()
 
 
@@ -98,10 +140,17 @@ def pose_from_landmarks(points: np.ndarray) -> Pose:
     left = points[list(LEFT_EYE)].mean(0)
     dx, dy = left - right
     centre = points[list(MOUTH)].mean(0)
-    return Pose(float(centre[0]), float(centre[1]), float(np.arctan2(dy, dx)), float(np.hypot(dx, dy)))
+    return Pose(
+        float(centre[0]),
+        float(centre[1]),
+        float(np.arctan2(dy, dx)),
+        float(np.hypot(dx, dy)),
+    )
 
 
-def smooth_poses(poses: list[Pose | None], window: int = DEFAULT_SMOOTH) -> list[Pose | None]:
+def smooth_poses(
+    poses: list[Pose | None], window: int = DEFAULT_SMOOTH
+) -> list[Pose | None]:
     """Centred moving average over the frames where a face was found.
 
     A frame without a face stays None; it is not filled from its neighbours,
@@ -110,7 +159,9 @@ def smooth_poses(poses: list[Pose | None], window: int = DEFAULT_SMOOTH) -> list
     found = [i for i, p in enumerate(poses) if p is not None]
     if not found:
         return list(poses)
-    table = np.array([[poses[i].cx, poses[i].cy, poses[i].angle, poses[i].eyes] for i in found])
+    table = np.array(
+        [[poses[i].cx, poses[i].cy, poses[i].angle, poses[i].eyes] for i in found]
+    )
     out: list[Pose | None] = [None] * len(poses)
     half = window // 2
     for index in found:
@@ -119,26 +170,41 @@ def smooth_poses(poses: list[Pose | None], window: int = DEFAULT_SMOOTH) -> list
     return out
 
 
-def crop_mouth(frame: np.ndarray, pose: Pose, eye_px: float = DEFAULT_EYE_PX) -> np.ndarray:
+def crop_mouth(
+    frame: np.ndarray, pose: Pose, eye_px: float = DEFAULT_EYE_PX
+) -> np.ndarray:
     """A [96, 96] grey uint8 mouth crop of an RGB frame."""
     scale = eye_px / max(pose.eyes, 1e-6)
     matrix = cv2.getRotationMatrix2D((pose.cx, pose.cy), np.degrees(pose.angle), scale)
     matrix[:, 2] += (CROP / 2 - pose.cx, CROP / 2 - pose.cy)
     grey = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
-    return cv2.warpAffine(grey, matrix, (CROP, CROP), flags=cv2.INTER_AREA, borderMode=cv2.BORDER_REPLICATE)
+    return cv2.warpAffine(
+        grey,
+        matrix,
+        (CROP, CROP),
+        flags=cv2.INTER_AREA,
+        borderMode=cv2.BORDER_REPLICATE,
+    )
 
 
 def normalise_lips(crops: np.ndarray) -> np.ndarray:
     """[T, 96, 96] uint8 to [T, 88, 88] float32 as AV-HuBERT's loader feeds the model."""
     offset = (CROP - LIP_SIZE) // 2
-    centre = crops[:, offset : offset + LIP_SIZE, offset : offset + LIP_SIZE].astype(np.float32) / 255.0
+    centre = (
+        crops[:, offset : offset + LIP_SIZE, offset : offset + LIP_SIZE].astype(
+            np.float32
+        )
+        / 255.0
+    )
     return (centre - LIP_MEAN) / LIP_STD
 
 
-LOCATE_SCALE = 2.2      # region side as a multiple of the face box side (A10)
+LOCATE_SCALE = 2.2  # region side as a multiple of the face box side (A10)
 
 
-def locate_region(box: np.ndarray, width: int, height: int, scale: float = LOCATE_SCALE) -> tuple[int, int, int]:
+def locate_region(
+    box: np.ndarray, width: int, height: int, scale: float = LOCATE_SCALE
+) -> tuple[int, int, int]:
     """(x0, y0, side) of a square around a face box (x, y, w, h), kept inside the frame."""
     x, y, w, h = (float(v) for v in box)
     side = int(min(max(w, h) * scale, width, height))
@@ -150,9 +216,15 @@ def locate_region(box: np.ndarray, width: int, height: int, scale: float = LOCAT
 class MouthCropper:
     """MediaPipe Face Landmarker in video mode, one instance per clip at a time."""
 
-    def __init__(self, model: str | Path = DEFAULT_MODEL, *, eye_px: float = DEFAULT_EYE_PX,
-                 smooth: int = DEFAULT_SMOOTH, locator: str | Path | None = None,
-                 min_share: float = 0.8) -> None:
+    def __init__(
+        self,
+        model: str | Path = DEFAULT_MODEL,
+        *,
+        eye_px: float = DEFAULT_EYE_PX,
+        smooth: int = DEFAULT_SMOOTH,
+        locator: str | Path | None = None,
+        min_share: float = 0.8,
+    ) -> None:
         from mediapipe.tasks.python import BaseOptions, vision
 
         self._vision = vision
@@ -168,24 +240,35 @@ class MouthCropper:
         self._locator = None
         if locator is not None:
             import cv2
+
             self._locator = cv2.FaceDetectorYN.create(str(locator), "", (320, 320), 0.6)
         self.min_share = min_share
 
-    def _landmark(self, frames: np.ndarray, offset: tuple[int, int] = (0, 0)) -> list[Pose | None]:
+    def _landmark(
+        self, frames: np.ndarray, offset: tuple[int, int] = (0, 0)
+    ) -> list[Pose | None]:
         import mediapipe as mp
 
         out: list[Pose | None] = []
         # A fresh landmarker per clip: video mode needs rising timestamps.
-        with self._vision.FaceLandmarker.create_from_options(self._options) as landmarker:
+        with self._vision.FaceLandmarker.create_from_options(
+            self._options
+        ) as landmarker:
             for index, frame in enumerate(frames):
-                image = mp.Image(image_format=mp.ImageFormat.SRGB, data=np.ascontiguousarray(frame))
+                image = mp.Image(
+                    image_format=mp.ImageFormat.SRGB, data=np.ascontiguousarray(frame)
+                )
                 result = landmarker.detect_for_video(image, int(index * 1000 / FPS))
                 if not result.face_landmarks:
                     out.append(None)
                     continue
                 height, width = frame.shape[:2]
-                points = np.array([(p.x * width + offset[0], p.y * height + offset[1])
-                                   for p in result.face_landmarks[0]])
+                points = np.array(
+                    [
+                        (p.x * width + offset[0], p.y * height + offset[1])
+                        for p in result.face_landmarks[0]
+                    ]
+                )
                 out.append(pose_from_landmarks(points))
         return out
 
@@ -202,7 +285,9 @@ class MouthCropper:
                 boxes.append(faces[np.argmax(faces[:, -1])][:4])
         if not boxes:
             return None
-        return locate_region(np.median(np.array(boxes), axis=0), frames.shape[2], frames.shape[1])
+        return locate_region(
+            np.median(np.array(boxes), axis=0), frames.shape[2], frames.shape[1]
+        )
 
     def poses(self, frames: np.ndarray) -> list[Pose | None]:
         out = self._landmark(frames)
@@ -211,7 +296,9 @@ class MouthCropper:
             region = self._locate(frames)
             if region is not None:
                 x0, y0, side = region
-                located = self._landmark(frames[:, y0:y0 + side, x0:x0 + side], offset=(x0, y0))
+                located = self._landmark(
+                    frames[:, y0 : y0 + side, x0 : x0 + side], offset=(x0, y0)
+                )
                 if np.mean([p is not None for p in located]) > share:
                     out = located
         return smooth_poses(out, self.smooth)
@@ -227,8 +314,10 @@ class MouthCropper:
         if not found.any():
             return np.zeros((len(frames), LIP_SIZE, LIP_SIZE), np.float32), found
         have = np.flatnonzero(found)
-        crops = np.stack([
-            crop_mouth(frame, poses[have[np.abs(have - i).argmin()]], self.eye_px)
-            for i, frame in enumerate(frames)
-        ])
+        crops = np.stack(
+            [
+                crop_mouth(frame, poses[have[np.abs(have - i).argmin()]], self.eye_px)
+                for i, frame in enumerate(frames)
+            ]
+        )
         return normalise_lips(crops), found

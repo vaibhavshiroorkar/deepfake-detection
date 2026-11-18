@@ -70,39 +70,88 @@ def main(argv: list[str] | None = None) -> int:
     with open(SPEAKERS, encoding="utf-8", newline="") as f:
         split = {r["speaker_id"]: r["split"] for r in csv.DictReader(f)}
 
-    with open(ROOT / "data/manifests/fakeavceleb.csv", encoding="utf-8", newline="") as f:
+    with open(
+        ROOT / "data/manifests/fakeavceleb.csv", encoding="utf-8", newline=""
+    ) as f:
         sources = sorted({r["source"] for r in csv.DictReader(f)})
-    counts = {g: sum(group_of(s, split) == g for s in sources) for g in ("dev", "test", "neither")}
+    counts = {
+        g: sum(group_of(s, split) == g for s in sources)
+        for g in ("dev", "test", "neither")
+    }
 
-    report = {"amendment": "A17", "exploratory": True, "vox2": meta or "from vox2-speakers.csv",
-              "vox2_speakers": {g: sum(v == g for v in split.values()) for g in ("dev", "test")},
-              "fakeavceleb_sources": counts, "fakeavceleb_test_partition": {}, "lavdf": "unknown: no speaker ids"}
+    report = {
+        "amendment": "A17",
+        "exploratory": True,
+        "vox2": meta or "from vox2-speakers.csv",
+        "vox2_speakers": {
+            g: sum(v == g for v in split.values()) for g in ("dev", "test")
+        },
+        "fakeavceleb_sources": counts,
+        "fakeavceleb_test_partition": {},
+        "lavdf": "unknown: no speaker ids",
+    }
     tables = []
     for seed in SEEDS:
-        with open(ROOT / f"results/p001-sync/sync-test-seed{seed}-predictions.csv", encoding="utf-8", newline="") as f:
+        with open(
+            ROOT / f"results/p001-sync/sync-test-seed{seed}-predictions.csv",
+            encoding="utf-8",
+            newline="",
+        ) as f:
             tables.append(list(csv.DictReader(f)))
     test_rows = tables[0]
     for g in ("dev", "test", "neither"):
         members = [r for r in test_rows if group_of(r["source"], split) == g]
         real_ids = {r["source"] for r in members if r["label"] == "0"}
-        report["fakeavceleb_test_partition"][g] = {"clips": len(members), "identities": len({r["source"] for r in members}),
-                                                    "identities_with_real_clips": len(real_ids)}
-    enough = all(report["fakeavceleb_test_partition"][g]["identities_with_real_clips"] >= MIN_IDENTITIES
-                 for g in ("dev", "test"))
-    report["auc_by_group"] = "not reported: fewer than 5 identities with real clips in dev or test"
+        report["fakeavceleb_test_partition"][g] = {
+            "clips": len(members),
+            "identities": len({r["source"] for r in members}),
+            "identities_with_real_clips": len(real_ids),
+        }
+    enough = all(
+        report["fakeavceleb_test_partition"][g]["identities_with_real_clips"]
+        >= MIN_IDENTITIES
+        for g in ("dev", "test")
+    )
+    report["auc_by_group"] = (
+        "not reported: fewer than 5 identities with real clips in dev or test"
+    )
     if enough:
         report["auc_by_group"] = {}
         for g in ("dev", "test"):
             per_seed = {}
             for seed, table in zip(SEEDS, tables, strict=True):
-                rows = [_Row(r["source"], int(r["label"]), float(r["probability"])) for r in table
-                        if group_of(r["source"], split) == g and r["probability"] not in ("", "nan")]
+                rows = [
+                    _Row(r["source"], int(r["label"]), float(r["probability"]))
+                    for r in table
+                    if group_of(r["source"], split) == g
+                    and r["probability"] not in ("", "nan")
+                ]
                 interval = cluster_bootstrap_interval(rows, _auc, samples=1000, seed=17)
-                per_seed[str(seed)] = {"auc": interval.estimate, "lower": interval.lower, "upper": interval.upper}
-            report["auc_by_group"][g] = per_seed | {"mean": float(np.mean([v["auc"] for v in per_seed.values()]))}
-    (OUTPUT / "a17.json").write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
-    print(json.dumps({k: report[k] for k in ("vox2_speakers", "fakeavceleb_sources", "fakeavceleb_test_partition",
-                                              "auc_by_group")}, indent=1))
+                per_seed[str(seed)] = {
+                    "auc": interval.estimate,
+                    "lower": interval.lower,
+                    "upper": interval.upper,
+                }
+            report["auc_by_group"][g] = per_seed | {
+                "mean": float(np.mean([v["auc"] for v in per_seed.values()]))
+            }
+    (OUTPUT / "a17.json").write_text(
+        json.dumps(report, indent=1) + "\n", encoding="utf-8"
+    )
+    print(
+        json.dumps(
+            {
+                k: report[k]
+                for k in (
+                    "vox2_speakers",
+                    "fakeavceleb_sources",
+                    "fakeavceleb_test_partition",
+                    "auc_by_group",
+                )
+            },
+            indent=1,
+        )
+    )
     return 0
 
 

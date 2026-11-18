@@ -33,7 +33,10 @@ OUTPUT = RESULTS / "web-calibration.json"
 SEEDS = (17, 29, 43)
 # corpus: (branch set name, sync prediction stem with {seed})
 CORPORA = {
-    "FakeAVCeleb": ("test-identity-strict", "p001-sync/sync-test-identity-strict-seed{seed}"),
+    "FakeAVCeleb": (
+        "test-identity-strict",
+        "p001-sync/sync-test-identity-strict-seed{seed}",
+    ),
     "DFDC": ("dfdc", "p001-sync-targets/sync-dfdc-seed{seed}"),
     "LAV-DF": ("lavdf-test", "p001-sync-targets/sync-lavdf-window-seed{seed}"),
     "HiFi-AVDF": ("hifiavdf", "p001-sync-targets/sync-hifiavdf-seed{seed}"),
@@ -42,7 +45,9 @@ BRANCH_OF = {"face": "visual", "voice": "audio"}
 
 
 def _read(path: Path, sources: dict) -> dict[str, dict]:
-    sources[str(path.relative_to(ROOT).as_posix())] = hashlib.sha256(path.read_bytes()).hexdigest()
+    sources[str(path.relative_to(ROOT).as_posix())] = hashlib.sha256(
+        path.read_bytes()
+    ).hexdigest()
     with open(path, encoding="utf-8", newline="") as f:
         return {r["clip_id"]: r for r in csv.DictReader(f)}
 
@@ -61,9 +66,20 @@ def _score(tables: list[dict], clip: str) -> float | None:
 
 
 def rows_for(corpus: str, branch_set: str, sync_stem: str, sources: dict) -> list[dict]:
-    sync = [_read(RESULTS / (sync_stem.format(seed=s) + "-predictions.csv"), sources) for s in SEEDS]
-    branches = {check: [_read(RESULTS / "p001-branches" / f"{b}-seed{s}-{branch_set}-predictions.csv", sources)
-                        for s in SEEDS] for check, b in BRANCH_OF.items()}
+    sync = [
+        _read(RESULTS / (sync_stem.format(seed=s) + "-predictions.csv"), sources)
+        for s in SEEDS
+    ]
+    branches = {
+        check: [
+            _read(
+                RESULTS / "p001-branches" / f"{b}-seed{s}-{branch_set}-predictions.csv",
+                sources,
+            )
+            for s in SEEDS
+        ]
+        for check, b in BRANCH_OF.items()
+    }
     rows = []
     for clip, row in sync[0].items():
         scores = {check: _score(tables, clip) for check, tables in branches.items()}
@@ -74,23 +90,35 @@ def rows_for(corpus: str, branch_set: str, sync_stem: str, sources: dict) -> lis
 
 def main() -> int:
     sources: dict[str, str] = {}
-    rows = [r for corpus, (b, s) in CORPORA.items() for r in rows_for(corpus, b, s, sources)]
+    rows = [
+        r for corpus, (b, s) in CORPORA.items() for r in rows_for(corpus, b, s, sources)
+    ]
     calibration, summary = build(rows)
-    coverage = {c: {check: sum(r["scores"][check] is not None for r in rows if r["corpus"] == c)
-                    for check in ("face", "voice", "sync")} | {"clips": sum(r["corpus"] == c for r in rows)}
-                for c in CORPORA}
+    coverage = {
+        c: {
+            check: sum(r["scores"][check] is not None for r in rows if r["corpus"] == c)
+            for check in ("face", "voice", "sync")
+        }
+        | {"clips": sum(r["corpus"] == c for r in rows)}
+        for c in CORPORA
+    }
     meta = {
         "built": date.today().isoformat(),
         "code_commit": _git_commit(),
         "note": "Calibration clips are P-001 test data; the site uses them only to place scores.",
         "check_score": "mean logit of the three seeds",
-        "flag_quantile": 0.95, "unsure_quantile": 0.80,
-        "coverage": coverage, "outcomes": summary, "sources": sources,
+        "flag_quantile": 0.95,
+        "unsure_quantile": 0.80,
+        "coverage": coverage,
+        "outcomes": summary,
+        "sources": sources,
     }
     data = json.loads(calibration.to_json())
     data["meta"] = meta
     OUTPUT.write_text(json.dumps(data, indent=1) + "\n", encoding="utf-8")
-    print(f"threshold {calibration.threshold:.4f}, can't tell above {calibration.lower:.4f} -> {OUTPUT.relative_to(ROOT)}")
+    print(
+        f"threshold {calibration.threshold:.4f}, can't tell above {calibration.lower:.4f} -> {OUTPUT.relative_to(ROOT)}"
+    )
     print(json.dumps({"coverage": coverage, "outcomes": summary}, indent=1))
     return 0
 

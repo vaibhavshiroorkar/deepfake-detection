@@ -19,7 +19,12 @@ from pathlib import Path
 import numpy as np
 from sklearn.metrics import roc_auc_score
 
-from deepfake_detection.fusion.h2 import SeedPair, cross_fit_scores, fit_fusion, mean_seed_difference
+from deepfake_detection.fusion.h2 import (
+    SeedPair,
+    cross_fit_scores,
+    fit_fusion,
+    mean_seed_difference,
+)
 
 TARGETS = ("dfdc", "lavdf-window", "hifiavdf")
 SEEDS = (17, 29, 43)
@@ -27,7 +32,9 @@ PATHS = ("visual", "audio", "sync")
 
 
 def load(h2_dir: Path, target: str, seed: int) -> dict:
-    with (h2_dir / f"fusion-{target}-seed{seed}-predictions.csv").open(encoding="utf-8", newline="") as handle:
+    with (h2_dir / f"fusion-{target}-seed{seed}-predictions.csv").open(
+        encoding="utf-8", newline=""
+    ) as handle:
         rows = list(csv.DictReader(handle))
     return {
         "labels": np.array([int(r["label"]) for r in rows]),
@@ -42,7 +49,10 @@ def scores_for_seed(data: dict[str, dict]) -> dict[str, dict[str, np.ndarray]]:
     out = {}
     for target, held in data.items():
         others = [d for name, d in data.items() if name != target]
-        fusion = fit_fusion(np.vstack([d["x"] for d in others]), np.concatenate([d["labels"] for d in others]))
+        fusion = fit_fusion(
+            np.vstack([d["x"] for d in others]),
+            np.concatenate([d["labels"] for d in others]),
+        )
         out[target] = {
             "leave_one_out": fusion.score(held["x"]),
             "upper_bound": cross_fit_scores(held["x"], held["labels"], held["groups"]),
@@ -52,15 +62,29 @@ def scores_for_seed(data: dict[str, dict]) -> dict[str, dict[str, np.ndarray]]:
     return out
 
 
-def compare(per_seed: list[dict], target: str, labels: np.ndarray, groups: np.ndarray) -> dict:
+def compare(
+    per_seed: list[dict], target: str, labels: np.ndarray, groups: np.ndarray
+) -> dict:
     """AUC of each score per seed, and the paired differences A12 reports."""
     names = ("leave_one_out", "upper_bound", "a8", *PATHS)
-    result = {"auc": {n: [float(roc_auc_score(labels, s[target][n])) for s in per_seed] for n in names}}
-    pairs = [("leave_one_out", other) for other in ("a8", *PATHS)] + [("upper_bound", p) for p in PATHS]
+    result = {
+        "auc": {
+            n: [float(roc_auc_score(labels, s[target][n])) for s in per_seed]
+            for n in names
+        }
+    }
+    pairs = [("leave_one_out", other) for other in ("a8", *PATHS)] + [
+        ("upper_bound", p) for p in PATHS
+    ]
     result["differences"] = {}
     for first, second in pairs:
-        seed_pairs = [SeedPair(labels, groups, s[target][first], s[target][second]) for s in per_seed]
-        result["differences"][f"{first}-minus-{second}"] = mean_seed_difference(seed_pairs)
+        seed_pairs = [
+            SeedPair(labels, groups, s[target][first], s[target][second])
+            for s in per_seed
+        ]
+        result["differences"][f"{first}-minus-{second}"] = mean_seed_difference(
+            seed_pairs
+        )
     return result
 
 
@@ -76,14 +100,27 @@ def main() -> int:
             if not np.array_equal(loaded[seed][target]["groups"], first["groups"]):
                 raise ValueError(f"Seeds score different clips on {target}")
     per_seed = [scores_for_seed(loaded[seed]) for seed in SEEDS]
-    report = {"amendment": "A12", "exploratory": True, "seeds": list(SEEDS), "targets": {}}
+    report = {
+        "amendment": "A12",
+        "exploratory": True,
+        "seeds": list(SEEDS),
+        "targets": {},
+    }
     for target in TARGETS:
-        labels, groups = loaded[SEEDS[0]][target]["labels"], loaded[SEEDS[0]][target]["groups"]
-        report["targets"][target] = {"clips": int(len(labels)), **compare(per_seed, target, labels, groups)}
+        labels, groups = (
+            loaded[SEEDS[0]][target]["labels"],
+            loaded[SEEDS[0]][target]["groups"],
+        )
+        report["targets"][target] = {
+            "clips": int(len(labels)),
+            **compare(per_seed, target, labels, groups),
+        }
         auc = report["targets"][target]["auc"]
         print(target, " ".join(f"{n}={np.mean(v):.3f}" for n, v in auc.items()))
     args.output.mkdir(parents=True, exist_ok=True)
-    (args.output / "a12.json").write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
+    (args.output / "a12.json").write_text(
+        json.dumps(report, indent=1) + "\n", encoding="utf-8"
+    )
     return 0
 
 

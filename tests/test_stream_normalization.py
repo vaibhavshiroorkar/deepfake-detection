@@ -21,15 +21,21 @@ OPENAI_STD = (0.26862954, 0.26130258, 0.27577711)
 
 def test_renormalize_maps_pixels_from_one_normalization_to_another():
     pixel = torch.tensor([0.2, 0.5, 0.9]).view(1, 3, 1, 1)
-    imagenet = (pixel - torch.tensor(IMAGENET_MEAN).view(1, 3, 1, 1)) / torch.tensor(IMAGENET_STD).view(1, 3, 1, 1)
+    imagenet = (pixel - torch.tensor(IMAGENET_MEAN).view(1, 3, 1, 1)) / torch.tensor(
+        IMAGENET_STD
+    ).view(1, 3, 1, 1)
     clip = renormalize(imagenet, IMAGENET_MEAN, IMAGENET_STD, OPENAI_MEAN, OPENAI_STD)
-    expected = (pixel - torch.tensor(OPENAI_MEAN).view(1, 3, 1, 1)) / torch.tensor(OPENAI_STD).view(1, 3, 1, 1)
+    expected = (pixel - torch.tensor(OPENAI_MEAN).view(1, 3, 1, 1)) / torch.tensor(
+        OPENAI_STD
+    ).view(1, 3, 1, 1)
     assert torch.allclose(clip, expected, atol=1e-6)
 
 
 def test_same_normalization_is_left_alone():
     x = torch.randn(2, 3, 4, 4)
-    assert torch.equal(renormalize(x, IMAGENET_MEAN, IMAGENET_STD, IMAGENET_MEAN, IMAGENET_STD), x)
+    assert torch.equal(
+        renormalize(x, IMAGENET_MEAN, IMAGENET_STD, IMAGENET_MEAN, IMAGENET_STD), x
+    )
 
 
 def test_clip_preset_names_the_openai_vit_l14():
@@ -40,15 +46,26 @@ def test_clip_preset_names_the_openai_vit_l14():
 
 def test_a_clip_stream_reads_its_normalization_from_the_backbone():
     # A small CLIP ViT keeps the test light; the mechanism is the same for ViT-L.
-    config = StreamConfig(stream_name="clip-small", backbone_name="vit_base_patch32_clip_224.openai",
-                          pretrained=False, global_pool="token", temporal_type="mean", grad_checkpointing=False)
+    config = StreamConfig(
+        stream_name="clip-small",
+        backbone_name="vit_base_patch32_clip_224.openai",
+        pretrained=False,
+        global_pool="token",
+        temporal_type="mean",
+        grad_checkpointing=False,
+    )
     stream = VisualStream(config)
     assert torch.allclose(stream.backbone_mean.flatten(), torch.tensor(OPENAI_MEAN))
     assert stream.renormalizes
-    assert "backbone_mean" not in stream.state_dict()      # old checkpoints still load
+    assert "backbone_mean" not in stream.state_dict()  # old checkpoints still load
 
 
 def test_an_imagenet_backbone_is_not_converted():
-    config = StreamConfig(stream_name="tiny", backbone_name="resnet18", pretrained=False,
-                          temporal_type="mean", grad_checkpointing=False)
+    config = StreamConfig(
+        stream_name="tiny",
+        backbone_name="resnet18",
+        pretrained=False,
+        temporal_type="mean",
+        grad_checkpointing=False,
+    )
     assert not VisualStream(config).renormalizes

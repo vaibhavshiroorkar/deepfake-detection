@@ -30,7 +30,11 @@ def module_target(labels, groups, x):
 def test_leave_one_out_scores_never_see_the_held_out_labels():
     module = _module()
     rng = np.random.default_rng(0)
-    data = {"a": _corpus(rng, 40, 0), "b": _corpus(rng, 40, 1), "c": _corpus(rng, 40, 2)}
+    data = {
+        "a": _corpus(rng, 40, 0),
+        "b": _corpus(rng, 40, 1),
+        "c": _corpus(rng, 40, 2),
+    }
     first = module.scores_for_seed(data)
     shuffled = dict(data)
     shuffled["c"] = dict(data["c"], labels=rng.permutation(data["c"]["labels"]))
@@ -43,9 +47,14 @@ def test_leave_one_out_scores_never_see_the_held_out_labels():
 def test_upper_bound_finds_the_path_that_only_this_corpus_rewards():
     module = _module()
     rng = np.random.default_rng(1)
-    data = {"a": _corpus(rng, 200, 0), "b": _corpus(rng, 200, 0), "c": _corpus(rng, 200, 2)}
+    data = {
+        "a": _corpus(rng, 200, 0),
+        "b": _corpus(rng, 200, 0),
+        "c": _corpus(rng, 200, 2),
+    }
     scores = module.scores_for_seed(data)
     labels = data["c"]["labels"]
     from sklearn.metrics import roc_auc_score
+
     assert roc_auc_score(labels, scores["c"]["upper_bound"]) > 0.85
     assert roc_auc_score(labels, scores["c"]["leave_one_out"]) < 0.7

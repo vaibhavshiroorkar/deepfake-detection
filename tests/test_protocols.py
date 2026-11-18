@@ -192,26 +192,39 @@ class ComponentSplitTests(unittest.TestCase):
         rows = []
         for number in range(0, 30, 2):
             left, right = f"id{number:02d}", f"id{number + 1:02d}"
-            rows += [make_record(f"{left}-real", left), make_record(f"{right}-real", right)]
-            rows.append(make_record(f"{left}-{right}-swap", left, targets=(right,), method="swap"))
+            rows += [
+                make_record(f"{left}-real", left),
+                make_record(f"{right}-real", right),
+            ]
+            rows.append(
+                make_record(
+                    f"{left}-{right}-swap", left, targets=(right,), method="swap"
+                )
+            )
         return tuple(rows)
 
     def test_source_grouping_can_leak_donor_identities(self) -> None:
         leaks = [
-            audit_split(build_source_split(self._swap_pairs(), seed=seed)).all_identity_overlaps
+            audit_split(
+                build_source_split(self._swap_pairs(), seed=seed)
+            ).all_identity_overlaps
             for seed in range(5)
         ]
         self.assertTrue(any(leaks))
 
     def test_component_grouping_leaves_no_identity_overlap(self) -> None:
         for seed in range(5):
-            split = build_source_split(self._swap_pairs(), seed=seed, group_by="component")
+            split = build_source_split(
+                self._swap_pairs(), seed=seed, group_by="component"
+            )
             self.assertEqual(audit_split(split).all_identity_overlaps, {})
             self.assertEqual(sum(len(rows) for rows in split.values()), 45)
 
     def test_component_grouping_refuses_a_fully_connected_graph(self) -> None:
         chain = tuple(
-            make_record(f"c{n}", f"id{n:02d}", targets=(f"id{n + 1:02d}",), method="swap")
+            make_record(
+                f"c{n}", f"id{n:02d}", targets=(f"id{n + 1:02d}",), method="swap"
+            )
             for n in range(10)
         )
         with self.assertRaisesRegex(ValueError, "components"):

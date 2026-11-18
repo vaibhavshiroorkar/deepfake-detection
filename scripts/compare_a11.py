@@ -25,10 +25,15 @@ MODELS = (("clip", "visual"), ("xlsr", "audio"))
 
 def _read(path: Path) -> dict[str, tuple[int, float, str]]:
     with path.open(encoding="utf-8", newline="") as handle:
-        return {r["clip_id"]: (int(r["label"]), float(r["probability"]), r["source"]) for r in csv.DictReader(handle)}
+        return {
+            r["clip_id"]: (int(r["label"]), float(r["probability"]), r["source"])
+            for r in csv.DictReader(handle)
+        }
 
 
-def compare_part(new_dir: Path, old_dir: Path, new: str, old: str, part: str, *, samples: int = 1000) -> dict:
+def compare_part(
+    new_dir: Path, old_dir: Path, new: str, old: str, part: str, *, samples: int = 1000
+) -> dict:
     pairs, seeds = [], []
     for seed in SEEDS:
         new_file = new_dir / f"{new}-seed{seed}-{part}-predictions.csv"
@@ -43,8 +48,14 @@ def compare_part(new_dir: Path, old_dir: Path, new: str, old: str, part: str, *,
         if labels.min() == labels.max():
             return {"skipped": "one class in the set"}
         groups = np.array([new_rows[c][2] for c in clips])
-        pairs.append(SeedPair(labels, groups, np.array([new_rows[c][1] for c in clips]),
-                              np.array([old_rows[c][1] for c in clips])))
+        pairs.append(
+            SeedPair(
+                labels,
+                groups,
+                np.array([new_rows[c][1] for c in clips]),
+                np.array([old_rows[c][1] for c in clips]),
+            )
+        )
         seeds.append(seed)
     if not pairs:
         return {"skipped": "no finished seed"}
@@ -70,12 +81,16 @@ def main() -> int:
             report["results"][f"{new}-vs-{old}.{part}"] = result
             if "difference" in result:
                 d = result["difference"]
-                print(f"{new} vs {old} {part}: seeds {result['seeds']} new {np.mean(result['auc_new']):.3f} "
-                      f"old {np.mean(result['auc_old']):.3f} diff {d['estimate']:+.3f} [{d['lower']:+.3f}, {d['upper']:+.3f}]")
+                print(
+                    f"{new} vs {old} {part}: seeds {result['seeds']} new {np.mean(result['auc_new']):.3f} "
+                    f"old {np.mean(result['auc_old']):.3f} diff {d['estimate']:+.3f} [{d['lower']:+.3f}, {d['upper']:+.3f}]"
+                )
             else:
                 print(f"{new} vs {old} {part}: {result['skipped']}")
     args.output.mkdir(parents=True, exist_ok=True)
-    (args.output / "compare.json").write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
+    (args.output / "compare.json").write_text(
+        json.dumps(report, indent=1) + "\n", encoding="utf-8"
+    )
     return 0
 
 

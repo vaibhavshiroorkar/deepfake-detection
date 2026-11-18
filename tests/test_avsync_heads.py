@@ -34,7 +34,9 @@ def test_alignment_head_learns_which_frames_belong_together():
         audio = lips + 0.1 * torch.randn_like(lips)
         positive, negative = head(lips, audio), head(lips, torch.roll(audio, 7, dims=1))
         loss = torch.nn.functional.binary_cross_entropy_with_logits(
-            torch.cat([positive, negative]), torch.cat([torch.ones_like(positive), torch.zeros_like(negative)]))
+            torch.cat([positive, negative]),
+            torch.cat([torch.ones_like(positive), torch.zeros_like(negative)]),
+        )
         optimiser.zero_grad()
         loss.backward()
         optimiser.step()

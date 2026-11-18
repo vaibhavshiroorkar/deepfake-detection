@@ -49,7 +49,9 @@ def conformal_threshold(real_scores: Sequence[float], alpha: float) -> float:
     return float(scores[rank - 1])
 
 
-def neyman_pearson_threshold(real_scores: Sequence[float], alpha: float, delta: float) -> float:
+def neyman_pearson_threshold(
+    real_scores: Sequence[float], alpha: float, delta: float
+) -> float:
     """Smallest order statistic whose FPR exceeds alpha with probability <= delta."""
     if not (0 < alpha < 1 and 0 < delta < 1):
         raise ValueError("alpha and delta must be in (0, 1)")

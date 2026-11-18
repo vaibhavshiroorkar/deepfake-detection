@@ -36,9 +36,24 @@ def _rows(path: Path) -> list[dict]:
 def _durations(path: Path) -> tuple[float, float]:
     """(video seconds, audio seconds) of one file, from the stream headers."""
     out = subprocess.run(  # noqa: S603 - fixed ffprobe arguments, the path is a local file
-        ["ffprobe", "-v", "error", "-show_entries", "stream=codec_type,duration", "-of", "json", str(path)],  # noqa: S607
-        capture_output=True, text=True, check=True).stdout
-    streams = {s["codec_type"]: float(s.get("duration", 0.0)) for s in json.loads(out)["streams"]}
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "stream=codec_type,duration",
+            "-of",
+            "json",
+            str(path),
+        ],  # noqa: S607
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    streams = {
+        s["codec_type"]: float(s.get("duration", 0.0))
+        for s in json.loads(out)["streams"]
+    }
     return streams.get("video", 0.0), streams.get("audio", 0.0)
 
 
@@ -46,10 +61,20 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--data-dir", type=Path, default=Path("data"))
-    parser.add_argument("--features", type=Path, help="feature folder with index.csv (face coverage)")
-    parser.add_argument("--audit", type=Path, help="shortcut-audit summary.json of the neutral copies")
-    parser.add_argument("--segments", type=Path, help="metadata with fake_periods (LAV-DF)")
-    parser.add_argument("--probe", action="store_true", help="read each file's stream lengths (full span)")
+    parser.add_argument(
+        "--features", type=Path, help="feature folder with index.csv (face coverage)"
+    )
+    parser.add_argument(
+        "--audit", type=Path, help="shortcut-audit summary.json of the neutral copies"
+    )
+    parser.add_argument(
+        "--segments", type=Path, help="metadata with fake_periods (LAV-DF)"
+    )
+    parser.add_argument(
+        "--probe",
+        action="store_true",
+        help="read each file's stream lengths (full span)",
+    )
     parser.add_argument("--workers", type=int, default=8)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args(argv)
@@ -58,14 +83,22 @@ def main(argv: list[str] | None = None) -> int:
     results = []
     if args.features:
         index = _rows(args.features / "index.csv")
-        results.append(face_coverage([float(r["face"]) if r["status"] == "ok" else 0.0 for r in index]))
+        results.append(
+            face_coverage(
+                [float(r["face"]) if r["status"] == "ok" else 0.0 for r in index]
+            )
+        )
     if args.probe:
         paths = [args.data_dir / r["video_path"].replace("\\", "/") for r in rows]
         with ThreadPoolExecutor(args.workers) as pool:
             # Clips with no audio track are counted by the audit, not here.
-            results.append(full_span([d for d in pool.map(_durations, paths) if d[1] > 0]))
+            results.append(
+                full_span([d for d in pool.map(_durations, paths) if d[1] > 0])
+            )
     if args.segments:
-        meta = {m["file"]: m for m in json.loads(args.segments.read_text(encoding="utf-8"))}
+        meta = {
+            m["file"]: m for m in json.loads(args.segments.read_text(encoding="utf-8"))
+        }
         cuts = {r["clip_id"]: r for r in _rows(args.manifest.with_suffix(".cuts.csv"))}
         windows, periods = [], []
         for r in rows:
@@ -84,11 +117,16 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("give at least one of --features, --probe, --segments, --audit")
 
     for r in results:
-        print(f"{'pass' if r.passed else 'FAIL'}  {r.name:20} {r.value:.3f} (bar {r.bar})  {r.detail}")
+        print(
+            f"{'pass' if r.passed else 'FAIL'}  {r.name:20} {r.value:.3f} (bar {r.bar})  {r.detail}"
+        )
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        report = {"manifest": str(args.manifest), "checks": [asdict(r) for r in results],
-                  "passed": all(r.passed for r in results)}
+        report = {
+            "manifest": str(args.manifest),
+            "checks": [asdict(r) for r in results],
+            "passed": all(r.passed for r in results),
+        }
         args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     return 0 if all(r.passed for r in results) else 1
 

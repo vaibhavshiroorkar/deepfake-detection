@@ -51,15 +51,25 @@ def main(argv: list[str] | None = None) -> int:
     scores = np.array([float(r["probability"]) for r in rows])
     real = np.flatnonzero(labels == 0)
     if len(real) <= arguments.n_cal:
-        raise SystemExit(f"only {len(real)} real clips; need more than n_cal={arguments.n_cal}")
-    calibration = np.random.default_rng(CALIBRATION_SEED).choice(real, arguments.n_cal, replace=False)
+        raise SystemExit(
+            f"only {len(real)} real clips; need more than n_cal={arguments.n_cal}"
+        )
+    calibration = np.random.default_rng(CALIBRATION_SEED).choice(
+        real, arguments.n_cal, replace=False
+    )
     held = np.setdiff1d(np.arange(len(rows)), calibration)
 
-    source = float(json.loads(arguments.source_threshold.read_text(encoding="utf-8"))["threshold"])
+    source = float(
+        json.loads(arguments.source_threshold.read_text(encoding="utf-8"))["threshold"]
+    )
     thresholds = {
         "source_validation": source,
-        "conformal_real_only": conformal_threshold(scores[calibration], arguments.alpha),
-        "umbrella_real_only": neyman_pearson_threshold(scores[calibration], arguments.alpha, arguments.delta),
+        "conformal_real_only": conformal_threshold(
+            scores[calibration], arguments.alpha
+        ),
+        "umbrella_real_only": neyman_pearson_threshold(
+            scores[calibration], arguments.alpha, arguments.delta
+        ),
     }
     # The evaluation tools flag at >= threshold; the conformal module flags at >.
     # Scores are continuous, so the two agree except on exact ties.
@@ -68,7 +78,9 @@ def main(argv: list[str] | None = None) -> int:
         "alpha": arguments.alpha,
         "delta": arguments.delta,
         "n_cal": arguments.n_cal,
-        "minimum_n_for_umbrella": minimum_calibration_size(arguments.alpha, arguments.delta),
+        "minimum_n_for_umbrella": minimum_calibration_size(
+            arguments.alpha, arguments.delta
+        ),
         "calibration_seed": CALIBRATION_SEED,
         "held_out_real": int((labels[held] == 0).sum()),
         "held_out_fake": int((labels[held] == 1).sum()),
@@ -81,11 +93,16 @@ def main(argv: list[str] | None = None) -> int:
             "false_positive_rate": point.false_positive_rate,
             "true_positive_rate": point.true_positive_rate,
         }
-    report["h4_success"] = report["results"]["conformal_real_only"]["false_positive_rate"] <= arguments.alpha + 0.02
+    report["h4_success"] = (
+        report["results"]["conformal_real_only"]["false_positive_rate"]
+        <= arguments.alpha + 0.02
+    )
     arguments.output.parent.mkdir(parents=True, exist_ok=True)
     arguments.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     for name, values in report["results"].items():
-        print(f"{name:20} thr {values['threshold']:.4f}  FPR {values['false_positive_rate']:.3f}  TPR {values['true_positive_rate']:.3f}")
+        print(
+            f"{name:20} thr {values['threshold']:.4f}  FPR {values['false_positive_rate']:.3f}  TPR {values['true_positive_rate']:.3f}"
+        )
     return 0
 
 

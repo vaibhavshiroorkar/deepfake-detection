@@ -18,7 +18,10 @@ def _asvspoof_tree(root: Path) -> None:
     for partition, (protocol, folder) in ASVSPOOF_PARTITIONS.items():
         flac = root / "LA" / folder / "flac"
         flac.mkdir(parents=True)
-        lines = [f"LA_{partition}_s1 {partition}_0 - - bonafide", f"LA_{partition}_s1 {partition}_1 - A07 spoof"]
+        lines = [
+            f"LA_{partition}_s1 {partition}_0 - - bonafide",
+            f"LA_{partition}_s1 {partition}_1 - A07 spoof",
+        ]
         (protocols / protocol).write_text("\n".join(lines) + "\n", encoding="utf-8")
         for index in range(2):
             (flac / f"{partition}_{index}.flac").write_bytes(b"x")
@@ -45,7 +48,8 @@ def test_in_the_wild_checks_meta_against_disk(tmp_path: Path) -> None:
     base = tmp_path / "release_in_the_wild"
     base.mkdir()
     (base / "meta.csv").write_text(
-        "file,speaker,label\n0.wav,Alice,bona-fide\n1.wav,Alice,spoof\n", encoding="utf-8"
+        "file,speaker,label\n0.wav,Alice,bona-fide\n1.wav,Alice,spoof\n",
+        encoding="utf-8",
     )
     (base / "0.wav").write_bytes(b"x")
     with pytest.raises(ValueError, match="not on disk"):

@@ -5,7 +5,7 @@ from deepfake_detection.avsync.mouth import locate_region
 
 def test_region_is_centred_on_the_face_and_scaled():
     x0, y0, side = locate_region(np.array([900, 500, 100, 120]), 1920, 1080)
-    assert side == 264                                  # 2.2 x the longer side
+    assert side == 264  # 2.2 x the longer side
     assert (x0 + side / 2, y0 + side / 2) == (950, 560)  # centre of the box
 
 

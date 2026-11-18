@@ -198,7 +198,8 @@ def test_guard_allows_datasets_that_are_not_locked() -> None:
 
 
 @pytest.mark.parametrize(
-    "dataset", ["DFDC", "Celeb-DF-v2", "DeepSpeak_v2", "In-the-Wild", "KoDF", "HiFi-AVDF"]
+    "dataset",
+    ["DFDC", "Celeb-DF-v2", "DeepSpeak_v2", "In-the-Wild", "KoDF", "HiFi-AVDF"],
 )
 def test_guard_locks_every_cross_corpus_target(dataset: str) -> None:
     # A cross-corpus target stops being one the moment it picks an epoch, an

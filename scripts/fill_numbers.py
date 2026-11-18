@@ -34,20 +34,28 @@ def render(value, style: str | None, latex: bool = False) -> str:
 
 
 def fill(text: str, numbers: dict, latex: bool = False) -> str:
-    missing = sorted({m.group(1) for m in PATTERN.finditer(text) if m.group(1) not in numbers})
+    missing = sorted(
+        {m.group(1) for m in PATTERN.finditer(text) if m.group(1) not in numbers}
+    )
     if missing:
         raise SystemExit("missing numbers: " + ", ".join(missing))
-    return PATTERN.sub(lambda m: render(numbers[m.group(1)]["value"], m.group(2), latex), text)
+    return PATTERN.sub(
+        lambda m: render(numbers[m.group(1)]["value"], m.group(2), latex), text
+    )
 
 
 def main(argv: list[str]) -> int:
     if len(argv) != 2:
         raise SystemExit("usage: fill_numbers.py SOURCE TARGET")
-    numbers = json.loads((ROOT / "results" / "numbers.json").read_text(encoding="utf-8"))
+    numbers = json.loads(
+        (ROOT / "results" / "numbers.json").read_text(encoding="utf-8")
+    )
     source, target = Path(argv[0]), Path(argv[1])
     target.parent.mkdir(parents=True, exist_ok=True)
     latex = target.suffix == ".tex"
-    target.write_text(fill(source.read_text(encoding="utf-8"), numbers, latex), encoding="utf-8")
+    target.write_text(
+        fill(source.read_text(encoding="utf-8"), numbers, latex), encoding="utf-8"
+    )
     print(f"filled {source} -> {target}")
     return 0
 

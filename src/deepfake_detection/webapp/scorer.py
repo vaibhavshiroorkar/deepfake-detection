@@ -31,15 +31,17 @@ import torch
 from deepfake_detection.paths import PROJECT_ROOT
 from deepfake_detection.webapp.calibration import check_score
 
-P001_PREPROCESSING_HASH = "5f2954fbda2cd643b4da48b8a526b0aa3d9ad831033ac8d22704d78d885df7d1"
+P001_PREPROCESSING_HASH = (
+    "5f2954fbda2cd643b4da48b8a526b0aa3d9ad831033ac8d22704d78d885df7d1"
+)
 # The released AV-HuBERT Base checkpoint. Its loader unpickles with weights_only=False, so a changed
 # file could run code: it is refused unless it is exactly this file (docs/SECURITY.md).
 AVHUBERT_SHA256 = "dee8b0651dbea3a21cda0f2c52b956e3a878d5f6ee503d427d6a4044bb95c9cc"
 SEEDS = (17, 29, 43)
-SYNC_STARTS = (0.0, 1.0)        # P-001 amendment A4: two 2 s windows of a 3.00 s neutral clip
-MIN_FACE = 0.8                  # as scripts/train_sync_path.py
+SYNC_STARTS = (0.0, 1.0)  # P-001 amendment A4: two 2 s windows of a 3.00 s neutral clip
+MIN_FACE = 0.8  # as scripts/train_sync_path.py
 WINDOW_FRAMES = 50
-HOP = 640                       # 16 kHz samples per 25 fps frame
+HOP = 640  # 16 kHz samples per 25 fps frame
 BRANCH_VIEW = {"face": ("visual", "visual_view"), "voice": ("audio", "audio_view")}
 
 
@@ -48,7 +50,9 @@ def verified_avhubert(path: Path) -> Path:
     from deepfake_detection.digest import file_sha256
 
     if file_sha256(path) != AVHUBERT_SHA256:
-        raise RuntimeError(f"{path} does not have the released AV-HuBERT SHA-256; refusing to load it")
+        raise RuntimeError(
+            f"{path} does not have the released AV-HuBERT SHA-256; refusing to load it"
+        )
     return path
 
 
@@ -58,12 +62,18 @@ class ClipRefused(ValueError):
 
 @dataclass(frozen=True)
 class CheckResult:
-    probabilities: tuple[float, ...] | None      # one per seed, or None when the check could not run
+    probabilities: (
+        tuple[float, ...] | None
+    )  # one per seed, or None when the check could not run
     reason: str | None = None
 
     @property
     def score(self) -> float | None:
-        return None if self.probabilities is None else check_score(list(self.probabilities))
+        return (
+            None
+            if self.probabilities is None
+            else check_score(list(self.probabilities))
+        )
 
 
 @dataclass(frozen=True)
@@ -97,12 +107,22 @@ class Scorer:
 
         self.device = device
         checkpoints = root / "runs" / "p001" / "checkpoints"
-        branches = {check: [load_branch(checkpoints / f"{branch}-seed{seed}.pt", branch)[0].to(device).eval()
-                            for seed in SEEDS] for check, (branch, _) in BRANCH_VIEW.items()}
+        branches = {
+            check: [
+                load_branch(checkpoints / f"{branch}-seed{seed}.pt", branch)[0]
+                .to(device)
+                .eval()
+                for seed in SEEDS
+            ]
+            for check, (branch, _) in BRANCH_VIEW.items()
+        }
         heads = []
         for seed in SEEDS:
-            state = torch.load(root / "runs" / "p001" / "sync" / f"sync-seed{seed}.pt", map_location="cpu",
-                               weights_only=True)
+            state = torch.load(
+                root / "runs" / "p001" / "sync" / f"sync-seed{seed}.pt",
+                map_location="cpu",
+                weights_only=True,
+            )
             head = AlignmentHead(width=768)
             head.load_state_dict(state["state_dict"])
             heads.append(head.to(device).eval())
@@ -110,11 +130,21 @@ class Scorer:
         self.models = _Models(
             preprocessor=build_preprocessor(code_version="p001", device=device),
             branches=branches,
-            avhubert=load_avhubert(verified_avhubert(root / "models" / "avhubert" / "base_vox_iter5.pt")).to(device).eval(),
+            avhubert=load_avhubert(
+                verified_avhubert(root / "models" / "avhubert" / "base_vox_iter5.pt")
+            )
+            .to(device)
+            .eval(),
             heads=heads,
         )
 
-    def score(self, upload: Path, workdir: Path, progress=lambda stage: None, mode: str = "video") -> list[ScoreReport]:
+    def score(
+        self,
+        upload: Path,
+        workdir: Path,
+        progress=lambda stage: None,
+        mode: str = "video",
+    ) -> list[ScoreReport]:
         """Score every 3 s part of `upload`, writing derived files under `workdir`. The caller deletes `workdir`.
 
         `progress` gets the stage names the page shows: cleaning, finding the face, scoring,
@@ -126,9 +156,15 @@ class Scorer:
             plan_windows,
         )
 
-        parts = [(0.0, 3.0)] if mode == "picture" else plan_windows(upload, NeutralSettings())
+        parts = (
+            [(0.0, 3.0)]
+            if mode == "picture"
+            else plan_windows(upload, NeutralSettings())
+        )
         if not parts:
-            raise ClipRefused("The clip has less than 3 seconds of sound, so it cannot be cleaned and checked.")
+            raise ClipRefused(
+                "The clip has less than 3 seconds of sound, so it cannot be cleaned and checked."
+            )
         reports = []
         for i, (start, end) in enumerate(parts):
             step = f":{i + 1}/{len(parts)}"
@@ -141,11 +177,16 @@ class Scorer:
             if mode == "video":
                 sync, trace = self._sync(neutral)
             else:
-                unused = CheckResult(None, f"not used for a {mode}" if mode == "picture" else "not used for a voice recording")
+                unused = CheckResult(
+                    None,
+                    f"not used for a {mode}"
+                    if mode == "picture"
+                    else "not used for a voice recording",
+                )
                 sync, trace = unused, {"loudness_db": [], "windows": []}
                 checks["face" if mode == "voice" else "voice"] = unused
             reports.append(ScoreReport({**checks, "sync": sync}, trace, start, end))
-            shutil.rmtree(part_dir, ignore_errors=True)    # keep at most one part on disk
+            shutil.rmtree(part_dir, ignore_errors=True)  # keep at most one part on disk
         return reports
 
     @staticmethod
@@ -160,7 +201,9 @@ class Scorer:
             raise RuntimeError(f"neutralizer failed: {report['error']}")
         return target
 
-    def _face_and_voice(self, neutral: Path, cache_root: Path) -> dict[str, CheckResult]:
+    def _face_and_voice(
+        self, neutral: Path, cache_root: Path
+    ) -> dict[str, CheckResult]:
         from deepfake_detection.data.datasets import (
             CachedBranchDataset,
             collate_branch_items,
@@ -171,27 +214,50 @@ class Scorer:
 
         # An upload has no label. ClipRecord requires a consistent one, so it gets the real
         # placeholder; the label only feeds the loss in training and is never read here.
-        record = ClipRecord(clip_id="upload", dataset="Upload", video_path=neutral,
-                            manipulation_type="RealVideo-RealAudio", method="upload", source="upload", targets=(),
-                            clip_fake=False, video_fake=False, audio_fake=False)
+        record = ClipRecord(
+            clip_id="upload",
+            dataset="Upload",
+            video_path=neutral,
+            manipulation_type="RealVideo-RealAudio",
+            method="upload",
+            source="upload",
+            targets=(),
+            clip_fake=False,
+            video_fake=False,
+            audio_fake=False,
+        )
         prepared = self.models.preprocessor.prepare(record, neutral)
         if prepared.preprocessing_config_hash != P001_PREPROCESSING_HASH:
-            raise RuntimeError(f"preprocessing hash {prepared.preprocessing_config_hash} is not the P-001 hash")
+            raise RuntimeError(
+                f"preprocessing hash {prepared.preprocessing_config_hash} is not the P-001 hash"
+            )
         store = CacheStore(cache_root)
         path = store.save(prepared, dataset=record.dataset)
         views = store.available_views(path)
         out = {}
         for check, (branch, view) in BRANCH_VIEW.items():
             if view not in views:
-                out[check] = CheckResult(None, "no steady face was found" if check == "face" else "no usable sound")
+                out[check] = CheckResult(
+                    None,
+                    "no steady face was found"
+                    if check == "face"
+                    else "no usable sound",
+                )
                 continue
-            item = CachedBranchDataset(records=[record], cache_index={record.clip_id: path}, cache_store=store,
-                                       branch=branch, preprocessing_hash=P001_PREPROCESSING_HASH)[0]
+            item = CachedBranchDataset(
+                records=[record],
+                cache_index={record.clip_id: path},
+                cache_store=store,
+                branch=branch,
+                preprocessing_hash=P001_PREPROCESSING_HASH,
+            )[0]
             batch = collate_branch_items([item])
             probs = []
             with torch.inference_mode():
                 for model in self.models.branches[check]:
-                    logits = audio_forward(model, batch.values.to(self.device), batch.valid_samples).logits
+                    logits = audio_forward(
+                        model, batch.values.to(self.device), batch.valid_samples
+                    ).logits
                     probs.append(float(torch.sigmoid(logits).reshape(-1)[0]))
             out[check] = CheckResult(tuple(probs))
         return out
@@ -215,22 +281,28 @@ class Scorer:
             windows.append((start, lips.astype(np.float32), sound.astype(np.float32)))
         trace = {"loudness_db": loudness or [], "windows": []}
         if not windows:
-            return CheckResult(None, "the mouth or the sound could not be followed for 2 seconds"), trace
+            return CheckResult(
+                None, "the mouth or the sound could not be followed for 2 seconds"
+            ), trace
         lips = torch.from_numpy(np.stack([w[1] for w in windows])).to(self.device)
         sound = torch.from_numpy(np.stack([w[2] for w in windows])).to(self.device)
         per_seed = []
         with torch.no_grad():
             for head in self.models.heads:
                 per_seed.append(head.window_score(lips, sound).cpu().numpy())
-        misfit = np.stack(per_seed)                      # [seeds, windows]
+        misfit = np.stack(per_seed)  # [seeds, windows]
         probabilities = tuple(float(1 - math.exp(-s)) for s in misfit.mean(axis=1))
-        trace["windows"] = [{"start": w[0], "misfit": float(1 - math.exp(-m))}
-                            for w, m in zip(windows, misfit.mean(axis=0), strict=True)]
+        trace["windows"] = [
+            {"start": w[0], "misfit": float(1 - math.exp(-m))}
+            for w, m in zip(windows, misfit.mean(axis=0), strict=True)
+        ]
         return CheckResult(probabilities), trace
 
 
 def _loudness_db(audio: np.ndarray) -> list[float]:
     """Speech loudness in dB per 40 ms frame, for the trace."""
     frames = len(audio) // HOP
-    rms = np.sqrt((audio[: frames * HOP].reshape(frames, HOP) ** 2).mean(axis=1) + 1e-10)
+    rms = np.sqrt(
+        (audio[: frames * HOP].reshape(frames, HOP) ** 2).mean(axis=1) + 1e-10
+    )
     return [round(float(v), 2) for v in 20 * np.log10(rms)]

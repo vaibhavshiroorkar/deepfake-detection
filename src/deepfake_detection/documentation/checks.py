@@ -85,7 +85,8 @@ def check_change_contract(
     paths = tuple(changed_paths)
     source_changed = any(path.parts[:1] == ("src",) for path in paths)
     teaching_docs_changed = any(
-        path.suffix == ".md" and path.as_posix() != "docs/CHANGELOG.md" for path in paths
+        path.suffix == ".md" and path.as_posix() != "docs/CHANGELOG.md"
+        for path in paths
     )
     material_changed = source_changed or any(
         path.as_posix()

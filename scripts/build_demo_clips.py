@@ -37,7 +37,7 @@ from deepfake_detection.webapp.scorer import ClipRefused, Scorer
 ROOT = Path(__file__).resolve().parents[1]
 UPLOAD, WATCH = ROOT / "data" / "demo" / "upload", ROOT / "data" / "demo" / "watch"
 LIST = ROOT / "docs" / "demo-clips.csv"
-FAKEAVCELEB_TYPES = {   # label: (manipulation_type, method or None)
+FAKEAVCELEB_TYPES = {  # label: (manipulation_type, method or None)
     "real": ("RealVideo-RealAudio", None),
     "cloned voice": ("RealVideo-FakeAudio", "rtvc"),
     "face swap": ("FakeVideo-RealAudio", "faceswap"),
@@ -56,23 +56,57 @@ def _rows(path: Path) -> list[dict]:
 def candidates(per_type: int, seed: int = 17) -> list[dict]:
     rng = random.Random(seed)  # noqa: S311 - a fixed sample of clips, not a secret
     test = {r["clip_id"] for r in _rows(ROOT / "runs/p001/split/test.csv")}
-    fav = [r for r in _rows(ROOT / "data/manifests/fakeavceleb.csv") if r["clip_id"] in test]
+    fav = [
+        r
+        for r in _rows(ROOT / "data/manifests/fakeavceleb.csv")
+        if r["clip_id"] in test
+    ]
     picked = []
     for label, (kind, method) in FAKEAVCELEB_TYPES.items():
-        pool = [r for r in fav if r["manipulation_type"] == kind and (method is None or r["method"] == method)]
-        picked += [{"corpus": "FakeAVCeleb", "type": label, **r} for r in rng.sample(pool, min(per_type, len(pool)))]
+        pool = [
+            r
+            for r in fav
+            if r["manipulation_type"] == kind
+            and (method is None or r["method"] == method)
+        ]
+        picked += [
+            {"corpus": "FakeAVCeleb", "type": label, **r}
+            for r in rng.sample(pool, min(per_type, len(pool)))
+        ]
     hifi = _rows(ROOT / "data/manifests/hifiavdf.csv")
     for method in HIFI_TYPES:
         pool = [r for r in hifi if r["method"] == method]
         label = "real" if method == "real" else f"generated ({method})"
-        picked += [{"corpus": "HiFi-AVDF", "type": label, **r} for r in rng.sample(pool, min(per_type, len(pool)))]
+        picked += [
+            {"corpus": "HiFi-AVDF", "type": label, **r}
+            for r in rng.sample(pool, min(per_type, len(pool)))
+        ]
     return picked
 
 
 def reencode(source: Path, target: Path) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", str(source), "-c:v", "libx264", "-pix_fmt", "yuv420p",  # noqa: S603, S607
-                    "-c:a", "aac", "-movflags", "+faststart", str(target)], check=True, timeout=120)
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-v",
+            "error",
+            "-i",
+            str(source),
+            "-c:v",
+            "libx264",
+            "-pix_fmt",
+            "yuv420p",  # noqa: S603, S607
+            "-c:a",
+            "aac",
+            "-movflags",
+            "+faststart",
+            str(target),
+        ],
+        check=True,
+        timeout=120,
+    )
 
 
 def decide_clip(calibration: Calibration, scorer, path: Path, work: Path) -> dict:
@@ -80,13 +114,25 @@ def decide_clip(calibration: Calibration, scorer, path: Path, work: Path) -> dic
     try:
         parts = scorer.score(path, work)
     except ClipRefused as error:
-        return {"outcome": "cant_check", "raised": str(error), "face": "", "voice": "", "sync": "",
-                "parts": 0, "part": ""}
+        return {
+            "outcome": "cant_check",
+            "raised": str(error),
+            "face": "",
+            "voice": "",
+            "sync": "",
+            "parts": 0,
+            "part": "",
+        }
     outcome = calibration.decide_parts([part.scores() for part in parts])
     deciding = parts[outcome.part] if outcome.part is not None else None
     pct = {k: "" if v is None else f"{v:.3f}" for k, v in outcome.percentiles.items()}
-    return {"outcome": outcome.kind, "raised": "+".join(outcome.raised), **pct, "parts": len(parts),
-            "part": "" if deciding is None else f"{deciding.start:.1f}-{deciding.end:.1f}"}
+    return {
+        "outcome": outcome.kind,
+        "raised": "+".join(outcome.raised),
+        **pct,
+        "parts": len(parts),
+        "part": "" if deciding is None else f"{deciding.start:.1f}-{deciding.end:.1f}",
+    }
 
 
 def rescore(calibration: Calibration, scorer) -> list[dict]:
@@ -100,8 +146,11 @@ def rescore(calibration: Calibration, scorer) -> list[dict]:
         finally:
             shutil.rmtree(work, ignore_errors=True)
         rows.append({k: row[k] for k in ("file", "corpus", "type", "truth")} | result)
-        print(f"{row['corpus']:11} {row['type']:34} {row['truth']:5} -> {result['outcome']:10} {result['raised']}"
-              f"  ({result['parts']} parts)", flush=True)
+        print(
+            f"{row['corpus']:11} {row['type']:34} {row['truth']:5} -> {result['outcome']:10} {result['raised']}"
+            f"  ({result['parts']} parts)",
+            flush=True,
+        )
     return rows
 
 
@@ -109,13 +158,21 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--per-type", type=int, default=3)
     parser.add_argument("--device", default="cuda")
-    parser.add_argument("--rescore", action="store_true", help="score the listed clips again, in parts")
+    parser.add_argument(
+        "--rescore", action="store_true", help="score the listed clips again, in parts"
+    )
     arguments = parser.parse_args()
-    calibration = Calibration.from_json((ROOT / "results" / "web-calibration.json").read_text(encoding="utf-8"))
+    calibration = Calibration.from_json(
+        (ROOT / "results" / "web-calibration.json").read_text(encoding="utf-8")
+    )
     scorer = Scorer(device=arguments.device)
     rows = rescore(calibration, scorer) if arguments.rescore else []
     for clip in [] if arguments.rescore else candidates(arguments.per_type):
-        name = f"{clip['corpus']}_{clip['type']}_{clip['clip_id']}".replace(" ", "-").replace("(", "").replace(")", "")
+        name = (
+            f"{clip['corpus']}_{clip['type']}_{clip['clip_id']}".replace(" ", "-")
+            .replace("(", "")
+            .replace(")", "")
+        )
         name = "".join(c for c in name if c.isalnum() or c in "-_.+")[:120] + ".mp4"
         source = ROOT / "data" / clip["video_path"]
         target = UPLOAD / name
@@ -128,14 +185,27 @@ def main() -> int:
         finally:
             shutil.rmtree(work, ignore_errors=True)
         truth = "fake" if clip["clip_fake"] == "1" else "real"
-        rows.append({"file": name, "corpus": clip["corpus"], "type": clip["type"], "truth": truth} | result)
-        print(f"{clip['corpus']:11} {clip['type']:34} {truth:5} -> {result['outcome']:10} {result['raised']}", flush=True)
+        rows.append(
+            {
+                "file": name,
+                "corpus": clip["corpus"],
+                "type": clip["type"],
+                "truth": truth,
+            }
+            | result
+        )
+        print(
+            f"{clip['corpus']:11} {clip['type']:34} {truth:5} -> {result['outcome']:10} {result['raised']}",
+            flush=True,
+        )
     with open(LIST, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
-    print(f"{len(rows)} clips -> {UPLOAD.relative_to(ROOT)} (upload), {WATCH.relative_to(ROOT)} (watch); "
-          f"outcomes -> {LIST.relative_to(ROOT)}")
+    print(
+        f"{len(rows)} clips -> {UPLOAD.relative_to(ROOT)} (upload), {WATCH.relative_to(ROOT)} (watch); "
+        f"outcomes -> {LIST.relative_to(ROOT)}"
+    )
     return 0
 
 

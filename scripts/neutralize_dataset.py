@@ -38,9 +38,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--manifest-out", type=Path, required=True)
     parser.add_argument("--workers", type=int, default=12)
     parser.add_argument("--size", help="one frame size for the corpus, WxH (stretched)")
-    parser.add_argument("--video-bitrate", help="constant video bitrate such as 160k instead of crf (P-001 A18)")
+    parser.add_argument(
+        "--video-bitrate",
+        help="constant video bitrate such as 160k instead of crf (P-001 A18)",
+    )
     arguments = parser.parse_args(argv)
-    settings = NeutralSettings(size=arguments.size, video_bitrate=arguments.video_bitrate)
+    settings = NeutralSettings(
+        size=arguments.size, video_bitrate=arguments.video_bitrate
+    )
 
     with arguments.manifest.open(newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)
@@ -53,8 +58,11 @@ def main(argv: list[str] | None = None) -> int:
         # A refusal for length is final. Any other error (a decoder that could
         # not start under memory pressure) is retried on resume.
         with sidecar_path.open(newline="", encoding="utf-8") as handle:
-            cuts = {r["clip_id"]: r for r in csv.DictReader(handle)
-                    if not r.get("error") or r["error"].startswith("too short")}
+            cuts = {
+                r["clip_id"]: r
+                for r in csv.DictReader(handle)
+                if not r.get("error") or r["error"].startswith("too short")
+            }
 
     jobs, seen = [], set()
     for row in rows:
@@ -66,8 +74,15 @@ def main(argv: list[str] | None = None) -> int:
         seen.add(relative)
         jobs.append((row["clip_id"], str(arguments.data_dir / relative), str(target)))
 
-    cut_fields = ("clip_id", "offset_sec", "kept_sec", "cut_leading_sec", "cut_trailing_sec",
-                  "has_audio", "error")
+    cut_fields = (
+        "clip_id",
+        "offset_sec",
+        "kept_sec",
+        "cut_leading_sec",
+        "cut_trailing_sec",
+        "has_audio",
+        "error",
+    )
     sidecar_path.parent.mkdir(parents=True, exist_ok=True)
     new_file = not sidecar_path.exists()
     with sidecar_path.open("a", newline="", encoding="utf-8") as handle:
@@ -97,17 +112,26 @@ def main(argv: list[str] | None = None) -> int:
         if not cut or cut.get("error"):
             failed += 1
             reason = (cut or {}).get("error", "missing") or "missing"
-            reason = "too short" if str(reason).startswith("too short") else "ffmpeg or decode error"
+            reason = (
+                "too short"
+                if str(reason).startswith("too short")
+                else "ffmpeg or decode error"
+            )
             kind = row.get("manipulation_type", "unknown")
             refused.setdefault(kind, {}).setdefault(reason, 0)
             refused[kind][reason] += 1
             continue
         offset = float(cut["offset_sec"])
-        row["video_path"] = str(Path(row["_target"]).relative_to(arguments.data_dir)).replace("\\", "/") \
-            if Path(row["_target"]).is_relative_to(arguments.data_dir) else str(row["_target"])
+        row["video_path"] = (
+            str(Path(row["_target"]).relative_to(arguments.data_dir)).replace("\\", "/")
+            if Path(row["_target"]).is_relative_to(arguments.data_dir)
+            else str(row["_target"])
+        )
         row["leading_silence_sec"] = "0.0"
         if row.get("sync_start_sec", "").strip():
-            row["sync_start_sec"] = f"{max(0.0, float(row['sync_start_sec']) - offset):.4f}"
+            row["sync_start_sec"] = (
+                f"{max(0.0, float(row['sync_start_sec']) - offset):.4f}"
+            )
         kept.append(row)
 
     arguments.manifest_out.parent.mkdir(parents=True, exist_ok=True)
@@ -123,12 +147,15 @@ def main(argv: list[str] | None = None) -> int:
         "rows_failed": failed,
         # A refusal that hits one class harder is a selection effect; report it.
         "refused_by_category": refused,
-        "rows_in_by_category": {k: sum(1 for r in rows if r.get("manipulation_type") == k)
-                                for k in sorted({r.get("manipulation_type", "") for r in rows})},
+        "rows_in_by_category": {
+            k: sum(1 for r in rows if r.get("manipulation_type") == k)
+            for k in sorted({r.get("manipulation_type", "") for r in rows})
+        },
         "settings": settings.as_dict(),
     }
-    arguments.manifest_out.with_suffix(".json").write_text(json.dumps(summary, indent=2) + "\n",
-                                                           encoding="utf-8")
+    arguments.manifest_out.with_suffix(".json").write_text(
+        json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+    )
     print(json.dumps(summary, indent=2))
     return 0 if kept else 1
 

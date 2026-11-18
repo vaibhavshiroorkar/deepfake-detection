@@ -73,8 +73,13 @@ def build_source_split(
         demographics: dict[str, Counter[tuple[str, str]]] = defaultdict(Counter)
         for unit in units:
             demographics[unit.source][(unit.race, unit.gender)] += 1
-        majority = {key: counts.most_common(1)[0][0] for key, counts in demographics.items()}
-        units = [replace(u, race=majority[u.source][0], gender=majority[u.source][1]) for u in units]
+        majority = {
+            key: counts.most_common(1)[0][0] for key, counts in demographics.items()
+        }
+        units = [
+            replace(u, race=majority[u.source][0], gender=majority[u.source][1])
+            for u in units
+        ]
         unit_split = build_source_split(units, seed=seed, ratios=ratios)
         owner = {u.clip_id: name for name, rows in unit_split.items() for u in rows}
         grouped_records: dict[str, list[ClipRecord]] = {name: [] for name in unit_split}

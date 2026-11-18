@@ -27,12 +27,16 @@ IMAGENET_MEAN = (0.485, 0.456, 0.406)
 IMAGENET_STD = (0.229, 0.224, 0.225)
 
 
-def renormalize(frames: torch.Tensor, from_mean, from_std, to_mean, to_std) -> torch.Tensor:
+def renormalize(
+    frames: torch.Tensor, from_mean, from_std, to_mean, to_std
+) -> torch.Tensor:
     """Re-express normalized [..., 3, H, W] frames under another mean and std."""
     shape = (1,) * (frames.dim() - 3) + (3, 1, 1)
 
     def as_tensor(values):
-        return torch.as_tensor(values, dtype=frames.dtype, device=frames.device).view(shape)
+        return torch.as_tensor(values, dtype=frames.dtype, device=frames.device).view(
+            shape
+        )
 
     if tuple(from_mean) == tuple(to_mean) and tuple(from_std) == tuple(to_std):
         return frames
@@ -106,8 +110,12 @@ class VisualStream(nn.Module):
         mean = tuple(cfg.get("mean", IMAGENET_MEAN))
         std = tuple(cfg.get("std", IMAGENET_STD))
         self.renormalizes = (mean, std) != (IMAGENET_MEAN, IMAGENET_STD)
-        self.register_buffer("backbone_mean", torch.tensor(mean).view(1, 3, 1, 1), persistent=False)
-        self.register_buffer("backbone_std", torch.tensor(std).view(1, 3, 1, 1), persistent=False)
+        self.register_buffer(
+            "backbone_mean", torch.tensor(mean).view(1, 3, 1, 1), persistent=False
+        )
+        self.register_buffer(
+            "backbone_std", torch.tensor(std).view(1, 3, 1, 1), persistent=False
+        )
 
         # Gradient checkpointing is a VRAM trade, not a correctness requirement.
         # Some timm backbones expose the method and assert on enable, so a
@@ -151,8 +159,13 @@ class VisualStream(nn.Module):
 
     def _run_backbone_chunked(self, frames_flat: torch.Tensor) -> torch.Tensor:
         if self.renormalizes:
-            frames_flat = renormalize(frames_flat, IMAGENET_MEAN, IMAGENET_STD,
-                                      self.backbone_mean.flatten().tolist(), self.backbone_std.flatten().tolist())
+            frames_flat = renormalize(
+                frames_flat,
+                IMAGENET_MEAN,
+                IMAGENET_STD,
+                self.backbone_mean.flatten().tolist(),
+                self.backbone_std.flatten().tolist(),
+            )
         chunk = self.config.frame_chunk_size
         if not chunk or chunk >= frames_flat.shape[0]:
             return self.backbone(frames_flat)

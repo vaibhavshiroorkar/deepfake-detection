@@ -27,7 +27,16 @@ def test_short_windows_are_left_out(tmp_path, capsys):
         path.parent.mkdir(parents=True, exist_ok=True)
         data = np.zeros((frames, 768), np.float16)
         np.savez(path, lips=data, audio=data, fused=data, face=np.float32(1.0))
-        rows.append({"clip_id": clip, "window_id": window, "start": 0, "file": "", "face": 1.0, "status": "ok"})
+        rows.append(
+            {
+                "clip_id": clip,
+                "window_id": window,
+                "start": 0,
+                "file": "",
+                "face": 1.0,
+                "status": "ok",
+            }
+        )
     with (tmp_path / "index.csv").open("w", newline="", encoding="utf-8") as h:
         writer = csv.DictWriter(h, fieldnames=list(rows[0]))
         writer.writeheader()

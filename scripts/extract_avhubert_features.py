@@ -25,14 +25,24 @@ from pathlib import Path
 
 import numpy as np
 
-
 WINDOW_SECONDS = 2.0
 
 
 def _duration(path: Path) -> float:
     run = subprocess.run(
-        ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "json", str(path)],
-        capture_output=True, text=True, check=False,
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "json",
+            str(path),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
     )
     try:
         return float(json.loads(run.stdout)["format"]["duration"])
@@ -40,10 +50,14 @@ def _duration(path: Path) -> float:
         return 0.0
 
 
-def window_starts(duration: float, fixed: str, count: int, step: float = 2.0) -> list[float]:
+def window_starts(
+    duration: float, fixed: str, count: int, step: float = 2.0
+) -> list[float]:
     if fixed.strip():
         return [float(fixed)]
-    starts = [step * i for i in range(count) if step * i + WINDOW_SECONDS <= duration + 1e-6]
+    starts = [
+        step * i for i in range(count) if step * i + WINDOW_SECONDS <= duration + 1e-6
+    ]
     return starts or ([0.0] if duration >= 1.0 else [])
 
 
@@ -52,18 +66,33 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--data-dir", type=Path, default=Path("data"))
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--weights", type=Path, default=Path("models/avhubert/base_vox_iter5.pt"))
-    parser.add_argument("--landmarker", type=Path, default=Path("models/mediapipe/face_landmarker.task"))
+    parser.add_argument(
+        "--weights", type=Path, default=Path("models/avhubert/base_vox_iter5.pt")
+    )
+    parser.add_argument(
+        "--landmarker", type=Path, default=Path("models/mediapipe/face_landmarker.task")
+    )
     parser.add_argument("--eye-px", type=float, default=64.0)
-    parser.add_argument("--locator", type=Path, help="YuNet model for small faces (P-001 amendment A10)")
+    parser.add_argument(
+        "--locator", type=Path, help="YuNet model for small faces (P-001 amendment A10)"
+    )
     parser.add_argument("--windows", type=int, default=3)
-    parser.add_argument("--step", type=float, default=2.0, help="seconds between window starts")
+    parser.add_argument(
+        "--step", type=float, default=2.0, help="seconds between window starts"
+    )
     parser.add_argument("--workers", type=int, default=6)
     parser.add_argument("--limit", type=int)
-    parser.add_argument("--cuts", type=Path, help="neutralizer sidecar with kept_sec per clip")
+    parser.add_argument(
+        "--cuts", type=Path, help="neutralizer sidecar with kept_sec per clip"
+    )
     arguments = parser.parse_args(argv)
 
-    from deepfake_detection.avsync.features import cache_path, encode, init_worker, prepare_window
+    from deepfake_detection.avsync.features import (
+        cache_path,
+        encode,
+        init_worker,
+        prepare_window,
+    )
     from deepfake_detection.streams.avhubert import load_avhubert
 
     with arguments.manifest.open(newline="", encoding="utf-8-sig") as handle:
@@ -78,8 +107,11 @@ def main(argv: list[str] | None = None) -> int:
         # Only final outcomes count as done. A decode error under memory
         # pressure is transient, and skipping it on resume would lose the window.
         with index_path.open(newline="", encoding="utf-8") as handle:
-            done = {r["window_id"] for r in csv.DictReader(handle)
-                    if r["status"] in {"ok", "no face", "no audio"}}
+            done = {
+                r["window_id"]
+                for r in csv.DictReader(handle)
+                if r["status"] in {"ok", "no face", "no audio"}
+            }
 
     paths = []
     for row in rows:
@@ -90,15 +122,26 @@ def main(argv: list[str] | None = None) -> int:
     lengths: dict[str, float] = {}
     if arguments.cuts and arguments.cuts.exists():
         with arguments.cuts.open(newline="", encoding="utf-8") as handle:
-            lengths = {r["clip_id"]: float(r["kept_sec"]) for r in csv.DictReader(handle) if r.get("kept_sec")}
+            lengths = {
+                r["clip_id"]: float(r["kept_sec"])
+                for r in csv.DictReader(handle)
+                if r.get("kept_sec")
+            }
     missing = [i for i, row in enumerate(rows) if row["clip_id"] not in lengths]
     with ThreadPoolExecutor(16) as pool:
-        for i, value in zip(missing, pool.map(_duration, [paths[i] for i in missing]), strict=True):
+        for i, value in zip(
+            missing, pool.map(_duration, [paths[i] for i in missing]), strict=True
+        ):
             lengths[rows[i]["clip_id"]] = value
 
     jobs, meta = [], []
     for row, path in zip(rows, paths, strict=True):
-        for start in window_starts(lengths[row["clip_id"]], row.get("sync_start_sec", "") or "", arguments.windows, arguments.step):
+        for start in window_starts(
+            lengths[row["clip_id"]],
+            row.get("sync_start_sec", "") or "",
+            arguments.windows,
+            arguments.step,
+        ):
             window_id = f"{row['clip_id']}@{start:.2f}"
             if window_id in done:
                 continue
@@ -111,24 +154,47 @@ def main(argv: list[str] | None = None) -> int:
         writer = csv.DictWriter(handle, fieldnames=fields)
         if not done:
             writer.writeheader()
-        with Pool(arguments.workers, initializer=init_worker,
-                  initargs=(str(arguments.landmarker), arguments.eye_px,
-                            str(arguments.locator) if arguments.locator else None)) as pool:
+        with Pool(
+            arguments.workers,
+            initializer=init_worker,
+            initargs=(
+                str(arguments.landmarker),
+                arguments.eye_px,
+                str(arguments.locator) if arguments.locator else None,
+            ),
+        ) as pool:
             for count, ((clip_id, window_id, start), (face, crops, audio)) in enumerate(
-                zip(meta, pool.imap(prepare_window, jobs, chunksize=2), strict=True), start=1
+                zip(meta, pool.imap(prepare_window, jobs, chunksize=2), strict=True),
+                start=1,
             ):
                 target = cache_path(arguments.output, window_id)
                 if crops is None or audio is None or len(audio) == 0:
-                    status = face if isinstance(face, str) else ("no audio" if crops is not None else "no face")
+                    status = (
+                        face
+                        if isinstance(face, str)
+                        else ("no audio" if crops is not None else "no face")
+                    )
                     face_share = 0.0 if isinstance(face, str) else float(face)
                     file = ""
                 else:
                     status, face_share = "ok", float(face)
                     target.parent.mkdir(parents=True, exist_ok=True)
-                    np.savez(target, face=np.float32(face_share), **encode(model, crops, audio))
+                    np.savez(
+                        target,
+                        face=np.float32(face_share),
+                        **encode(model, crops, audio),
+                    )
                     file = str(target.relative_to(arguments.output)).replace("\\", "/")
-                writer.writerow({"clip_id": clip_id, "window_id": window_id, "start": start,
-                                 "file": file, "face": round(face_share, 4), "status": status})
+                writer.writerow(
+                    {
+                        "clip_id": clip_id,
+                        "window_id": window_id,
+                        "start": start,
+                        "file": file,
+                        "face": round(face_share, 4),
+                        "status": status,
+                    }
+                )
                 if count % 500 == 0:
                     handle.flush()
                     print(f"{count}/{len(jobs)}", flush=True)

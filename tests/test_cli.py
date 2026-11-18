@@ -495,7 +495,9 @@ def _predictions(path: Path, ids: range, offset: float = 0.0) -> Path:
     for index in ids:
         label = index % 2
         method = "fake" if label else "real"
-        lines.append(f"c{index},{label},{0.2 + 0.6 * label + offset},id{index},{method}")
+        lines.append(
+            f"c{index},{label},{0.2 + 0.6 * label + offset},id{index},{method}"
+        )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
 
@@ -503,19 +505,52 @@ def _predictions(path: Path, ids: range, offset: float = 0.0) -> Path:
 def test_threshold_command_refuses_a_test_split(tmp_path: Path) -> None:
     predictions = _predictions(tmp_path / "test.csv", range(4))
     with pytest.raises(SystemExit):
-        main(["threshold", "--predictions", str(predictions), "--split", "test",
-              "--output", str(tmp_path / "t.json")])
+        main(
+            [
+                "threshold",
+                "--predictions",
+                str(predictions),
+                "--split",
+                "test",
+                "--output",
+                str(tmp_path / "t.json"),
+            ]
+        )
 
 
 def test_threshold_file_carries_into_the_report(tmp_path: Path) -> None:
     validation = _predictions(tmp_path / "val.csv", range(0, 8))
     test = _predictions(tmp_path / "test.csv", range(100, 108), offset=0.05)
     threshold = tmp_path / "threshold.json"
-    main(["threshold", "--predictions", str(validation), "--split", "val", "--output", str(threshold)])
+    main(
+        [
+            "threshold",
+            "--predictions",
+            str(validation),
+            "--split",
+            "val",
+            "--output",
+            str(threshold),
+        ]
+    )
     report = tmp_path / "report.json"
-    assert main(["evaluate", "predictions", "--predictions", str(test),
-                 "--threshold-file", str(threshold), "--output", str(report),
-                 "--bootstrap-samples", "10"]) == 0
+    assert (
+        main(
+            [
+                "evaluate",
+                "predictions",
+                "--predictions",
+                str(test),
+                "--threshold-file",
+                str(threshold),
+                "--output",
+                str(report),
+                "--bootstrap-samples",
+                "10",
+            ]
+        )
+        == 0
+    )
     written = json.loads(report.read_text(encoding="utf-8"))
     assert written["threshold_source"]["split"] == "val"
 
@@ -523,8 +558,29 @@ def test_threshold_file_carries_into_the_report(tmp_path: Path) -> None:
 def test_a_threshold_chosen_on_the_evaluated_rows_is_refused(tmp_path: Path) -> None:
     rows = _predictions(tmp_path / "val.csv", range(0, 8))
     threshold = tmp_path / "threshold.json"
-    main(["threshold", "--predictions", str(rows), "--split", "val", "--output", str(threshold)])
+    main(
+        [
+            "threshold",
+            "--predictions",
+            str(rows),
+            "--split",
+            "val",
+            "--output",
+            str(threshold),
+        ]
+    )
     with pytest.raises(ValueError, match="selected on"):
-        main(["evaluate", "predictions", "--predictions", str(rows),
-              "--threshold-file", str(threshold), "--output", str(tmp_path / "r.json"),
-              "--bootstrap-samples", "10"])
+        main(
+            [
+                "evaluate",
+                "predictions",
+                "--predictions",
+                str(rows),
+                "--threshold-file",
+                str(threshold),
+                "--output",
+                str(tmp_path / "r.json"),
+                "--bootstrap-samples",
+                "10",
+            ]
+        )

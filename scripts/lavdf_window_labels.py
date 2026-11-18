@@ -62,7 +62,9 @@ def main(argv: list[str] | None = None) -> int:
         writer.writeheader()
         writer.writerows(out)
     summary = {f"file {a} -> window {b}": n for (a, b), n in sorted(moves.items())}
-    args.output.with_suffix(".json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
+    args.output.with_suffix(".json").write_text(
+        json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+    )
     print(json.dumps(summary, indent=2))
     return 0
 

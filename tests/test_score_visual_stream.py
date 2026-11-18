@@ -15,16 +15,26 @@ def _module():
     return module
 
 
-HISTORY = {"config": {"stream": "visual-test", "model": {
-    "backbone": "resnet18", "global_pool": "avg", "temporal": "gru", "temporal_hidden": 32,
-    "common_dim": 16, "frozen_backbone": True}}}
+HISTORY = {
+    "config": {
+        "stream": "visual-test",
+        "model": {
+            "backbone": "resnet18",
+            "global_pool": "avg",
+            "temporal": "gru",
+            "temporal_hidden": 32,
+            "common_dim": 16,
+            "frozen_backbone": True,
+        },
+    }
+}
 
 
 def test_rebuilt_stream_matches_the_trained_shape_and_loads_its_weights():
     module = _module()
     trained = module.stream_from_history(HISTORY)
     rebuilt = module.stream_from_history(HISTORY)
-    rebuilt.load_state_dict(trained.state_dict())          # strict: same architecture
+    rebuilt.load_state_dict(trained.state_dict())  # strict: same architecture
     frames = torch.randn(1, 4, 3, 64, 64)
     trained.eval()
     rebuilt.eval()

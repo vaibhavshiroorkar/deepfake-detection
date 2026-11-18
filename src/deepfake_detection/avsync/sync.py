@@ -9,6 +9,7 @@ A small audio-video offset is common in genuine uploads, so `best_offset`
 takes the highest mean agreement over shifts of up to `max_shift` frames
 (40 ms each) instead of trusting zero.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -20,7 +21,9 @@ from deepfake_detection.streams.avhubert import AVHubert, audio_features
 FRAME_SAMPLES = 640  # 16 kHz / 25 fps
 
 
-def model_inputs(lips: np.ndarray, audio: np.ndarray, device: str | torch.device) -> tuple[torch.Tensor, torch.Tensor]:
+def model_inputs(
+    lips: np.ndarray, audio: np.ndarray, device: str | torch.device
+) -> tuple[torch.Tensor, torch.Tensor]:
     """Lips [T, 88, 88] and a waveform to model tensors with the same T.
 
     The audio is cut or zero-padded to exactly T * 640 samples first, so both
@@ -35,7 +38,13 @@ def model_inputs(lips: np.ndarray, audio: np.ndarray, device: str | torch.device
 
 
 @torch.no_grad()
-def agreement(model: AVHubert, video: torch.Tensor, audio: torch.Tensor, *, layer: int | None = None) -> torch.Tensor:
+def agreement(
+    model: AVHubert,
+    video: torch.Tensor,
+    audio: torch.Tensor,
+    *,
+    layer: int | None = None,
+) -> torch.Tensor:
     """Per-frame cosine of the lips-only and audio-only passes, [B, T]."""
     lips = model(video=video, output_layer=layer)
     sound = model(audio=audio, output_layer=layer)
@@ -43,15 +52,25 @@ def agreement(model: AVHubert, video: torch.Tensor, audio: torch.Tensor, *, laye
 
 
 @torch.no_grad()
-def best_offset(model: AVHubert, video: torch.Tensor, audio: torch.Tensor, *, max_shift: int = 3,
-                layer: int | None = None) -> tuple[float, int]:
+def best_offset(
+    model: AVHubert,
+    video: torch.Tensor,
+    audio: torch.Tensor,
+    *,
+    max_shift: int = 3,
+    layer: int | None = None,
+) -> tuple[float, int]:
     """Highest mean agreement over audio shifts in [-max_shift, max_shift] frames, and that shift."""
     lips = model(video=video, output_layer=layer)[0]
     sound = model(audio=audio, output_layer=layer)[0]
     best = (-2.0, 0)
     frames = lips.shape[0]
     for shift in range(-max_shift, max_shift + 1):
-        a, b = (lips[shift:], sound[: frames - shift]) if shift >= 0 else (lips[:shift], sound[-shift:])
+        a, b = (
+            (lips[shift:], sound[: frames - shift])
+            if shift >= 0
+            else (lips[:shift], sound[-shift:])
+        )
         value = F.cosine_similarity(a, b, dim=-1).mean().item()
         best = max(best, (value, shift))
     return best

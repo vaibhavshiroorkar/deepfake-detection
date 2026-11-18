@@ -32,34 +32,84 @@ def _fixture(tmp: Path, parts, drop_audio_clip=None):
         labels = rng.integers(0, 2, n)
         for seed in (17, 29, 43):
             noise = np.random.default_rng(seed).normal(0, 1, (n, 3))
+
             def prob(k, gain, labels=labels, noise=noise):
                 return 1 / (1 + np.exp(-(labels * gain + noise[:, k])))
-            clip_part = "lavdf-test" if part == "lavdf-window" else part   # same clips, other label
-            base = [{"clip_id": f"{clip_part}-{i}", "label": int(labels[i]), "source": f"id{i // 4}"} for i in range(n)]
-            sync_dir = tmp / ("sync" if part in ("val", "test", "test-identity-strict") else "targets")
-            _write(sync_dir / f"sync-{part}-seed{seed}-predictions.csv",
-                   [{**b, "probability": f"{prob(2, 0.5)[i]:.6f}"} for i, b in enumerate(base)])
+
+            clip_part = (
+                "lavdf-test" if part == "lavdf-window" else part
+            )  # same clips, other label
+            base = [
+                {
+                    "clip_id": f"{clip_part}-{i}",
+                    "label": int(labels[i]),
+                    "source": f"id{i // 4}",
+                }
+                for i in range(n)
+            ]
+            sync_dir = tmp / (
+                "sync" if part in ("val", "test", "test-identity-strict") else "targets"
+            )
+            _write(
+                sync_dir / f"sync-{part}-seed{seed}-predictions.csv",
+                [
+                    {**b, "probability": f"{prob(2, 0.5)[i]:.6f}"}
+                    for i, b in enumerate(base)
+                ],
+            )
             if part == "lavdf-window":
-                continue                     # branch files are shared with lavdf-test
-            _write(tmp / "branches" / f"visual-seed{seed}-{part}-predictions.csv",
-                   [{**b, "probability": f"{prob(0, 0.7)[i]:.6f}"} for i, b in enumerate(base)])
-            audio = [{**b, "probability": f"{prob(1, 2.0)[i]:.6f}"} for i, b in enumerate(base)]
+                continue  # branch files are shared with lavdf-test
+            _write(
+                tmp / "branches" / f"visual-seed{seed}-{part}-predictions.csv",
+                [
+                    {**b, "probability": f"{prob(0, 0.7)[i]:.6f}"}
+                    for i, b in enumerate(base)
+                ],
+            )
+            audio = [
+                {**b, "probability": f"{prob(1, 2.0)[i]:.6f}"}
+                for i, b in enumerate(base)
+            ]
             if drop_audio_clip is not None and seed == 29:
-                audio = [a for a in audio if a["clip_id"] != f"{part}-{drop_audio_clip}"]
+                audio = [
+                    a for a in audio if a["clip_id"] != f"{part}-{drop_audio_clip}"
+                ]
             _write(tmp / "branches" / f"audio-seed{seed}-{part}-predictions.csv", audio)
 
 
 def test_run_h2_end_to_end(tmp_path):
-    parts = ("val", "test", "test-identity-strict", "dfdc", "lavdf-test", "lavdf-window", "hifiavdf")
+    parts = (
+        "val",
+        "test",
+        "test-identity-strict",
+        "dfdc",
+        "lavdf-test",
+        "lavdf-window",
+        "hifiavdf",
+    )
     _fixture(tmp_path, parts, drop_audio_clip=3)
     out = tmp_path / "out"
-    code = _load().main(["--branch-dir", str(tmp_path / "branches"), "--sync-dir", str(tmp_path / "sync"),
-                         "--sync-targets", str(tmp_path / "targets"), "--output", str(out), "--samples", "100"])
+    code = _load().main(
+        [
+            "--branch-dir",
+            str(tmp_path / "branches"),
+            "--sync-dir",
+            str(tmp_path / "sync"),
+            "--sync-targets",
+            str(tmp_path / "targets"),
+            "--output",
+            str(out),
+            "--samples",
+            "100",
+        ]
+    )
     assert code == 0
     report = json.loads((out / "h2.json").read_text())
-    assert report["h2_success"] is True            # audio carries signal the visual path lacks
+    assert report["h2_success"] is True  # audio carries signal the visual path lacks
     dfdc = report["targets"]["dfdc"]
-    assert dfdc["clips_scored_by_every_seed"] == 159   # one clip lost its audio score in one seed
+    assert (
+        dfdc["clips_scored_by_every_seed"] == 159
+    )  # one clip lost its audio score in one seed
     assert report["targets"]["lavdf-window"]["clips_scored_by_every_seed"] == 159
     assert dfdc["estimate"] > 0
     assert set(report["holm"]) == {"test-identity-strict", "dfdc", "lavdf-window"}
@@ -67,11 +117,30 @@ def test_run_h2_end_to_end(tmp_path):
 
 
 def test_a_reported_target_not_scored_yet_is_skipped_not_fatal(tmp_path):
-    parts = ("val", "test", "test-identity-strict", "dfdc", "lavdf-test", "lavdf-window")   # no hifiavdf yet
+    parts = (
+        "val",
+        "test",
+        "test-identity-strict",
+        "dfdc",
+        "lavdf-test",
+        "lavdf-window",
+    )  # no hifiavdf yet
     _fixture(tmp_path, parts)
     out = tmp_path / "out"
-    code = _load().main(["--branch-dir", str(tmp_path / "branches"), "--sync-dir", str(tmp_path / "sync"),
-                         "--sync-targets", str(tmp_path / "targets"), "--output", str(out), "--samples", "50"])
+    code = _load().main(
+        [
+            "--branch-dir",
+            str(tmp_path / "branches"),
+            "--sync-dir",
+            str(tmp_path / "sync"),
+            "--sync-targets",
+            str(tmp_path / "targets"),
+            "--output",
+            str(out),
+            "--samples",
+            "50",
+        ]
+    )
     assert code == 0
     report = json.loads((out / "h2.json").read_text())
     assert "hifiavdf" not in report["targets"]
@@ -80,9 +149,29 @@ def test_a_reported_target_not_scored_yet_is_skipped_not_fatal(tmp_path):
 
 
 def test_a_missing_holm_target_is_fatal(tmp_path):
-    parts = ("val", "test", "test-identity-strict", "lavdf-test", "lavdf-window", "hifiavdf")  # no dfdc
+    parts = (
+        "val",
+        "test",
+        "test-identity-strict",
+        "lavdf-test",
+        "lavdf-window",
+        "hifiavdf",
+    )  # no dfdc
     _fixture(tmp_path, parts)
     import pytest
+
     with pytest.raises(FileNotFoundError):
-        _load().main(["--branch-dir", str(tmp_path / "branches"), "--sync-dir", str(tmp_path / "sync"),
-                      "--sync-targets", str(tmp_path / "targets"), "--output", str(tmp_path / "out"), "--samples", "10"])
+        _load().main(
+            [
+                "--branch-dir",
+                str(tmp_path / "branches"),
+                "--sync-dir",
+                str(tmp_path / "sync"),
+                "--sync-targets",
+                str(tmp_path / "targets"),
+                "--output",
+                str(tmp_path / "out"),
+                "--samples",
+                "10",
+            ]
+        )

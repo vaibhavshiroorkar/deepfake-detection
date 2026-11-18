@@ -46,34 +46,71 @@ def test_a_missing_number_fails_loudly():
 
 def test_seed_range_and_percent_formats():
     assert " to " in site.seed_range("sync.test-identity-strict.seed{}.auc")
-    assert site.percent_range("h4.hifiavdf-seed{}.conformal_real_only.fpr").endswith("%")
+    assert site.percent_range("h4.hifiavdf-seed{}.conformal_real_only.fpr").endswith(
+        "%"
+    )
 
 
-@pytest.mark.parametrize("info, message", [
-    ({"streams": [{"codec_type": "audio"}], "format": {"duration": "5"}}, "one video stream"),
-    ({"streams": [{"codec_type": "video"}, {"codec_type": "video"}], "format": {"duration": "5"}}, "one video stream"),
-    ({"streams": [{"codec_type": "video"}, {"codec_type": "audio"}, {"codec_type": "audio"}], "format": {"duration": "5"}}, "more than one audio"),
-    ({"streams": [{"codec_type": "video"}], "format": {"duration": "2.0"}}, "3 to 60 seconds"),
-    ({"streams": [{"codec_type": "video"}], "format": {"duration": "61"}}, "3 to 60 seconds"),
-    ({"streams": [{"codec_type": "video"}], "format": {}}, "3 to 60 seconds"),
-])
+@pytest.mark.parametrize(
+    "info, message",
+    [
+        (
+            {"streams": [{"codec_type": "audio"}], "format": {"duration": "5"}},
+            "one video stream",
+        ),
+        (
+            {
+                "streams": [{"codec_type": "video"}, {"codec_type": "video"}],
+                "format": {"duration": "5"},
+            },
+            "one video stream",
+        ),
+        (
+            {
+                "streams": [
+                    {"codec_type": "video"},
+                    {"codec_type": "audio"},
+                    {"codec_type": "audio"},
+                ],
+                "format": {"duration": "5"},
+            },
+            "more than one audio",
+        ),
+        (
+            {"streams": [{"codec_type": "video"}], "format": {"duration": "2.0"}},
+            "3 to 60 seconds",
+        ),
+        (
+            {"streams": [{"codec_type": "video"}], "format": {"duration": "61"}},
+            "3 to 60 seconds",
+        ),
+        ({"streams": [{"codec_type": "video"}], "format": {}}, "3 to 60 seconds"),
+    ],
+)
 def test_clip_rules_reject(info, message):
     with pytest.raises(site.ClipRejected, match=message):
         site.check_clip_rules(info)
 
 
 def test_clip_rules_accept_one_video_and_one_audio():
-    info = {"streams": [{"codec_type": "video"}, {"codec_type": "audio"}], "format": {"duration": "4.2"}}
+    info = {
+        "streams": [{"codec_type": "video"}, {"codec_type": "audio"}],
+        "format": {"duration": "4.2"},
+    }
     assert site.check_clip_rules(info) == 4.2
 
 
 def test_upload_rejects_a_wrong_extension(client):
-    response = client.post("/api/check", files={"file": ("notes.txt", b"hello", "text/plain")})
+    response = client.post(
+        "/api/check", files={"file": ("notes.txt", b"hello", "text/plain")}
+    )
     assert response.status_code == 400 and response.json()["status"] == "rejected"
 
 
 def test_upload_rejects_a_file_that_is_not_a_video(client):
-    response = client.post("/api/check", files={"file": ("clip.mp4", b"not a video", "video/mp4")})
+    response = client.post(
+        "/api/check", files={"file": ("clip.mp4", b"not a video", "video/mp4")}
+    )
     assert response.status_code == 400
     assert "could not be read" in response.json()["reason"]
 
@@ -90,15 +127,40 @@ class _FakeScorer:
         self.seen.append(upload)
         self.modes = [*getattr(self, "modes", []), mode]
         progress("scoring")
-        checks = {"face": CheckResult((0.9999,) * 3), "voice": CheckResult((0.01,) * 3),
-                  "sync": CheckResult(None, "no face in the mouth window")}
-        return [ScoreReport(checks, {"loudness_db": [-30.0] * 50, "windows": []}, 0.0, 3.0)]
+        checks = {
+            "face": CheckResult((0.9999,) * 3),
+            "voice": CheckResult((0.01,) * 3),
+            "sync": CheckResult(None, "no face in the mouth window"),
+        }
+        return [
+            ScoreReport(checks, {"loudness_db": [-30.0] * 50, "windows": []}, 0.0, 3.0)
+        ]
 
 
 def _clip(tmp_path):
     clip = tmp_path / "clip.mp4"
-    subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "testsrc=size=160x120:rate=25", "-f", "lavfi",
-                    "-i", "sine=frequency=440", "-t", "4", "-shortest", "-pix_fmt", "yuv420p", str(clip)], check=True)
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc=size=160x120:rate=25",
+            "-f",
+            "lavfi",
+            "-i",
+            "sine=frequency=440",
+            "-t",
+            "4",
+            "-shortest",
+            "-pix_fmt",
+            "yuv420p",
+            str(clip),
+        ],
+        check=True,
+    )
     return clip
 
 
@@ -107,16 +169,23 @@ def test_a_valid_clip_is_scored_through_a_job_and_deleted(monkeypatch, tmp_path)
     fake = _FakeScorer()
     monkeypatch.setattr(site, "make_scorer", lambda: fake)
     client = TestClient(create_app(_Registry()))
-    response = client.post("/api/check", files={"file": ("clip.mp4", _clip(tmp_path).read_bytes(), "video/mp4")})
+    response = client.post(
+        "/api/check",
+        files={"file": ("clip.mp4", _clip(tmp_path).read_bytes(), "video/mp4")},
+    )
     assert response.status_code == 202 and response.json()["status"] == "queued"
     job = response.json()["job"]
     site.detector().wait(job, timeout=10)
     body = client.get(f"/api/check/{job}").json()
     assert body["status"] == "done" and body["outcome"] == "signs"
     assert body["checks"]["face"]["raised"] is True
-    assert body["checks"]["sync"] == {"percentile": None, "raised": False, "reason": "no face in the mouth window"}
+    assert body["checks"]["sync"] == {
+        "percentile": None,
+        "raised": False,
+        "reason": "no face in the mouth window",
+    }
     assert "5 in 100" in body["how_sure"]
-    assert not fake.seen[0].exists()        # the upload is gone once the result can be read
+    assert not fake.seen[0].exists()  # the upload is gone once the result can be read
 
 
 def test_an_unknown_job_is_not_found(client):
@@ -124,28 +193,62 @@ def test_an_unknown_job_is_not_found(client):
 
 
 def test_present_turns_percentiles_into_whole_numbers_below_100():
-    outcome = {"kind": "cant_tell", "raised": [], "checks": {"face": {"percentile": 0.9995, "reason": None},
-               "voice": {"percentile": 0.12, "reason": None}, "sync": {"percentile": None, "reason": "x"}},
-               "trace": {}}
+    outcome = {
+        "kind": "cant_tell",
+        "raised": [],
+        "checks": {
+            "face": {"percentile": 0.9995, "reason": None},
+            "voice": {"percentile": 0.12, "reason": None},
+            "sync": {"percentile": None, "reason": "x"},
+        },
+        "trace": {},
+    }
     shown = site.present(outcome)
-    assert shown["checks"]["face"]["percentile"] == 99 and shown["checks"]["voice"]["percentile"] == 12
+    assert (
+        shown["checks"]["face"]["percentile"] == 99
+        and shown["checks"]["voice"]["percentile"] == 12
+    )
     assert shown["outcome"] == "cant_tell" and shown["summary"]
 
 
 def test_contact_honeypot_pretends_success_without_sending(client, monkeypatch):
-    monkeypatch.setattr(site, "send_contact", lambda *a: pytest.fail("a bot message was sent"))
-    response = client.post("/contact", data={"name": "Bot", "email": "b@x.io", "message": "buy now buy now", "website": "x"})
+    monkeypatch.setattr(
+        site, "send_contact", lambda *a: pytest.fail("a bot message was sent")
+    )
+    response = client.post(
+        "/contact",
+        data={
+            "name": "Bot",
+            "email": "b@x.io",
+            "message": "buy now buy now",
+            "website": "x",
+        },
+    )
     assert "your message was sent" in response.text
 
 
 def test_contact_says_when_it_is_not_connected(client):
-    response = client.post("/contact", data={"name": "Ana", "email": "ana@example.com", "message": "A question about H2."})
+    response = client.post(
+        "/contact",
+        data={
+            "name": "Ana",
+            "email": "ana@example.com",
+            "message": "A question about H2.",
+        },
+    )
     assert "not connected yet" in response.text
-    assert "A question about H2." in response.text      # the visitor's text is kept
+    assert "A question about H2." in response.text  # the visitor's text is kept
 
 
 def test_contact_rejects_a_bad_email(client):
-    response = client.post("/contact", data={"name": "Ana", "email": "not-an-email", "message": "A question about H2."})
+    response = client.post(
+        "/contact",
+        data={
+            "name": "Ana",
+            "email": "not-an-email",
+            "message": "A question about H2.",
+        },
+    )
     assert "valid email" in response.text
 
 
@@ -165,10 +268,16 @@ def test_html_pages_tell_the_browser_to_revalidate(client, route):
 
 
 def test_present_names_every_raised_check_in_plain_english():
-    checks = {n: {"percentile": 0.99, "reason": None} for n in ("face", "voice", "sync")}
-    two = site.present({"kind": "signs", "raised": ["face", "sync"], "checks": checks, "trace": {}})
+    checks = {
+        n: {"percentile": 0.99, "reason": None} for n in ("face", "voice", "sync")
+    }
+    two = site.present(
+        {"kind": "signs", "raised": ["face", "sync"], "checks": checks, "trace": {}}
+    )
     assert two["summary"].startswith("The face and lip-sync checks scored")
-    one = site.present({"kind": "signs", "raised": ["voice"], "checks": checks, "trace": {}})
+    one = site.present(
+        {"kind": "signs", "raised": ["voice"], "checks": checks, "trace": {}}
+    )
     assert one["summary"].startswith("The voice check scored")
 
 
@@ -180,52 +289,108 @@ def test_the_upload_limit_can_be_raised_for_a_private_demo(monkeypatch):
 
 
 def test_present_lists_three_raised_checks_with_commas():
-    checks = {n: {"percentile": 0.99, "reason": None} for n in ("face", "voice", "sync")}
-    three = site.present({"kind": "signs", "raised": ["face", "voice", "sync"], "checks": checks, "trace": {}})
+    checks = {
+        n: {"percentile": 0.99, "reason": None} for n in ("face", "voice", "sync")
+    }
+    three = site.present(
+        {
+            "kind": "signs",
+            "raised": ["face", "voice", "sync"],
+            "checks": checks,
+            "trace": {},
+        }
+    )
     assert three["summary"].startswith("The face, voice and lip-sync checks scored")
 
 
 def test_present_says_which_part_of_a_long_video_decided():
     checks = {"face": {"percentile": 0.999, "reason": None}}
-    shown = site.present({"kind": "signs", "raised": ["face"], "checks": checks, "trace": {},
-                          "parts": 5, "part": {"start": 6.04, "end": 9.04}})
-    assert shown["where"] == "The whole video was checked in 5 parts of 3 seconds. The most unusual part, 0:06 to 0:09, is shown."
-    one = site.present({"kind": "no_signs", "raised": [], "checks": checks, "trace": {},
-                        "parts": 1, "part": {"start": 0.52, "end": 3.52}})
-    assert one["where"] == "The video has 3 seconds of sound, checked as one part (0:00 to 0:03)."
+    shown = site.present(
+        {
+            "kind": "signs",
+            "raised": ["face"],
+            "checks": checks,
+            "trace": {},
+            "parts": 5,
+            "part": {"start": 6.04, "end": 9.04},
+        }
+    )
+    assert (
+        shown["where"]
+        == "The whole video was checked in 5 parts of 3 seconds. The most unusual part, 0:06 to 0:09, is shown."
+    )
+    one = site.present(
+        {
+            "kind": "no_signs",
+            "raised": [],
+            "checks": checks,
+            "trace": {},
+            "parts": 1,
+            "part": {"start": 0.52, "end": 3.52},
+        }
+    )
+    assert (
+        one["where"]
+        == "The video has 3 seconds of sound, checked as one part (0:00 to 0:03)."
+    )
 
 
 def test_present_puts_a_file_label_first_in_plain_words():
     checks = {"face": {"percentile": 0.5, "reason": None}}
-    shown = site.present({"kind": "signs", "raised": ["file"], "checks": checks, "trace": {},
-                          "file_check": ["an AIGC label marking the file as AI-generated content"]})
+    shown = site.present(
+        {
+            "kind": "signs",
+            "raised": ["file"],
+            "checks": checks,
+            "trace": {},
+            "file_check": ["an AIGC label marking the file as AI-generated content"],
+        }
+    )
     assert shown["summary"].startswith("The file carries an AIGC label")
-    assert shown["file_check"] == ["an AIGC label marking the file as AI-generated content"]
-    plain = site.present({"kind": "no_signs", "raised": [], "checks": checks, "trace": {}, "file_check": []})
+    assert shown["file_check"] == [
+        "an AIGC label marking the file as AI-generated content"
+    ]
+    plain = site.present(
+        {
+            "kind": "no_signs",
+            "raised": [],
+            "checks": checks,
+            "trace": {},
+            "file_check": [],
+        }
+    )
     assert plain["file_check"] == []
 
 
-@pytest.mark.parametrize(("suffix", "mode", "streams", "kind"), [
-    (".mp4", "", ["video", "audio"], "video"),
-    (".webm", "video", ["video", "audio"], "video"),
-    (".webm", "voice", ["audio"], "voice"),
-    (".webm", "", ["audio"], "voice"),
-    (".wav", "", ["audio"], "voice"),
-    (".mp3", "", ["audio"], "voice"),
-    (".jpg", "", ["video"], "picture"),
-    (".png", "picture", ["video"], "picture"),
-])
-def test_the_kind_of_input_comes_from_the_mode_the_name_and_the_streams(suffix, mode, streams, kind):
+@pytest.mark.parametrize(
+    ("suffix", "mode", "streams", "kind"),
+    [
+        (".mp4", "", ["video", "audio"], "video"),
+        (".webm", "video", ["video", "audio"], "video"),
+        (".webm", "voice", ["audio"], "voice"),
+        (".webm", "", ["audio"], "voice"),
+        (".wav", "", ["audio"], "voice"),
+        (".mp3", "", ["audio"], "voice"),
+        (".jpg", "", ["video"], "picture"),
+        (".png", "picture", ["video"], "picture"),
+    ],
+)
+def test_the_kind_of_input_comes_from_the_mode_the_name_and_the_streams(
+    suffix, mode, streams, kind
+):
     info = {"streams": [{"codec_type": s} for s in streams]}
     assert site.classify(suffix, mode, info) == kind
 
 
-@pytest.mark.parametrize(("suffix", "mode", "streams", "message"), [
-    (".txt", "", ["video"], "Use"),
-    (".wav", "", [], "no sound"),
-    (".mp4", "video", ["audio"], "no picture"),
-    (".jpg", "voice", ["video"], "no sound"),
-])
+@pytest.mark.parametrize(
+    ("suffix", "mode", "streams", "message"),
+    [
+        (".txt", "", ["video"], "Use"),
+        (".wav", "", [], "no sound"),
+        (".mp4", "video", ["audio"], "no picture"),
+        (".jpg", "voice", ["video"], "no sound"),
+    ],
+)
 def test_an_input_that_does_not_fit_its_kind_is_refused(suffix, mode, streams, message):
     with pytest.raises(site.ClipRejected, match=message):
         site.classify(suffix, mode, {"streams": [{"codec_type": s} for s in streams]})
@@ -234,9 +399,36 @@ def test_an_input_that_does_not_fit_its_kind_is_refused(suffix, mode, streams, m
 @pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="needs ffmpeg")
 def test_a_voice_and_a_picture_become_clips_the_checks_can_read(tmp_path):
     wav, png = tmp_path / "voice.wav", tmp_path / "face.png"
-    subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "sine=frequency=300", "-t", "4", str(wav)], check=True)
-    subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "testsrc=size=161x121", "-frames:v", "1", str(png)],
-                   check=True)
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "sine=frequency=300",
+            "-t",
+            "4",
+            str(wav),
+        ],
+        check=True,
+    )
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc=size=161x121",
+            "-frames:v",
+            "1",
+            str(png),
+        ],
+        check=True,
+    )
     voice = site.to_clip(wav, "voice", tmp_path / "voice.mp4")
     assert site.check_clip_rules(site.probe(voice)) == pytest.approx(4.0, abs=0.1)
     picture = site.to_clip(png, "picture", tmp_path / "face.mp4")
@@ -251,10 +443,27 @@ def test_a_recorded_voice_is_scored_as_a_voice(monkeypatch, tmp_path):
     monkeypatch.setattr(site, "make_scorer", lambda: fake)
     site.detector.cache_clear()
     wav = tmp_path / "voice.wav"
-    subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "sine=frequency=300", "-t", "4", str(wav)], check=True)
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "sine=frequency=300",
+            "-t",
+            "4",
+            str(wav),
+        ],
+        check=True,
+    )
     client = TestClient(create_app(_Registry()))
-    response = client.post("/api/check", files={"file": ("recording.wav", wav.read_bytes(), "audio/wav")},
-                           data={"mode": "voice"})
+    response = client.post(
+        "/api/check",
+        files={"file": ("recording.wav", wav.read_bytes(), "audio/wav")},
+        data={"mode": "voice"},
+    )
     assert response.status_code == 202
     site.detector().wait(response.json()["job"], timeout=10)
     assert fake.modes == ["voice"]
@@ -263,20 +472,42 @@ def test_a_recorded_voice_is_scored_as_a_voice(monkeypatch, tmp_path):
 
 def test_a_picture_and_a_voice_say_which_check_ran():
     checks = {"face": {"percentile": 0.5, "reason": None}}
-    picture = site.present({"kind": "no_signs", "raised": [], "checks": checks, "trace": {}, "input": "picture",
-                            "parts": 1, "part": {"start": 0.0, "end": 3.0}})
+    picture = site.present(
+        {
+            "kind": "no_signs",
+            "raised": [],
+            "checks": checks,
+            "trace": {},
+            "input": "picture",
+            "parts": 1,
+            "part": {"start": 0.0, "end": 3.0},
+        }
+    )
     assert picture["where"] == "A picture, checked by the face check only."
-    voice = site.present({"kind": "no_signs", "raised": [], "checks": checks, "trace": {}, "input": "voice",
-                          "parts": 2, "part": {"start": 3.0, "end": 6.0}})
-    assert voice["where"].startswith("A voice recording, checked by the voice check only.")
+    voice = site.present(
+        {
+            "kind": "no_signs",
+            "raised": [],
+            "checks": checks,
+            "trace": {},
+            "input": "voice",
+            "parts": 2,
+            "part": {"start": 3.0, "end": 6.0},
+        }
+    )
+    assert voice["where"].startswith(
+        "A voice recording, checked by the voice check only."
+    )
 
 
-def test_a_picture_is_refused_when_there_is_no_picture_calibration(monkeypatch, tmp_path):
+def test_a_picture_is_refused_when_there_is_no_picture_calibration(
+    monkeypatch, tmp_path
+):
     monkeypatch.setattr(site, "PICTURE_CALIBRATION", tmp_path / "missing.json")
     site.picture_calibration.cache_clear()
     with pytest.raises(site.ClipRejected, match="Pictures cannot be checked"):
         site.require_calibration("picture")
-    site.require_calibration("voice")          # voices and videos use the video calibration
+    site.require_calibration("voice")  # voices and videos use the video calibration
     site.picture_calibration.cache_clear()
 
 

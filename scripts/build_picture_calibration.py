@@ -30,7 +30,10 @@ sys.path.insert(0, str(ROOT / "src"))
 
 # corpus: (sync predictions that list the calibration clips, cleaned-clip manifest)
 CORPORA = {
-    "FakeAVCeleb": ("p001-sync/sync-test-identity-strict-seed17", "fakeavceleb-neutral"),
+    "FakeAVCeleb": (
+        "p001-sync/sync-test-identity-strict-seed17",
+        "fakeavceleb-neutral",
+    ),
     "DFDC": ("p001-sync-targets/sync-dfdc-seed17", "dfdc-neutral"),
     "LAV-DF": ("p001-sync-targets/sync-lavdf-window-seed17", "lavdf-test-neutral"),
     "HiFi-AVDF": ("p001-sync-targets/sync-hifiavdf-seed17", "hifiavdf-neutral"),
@@ -47,13 +50,29 @@ def draw(per_side: int, seed: int = 17) -> list[dict]:
     """Up to per_side real and per_side fake calibration clips per corpus, with their cleaned files."""
     chosen = []
     for corpus, (predictions, manifest) in CORPORA.items():
-        paths = {r["clip_id"]: r["video_path"] for r in _csv(ROOT / "data" / "manifests" / f"{manifest}.csv")}
-        rows = [r for r in _csv(ROOT / "results" / f"{predictions}-predictions.csv") if r["clip_id"] in paths]
+        paths = {
+            r["clip_id"]: r["video_path"]
+            for r in _csv(ROOT / "data" / "manifests" / f"{manifest}.csv")
+        }
+        rows = [
+            r
+            for r in _csv(ROOT / "results" / f"{predictions}-predictions.csv")
+            if r["clip_id"] in paths
+        ]
         for label in ("0", "1"):
-            side = sorted((r for r in rows if r["label"] == label), key=lambda r: r["clip_id"])
-            for r in random.Random(f"{seed}-{corpus}-{label}").sample(side, min(per_side, len(side))):
-                chosen.append({"corpus": corpus, "label": int(label), "clip_id": r["clip_id"],
-                               "path": ROOT / "data" / paths[r["clip_id"]]})
+            side = sorted(
+                (r for r in rows if r["label"] == label), key=lambda r: r["clip_id"]
+            )
+            draw_rng = random.Random(f"{seed}-{corpus}-{label}")  # noqa: S311 - a seeded sample, not security
+            for r in draw_rng.sample(side, min(per_side, len(side))):
+                chosen.append(
+                    {
+                        "corpus": corpus,
+                        "label": int(label),
+                        "clip_id": r["clip_id"],
+                        "path": ROOT / "data" / paths[r["clip_id"]],
+                    }
+                )
     return chosen
 
 
@@ -74,10 +93,30 @@ def main() -> int:
         with tempfile.TemporaryDirectory() as work:
             work = Path(work)
             jpg = work / "picture.jpg"
-            subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", str(FRAME_AT), "-i", str(clip["path"]),
-                            "-frames:v", "1", "-q:v", "2", str(jpg)], check=True)
+            subprocess.run(
+                [
+                    "ffmpeg",
+                    "-v",
+                    "error",
+                    "-y",
+                    "-ss",
+                    str(FRAME_AT),
+                    "-i",
+                    str(clip["path"]),
+                    "-frames:v",
+                    "1",
+                    "-q:v",
+                    "2",
+                    str(jpg),
+                ],
+                check=True,
+            )
             try:
-                parts = scorer.score(site.to_clip(jpg, "picture", work / "picture.mp4"), work / "job", mode="picture")
+                parts = scorer.score(
+                    site.to_clip(jpg, "picture", work / "picture.mp4"),
+                    work / "job",
+                    mode="picture",
+                )
             except ClipRefused:
                 skipped += 1
                 continue
@@ -85,15 +124,27 @@ def main() -> int:
         if face is None:
             skipped += 1
             continue
-        rows.append({"corpus": clip["corpus"], "label": clip["label"], "scores": {"face": face, "voice": None, "sync": None}})
+        rows.append(
+            {
+                "corpus": clip["corpus"],
+                "label": clip["label"],
+                "scores": {"face": face, "voice": None, "sync": None},
+            }
+        )
         if i % 50 == 0:
             print(f"{i + 1}/{len(clips)}", flush=True)
     calibration, summary = build(rows, checks=("face",))
     data = json.loads(calibration.to_json())
-    data["meta"] = {"built": date.today().isoformat(), "code_commit": _git_commit(), "device": arguments.device,
-                    "input": "picture: one frame at 1.0 s of a cleaned calibration clip, saved as JPEG",
-                    "per_side": arguments.per_side, "no_face": skipped, "outcomes": summary,
-                    "note": "Calibration frames come from P-001 test data; the site uses them only to place scores."}
+    data["meta"] = {
+        "built": date.today().isoformat(),
+        "code_commit": _git_commit(),
+        "device": arguments.device,
+        "input": "picture: one frame at 1.0 s of a cleaned calibration clip, saved as JPEG",
+        "per_side": arguments.per_side,
+        "no_face": skipped,
+        "outcomes": summary,
+        "note": "Calibration frames come from P-001 test data; the site uses them only to place scores.",
+    }
     out = ROOT / "results" / "web-calibration-picture.json"
     out.write_text(json.dumps(data, indent=1) + "\n", encoding="utf-8")
     print(json.dumps({"no_face": skipped, "outcomes": summary}, indent=1))

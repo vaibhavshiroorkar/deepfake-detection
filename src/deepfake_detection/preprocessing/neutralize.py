@@ -79,7 +79,9 @@ class NeutralSettings:
 
 
 def silence_bounds(
-    wave_samples: np.ndarray, rate: int = SAMPLE_RATE, threshold_dbfs: float = SILENCE_DBFS
+    wave_samples: np.ndarray,
+    rate: int = SAMPLE_RATE,
+    threshold_dbfs: float = SILENCE_DBFS,
 ) -> tuple[float, float]:
     """Seconds of digital silence at the start and at the end of a mono wave."""
     if wave_samples.size == 0:
@@ -128,16 +130,24 @@ def sound_windows(
 
 def normalize_level(samples: np.ndarray, target_dbfs: float) -> np.ndarray:
     """Scale to a fixed RMS level. A plain gain: no look-ahead, no delay."""
-    rms = float(np.sqrt(np.mean(np.square(samples, dtype=np.float64)))) if samples.size else 0.0
+    rms = (
+        float(np.sqrt(np.mean(np.square(samples, dtype=np.float64))))
+        if samples.size
+        else 0.0
+    )
     if rms <= 0:
         return samples.astype(np.float32)
-    return np.clip(samples * (10 ** (target_dbfs / 20) / rms), -1.0, 1.0).astype(np.float32)
+    return np.clip(samples * (10 ** (target_dbfs / 20) / rms), -1.0, 1.0).astype(
+        np.float32
+    )
 
 
 def dither(samples: np.ndarray, level_dbfs: float, seed_text: str) -> np.ndarray:
     """Add Gaussian noise at a fixed RMS level, the same recipe for every clip."""
     seed = int.from_bytes(hashlib.sha256(seed_text.encode()).digest()[:8], "little")
-    noise = np.random.default_rng(seed).normal(0.0, 10 ** (level_dbfs / 20), samples.shape)
+    noise = np.random.default_rng(seed).normal(
+        0.0, 10 ** (level_dbfs / 20), samples.shape
+    )
     return (samples + noise).astype(np.float32)
 
 
@@ -162,25 +172,68 @@ def _rate_control(settings: NeutralSettings) -> list[str]:
     if settings.video_bitrate is None:
         return ["-crf", str(settings.crf)]
     rate = settings.video_bitrate
-    return ["-b:v", rate, "-minrate", rate, "-maxrate", rate, "-bufsize", rate, "-x264-params", "nal-hrd=cbr"]
+    return [
+        "-b:v",
+        rate,
+        "-minrate",
+        rate,
+        "-maxrate",
+        rate,
+        "-bufsize",
+        rate,
+        "-x264-params",
+        "nal-hrd=cbr",
+    ]
 
 
 def ffmpeg_command(
-    source: Path, target: Path, start: float, end: float, audio_wav: Path | None, settings: NeutralSettings
+    source: Path,
+    target: Path,
+    start: float,
+    end: float,
+    audio_wav: Path | None,
+    settings: NeutralSettings,
 ) -> list[str]:
     command = [
-        "ffmpeg", "-y", "-v", "error", "-nostdin",
-        "-ss", f"{start:.4f}", "-to", f"{end:.4f}", "-i", str(source),
+        "ffmpeg",
+        "-y",
+        "-v",
+        "error",
+        "-nostdin",
+        "-ss",
+        f"{start:.4f}",
+        "-to",
+        f"{end:.4f}",
+        "-i",
+        str(source),
     ]
     if audio_wav is not None:
         command += ["-i", str(audio_wav)]
     command += [
-        "-map_metadata", "-1", "-map", "0:v:0",
-        "-vf", _video_filter(settings),
-        "-c:v", "libx264", "-preset", settings.preset, *_rate_control(settings), "-bf", "0",
+        "-map_metadata",
+        "-1",
+        "-map",
+        "0:v:0",
+        "-vf",
+        _video_filter(settings),
+        "-c:v",
+        "libx264",
+        "-preset",
+        settings.preset,
+        *_rate_control(settings),
+        "-bf",
+        "0",
     ]
     if audio_wav is not None:
-        command += ["-map", "1:a:0", "-c:a", "aac", "-b:a", settings.audio_bitrate, "-shortest"]
+        command += [
+            "-map",
+            "1:a:0",
+            "-c:a",
+            "aac",
+            "-b:a",
+            settings.audio_bitrate,
+            "-shortest",
+        ]
     else:
         command += ["-an"]
     command += ["-movflags", "+faststart", str(target)]
@@ -189,17 +242,48 @@ def ffmpeg_command(
 
 def _read_audio(path: Path) -> np.ndarray:
     run = subprocess.run(
-        ["ffmpeg", "-v", "error", "-nostdin", "-i", str(path), "-map", "0:a:0?", "-ac", "1",
-         "-ar", str(SAMPLE_RATE), "-f", "f32le", "pipe:1"],
-        capture_output=True, check=False,
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-nostdin",
+            "-i",
+            str(path),
+            "-map",
+            "0:a:0?",
+            "-ac",
+            "1",
+            "-ar",
+            str(SAMPLE_RATE),
+            "-f",
+            "f32le",
+            "pipe:1",
+        ],
+        capture_output=True,
+        check=False,
     )
-    return np.frombuffer(run.stdout, np.float32) if run.returncode == 0 else np.zeros(0, np.float32)
+    return (
+        np.frombuffer(run.stdout, np.float32)
+        if run.returncode == 0
+        else np.zeros(0, np.float32)
+    )
 
 
 def _duration(path: Path) -> float:
     run = subprocess.run(
-        ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "json", str(path)],
-        capture_output=True, text=True, check=True,
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "json",
+            str(path),
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
     )
     return float(json.loads(run.stdout)["format"]["duration"])
 
@@ -208,7 +292,9 @@ def plan_windows(source: Path, settings: NeutralSettings) -> list[tuple[float, f
     """Every `fixed_seconds` span of `source` that holds sound, from `sound_windows`."""
     audio = normalize_level(_read_audio(source), settings.loudness_dbfs)
     leading, trailing = silence_bounds(audio, SAMPLE_RATE, settings.silence_dbfs)
-    return sound_windows(_duration(source), leading, trailing, settings.fixed_seconds, settings.fps)
+    return sound_windows(
+        _duration(source), leading, trailing, settings.fixed_seconds, settings.fps
+    )
 
 
 def neutralize_clip(
@@ -223,7 +309,9 @@ def neutralize_clip(
     duration = _duration(source)
     if start is None:
         leading, trailing = silence_bounds(audio, SAMPLE_RATE, settings.silence_dbfs)
-        window = cut_window(duration, leading, trailing, settings.fixed_seconds, settings.fps)
+        window = cut_window(
+            duration, leading, trailing, settings.fixed_seconds, settings.fps
+        )
     else:
         window = (start, start + settings.fixed_seconds)
     if window is None:
@@ -236,9 +324,14 @@ def neutralize_clip(
             wav = Path(scratch) / "audio.wav"
             # Scale the kept span again so every clip has the same level.
             level = normalize_level(span, settings.loudness_dbfs)
-            write_wav(wav, dither(level, settings.dither_dbfs, source.name), SAMPLE_RATE)
-        run = subprocess.run(ffmpeg_command(source, target, start, end, wav, settings),
-                             capture_output=True, check=False)
+            write_wav(
+                wav, dither(level, settings.dither_dbfs, source.name), SAMPLE_RATE
+            )
+        run = subprocess.run(
+            ffmpeg_command(source, target, start, end, wav, settings),
+            capture_output=True,
+            check=False,
+        )
     if run.returncode != 0 or not target.is_file():
         return {"error": run.stderr.decode(errors="replace")[:200]}
     return {

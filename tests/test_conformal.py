@@ -19,7 +19,9 @@ def test_minimum_size_matches_the_known_59() -> None:
 def test_too_few_real_clips_flag_nothing() -> None:
     assert conformal_threshold([0.1] * 10, alpha=0.05) == math.inf
     assert neyman_pearson_threshold([0.1] * 58, alpha=0.05, delta=0.05) == math.inf
-    assert neyman_pearson_threshold(np.linspace(0, 1, 59), alpha=0.05, delta=0.05) == 1.0
+    assert (
+        neyman_pearson_threshold(np.linspace(0, 1, 59), alpha=0.05, delta=0.05) == 1.0
+    )
 
 
 def test_conformal_threshold_holds_fpr_on_average() -> None:
@@ -37,7 +39,9 @@ def test_umbrella_threshold_holds_fpr_with_high_probability() -> None:
     violations = 0
     trials = 1000
     for _ in range(trials):
-        threshold = neyman_pearson_threshold(generator.normal(size=200), alpha=0.05, delta=0.1)
+        threshold = neyman_pearson_threshold(
+            generator.normal(size=200), alpha=0.05, delta=0.1
+        )
         violations += (generator.normal(size=20000) > threshold).mean() > 0.05
     assert violations / trials <= 0.1 + 0.03
 
@@ -45,12 +49,16 @@ def test_umbrella_threshold_holds_fpr_with_high_probability() -> None:
 def test_a_shifted_target_breaks_a_source_threshold_but_not_a_target_one() -> None:
     generator = np.random.default_rng(2)
     source_real = generator.normal(0, 1, 500)
-    target_real = generator.normal(1.5, 1, 500)  # a codec change moves every real score up
+    target_real = generator.normal(
+        1.5, 1, 500
+    )  # a codec change moves every real score up
     target_fake = generator.normal(4.0, 1, 500)
     labels = [0] * 300 + [1] * 500
     scores = np.concatenate([target_real[200:], target_fake])
     source = operating_point(conformal_threshold(source_real, 0.05), labels, scores)
-    target = operating_point(conformal_threshold(target_real[:200], 0.05), labels, scores)
+    target = operating_point(
+        conformal_threshold(target_real[:200], 0.05), labels, scores
+    )
     assert source.false_positive_rate > 0.3
     assert target.false_positive_rate < 0.1
     assert target.true_positive_rate > 0.7  # about 0.80 expected at 2.5 SD separation

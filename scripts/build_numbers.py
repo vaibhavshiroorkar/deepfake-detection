@@ -27,42 +27,75 @@ def _put(numbers: dict, key: str, value, source: Path) -> None:
 
 
 def audits(numbers: dict) -> None:
-    names = {"fakeavceleb": "fakeavceleb.raw", "fakeavceleb-neutral-v1": "fakeavceleb.v1",
-             "fakeavceleb-neutral": "fakeavceleb.neutral", "fakeavceleb-neutral-v4-check": "fakeavceleb.v4check",
-             "lavdf-files": "lavdf.raw", "dfdc": "dfdc.raw", "hifiavdf": "hifiavdf.raw",
-             "hifiavdf-neutral": "hifiavdf.neutral", "dfdc-neutral": "dfdc.neutral",
-             "lavdf-test-neutral": "lavdf.neutral",
-             "lavdf-window-neutral": "lavdf.window",   # LAV-DF by window label (A9)
-             "fakeavceleb-neutral-cbr-check": "fakeavceleb.cbrcheck",   # A18, check sample
-             "fakeavceleb-neutral-cbr": "fakeavceleb.cbr"}              # A18, all of FakeAVCeleb
+    names = {
+        "fakeavceleb": "fakeavceleb.raw",
+        "fakeavceleb-neutral-v1": "fakeavceleb.v1",
+        "fakeavceleb-neutral": "fakeavceleb.neutral",
+        "fakeavceleb-neutral-v4-check": "fakeavceleb.v4check",
+        "lavdf-files": "lavdf.raw",
+        "dfdc": "dfdc.raw",
+        "hifiavdf": "hifiavdf.raw",
+        "hifiavdf-neutral": "hifiavdf.neutral",
+        "dfdc-neutral": "dfdc.neutral",
+        "lavdf-test-neutral": "lavdf.neutral",
+        "lavdf-window-neutral": "lavdf.window",  # LAV-DF by window label (A9)
+        "fakeavceleb-neutral-cbr-check": "fakeavceleb.cbrcheck",  # A18, check sample
+        "fakeavceleb-neutral-cbr": "fakeavceleb.cbr",
+    }  # A18, all of FakeAVCeleb
     for folder, key in names.items():
         path = RESULTS / "shortcut-audit" / folder / "summary.json"
         if not path.exists():
             continue
         summary = json.loads(path.read_text(encoding="utf-8"))
         _put(numbers, f"audit.{key}.clips", summary["clips_read"], path)
-        for label, short in (("clip_fake", "clip"), ("video_fake", "video"), ("audio_fake", "audio")):
+        for label, short in (
+            ("clip_fake", "clip"),
+            ("video_fake", "video"),
+            ("audio_fake", "audio"),
+        ):
             if label in summary:
-                _put(numbers, f"audit.{key}.{short}", round(summary[label]["shortcut_ceiling_auc"], 3), path)
+                _put(
+                    numbers,
+                    f"audit.{key}.{short}",
+                    round(summary[label]["shortcut_ceiling_auc"], 3),
+                    path,
+                )
                 for cue, auc in summary[label]["cue_auc"].items():
                     if auc == auc:  # skip NaN cues
-                        _put(numbers, f"audit.{key}.cue.{short}.{cue}", round(auc, 3), path)
+                        _put(
+                            numbers,
+                            f"audit.{key}.cue.{short}.{cue}",
+                            round(auc, 3),
+                            path,
+                        )
         census = summary.get("codec_census", {})
         for kind, entry in census.items():
             _put(numbers, f"audit.{key}.census.{kind}.clips", entry["clips"], path)
             for field in ("video_codec", "audio_codec"):
                 for codec, count in entry.get(field, {}).items():
-                    _put(numbers, f"audit.{key}.census.{kind}.{field}.{codec or 'none'}", count, path)
+                    _put(
+                        numbers,
+                        f"audit.{key}.census.{kind}.{field}.{codec or 'none'}",
+                        count,
+                        path,
+                    )
 
 
 def neutralization(numbers: dict) -> None:
-    path = RESULTS / "shortcut-audit" / "fakeavceleb-neutral" / "neutralize-summary.json"
+    path = (
+        RESULTS / "shortcut-audit" / "fakeavceleb-neutral" / "neutralize-summary.json"
+    )
     if path.exists():
         summary = json.loads(path.read_text(encoding="utf-8"))
         _put(numbers, "neutral.fakeavceleb.kept", summary["rows_out"], path)
         _put(numbers, "neutral.fakeavceleb.refused", summary["rows_failed"], path)
         for kind, reasons in summary.get("refused_by_category", {}).items():
-            _put(numbers, f"neutral.fakeavceleb.refused.{kind}", sum(reasons.values()), path)
+            _put(
+                numbers,
+                f"neutral.fakeavceleb.refused.{kind}",
+                sum(reasons.values()),
+                path,
+            )
         for kind, count in summary.get("rows_in_by_category", {}).items():
             _put(numbers, f"neutral.fakeavceleb.in.{kind}", count, path)
 
@@ -72,7 +105,12 @@ def metrics_file(numbers: dict, prefix: str, path: Path) -> None:
     overall = report["overall"]["metrics"]
     _put(numbers, f"{prefix}.n", report["overall"]["total"], path)
     # n counts every clip in the set; scored leaves out clips with no usable window (no face, no audio).
-    _put(numbers, f"{prefix}.scored", report["overall"].get("scored", report["overall"]["total"]), path)
+    _put(
+        numbers,
+        f"{prefix}.scored",
+        report["overall"].get("scored", report["overall"]["total"]),
+        path,
+    )
     if overall is None:
         # A set with one class has no AUC (the audio path on DFDC: every clip has real audio).
         _put(numbers, f"{prefix}.single_class", "yes", path)
@@ -83,10 +121,20 @@ def metrics_file(numbers: dict, prefix: str, path: Path) -> None:
     _put(numbers, f"{prefix}.auc_low", round(intervals["roc_auc"]["lower"], 3), path)
     _put(numbers, f"{prefix}.auc_high", round(intervals["roc_auc"]["upper"], 3), path)
     _put(numbers, f"{prefix}.fpr", round(overall["fpr"], 3), path)
-    _put(numbers, f"{prefix}.balanced_accuracy", round(overall["balanced_accuracy"], 3), path)
+    _put(
+        numbers,
+        f"{prefix}.balanced_accuracy",
+        round(overall["balanced_accuracy"], 3),
+        path,
+    )
     for method, entry in report.get("per_method", {}).items():
         if entry.get("metrics"):
-            _put(numbers, f"{prefix}.method.{method}", round(entry["metrics"]["roc_auc"], 3), path)
+            _put(
+                numbers,
+                f"{prefix}.method.{method}",
+                round(entry["metrics"]["roc_auc"], 3),
+                path,
+            )
 
 
 def sync(numbers: dict) -> None:
@@ -95,7 +143,11 @@ def sync(numbers: dict) -> None:
         if not directory.exists():
             continue
         for path in sorted(directory.glob("sync-*-seed*-metrics.json")):
-            part, seed = path.stem.removeprefix("sync-").removesuffix("-metrics").rsplit("-seed", 1)
+            part, seed = (
+                path.stem.removeprefix("sync-")
+                .removesuffix("-metrics")
+                .rsplit("-seed", 1)
+            )
             metrics_file(numbers, f"{base}.{part}.seed{seed}", path)
 
 
@@ -116,8 +168,18 @@ def h4(numbers: dict) -> None:
         report = json.loads(path.read_text(encoding="utf-8"))
         key = path.stem.replace("sync-", "h4.")
         for name, values in report["results"].items():
-            _put(numbers, f"{key}.{name}.fpr", round(values["false_positive_rate"], 3), path)
-            _put(numbers, f"{key}.{name}.tpr", round(values["true_positive_rate"], 3), path)
+            _put(
+                numbers,
+                f"{key}.{name}.fpr",
+                round(values["false_positive_rate"], 3),
+                path,
+            )
+            _put(
+                numbers,
+                f"{key}.{name}.tpr",
+                round(values["true_positive_rate"], 3),
+                path,
+            )
         _put(numbers, f"{key}.success", _yes(report["h4_success"]), path)
 
 
@@ -182,10 +244,19 @@ def h2_levels(numbers: dict) -> None:
     """Each path's AUC on the clip label, on the clips H2 compares, so the differences can be read
     against their levels: h2.{target}.seed{S}.auc.{path}, and the min and max over seeds."""
     directory = RESULTS / "p001-h2"
-    paths = {"fusion": "fusion", "visual": "visual_logit", "audio": "audio_logit", "sync": "sync_logit"}
+    paths = {
+        "fusion": "fusion",
+        "visual": "visual_logit",
+        "audio": "audio_logit",
+        "sync": "sync_logit",
+    }
     by_target: dict[str, dict[str, list[float]]] = {}
     for path in sorted(directory.glob("fusion-*-seed*-predictions.csv")):
-        target, seed = path.stem.removeprefix("fusion-").removesuffix("-predictions").rsplit("-seed", 1)
+        target, seed = (
+            path.stem.removeprefix("fusion-")
+            .removesuffix("-predictions")
+            .rsplit("-seed", 1)
+        )
         with path.open(encoding="utf-8", newline="") as handle:
             rows = list(csv.DictReader(handle))
         labels = [int(row["label"]) for row in rows]
@@ -221,26 +292,54 @@ def h2_checks(numbers: dict) -> None:
     h2_dir, branch_dir = RESULTS / "p001-h2", RESULTS / "p001-branches"
     cloned = "RealVideo-FakeAudio"
     gains = []
-    for path in sorted(h2_dir.glob("fusion-test-identity-strict-seed*-predictions.csv")):
+    for path in sorted(
+        h2_dir.glob("fusion-test-identity-strict-seed*-predictions.csv")
+    ):
         seed = path.stem.removesuffix("-predictions").rsplit("-seed", 1)[1]
-        types_file = branch_dir / f"visual-seed{seed}-test-identity-strict-predictions.csv"
+        types_file = (
+            branch_dir / f"visual-seed{seed}-test-identity-strict-predictions.csv"
+        )
         types = {row["clip_id"]: row["manipulation_type"] for row in _rows(types_file)}
         rows = _rows(path)
         kept = [row for row in rows if types[row["clip_id"]] != cloned]
         for name, subset in (("diff_all", rows), ("diff_without_cloned_voice", kept)):
             labels = [int(row["label"]) for row in subset]
-            diff = _auc(labels, [float(r["fusion"]) for r in subset]) - _auc(labels, [float(r["visual_logit"]) for r in subset])
-            _put(numbers, f"h2.test-identity-strict.seed{seed}.{name}", round(diff, 3), path)
-        gains.append(numbers[f"h2.test-identity-strict.seed{seed}.diff_without_cloned_voice"]["value"])
+            diff = _auc(labels, [float(r["fusion"]) for r in subset]) - _auc(
+                labels, [float(r["visual_logit"]) for r in subset]
+            )
+            _put(
+                numbers,
+                f"h2.test-identity-strict.seed{seed}.{name}",
+                round(diff, 3),
+                path,
+            )
+        gains.append(
+            numbers[f"h2.test-identity-strict.seed{seed}.diff_without_cloned_voice"][
+                "value"
+            ]
+        )
     if gains:
-        _put_range(numbers, "h2.test-identity-strict.without_cloned_voice", gains, h2_dir / "fusion-test-identity-strict-seed*-predictions.csv")
+        _put_range(
+            numbers,
+            "h2.test-identity-strict.without_cloned_voice",
+            gains,
+            h2_dir / "fusion-test-identity-strict-seed*-predictions.csv",
+        )
     by_type: dict[str, list[float]] = {}
     for path in sorted(branch_dir.glob("visual-seed*-lavdf-test-predictions.csv")):
         seed = path.stem.removeprefix("visual-seed").split("-", 1)[0]
         rows = _rows(path)
-        reals = [float(r["probability"]) for r in rows if r["manipulation_type"] == "RealVideo-RealAudio"]
-        for kind in sorted({r["manipulation_type"] for r in rows} - {"RealVideo-RealAudio"}):
-            fakes = [float(r["probability"]) for r in rows if r["manipulation_type"] == kind]
+        reals = [
+            float(r["probability"])
+            for r in rows
+            if r["manipulation_type"] == "RealVideo-RealAudio"
+        ]
+        for kind in sorted(
+            {r["manipulation_type"] for r in rows} - {"RealVideo-RealAudio"}
+        ):
+            fakes = [
+                float(r["probability"]) for r in rows if r["manipulation_type"] == kind
+            ]
             value = round(_auc([0] * len(reals) + [1] * len(fakes), reals + fakes), 3)
             _put(numbers, f"visual.lavdf-test.seed{seed}.type.{kind}", value, path)
             by_type.setdefault(kind, []).append(value)
@@ -248,7 +347,12 @@ def h2_checks(numbers: dict) -> None:
     for kind, values in by_type.items():
         _put_range(numbers, f"visual.lavdf-test.type.{kind}", values, source)
     if by_type:
-        _put_range(numbers, "visual.lavdf-test.type", [v for values in by_type.values() for v in values], source)
+        _put_range(
+            numbers,
+            "visual.lavdf-test.type",
+            [v for values in by_type.values() for v in values],
+            source,
+        )
 
 
 def a12(numbers: dict) -> None:
@@ -261,10 +365,17 @@ def a12(numbers: dict) -> None:
     for target, result in report["targets"].items():
         _put(numbers, f"a12.{target}.clips", result["clips"], path)
         for name, values in result["auc"].items():
-            _put(numbers, f"a12.{target}.auc.{name}", round(sum(values) / len(values), 3), path)
+            _put(
+                numbers,
+                f"a12.{target}.auc.{name}",
+                round(sum(values) / len(values), 3),
+                path,
+            )
         for name, diff in result["differences"].items():
             for field in ("estimate", "lower", "upper"):
-                _put(numbers, f"a12.{target}.{name}.{field}", round(diff[field], 3), path)
+                _put(
+                    numbers, f"a12.{target}.{name}.{field}", round(diff[field], 3), path
+                )
 
 
 def a11(numbers: dict) -> None:
@@ -280,7 +391,12 @@ def a11(numbers: dict) -> None:
             _put(numbers, f"{key}.skipped", result["skipped"], path)
             continue
         for side in ("auc_new", "auc_old"):
-            _put(numbers, f"{key}.{side}", round(sum(result[side]) / len(result[side]), 3), path)
+            _put(
+                numbers,
+                f"{key}.{side}",
+                round(sum(result[side]) / len(result[side]), 3),
+                path,
+            )
         for field in ("estimate", "lower", "upper"):
             _put(numbers, f"{key}.{field}", round(result["difference"][field], 3), path)
         _put(numbers, f"{key}.seeds", len(result["seeds"]), path)
@@ -291,7 +407,10 @@ def a13(numbers: dict) -> None:
     path = RESULTS / "p001-a13" / "a13.json"
     if not path.exists():
         return
-    names = {"lavdf_unedited_video_fakes_vs_reals": "lavdf", "fakeavceleb_video_fakes_vs_reals": "fakeavceleb"}
+    names = {
+        "lavdf_unedited_video_fakes_vs_reals": "lavdf",
+        "fakeavceleb_video_fakes_vs_reals": "fakeavceleb",
+    }
     for block, result in json.loads(path.read_text(encoding="utf-8")).items():
         if block not in names:
             continue
@@ -301,7 +420,12 @@ def a13(numbers: dict) -> None:
             _put(numbers, f"{key}.{stat}.low", round(entry["interval"][0], 3), path)
             _put(numbers, f"{key}.{stat}.high", round(entry["interval"][1], 3), path)
             if "spearman_with_visual" in entry:
-                _put(numbers, f"{key}.{stat}.rho", round(entry["spearman_with_visual"], 2), path)
+                _put(
+                    numbers,
+                    f"{key}.{stat}.rho",
+                    round(entry["spearman_with_visual"], 2),
+                    path,
+                )
                 _put(numbers, f"{key}.{stat}.candidate", _yes(entry["candidate"]), path)
         aucs = [round(entry["auc"], 3) for entry in result["statistics"].values()]
         _put(numbers, f"{key}.auc_min", min(aucs), path)
@@ -318,19 +442,35 @@ def a14(numbers: dict) -> None:
         return
     perturbed: dict[str, list[float]] = {}
     for path in sorted(directory.glob("audio-seed*-metrics.json")):
-        seed, rest = path.stem.removeprefix("audio-seed").removesuffix("-metrics").split("-", 1)
+        seed, rest = (
+            path.stem.removeprefix("audio-seed").removesuffix("-metrics").split("-", 1)
+        )
         part, kind = rest.rsplit("-", 1)
         metrics_file(numbers, f"a14.{part}.{kind}.seed{seed}", path)
-        if kind != "none":           # "none" is the unperturbed rerun
-            perturbed.setdefault(part, []).append(numbers[f"a14.{part}.{kind}.seed{seed}.auc"]["value"])
+        if kind != "none":  # "none" is the unperturbed rerun
+            perturbed.setdefault(part, []).append(
+                numbers[f"a14.{part}.{kind}.seed{seed}.auc"]["value"]
+            )
     for part, values in perturbed.items():
-        _put(numbers, f"a14.{part}.perturbed_min", min(values), directory / f"audio-seed*-{part}-*-metrics.json")
-        _put(numbers, f"a14.{part}.perturbed_max", max(values), directory / f"audio-seed*-{part}-*-metrics.json")
+        _put(
+            numbers,
+            f"a14.{part}.perturbed_min",
+            min(values),
+            directory / f"audio-seed*-{part}-*-metrics.json",
+        )
+        _put(
+            numbers,
+            f"a14.{part}.perturbed_max",
+            max(values),
+            directory / f"audio-seed*-{part}-*-metrics.json",
+        )
 
 
 def _load(folder: str, name: str) -> tuple[dict | None, Path]:
     path = RESULTS / folder / name
-    return (json.loads(path.read_text(encoding="utf-8")) if path.exists() else None), path
+    return (
+        json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+    ), path
 
 
 def a15(numbers: dict) -> None:
@@ -341,7 +481,12 @@ def a15(numbers: dict) -> None:
     for label, r in report["labels"].items():
         key = f"a15.{label}"
         _put(numbers, f"{key}.clips", r["clips"], path)
-        _put_range(numbers, f"{key}.heads", [round(v, 3) for v in r["macro_f1_heads"].values()], path)
+        _put_range(
+            numbers,
+            f"{key}.heads",
+            [round(v, 3) for v in r["macro_f1_heads"].values()],
+            path,
+        )
         _put(numbers, f"{key}.baseline", round(r["macro_f1_baseline"], 3), path)
         for name in ("estimate", "lower", "upper"):
             _put(numbers, f"{key}.{name}", round(r["difference"][name], 3), path)
@@ -349,7 +494,12 @@ def a15(numbers: dict) -> None:
             for seed, values in rows.items():
                 name = seed if seed == "baseline" else f"seed{seed}"
                 for metric, value in values.items():
-                    _put(numbers, f"{key}.{stream}.{name}.{metric}", round(value, 3), path)
+                    _put(
+                        numbers,
+                        f"{key}.{stream}.{name}.{metric}",
+                        round(value, 3),
+                        path,
+                    )
 
 
 def a16(numbers: dict) -> None:
@@ -359,11 +509,20 @@ def a16(numbers: dict) -> None:
         return
     _put(numbers, "a16.clips", report["clips"], path)
     for condition, r in report["conditions"].items():
-        key = "a16." + ("swap" if condition == "swap" else "shift" + condition.split()[1].replace(".", ""))
+        key = "a16." + (
+            "swap"
+            if condition == "swap"
+            else "shift" + condition.split()[1].replace(".", "")
+        )
         _put(numbers, f"{key}.auc", round(r["mean_auc"], 3), path)
         _put(numbers, f"{key}.low", round(r["lower"], 3), path)
         _put(numbers, f"{key}.high", round(r["upper"], 3), path)
-        _put_range(numbers, f"{key}.rising", [round(v["share_rising"], 2) for v in r["per_seed"].values()], path)
+        _put_range(
+            numbers,
+            f"{key}.rising",
+            [round(v["share_rising"], 2) for v in r["per_seed"].values()],
+            path,
+        )
 
 
 def a17(numbers: dict) -> None:
@@ -390,20 +549,35 @@ def a19(numbers: dict) -> None:
         _put(numbers, f"{key}.auc", round(r["mean_auc"], 3), path)
         _put(numbers, f"{key}.low", round(r["lower"], 3), path)
         _put(numbers, f"{key}.high", round(r["upper"], 3), path)
-        _put_range(numbers, f"{key}.sync", [round(v, 3) for v in r["auc_sync"].values()], path)
+        _put_range(
+            numbers, f"{key}.sync", [round(v, 3) for v in r["auc_sync"].values()], path
+        )
         diff = r["minus_sync"]
         for part in ("estimate", "lower", "upper"):
             _put(numbers, f"{key}.minus_sync.{part}", round(diff[part], 3), path)
-        reading = "better" if diff["lower"] > 0 else "worse" if diff["upper"] < 0 else "not different"
+        reading = (
+            "better"
+            if diff["lower"] > 0
+            else "worse"
+            if diff["upper"] < 0
+            else "not different"
+        )
         _put(numbers, f"{key}.reading", reading, path)
 
 
-PARTS_SHOWN = (1, 2, 5, 10, 20)     # a 60 s upload, the site's longest, has at most 20 parts
+PARTS_SHOWN = (
+    1,
+    2,
+    5,
+    10,
+    20,
+)  # a 60 s upload, the site's longest, has at most 20 parts
 
 
 def website(numbers: dict) -> None:
     """The website's flag and unsure lines per number of parts, and its measured speed per part."""
     import sys
+
     sys.path.insert(0, str(ROOT / "src"))
     from deepfake_detection.webapp.calibration import Calibration
 
@@ -419,12 +593,19 @@ def website(numbers: dict) -> None:
             clips = sum(counts.values())
             _put(numbers, f"web.outcomes.{name}.{side}.clips", clips, path)
             share = round(counts.get("signs", 0) / clips, 3)
-            _put(numbers, f"web.outcomes.{name}.{side}.{'flagged' if side == 'real' else 'caught'}", share, path)
+            _put(
+                numbers,
+                f"web.outcomes.{name}.{side}.{'flagged' if side == 'real' else 'caught'}",
+                share,
+                path,
+            )
     timing = RESULTS / "web-timing.json"
     if not timing.exists():
         return
     runs = json.loads(timing.read_text(encoding="utf-8"))
-    per_part = sum(c["seconds"] for c in runs["clips"]) / sum(c["parts"] for c in runs["clips"])
+    per_part = sum(c["seconds"] for c in runs["clips"]) / sum(
+        c["parts"] for c in runs["clips"]
+    )
     _put(numbers, "web.seconds_per_part", round(per_part), timing)
     _put(numbers, "web.minutes_60s", round(max(PARTS_SHOWN) * per_part / 60, 1), timing)
     _put(numbers, "web.timing.threads", runs["threads"], timing)
@@ -468,7 +649,9 @@ def main() -> int:
     website(numbers)
     file_check(numbers)
     out = RESULTS / "numbers.json"
-    out.write_text(json.dumps(dict(sorted(numbers.items())), indent=1) + "\n", encoding="utf-8")
+    out.write_text(
+        json.dumps(dict(sorted(numbers.items())), indent=1) + "\n", encoding="utf-8"
+    )
     print(f"{len(numbers)} numbers -> {_rel(out)}")
     return 0
 

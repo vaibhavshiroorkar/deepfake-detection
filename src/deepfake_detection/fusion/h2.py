@@ -47,13 +47,16 @@ def fit_fusion(logits: np.ndarray, labels: Sequence[int]) -> Fusion:
     mean = logits.mean(axis=0)
     scale = logits.std(axis=0)
     scale[scale == 0] = 1.0
-    model = LogisticRegression(C=1.0, solver="lbfgs", class_weight="balanced", max_iter=1000)
+    model = LogisticRegression(
+        C=1.0, solver="lbfgs", class_weight="balanced", max_iter=1000
+    )
     model.fit((logits - mean) / scale, np.asarray(labels, dtype=int))
     return Fusion(mean, scale, model)
 
 
-def cross_fit_scores(logits: np.ndarray, labels: Sequence[int], groups: Sequence[str],
-                     folds: int = 5) -> np.ndarray:
+def cross_fit_scores(
+    logits: np.ndarray, labels: Sequence[int], groups: Sequence[str], folds: int = 5
+) -> np.ndarray:
     """Out-of-fold fusion scores: each clip is scored by a model that never saw its identity."""
     labels = np.asarray(labels, dtype=int)
     scores = np.empty(len(labels))
@@ -76,11 +79,19 @@ def _difference(pair: SeedPair, index: np.ndarray) -> float:
     labels = pair.labels[index]
     if labels.min() == labels.max():
         raise ValueError("one class")
-    return float(roc_auc_score(labels, pair.fusion[index]) - roc_auc_score(labels, pair.visual[index]))
+    return float(
+        roc_auc_score(labels, pair.fusion[index])
+        - roc_auc_score(labels, pair.visual[index])
+    )
 
 
-def mean_seed_difference(pairs: Sequence[SeedPair], *, samples: int = 1000, seed: int = 17,
-                         confidence: float = 0.95) -> dict:
+def mean_seed_difference(
+    pairs: Sequence[SeedPair],
+    *,
+    samples: int = 1000,
+    seed: int = 17,
+    confidence: float = 0.95,
+) -> dict:
     """Mean over seeds of AUC(fusion) - AUC(visual), with an identity bootstrap shared by every seed.
 
     All seeds must score the same clips in the same order, so one resample of
@@ -88,7 +99,9 @@ def mean_seed_difference(pairs: Sequence[SeedPair], *, samples: int = 1000, seed
     """
     groups = pairs[0].groups
     for pair in pairs[1:]:
-        if not np.array_equal(pair.groups, groups) or not np.array_equal(pair.labels, pairs[0].labels):
+        if not np.array_equal(pair.groups, groups) or not np.array_equal(
+            pair.labels, pairs[0].labels
+        ):
             raise ValueError("Seeds must score the same clips in the same order")
     identities = np.unique(groups)
     rows_of = {g: np.flatnonzero(groups == g) for g in identities}
@@ -97,10 +110,12 @@ def mean_seed_difference(pairs: Sequence[SeedPair], *, samples: int = 1000, seed
     rng = np.random.default_rng(seed)
     values = []
     for _ in range(samples):
-        index = np.concatenate([rows_of[g] for g in rng.choice(identities, size=len(identities))])
+        index = np.concatenate(
+            [rows_of[g] for g in rng.choice(identities, size=len(identities))]
+        )
         try:
             values.append(float(np.mean([_difference(p, index) for p in pairs])))
-        except ValueError:      # a draw with one class: skipped and counted out
+        except ValueError:  # a draw with one class: skipped and counted out
             continue
     values = np.asarray(values)
     tail = (1 - confidence) / 2

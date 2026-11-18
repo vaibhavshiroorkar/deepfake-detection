@@ -10,6 +10,7 @@ stored as float16 in one .npz per window with the share of frames that had a fac
 Decoding and MediaPipe run in worker processes (`prepare_window`); the encoder
 runs in the caller's process.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -34,12 +35,16 @@ FRAMES = round(WINDOW_S * FPS)
 _cropper: MouthCropper | None = None
 
 
-def init_worker(landmarker: str | Path, eye_px: float, locator: str | Path | None = None) -> None:
+def init_worker(
+    landmarker: str | Path, eye_px: float, locator: str | Path | None = None
+) -> None:
     global _cropper
     _cropper = MouthCropper(landmarker, eye_px=eye_px, locator=locator)
 
 
-def prepare_window(job: tuple[str, float]) -> tuple[float | str, np.ndarray | None, np.ndarray | None]:
+def prepare_window(
+    job: tuple[str, float],
+) -> tuple[float | str, np.ndarray | None, np.ndarray | None]:
     """(path, start) to (face share, uint8 crops [50, 96, 96], audio); a failure gives (message, None, None)."""
     path, start = job
     try:
@@ -50,14 +55,21 @@ def prepare_window(job: tuple[str, float]) -> tuple[float | str, np.ndarray | No
         if not found.any():
             return 0.0, None, audio
         have = np.flatnonzero(found)
-        crops = np.stack([crop_mouth(f, poses[have[np.abs(have - i).argmin()]], _cropper.eye_px) for i, f in enumerate(frames)])
+        crops = np.stack(
+            [
+                crop_mouth(f, poses[have[np.abs(have - i).argmin()]], _cropper.eye_px)
+                for i, f in enumerate(frames)
+            ]
+        )
         return float(found.mean()), crops, audio
     except Exception as error:  # counted by the caller, not fatal
         return f"{type(error).__name__}: {str(error)[:120]}", None, None
 
 
 @torch.no_grad()
-def encode(model: AVHubert, crops: np.ndarray, audio: np.ndarray, device: str = "cuda") -> dict[str, np.ndarray]:
+def encode(
+    model: AVHubert, crops: np.ndarray, audio: np.ndarray, device: str = "cuda"
+) -> dict[str, np.ndarray]:
     video, sound = model_inputs(normalise_lips(crops), audio, device)
     return {
         "fused": model(video=video, audio=sound)[0].half().cpu().numpy(),

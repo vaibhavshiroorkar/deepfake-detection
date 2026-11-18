@@ -131,7 +131,11 @@ def build_asvspoof2019_la(root: Path) -> tuple[list[AudioRecord], dict]:
 
 
 def build_in_the_wild(root: Path) -> tuple[list[AudioRecord], dict]:
-    base = root / "release_in_the_wild" if (root / "release_in_the_wild").is_dir() else root
+    base = (
+        root / "release_in_the_wild"
+        if (root / "release_in_the_wild").is_dir()
+        else root
+    )
     meta = base / "meta.csv"
     if not meta.is_file():
         raise FileNotFoundError(f"meta.csv not found: {meta}")
@@ -177,7 +181,15 @@ def build_in_the_wild(root: Path) -> tuple[list[AudioRecord], dict]:
     return records, report
 
 
-AUDIO_FIELDS = ("clip_id", "dataset", "audio_path", "audio_fake", "method", "speaker", "partition")
+AUDIO_FIELDS = (
+    "clip_id",
+    "dataset",
+    "audio_path",
+    "audio_fake",
+    "method",
+    "speaker",
+    "partition",
+)
 
 
 def write_audio_manifest(records: Sequence[AudioRecord], path: Path) -> None:

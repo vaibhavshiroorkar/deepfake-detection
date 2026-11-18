@@ -66,7 +66,16 @@ def _rate(text: str | None) -> float:
 
 def probe(path: Path) -> dict[str, object]:
     run = subprocess.run(
-        ["ffprobe", "-v", "error", "-show_format", "-show_streams", "-of", "json", str(path)],
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_format",
+            "-show_streams",
+            "-of",
+            "json",
+            str(path),
+        ],
         capture_output=True,
         text=True,
         check=False,
@@ -96,15 +105,33 @@ def probe(path: Path) -> dict[str, object]:
 
 def edges(path: Path) -> dict[str, float]:
     run = subprocess.run(
-        ["ffmpeg", "-v", "error", "-nostdin", "-i", str(path), "-map", "0:a:0?", "-ac", "1",
-         "-ar", str(SAMPLE_RATE), "-f", "f32le", "pipe:1"],
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-nostdin",
+            "-i",
+            str(path),
+            "-map",
+            "0:a:0?",
+            "-ac",
+            "1",
+            "-ar",
+            str(SAMPLE_RATE),
+            "-f",
+            "f32le",
+            "pipe:1",
+        ],
         capture_output=True,
         check=False,
     )
     wave = np.frombuffer(run.stdout, np.float32)
     if run.returncode != 0 or wave.size == 0:
-        return {"leading_silence_ms": float("nan"), "trailing_silence_ms": float("nan"),
-                "loudness_db": float("nan")}
+        return {
+            "leading_silence_ms": float("nan"),
+            "trailing_silence_ms": float("nan"),
+            "loudness_db": float("nan"),
+        }
     loud = np.flatnonzero(np.abs(wave) > SILENCE)
     if loud.size == 0:
         lead = trail = wave.size
@@ -123,8 +150,14 @@ def describe(job: tuple[str, Path]) -> dict[str, object]:
     return {"clip_id": clip_id, **probe(path), **edges(path)}
 
 
-def _cue_auc(values: np.ndarray, labels: np.ndarray, groups: np.ndarray, categorical: bool,
-             folds: int, seed: int) -> float:
+def _cue_auc(
+    values: np.ndarray,
+    labels: np.ndarray,
+    groups: np.ndarray,
+    categorical: bool,
+    folds: int,
+    seed: int,
+) -> float:
     """Out-of-fold AUC of one cue, folds grouped by source identity.
 
     A numeric cue is ranked as is, then flipped if it points the other way, so
@@ -154,7 +187,9 @@ def _cue_auc(values: np.ndarray, labels: np.ndarray, groups: np.ndarray, categor
     return float(roc_auc_score(labels, scores))
 
 
-def _ceiling(rows: list[dict], labels: np.ndarray, groups: np.ndarray, folds: int, seed: int) -> float:
+def _ceiling(
+    rows: list[dict], labels: np.ndarray, groups: np.ndarray, folds: int, seed: int
+) -> float:
     """All cues together in a gradient-boosted model: the shortcut ceiling."""
     from sklearn.ensemble import HistGradientBoostingClassifier
     from sklearn.metrics import roc_auc_score
@@ -166,7 +201,9 @@ def _ceiling(rows: list[dict], labels: np.ndarray, groups: np.ndarray, folds: in
     for name in NUMERIC:
         columns.append([_number(r.get(name)) for r in rows])
     for name in CATEGORICAL:
-        vocabulary = {v: i for i, v in enumerate(sorted({str(r.get(name, "")) for r in rows}))}
+        vocabulary = {
+            v: i for i, v in enumerate(sorted({str(r.get(name, "")) for r in rows}))
+        }
         columns.append([vocabulary[str(r.get(name, ""))] for r in rows])
     features = np.array(columns, dtype=float).T
     categorical = [False] * len(NUMERIC) + [True] * len(CATEGORICAL)
@@ -180,7 +217,9 @@ def _ceiling(rows: list[dict], labels: np.ndarray, groups: np.ndarray, folds: in
     return float(roc_auc_score(labels, scores))
 
 
-def summarise(rows: list[dict], manifest: dict[str, dict], folds: int, seed: int) -> dict:
+def summarise(
+    rows: list[dict], manifest: dict[str, dict], folds: int, seed: int
+) -> dict:
     groups = np.array([manifest[r["clip_id"]]["source"] for r in rows])
     report: dict[str, object] = {}
     for label_name in ("clip_fake", "video_fake", "audio_fake"):
@@ -199,13 +238,20 @@ def summarise(rows: list[dict], manifest: dict[str, dict], folds: int, seed: int
         report[label_name] = {
             "positives": int(labels.sum()),
             "negatives": int((1 - labels).sum()),
-            "cue_auc": {k: round(v, 4) for k, v in sorted(cues.items(), key=lambda kv: -np.nan_to_num(kv[1]))},
-            "shortcut_ceiling_auc": round(_ceiling(rows, labels, groups, folds, seed), 4),
+            "cue_auc": {
+                k: round(v, 4)
+                for k, v in sorted(cues.items(), key=lambda kv: -np.nan_to_num(kv[1]))
+            },
+            "shortcut_ceiling_auc": round(
+                _ceiling(rows, labels, groups, folds, seed), 4
+            ),
         }
     by_class: dict[str, dict] = {}
     for row in rows:
         key = manifest[row["clip_id"]].get("manipulation_type", "unknown")
-        entry = by_class.setdefault(key, {"clips": 0, "video_codec": {}, "container": {}, "audio_codec": {}})
+        entry = by_class.setdefault(
+            key, {"clips": 0, "video_codec": {}, "container": {}, "audio_codec": {}}
+        )
         entry["clips"] += 1
         for name in ("video_codec", "container", "audio_codec"):
             value = str(row.get(name, ""))
@@ -220,7 +266,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--dataset", required=True)
     parser.add_argument("--data-dir", type=Path, default=Path("data"))
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--limit", type=int, help="Stratified sample size for very large sets")
+    parser.add_argument(
+        "--limit", type=int, help="Stratified sample size for very large sets"
+    )
     parser.add_argument("--workers", type=int, default=12)
     parser.add_argument("--folds", type=int, default=5)
     parser.add_argument("--seed", type=int, default=17)
@@ -233,20 +281,29 @@ def main(argv: list[str] | None = None) -> int:
         kind = row.get("manipulation_type", "")
         row.setdefault("video_fake", str(int(kind.startswith("FakeVideo-"))))
         row.setdefault("audio_fake", str(int(kind.endswith("-FakeAudio"))))
-        row.setdefault("clip_fake", str(int(row["video_fake"] == "1" or row["audio_fake"] == "1")))
+        row.setdefault(
+            "clip_fake", str(int(row["video_fake"] == "1" or row["audio_fake"] == "1"))
+        )
     ids = sorted(manifest)
     if arguments.limit and len(ids) > arguments.limit:
         generator = np.random.default_rng(arguments.seed)
         by_type: dict[str, list[str]] = {}
         for clip_id in ids:
-            by_type.setdefault(manifest[clip_id].get("manipulation_type", ""), []).append(clip_id)
+            by_type.setdefault(
+                manifest[clip_id].get("manipulation_type", ""), []
+            ).append(clip_id)
         share = arguments.limit / len(ids)
         ids = sorted(
             clip_id
             for members in by_type.values()
-            for clip_id in generator.choice(members, max(1, round(len(members) * share)), replace=False)
+            for clip_id in generator.choice(
+                members, max(1, round(len(members) * share)), replace=False
+            )
         )
-    jobs = [(i, arguments.data_dir / manifest[i]["video_path"].replace("\\", "/")) for i in ids]
+    jobs = [
+        (i, arguments.data_dir / manifest[i]["video_path"].replace("\\", "/"))
+        for i in ids
+    ]
 
     arguments.output.mkdir(parents=True, exist_ok=True)
     clips_path = arguments.output / "clips.csv"
@@ -261,7 +318,9 @@ def main(argv: list[str] | None = None) -> int:
         if not done:
             writer.writeheader()
         with ProcessPoolExecutor(arguments.workers) as pool:
-            for index, row in enumerate(pool.map(describe, pending, chunksize=16), start=1):
+            for index, row in enumerate(
+                pool.map(describe, pending, chunksize=16), start=1
+            ):
                 writer.writerow(row)
                 done[row["clip_id"]] = row
                 if index % 1000 == 0:
@@ -281,12 +340,16 @@ def main(argv: list[str] | None = None) -> int:
         "fold_grouping": "source identity",
         **summarise(rows, manifest, arguments.folds, arguments.seed),
     }
-    (arguments.output / "summary.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    (arguments.output / "summary.json").write_text(
+        json.dumps(report, indent=2) + "\n", encoding="utf-8"
+    )
     for label_name in ("clip_fake", "video_fake", "audio_fake"):
         if label_name in report:
             entry = report[label_name]
             top = list(entry["cue_auc"].items())[:4]
-            print(f"{label_name}: ceiling {entry['shortcut_ceiling_auc']}  top cues {top}")
+            print(
+                f"{label_name}: ceiling {entry['shortcut_ceiling_auc']}  top cues {top}"
+            )
     return 0
 
 

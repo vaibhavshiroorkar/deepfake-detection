@@ -4,11 +4,19 @@ import json
 
 from deepfake_detection.webapp import provenance
 
-SEEDANCE_AIGC = json.dumps({"Label": "1", "ContentProducer": "00119144030008867405X210001", "ProduceID": "v0d8"})
+SEEDANCE_AIGC = json.dumps(
+    {
+        "Label": "1",
+        "ContentProducer": "00119144030008867405X210001",
+        "ProduceID": "v0d8",
+    }
+)
 
 
 def test_an_aigc_label_marked_1_is_found():
-    found = provenance.labels_from_tags({"AIGC": SEEDANCE_AIGC, "encoder": "Lavf58.76.100"})
+    found = provenance.labels_from_tags(
+        {"AIGC": SEEDANCE_AIGC, "encoder": "Lavf58.76.100"}
+    )
     assert len(found) == 1 and "AIGC" in found[0]
 
 
@@ -18,8 +26,12 @@ def test_an_aigc_label_marked_0_or_broken_is_not_evidence():
 
 
 def test_codec_encoder_and_platform_tags_are_never_evidence():
-    tags = {"encoder": "Lavf62.3.100", "handler_name": "ISO Media file produced by Google Inc.",
-            "major_brand": "isom", "compatible_brands": "isomiso2avc1mp41"}
+    tags = {
+        "encoder": "Lavf62.3.100",
+        "handler_name": "ISO Media file produced by Google Inc.",
+        "major_brand": "isom",
+        "compatible_brands": "isomiso2avc1mp41",
+    }
     assert provenance.labels_from_tags(tags) == []
 
 
@@ -34,5 +46,8 @@ def test_a_c2pa_manifest_declaring_ai_media_is_found():
 
 
 def test_a_c2pa_manifest_without_an_ai_source_is_not_evidence():
-    assert provenance.labels_from_bytes(b"jumb c2pa digitalsourcetype/digitalCapture") == []
+    assert (
+        provenance.labels_from_bytes(b"jumb c2pa digitalsourcetype/digitalCapture")
+        == []
+    )
     assert provenance.labels_from_bytes(b"plain video bytes") == []

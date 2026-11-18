@@ -38,15 +38,19 @@ AUDIO_EXTENSIONS = {".wav", ".mp3", ".m4a", ".ogg", ".opus", ".webm"}
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 EXTENSIONS = VIDEO_EXTENSIONS | AUDIO_EXTENSIONS | IMAGE_EXTENSIONS
 MODES = ("video", "voice", "picture")
-PICTURE_SECONDS = 3.2      # a still is looped into a clip just over the 3 s the cleaning keeps
-CONTACT_LIMIT = 5                    # messages per address per hour
-UPLOAD_LIMIT = 10                    # uploads per address per hour
+PICTURE_SECONDS = (
+    3.2  # a still is looped into a clip just over the 3 s the cleaning keeps
+)
+CONTACT_LIMIT = 5  # messages per address per hour
+UPLOAD_LIMIT = 10  # uploads per address per hour
 
 
 def upload_limit() -> int:
     """Uploads per address per hour. DDF_UPLOAD_LIMIT raises it for a private demo, where every request can
     arrive through one local proxy and so share one address."""
     return int(os.environ.get("DDF_UPLOAD_LIMIT", UPLOAD_LIMIT))
+
+
 CALIBRATION = PROJECT_ROOT / "results" / "web-calibration.json"
 PICTURE_CALIBRATION = PROJECT_ROOT / "results" / "web-calibration-picture.json"
 RESEND_URL = "https://api.resend.com/emails"
@@ -80,7 +84,9 @@ def seed_range(pattern: str, digits: int = 3) -> str:
     """'0.780 to 0.810' over the three seeds of a key pattern with a {} for the seed."""
     values = [_numbers()[pattern.format(seed)]["value"] for seed in SEEDS]
     low, high = min(values), max(values)
-    return f"{low:.{digits}f}" if low == high else f"{low:.{digits}f} to {high:.{digits}f}"
+    return (
+        f"{low:.{digits}f}" if low == high else f"{low:.{digits}f} to {high:.{digits}f}"
+    )
 
 
 def percent(key: str) -> str:
@@ -95,20 +101,37 @@ def percent_range(pattern: str) -> str:
 
 
 def _environment() -> Environment:
-    env = Environment(loader=FileSystemLoader(TEMPLATES), autoescape=select_autoescape(),
-                      undefined=StrictUndefined, trim_blocks=True, lstrip_blocks=True)
+    env = Environment(
+        loader=FileSystemLoader(TEMPLATES),
+        autoescape=select_autoescape(),
+        undefined=StrictUndefined,
+        trim_blocks=True,
+        lstrip_blocks=True,
+    )
     env.globals.update(n=number, seeds=seed_range, pct=percent, pct_range=percent_range)
     return env
 
 
 def ceilings() -> list[dict]:
     """File-cue ceiling per corpus, raw and after cleaning, for the dumbbell chart."""
-    rows = [("FakeAVCeleb", "fakeavceleb"), ("HiFi-AVDF", "hifiavdf"), ("LAV-DF", "lavdf"), ("DFDC", "dfdc")]
-    return [{"name": name, "raw": _numbers()[f"audit.{key}.raw.clip"]["value"],
-             "clean": _numbers()[f"audit.{key}.neutral.clip"]["value"]} for name, key in rows]
+    rows = [
+        ("FakeAVCeleb", "fakeavceleb"),
+        ("HiFi-AVDF", "hifiavdf"),
+        ("LAV-DF", "lavdf"),
+        ("DFDC", "dfdc"),
+    ]
+    return [
+        {
+            "name": name,
+            "raw": _numbers()[f"audit.{key}.raw.clip"]["value"],
+            "clean": _numbers()[f"audit.{key}.neutral.clip"]["value"],
+        }
+        for name, key in rows
+    ]
 
 
 # Upload checks ------------------------------------------------------------------------------------
+
 
 class ClipRejected(ValueError):
     """The upload breaks a clip rule; the message is shown to the visitor."""
@@ -117,8 +140,21 @@ class ClipRejected(ValueError):
 def probe(path: Path) -> dict:
     """Streams and duration from ffprobe, bounded in time so a hostile file cannot hang the server."""
     result = subprocess.run(
-        ["ffprobe", "-v", "error", "-show_entries", "stream=codec_type:format=duration", "-of", "json", str(path)],
-        capture_output=True, text=True, timeout=20, check=False)
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "stream=codec_type:format=duration",
+            "-of",
+            "json",
+            str(path),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
     if result.returncode != 0:
         raise ClipRejected("This file could not be read as a video.")
     return json.loads(result.stdout or "{}")
@@ -136,7 +172,9 @@ def check_clip_rules(info: dict) -> float:
     except ValueError as error:
         raise ClipRejected("The video's length could not be read.") from error
     if not MIN_SECONDS <= duration <= MAX_SECONDS:
-        raise ClipRejected(f"The video must be {MIN_SECONDS:.0f} to {MAX_SECONDS:.0f} seconds long; this one is {duration:.1f} s.")
+        raise ClipRejected(
+            f"The video must be {MIN_SECONDS:.0f} to {MAX_SECONDS:.0f} seconds long; this one is {duration:.1f} s."
+        )
     return duration
 
 
@@ -148,7 +186,9 @@ def classify(suffix: str, mode: str, info: dict) -> str:
     """
     kinds = [s.get("codec_type") for s in info.get("streams", [])]
     if suffix not in EXTENSIONS:
-        raise ClipRejected("Use a video (MP4, MOV, WebM), a voice recording (WAV, MP3, M4A, OGG) or a picture (JPG, PNG).")
+        raise ClipRejected(
+            "Use a video (MP4, MOV, WebM), a voice recording (WAV, MP3, M4A, OGG) or a picture (JPG, PNG)."
+        )
     if mode in MODES:
         kind = mode
     elif suffix in IMAGE_EXTENSIONS:
@@ -172,21 +212,50 @@ def to_clip(source: Path, kind: str, target: Path) -> Path:
     """
     common = ["-c:v", "libx264", "-pix_fmt", "yuv420p", "-r", "25"]
     if kind == "voice":
-        command = ["-f", "lavfi", "-i", "color=c=black:s=320x320:r=25", "-i", str(source),
-                   "-map", "0:v", "-map", "1:a", "-shortest", *common, "-c:a", "aac"]
+        command = [
+            "-f",
+            "lavfi",
+            "-i",
+            "color=c=black:s=320x320:r=25",
+            "-i",
+            str(source),
+            "-map",
+            "0:v",
+            "-map",
+            "1:a",
+            "-shortest",
+            *common,
+            "-c:a",
+            "aac",
+        ]
     elif kind == "picture":
-        command = ["-loop", "1", "-i", str(source), "-t", str(PICTURE_SECONDS),
-                   "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2", *common, "-an"]
+        command = [
+            "-loop",
+            "1",
+            "-i",
+            str(source),
+            "-t",
+            str(PICTURE_SECONDS),
+            "-vf",
+            "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+            *common,
+            "-an",
+        ]
     else:
         command = ["-i", str(source), *common, "-c:a", "aac"]
-    run = subprocess.run(["ffmpeg", "-y", "-v", "error", "-nostdin", *command, str(target)],
-                         capture_output=True, timeout=120, check=False)
+    run = subprocess.run(
+        ["ffmpeg", "-y", "-v", "error", "-nostdin", *command, str(target)],
+        capture_output=True,
+        timeout=120,
+        check=False,
+    )
     if run.returncode != 0 or not target.is_file():
         raise ClipRejected("This file could not be converted for checking.")
     return target
 
 
 # Detector -----------------------------------------------------------------------------------------
+
 
 def make_scorer():
     """The P-001 scorer. Loading takes about a minute: on the first upload, or at start with --preload-detector.
@@ -218,14 +287,20 @@ def picture_calibration():
 def require_calibration(kind: str) -> None:
     """A picture needs its own calibration: judged against moving video, a real face looks unusual."""
     if kind == "picture" and picture_calibration() is None:
-        raise ClipRejected("Pictures cannot be checked yet: their calibration has not been built.")
+        raise ClipRejected(
+            "Pictures cannot be checked yet: their calibration has not been built."
+        )
 
 
 @lru_cache(maxsize=1)
 def detector():
     # Looked up at call time, so a test can replace make_scorer before the first job.
     pictures = picture_calibration()
-    return Detector(lambda: make_scorer(), calibration(), calibrations={"picture": pictures} if pictures else None)
+    return Detector(
+        lambda: make_scorer(),
+        calibration(),
+        calibrations={"picture": pictures} if pictures else None,
+    )
 
 
 CHECK_NAMES = {"face": "face", "voice": "voice", "sync": "lip-sync"}
@@ -243,12 +318,16 @@ def how_sure(kind: str = "video") -> str:
             caught.append((fakes.get("signs", 0) / sum(fakes.values()), corpus))
     low, high = min(caught), max(caught)
     if kind == "picture":
-        return (f"On still pictures from the four test sets, about 5 in 100 real pictures get this flag. The same "
-                f"threshold catches {low[0]:.0%} of fake pictures on {low[1]} and {high[0]:.0%} on {high[1]}. The face "
-                f"check learned from video, so treat a picture's answer as a rough guide.")
-    return (f"On the four test sets we calibrated on, about 5 in 100 real clips get this flag. The same "
-            f"threshold catches {low[0]:.0%} of fakes on {low[1]} and {high[0]:.0%} on {high[1]}: few from "
-            f"sources the models never trained on. For a video from anywhere else, 5 in 100 is an estimate.")
+        return (
+            f"On still pictures from the four test sets, about 5 in 100 real pictures get this flag. The same "
+            f"threshold catches {low[0]:.0%} of fake pictures on {low[1]} and {high[0]:.0%} on {high[1]}. The face "
+            f"check learned from video, so treat a picture's answer as a rough guide."
+        )
+    return (
+        f"On the four test sets we calibrated on, about 5 in 100 real clips get this flag. The same "
+        f"threshold catches {low[0]:.0%} of fakes on {low[1]} and {high[0]:.0%} on {high[1]}: few from "
+        f"sources the models never trained on. For a video from anywhere else, 5 in 100 is an estimate."
+    )
 
 
 def _clock(seconds: float) -> str:
@@ -258,13 +337,19 @@ def _clock(seconds: float) -> str:
 
 def where(outcome: dict) -> str:
     """Which part of the video the details come from, in one sentence; empty before any part was checked."""
-    part, parts, kind = outcome.get("part"), outcome.get("parts"), outcome.get("input", "video")
+    part, parts, kind = (
+        outcome.get("part"),
+        outcome.get("parts"),
+        outcome.get("input", "video"),
+    )
     if kind == "picture":
         return "A picture, checked by the face check only."
     if not part or not parts:
         return ""
     if kind == "voice":
-        return "A voice recording, checked by the voice check only. " + where(outcome | {"input": "video"})
+        return "A voice recording, checked by the voice check only. " + where(
+            outcome | {"input": "video"}
+        )
     span = f"{_clock(part['start'])} to {_clock(part['end'])}"
     if parts == 1:
         return f"The video has 3 seconds of sound, checked as one part ({span})."
@@ -273,20 +358,35 @@ def where(outcome: dict) -> str:
 
 def present(outcome: dict) -> dict:
     """The detector's outcome in the shape the page draws: whole-number percentiles and plain sentences."""
-    checks = {name: {"percentile": None if c["percentile"] is None else min(99, int(c["percentile"] * 100)),
-                     "raised": name in outcome.get("raised", []), "reason": c["reason"]}
-              for name, c in outcome.get("checks", {}).items()}
+    checks = {
+        name: {
+            "percentile": None
+            if c["percentile"] is None
+            else min(99, int(c["percentile"] * 100)),
+            "raised": name in outcome.get("raised", []),
+            "reason": c["reason"],
+        }
+        for name, c in outcome.get("checks", {}).items()
+    }
     kind = outcome["kind"]
     labels = outcome.get("file_check") or []
     if labels:
-        summary = (f"The file carries {' and '.join(labels)}. AI tools write such labels on purpose, "
-                   "so this is strong evidence on its own.")
+        summary = (
+            f"The file carries {' and '.join(labels)}. AI tools write such labels on purpose, "
+            "so this is strong evidence on its own."
+        )
         checks_raised = [n for n in outcome["raised"] if n != "file"]
         if checks_raised:
-            summary += " The " + " and ".join(CHECK_NAMES[n] for n in checks_raised) + " checks also flagged it."
+            summary += (
+                " The "
+                + " and ".join(CHECK_NAMES[n] for n in checks_raised)
+                + " checks also flagged it."
+            )
     elif kind == "signs":
         words = [CHECK_NAMES[n] for n in outcome["raised"]]
-        names = words[0] if len(words) == 1 else ", ".join(words[:-1]) + " and " + words[-1]
+        names = (
+            words[0] if len(words) == 1 else ", ".join(words[:-1]) + " and " + words[-1]
+        )
         noun = "checks" if len(outcome["raised"]) > 1 else "check"
         summary = f"The {names} {noun} scored higher than almost every real clip we calibrated on."
     elif kind == "cant_tell":
@@ -295,9 +395,18 @@ def present(outcome: dict) -> dict:
         summary = "No check scored unusually high compared with real clips. That is not proof the video is real."
     else:
         summary = outcome.get("reason", "The video could not be checked.")
-    return {"status": "done", "outcome": kind, "summary": summary, "where": where(outcome), "file_check": labels,
-            "checks": checks,
-            "trace": outcome.get("trace", {}), "how_sure": how_sure(outcome.get("input", "video")) if kind != "cant_check" else ""}
+    return {
+        "status": "done",
+        "outcome": kind,
+        "summary": summary,
+        "where": where(outcome),
+        "file_check": labels,
+        "checks": checks,
+        "trace": outcome.get("trace", {}),
+        "how_sure": how_sure(outcome.get("input", "video"))
+        if kind != "cant_check"
+        else "",
+    }
 
 
 # Contact ------------------------------------------------------------------------------------------
@@ -331,11 +440,18 @@ def send_contact(name: str, email: str, message: str) -> None:
     if not key or not to:
         raise RuntimeError("not configured")
     sender = os.environ.get("CONTACT_FROM", "Deepfake Check <onboarding@resend.dev>")
-    response = httpx.post(RESEND_URL, timeout=15, headers={"Authorization": f"Bearer {key}"}, json={
-        "from": sender, "to": [to], "reply_to": email,
-        "subject": f"Deepfake Check: message from {name}",
-        "text": f"From: {name} <{email}>\n\n{message}",
-    })
+    response = httpx.post(
+        RESEND_URL,
+        timeout=15,
+        headers={"Authorization": f"Bearer {key}"},
+        json={
+            "from": sender,
+            "to": [to],
+            "reply_to": email,
+            "subject": f"Deepfake Check: message from {name}",
+            "text": f"From: {name} <{email}>\n\n{message}",
+        },
+    )
     if response.status_code >= 300:
         raise RuntimeError(f"Resend answered {response.status_code}")
 
@@ -355,29 +471,50 @@ def register(app: FastAPI) -> None:
         return response
 
     def render(template: str, title: str, path: str, **extra) -> HTMLResponse:
-        page = env.get_template(template).render(title=title, path=path, ceilings=ceilings(), **extra)
+        page = env.get_template(template).render(
+            title=title, path=path, ceilings=ceilings(), **extra
+        )
         return HTMLResponse(page)
 
     def page_for(template: str, title: str, route: str):
         # A factory, not default arguments: FastAPI would read those as query parameters.
         def page() -> HTMLResponse:
             return render(template, title, route)
+
         return page
 
     for route, (template, title) in PAGES.items():
-        app.add_api_route(route, page_for(template, title, route), methods=["GET"],
-                          response_class=HTMLResponse, include_in_schema=False)
+        app.add_api_route(
+            route,
+            page_for(template, title, route),
+            methods=["GET"],
+            response_class=HTMLResponse,
+            include_in_schema=False,
+        )
 
     @app.post("/api/check")
-    async def check(request: Request, file: UploadFile = File(...), mode: str = Form("")) -> JSONResponse:
+    async def check(
+        request: Request, file: UploadFile = File(...), mode: str = Form("")
+    ) -> JSONResponse:
         client = request.client.host if request.client else "unknown"
         if not uploads.allow(client):
-            return JSONResponse({"status": "rejected", "reason": "Too many videos from here. Try again in an hour."},
-                                status_code=429)
+            return JSONResponse(
+                {
+                    "status": "rejected",
+                    "reason": "Too many videos from here. Try again in an hour.",
+                },
+                status_code=429,
+            )
         suffix = Path(file.filename or "").suffix.lower()
         if suffix not in EXTENSIONS:
-            return JSONResponse({"status": "rejected", "reason": "Use a video (MP4, MOV, WebM), a voice recording "
-                                 "(WAV, MP3, M4A, OGG) or a picture (JPG, PNG)."}, status_code=400)
+            return JSONResponse(
+                {
+                    "status": "rejected",
+                    "reason": "Use a video (MP4, MOV, WebM), a voice recording "
+                    "(WAV, MP3, M4A, OGG) or a picture (JPG, PNG).",
+                },
+                status_code=400,
+            )
         converted = None
         handle = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
         path = Path(handle.name)
@@ -387,8 +524,13 @@ def register(app: FastAPI) -> None:
                 while chunk := await file.read(1 << 20):
                     size += len(chunk)
                     if size > MAX_UPLOAD_MB << 20:
-                        return JSONResponse({"status": "rejected", "reason": f"The file is over {MAX_UPLOAD_MB} MB."},
-                                            status_code=413)
+                        return JSONResponse(
+                            {
+                                "status": "rejected",
+                                "reason": f"The file is over {MAX_UPLOAD_MB} MB.",
+                            },
+                            status_code=413,
+                        )
                     handle.write(chunk)
             kind = classify(suffix, mode, probe(path))
             require_calibration(kind)
@@ -397,18 +539,30 @@ def register(app: FastAPI) -> None:
                 path.unlink(missing_ok=True)
                 path, converted = converted, None
             check_clip_rules(probe(path))
-            job = detector().submit(path, mode=kind)   # the detector owns the file from here and deletes it
+            job = detector().submit(
+                path, mode=kind
+            )  # the detector owns the file from here and deletes it
         except ClipRejected as error:
             path.unlink(missing_ok=True)
             if converted is not None:
                 converted.unlink(missing_ok=True)
-            return JSONResponse({"status": "rejected", "reason": str(error)}, status_code=400)
+            return JSONResponse(
+                {"status": "rejected", "reason": str(error)}, status_code=400
+            )
         except subprocess.TimeoutExpired:
             path.unlink(missing_ok=True)
-            return JSONResponse({"status": "rejected", "reason": "Reading the file took too long."}, status_code=400)
-        except Detector.Busy:              # the detector already deleted the file
-            return JSONResponse({"status": "busy", "reason": "The detector is busy. Try again in a minute."},
-                                status_code=503)
+            return JSONResponse(
+                {"status": "rejected", "reason": "Reading the file took too long."},
+                status_code=400,
+            )
+        except Detector.Busy:  # the detector already deleted the file
+            return JSONResponse(
+                {
+                    "status": "busy",
+                    "reason": "The detector is busy. Try again in a minute.",
+                },
+                status_code=503,
+            )
         except BaseException:
             path.unlink(missing_ok=True)
             raise
@@ -418,29 +572,62 @@ def register(app: FastAPI) -> None:
     def check_status(job: str) -> JSONResponse:
         state = detector().status(job) if re.fullmatch(r"[0-9a-f]{32}", job) else None
         if state is None:
-            return JSONResponse({"status": "unknown", "reason": "This check has expired or never existed."},
-                                status_code=404)
+            return JSONResponse(
+                {
+                    "status": "unknown",
+                    "reason": "This check has expired or never existed.",
+                },
+                status_code=404,
+            )
         if state["status"] == "done":
             return JSONResponse(present(state["outcome"]))
         return JSONResponse(state)
 
     @app.post("/contact", response_class=HTMLResponse)
-    def contact(request: Request, name: str = Form(""), email: str = Form(""), message: str = Form(""),
-                website: str = Form("")) -> HTMLResponse:
+    def contact(
+        request: Request,
+        name: str = Form(""),
+        email: str = Form(""),
+        message: str = Form(""),
+        website: str = Form(""),
+    ) -> HTMLResponse:
         title, path = PAGES["/contact"][1], "/contact"
-        if website:                      # a hidden field only bots fill in
+        if website:  # a hidden field only bots fill in
             return render("contact.html", title, path, sent=True)
-        name, email, message = name.strip()[:120], email.strip()[:200], message.strip()[:4000]
+        name, email, message = (
+            name.strip()[:120],
+            email.strip()[:200],
+            message.strip()[:4000],
+        )
         if not name or not EMAIL.match(email) or len(message) < 10:
-            return render("contact.html", title, path, error="Please give your name, a valid email and a message.",
-                          form={"name": name, "email": email, "message": message})
+            return render(
+                "contact.html",
+                title,
+                path,
+                error="Please give your name, a valid email and a message.",
+                form={"name": name, "email": email, "message": message},
+            )
         client = request.client.host if request.client else "unknown"
         if not contact_limit.allow(client):
-            return render("contact.html", title, path, error="Too many messages from here. Try again in an hour.")
+            return render(
+                "contact.html",
+                title,
+                path,
+                error="Too many messages from here. Try again in an hour.",
+            )
         try:
             send_contact(name, email, message)
         except (RuntimeError, httpx.HTTPError) as error:
-            reason = "The form is not connected yet." if str(error) == "not configured" else "Sending failed."
-            return render("contact.html", title, path, error=f"{reason} Please try again later.",
-                          form={"name": name, "email": email, "message": message})
+            reason = (
+                "The form is not connected yet."
+                if str(error) == "not configured"
+                else "Sending failed."
+            )
+            return render(
+                "contact.html",
+                title,
+                path,
+                error=f"{reason} Please try again later.",
+                form={"name": name, "email": email, "message": message},
+            )
         return render("contact.html", title, path, sent=True)

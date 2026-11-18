@@ -86,7 +86,11 @@ def efficientnet_config(**overrides) -> StreamConfig:
 
 
 def clip_config(**overrides) -> StreamConfig:
-    base = {"stream_name": "clip", "backbone_name": CLIP_VIT_L14, "global_pool": "token"}
+    base = {
+        "stream_name": "clip",
+        "backbone_name": CLIP_VIT_L14,
+        "global_pool": "token",
+    }
     base.update(overrides)
     return StreamConfig(**base)
 

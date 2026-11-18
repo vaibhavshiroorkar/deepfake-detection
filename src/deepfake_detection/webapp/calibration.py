@@ -26,7 +26,9 @@ import numpy as np
 CHECKS = ("face", "voice", "sync")
 FLAG_QUANTILE = 0.95
 UNSURE_QUANTILE = 0.80
-OWN_FLAG = 0.95          # a check is named as raising the flag at or above its own 95th percentile
+OWN_FLAG = (
+    0.95  # a check is named as raising the flag at or above its own 95th percentile
+)
 _EPS = 1e-7
 
 
@@ -61,7 +63,10 @@ class Reference:
     def from_scores(cls, scores: list[float], weights: list[float]) -> Reference:
         order = np.argsort(scores, kind="stable")
         w = np.asarray(weights, float)[order]
-        return cls(tuple(float(v) for v in np.asarray(scores, float)[order]), tuple(float(x) for x in w / w.sum()))
+        return cls(
+            tuple(float(v) for v in np.asarray(scores, float)[order]),
+            tuple(float(x) for x in w / w.sum()),
+        )
 
     def quantile(self, q: float) -> float:
         return weighted_quantile(list(self.values), list(self.weights), q)
@@ -77,12 +82,14 @@ class Reference:
 
 @dataclass(frozen=True)
 class Outcome:
-    kind: str                      # signs, cant_tell, no_signs or cant_check
+    kind: str  # signs, cant_tell, no_signs or cant_check
     combined: float | None
     percentiles: dict[str, float | None]
     raised: list[str] = field(default_factory=list)
-    part: int | None = None        # the index of the part that decided
-    parts: list[float | None] = field(default_factory=list)   # each part's combined percentile
+    part: int | None = None  # the index of the part that decided
+    parts: list[float | None] = field(
+        default_factory=list
+    )  # each part's combined percentile
 
 
 @dataclass(frozen=True)
@@ -91,20 +98,30 @@ class Calibration:
     threshold: float
     lower: float
     meta: dict = field(default_factory=dict, compare=False)
-    combined: Reference | None = None   # the real clips' combined percentiles, for videos in parts
+    combined: Reference | None = (
+        None  # the real clips' combined percentiles, for videos in parts
+    )
 
     def percentiles(self, scores: dict[str, float | None]) -> dict[str, float | None]:
-        return {c: None if scores.get(c) is None or c not in self.references else self.references[c].percentile(scores[c])
-                for c in CHECKS}
+        return {
+            c: None
+            if scores.get(c) is None or c not in self.references
+            else self.references[c].percentile(scores[c])
+            for c in CHECKS
+        }
 
     def limits(self, parts: int) -> tuple[float, float]:
         """The flag line and the "can't tell" line for a video checked in `parts` parts."""
         if parts <= 1:
             return self.threshold, self.lower
         if self.combined is None:
-            raise ValueError("a video in parts needs the combined reference; rebuild the calibration file")
-        return (self.combined.quantile(1 - (1 - FLAG_QUANTILE) / parts),
-                self.combined.quantile(1 - (1 - UNSURE_QUANTILE) / parts))
+            raise ValueError(
+                "a video in parts needs the combined reference; rebuild the calibration file"
+            )
+        return (
+            self.combined.quantile(1 - (1 - FLAG_QUANTILE) / parts),
+            self.combined.quantile(1 - (1 - UNSURE_QUANTILE) / parts),
+        )
 
     def decide(self, scores: dict[str, float | None]) -> Outcome:
         """`scores`: each check's score, or None when its quality gate failed."""
@@ -116,10 +133,18 @@ class Calibration:
         Parts where no check could run are skipped and do not count toward the correction.
         """
         pcts = [self.percentiles(scores) for scores in parts]
-        combined = [max((p for p in pct.values() if p is not None), default=None) for pct in pcts]
+        combined = [
+            max((p for p in pct.values() if p is not None), default=None)
+            for pct in pcts
+        ]
         checked = [i for i, c in enumerate(combined) if c is not None]
         if not checked:
-            return Outcome("cant_check", None, pcts[0] if pcts else {c: None for c in CHECKS}, parts=combined)
+            return Outcome(
+                "cant_check",
+                None,
+                pcts[0] if pcts else {c: None for c in CHECKS},
+                parts=combined,
+            )
         worst = max(checked, key=lambda i: combined[i])
         pct, top = pcts[worst], combined[worst]
         threshold, lower = self.limits(len(checked))
@@ -127,25 +152,50 @@ class Calibration:
             bar = min(OWN_FLAG, top)
             raised = [c for c in CHECKS if pct[c] is not None and pct[c] >= bar]
             return Outcome("signs", top, pct, raised, worst, combined)
-        return Outcome("cant_tell" if top > lower else "no_signs", top, pct, [], worst, combined)
+        return Outcome(
+            "cant_tell" if top > lower else "no_signs", top, pct, [], worst, combined
+        )
 
     def to_json(self) -> str:
-        refs = {c: {"values": list(r.values), "weights": list(r.weights)} for c, r in self.references.items()}
-        data = {"meta": self.meta, "threshold": self.threshold, "lower": self.lower, "references": refs}
+        refs = {
+            c: {"values": list(r.values), "weights": list(r.weights)}
+            for c, r in self.references.items()
+        }
+        data = {
+            "meta": self.meta,
+            "threshold": self.threshold,
+            "lower": self.lower,
+            "references": refs,
+        }
         if self.combined is not None:
-            data["combined"] = {"values": list(self.combined.values), "weights": list(self.combined.weights)}
+            data["combined"] = {
+                "values": list(self.combined.values),
+                "weights": list(self.combined.weights),
+            }
         return json.dumps(data, indent=1)
 
     @classmethod
     def from_json(cls, text: str) -> Calibration:
         data = json.loads(text)
-        refs = {c: Reference(tuple(r["values"]), tuple(r["weights"])) for c, r in data["references"].items()}
+        refs = {
+            c: Reference(tuple(r["values"]), tuple(r["weights"]))
+            for c, r in data["references"].items()
+        }
         combined = data.get("combined")
-        return cls(refs, float(data["threshold"]), float(data["lower"]), data.get("meta", {}),
-                   None if combined is None else Reference(tuple(combined["values"]), tuple(combined["weights"])))
+        return cls(
+            refs,
+            float(data["threshold"]),
+            float(data["lower"]),
+            data.get("meta", {}),
+            None
+            if combined is None
+            else Reference(tuple(combined["values"]), tuple(combined["weights"])),
+        )
 
 
-def build(rows: list[dict], checks: tuple[str, ...] = CHECKS) -> tuple[Calibration, dict]:
+def build(
+    rows: list[dict], checks: tuple[str, ...] = CHECKS
+) -> tuple[Calibration, dict]:
     """Calibration from rows {corpus, label (0 real, 1 fake, clip label), scores {check: float | None}}.
 
     `checks` names the checks the input can feed: a picture feeds the face check alone.
@@ -158,18 +208,27 @@ def build(rows: list[dict], checks: tuple[str, ...] = CHECKS) -> tuple[Calibrati
         have = [r for r in reals if r["scores"].get(check) is not None]
         if not have:
             raise ValueError(f"no real calibration clip has a {check} score")
-        references[check] = Reference.from_scores([r["scores"][check] for r in have],
-                                                  corpus_weights([r["corpus"] for r in have]))
+        references[check] = Reference.from_scores(
+            [r["scores"][check] for r in have],
+            corpus_weights([r["corpus"] for r in have]),
+        )
     draft = Calibration(references, threshold=1.0, lower=1.0)
     scored = [(r, draft.decide(r["scores"]).combined) for r in reals]
     scored = [(r, c) for r, c in scored if c is not None]
     combined = [c for _, c in scored]
     weights = corpus_weights([r["corpus"] for r, _ in scored])
-    final = Calibration(references, weighted_quantile(combined, weights, FLAG_QUANTILE),
-                        weighted_quantile(combined, weights, UNSURE_QUANTILE),
-                        combined=Reference.from_scores(combined, weights))
+    final = Calibration(
+        references,
+        weighted_quantile(combined, weights, FLAG_QUANTILE),
+        weighted_quantile(combined, weights, UNSURE_QUANTILE),
+        combined=Reference.from_scores(combined, weights),
+    )
     summary: dict = {}
     for r in rows:
-        side = summary.setdefault(r["corpus"], {}).setdefault("fake" if r["label"] else "real", Counter())
+        side = summary.setdefault(r["corpus"], {}).setdefault(
+            "fake" if r["label"] else "real", Counter()
+        )
         side[final.decide(r["scores"]).kind] += 1
-    return final, {c: {s: dict(n) for s, n in sides.items()} for c, sides in summary.items()}
+    return final, {
+        c: {s: dict(n) for s, n in sides.items()} for c, sides in summary.items()
+    }

@@ -51,8 +51,14 @@ def derangement(sources: list[str], seed: int = 17) -> list[int]:
 def real_test_clips() -> list[dict]:
     with open(ROOT / "runs/p001/split/test.csv", encoding="utf-8", newline="") as f:
         test = {r["clip_id"] for r in csv.DictReader(f)}
-    with open(ROOT / "data/manifests/fakeavceleb-neutral.csv", encoding="utf-8", newline="") as f:
-        return [r for r in csv.DictReader(f) if r["clip_id"] in test and r["manipulation_type"] == "RealVideo-RealAudio"]
+    with open(
+        ROOT / "data/manifests/fakeavceleb-neutral.csv", encoding="utf-8", newline=""
+    ) as f:
+        return [
+            r
+            for r in csv.DictReader(f)
+            if r["clip_id"] in test and r["manipulation_type"] == "RealVideo-RealAudio"
+        ]
 
 
 class _Pair:
@@ -77,7 +83,11 @@ def main() -> int:
     model = load_avhubert(ROOT / "models/avhubert/base_vox_iter5.pt").to(device).eval()
     heads = []
     for seed in SEEDS:
-        state = torch.load(ROOT / f"runs/p001/sync/sync-seed{seed}.pt", map_location="cpu", weights_only=True)
+        state = torch.load(
+            ROOT / f"runs/p001/sync/sync-seed{seed}.pt",
+            map_location="cpu",
+            weights_only=True,
+        )
         head = AlignmentHead(width=768)
         head.load_state_dict(state["state_dict"])
         heads.append(head.to(device).eval())
@@ -86,9 +96,22 @@ def main() -> int:
     for row in real_test_clips():
         path = str(ROOT / "data" / row["video_path"])
         face, crops, audio = prepare_window((path, 0.0))
-        if isinstance(face, str) or crops is None or face < MIN_FACE or len(crops) != FRAMES:
+        if (
+            isinstance(face, str)
+            or crops is None
+            or face < MIN_FACE
+            or len(crops) != FRAMES
+        ):
             continue
-        usable.append({"clip_id": row["clip_id"], "source": row["source"], "path": path, "crops": crops, "audio": audio})
+        usable.append(
+            {
+                "clip_id": row["clip_id"],
+                "source": row["source"],
+                "path": path,
+                "crops": crops,
+                "audio": audio,
+            }
+        )
     swap = derangement([u["source"] for u in usable])
 
     def misfit(crops: np.ndarray, audio: np.ndarray) -> list[float]:
@@ -98,7 +121,9 @@ def main() -> int:
         if lips.shape[1] != FRAMES or sound.shape[1] != FRAMES:
             raise ValueError("window is not 50 frames")
         with torch.no_grad():
-            return [float(1 - math.exp(-h.window_score(lips, sound).item())) for h in heads]
+            return [
+                float(1 - math.exp(-h.window_score(lips, sound).item())) for h in heads
+            ]
 
     conditions = ["original", *[f"shift {s:.2f} s" for s in SHIFTS], "swap"]
     scores: dict[str, list[list[float]]] = {c: [] for c in conditions}
@@ -109,31 +134,57 @@ def main() -> int:
             scores[f"shift {s:.2f} s"].append(misfit(clip["crops"], moved))
         scores["swap"].append(misfit(clip["crops"], usable[swap[i]]["audio"]))
 
-    report = {"amendment": "A16", "exploratory": True, "clips": len(usable),
-              "identities": len({u["source"] for u in usable}), "conditions": {}}
+    report = {
+        "amendment": "A16",
+        "exploratory": True,
+        "clips": len(usable),
+        "identities": len({u["source"] for u in usable}),
+        "conditions": {},
+    }
     for c in conditions[1:]:
-        pairs = [_Pair(u["source"], o, m) for u, o, m in zip(usable, scores["original"], scores[c], strict=True)]
+        pairs = [
+            _Pair(u["source"], o, m)
+            for u, o, m in zip(usable, scores["original"], scores[c], strict=True)
+        ]
         interval = cluster_bootstrap_interval(pairs, mean_auc, samples=1000, seed=17)
         per_seed = {}
         for k, seed in enumerate(SEEDS):
             per_seed[str(seed)] = {
-                "auc": float(roc_auc_score([0] * len(pairs) + [1] * len(pairs),
-                                           [p.original[k] for p in pairs] + [p.moved[k] for p in pairs])),
-                "share_rising": float(np.mean([p.moved[k] > p.original[k] for p in pairs])),
+                "auc": float(
+                    roc_auc_score(
+                        [0] * len(pairs) + [1] * len(pairs),
+                        [p.original[k] for p in pairs] + [p.moved[k] for p in pairs],
+                    )
+                ),
+                "share_rising": float(
+                    np.mean([p.moved[k] > p.original[k] for p in pairs])
+                ),
             }
-        report["conditions"][c] = {"mean_auc": interval.estimate, "lower": interval.lower, "upper": interval.upper,
-                                   "per_seed": per_seed}
+        report["conditions"][c] = {
+            "mean_auc": interval.estimate,
+            "lower": interval.lower,
+            "upper": interval.upper,
+            "per_seed": per_seed,
+        }
     OUTPUT.mkdir(parents=True, exist_ok=True)
-    (OUTPUT / "a16.json").write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
+    (OUTPUT / "a16.json").write_text(
+        json.dumps(report, indent=1) + "\n", encoding="utf-8"
+    )
     with open(OUTPUT / "windows.csv", "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["clip_id", "source", "condition", *[f"misfit_seed{s}" for s in SEEDS]])
+        writer.writerow(
+            ["clip_id", "source", "condition", *[f"misfit_seed{s}" for s in SEEDS]]
+        )
         for c in conditions:
             for u, values in zip(usable, scores[c], strict=True):
-                writer.writerow([u["clip_id"], u["source"], c, *[f"{v:.6f}" for v in values]])
+                writer.writerow(
+                    [u["clip_id"], u["source"], c, *[f"{v:.6f}" for v in values]]
+                )
     for c, r in report["conditions"].items():
-        print(f"{c:15} AUC {r['mean_auc']:.3f} [{r['lower']:.3f}, {r['upper']:.3f}]  "
-              f"rising {np.mean([v['share_rising'] for v in r['per_seed'].values()]):.2f}")
+        print(
+            f"{c:15} AUC {r['mean_auc']:.3f} [{r['lower']:.3f}, {r['upper']:.3f}]  "
+            f"rising {np.mean([v['share_rising'] for v in r['per_seed'].values()]):.2f}"
+        )
     print(f"{report['clips']} clips, {report['identities']} identities")
     return 0
 

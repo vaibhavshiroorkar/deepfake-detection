@@ -22,8 +22,12 @@ from pathlib import Path
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--metadata", type=Path, default=Path("data/LAV-DF/LAV-DF/metadata.min.json"))
-    parser.add_argument("--output", type=Path, default=Path("data/manifests/lavdf-files.csv"))
+    parser.add_argument(
+        "--metadata", type=Path, default=Path("data/LAV-DF/LAV-DF/metadata.min.json")
+    )
+    parser.add_argument(
+        "--output", type=Path, default=Path("data/manifests/lavdf-files.csv")
+    )
     arguments = parser.parse_args(argv)
 
     entries = json.loads(arguments.metadata.read_text(encoding="utf-8"))
