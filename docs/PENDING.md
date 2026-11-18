@@ -18,6 +18,8 @@ The demo, the PPT, the overnight checks and `docs/SECURITY.md` are done and merg
 
 3. Public site hardening, before it is left public unattended (`docs/SECURITY.md`): per-visitor rate limits behind the Funnel proxy, memory limits on FFmpeg, uploads in a container without `data/`. Until then `-Public` only while someone watches.
 
+4. Check the study's cleaned clips for the same assumption: `neutralize_clip(start=None)` judges "enough sound" from the container's length, so a source whose audio ends early could have given a cleaned clip under 3.00 s. Count cleaned clips shorter than 3.00 s in `data/neutral`; if any, say so in the report's limitations.
+
 **Claude, also:**
 
 - On request: answer Overleaf compile errors; adjust slides or the demo after Vaibhav's review and rehearsal.

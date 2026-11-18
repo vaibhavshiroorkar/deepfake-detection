@@ -294,11 +294,17 @@ def _duration(path: Path) -> float:
 
 
 def plan_windows(source: Path, settings: NeutralSettings) -> list[tuple[float, float]]:
-    """Every `fixed_seconds` span of `source` that holds sound, from `sound_windows`."""
+    """Every `fixed_seconds` span of `source` that holds sound, from `sound_windows`.
+
+    The sound ends where the decoded audio ends, which can be well before the container's length: a
+    cloned voice laid over a longer picture is one case. Planning from the container put a part past
+    the sound, and that part had too few frames to score.
+    """
     audio = normalize_level(_read_audio(source), settings.loudness_dbfs)
     leading, trailing = silence_bounds(audio, SAMPLE_RATE, settings.silence_dbfs)
+    length = min(_duration(source), audio.size / SAMPLE_RATE)
     return sound_windows(
-        _duration(source), leading, trailing, settings.fixed_seconds, settings.fps
+        length, leading, trailing, settings.fixed_seconds, settings.fps
     )
 
 

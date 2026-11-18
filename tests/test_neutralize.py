@@ -282,3 +282,43 @@ def test_a_given_start_cleans_that_part_of_the_clip(tmp_path: Path) -> None:
     assert "error" not in report
     assert report["offset_sec"] == pytest.approx(1.0)
     assert report["kept_sec"] == pytest.approx(1.0)
+
+
+@pytest.mark.skipif(not HAS_FFMPEG, reason="needs ffmpeg")
+def test_parts_end_where_the_audio_ends_when_the_video_runs_longer(
+    tmp_path: Path,
+) -> None:
+    # A cloned-voice upload had 6.4 s of picture and 4.18 s of sound; parts were planned from the
+    # container's length, so the last part ran past the sound and had too few frames to score.
+    from deepfake_detection.preprocessing.neutralize import plan_windows
+
+    source = tmp_path / "short_audio.mp4"
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc=size=64x64:rate=25:duration=6",
+            "-f",
+            "lavfi",
+            "-i",
+            "sine=frequency=440:duration=4",
+            "-map",
+            "0:v",
+            "-map",
+            "1:a",
+            "-c:v",
+            "libx264",
+            "-c:a",
+            "aac",
+            str(source),
+        ],
+        check=True,
+    )
+    parts = plan_windows(source, NeutralSettings())
+    assert parts, "4 s of sound holds at least one 3 s part"
+    assert max(end for _, end in parts) <= 4.0 + 0.05
