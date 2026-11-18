@@ -11,6 +11,12 @@ The demo, the PPT, the overnight checks and `docs/SECURITY.md` are done and merg
 
 **Claude, the 18th:** the deliverables remake is done (changelog). Vaibhav: compile the paper and the report on Overleaf (no LaTeX here, so only static checks have run), and confirm the paper title with the guide.
 
+**Claude, the 18th, website (decided by Vaibhav 11-18):**
+
+1. Check the whole video, not only the first 3 seconds: score every 3-second part, report the most unusual one, and raise the bar with the number of parts (a Bonferroni correction) so real videos are not flagged more often.
+2. A file check runs first: look for provenance tags that AI tools write on purpose (C2PA, a generator's name). A tag gives "signs of manipulation" with the tag as evidence; no tag says nothing and the three checks run. First inspect the HiFi-AVDF clips to see which tags really exist. Codec, bitrate and length are not used as evidence (the file audit shows they describe the dataset, not the fake).
+3. Update the site's wording, the report's website section and the demo notes to match; push after each step.
+
 **Claude, also:**
 
 - On request: answer Overleaf compile errors; adjust slides or the demo after Vaibhav's review and rehearsal.
