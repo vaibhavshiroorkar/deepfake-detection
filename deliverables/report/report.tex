@@ -730,7 +730,7 @@
 % =============================================================================
 % PROJECT METADATA
 % =============================================================================
-\newcommand{\ProjectTitle}{Shortcut-Neutral Multimodal Audio-Visual Deepfake Detection}
+\newcommand{\ProjectTitle}{Multimodal Audio-Visual Deepfake Detection}
 \newcommand{\Branch}{Electronics and Computer Engineering}
 \newcommand{\BranchShort}{Electronics and Computer Engineering}
 \newcommand{\Department}{Department of \BranchShort}
@@ -967,10 +967,8 @@ have not been properly cited or from whom proper permission is not sought.
     \textbf{Roll No.} \rule{4cm}{0.4pt} &
     \textbf{Signature of the Student} \newline\rule{6cm}{0.4pt}\newline
     \textbf{Roll No.} \rule{4cm}{0.4pt} \\ \hline
-    \textbf{Signature of the Student} \newline\rule{6cm}{0.4pt}\newline
-    \textbf{Roll No.} \rule{4cm}{0.4pt} &
-    \textbf{Signature of the Student} \newline\rule{6cm}{0.4pt}\newline
-    \textbf{Roll No.} \rule{4cm}{0.4pt} \\ \hline
+        \textbf{Signature of the Student} \newline\rule{6cm}{0.4pt}\newline
+    \textbf{Roll No.} \rule{4cm}{0.4pt} & \\ \hline
 \end{tabular}
 \renewcommand{\arraystretch}{1.0}
 
@@ -1072,10 +1070,12 @@ Claude (Anthropic) assisted with implementation, analysis and documentation. All
 \chapter*{Nomenclature}
 \addcontentsline{toc}{chapter}{Nomenclature}
 
-\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{3.8cm}X@{}}
+% A longtable, so the list starts under its heading and breaks across pages (a tabularx cannot).
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.27\textwidth}>{\raggedright\arraybackslash}p{0.69\textwidth}@{}}
     \toprule
     \textbf{Term} & \textbf{Meaning} \\
     \midrule
+    \endhead
     AUC (ROC-AUC)       & Area under the receiver operating characteristic curve: the chance that a random fake scores higher than a random real clip. 0.5 is guessing and 1.0 is perfect \\
     Shortcut, clue      & A cue that predicts the label in a dataset but is not the manipulation itself, such as the video codec \\
     Cue-only classifier & A classifier that sees only file metadata and audio-edge measurements, never a face or a voice \\
@@ -1104,7 +1104,7 @@ Claude (Anthropic) assisted with implementation, analysis and documentation. All
     dBFS                & Decibels relative to digital full scale \\
     CRF                 & Constant rate factor, the quality setting of the H.264 encoder \\
     \bottomrule
-\end{tabularx}
+\end{longtable}
 
 \clearpage
 
@@ -1148,9 +1148,8 @@ idea now generates whole videos. The newest commercial tools, such as Sora~2
 and Veo~3.1, write the picture and the sound together from a text prompt. Their
 output has no original recording behind it at all.
 
-These tools are cheap and easy to use. Surveys of the field~\cite{tolosana,mirsky}
-describe the same trend: each new generation of tools needs less data, less
-skill and less time, and leaves fewer visible traces.
+Surveys of the field~\cite{tolosana,mirsky} track both sides of this
+development: the methods that make fakes and the detectors built against them.
 
 \section{Kinds of Audio-Visual Manipulation}
 
@@ -1186,21 +1185,18 @@ Section~\ref{sec:r-new}.
 
 \section{Why Detection Matters}
 
-A convincing fake video of a real person can be used to deceive, to defraud
-or to embarrass. A detector cannot stop a fake from being made, but it can
-help a viewer, a newsroom or a platform decide how much to trust a clip before
-sharing it.
+A convincing fake video of a real person can be used to deceive or to
+defraud. A detector cannot stop a fake from being made. It can help a viewer,
+a newsroom or a platform decide how much to trust a clip before sharing it.
 
 What a detector must do is set by where fakes are found. Deepfake-Eval-2024~\cite{dfeval2024}
 collected deepfakes that circulated on 88 websites in 52 languages during 2024.
 Open-source detectors lost about half their AUC on it compared with the
 benchmarks they were built on: 50\% for video, 48\% for audio and 45\% for
-images. A detector that only works on its own benchmark is of little use to
-anyone who meets a clip in a message or a feed.
+images.
 
-That gap is the subject of this report. We do not try to build a detector that
-beats a benchmark. We try to find out why detectors that beat benchmarks fail
-elsewhere, and what still works once the easy clues are gone.
+This report studies that gap. It asks why detectors that do well on
+benchmarks fail elsewhere, and what still works once the easy clues are gone.
 
 \section{The Problem}
 \label{sec:problem}
@@ -1210,11 +1206,10 @@ kind in Table~\ref{tab:manipulations}. On their own benchmarks they report AUC
 values near 0.99. On video from anywhere else they often fall to chance. Our
 own earlier models did the same (Section~\ref{ch:history}).
 
-Here is one reason. Open a real clip from FakeAVCeleb~\cite{fakeavceleb}, the
-most used audio-visual benchmark, and it is H.264 video with AAC audio. Open a
-clip with a cloned voice over real video and the audio is MP3. Open a face swap
-and the video is, nine times in ten, MPEG-4. A model never needs to look at a
-face to tell them apart. Geirhos et al.\ call this shortcut learning~\cite{shortcut}:
+One reason is in the files. In FakeAVCeleb~\cite{fakeavceleb}, the most
+used audio-visual benchmark, real clips are H.264 video with AAC audio. Clips
+with a cloned voice over real video have MP3 audio, and nine face swaps in ten
+are MPEG-4 video. A model can tell them apart without looking at a face. Geirhos et al.\ call this shortcut learning~\cite{shortcut}:
 the model learns a clue that happens to follow the label instead of the thing
 the label is about.
 
@@ -1231,8 +1226,7 @@ work, and how they behave on data they never saw.
 
 \section{Motivation for This Approach}
 
-Three choices follow from the problem, and each one shapes the rest of the
-report.
+Three choices follow from the problem.
 
 \textbf{Read both the picture and the sound.} A face check alone cannot see a
 cloned voice, and a voice check alone cannot see a swapped face.
@@ -1240,9 +1234,9 @@ Table~\ref{tab:manipulations} shows that no single stream covers every kind of
 fake. An audio-visual detector can also ask a question neither stream can ask
 alone: do the lips match the words?
 
-\textbf{Learn from real videos where possible.} Fakes change every few months,
-and a detector trained on last year's fakes learns last year's mistakes. Real
-talking faces change much less. A lip-sync check that learns only how real
+\textbf{Learn from real videos where possible.} New generators appear every few
+months, and a detector trained on older fakes learns their particular flaws.
+Real talking faces change much less. A lip-sync check that learns only how real
 lips move with real speech never sees a fake during training, so it cannot
 learn a fake file's habits. Smeu et al.~\cite{smeu2025} found that such a
 model loses almost nothing when a known shortcut is removed, while a
@@ -1363,7 +1357,8 @@ true of 46\% of LAV-DF fake windows (Section~\ref{ch:setup}).
 
 \textbf{Some fakes leave nothing to compare.} A lip-sync check looks for a
 mismatch between lips and voice. A face swap that keeps the original mouth and
-voice has none. Neither has a video in which one model generated both.
+voice has no such mismatch, and neither does a video in which one model
+generated both.
 
 \section{Research Questions}
 \label{sec:questions}
@@ -1389,9 +1384,8 @@ Section~\ref{ch:setup} gives the exact rules.
     alarms at most 0.07.
 \end{enumerate}
 
-A hypothesis can fail, and two of them did not come out as hoped. Q1 missed
-its bar and Q3 has run in one direction only. They are reported anyway,
-because a test that is reported only when it passes is not a test.
+Two of the four did not come out as planned: Q1 missed its bar, and Q3 has
+run in one direction only. Both are reported in full.
 
 \section{Who Would Use This}
 
@@ -1412,6 +1406,7 @@ and they need different things from it.
 
 The website of Section~\ref{sec:m-website} is built for the first user, and
 H4 answers a question the third user would ask.
+
 \section{Contributions}
 
 \begin{enumerate}
@@ -1442,9 +1437,6 @@ H4 answers a question the third user would ask.
     spot.
 \end{enumerate}
 
-We do not claim a new architecture. Combining audio and video is not new, and
-neither is training a lip-sync model on real clips only.
-
 \section{How This Report Is Organized}
 
 The report follows the college's five chapters.
@@ -1473,10 +1465,10 @@ for each stream, thresholds that do not transfer, and the choice of
 performance measure. A comparison table and the research gap close the
 chapter.
 
-Numbers quoted from other papers are mostly left out on purpose. They come
-from protocols that differ from ours, and the point of this chapter is the
-protocols, not the scores. Where a number is quoted, it is one the paper
-itself reports, and it is quoted to show a pattern, not to rank methods.
+Few numbers from other papers are quoted, because they come from protocols
+that differ from ours. This chapter compares protocols. Where a number is
+quoted, it is one the paper itself reports, and it shows a pattern; it does
+not rank methods.
 
 \section{Surveys of the Field}
 
@@ -1534,7 +1526,7 @@ come from an open implementation of this design, Real-Time Voice Cloning
 predicts them with a language model, copying a voice from a three-second
 recording.
 
-\subsection{Whole videos}
+\subsection{Whole Videos}
 
 Diffusion models~\cite{ddpm} learn to remove noise step by step, and generate
 an image by starting from pure noise. Latent diffusion~\cite{ldm} runs that
@@ -1546,12 +1538,12 @@ collects clips from six such tools. Section~\ref{sec:r-new} shows why they are
 hard for a lip-sync check: when one model makes the mouth and the voice
 together, the two agree.
 
-\subsection{A timeline of making and detecting}
+\subsection{A Timeline of Making and Detecting}
 
 Table~\ref{tab:timeline} puts the main steps of both sides on one timeline.
 Each new kind of generator was followed, a year or two later, by a dataset
-and detectors aimed at it. The newest generators, which make picture and
-sound together, do not yet have that answer.
+and detectors aimed at it. For generators that make picture and sound
+together, HiFi-AVDF and HAVIC (2026) are the first such answer we found.
 
 \begin{table}[ht]
     \centering
@@ -1578,7 +1570,7 @@ sound together, do not yet have that answer.
     \end{tabularx}
 \end{table}
 
-\subsection{What the makers leave behind}
+\subsection{What the Makers Leave Behind}
 
 Each method leaves its own traces. Face swaps leave a blending boundary where
 the new face meets the old head, and colour or sharpness that does not match.
@@ -1595,8 +1587,7 @@ word. Those traces are the subject of Section~\ref{sec:l-shortcuts}.
 \section{Datasets}
 \label{sec:l-datasets}
 
-A detector is only as good as the data it learns from and the data it is
-judged on. Table~\ref{tab:datasets} lists the datasets this survey refers to.
+Table~\ref{tab:datasets} lists the datasets this survey refers to.
 The ones used in this project are marked.
 
 \begin{table}[ht]
@@ -1627,7 +1618,7 @@ The ones used in this project are marked.
     \end{tabularx}
 \end{table}
 
-\subsection{Face-video datasets}
+\subsection{Face-Video Datasets}
 
 FaceForensics++~\cite{ffpp} set the pattern for face forensics. It applies
 four manipulations to the same YouTube videos and releases them at three
@@ -1643,7 +1634,7 @@ sets hold only a few, dated methods, and collects forty. Celeb-DF++~\cite{celebd
 extends Celeb-DF with 22 recent methods and protocols for testing
 generalization.
 
-\subsection{Speech datasets}
+\subsection{Speech Datasets}
 
 Speech anti-spoofing grew up around the ASVspoof challenges. The 2019
 edition~\cite{asvspoof2019} was the first to cover synthesized, converted and
@@ -1653,7 +1644,7 @@ which the attack is unknown. M\"uller et al.~\cite{mueller2022} collected
 In-the-Wild, 37.9 hours of found recordings of celebrities and politicians, of
 which 17.2 hours are deepfakes. Models trained on ASVspoof did poorly on it.
 
-\subsection{Audio-visual datasets}
+\subsection{Audio-Visual Datasets}
 
 FakeAVCeleb~\cite{fakeavceleb} is the most used audio-visual benchmark. It
 starts from real VoxCeleb2 videos of celebrities and adds face swaps, lip
@@ -1666,7 +1657,7 @@ consented, and made fakes of them with fourteen video and three voice
 engines. HiFi-AVDF~\cite{havic} pairs real videos with copies made by six
 commercial generators of 2025. KoDF~\cite{kodf} adds Korean faces and voices.
 
-\subsection{How the four corpora of this project were made}
+\subsection{How the Four Corpora of This Project Were Made}
 
 The corpora used here differ in who made the fakes, with which tools and in
 which year. Table~\ref{tab:corpusmaking} sets them side by side, because the
@@ -1696,7 +1687,7 @@ HiFi-AVDF has no edit at all, only generation. A detector that transfers
 across all four has learned something general; one that transfers only
 between the first two may have learned VoxCeleb2.
 
-\subsection{In-the-wild benchmarks}
+\subsection{In-the-Wild Benchmarks}
 
 Deepfake-Eval-2024~\cite{dfeval2024} is different from every set above. Its
 fakes were not made by the authors. They were found on social media and sent
@@ -1707,7 +1698,7 @@ this can happen.
 \section{Visual Detectors}
 \label{sec:l-visual}
 
-\subsection{Frame classifiers}
+\subsection{Frame Classifiers}
 
 The simplest detector crops the face from each frame and classifies it.
 MesoNet~\cite{mesonet} used a small network aimed at mid-level image detail,
@@ -1722,11 +1713,10 @@ built an end-to-end framework on one. Coccomini et al.~\cite{coccomini2022}
 compared vision transformers with CNNs on forgery methods the models were not
 trained on.
 
-These detectors learn whatever separates the training classes. On
-FaceForensics++ that is mostly the method's own artifacts, so they do well on
-methods they saw and poorly on methods they did not.
+Trained on fakes from a few methods, these detectors tend to do well on
+those methods and worse on others~\cite{deepfakebench}.
 
-\subsection{Detectors that learn the blending step}
+\subsection{Detectors That Learn the Blending Step}
 
 A face swap has one step in common across methods: the new face is blended
 into the old frame. Face X-ray~\cite{facexray} trains a network to find that
@@ -1742,7 +1732,7 @@ fakes.
 The approach has a limit that matters for this project. It assumes a blend.
 A face that was generated whole, as in HiFi-AVDF, has no boundary to find.
 
-\subsection{Detectors that use time}
+\subsection{Detectors That Use Time}
 
 Fakes made frame by frame tend to flicker. Several detectors look for this.
 LipForensics~\cite{lipforensics} first trains a network to read lips on real
@@ -1755,7 +1745,7 @@ neither kind of clue takes over. TALL~\cite{tall} lays several frames out as
 a grid in one image, which lets an image model see change over time at low
 cost.
 
-\subsection{Detectors that read the body}
+\subsection{Detectors That Read the Body}
 
 A real face shows a faint colour change with every heartbeat. FakeCatcher~\cite{fakecatcher}
 measures this signal in several parts of the face and flags videos in which
@@ -1763,7 +1753,7 @@ the parts disagree. The idea is attractive because a generator has no reason
 to copy a pulse. The signal is faint, though, so it depends on video quality
 in a way that blending traces do not.
 
-\subsection{Detectors built on large pretrained models}
+\subsection{Detectors Built on Large Pretrained Models}
 
 A different line asks whether a network needs to be trained for forgery at
 all. Wang et al.~\cite{cnnspot} showed that a classifier trained on images
@@ -1783,7 +1773,7 @@ pretrained encoder, 0.03\% of its weights, and reports that this is enough to
 generalize across benchmarks. Our exploratory test of stronger frozen
 backbones (Section~\ref{sec:r-further}) belongs to this line.
 
-\subsection{Pretrained image encoders}
+\subsection{Pretrained Image Encoders}
 
 Several detectors above, and one exploratory check of ours, rest on large
 image encoders trained for other purposes. Four matter here.
@@ -1801,7 +1791,7 @@ The risk is the reverse: they were trained to ignore the low-level detail in
 which many fakes differ. Section~\ref{sec:r-further} tests whether swapping
 our face check's backbone for stronger frozen encoders helps on cleaned data.
 
-\subsection{Benchmarks of visual detectors}
+\subsection{Benchmarks of Visual Detectors}
 
 DeepfakeBench~\cite{deepfakebench} found that published comparisons were
 unfair because each paper prepared the data in its own way. It put many
@@ -1815,7 +1805,7 @@ detector can learn who a face belongs to, because each fake mixes two known
 identities. They call this implicit identity leakage. It is the reason this
 project splits FakeAVCeleb by person (Section~\ref{ch:setup}).
 
-\subsection{Summary of visual detectors}
+\subsection{Summary of Visual Detectors}
 
 Table~\ref{tab:visual} sums up the visual detectors above by the idea each
 relies on and the kind of fake that idea cannot see.
@@ -1854,7 +1844,7 @@ blend, no swap and often no flicker, is hard for most of them.
 \section{Audio Detectors}
 \label{sec:l-audio}
 
-\subsection{Hand-built features and the ASVspoof challenges}
+\subsection{Hand-Built Features and the ASVspoof Challenges}
 
 Speech anti-spoofing began as a defence for speaker verification: a system
 that unlocks with a voice must reject a recording or a synthetic copy of that
@@ -1864,16 +1854,16 @@ simple classifiers. M\"uller et al.~\cite{mueller2022} later compared many
 feature choices under one protocol and found that the choice of feature alone
 changed the error rate a lot.
 
-\subsection{Networks on the raw waveform}
+\subsection{Networks on the Raw Waveform}
 
 RawNet2~\cite{rawnet2} reads the raw waveform instead of a spectrogram, so it
 can learn clues that hand-built features throw away. AASIST~\cite{aasist}
 models the spectral and temporal parts of an utterance as graphs and joins
 them with graph attention, in one system instead of an ensemble.
 
-\subsection{Self-supervised speech models}
+\subsection{Self-Supervised Speech Models}
 
-The largest recent gain came from speech models pretrained without labels.
+Much recent work builds on speech models pretrained without labels.
 wav2vec~2.0~\cite{wav2vec2} learns speech representations by masking parts of
 the input and predicting them. HuBERT~\cite{hubert} and WavLM~\cite{wavlm}
 follow the same idea with different targets, and Whisper~\cite{whisper}
@@ -1884,7 +1874,7 @@ al.~\cite{pascu2024} used frozen self-supervised features with a simple
 classifier and argue that this generalizes and is better calibrated. Our
 voice check uses a wav2vec~2.0 Base front end.
 
-\subsection{Summary of audio detectors}
+\subsection{Summary of Audio Detectors}
 
 \begin{table}[ht]
     \centering
@@ -1915,7 +1905,7 @@ in a recording followed the label.
 \section{Audio-Visual Detectors}
 \label{sec:l-av}
 
-\subsection{Supervised fusion detectors}
+\subsection{Supervised Fusion Detectors}
 
 Most audio-visual detectors train on real and fake clips and fuse the two
 streams inside the network. Chugh et al.~\cite{notmade} compute a modality
@@ -1945,7 +1935,7 @@ videos, so a random split almost certainly puts the same people in training
 and test. None of these supervised detectors reports results with the
 leading-silence cue removed.
 
-\subsection{Detectors trained on real clips only}
+\subsection{Detectors Trained on Real Clips Only}
 
 A second family never trains on fakes. SyncNet~\cite{syncnet} first showed
 that lip and audio embeddings can be compared directly to measure sync. Its
@@ -1965,7 +1955,7 @@ loses almost nothing when the leading silence is trimmed, while a supervised
 variant of the same model loses a lot. That result is the main reason we chose
 a real-only lip-sync check.
 
-\subsection{Summary of audio-visual detectors}
+\subsection{Summary of Audio-Visual Detectors}
 
 Table~\ref{tab:avdetectors} sums up the audio-visual detectors of this
 section by how they learn and how they join the two streams.
@@ -2002,9 +1992,9 @@ lip-sync check belongs to the second group by design, and our face and voice
 checks to the first, which is why the file audit and the cleaning step matter
 for them most.
 
-\subsection{Where the streams are joined}
+\subsection{Where the Streams Are Joined}
 
-Audio-visual detectors differ most in where they join the two streams, and
+Audio-visual detectors also differ in where they join the two streams, and
 the choice decides what can go wrong.
 
 \textbf{Early fusion} joins the raw inputs or low-level features and lets one
@@ -2031,7 +2021,7 @@ A check of agreement between the streams, such as our lip-sync check, sits
 apart from all three. It does not join two detectors; its whole input is the
 relation between the streams.
 
-\subsection{What these papers have in common}
+\subsection{What These Papers Have in Common}
 
 Reproducible baselines with official code and weights exist for AVH-Align,
 HAVIC, RealForensics, LipForensics, AVAD and SpeechForensics. Of these, only
@@ -2092,17 +2082,17 @@ labelled LAV-DF windows for that reason.
 \section{Dataset Shortcuts}
 \label{sec:l-shortcuts}
 
-\subsection{Shortcut learning}
+\subsection{Shortcut Learning}
 
 Geirhos et al.~\cite{shortcut} describe shortcut learning in general terms. A
 network takes the easiest route to a low training loss. If some feature
 follows the label in the training data and is easier to read than the real
 signal, the network reads it. The network then does well on test data that
 shares the shortcut and fails on data that does not. Their examples include
-image classifiers that judge texture instead of shape. Deepfake datasets turn
-out to be full of such features.
+image classifiers that judge texture instead of shape. The next subsections
+show such features in deepfake datasets.
 
-\subsection{Silence in speech anti-spoofing}
+\subsection{Silence in Speech Anti-Spoofing}
 
 The first clear case in this field was in speech. M\"uller et al.~\cite{mueller2021}
 showed that genuine ASVspoof 2019 LA recordings carry longer silences than
@@ -2113,7 +2103,7 @@ ASVspoof fail on real-world recordings. The audio-visual community did not
 import their fix. This project's own earlier audio model hit the same problem
 (Section~\ref{ch:history}).
 
-\subsection{Silence in audio-visual datasets}
+\subsection{Silence in Audio-Visual Datasets}
 
 Smeu et al.~\cite{smeu2025} found that fake clips in FakeAVCeleb and
 AV-Deepfake1M start with a short stretch of digital silence. Real clips start
@@ -2131,7 +2121,7 @@ removes most of the reliance. It also found that FakeAVCeleb's original
 leave-one-method-out protocol leaks Wav2Lip content between training and test,
 and it proposed an identity split and method-family splits instead.
 
-\subsection{Format shortcuts}
+\subsection{Format Shortcuts}
 
 In generated images, JPEG compression and image size differ between real and
 fake sets. Grommelt et al.~\cite{grommelt2024} showed that detectors learn
@@ -2141,7 +2131,7 @@ settings~\cite{ffpp}. We found no paper that publishes a per-class codec census
 for an audio-visual deepfake dataset, or a classifier trained on file metadata
 alone. Section~\ref{sec:r-files} gives both.
 
-\subsection{Identity shortcuts}
+\subsection{Identity Shortcuts}
 
 Dong et al.~\cite{dong2023} showed that face-swap detectors learn identity,
 and that this hurts generalization. No paper we read measures identity leakage
@@ -2181,7 +2171,7 @@ Recent work shows that thresholds fail to transfer even when AUC holds.
 Nguyen et al.~\cite{nguyen2026} found that the best threshold varies widely
 from dataset to dataset for the same detector. LAION-Mobile~\cite{laionmobile2026}
 found that thresholds fitted on older data flag far more real smartphone
-photos than intended. We do not claim this observation as ours.
+photos than intended.
 
 The statistics to fix it are standard. Split conformal prediction~\cite{conformalintro}
 sets a threshold from the scores of real clips alone. A new real clip from the
@@ -2201,8 +2191,8 @@ calibration for audio-visual video detectors across corpora.
 \section{Performance Measures and Why We Chose Them}
 \label{sec:l-measures}
 
-The choice of measure decides what a result can show. This section explains
-the measures this report uses and the ones it avoids.
+This section explains the measures this report uses and the ones it
+avoids.
 
 \subsection{AUC}
 
@@ -2226,17 +2216,18 @@ score, including a classifier on file details alone. That is what makes the
 file-clue score of Section~\ref{sec:m-audit} comparable with a detector score
 on the same data.
 
-\subsection{False-alarm and catch rates at a threshold}
+\subsection{False-Alarm and Catch Rates at a Threshold}
 
-A user meets a threshold, not an AUC. So for the practical question we report
+A user sees a decision at one threshold, not an AUC. So for the practical
+question we report
 two rates at a fixed threshold: the false-alarm rate, the share of real clips
 flagged, and the catch rate, the share of fakes flagged. H4 fixes a target
 false-alarm rate in advance and asks whether a threshold set from real clips
 alone keeps to it on new data. Equal error rate, common in speech work, is
 reported by some papers we cite, but it fixes the threshold where the two
-error rates meet, which is not where any real system would set it.
+error rates meet, which is rarely where a system in use sets it.
 
-\subsection{Confidence intervals by person}
+\subsection{Confidence Intervals by Person}
 
 A test set of a few hundred clips gives a noisy AUC. We give a 95\% interval
 from 1,000 bootstrap resamples~\cite{bootstrap}. The resampling unit is the
@@ -2244,7 +2235,7 @@ person, not the clip, because clips of one person are not independent: a
 detector that has learned one face gets all of that person's clips right or
 wrong together.
 
-\subsection{Corrections for several tests}
+\subsection{Corrections for Several Tests}
 
 When several tests are run, some will pass by chance. H2 compares fusion with
 the face check on three corpora, so its p-values are corrected with Holm's
@@ -2280,9 +2271,9 @@ ties counted as half~\cite{hanley}.
 A short example shows why AUC and accuracy disagree on unbalanced data.
 Suppose a test set has 100 real clips and 900 fakes, and a detector calls
 every clip fake. Its accuracy is 90\%. Its AUC is 0.5, because its scores put
-no fake above any real clip. The AUC is the honest number.
+no fake above any real clip. Accuracy rewards it; AUC does not.
 
-\subsection{How the bootstrap interval is built}
+\subsection{How the Bootstrap Interval Is Built}
 
 To build the interval, we list the people in the test set and draw the same
 number of people at random, with replacement. Every clip of a drawn person
@@ -2292,10 +2283,10 @@ percentiles of the 1,000 values as the 95\% interval~\cite{bootstrap}. A
 difference between two detectors is resampled the same way, with both scored
 on the same draw, so their shared difficulty cancels.
 
-\subsection{What we avoid}
+\subsection{What We Avoid}
 
 We do not report accuracy at 0.5, for the reasons above. We do not compare
-our numbers with published numbers from other protocols. And we never read a
+our numbers with published numbers from other protocols. We never read a
 detector's AUC against 0.5 alone: every AUC in this report is read beside the
 file-clue score of the same data.
 
@@ -2303,8 +2294,8 @@ file-clue score of the same data.
 \label{sec:l-compare}
 
 Table~\ref{tab:litcompare} sets the audio-visual work closest to this project
-side by side, on the protocol choices that matter here. A tick means the paper
-does it, as we read the paper. A blank means we did not find it.
+side by side, on the protocol choices that matter here. An entry means the
+paper does it, as we read the paper. A blank means we did not find it.
 
 \begin{table}[ht]
     \centering
@@ -2338,8 +2329,7 @@ other column has at least one earlier paper in it.
 
 \section{Open Problems Named in the Literature}
 
-The papers surveyed name the same open problems again and again. Five matter
-for this project.
+The papers surveyed name five open problems that matter for this project.
 
 \begin{enumerate}
     \item \textbf{Generalization to new generators.} Every family of detector
@@ -2359,8 +2349,8 @@ for this project.
     report a false-alarm rate at a fixed threshold at all.
     \item \textbf{Jointly generated video.} Detectors built around a mismatch
     between picture and sound meet generators that produce both together.
-    HiFi-AVDF~\cite{havic} is the first audio-visual corpus built around such
-    tools, and every detector it tested fell sharply.
+    HiFi-AVDF~\cite{havic} is built around such tools, and every detector it
+tested fell sharply.
 \end{enumerate}
 
 This project addresses the second, third and fourth directly, measures the
@@ -2368,7 +2358,7 @@ first under shortcut control, and reports the fifth as a finding.
 
 \section{What the Survey Means for This Project}
 
-Each part of the survey left a mark on the design of Chapter~\ref{ch:methodology}.
+Each part of the survey shaped a choice in Chapter~\ref{ch:methodology}.
 
 \begin{itemize}
     \item \textbf{Generation (Section~\ref{sec:l-generation}).} No single
@@ -2379,12 +2369,12 @@ Each part of the survey left a mark on the design of Chapter~\ref{ch:methodology
     on, so it is the training corpus. Three others with different makers and
     eras are kept locked as tests.
     \item \textbf{Visual and audio detectors (Sections~\ref{sec:l-visual}
-    and~\ref{sec:l-audio}).} Simple, well-known backbones are enough for the
-    face and voice checks: EfficientNet-B0 and Wav2Vec2 Base. The project's
-    question is the protocol, not the backbone.
-    \item \textbf{Audio-visual detectors (Section~\ref{sec:l-av}).} Real-only
-    training is the one design reported to survive removal of a known
-    shortcut, so the lip-sync check is real-only, on frozen AV-HuBERT.
+    and~\ref{sec:l-audio}).} The face and voice checks use simple, well-known
+    backbones, EfficientNet-B0 and Wav2Vec2 Base, because the project studies
+    the protocol around them.
+    \item \textbf{Audio-visual detectors (Section~\ref{sec:l-av}).} AVH-Align
+    reports that real-only training survives removal of a known shortcut, so
+    the lip-sync check is real-only, on frozen AV-HuBERT.
     \item \textbf{Shortcuts (Section~\ref{sec:l-shortcuts}).} The method starts
     with an audit and a cleaning step, and splits FakeAVCeleb by person.
     \item \textbf{Thresholds (Section~\ref{sec:l-thresholds}).} Thresholds are
@@ -2396,9 +2386,9 @@ Each part of the survey left a mark on the design of Chapter~\ref{ch:methodology
 
 \section{The Gap This Project Fills}
 
-Each part of our method has precedent. Real-only sync models exist. Silence
-shortcuts are documented. Conformal thresholds are textbook. What we did not
-find in the literature is the combination below:
+Each part of our method has precedent: real-only sync models, documented
+silence shortcuts and conformal thresholds all exist. What we did not find in
+the literature is the combination below:
 
 \begin{itemize}
     \item a per-class census of codec, silence, length and other file cues for
@@ -2475,8 +2465,7 @@ The milestones of the short plan were, in order:
     \item Build the website and the deliverables from the result files.
 \end{enumerate}
 
-Every milestone was checked before the next one started, and every result
-was pushed to GitHub as soon as it was verified.
+Each milestone was checked before the next one started.
 
 \section{Resources}
 \label{sec:m-resources}
@@ -2832,8 +2821,8 @@ audio path is Wav2Vec2 Base~\cite{wav2vec2} with attentive pooling. The sync
 path is frozen AV-HuBERT Base~\cite{avhubert} with an alignment head trained on
 real clips only. Fusion is logistic regression on out-of-fold path logits. No
 ensembles across seeds or architectures appear in primary results. A Holm
-correction applies to H2's three targets (amendment A8 narrowed it from "H2 to
-H4", because H4 is a bar check with no $p$-value). H1 is a precondition: if it fails, the
+correction applies to H2's three targets (amendment A8 narrowed it from ``H2 to
+H4'', because H4 is a bar check with no $p$-value). H1 is a precondition: if it fails, the
 other tests still run and carry that caveat.
 
 \subsubsection{Amendments}
@@ -2874,7 +2863,7 @@ training data and also used LAV-DF test as a cross-corpus target. A model
 trained on LAV-DF cannot give a cross-corpus result on LAV-DF. We found the
 contradiction while planning the runs, before any result was read.
 
-\subsubsection{How H2 and H4 are scored}
+\subsubsection{How H2 and H4 Are Scored}
 
 The label is the clip label: a clip is fake if either stream is fake. For each
 target and seed, the statistic is AUC(fusion) minus AUC(visual). H2 uses the
@@ -3053,7 +3042,7 @@ Each cleaned clip is scored by three paths that look at different evidence.
 The face and voice checks are trained classifiers. The lip-sync check is
 trained on real clips only.
 
-\subsubsection{Face and voice checks}
+\subsubsection{Face and Voice Checks}
 
 The visual path is EfficientNet-B0~\cite{efficientnet} with a GRU over face
 frames, trained on the video label. The audio path is Wav2Vec2
@@ -3062,7 +3051,7 @@ train on the neutral FakeAVCeleb training partition, thinned to three
 video-fake clips per real-video clip, at seeds 17, 29 and 43.
 Each picks its epoch and its threshold on validation.
 
-\subsubsection{The lip-sync check}
+\subsubsection{The Lip-Sync Check}
 \label{sec:m-sync}
 
 A lip-sync detector asks one question: do the lips match the sound? Many
@@ -3151,7 +3140,7 @@ The score is not a calibrated probability.
 A score becomes a decision through a threshold. This stage sets that
 threshold in three ways, and combines the three checks into one score.
 
-\subsubsection{Threshold from validation}
+\subsubsection{Threshold from Validation}
 
 A threshold of 0.5 means nothing on data where fakes far outnumber real clips.
 Our thresholds maximize balanced accuracy on the validation split. The command
@@ -3160,7 +3149,7 @@ that chose it. The command \texttt{ddf evaluate} refuses to run if any of those
 clips is in the set being evaluated. A threshold can therefore never be chosen
 on the clips it scores.
 
-\subsubsection{Thresholds from real clips only}
+\subsubsection{Thresholds from Real Clips Only}
 
 For each target and seed, \texttt{scripts/run\_h4.py} compares three rules.
 
@@ -3188,7 +3177,7 @@ scored on the target clips that were not used for calibration. The
 preregistered success rule is a realized FPR of at most $\alpha + 0.02 = 0.07$
 with the conformal threshold, on every target.
 
-\subsubsection{Combining the three checks}
+\subsubsection{Combining the Three Checks}
 
 Every choice below was fixed on 16 November, before any face or voice checkpoint existed:
 
@@ -3224,7 +3213,7 @@ has one video in front of them has a different question: should I trust this
 one? The website answers that question with the same models and the same
 cleaning as the study, and it says how sure it can be.
 
-\subsection{What a user does}
+\subsection{What a User Does}
 
 A user opens the site, drops a video file on the page, and waits. The page
 shows which stage the check is in. When it finishes, it shows one of four
@@ -3234,7 +3223,7 @@ manual.
 
 \subsection{Components}
 
-The website has five parts:
+The website has six parts:
 
 \begin{itemize}
     \item \textbf{The page.} It takes the upload, follows the job, and draws
@@ -3256,7 +3245,7 @@ The website has five parts:
     and the lines that decide the answer.
 \end{itemize}
 
-\subsection{What happens to an upload}
+\subsection{What Happens to an Upload}
 
 \begin{enumerate}
     \item The server checks the file and puts it in the queue. A voice
@@ -3282,7 +3271,7 @@ The website has five parts:
     is shown, and also when something fails.
 \end{enumerate}
 
-\subsection{The four answers}
+\subsection{The Four Answers}
 
 \begin{itemize}
     \item \textbf{Signs of manipulation:} the reading is above the flag line.
@@ -3299,7 +3288,7 @@ clips' readings, so about 5 in 100 real clips are flagged. The lower line is
 the 80th percentile. These are {{web.limit.parts1.flag}} and
 {{web.limit.parts1.unsure}} on the percentile scale.
 
-\subsection{Long videos and the bar for each part}
+\subsection{Long Videos and the Bar for Each Part}
 
 Checking the whole video brings a statistical problem. Each part is another
 chance for a real video to look unusual by accident. A 60-second video has 20
@@ -3345,7 +3334,7 @@ loaded. A 60-second video, the longest the site accepts, takes about
 {{web.minutes_60s}} minutes. The graphics card would be faster, but the
 website's calibration was checked on the processor.
 
-\subsection{What the website does not use as evidence}
+\subsection{What the Website Does Not Use as Evidence}
 
 The website reads codec, bitrate and length only to apply its upload rules.
 It never uses them as evidence, because Section~\ref{sec:r-files} shows that
@@ -3354,7 +3343,7 @@ clip is fake. A real clip that happens to carry MP3 audio would otherwise be
 flagged for its format. The one kind of file detail it does read is a label
 that a generator writes on purpose, which the next subsection describes.
 
-\subsection{The file check}
+\subsection{The File Check}
 \label{sec:m-filecheck}
 
 Some generators mark their output by writing a label into the file's
@@ -3371,7 +3360,7 @@ A missing label proves nothing. Any upload or re-save can strip it, so the file
 check can only raise the answer, never lower it. When it finds nothing, it says
 nothing, and the three checks decide.
 
-\subsection{Live input}
+\subsection{Live Input}
 \label{sec:m-live}
 
 Beside the drop zone, the page offers three buttons: record a video, record a
@@ -3443,9 +3432,9 @@ to what produced it.
 \section{Integration and Testing}
 \label{sec:m-testing}
 
-\subsection{Automated tests}
+\subsection{Automated Tests}
 
-The code has 922 automated tests in 112 files at the time of writing. We run
+The code has 952 automated tests in 114 files at the time of writing. We run
 the full suite before merging a change. Four kinds matter most:
 
 \begin{itemize}
@@ -3462,7 +3451,7 @@ the full suite before merging a change. Four kinds matter most:
     exactly; more parts must raise both lines.
 \end{itemize}
 
-\subsection{Putting the parts together}
+\subsection{Putting the Parts Together}
 
 The study's steps run as separate scripts, each reading the previous step's
 output and writing its own. Long runs ran as detached processes that survive
@@ -3536,8 +3525,8 @@ Table~\ref{tab:census-fakeavceleb} shows why. Every real clip is H.264 video
 with AAC audio. Almost every cloned-voice clip with real video stores its audio as MP3. Most
 FakeVideo-RealAudio clips, and every FakeVideo-FakeAudio clip, use MPEG-4 Part 2
 video. A detector trained on these files can learn the encoder instead of the
-face. Two of these cues have not been reported for this dataset before: the MP3
-track on generated speech, and the per-category codec split.
+face. We found no earlier report of two of these cues: the MP3 track on
+generated speech, and the per-category codec split.
 
 \begin{table}[ht]
     \centering
@@ -3710,7 +3699,7 @@ It comes mainly from millisecond differences at the clip ends and from
 loudness after AAC encoding. This residual matters for any claim about which
 modality was faked, and P-001 requires us to report it beside H3.
 
-\subsection{A fixed bitrate instead}
+\subsection{A Fixed Bitrate Instead}
 
 Video bitrate was the leading clue left after cleaning. As an exploratory
 check, we re-encoded all of FakeAVCeleb at a constant 160~kb/s, the median of
@@ -3881,7 +3870,7 @@ properties rather than from the lips. Real-only training makes this less
 likely, because nothing in training rewards it. It does not rule it out.
 Section~\ref{sec:r-moved} tests the mechanism directly: moving the audio of real clips raises the misfit, even by one frame. That test does not cover cloned voices, which are new audio rather than moved audio.
 
-\subsection{Moving the audio of real clips}
+\subsection{Moving the Audio of Real Clips}
 \label{sec:r-moved}
 
 The ranking by method is evidence, not proof, so we tested the mechanism
@@ -4006,7 +3995,7 @@ are mainly face swaps, the case the sync path catches least in-domain. HiFi-AVDF
 together. The FPR column shows how the source threshold behaves on each new
 domain.
 
-\subsubsection{HiFi-AVDF by generator}
+\subsubsection{HiFi-AVDF by Generator}
 
 Table~\ref{tab:hifi-generators} splits the HiFi-AVDF result by generator. Each
 generator's clips are ranked against all real HiFi-AVDF clips.
@@ -4035,7 +4024,7 @@ never saw any of them, nor any fake at all. Its result on each one measures
 how well that generator matches lip motion to speech, as judged by a model of
 real speech.
 
-\subsubsection{What the results show}
+\subsubsection{What the Results Show}
 
 The sync path keeps some signal on every target, but far less than on
 FakeAVCeleb, where it was trained. On LAV-DF it clears the neutral ceiling
@@ -4053,7 +4042,7 @@ together, so lips and voice already match. On Sora 2 the generated clips look
 more in sync than the real ones. A detector built on lip-voice mismatch has
 nothing to find there. That is a limit of the idea, not only of our model.
 
-\subsubsection{Coverage, and a second face detector}
+\subsubsection{Coverage, and a Second Face Detector}
 
 The face landmarker first found a face in only 2,110 of 6,064 DFDC windows,
 because DFDC faces are small in full-HD frames. The sync path then scored 921
@@ -4116,7 +4105,7 @@ of each rule, and Figure~\ref{fig:h4} plots the false-positive rates.
     \label{fig:h4}
 \end{figure}
 
-\subsection{How to read the table}
+\subsection{How to Read the Table}
 
 The source columns show what happens when the FakeAVCeleb threshold is carried
 to a new domain unchanged. The conformal and umbrella columns show the
@@ -4135,7 +4124,7 @@ conformal guarantee holds on average over draws, so one draw can land above
 $\alpha$ by chance. Third, H4 is a bar check, not a $p$-value test, so it sits
 outside the Holm correction, which covers only H2's three targets.
 
-\subsection{What H4 shows}
+\subsection{What H4 Shows}
 
 The threshold carried over from FakeAVCeleb does not transfer. It flags a large
 share of real clips on every target. Set from 200 real target clips, the
@@ -4389,7 +4378,7 @@ tuning for CLIP, and no weighted sum of XLS-R layers. A published recipe might
 do better. Under ours, the advantage measured on raw files does not survive the
 shortcut control.
 
-\subsection{A published method on our protocol}
+\subsection{A Published Method on Our Protocol}
 
 AVH-Align~\cite{smeu2025} is the closest published method. Its released
 weights need features from a fine-tuned AV-HuBERT Large checkpoint that is not
@@ -4421,7 +4410,7 @@ head does not fix transfer. This compares two heads on our features and data,
 not the published system, which was trained on 45,000 real AV-Deepfake1M
 videos.
 
-\subsection{Which stream was faked, one direction}
+\subsection{Which Stream Was Faked, One Direction}
 
 H3 asks whether a model can say which stream was faked, in both directions
 between FakeAVCeleb and LAV-DF. The reverse direction needs models trained on
@@ -4441,7 +4430,7 @@ but recalls only {{a15.window.audio.seed43.recall}} to
 ranking is fair (Section~\ref{sec:r-combine}), so the loss is in the threshold carried
 over from FakeAVCeleb, as with the sync path in H4.
 
-\subsection{Speaker overlap}
+\subsection{Speaker Overlap}
 
 VoxCeleb2's dev and test speaker lists, checked against the published split,
 place all {{a17.sources.dev}} FakeAVCeleb source identities in VoxCeleb2 dev
@@ -4484,7 +4473,7 @@ follows the cross-corpus results of Section~\ref{sec:r-new}: high on the
 training corpus, low elsewhere. Third, a ``no signs found'' answer is weak
 evidence on any corpus but FakeAVCeleb, and the page says so.
 
-\subsection{The file check on HiFi-AVDF}
+\subsection{The File Check on HiFi-AVDF}
 
 HiFi-AVDF is the one corpus here made with commercial generators, so it is
 where a generator's own label could survive. We ran the website's file check
@@ -4497,7 +4486,7 @@ marks {{web.provenance.fakes.labelled|int}} of
 with no false alarm. The result shows both sides of a label: when it is
 there, it is certain; most of the time, a re-encode has removed it.
 
-\subsection{The exhibition clips}
+\subsection{The Exhibition Clips}
 
 For the exhibition we chose seven clips that show each answer: a real clip,
 a cloned voice, a face swap, a Wav2Lip fake, a fully faked clip, a real clip
@@ -4517,8 +4506,8 @@ and loses most of it on new data.
 The lip-sync check shows both sides of this. It beats the cleaned file clues
 without ever seeing a fake, and it reacts to audio moved by a single frame.
 Yet on Sora~2 it falls below chance and on Veo~3.1 it sits near it: these
-tools make picture and sound together, so their lips and voice already agree.
-We read that as a limit of the lip-mismatch idea, not only of our model.
+tools make picture and sound together, so their lips and voice already agree
+(Section~\ref{sec:r-new}).
 
 The threshold result is the most practical one. A platform cannot label the
 fakes in its own traffic, but it has plenty of real videos. Two hundred of
@@ -4664,31 +4653,6 @@ training a detector, measure what the files alone can do.
     checks every part of it, and states its false-alarm rate.
 \end{enumerate}
 
-\section{Future Work at a Glance}
-
-Table~\ref{tab:futurework} lists the work that follows, with what each item
-would answer.
-
-\begin{table}[ht]
-    \centering
-    \small
-    \caption{Future work and the question each item answers.}
-    \label{tab:futurework}
-    \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{5cm}>{\raggedright\arraybackslash}X@{}}
-        \toprule
-        \textbf{Work} & \textbf{Question it answers} \\
-        \midrule
-        Train on several corpora, one held out at a time (P-002) & Is the cross-corpus drop a data problem or a method problem? \\
-        Run H3 in both directions & Can a model say which stream was faked on a new corpus? \\
-        Run HAVIC and AVH-Align's published system on our protocol & How do published detectors do once file clues are removed? \\
-        Measure the cost of cleaning on LAV-DF & Does cleaning remove real evidence as well as file clues? \\
-        Score long real videos part by part & Does the website's long-video correction hold? \\
-        Measure pictures and voice recordings & How well do the face and voice checks do alone, on photographs and today's voice tools? \\
-        Add AV-Deepfake1M and KoDF when access arrives & Do the results hold on more corpora? \\
-        \bottomrule
-    \end{tabularx}
-\end{table}
-
 \section{Answers to the Research Questions}
 
 \textbf{Q1. Can cleaning remove the file clues?} Mostly, not fully. Cleaning
@@ -4702,7 +4666,7 @@ which shows that cleaning has to be audited, not assumed.
 advance, yes: H2 passed. Read closely, the gain comes from fakes the face
 check cannot see and, on LAV-DF, from a face check that ranks fakes below
 chance, and no fixed weighting transferred between corpora. Combining helps
-where one check is blind; it does not make a weak detector strong.
+on fakes one check cannot see; it did not make the checks transfer better.
 
 \textbf{Q3. Can a model say which stream was faked, on a corpus it never
 saw?} Not answered in full. The one direction that ran, from FakeAVCeleb to
@@ -4711,7 +4675,7 @@ LAV-DF, as an exploratory check, did not transfer.
 \textbf{Q4. Can real clips alone set a safe threshold?} Yes, for false alarms.
 Two hundred real clips from the new corpus brought false alarms back near the
 target on both corpora we could test. They did not make the detector catch
-more fakes, and nothing that sets a threshold can.
+more fakes; no choice of threshold can.
 
 \section{Recommendations}
 
@@ -4727,7 +4691,7 @@ suggest five habits.
     \item \textbf{Split by person.} Random splits of FakeAVCeleb put the same
     people in training and test.
     \item \textbf{Test on corpora from other makers, and lock them in code.} A
-    test set that has been used to choose anything is no longer a test set.
+    test set used to choose a model or a threshold no longer measures transfer.
     \item \textbf{Set thresholds from real clips of the target source.} A
     platform has those clips; it does not have labelled fakes.
 \end{enumerate}
@@ -4745,10 +4709,9 @@ designed around both risks: it never says ``real'' or ``fake'', only whether it
 found signs; it states its false-alarm rate; and it says that ``no signs
 found'' is not proof.
 
-The data raises its own questions. Every corpus we used is public for research
-research use, and their makers set the terms of that use. We follow them:
-we do not redistribute any clip, and the website
-deletes every upload before it shows the answer.
+Every corpus we used is published for research use, and its makers set the
+terms of that use. We follow them: we do not redistribute any clip, and the
+website deletes every upload before it shows the answer.
 
 Detection research can also help the other side. A published weakness, such
 as the lip-sync check's blindness to jointly generated video, tells a maker
@@ -4760,24 +4723,25 @@ cannot see such fakes is worse off than one who knows its limits.
 The project's largest lessons were about method, not models.
 
 \begin{itemize}
-    \item \textbf{A strong number is a question, not an answer.} Every
-    near-perfect score of the earlier phases turned out to measure something
-    other than the fake. The habit that would have caught them is cheap:
-    check what the simplest possible model gets on the same data.
+    \item \textbf{Check the simplest model first.} Every near-perfect score
+    of the earlier phases turned out to measure something other than the fake.
+    A classifier on file details alone, which takes minutes, would have shown
+    it.
     \item \textbf{Write the plan down before the result exists.} Committing
     each hypothesis to git before its run made it impossible to move a bar
     after seeing a result, and it made two failures visible that might
     otherwise have been explained away.
-    \item \textbf{Put the rules in code.} A locked test set that is locked
-    only by agreement gets used. The ones refused in code did not.
-    \item \textbf{Never type a result.} Filling every number from result
-    files meant that when a result changed, every document changed with it.
+    \item \textbf{Put the rules in code.} DFDC was locked only by agreement in
+    the earlier phases, and it was used to choose models. The test sets refused
+    in code were not.
+    \item \textbf{Never type a result.} Because every number is filled from
+    result files, a changed result changes every document with it.
 \end{itemize}
 
 \section{Limitations}
 \label{ch:future}
 
-\subsection{One training corpus}
+\subsection{One Training Corpus}
 
 Every model in this report learns from one corpus, FakeAVCeleb. It dates from
 2021, has about 500 real videos, and its fakes are crude by today's standard.
@@ -4789,7 +4753,7 @@ more and newer training data would not help. Testing that needs training on
 several corpora with one held out at a time, which is the main protocol we
 propose next (Section~\ref{sec:next}).
 
-\subsection{H1 missed its preregistered bar}
+\subsection{H1 Missed Its Preregistered Bar}
 
 The neutral FakeAVCeleb ceiling is {{audit.fakeavceleb.neutral.clip}}, against
 a bar of 0.60. The main residual is video bitrate. Under constant-quality
@@ -4797,7 +4761,7 @@ encoding it follows image content, so it is partly a property of the
 manipulated pixels. That explanation does not change the result. H1 failed as
 written, and every result on the neutral copies carries that caveat.
 
-\subsection{A residual audio-label cue}
+\subsection{A Residual Audio-Label Cue}
 
 The ceiling on the audio label stays at {{audit.fakeavceleb.neutral.audio}}.
 It comes from millisecond differences at clip ends and from loudness after
@@ -4820,7 +4784,7 @@ generated speech and none real. Results on the neutral copies describe clips
 with at least 3.00 s of sound. They say nothing about very short generated
 clips.
 
-\subsection{Parts of the study that have not run}
+\subsection{Parts of the Study That Have Not Run}
 
 Two parts of the preregistered study are incomplete in this version, and the
 secondary fusion model was dropped for the deadline window:
@@ -4838,7 +4802,7 @@ secondary fusion model was dropped for the deadline window:
     identities.
 \end{itemize}
 
-\subsection{Speaker overlap with AV-HuBERT pretraining}
+\subsection{Speaker Overlap with AV-HuBERT Pretraining}
 
 AV-HuBERT was pretrained on LRS3 and VoxCeleb2. An exploratory check found every
 FakeAVCeleb speaker in VoxCeleb2 dev, the part used for pretraining, and none
@@ -4847,13 +4811,13 @@ Some of the sync path's signal may come from the encoder having heard these
 speakers before. With no unseen speaker in FakeAVCeleb, its size cannot be
 measured here.
 
-\subsection{Too few real clips in DFDC for H4}
+\subsection{Too Few Real Clips in DFDC for H4}
 
 Our DFDC subset has {{audit.dfdc.raw.census.RealVideo-RealAudio.clips|int}}
 real clips. H4 needs 200 for calibration and more to score. So H4 runs on
 LAV-DF and HiFi-AVDF only.
 
-\subsection{Other limits}
+\subsection{Other Limits}
 
 \begin{itemize}
     \item \textbf{A simulated upload, not a real one.} Our cleaning imitates
@@ -4868,7 +4832,7 @@ LAV-DF and HiFi-AVDF only.
     catch a fake that keeps the original lips and voice.
 \end{itemize}
 
-\subsection{Limits of the website}
+\subsection{Limits of the Website}
 
 \begin{itemize}
     \item \textbf{False alarms differ by source.} The 5-in-100 rate is an
@@ -4894,7 +4858,30 @@ LAV-DF and HiFi-AVDF only.
 \section{Future Scope}
 \label{sec:next}
 
-\subsection{The full study}
+Table~\ref{tab:futurework} lists the work that follows, with what each item would answer.
+
+\begin{table}[ht]
+    \centering
+    \small
+    \caption{Future work and the question each item answers.}
+    \label{tab:futurework}
+    \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{5cm}>{\raggedright\arraybackslash}X@{}}
+        \toprule
+        \textbf{Work} & \textbf{Question it answers} \\
+        \midrule
+        Train on several corpora, one held out at a time (P-002) & Is the cross-corpus drop a data problem or a method problem? \\
+        Run H3 in both directions & Can a model say which stream was faked on a new corpus? \\
+        Run HAVIC and AVH-Align's published system on our protocol & How do published detectors do once file clues are removed? \\
+        Measure the cost of cleaning on LAV-DF & Does cleaning remove real evidence as well as file clues? \\
+        Score long real videos part by part & Does the website's long-video correction hold? \\
+        Measure pictures and voice recordings & How well do the face and voice checks do alone, on photographs and today's voice tools? \\
+        Add AV-Deepfake1M and KoDF when access arrives & Do the results hold on more corpora? \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+
+\subsection{The Full Study}
 
 This report follows the short plan chosen for the submission deadline, three
 days from 16 November 2026. The full study runs after the deadline, in this
@@ -4916,6 +4903,10 @@ order:
     \item Write the full paper.
 \end{enumerate}
 
+P-002 asks this report's question again of a detector that has seen far
+more variety. If it still falls to chance on held-out corpora once file clues
+are removed, the problem lies in the approach; if not, more data can fix it.
+
 The results in this report stay valid in the full run. It reuses the same
 frozen sync models, neutral copies and splits. When new results arrive, the
 deliverables are rebuilt from the larger result file, so no result is copied
@@ -4926,7 +4917,7 @@ neutralization on LAV-DF, by training and testing on raw files, then on
 neutral files, where the codec does not follow the label. The direct test of
 the sync mechanism has run (Section~\ref{sec:r-moved}).
 
-\subsection{The website}
+\subsection{The Website}
 
 The file check and live input are built (Section~\ref{sec:m-website}).
 Three changes would make the website more useful, in this order:
@@ -4942,15 +4933,7 @@ Three changes would make the website more useful, in this order:
     from, use lines set from real clips of that source, as H4 does.
 \end{enumerate}
 
-\subsection{The study}
 
-The longer study (P-002) trains on several corpora with one held out at a
-time. It is designed so that the question this report asked, what survives
-the upload, is asked again of a detector that has seen far more variety. If
-such a detector still falls to chance on held-out corpora once file clues are
-removed, the problem lies in the approach, not in the amount of data. If it
-does not, this report's results describe a data problem that more data can
-fix. Either answer is worth having.
 
 %
 \appendix
