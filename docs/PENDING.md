@@ -23,7 +23,7 @@ The demo, the PPT, the overnight checks and `docs/SECURITY.md` are done and merg
 1. Fixed held-out sets, scored before any change: voice on In-the-Wild dev_x speakers, FakeAVCeleb identity-strict test audio and an ASVspoof 2019 LA eval sample; face on frames of the FF++ c23 official test split, the Celeb-DF v2 test list and FakeAVCeleb identity-strict test.
 2. Pretrained candidates first. Voice: AntiDeepfake (NII Yamagishi lab, CC BY-NC-SA 4.0; model card reports 1.35% EER on In-the-Wild, which it did not train on). Face and picture: Effort (CLIP ViT-L/14, ICML 2025, CC BY-NC 4.0, trained on FF++). Each downloaded model gets a hash check and an entry in `docs/SECURITY.md`.
 3. A candidate replaces a website model only if it beats it on step 1's sets. Then rebuild both calibrations, rescore the demo clips, rerun the tests, and merge.
-4. If time is left: train our own picture and voice models (the plans above) and compare.
+4. Goal set by Vaibhav 11-19: real-world performance for users, not paper numbers. So the deciding sets are the ones closest to real use: DF26 (2026 generators: Veo 3.1, Kling 3.0, Grok, Wan, Hunyuan, LTX; evaluation only), the Veo 3 clips, MNW (evaluation only, used in the end-to-end check because it has 3 real videos) and Vaibhav's own phone and laptop recordings (the false-alarm test that matters most). Then multi-dataset fine-tuning of the winning models where those sets show gaps: face on FF++, Celeb-DF train, DFDC, FakeAVCeleb train and generated faces; voice on In-the-Wild (minus the 12 held-out speakers), ASVspoof and FakeAVCeleb. DF26 and MNW are never trained on.
 
 **Claude, also:**
 
