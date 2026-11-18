@@ -8,6 +8,14 @@ from deepfake_detection.webapp.detector import Detector
 from deepfake_detection.webapp.scorer import CheckResult, ClipRefused, ScoreReport
 
 
+@pytest.fixture(autouse=True)
+def _no_file_check(monkeypatch):
+    """These tests are about the queue; the file check (ffprobe) has its own tests."""
+    from deepfake_detection.webapp import provenance
+
+    monkeypatch.setattr(provenance, "read", lambda path: [])
+
+
 def _calibration() -> cal.Calibration:
     ref = cal.Reference.from_scores(
         [i / 10 for i in range(-50, 50)], [1] * 100

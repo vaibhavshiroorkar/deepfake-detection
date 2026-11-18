@@ -31,6 +31,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: FFmpeg
+        # The website, the cleaning step and the file check call ffmpeg and ffprobe; without them those tests
+        # fail or skip.
+        run: choco install ffmpeg -y --no-progress
       - name: Install
         # `dashboard` is needed for the tests to actually run rather than skip.
         # The dashboard tests guard themselves with `importorskip("streamlit")`,
