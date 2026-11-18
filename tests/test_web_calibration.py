@@ -132,3 +132,13 @@ def test_built_calibration_keeps_the_real_combined_scores_and_round_trips() -> N
     assert built.combined.quantile(0.95) == pytest.approx(built.threshold)
     again = cal.Calibration.from_json(built.to_json())
     assert again.limits(7) == built.limits(7)
+
+
+def test_a_calibration_can_be_built_for_the_face_check_alone() -> None:
+    rows = [{"corpus": "a" if i % 2 else "b", "label": 0, "scores": {"face": float(i), "voice": None, "sync": None}}
+            for i in range(200)]
+    built, _ = cal.build(rows, checks=("face",))
+    assert built.decide({"face": 199.5, "voice": None, "sync": None}).kind == "signs"
+    assert built.decide({"face": 10.0, "voice": None, "sync": None}).kind == "no_signs"
+    again = cal.Calibration.from_json(built.to_json())
+    assert again.decide({"face": 150.0, "voice": None, "sync": None}) == built.decide({"face": 150.0, "voice": None, "sync": None})

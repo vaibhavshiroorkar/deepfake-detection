@@ -269,3 +269,18 @@ def test_a_picture_and_a_voice_say_which_check_ran():
     voice = site.present({"kind": "no_signs", "raised": [], "checks": checks, "trace": {}, "input": "voice",
                           "parts": 2, "part": {"start": 3.0, "end": 6.0}})
     assert voice["where"].startswith("A voice recording, checked by the voice check only.")
+
+
+def test_a_picture_is_refused_when_there_is_no_picture_calibration(monkeypatch, tmp_path):
+    monkeypatch.setattr(site, "PICTURE_CALIBRATION", tmp_path / "missing.json")
+    site.picture_calibration.cache_clear()
+    with pytest.raises(site.ClipRejected, match="Pictures cannot be checked"):
+        site.require_calibration("picture")
+    site.require_calibration("voice")          # voices and videos use the video calibration
+    site.picture_calibration.cache_clear()
+
+
+def test_how_sure_for_a_picture_speaks_of_pictures():
+    if site.picture_calibration() is None:
+        pytest.skip("no picture calibration built")
+    assert "pictures" in site.how_sure("picture")

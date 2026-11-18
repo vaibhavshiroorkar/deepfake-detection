@@ -94,7 +94,8 @@ class Calibration:
     combined: Reference | None = None   # the real clips' combined percentiles, for videos in parts
 
     def percentiles(self, scores: dict[str, float | None]) -> dict[str, float | None]:
-        return {c: None if scores.get(c) is None else self.references[c].percentile(scores[c]) for c in CHECKS}
+        return {c: None if scores.get(c) is None or c not in self.references else self.references[c].percentile(scores[c])
+                for c in CHECKS}
 
     def limits(self, parts: int) -> tuple[float, float]:
         """The flag line and the "can't tell" line for a video checked in `parts` parts."""
@@ -144,14 +145,16 @@ class Calibration:
                    None if combined is None else Reference(tuple(combined["values"]), tuple(combined["weights"])))
 
 
-def build(rows: list[dict]) -> tuple[Calibration, dict]:
+def build(rows: list[dict], checks: tuple[str, ...] = CHECKS) -> tuple[Calibration, dict]:
     """Calibration from rows {corpus, label (0 real, 1 fake, clip label), scores {check: float | None}}.
+
+    `checks` names the checks the input can feed: a picture feeds the face check alone.
 
     Returns the calibration and, per corpus and label, how many clips land in each outcome.
     """
     reals = [r for r in rows if r["label"] == 0]
     references = {}
-    for check in CHECKS:
+    for check in checks:
         have = [r for r in reals if r["scores"].get(check) is not None]
         if not have:
             raise ValueError(f"no real calibration clip has a {check} score")

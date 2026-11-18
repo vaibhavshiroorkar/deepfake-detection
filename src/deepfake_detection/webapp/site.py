@@ -48,6 +48,7 @@ def upload_limit() -> int:
     arrive through one local proxy and so share one address."""
     return int(os.environ.get("DDF_UPLOAD_LIMIT", UPLOAD_LIMIT))
 CALIBRATION = PROJECT_ROOT / "results" / "web-calibration.json"
+PICTURE_CALIBRATION = PROJECT_ROOT / "results" / "web-calibration-picture.json"
 RESEND_URL = "https://api.resend.com/emails"
 
 PAGES = {
@@ -205,22 +206,46 @@ def calibration():
 
 
 @lru_cache(maxsize=1)
+def picture_calibration():
+    """The face check's lines for still pictures (scripts/build_picture_calibration.py), or None if not built."""
+    from deepfake_detection.webapp.calibration import Calibration
+
+    if not PICTURE_CALIBRATION.exists():
+        return None
+    return Calibration.from_json(PICTURE_CALIBRATION.read_text(encoding="utf-8"))
+
+
+def require_calibration(kind: str) -> None:
+    """A picture needs its own calibration: judged against moving video, a real face looks unusual."""
+    if kind == "picture" and picture_calibration() is None:
+        raise ClipRejected("Pictures cannot be checked yet: their calibration has not been built.")
+
+
+@lru_cache(maxsize=1)
 def detector():
     # Looked up at call time, so a test can replace make_scorer before the first job.
-    return Detector(lambda: make_scorer(), calibration())
+    pictures = picture_calibration()
+    return Detector(lambda: make_scorer(), calibration(), calibrations={"picture": pictures} if pictures else None)
 
 
 CHECK_NAMES = {"face": "face", "voice": "voice", "sync": "lip-sync"}
 
 
-def how_sure() -> str:
+def how_sure(kind: str = "video") -> str:
     """The false-alarm and catch rates on the calibration sets, from the calibration file itself."""
+    source = picture_calibration() if kind == "picture" else calibration()
+    if source is None:
+        return ""
     caught = []
-    for corpus, sides in calibration().meta["outcomes"].items():
+    for corpus, sides in source.meta["outcomes"].items():
         fakes = sides.get("fake", {})
         if sum(fakes.values()):
             caught.append((fakes.get("signs", 0) / sum(fakes.values()), corpus))
     low, high = min(caught), max(caught)
+    if kind == "picture":
+        return (f"On still pictures from the four test sets, about 5 in 100 real pictures get this flag. The same "
+                f"threshold catches {low[0]:.0%} of fake pictures on {low[1]} and {high[0]:.0%} on {high[1]}. The face "
+                f"check learned from video, so treat a picture's answer as a rough guide.")
     return (f"On the four test sets we calibrated on, about 5 in 100 real clips get this flag. The same "
             f"threshold catches {low[0]:.0%} of fakes on {low[1]} and {high[0]:.0%} on {high[1]}: few from "
             f"sources the models never trained on. For a video from anywhere else, 5 in 100 is an estimate.")
@@ -272,7 +297,7 @@ def present(outcome: dict) -> dict:
         summary = outcome.get("reason", "The video could not be checked.")
     return {"status": "done", "outcome": kind, "summary": summary, "where": where(outcome), "file_check": labels,
             "checks": checks,
-            "trace": outcome.get("trace", {}), "how_sure": how_sure() if kind != "cant_check" else ""}
+            "trace": outcome.get("trace", {}), "how_sure": how_sure(outcome.get("input", "video")) if kind != "cant_check" else ""}
 
 
 # Contact ------------------------------------------------------------------------------------------
@@ -366,6 +391,7 @@ def register(app: FastAPI) -> None:
                                             status_code=413)
                     handle.write(chunk)
             kind = classify(suffix, mode, probe(path))
+            require_calibration(kind)
             if kind != "video" or suffix == ".webm":
                 converted = to_clip(path, kind, path.with_name(path.stem + "-clip.mp4"))
                 path.unlink(missing_ok=True)

@@ -153,3 +153,13 @@ def test_no_label_changes_nothing(tmp_path) -> None:
     detector = Detector(lambda: FakeScorer(calm), _calibration(), workroot=tmp_path / "work", read_labels=lambda path: [])
     outcome = _finished(detector, detector.submit(_upload(tmp_path)))["outcome"]
     assert outcome["kind"] != "signs" and outcome["file_check"] == []
+
+
+def test_a_picture_is_judged_against_the_picture_calibration(tmp_path) -> None:
+    still = {"face": (0.999,) * 3, "voice": None, "sync": None}
+    lenient = cal.Calibration({"face": cal.Reference.from_scores([10.0, 20.0], [1, 1])}, threshold=0.97, lower=0.8)
+    detector = Detector(lambda: FakeScorer(still), _calibration(), workroot=tmp_path / "work", read_labels=lambda p: [],
+                        calibrations={"picture": lenient})
+    picture = _finished(detector, detector.submit(_upload(tmp_path, "a.mp4"), mode="picture"))["outcome"]
+    video = _finished(detector, detector.submit(_upload(tmp_path, "b.mp4")))["outcome"]
+    assert picture["kind"] == "no_signs" and video["kind"] == "signs"
