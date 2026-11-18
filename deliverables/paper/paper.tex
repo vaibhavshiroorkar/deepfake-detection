@@ -15,6 +15,7 @@
 % deliverables/NUMBER_KEYS.md. Compile the filled copy, not this source.
 % The pct style prints an escaped percent sign, so it is safe in LaTeX.
 
+\usepackage{array}
 \begin{document}
 
 \title{What Survives the Upload? Evaluating Audio-Visual Deepfake Detectors
@@ -256,7 +257,7 @@ verdict.
 \label{tab:tests}
 \centering
 \small
-\begin{tabular}{lp{3.3cm}l}
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{3.6cm}>{\raggedright\arraybackslash}p{2.6cm}@{}}
 \toprule
 Test & Pass mark & Outcome \\
 \midrule
@@ -625,6 +626,7 @@ compares: lowest and highest of three seeds}
 \label{tab:h2levels}
 \centering
 \small
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lllll}
 \toprule
 Corpus & Face & Voice & Lip sync & Combined \\
@@ -635,7 +637,7 @@ LAV-DF, window & {{h2.lavdf-window.auc.visual.min}}, {{h2.lavdf-window.auc.visua
 \midrule
 HiFi-AVDF & {{h2.hifiavdf.auc.visual.min}}, {{h2.hifiavdf.auc.visual.max}} & {{h2.hifiavdf.auc.audio.min}}, {{h2.hifiavdf.auc.audio.max}} & {{h2.hifiavdf.auc.sync.min}}, {{h2.hifiavdf.auc.sync.max}} & {{h2.hifiavdf.auc.fusion.min}}, {{h2.hifiavdf.auc.fusion.max}} \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 \begin{table*}[htbp]
@@ -720,6 +722,7 @@ each check's own label, mean of three seeds with a 95\% interval}
 \label{tab:a11}
 \centering
 \small
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{lll}
 \toprule
 Set & CLIP $-$ face & XLS-R $-$ voice \\
@@ -729,7 +732,7 @@ DFDC & {{a11.clip-vs-visual.dfdc.estimate}} [{{a11.clip-vs-visual.dfdc.lower}}, 
 LAV-DF test & {{a11.clip-vs-visual.lavdf-test.estimate}} [{{a11.clip-vs-visual.lavdf-test.lower}}, {{a11.clip-vs-visual.lavdf-test.upper}}] & {{a11.xlsr-vs-audio.lavdf-test.estimate}} [{{a11.xlsr-vs-audio.lavdf-test.lower}}, {{a11.xlsr-vs-audio.lavdf-test.upper}}] \\
 HiFi-AVDF & {{a11.clip-vs-visual.hifiavdf.estimate}} [{{a11.clip-vs-visual.hifiavdf.lower}}, {{a11.clip-vs-visual.hifiavdf.upper}}] & {{a11.xlsr-vs-audio.hifiavdf.estimate}} [{{a11.xlsr-vs-audio.hifiavdf.lower}}, {{a11.xlsr-vs-audio.hifiavdf.upper}}] \\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 \textit{Stronger frozen backbones.} Published work reports that frozen CLIP

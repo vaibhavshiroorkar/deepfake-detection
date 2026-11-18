@@ -1,6 +1,11 @@
 """Build the exhibition demo clip set and record what the website answers for each.
 
     .venv/Scripts/python.exe scripts/build_demo_clips.py [--per-type 3] [--device cuda]
+    .venv/Scripts/python.exe scripts/build_demo_clips.py --rescore [--device cpu]
+
+--rescore scores the clips already listed in docs/demo-clips.csv again, without drawing or copying,
+for when the website's scoring changes. Like the site, a clip is checked in 3-second parts and its
+most unusual part decides.
 
 Candidates are seeded draws from clips the models never trained on: the FakeAVCeleb test
 partition and HiFi-AVDF. The original file is copied to data/demo/upload/ (what gets uploaded)
@@ -70,15 +75,46 @@ def reencode(source: Path, target: Path) -> None:
                     "-c:a", "aac", "-movflags", "+faststart", str(target)], check=True, timeout=120)
 
 
+def decide_clip(calibration: Calibration, scorer, path: Path, work: Path) -> dict:
+    """What the website answers for one file: every 3-second part is scored, then one decision."""
+    try:
+        parts = scorer.score(path, work)
+    except ClipRefused as error:
+        return {"outcome": "cant_check", "raised": str(error), "face": "", "voice": "", "sync": "",
+                "parts": 0, "part": ""}
+    outcome = calibration.decide_parts([part.scores() for part in parts])
+    deciding = parts[outcome.part] if outcome.part is not None else None
+    pct = {k: "" if v is None else f"{v:.3f}" for k, v in outcome.percentiles.items()}
+    return {"outcome": outcome.kind, "raised": "+".join(outcome.raised), **pct, "parts": len(parts),
+            "part": "" if deciding is None else f"{deciding.start:.1f}-{deciding.end:.1f}"}
+
+
+def rescore(calibration: Calibration, scorer) -> list[dict]:
+    with open(LIST, encoding="utf-8", newline="") as f:
+        listed = list(csv.DictReader(f))
+    rows = []
+    for row in listed:
+        work = Path(tempfile.mkdtemp(prefix="demo-"))
+        try:
+            result = decide_clip(calibration, scorer, UPLOAD / row["file"], work)
+        finally:
+            shutil.rmtree(work, ignore_errors=True)
+        rows.append({k: row[k] for k in ("file", "corpus", "type", "truth")} | result)
+        print(f"{row['corpus']:11} {row['type']:34} {row['truth']:5} -> {result['outcome']:10} {result['raised']}"
+              f"  ({result['parts']} parts)", flush=True)
+    return rows
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--per-type", type=int, default=3)
     parser.add_argument("--device", default="cuda")
+    parser.add_argument("--rescore", action="store_true", help="score the listed clips again, in parts")
     arguments = parser.parse_args()
     calibration = Calibration.from_json((ROOT / "results" / "web-calibration.json").read_text(encoding="utf-8"))
     scorer = Scorer(device=arguments.device)
-    rows = []
-    for clip in candidates(arguments.per_type):
+    rows = rescore(calibration, scorer) if arguments.rescore else []
+    for clip in [] if arguments.rescore else candidates(arguments.per_type):
         name = f"{clip['corpus']}_{clip['type']}_{clip['clip_id']}".replace(" ", "-").replace("(", "").replace(")", "")
         name = "".join(c for c in name if c.isalnum() or c in "-_.+")[:120] + ".mp4"
         source = ROOT / "data" / clip["video_path"]
@@ -88,16 +124,12 @@ def main() -> int:
         reencode(source, WATCH / name)
         work = Path(tempfile.mkdtemp(prefix="demo-"))
         try:
-            outcome = calibration.decide(scorer.score(target, work).scores())
-            kind, raised = outcome.kind, "+".join(outcome.raised)
-            pct = {k: "" if v is None else f"{v:.3f}" for k, v in outcome.percentiles.items()}
-        except ClipRefused as error:
-            kind, raised, pct = "cant_check", str(error), {"face": "", "voice": "", "sync": ""}
+            result = decide_clip(calibration, scorer, target, work)
         finally:
             shutil.rmtree(work, ignore_errors=True)
-        rows.append({"file": name, "corpus": clip["corpus"], "type": clip["type"], "truth": "fake" if clip["clip_fake"] == "1" else "real",
-                     "outcome": kind, "raised": raised, "face": pct["face"], "voice": pct["voice"], "sync": pct["sync"]})
-        print(f"{clip['corpus']:11} {clip['type']:34} {rows[-1]['truth']:5} -> {kind:10} {raised}", flush=True)
+        truth = "fake" if clip["clip_fake"] == "1" else "real"
+        rows.append({"file": name, "corpus": clip["corpus"], "type": clip["type"], "truth": truth} | result)
+        print(f"{clip['corpus']:11} {clip['type']:34} {truth:5} -> {result['outcome']:10} {result['raised']}", flush=True)
     with open(LIST, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=list(rows[0]))
         writer.writeheader()
