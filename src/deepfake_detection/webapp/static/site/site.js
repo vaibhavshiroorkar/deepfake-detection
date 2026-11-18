@@ -176,9 +176,11 @@
   });
 
   /* live input: record a video or a voice, or take a picture, then check it like an upload ---- */
+  // Raw microphone: the browser's noise suppression made a real voice score 0.99 (measured 11-18), because the
+  // voice model learned that perfectly clean speech is synthetic.
   const LIVE = {
-    video: { media: { video: true, audio: true }, note: "Look at the camera and speak for 3 to 30 seconds." },
-    voice: { media: { audio: true }, note: "Speak for 3 to 30 seconds. Only the voice check runs on a recording." },
+    video: { media: { video: true, audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }, note: "Look at the camera and speak for 3 to 30 seconds, in a normal room." },
+    voice: { media: { audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }, note: "Speak for 3 to 30 seconds, in a normal room, without a noise-cancelling headset. Only the voice check runs." },
     picture: { media: { video: true }, note: "Face the camera. Only the face check runs on a picture." },
   };
   const MAX_SECONDS = 30, MIN_SECONDS = 4;   // a little over the 3 s the cleaning needs
