@@ -104,6 +104,28 @@ def cut_window(
     return start, start + fixed
 
 
+def sound_windows(
+    duration: float, leading: float, trailing: float, fixed: float, fps: int = 25
+) -> list[tuple[float, float]]:
+    """Back-to-back spans of `fixed` seconds that together cover all the sound.
+
+    The first span is `cut_window`'s. When the sound does not divide evenly, the
+    last span ends where the sound ends, overlapping the one before it, so no
+    second of sound is left out. Empty when the sound is shorter than `fixed`.
+    """
+    first = cut_window(duration, leading, trailing, fixed, fps)
+    if first is None:
+        return []
+    end_of_sound = duration - trailing
+    starts = [first[0]]
+    while starts[-1] + 2 * fixed <= end_of_sound + 1e-9:
+        starts.append(round(starts[-1] + fixed, 6))
+    last = math.floor((end_of_sound - fixed) * fps + 1e-9) / fps
+    if last > starts[-1] + 1e-9:
+        starts.append(last)
+    return [(s, round(s + fixed, 6)) for s in starts]
+
+
 def normalize_level(samples: np.ndarray, target_dbfs: float) -> np.ndarray:
     """Scale to a fixed RMS level. A plain gain: no look-ahead, no delay."""
     rms = float(np.sqrt(np.mean(np.square(samples, dtype=np.float64)))) if samples.size else 0.0
@@ -182,13 +204,28 @@ def _duration(path: Path) -> float:
     return float(json.loads(run.stdout)["format"]["duration"])
 
 
-def neutralize_clip(source: Path, target: Path, settings: NeutralSettings) -> dict[str, object]:
-    """Write the neutral copy and report what was cut."""
+def plan_windows(source: Path, settings: NeutralSettings) -> list[tuple[float, float]]:
+    """Every `fixed_seconds` span of `source` that holds sound, from `sound_windows`."""
+    audio = normalize_level(_read_audio(source), settings.loudness_dbfs)
+    leading, trailing = silence_bounds(audio, SAMPLE_RATE, settings.silence_dbfs)
+    return sound_windows(_duration(source), leading, trailing, settings.fixed_seconds, settings.fps)
+
+
+def neutralize_clip(
+    source: Path, target: Path, settings: NeutralSettings, start: float | None = None
+) -> dict[str, object]:
+    """Write the neutral copy and report what was cut.
+
+    `start` picks the span (one from `plan_windows`); None keeps the first span of sound.
+    """
     target.parent.mkdir(parents=True, exist_ok=True)
     audio = normalize_level(_read_audio(source), settings.loudness_dbfs)
     duration = _duration(source)
-    leading, trailing = silence_bounds(audio, SAMPLE_RATE, settings.silence_dbfs)
-    window = cut_window(duration, leading, trailing, settings.fixed_seconds, settings.fps)
+    if start is None:
+        leading, trailing = silence_bounds(audio, SAMPLE_RATE, settings.silence_dbfs)
+        window = cut_window(duration, leading, trailing, settings.fixed_seconds, settings.fps)
+    else:
+        window = (start, start + settings.fixed_seconds)
     if window is None:
         return {"error": f"too short: under {settings.fixed_seconds} s of sound"}
     start, end = window

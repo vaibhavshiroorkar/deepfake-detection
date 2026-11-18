@@ -175,6 +175,22 @@ def how_sure() -> str:
             f"sources the models never trained on. For a video from anywhere else, 5 in 100 is an estimate.")
 
 
+def _clock(seconds: float) -> str:
+    whole = int(seconds)
+    return f"{whole // 60}:{whole % 60:02d}"
+
+
+def where(outcome: dict) -> str:
+    """Which part of the video the details come from, in one sentence; empty before any part was checked."""
+    part, parts = outcome.get("part"), outcome.get("parts")
+    if not part or not parts:
+        return ""
+    span = f"{_clock(part['start'])} to {_clock(part['end'])}"
+    if parts == 1:
+        return f"The video has 3 seconds of sound, checked as one part ({span})."
+    return f"The whole video was checked in {parts} parts of 3 seconds. The most unusual part, {span}, is shown."
+
+
 def present(outcome: dict) -> dict:
     """The detector's outcome in the shape the page draws: whole-number percentiles and plain sentences."""
     checks = {name: {"percentile": None if c["percentile"] is None else min(99, int(c["percentile"] * 100)),
@@ -192,7 +208,7 @@ def present(outcome: dict) -> dict:
         summary = "No check scored unusually high compared with real clips. That is not proof the video is real."
     else:
         summary = outcome.get("reason", "The video could not be checked.")
-    return {"status": "done", "outcome": kind, "summary": summary, "checks": checks,
+    return {"status": "done", "outcome": kind, "summary": summary, "where": where(outcome), "checks": checks,
             "trace": outcome.get("trace", {}), "how_sure": how_sure() if kind != "cant_check" else ""}
 
 

@@ -3,7 +3,9 @@
 Every step calls the code the study used, so an upload is scored as the paper's
 test clips were:
 
-1. neutralizer v4 (`preprocessing.neutralize.neutralize_clip`), native frame size;
+1. neutralizer v4 (`preprocessing.neutralize.neutralize_clip`), native frame size,
+   once for every 3 s part of the sound (`plan_windows`), so no part of the video is
+   skipped; each part then goes through steps 2 to 4 like one study clip;
 2. the P-001 preprocessor (`code_version="p001"`), refused if its hash is not the
    one every P-001 model was trained on;
 3. face and voice: the six visual and audio checkpoints through `CachedBranchDataset`,
@@ -19,6 +21,7 @@ A check that cannot run returns no score and a reason. The models load once, in
 from __future__ import annotations
 
 import math
+import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -65,8 +68,12 @@ class CheckResult:
 
 @dataclass(frozen=True)
 class ScoreReport:
+    """The three checks of one 3 s part, which runs from `start` to `end` seconds of the upload."""
+
     checks: dict[str, CheckResult]
     trace: dict = field(default_factory=dict)
+    start: float = 0.0
+    end: float = 3.0
 
     def scores(self) -> dict[str, float | None]:
         return {name: result.score for name, result in self.checks.items()}
@@ -107,30 +114,43 @@ class Scorer:
             heads=heads,
         )
 
-    def score(self, upload: Path, workdir: Path, progress=lambda stage: None) -> ScoreReport:
-        """Score `upload`, writing every derived file under `workdir`. The caller deletes `workdir`.
+    def score(self, upload: Path, workdir: Path, progress=lambda stage: None) -> list[ScoreReport]:
+        """Score every 3 s part of `upload`, writing derived files under `workdir`. The caller deletes `workdir`.
 
-        `progress` gets the stage names the page shows: cleaning, finding the face, scoring.
+        `progress` gets the stage names the page shows: cleaning, finding the face, scoring,
+        each with the part it is on, such as "scoring:2/5".
         """
-        progress("cleaning")
-        neutral = self._neutralize(upload, workdir / "neutral.mp4")
-        progress("finding the face")
-        checks = self._face_and_voice(neutral, workdir / "cache")
-        progress("scoring")
-        sync, trace = self._sync(neutral)
-        return ScoreReport({**checks, "sync": sync}, trace)
+        from deepfake_detection.preprocessing.neutralize import (
+            NeutralSettings,
+            plan_windows,
+        )
+
+        parts = plan_windows(upload, NeutralSettings())
+        if not parts:
+            raise ClipRefused("The clip has less than 3 seconds of sound, so it cannot be cleaned and checked.")
+        reports = []
+        for i, (start, end) in enumerate(parts):
+            step = f":{i + 1}/{len(parts)}"
+            part_dir = workdir / f"part{i}"
+            progress("cleaning" + step)
+            neutral = self._neutralize(upload, part_dir / "neutral.mp4", start)
+            progress("finding the face" + step)
+            checks = self._face_and_voice(neutral, part_dir / "cache")
+            progress("scoring" + step)
+            sync, trace = self._sync(neutral)
+            reports.append(ScoreReport({**checks, "sync": sync}, trace, start, end))
+            shutil.rmtree(part_dir, ignore_errors=True)    # keep at most one part on disk
+        return reports
 
     @staticmethod
-    def _neutralize(upload: Path, target: Path) -> Path:
+    def _neutralize(upload: Path, target: Path, start: float) -> Path:
         from deepfake_detection.preprocessing.neutralize import (
             NeutralSettings,
             neutralize_clip,
         )
 
-        report = neutralize_clip(upload, target, NeutralSettings())
+        report = neutralize_clip(upload, target, NeutralSettings(), start=start)
         if "error" in report:
-            if str(report["error"]).startswith("too short"):
-                raise ClipRefused("The clip has less than 3 seconds of sound, so it cannot be cleaned and checked.")
             raise RuntimeError(f"neutralizer failed: {report['error']}")
         return target
 

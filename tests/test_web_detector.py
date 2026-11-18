@@ -10,18 +10,20 @@ from deepfake_detection.webapp.scorer import CheckResult, ClipRefused, ScoreRepo
 
 def _calibration() -> cal.Calibration:
     ref = cal.Reference.from_scores([i / 10 for i in range(-50, 50)], [1] * 100)   # logits -5 to 4.9
+    combined = cal.Reference.from_scores([i / 1000 for i in range(1000)], [1] * 1000)
     return cal.Calibration({"face": ref, "voice": ref, "sync": ref}, threshold=0.97, lower=0.8,
-                           meta={"outcomes": {}})
+                           meta={"outcomes": {}}, combined=combined)
 
 
 class FakeScorer:
     """Returns fixed check probabilities; records the files it saw; can block or fail."""
 
-    def __init__(self, probabilities=None, error=None, gate: threading.Event | None = None):
+    def __init__(self, probabilities=None, error=None, gate: threading.Event | None = None, parts=None):
         self.probabilities = probabilities or {"face": (0.5, 0.5, 0.5), "voice": (0.5, 0.5, 0.5), "sync": None}
         self.error, self.gate, self.seen = error, gate, []
+        self.parts = parts            # a list of probability dicts, one per 3-second part
 
-    def score(self, upload: Path, workdir: Path, progress=lambda stage: None) -> ScoreReport:
+    def score(self, upload: Path, workdir: Path, progress=lambda stage: None) -> list[ScoreReport]:
         self.seen.append((upload.exists(), workdir))
         (workdir / "neutral.mp4").write_bytes(b"x")
         progress("scoring")
@@ -29,8 +31,11 @@ class FakeScorer:
             self.gate.wait(5)
         if self.error is not None:
             raise self.error
-        checks = {k: CheckResult(v, None if v else "not checked") for k, v in self.probabilities.items()}
-        return ScoreReport(checks, {"loudness_db": [], "windows": []})
+        reports = []
+        for i, probabilities in enumerate(self.parts or [self.probabilities]):
+            checks = {k: CheckResult(v, None if v else "not checked") for k, v in probabilities.items()}
+            reports.append(ScoreReport(checks, {"loudness_db": [], "windows": []}, start=3.0 * i, end=3.0 * i + 3))
+        return reports
 
 
 def _upload(tmp_path: Path, name: str = "clip.mp4") -> Path:
@@ -113,3 +118,21 @@ def test_a_tampered_avhubert_file_is_refused_before_it_is_unpickled(tmp_path) ->
     fake.write_bytes(b"not the released checkpoint")
     with pytest.raises(RuntimeError, match="SHA-256"):
         verified_avhubert(fake)
+
+
+def test_a_long_video_is_judged_by_its_most_unusual_part(tmp_path) -> None:
+    calm = {"face": (0.5,) * 3, "voice": (0.5,) * 3, "sync": None}
+    odd = {"face": (0.999,) * 3, "voice": (0.5,) * 3, "sync": None}
+    scorer = FakeScorer(parts=[calm, calm, odd, calm])
+    detector = Detector(lambda: scorer, _calibration(), workroot=tmp_path / "work")
+    outcome = _finished(detector, detector.submit(_upload(tmp_path)))["outcome"]
+    assert outcome["kind"] == "signs" and outcome["raised"] == ["face"]
+    assert outcome["part"] == {"start": 6.0, "end": 9.0}
+    assert outcome["parts"] == 4
+
+
+def test_a_video_where_no_part_can_be_checked_says_why(tmp_path) -> None:
+    empty = {"face": None, "voice": None, "sync": None}
+    detector = Detector(lambda: FakeScorer(parts=[empty, empty]), _calibration(), workroot=tmp_path / "work")
+    outcome = _finished(detector, detector.submit(_upload(tmp_path)))["outcome"]
+    assert outcome["kind"] == "cant_check" and "not checked" in outcome["reason"]

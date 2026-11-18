@@ -61,6 +61,7 @@
       card.classList.add(o.cls);
       card.append(el("p", "outcome " + o.cls, o.text));
       if (data.summary) card.append(el("p", "", data.summary));
+      if (data.where) card.append(el("p", "where", data.where));
       card.append(checkRows(data.checks));
       const trace = traceView(data.trace);
       if (trace) card.append(trace);
@@ -108,7 +109,9 @@
       const data = await response.json();
       if (data.status === "waiting" || data.status === "running") {
         const ahead = data.ahead ? ` (${data.ahead} ahead of you)` : "";
-        status.textContent = (STAGES[data.stage] || "Working") + ahead + "...";
+        const [stage, part] = String(data.stage || "").split(":");
+        const of = part ? " (part " + part.replace("/", " of ") + ")" : "";
+        status.textContent = (STAGES[stage] || "Working") + of + ahead + "...";
         continue;
       }
       return data;

@@ -91,7 +91,7 @@ class _FakeScorer:
         progress("scoring")
         checks = {"face": CheckResult((0.9999,) * 3), "voice": CheckResult((0.01,) * 3),
                   "sync": CheckResult(None, "no face in the mouth window")}
-        return ScoreReport(checks, {"loudness_db": [-30.0] * 50, "windows": []})
+        return [ScoreReport(checks, {"loudness_db": [-30.0] * 50, "windows": []}, 0.0, 3.0)]
 
 
 def _clip(tmp_path):
@@ -182,3 +182,13 @@ def test_present_lists_three_raised_checks_with_commas():
     checks = {n: {"percentile": 0.99, "reason": None} for n in ("face", "voice", "sync")}
     three = site.present({"kind": "signs", "raised": ["face", "voice", "sync"], "checks": checks, "trace": {}})
     assert three["summary"].startswith("The face, voice and lip-sync checks scored")
+
+
+def test_present_says_which_part_of_a_long_video_decided():
+    checks = {"face": {"percentile": 0.999, "reason": None}}
+    shown = site.present({"kind": "signs", "raised": ["face"], "checks": checks, "trace": {},
+                          "parts": 5, "part": {"start": 6.04, "end": 9.04}})
+    assert shown["where"] == "The whole video was checked in 5 parts of 3 seconds. The most unusual part, 0:06 to 0:09, is shown."
+    one = site.present({"kind": "no_signs", "raised": [], "checks": checks, "trace": {},
+                        "parts": 1, "part": {"start": 0.52, "end": 3.52}})
+    assert one["where"] == "The video has 3 seconds of sound, checked as one part (0:00 to 0:03)."

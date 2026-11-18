@@ -74,3 +74,61 @@ def test_json_round_trip_keeps_every_decision() -> None:
     again = cal.Calibration.from_json(c.to_json())
     for scores in ({"face": 99.5, "voice": None, "sync": 3.0}, {"face": 1.0, "voice": 2.0, "sync": 85.0}):
         assert again.decide(scores) == c.decide(scores)
+
+
+def _with_combined() -> cal.Calibration:
+    ref = cal.Reference.from_scores([float(i) for i in range(100)], [1] * 100)
+    combined = cal.Reference.from_scores([i / 1000 for i in range(1000)], [1] * 1000)
+    return cal.Calibration({"face": ref, "voice": ref, "sync": ref}, threshold=0.95, lower=0.8, combined=combined)
+
+
+def test_one_part_keeps_the_single_clip_thresholds() -> None:
+    c = _with_combined()
+    assert c.limits(1) == (0.95, 0.8)
+
+
+def test_more_parts_raise_the_bar_so_real_videos_are_not_flagged_more_often() -> None:
+    c = _with_combined()
+    threshold, lower = c.limits(10)
+    assert threshold == pytest.approx(0.995, abs=0.0015)      # 1 - 0.05 / 10
+    assert lower == pytest.approx(0.98, abs=0.0015)           # 1 - 0.20 / 10
+
+
+def test_the_most_unusual_part_decides_and_is_named() -> None:
+    c = _with_combined()
+    quiet = {"face": 10.0, "voice": 10.0, "sync": 10.0}       # 10th percentile
+    loud = {"face": 99.9, "voice": 10.0, "sync": None}        # above every reference clip
+    decision = c.decide_parts([quiet, loud, quiet])
+    assert (decision.kind, decision.part, decision.raised) == ("signs", 1, ["face"])
+    assert decision.parts == pytest.approx([0.105, 1.0, 0.105])
+    assert decision.percentiles["sync"] is None
+
+
+def test_a_part_flagged_alone_is_only_unsure_among_many() -> None:
+    c = _with_combined()
+    middling = {"face": 96.5, "voice": 10.0, "sync": 10.0}    # 96.5th percentile: signs alone
+    assert c.decide_parts([middling]).kind == "signs"
+    assert c.decide_parts([middling] + [{"face": 1.0, "voice": 1.0, "sync": 1.0}] * 19).kind == "no_signs"
+
+
+def test_parts_with_no_check_are_skipped_and_all_empty_is_cant_check() -> None:
+    c = _with_combined()
+    empty = {"face": None, "voice": None, "sync": None}
+    assert c.decide_parts([empty, empty]).kind == "cant_check"
+    decision = c.decide_parts([empty, {"face": 99.9, "voice": None, "sync": None}])
+    assert (decision.kind, decision.part, decision.parts) == ("signs", 1, [None, 1.0])
+
+
+def test_many_parts_need_the_combined_reference() -> None:
+    with pytest.raises(ValueError, match="combined"):
+        _calibration().limits(2)
+
+
+def test_built_calibration_keeps_the_real_combined_scores_and_round_trips() -> None:
+    rows = [{"corpus": "a" if i % 3 else "b", "label": 0,
+             "scores": {"face": float(i % 97), "voice": float((i * 7) % 89), "sync": float(i % 5)}} for i in range(600)]
+    built, _ = cal.build(rows)
+    assert built.limits(1) == (built.threshold, built.lower)
+    assert built.combined.quantile(0.95) == pytest.approx(built.threshold)
+    again = cal.Calibration.from_json(built.to_json())
+    assert again.limits(7) == built.limits(7)

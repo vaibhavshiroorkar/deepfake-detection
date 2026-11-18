@@ -5,6 +5,12 @@ real clips of the four P-001 evaluation sets with every corpus weighted equally.
 The combined score is the highest available percentile. The threshold is the
 95th weighted percentile of the combined score over the same real clips, so at
 most 5 in 100 of them are flagged; the 80th percentile starts "can't tell".
+
+A video longer than one clip is checked in parts, and its most unusual part
+decides. With n parts a real video has n chances to cross the line, so both
+lines move to the 1 - 0.05/n and 1 - 0.20/n quantiles of the real combined
+scores (a Bonferroni correction): a real video is then flagged at most about as
+often as a real clip, whatever the parts have in common.
 The design is in docs/superpowers/specs/2026-11-17-website-design.md.
 """
 
@@ -57,6 +63,9 @@ class Reference:
         w = np.asarray(weights, float)[order]
         return cls(tuple(float(v) for v in np.asarray(scores, float)[order]), tuple(float(x) for x in w / w.sum()))
 
+    def quantile(self, q: float) -> float:
+        return weighted_quantile(list(self.values), list(self.weights), q)
+
     def percentile(self, score: float) -> float:
         """Weighted share of reference clips below `score`, counting ties as half."""
         values = np.asarray(self.values)
@@ -72,6 +81,8 @@ class Outcome:
     combined: float | None
     percentiles: dict[str, float | None]
     raised: list[str] = field(default_factory=list)
+    part: int | None = None        # the index of the part that decided
+    parts: list[float | None] = field(default_factory=list)   # each part's combined percentile
 
 
 @dataclass(frozen=True)
@@ -80,32 +91,57 @@ class Calibration:
     threshold: float
     lower: float
     meta: dict = field(default_factory=dict, compare=False)
+    combined: Reference | None = None   # the real clips' combined percentiles, for videos in parts
 
     def percentiles(self, scores: dict[str, float | None]) -> dict[str, float | None]:
         return {c: None if scores.get(c) is None else self.references[c].percentile(scores[c]) for c in CHECKS}
 
+    def limits(self, parts: int) -> tuple[float, float]:
+        """The flag line and the "can't tell" line for a video checked in `parts` parts."""
+        if parts <= 1:
+            return self.threshold, self.lower
+        if self.combined is None:
+            raise ValueError("a video in parts needs the combined reference; rebuild the calibration file")
+        return (self.combined.quantile(1 - (1 - FLAG_QUANTILE) / parts),
+                self.combined.quantile(1 - (1 - UNSURE_QUANTILE) / parts))
+
     def decide(self, scores: dict[str, float | None]) -> Outcome:
         """`scores`: each check's score, or None when its quality gate failed."""
-        pct = self.percentiles(scores)
-        available = [p for p in pct.values() if p is not None]
-        if not available:
-            return Outcome("cant_check", None, pct)
-        combined = max(available)
-        if combined > self.threshold:
-            bar = min(OWN_FLAG, combined)
-            return Outcome("signs", combined, pct, [c for c in CHECKS if pct[c] is not None and pct[c] >= bar])
-        return Outcome("cant_tell" if combined > self.lower else "no_signs", combined, pct)
+        return self.decide_parts([scores])
+
+    def decide_parts(self, parts: list[dict[str, float | None]]) -> Outcome:
+        """One outcome for a video from the check scores of each of its parts.
+
+        Parts where no check could run are skipped and do not count toward the correction.
+        """
+        pcts = [self.percentiles(scores) for scores in parts]
+        combined = [max((p for p in pct.values() if p is not None), default=None) for pct in pcts]
+        checked = [i for i, c in enumerate(combined) if c is not None]
+        if not checked:
+            return Outcome("cant_check", None, pcts[0] if pcts else {c: None for c in CHECKS}, parts=combined)
+        worst = max(checked, key=lambda i: combined[i])
+        pct, top = pcts[worst], combined[worst]
+        threshold, lower = self.limits(len(checked))
+        if top > threshold:
+            bar = min(OWN_FLAG, top)
+            raised = [c for c in CHECKS if pct[c] is not None and pct[c] >= bar]
+            return Outcome("signs", top, pct, raised, worst, combined)
+        return Outcome("cant_tell" if top > lower else "no_signs", top, pct, [], worst, combined)
 
     def to_json(self) -> str:
         refs = {c: {"values": list(r.values), "weights": list(r.weights)} for c, r in self.references.items()}
-        return json.dumps({"meta": self.meta, "threshold": self.threshold, "lower": self.lower,
-                           "references": refs}, indent=1)
+        data = {"meta": self.meta, "threshold": self.threshold, "lower": self.lower, "references": refs}
+        if self.combined is not None:
+            data["combined"] = {"values": list(self.combined.values), "weights": list(self.combined.weights)}
+        return json.dumps(data, indent=1)
 
     @classmethod
     def from_json(cls, text: str) -> Calibration:
         data = json.loads(text)
         refs = {c: Reference(tuple(r["values"]), tuple(r["weights"])) for c, r in data["references"].items()}
-        return cls(refs, float(data["threshold"]), float(data["lower"]), data.get("meta", {}))
+        combined = data.get("combined")
+        return cls(refs, float(data["threshold"]), float(data["lower"]), data.get("meta", {}),
+                   None if combined is None else Reference(tuple(combined["values"]), tuple(combined["weights"])))
 
 
 def build(rows: list[dict]) -> tuple[Calibration, dict]:
@@ -127,7 +163,8 @@ def build(rows: list[dict]) -> tuple[Calibration, dict]:
     combined = [c for _, c in scored]
     weights = corpus_weights([r["corpus"] for r, _ in scored])
     final = Calibration(references, weighted_quantile(combined, weights, FLAG_QUANTILE),
-                        weighted_quantile(combined, weights, UNSURE_QUANTILE))
+                        weighted_quantile(combined, weights, UNSURE_QUANTILE),
+                        combined=Reference.from_scores(combined, weights))
     summary: dict = {}
     for r in rows:
         side = summary.setdefault(r["corpus"], {}).setdefault("fake" if r["label"] else "real", Counter())

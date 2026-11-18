@@ -43,7 +43,9 @@ def test_scorer_reproduces_the_recorded_study_scores(scorer, clip_id, tmp_path) 
 
     with open(PROJECT_ROOT / "data/manifests/fakeavceleb.csv", encoding="utf-8", newline="") as f:
         raw = next(r for r in csv.DictReader(f) if r["clip_id"] == clip_id)["video_path"]
-    report = scorer.score(PROJECT_ROOT / "data" / raw, tmp_path)
+    parts = scorer.score(PROJECT_ROOT / "data" / raw, tmp_path)
+    report = parts[0]          # the first part is the study's clip: the first 3 s of sound
+    assert all(round(p.end - p.start, 6) == 3.0 for p in parts)
     for check, result in report.checks.items():
         assert result.probabilities is not None, (check, result.reason)
         for seed, got in zip(SEEDS, result.probabilities, strict=True):

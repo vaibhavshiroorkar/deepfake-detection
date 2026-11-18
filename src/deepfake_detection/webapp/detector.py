@@ -107,12 +107,15 @@ class Detector:
             self._set(job, **result, stage="done", finished=time.monotonic())
             self._done[job].set()
 
-    def _outcome(self, report) -> dict:
-        decision = self.calibration.decide(report.scores())
+    def _outcome(self, reports) -> dict:
+        """One outcome from the reports of every part; the part that decided supplies the details."""
+        decision = self.calibration.decide_parts([r.scores() for r in reports])
+        report = reports[decision.part if decision.part is not None else 0]
         checks = {name: {"percentile": decision.percentiles[name], "reason": result.reason}
                   for name, result in report.checks.items()}
         outcome = {"kind": decision.kind, "combined": decision.combined, "raised": decision.raised,
-                   "checks": checks, "trace": report.trace}
+                   "checks": checks, "trace": report.trace, "parts": len(reports),
+                   "part": {"start": report.start, "end": report.end}}
         if decision.kind == "cant_check":
             outcome["reason"] = "Neither the face nor the voice could be checked: " + "; ".join(
                 r for r in (c["reason"] for c in checks.values()) if r)

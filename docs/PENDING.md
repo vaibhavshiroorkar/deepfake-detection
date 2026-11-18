@@ -11,11 +11,12 @@ The demo, the PPT, the overnight checks and `docs/SECURITY.md` are done and merg
 
 **Claude, the 18th:** the deliverables remake is done (changelog). Vaibhav: compile the paper and the report on Overleaf (no LaTeX here, so only static checks have run), and confirm the paper title with the guide.
 
-**Claude, the 18th, website (decided by Vaibhav 11-18):**
+**Claude, the 18th (decided by Vaibhav 11-18, in this order):**
 
-1. Check the whole video, not only the first 3 seconds: score every 3-second part, report the most unusual one, and raise the bar with the number of parts (a Bonferroni correction) so real videos are not flagged more often.
-2. A file check runs first: look for provenance tags that AI tools write on purpose (C2PA, a generator's name). A tag gives "signs of manipulation" with the tag as evidence; no tag says nothing and the three checks run. First inspect the HiFi-AVDF clips to see which tags really exist. Codec, bitrate and length are not used as evidence (the file audit shows they describe the dataset, not the fake).
-3. Update the site's wording, the report's website section and the demo notes to match; push after each step.
+1. Report in the college format: Introduction (about 10 pages), Literature Survey (20 to 40), Methodology (20 to 40), Results and Discussion (20 to 40), Conclusion and Future Scope (about 10), Bibliography (50 to 100 papers, every citation matched), Appendices (user manual; no papers or awards). The report cites 35 keys but has no `references.bib`, so on Overleaf every citation prints "[?]": build a checked `references.bib` first. Compile locally with Tectonic to measure pages.
+2. Website file check first: look for provenance tags AI tools write on purpose (C2PA, a generator's name). A tag gives "signs of manipulation" with the tag as evidence; no tag says nothing. First inspect the HiFi-AVDF clips for which tags exist. Codec, bitrate and length are not evidence (the file audit shows they describe the dataset).
+3. Website live input beside drag and drop: camera video, microphone voice, or a camera picture. A voice recording runs only the voice check, a picture only the face check. Audio and image files are accepted by drag and drop too.
+4. After 1 to 3: update the paper, the report's website sections and the PPT where the website changed; push after each step.
 
 **Claude, also:**
 

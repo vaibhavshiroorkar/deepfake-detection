@@ -157,3 +157,28 @@ def test_a_fixed_video_bitrate_replaces_constant_quality() -> None:
     assert "nal-hrd=cbr" in fixed[fixed.index("-x264-params") + 1]
     plain = ffmpeg_command(Path("a.mp4"), Path("b.mp4"), 0.0, 3.0, None, NeutralSettings())
     assert "-crf" in plain and "-b:v" not in plain       # v4 itself is unchanged
+
+
+def test_sound_windows_cover_all_the_sound_in_fixed_parts() -> None:
+    from deepfake_detection.preprocessing.neutralize import sound_windows
+
+    # 10 s of sound from 0.5 s: parts at 0.52, 3.52, 6.52, and a last one ending where the sound ends
+    parts = sound_windows(duration=11.0, leading=0.5, trailing=0.5, fixed=3.0)
+    assert [round(s, 2) for s, _ in parts] == [0.52, 3.52, 6.52, 7.48]
+    assert all(round(e - s, 6) == 3.0 for s, e in parts)
+    assert parts[-1][1] <= 10.5 + 1e-9
+    assert sound_windows(duration=3.52, leading=0.52, trailing=0.0, fixed=3.0) == [(0.52, 3.52)]
+    assert len(sound_windows(duration=60.0, leading=0.0, trailing=0.0, fixed=3.0)) == 20
+    assert sound_windows(duration=3.0, leading=0.5, trailing=0.0, fixed=3.0) == []
+    first = cut_window(11.0, 0.5, 0.5, 3.0)
+    assert parts[0] == first
+
+
+@pytest.mark.skipif(not HAS_FFMPEG, reason="needs ffmpeg")
+def test_a_given_start_cleans_that_part_of_the_clip(tmp_path: Path) -> None:
+    source = tmp_path / "source.mp4"
+    _make(source, "libx264", "aac", silence=0.0)
+    report = neutralize_clip(source, tmp_path / "out.mp4", NeutralSettings(fixed_seconds=1.0), start=1.0)
+    assert "error" not in report
+    assert report["offset_sec"] == pytest.approx(1.0)
+    assert report["kept_sec"] == pytest.approx(1.0)
