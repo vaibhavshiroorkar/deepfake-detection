@@ -19,7 +19,12 @@ from collections.abc import Callable
 from pathlib import Path
 
 from deepfake_detection.webapp import provenance
-from deepfake_detection.webapp.calibration import Calibration
+from deepfake_detection.webapp.calibration import (
+    SHOWN_FLAG,
+    SHOWN_LOWER,
+    Calibration,
+    display_score,
+)
 from deepfake_detection.webapp.scorer import ClipRefused
 
 log = logging.getLogger(__name__)
@@ -171,16 +176,19 @@ class Detector:
                 {
                     "start": r.start,
                     "end": r.end,
-                    "reading": None if reading is None else round(reading, 3),
+                    "reading": display_score(reading, flag, lower),
                     "checks": {
-                        k: None if v is None else round(v, 3)
-                        for k, v in per_model.items()
+                        k: display_score(v, flag, lower) for k, v in per_model.items()
                     },
                 }
             )
         report = reports[decision.part if decision.part is not None else 0]
         checks = {
-            name: {"percentile": decision.percentiles[name], "reason": result.reason}
+            name: {
+                "percentile": decision.percentiles[name],
+                "score": display_score(decision.percentiles[name], flag, lower),
+                "reason": result.reason,
+            }
             for name, result in report.checks.items()
         }
         outcome = {
@@ -193,7 +201,8 @@ class Detector:
             "part": {"start": report.start, "end": report.end},
             "file_check": labels,
             "timeline": timeline,
-            "lines": {"flag": flag, "lower": lower},
+            "lines": {"flag": SHOWN_FLAG, "lower": SHOWN_LOWER},
+            "raw_lines": {"flag": flag, "lower": lower},
             "explain": _face_explanation(reports),
         }
         if labels:

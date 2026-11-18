@@ -99,6 +99,7 @@ def test_a_finished_job_reports_the_outcome_and_deletes_every_file(tmp_path) -> 
     assert status["outcome"]["raised"] == ["face"]
     assert status["outcome"]["checks"]["sync"] == {
         "percentile": None,
+        "score": None,
         "reason": "not checked",
     }
     assert not upload.exists()
@@ -268,7 +269,12 @@ def test_the_outcome_carries_every_part_and_the_lines_it_was_judged_by(
     assert timeline[1]["checks"]["face"] > timeline[0]["checks"]["face"]
     assert timeline[0]["checks"]["sync"] is None
     flag, lower = calibration.limits(3)
-    assert outcome["lines"] == {"flag": flag, "lower": lower}
+    # The page shows one scale: 0 real, 0.5 neutral, 1 fake; flagged from 0.6, can't tell from 0.4.
+    assert outcome["lines"] == {"flag": 0.6, "lower": 0.4}
+    assert outcome["raw_lines"] == {"flag": flag, "lower": lower}
+    assert 0.6 <= timeline[1]["reading"] <= 1.0
+    assert timeline[0]["reading"] < 0.4
+    assert outcome["checks"]["face"]["score"] >= 0.6
 
 
 def test_the_outcome_explains_the_part_where_the_face_scored_highest(tmp_path) -> None:

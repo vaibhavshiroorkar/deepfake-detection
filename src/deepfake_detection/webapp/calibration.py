@@ -26,9 +26,6 @@ import numpy as np
 CHECKS = ("face", "voice", "sync")
 FLAG_QUANTILE = 0.95
 UNSURE_QUANTILE = 0.80
-OWN_FLAG = (
-    0.95  # a check is named as raising the flag at or above its own 95th percentile
-)
 _EPS = 1e-7
 
 
@@ -156,8 +153,8 @@ class Calibration:
         pct, top = pcts[worst], combined[worst]
         threshold, lower = self.limits(len(checked))
         if top > threshold:
-            bar = min(OWN_FLAG, top)
-            raised = [c for c in CHECKS if pct[c] is not None and pct[c] >= bar]
+            # Named only when it crosses the line in force, so every named model reads 0.6 or more on the page.
+            raised = [c for c in CHECKS if pct[c] is not None and pct[c] > threshold]
             return Outcome("signs", top, pct, raised, worst, combined)
         return Outcome(
             "cant_tell" if top > lower else "no_signs", top, pct, [], worst, combined
@@ -246,3 +243,28 @@ def build(
     return final, {
         c: {s: dict(n) for s, n in sides.items()} for c, sides in summary.items()
     }
+
+
+# The page's one scale, set by Vaibhav: 0 is real, 0.5 is neutral, 1 is fake. "Can't tell" is the band
+# around 0.5 and a score is flagged from 0.6.
+SHOWN_LOWER, SHOWN_FLAG = 0.4, 0.6
+
+
+def display_score(reading: float | None, flag: float, lower: float) -> float | None:
+    """A reading (share of real clips scored lower) on the page's 0-to-1 scale, piecewise linear so the
+    can't-tell line lands on 0.4 and the flag line on 0.6. Order is kept, so no answer changes."""
+    if reading is None:
+        return None
+    if reading < lower:
+        shown = SHOWN_LOWER * reading / lower
+    elif reading < flag:
+        shown = SHOWN_LOWER + (SHOWN_FLAG - SHOWN_LOWER) * (reading - lower) / (
+            flag - lower
+        )
+    else:
+        shown = (
+            1.0
+            if flag >= 1
+            else SHOWN_FLAG + (1 - SHOWN_FLAG) * (reading - flag) / (1 - flag)
+        )
+    return round(min(max(shown, 0.0), 1.0), 3)

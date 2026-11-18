@@ -57,9 +57,9 @@
       box.append(row);
     }
     if (flag != null) {
-      box.append(el("p", "scale small", "Scores run from 0 to 1. The video is flagged when a model crosses the flag "
-        + "line at " + fmt(flag) + " (the mark on each bar), set so that about 5 in 100 real videos cross it; from "
-        + fmt(lines.lower) + " the answer is can't tell. A score is not a chance of being fake."));
+      box.append(el("p", "scale small", "0 is real, 0.5 is neutral, 1 is fake. Below " + fmt(lines.lower)
+        + ": no signs. " + fmt(lines.lower) + " to " + fmt(flag) + ": can't tell. From " + fmt(flag)
+        + " (the mark on each bar): flagged. The flag mark is set so that about 5 in 100 real videos reach it."));
     }
     return box;
   }
@@ -155,8 +155,8 @@
     });
     if (media) media.addEventListener("timeupdate", () => { if (!held) show(media.currentTime); });
     const legend = el("p", "legend small");
-    legend.append(el("span", "key ok", "below " + fmt(lines.lower)), el("span", "key unsure", "can't tell"),
-      el("span", "key flag", "flag line " + fmt(lines.flag)), el("span", "key none", "not scored"));
+    legend.append(el("span", "key ok", "real side, below " + fmt(lines.lower)), el("span", "key unsure", "neutral, can't tell"),
+      el("span", "key flag", "fake side, from " + fmt(lines.flag)), el("span", "key none", "not scored"));
     box.append(bar, readout, legend);
     show(0);
     return box;

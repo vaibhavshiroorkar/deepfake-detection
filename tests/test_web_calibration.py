@@ -225,3 +225,31 @@ def test_measured_lines_for_videos_in_parts_replace_the_bonferroni_bound() -> No
     assert measured.limits(9) < c.limits(9)  # easier to reach than the Bonferroni bound
     again = cal.Calibration.from_json(measured.to_json())
     assert again.limits(3) == measured.limits(3)
+
+
+def test_display_scale_puts_real_at_0_neutral_at_half_and_fake_at_1():
+    from deepfake_detection.webapp.calibration import display_score
+
+    flag, lower = 0.98, 0.92
+    assert display_score(0.0, flag, lower) == 0.0
+    assert display_score(lower, flag, lower) == 0.4
+    assert display_score((flag + lower) / 2, flag, lower) == 0.5
+    assert display_score(flag, flag, lower) == 0.6
+    assert display_score(1.0, flag, lower) == 1.0
+    assert display_score(None, flag, lower) is None
+    steps = [display_score(x / 100, flag, lower) for x in range(101)]
+    assert steps == sorted(steps)
+
+
+def test_a_model_named_as_raising_the_flag_is_on_the_fake_side_of_the_page_scale():
+    # A second model at its own 95th percentile sat under the flag line in force and showed 0.40 on the
+    # page while being named as raising the flag (seen 11-18 on a cloned-voice clip).
+    c = _calibration()
+    outcome = c.decide({"face": 99.5, "voice": 95.5, "sync": None})
+    flag, lower = c.limits(1)
+    assert outcome.kind == "signs"
+    assert outcome.raised == ["face"]
+    for name in outcome.raised:
+        assert (
+            cal.display_score(outcome.percentiles[name], flag, lower) >= cal.SHOWN_FLAG
+        )

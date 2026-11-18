@@ -364,7 +364,10 @@ def present(outcome: dict) -> dict:
             "percentile": None
             if c["percentile"] is None
             else min(99, int(c["percentile"] * 100)),
-            "score": None if c["percentile"] is None else round(c["percentile"], 3),
+            # The detector sends the 0 (real) / 0.5 (neutral) / 1 (fake) scale; older outcomes only a percentile.
+            "score": c["score"]
+            if "score" in c
+            else (None if c["percentile"] is None else round(c["percentile"], 3)),
             "raised": name in outcome.get("raised", []),
             "reason": c["reason"],
         }
