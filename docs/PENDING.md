@@ -18,6 +18,13 @@ The demo, the PPT, the overnight checks and `docs/SECURITY.md` are done and merg
 
 3. Check the study's cleaned clips for the same assumption: `neutralize_clip(start=None)` judges "enough sound" from the container's length, so a source whose audio ends early could have given a cleaned clip under 3.00 s. Count cleaned clips shorter than 3.00 s in `data/neutral`; if any, say so in the report's limitations.
 
+**Claude, the 19th: best possible website detector (asked by Vaibhav 11-19: "any method, I want the best").** Work on branch `web-models-v2`; `main` stays the demo until a new model measures better. Website models only; the P-001 models and the paper's numbers are untouched.
+
+1. Fixed held-out sets, scored before any change: voice on In-the-Wild dev_x speakers, FakeAVCeleb identity-strict test audio and an ASVspoof 2019 LA eval sample; face on frames of the FF++ c23 official test split, the Celeb-DF v2 test list and FakeAVCeleb identity-strict test.
+2. Pretrained candidates first. Voice: AntiDeepfake (NII Yamagishi lab, CC BY-NC-SA 4.0; model card reports 1.35% EER on In-the-Wild, which it did not train on). Face and picture: Effort (CLIP ViT-L/14, ICML 2025, CC BY-NC 4.0, trained on FF++). Each downloaded model gets a hash check and an entry in `docs/SECURITY.md`.
+3. A candidate replaces a website model only if it beats it on step 1's sets. Then rebuild both calibrations, rescore the demo clips, rerun the tests, and merge.
+4. If time is left: train our own picture and voice models (the plans above) and compare.
+
 **Claude, also:**
 
 - On request: answer Overleaf compile errors; adjust slides or the demo after Vaibhav's review and rehearsal.
