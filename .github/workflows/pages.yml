@@ -11,6 +11,8 @@ name: pages
       - "src/deepfake_detection/webapp/**"
       - "results/numbers.json"
       - "scripts/export_site.py"
+      - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
