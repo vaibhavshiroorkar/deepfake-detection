@@ -398,6 +398,38 @@ def a19(numbers: dict) -> None:
         _put(numbers, f"{key}.reading", reading, path)
 
 
+PARTS_SHOWN = (1, 2, 5, 10, 20)     # a 60 s upload, the site's longest, has at most 20 parts
+
+
+def website(numbers: dict) -> None:
+    """The website's flag and unsure lines per number of parts, and its measured speed per part."""
+    import sys
+    sys.path.insert(0, str(ROOT / "src"))
+    from deepfake_detection.webapp.calibration import Calibration
+
+    path = RESULTS / "web-calibration.json"
+    calibration = Calibration.from_json(path.read_text(encoding="utf-8"))
+    for parts in PARTS_SHOWN:
+        flag, unsure = calibration.limits(parts)
+        _put(numbers, f"web.limit.parts{parts}.flag", round(flag, 3), path)
+        _put(numbers, f"web.limit.parts{parts}.unsure", round(unsure, 3), path)
+    for corpus, sides in calibration.meta.get("outcomes", {}).items():
+        name = corpus.lower().replace("-", "")
+        for side, counts in sides.items():
+            clips = sum(counts.values())
+            _put(numbers, f"web.outcomes.{name}.{side}.clips", clips, path)
+            share = round(counts.get("signs", 0) / clips, 3)
+            _put(numbers, f"web.outcomes.{name}.{side}.{'flagged' if side == 'real' else 'caught'}", share, path)
+    timing = RESULTS / "web-timing.json"
+    if not timing.exists():
+        return
+    runs = json.loads(timing.read_text(encoding="utf-8"))
+    per_part = sum(c["seconds"] for c in runs["clips"]) / sum(c["parts"] for c in runs["clips"])
+    _put(numbers, "web.seconds_per_part", round(per_part), timing)
+    _put(numbers, "web.minutes_60s", round(max(PARTS_SHOWN) * per_part / 60, 1), timing)
+    _put(numbers, "web.timing.threads", runs["threads"], timing)
+
+
 def main() -> int:
     numbers: dict = {}
     audits(numbers)
@@ -417,6 +449,7 @@ def main() -> int:
     a16(numbers)
     a17(numbers)
     a19(numbers)
+    website(numbers)
     out = RESULTS / "numbers.json"
     out.write_text(json.dumps(dict(sorted(numbers.items())), indent=1) + "\n", encoding="utf-8")
     print(f"{len(numbers)} numbers -> {_rel(out)}")

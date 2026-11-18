@@ -9,13 +9,13 @@ Internal and external examiners sit together. First priority: a live demonstrati
 
 The demo, the PPT, the overnight checks and `docs/SECURITY.md` are done and merged into `main` (changelog). The demo runs from the home PC and is opened on the laptop through Tailscale (decided by Vaibhav 11-17).
 
-**Claude, the 18th:** the deliverables remake is done (changelog). Vaibhav: compile the paper and the report on Overleaf (no LaTeX here, so only static checks have run), and confirm the paper title with the guide.
+**Claude, the 18th:** the deliverables remake and the report in the college format are done (changelog). Vaibhav: upload `report.zip` and `paper.zip` to Overleaf (the report compiles locally with Tectonic, 106 pages), and confirm the paper title with the guide.
 
 **Claude, the 18th (decided by Vaibhav 11-18, in this order):**
 
-1. Report in the college format: Introduction (about 10 pages), Literature Survey (20 to 40), Methodology (20 to 40), Results and Discussion (20 to 40), Conclusion and Future Scope (about 10), Bibliography (50 to 100 papers, every citation matched), Appendices (user manual; no papers or awards). The report cites 35 keys but has no `references.bib`, so on Overleaf every citation prints "[?]": build a checked `references.bib` first. Compile locally with Tectonic to measure pages.
-2. Website file check first: look for provenance tags AI tools write on purpose (C2PA, a generator's name). A tag gives "signs of manipulation" with the tag as evidence; no tag says nothing. First inspect the HiFi-AVDF clips for which tags exist. Codec, bitrate and length are not evidence (the file audit shows they describe the dataset).
-3. Website live input beside drag and drop: camera video, microphone voice, or a camera picture. A voice recording runs only the voice check, a picture only the face check. Audio and image files are accepted by drag and drop too.
+1. Website file check first: look for provenance tags AI tools write on purpose (C2PA, a generator's name). A tag gives "signs of manipulation" with the tag as evidence; no tag says nothing. First inspect the HiFi-AVDF clips for which tags exist. Codec, bitrate and length are not evidence (the file audit shows they describe the dataset).
+2. Website live input beside drag and drop: camera video, microphone voice, or a camera picture. A voice recording runs only the voice check, a picture only the face check. Audio and image files are accepted by drag and drop too.
+3. Re-run the 7 demo clips with whole-video checking and update `docs/DEMO.md` (timings and expected answers were measured on one 3-second part).
 4. After 1 to 3: update the paper, the report's website sections and the PPT where the website changed; push after each step.
 
 **Claude, also:**

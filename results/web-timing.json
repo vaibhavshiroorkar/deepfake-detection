@@ -1,0 +1,24 @@
+{
+ "date": "2026-11-18",
+ "code_commit": "ca032c7c55147df67bbf0f718a7e548b68e3eb9d",
+ "device": "cpu",
+ "threads": 2,
+ "load_seconds": 21.7,
+ "clips": [
+  {
+   "video_seconds": 15.2,
+   "parts": 4,
+   "seconds": 79.6
+  },
+  {
+   "video_seconds": 7.4,
+   "parts": 3,
+   "seconds": 53.0
+  },
+  {
+   "video_seconds": 6.42,
+   "parts": 2,
+   "seconds": 36.0
+  }
+ ]
+}

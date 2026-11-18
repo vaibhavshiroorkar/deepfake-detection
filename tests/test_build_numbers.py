@@ -253,3 +253,30 @@ def test_a19_keys(tmp_path):
     assert numbers["a19.dfdc.minus_sync.estimate"]["value"] == -0.046
     assert numbers["a19.dfdc.minus_sync.upper"]["value"] == -0.025
     assert numbers["a19.dfdc.reading"]["value"] == "worse"
+
+
+def test_website_keys_come_from_the_calibration_and_timing_files(tmp_path):
+    from deepfake_detection.webapp import calibration as cal
+
+    module = _module(tmp_path)
+    (tmp_path / "results").mkdir()
+    ref = cal.Reference.from_scores([float(i) for i in range(10)], [1] * 10)
+    combined = cal.Reference.from_scores([i / 1000 for i in range(1000)], [1] * 1000)
+    built = cal.Calibration({"face": ref, "voice": ref, "sync": ref}, 0.95, 0.8, combined=combined,
+                            meta={"outcomes": {"DFDC": {"real": {"no_signs": 18, "signs": 2},
+                                                        "fake": {"signs": 3, "cant_tell": 1, "no_signs": 6}}}})
+    (tmp_path / "results" / "web-calibration.json").write_text(built.to_json(), encoding="utf-8")
+    (tmp_path / "results" / "web-timing.json").write_text(json.dumps({
+        "device": "cpu", "threads": 2,
+        "clips": [{"parts": 4, "seconds": 68.0}, {"parts": 2, "seconds": 32.0}]}), encoding="utf-8")
+    numbers: dict = {}
+    module.website(numbers)
+    assert numbers["web.limit.parts1.flag"]["value"] == 0.95
+    assert numbers["web.limit.parts10.flag"]["value"] == 0.994
+    assert numbers["web.limit.parts20.unsure"]["value"] == 0.989
+    assert numbers["web.seconds_per_part"]["value"] == 17
+    assert numbers["web.minutes_60s"]["value"] == 5.6
+    assert numbers["web.seconds_per_part"]["source"] == "results/web-timing.json"
+    assert numbers["web.outcomes.dfdc.real.flagged"]["value"] == 0.1
+    assert numbers["web.outcomes.dfdc.fake.caught"]["value"] == 0.3
+    assert numbers["web.outcomes.dfdc.real.clips"]["value"] == 20
