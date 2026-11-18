@@ -430,6 +430,22 @@ def website(numbers: dict) -> None:
     _put(numbers, "web.timing.threads", runs["threads"], timing)
 
 
+def file_check(numbers: dict) -> None:
+    """How many HiFi-AVDF files carry an AI label the website's file check reads, by generator."""
+    path = RESULTS / "web-provenance.json"
+    if not path.exists():
+        return
+    groups = json.loads(path.read_text(encoding="utf-8"))["groups"]
+    for group, counts in groups.items():
+        _put(numbers, f"web.provenance.{group}.labelled", counts["labelled"], path)
+        _put(numbers, f"web.provenance.{group}.files", counts["files"], path)
+    fakes = [c for g, c in groups.items() if g != "real"]
+    labelled, files = sum(c["labelled"] for c in fakes), sum(c["files"] for c in fakes)
+    _put(numbers, "web.provenance.fakes.labelled", labelled, path)
+    _put(numbers, "web.provenance.fakes.files", files, path)
+    _put(numbers, "web.provenance.fakes.share", round(labelled / files, 3), path)
+
+
 def main() -> int:
     numbers: dict = {}
     audits(numbers)
@@ -450,6 +466,7 @@ def main() -> int:
     a17(numbers)
     a19(numbers)
     website(numbers)
+    file_check(numbers)
     out = RESULTS / "numbers.json"
     out.write_text(json.dumps(dict(sorted(numbers.items())), indent=1) + "\n", encoding="utf-8")
     print(f"{len(numbers)} numbers -> {_rel(out)}")

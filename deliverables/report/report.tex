@@ -1294,7 +1294,8 @@ Some things are outside the scope on purpose:
     \item \textbf{Locating the edit in time.} LAV-DF and AV-Deepfake1M ask
     where in a clip the edit is. We ask only whether a clip is edited.
     \item \textbf{Still images and speech alone.} The study measures
-    audio-visual clips. Pictures and voice recordings are not part of it.
+    audio-visual clips. The website accepts pictures and voice recordings,
+    but they are not part of the study.
 \end{itemize}
 
 \section{An Example: One Clip Through the Project}
@@ -1434,9 +1435,11 @@ H4 answers a question the third user would ask.
     combining it with face and voice checks passes its test without
     transferring.
     \item \textbf{A website for one video at a time}
-    (Section~\ref{sec:m-website}). It cleans an upload the way the study
-    cleaned its data, checks every three-second part, and answers in one of
-    four plain outcomes, with the false-alarm rate it was set to.
+    (Section~\ref{sec:m-website}). It reads the file for AI labels, cleans
+    an upload the way the study cleaned its data, checks every three-second
+    part, and answers in one of four plain outcomes, with the false-alarm rate
+    it was set to. It also takes a video, a voice or a picture recorded on the
+    spot.
 \end{enumerate}
 
 We do not claim a new architecture. Combining audio and video is not new, and
@@ -3241,6 +3244,8 @@ The website has five parts:
     before it accepts it.
     \item \textbf{The queue.} One check runs at a time and at most three wait.
     The models load once, so two uploads never compete for the processor.
+    \item \textbf{The file check.} Before any model runs, it reads the file for
+    labels that AI tools write on purpose (Section~\ref{sec:m-filecheck}).
     \item \textbf{The scorer.} It calls the study's own code: the same
     cleaning, the same preprocessing (refused if its configuration hash is not
     the one every model trained on), the same three checks at three seeds each.
@@ -3254,7 +3259,11 @@ The website has five parts:
 \subsection{What happens to an upload}
 
 \begin{enumerate}
-    \item The server checks the file and puts it in the queue.
+    \item The server checks the file and puts it in the queue. A voice
+    recording or a picture is first turned into a clip the checks can read
+    (Section~\ref{sec:m-live}).
+    \item The file check reads the file for an AI label. If it finds one, the
+    answer will be ``signs of manipulation'' whatever the checks say.
     \item The scorer finds every stretch of three seconds that holds sound,
     from the first sound to the last. Back-to-back parts cover all of it; when
     the sound does not divide evenly, the last part ends where the sound ends
@@ -3342,7 +3351,45 @@ The website reads codec, bitrate and length only to apply its upload rules.
 It never uses them as evidence, because Section~\ref{sec:r-files} shows that
 in research datasets they describe how the dataset was saved, not whether a
 clip is fake. A real clip that happens to carry MP3 audio would otherwise be
-flagged for its format.
+flagged for its format. The one kind of file detail it does read is a label
+that a generator writes on purpose, which the next subsection describes.
+
+\subsection{The file check}
+\label{sec:m-filecheck}
+
+Some generators mark their output by writing a label into the file's
+metadata. Industry also has a standard for such labels, the C2PA content credential, in
+which a field records the source of the media; the IPTC term
+``trainedAlgorithmicMedia'' means a trained model made it.
+
+The file check reads exactly two things: an AIGC metadata tag whose label is
+1, and a C2PA manifest whose source is ``trainedAlgorithmicMedia''. Either one
+is strong evidence, because a real camera never writes it. So a label gives
+``signs of manipulation'' on its own, and the page names it first.
+
+A missing label proves nothing. Any upload or re-save can strip it, so the file
+check can only raise the answer, never lower it. When it finds nothing, it says
+nothing, and the three checks decide.
+
+\subsection{Live input}
+\label{sec:m-live}
+
+Beside the drop zone, the page offers three buttons: record a video, record a
+voice, or take a picture. They use the browser's camera and microphone, which
+browsers allow only on a secure page; the demonstration's private-network
+address is one.
+
+Each kind of input runs only the checks it can feed. A recorded video runs all
+three. A voice recording runs the voice check alone: the server lays it over
+plain black frames, which hold no face, so the clip can pass through the same
+cleaning and preprocessing as any other. A picture runs the face check alone:
+the server holds it still for just over three seconds and the clip has no
+sound. The checks that do not run say so on the card (``not used for a voice
+recording'' or ``for a picture''), and the lines are those of a one-check
+reading. Voice recordings and pictures can also be dropped as files.
+
+Recordings from a browser are re-encoded before they are checked, because
+their WebM files often carry no length, which the upload rules need.
 
 \section{Implementation}
 \label{sec:m-impl}
@@ -4437,6 +4484,19 @@ follows the cross-corpus results of Section~\ref{sec:r-new}: high on the
 training corpus, low elsewhere. Third, a ``no signs found'' answer is weak
 evidence on any corpus but FakeAVCeleb, and the page says so.
 
+\subsection{The file check on HiFi-AVDF}
+
+HiFi-AVDF is the one corpus here made with commercial generators, so it is
+where a generator's own label could survive. We ran the website's file check
+on every file. It found a label on {{web.provenance.seedance1.0.labelled|int}}
+of the {{web.provenance.seedance1.0.files|int}} Seedance~1.0 clips and on none
+of the other generators' clips, which the dataset's makers had re-encoded. It
+found none on the {{web.provenance.real.files|int}} real clips. In all it
+marks {{web.provenance.fakes.labelled|int}} of
+{{web.provenance.fakes.files|int}} fakes ({{web.provenance.fakes.share|pct}})
+with no false alarm. The result shows both sides of a label: when it is
+there, it is certain; most of the time, a re-encode has removed it.
+
 \subsection{The exhibition clips}
 
 For the exhibition we chose seven clips that show each answer: a real clip,
@@ -4623,7 +4683,7 @@ would answer.
         Run HAVIC and AVH-Align's published system on our protocol & How do published detectors do once file clues are removed? \\
         Measure the cost of cleaning on LAV-DF & Does cleaning remove real evidence as well as file clues? \\
         Score long real videos part by part & Does the website's long-video correction hold? \\
-        Provenance check and live input on the website & Can the website use labels that generators write, and check a clip recorded on the spot? \\
+        Measure pictures and voice recordings & How well do the face and voice checks do alone, on photographs and today's voice tools? \\
         Add AV-Deepfake1M and KoDF when access arrives & Do the results hold on more corpora? \\
         \bottomrule
     \end{tabularx}
@@ -4821,6 +4881,12 @@ LAV-DF and HiFi-AVDF only.
     \item \textbf{It is slow on the processor.} About
     {{web.seconds_per_part|int}} seconds per part, so a minute of video takes
     about {{web.minutes_60s}} minutes.
+    \item \textbf{Pictures and voice recordings are outside the study.} The
+    face check learned from video frames of face swaps and the voice check
+    from cloned voices of 2021; neither has been measured on photographs or on
+    today's voice tools.
+    \item \textbf{Labels are rare.} Only one of the six HiFi-AVDF generators'
+    labels survived to the files we have.
     \item \textbf{It knows talking heads only.} A video with no steady face or
     no speech gets fewer checks or none.
 \end{itemize}
@@ -4862,18 +4928,13 @@ the sync mechanism has run (Section~\ref{sec:r-moved}).
 
 \subsection{The website}
 
-Four changes would make the website more useful, in this order:
+The file check and live input are built (Section~\ref{sec:m-website}).
+Three changes would make the website more useful, in this order:
 
 \begin{enumerate}
-    \item \textbf{A provenance check first.} Some generators write a label
-    into the file on purpose, such as a C2PA content credential. Reading it
-    costs nothing, and a label is strong evidence. Its absence proves nothing,
-    because an upload or a re-save removes it, so it can only ever raise the
-    answer, never lower it.
-    \item \textbf{Live input.} Let a user check a clip recorded on the spot
-    with a camera or a microphone, running only the checks the input allows: a
-    voice recording gets the voice check alone, a picture the face check
-    alone.
+    \item \textbf{Measure pictures and voice recordings.} Score photographs
+    and voice clips from real and fake sources, and set lines for one-check
+    readings from them.
     \item \textbf{Measure the long-video correction.} Score long real videos
     part by part and check that the Bonferroni lines keep false alarms near 5
     in 100, or set the lines from those videos directly.
@@ -5014,9 +5075,9 @@ For development, the site can also be started directly:
 
 \begin{enumerate}
     \item Open the address, then the \textbf{Check a video} page.
-    \item Drop a video file on the box, or click it to choose one. The file
-    must be MP4, MOV or WebM, 3 to 60 seconds long, with one video stream and
-    at most one audio track.
+    \item Drop a file on the box, or click it to choose one: a video (MP4,
+    MOV, WebM), a voice recording (WAV, MP3, M4A, OGG) or a picture (JPG,
+    PNG). A video or a recording must be 3 to 60 seconds long.
     \item Wait. The page shows the stage (cleaning, finding the face, scoring)
     and which part of the video it is on. Each three-second part takes about
     {{web.seconds_per_part|int}} seconds.
@@ -5026,6 +5087,16 @@ For development, the site can also be started directly:
 The best input is one person speaking to the camera, with the face in view
 and little background noise.
 
+\section{Recording on the Spot}
+
+Below the drop box are three buttons. \textbf{Record video} and
+\textbf{Record voice} ask for the camera and microphone; press
+\textbf{Start recording}, speak for at least four seconds, and press
+\textbf{Stop}, or let it stop by itself at 30 seconds. \textbf{Take a picture}
+shows the camera; press \textbf{Take the picture} when the face is in view.
+The browser asks once for permission. A voice recording is checked by the
+voice check alone, and a picture by the face check alone.
+
 \section{Reading the Answer}
 
 The card shows four things:
@@ -5033,6 +5104,9 @@ The card shows four things:
 \begin{itemize}
     \item \textbf{The answer:} signs of manipulation, can't tell, no signs
     found, or can't check.
+    \item \textbf{The file check}, only when the file carries an AI label:
+    for example, ``File check: an AIGC label marking the file as
+    AI-generated content.''
     \item \textbf{A sentence} saying which check raised the answer, if any.
     \item \textbf{Which part decided:} for example, ``The whole video was
     checked in 5 parts of 3 seconds. The most unusual part, 0:06 to 0:09, is

@@ -1,0 +1,35 @@
+{
+ "date": "2026-11-18",
+ "code_commit": "c3699d8abbeb8a027f017b90a169161fd4c63121",
+ "corpus": "HiFi-AVDF",
+ "groups": {
+  "kling2.5": {
+   "files": 230,
+   "labelled": 0
+  },
+  "pixverseV5": {
+   "files": 308,
+   "labelled": 0
+  },
+  "real": {
+   "files": 1905,
+   "labelled": 0
+  },
+  "seedance1.0": {
+   "files": 394,
+   "labelled": 394
+  },
+  "sora2": {
+   "files": 364,
+   "labelled": 0
+  },
+  "veo3.1": {
+   "files": 319,
+   "labelled": 0
+  },
+  "wan2.5": {
+   "files": 290,
+   "labelled": 0
+  }
+ }
+}

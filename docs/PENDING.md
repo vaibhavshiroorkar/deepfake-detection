@@ -13,9 +13,8 @@ The demo, the PPT, the overnight checks and `docs/SECURITY.md` are done and merg
 
 **Claude, the 18th (decided by Vaibhav 11-18, in this order):**
 
-1. Website live input beside drag and drop: camera video, microphone voice, or a camera picture. A voice recording runs only the voice check, a picture only the face check. Audio and image files are accepted by drag and drop too.
-2. Re-run the 7 demo clips with whole-video checking and update `docs/DEMO.md` (timings and expected answers were measured on one 3-second part).
-3. After 1 and 2: update the paper, the report's website sections and the PPT where the website changed; push after each step.
+1. Re-run the 7 demo clips with whole-video checking and update `docs/DEMO.md` (timings and expected answers were measured on one 3-second part).
+2. Measure the face check on photographs and the voice check on voice recordings before trusting those answers (the website says they are outside the study).
 
 **Claude, also:**
 

@@ -280,3 +280,19 @@ def test_website_keys_come_from_the_calibration_and_timing_files(tmp_path):
     assert numbers["web.outcomes.dfdc.real.flagged"]["value"] == 0.1
     assert numbers["web.outcomes.dfdc.fake.caught"]["value"] == 0.3
     assert numbers["web.outcomes.dfdc.real.clips"]["value"] == 20
+
+
+def test_file_check_keys_count_labelled_fakes_and_reals(tmp_path):
+    module = _module(tmp_path)
+    (tmp_path / "results").mkdir()
+    (tmp_path / "results" / "web-provenance.json").write_text(json.dumps({"groups": {
+        "real": {"files": 10, "labelled": 0}, "seedance1.0": {"files": 4, "labelled": 4},
+        "sora2": {"files": 6, "labelled": 0}}}), encoding="utf-8")
+    numbers: dict = {}
+    module.file_check(numbers)
+    assert numbers["web.provenance.seedance1.0.labelled"]["value"] == 4
+    assert numbers["web.provenance.fakes.labelled"]["value"] == 4
+    assert numbers["web.provenance.fakes.files"]["value"] == 10
+    assert numbers["web.provenance.fakes.share"]["value"] == 0.4
+    assert numbers["web.provenance.real.labelled"]["value"] == 0
+    assert numbers["web.provenance.real.files"]["value"] == 10

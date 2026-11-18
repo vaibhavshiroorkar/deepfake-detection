@@ -9059,6 +9059,74 @@
   "value": 0.076,
   "source": "results/web-calibration.json"
  },
+ "web.provenance.fakes.files": {
+  "value": 1905,
+  "source": "results/web-provenance.json"
+ },
+ "web.provenance.fakes.labelled": {
+  "value": 394,
+  "source": "results/web-provenance.json"
+ },
+ "web.provenance.fakes.share": {
+  "value": 0.207,
+  "source": "results/web-provenance.json"
+ },
+ "web.provenance.kling2.5.files": {
+  "value": 230,
+  "source": "results/web-provenance.json"
+ },
+ "web.provenance.kling2.5.labelled": {
+  "value": 0,
+  "source": "results/web-provenance.json"
+ },
+ "web.provenance.pixverseV5.files": {
+  "value": 308,
+  "source": "results/web-provenance.json"
+ },
+ "web.provenance.pixverseV5.labelled": {
+  "value": 0,
+  "source": "results/web-provenance.json"
+ },
+ "web.provenance.real.files": {
+  "value": 1905,
+  "source": "results/web-provenance.json"
+ },
+ "web.provenance.real.labelled": {
+  "value": 0,
+  "source": "results/web-provenance.json"
+ },
+ "web.provenance.seedance1.0.files": {
+  "value": 394,
+  "source": "results/web-provenance.json"
+ },
+ "web.provenance.seedance1.0.labelled": {
+  "value": 394,
+  "source": "results/web-provenance.json"
+ },
+ "web.provenance.sora2.files": {
+  "value": 364,
+  "source": "results/web-provenance.json"
+ },
+ "web.provenance.sora2.labelled": {
+  "value": 0,
+  "source": "results/web-provenance.json"
+ },
+ "web.provenance.veo3.1.files": {
+  "value": 319,
+  "source": "results/web-provenance.json"
+ },
+ "web.provenance.veo3.1.labelled": {
+  "value": 0,
+  "source": "results/web-provenance.json"
+ },
+ "web.provenance.wan2.5.files": {
+  "value": 290,
+  "source": "results/web-provenance.json"
+ },
+ "web.provenance.wan2.5.labelled": {
+  "value": 0,
+  "source": "results/web-provenance.json"
+ },
  "web.seconds_per_part": {
   "value": 19,
   "source": "results/web-timing.json"
