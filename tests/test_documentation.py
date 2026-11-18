@@ -15,7 +15,8 @@ from deepfake_detection.documentation.cli_reference import (
     render_command_block,
 )
 
-SMOKE_RECIPE_DOCUMENTS = ("README.md", "docs/reproducibility.md")
+# The README links to docs/workflow.md for commands since 11-18; the smoke recipe lives there.
+SMOKE_RECIPE_DOCUMENTS = ("docs/workflow.md", "docs/reproducibility.md")
 
 
 def command_tokens(command: str) -> tuple[str, ...]:
