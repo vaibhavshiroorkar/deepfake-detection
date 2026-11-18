@@ -44,6 +44,17 @@ def interval(labels, scores, groups, seed: int = 19) -> tuple[float, float]:
     return float(np.quantile(values, 0.025)), float(np.quantile(values, 0.975))
 
 
+def _group(set_name: str, item: dict) -> str:
+    """The unit the interval resamples: the person or source video, so near-copies stay together.
+
+    FF++ fakes are named target_source and Celeb-DF fakes idA_idB_n, so the first id is the person
+    whose video it is; a real video's stem starts with the same id.
+    """
+    if set_name in ("ffpp", "celebdf"):
+        return Path(item["path"].replace("\\", "/")).stem.split("_")[0]
+    return str(item.get("group", ""))
+
+
 def summarize(name: str, items: list[dict]) -> dict:
     models = sorted({m for i in items for m in i.get("scores", {})})
     scored = [
@@ -60,7 +71,7 @@ def summarize(name: str, items: list[dict]) -> dict:
     if not scored:
         return out
     labels = np.array([int(i["label"]) for i in scored])
-    groups = np.array([str(i.get("group", "")) for i in scored])
+    groups = np.array([_group(name, i) for i in scored])
     out["real"], out["fake"] = int((labels == 0).sum()), int((labels == 1).sum())
     if len(np.unique(labels)) < 2:
         return out
