@@ -54,6 +54,9 @@ def upload_limit() -> int:
 
 CALIBRATION = PROJECT_ROOT / "results" / "web-calibration.json"
 PICTURE_CALIBRATION = PROJECT_ROOT / "results" / "web-calibration-picture.json"
+# Which face and voice models are live, and the calibration files measured with them. Without the file,
+# or with DDF_WEB_MODELS=p001, the site runs the study's models and the two files above.
+WEB_MODELS = PROJECT_ROOT / "results" / "web-models.json"
 RESEND_URL = "https://api.resend.com/emails"
 
 PAGES = {
@@ -258,21 +261,43 @@ def to_clip(source: Path, kind: str, target: Path) -> Path:
 # Detector -----------------------------------------------------------------------------------------
 
 
+def web_models() -> dict | None:
+    """The live model choice (results/web-models.json), or None for the study's models."""
+    if os.environ.get("DDF_WEB_MODELS") == "p001" or not WEB_MODELS.exists():
+        return None
+    return json.loads(WEB_MODELS.read_text(encoding="utf-8"))
+
+
 def make_scorer():
-    """The P-001 scorer. Loading takes about a minute: on the first upload, or at start with --preload-detector.
+    """The scorer. Loading takes about a minute: on the first upload, or at start with --preload-detector.
 
     CPU by default, the path checked against the study's scores; DDF_SCORER_DEVICE=cuda for a faster demo.
+    With results/web-models.json the face and voice models it names replace the study's.
     """
     from deepfake_detection.webapp.scorer import Scorer
 
-    return Scorer(device=os.environ.get("DDF_SCORER_DEVICE", "cpu"))
+    device = os.environ.get("DDF_SCORER_DEVICE", "cpu")
+    scorer = Scorer(device=device)
+    choice = web_models()
+    if choice is not None:
+        from deepfake_detection.webapp.candidates import website_models
+
+        scorer.replace = website_models(choice, PROJECT_ROOT, device)
+    return scorer
+
+
+def _calibration_file(kind: str) -> Path:
+    choice = web_models()
+    if choice is None:
+        return PICTURE_CALIBRATION if kind == "picture" else CALIBRATION
+    return PROJECT_ROOT / choice["calibration"][kind]
 
 
 @lru_cache(maxsize=1)
 def calibration():
     from deepfake_detection.webapp.calibration import Calibration
 
-    return Calibration.from_json(CALIBRATION.read_text(encoding="utf-8"))
+    return Calibration.from_json(_calibration_file("video").read_text(encoding="utf-8"))
 
 
 @lru_cache(maxsize=1)
@@ -280,9 +305,10 @@ def picture_calibration():
     """The face check's lines for still pictures (scripts/build_picture_calibration.py), or None if not built."""
     from deepfake_detection.webapp.calibration import Calibration
 
-    if not PICTURE_CALIBRATION.exists():
+    path = _calibration_file("picture")
+    if not path.exists():
         return None
-    return Calibration.from_json(PICTURE_CALIBRATION.read_text(encoding="utf-8"))
+    return Calibration.from_json(path.read_text(encoding="utf-8"))
 
 
 def require_calibration(kind: str) -> None:

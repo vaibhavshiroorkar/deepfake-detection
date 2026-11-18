@@ -257,3 +257,28 @@ class OnBatch:
 
     def saliency(self, frames: torch.Tensor):
         return self.model.saliency(frames)
+
+
+LOADERS = {
+    "clipln": lambda path, device: ClipLnFace(path, device),
+    "effort": lambda path, device: EffortFace(
+        path.parent.parent / "clip-vit-large-patch14", path
+    ).to(device),
+    "antideepfake": lambda path, device: AntiDeepfakeVoice(path.parent).to(device),
+}
+
+
+def website_models(choice: dict, root: Path, device: str) -> dict[str, OnBatch]:
+    """The models results/web-models.json puts live, each file checked against its pinned hash first.
+
+    `choice` maps a check ("face", "voice") to {"loader", "file", "sha256"}; a check it leaves out keeps
+    the study's model.
+    """
+    live = {}
+    for check in ("face", "voice"):
+        entry = choice.get(check)
+        if entry is None:
+            continue
+        path = verified(root / entry["file"], entry["sha256"])
+        live[check] = OnBatch(LOADERS[entry["loader"]](path, device).eval(), check)
+    return live

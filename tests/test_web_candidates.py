@@ -105,3 +105,25 @@ def test_heatmaps_come_from_the_given_map_function_when_there_is_one():
         None, frames, [0.0, 1.0, 2.0, 3.0], offset=10.0, top=1, maps=maps
     )
     assert out["frames"][0]["time"] == 12.0
+
+
+def test_a_live_model_file_with_another_hash_is_refused(tmp_path):
+    import pytest
+
+    (tmp_path / "model.bin").write_bytes(b"changed")
+    choice = {"face": {"loader": "clipln", "file": "model.bin", "sha256": "0" * 64}}
+    with pytest.raises(RuntimeError, match="not the pinned"):
+        candidates.website_models(choice, tmp_path, "cpu")
+
+
+def test_the_study_models_stay_live_without_a_choice_or_when_asked(
+    tmp_path, monkeypatch
+):
+    from deepfake_detection.webapp import site
+
+    monkeypatch.setattr(site, "WEB_MODELS", tmp_path / "web-models.json")
+    assert site.web_models() is None
+    (tmp_path / "web-models.json").write_text('{"calibration": {}}', encoding="utf-8")
+    assert site.web_models() == {"calibration": {}}
+    monkeypatch.setenv("DDF_WEB_MODELS", "p001")
+    assert site.web_models() is None
