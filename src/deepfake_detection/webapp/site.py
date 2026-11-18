@@ -350,7 +350,7 @@ def where(outcome: dict) -> str:
     if kind == "voice":
         return "A voice recording, checked by the voice check only. " + where(
             outcome | {"input": "video"}
-        )
+        ).replace("video", "recording")
     span = f"{_clock(part['start'])} to {_clock(part['end'])}"
     if parts == 1:
         return f"The video has 3 seconds of sound, checked as one part ({span})."

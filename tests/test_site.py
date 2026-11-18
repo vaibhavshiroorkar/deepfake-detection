@@ -498,6 +498,8 @@ def test_a_picture_and_a_voice_say_which_check_ran():
     assert voice["where"].startswith(
         "A voice recording, checked by the voice check only."
     )
+    assert "whole recording was checked" in voice["where"]
+    assert "video" not in voice["where"]
 
 
 def test_a_picture_is_refused_when_there_is_no_picture_calibration(
