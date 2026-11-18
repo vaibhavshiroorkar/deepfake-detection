@@ -120,7 +120,7 @@ def sync_methods() -> str | None:
     ax.axvline(0.5, color=MUTED, linewidth=0.6)
     ax.set_yticks(range(len(methods)), [METHOD_NAMES[m] for m in methods])
     ax.set_xlim(0.4, 1.02)
-    ax.set_xlabel("Lip-sync check (AUC) on the cleaned FakeAVCeleb test set; bar: mean of 3 seeds")
+    ax.set_xlabel("Lip-sync model (AUC) on the cleaned FakeAVCeleb test set; bar: mean of 3 seeds")
     ax.xaxis.grid(True, color=GRID, linewidth=0.6)
     ax.set_axisbelow(True)
     ax.legend(frameon=False, loc="lower right", fontsize=8)
@@ -143,7 +143,7 @@ def cross_corpus() -> str | None:
         ax.text(i, max(seeds) + 0.02, f"{means[i]:.3f}", ha="center", va="bottom", fontsize=8, color=INK)
     ax.axhline(0.5, color=MUTED, linewidth=0.6)
     ax.set_xticks(range(len(targets)), [n for n, _ in targets])
-    _finish(ax, "Lip-sync check (AUC; dots: single seeds)", (0.3, 1.05))
+    _finish(ax, "Lip-sync model (AUC; dots: single seeds)", (0.3, 1.05))
     return _save(fig, "fig_cross_corpus.png")
 
 
@@ -244,7 +244,7 @@ def draw_pipeline():
     for x in (5.5, 25.75):
         arrow(x, mid + half, x, 37)
 
-    for (x0, x1), label in zip(cols.values(), ["1  Input", "2  Clean", "3  Check", "4  Compare", "5  Answer"],
+    for (x0, x1), label in zip(cols.values(), ["1  Input", "2  Clean", "3  Models", "4  Compare", "5  Answer"],
                                strict=True):
         ax.text((x0 + x1) / 2, -4.5, label, ha="center", va="center", fontsize=7.5, color=MUTED)
     return fig, pairs
@@ -275,7 +275,7 @@ def h2() -> str | None:
         ax.text(hi, y, f"  {est:+.3f}", va="center", fontsize=8, color=INK)
     ax.axvline(0, color=MUTED, linewidth=0.8)
     ax.set_yticks(range(len(targets)), [n for n, _ in reversed(targets)])
-    ax.set_xlabel("Gain from combining the three checks over the face check alone (AUC)\n"
+    ax.set_xlabel("Gain from combining the three models over the face model alone (AUC)\n"
                   "mean of 3 seeds with its 95% interval; dots: single seeds")
     ax.xaxis.grid(True, color=GRID, linewidth=0.6)
     ax.set_axisbelow(True)

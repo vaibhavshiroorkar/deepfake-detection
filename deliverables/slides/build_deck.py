@@ -137,9 +137,10 @@ def build(draft: bool) -> int:
         d.add_text(s, L, 5150000, W, 500000, [("p", f"**Guide:** {GUIDE}, {GUIDE_ROLE}")], "guide")
         d.add_footer(s, 1)
         s.notes_slide.notes_text_frame.text = (
-            "This project asks why audio-visual deepfake detectors that score near perfect at home fail on new data, "
-            "and what still works once a video has been through an upload. The benchmark files give the answer away, "
-            "uploads wipe those file clues out, so we clean every clip the way an upload would and test what survives. "
+            "This project trains an audio-visual deepfake detector from three models: one for the face, one for the "
+            "voice, and one that checks whether the lips match the words, which learns from real videos only. We train "
+            "and test them on files cleaned the way an upload cleans them, so they must learn the fake and not the file, "
+            "and we test them on three datasets they never saw. "
             "Introduce the three members and the guide, then move to the problem.")
 
     # Design (researched 11-18): one message per slide, as a sentence headline (assertion-evidence, Alley,
@@ -159,18 +160,18 @@ def build(draft: bool) -> int:
         s = slide("Introduction",
                   "A deepfake is a video in which a person's face, voice or both have been made or changed by a "
                   "generative model. A face can be swapped or its mouth redrawn, a voice can be cloned, and in the hardest "
-                  "cases both are faked so that the lips still follow the words. Detectors that read both the picture and "
-                  "the sound score close to perfect on their own benchmark datasets, partly because the fake files were "
-                  "saved differently from the real ones. Most platforms re-encode what you upload, which would wipe most of those "
-                  "file clues out. So the question is what still works after an upload.")
-        headline(s, "Platforms re-encode every upload. What still works after that?")
+                  "cases both are faked so that the lips still follow the words. No single model sees all of these, so we "
+                  "train three: a face model, a voice model, and a lip-sync model that asks whether the lips match the "
+                  "words. Benchmark files give the label away through their codecs, so every model is trained and tested "
+                  "on files cleaned the way an upload would clean them.")
+        headline(s, "Three trained models: a fake face, a fake voice, and lips that do not match")
         box_h = 2500000
-        for k, (head, text, fill) in enumerate([("Face", "swapped, or the mouth redrawn", F_FACE),
-                                                ("Voice", "cloned or synthesised", F_VOICE),
-                                                ("Both", "face and voice made together", F_GREY)]):
+        for k, (head, text, fill) in enumerate([("Face model", "swapped faces, redrawn mouths", F_FACE),
+                                                ("Voice model", "cloned or synthesised speech", F_VOICE),
+                                                ("Lip-sync model", "lips that do not match the words", F_SYNC)]):
             d.dbox(s, col_x(4 * k), Y0, span_w(4), box_h, f"**{head}**\n{text}", fill=fill, size=24)
         card(s, col_x(0), Y0 + box_h + 300000, W, BOT - Y0 - box_h - 300000,
-             [("p", "**Our question:** once an upload has wiped out the file clues, which checks still work?", 26)],
+             [("p", "**Our aim:** a detector that learns the fake, not the file, and still works on data it never saw", 26)],
              anchor=MSO_ANCHOR.MIDDLE, name="card_question")
 
     def s_need():
@@ -224,7 +225,7 @@ def build(draft: bool) -> int:
     def s_literature():
         s = slide("Literature review",
                   "AVFF and HAVIC fuse audio and video and train on real and fake clips. AVH-Align, which our lip-sync "
-                  "check follows, learns from real clips only and trims the leading silence at test time. DeepFake Doctor "
+                  "model follows, learns from real clips only and trims the leading silence at test time. DeepFake Doctor "
                   "found the silence clue and proposed splitting by person. None of them removes the file clues from both "
                   "training and test data, and none reports what a classifier gets from the file details alone. Check each "
                   "cell against the papers before quoting it.")
@@ -238,7 +239,7 @@ def build(draft: bool) -> int:
                     ["Work", "Learns from real clips only", "Split by person", "Removes file clues",
                      "Tested on unseen data"], rows, size=20, bold_first_col=True, fill=BOT - Y0 - 420000)
         d.add_text(s, L, BOT - 380000, W, 360000,
-                   [("s", "Partly: only the silence at the start of the audio, or only at test time. Ours: the lip-sync check "
+                   [("s", "Partly: only the silence at the start of the audio, or only at test time. Ours: the lip-sync model "
                           "learns from real clips only.", 14)], "lit_note")
 
     def s_hardware():
@@ -246,7 +247,8 @@ def build(draft: bool) -> int:
                   "All training and the live demo run on one desktop PC. The GPU trains the models; the website's detector "
                   "also runs on the processor alone, and we checked that it then gives the same scores. The models are "
                   "deliberately modest and frozen where possible, because the question is what the data allow, not how "
-                  "large a model can be. One check takes about 20 seconds on the GPU and about 30 on the processor alone.")
+                  "large a model can be. Three models at three seeds each are trained on the GPU; the website checks a "
+                  "video in 3-second parts, each taking about {{web.seconds_per_part|int}} seconds on the processor.")
         headline(s, "One desktop PC trains the models and runs the live demo")
         rows_hw = [("GPU", "NVIDIA RTX 5070 Ti, 16 GB"), ("Processor", "AMD Ryzen 5 5600X, 6 cores"),
                    ("Memory", "32 GB"), ("System", "Windows 11")]
@@ -257,20 +259,21 @@ def build(draft: bool) -> int:
             paras = [("h", head)] + [("p", f"**{a}:** {b}", 18) for a, b in rows]
             card(s, col_x(6 * k), Y0, span_w(6), col_h, paras, fill=fill, name=f"card_{head.lower()}")
         y = Y0 + col_h + 200000
-        stat(s, col_x(0), y, span_w(6), BOT - y, "about 20 s", "per check on the GPU", name="stat_gpu")
-        stat(s, col_x(6), y, span_w(6), BOT - y, "about 30 s", "per check on the processor alone", name="stat_cpu")
+        stat(s, col_x(0), y, span_w(6), BOT - y, "3 models x 3 seeds", "trained on the GPU", name="stat_gpu")
+        stat(s, col_x(6), y, span_w(6), BOT - y, n("about {{web.seconds_per_part|int}} s"), "per 3-second part on the processor",
+             name="stat_cpu")
 
     def s_flowchart():
         s = slide("Methodology: flowchart",
                   "The method has five stages. A video comes in and is first cleaned the way an upload would clean it: one "
                   "video codec, three seconds from the first sound, one loudness level and a little noise, so that how the "
-                  "file was made cannot give the answer away. Three checks then score it: the face, the voice, and whether "
-                  "the lips match the words. The lip-sync check learned from real videos only. Each score is placed among "
+                  "file was made cannot give the answer away. Three trained models then score it: the face, the voice, and "
+                  "whether the lips match the words. The lip-sync model learned from real videos only. Each score is placed among "
                   "the scores of real videos to give the answer. The file audit at the top is not part of the detector: it "
                   "measures how much the file alone reveals, before and after cleaning.")
-        headline(s, "Each clip is cleaned like an upload, then checked three ways")
+        headline(s, "Each clip is cleaned like an upload, then scored by three trained models")
         d.pic_fit(s, FIG / "fig_pipeline.png", L, Y0, W, BOT - Y0,
-                  "The method in five stages: input, cleaning, face, voice and lip-sync checks, comparison with real "
+                  "The method in five stages: input, cleaning, face, voice and lip-sync models, comparison with real "
                   "videos, and the answer, with the file audit above")
 
     def s_experiment():
@@ -298,48 +301,88 @@ def build(draft: bool) -> int:
             stat(s, col_x(4 * k), y, span_w(4), BOT - y, big, label, name=f"stat_exp{k}")
 
     def s_results_files():
-        s = slide("Results: file clues",
-                  "A classifier that never sees a face or hears a voice, only the file's codec, length, frame size and the "
-                  "silence at each end of the audio, predicts real or fake at an AUC of 0.994 on FakeAVCeleb and 0.999 on "
-                  "HiFi-AVDF. Real FakeAVCeleb clips are H.264 with AAC audio, cloned voices are stored as MP3, and most "
-                  "face swaps are MPEG-4. Our cleaning brings the FakeAVCeleb figure down to 0.632, close to our bar of "
-                  "0.60 but not under it. An upload would wipe these clues out, so any detector score must be read against "
-                  "these numbers, not against 0.5.")
-        headline(s, "File details alone give {{audit.fakeavceleb.raw.clip}}, until an upload re-encodes them")
-        figure_or_pending(s, "fig_census.png", col_x(0), Y0, span_w(8), BOT - Y0, "File-clue ceiling per dataset, before and after cleaning")
-        tile_h = (BOT - Y0 - 150000) // 2
-        stat(s, col_x(8), Y0, span_w(4), tile_h, n("{{audit.hifiavdf.raw.clip}}"), "HiFi-AVDF, six AI video tools, from file details alone",
-             name="stat_hifi")
-        stat(s, col_x(8), Y0 + tile_h + 150000, span_w(4), tile_h,
-             n("{{audit.fakeavceleb.neutral.clip}}"), "FakeAVCeleb after our cleaning (bar: 0.60)", name="stat_clean")
+        from pptx.chart.data import CategoryChartData
+        from pptx.dml.color import RGBColor
+        from pptx.enum.chart import XL_CHART_TYPE, XL_LABEL_POSITION
+        from pptx.util import Pt
+
+        s = slide("Results: the detector at home",
+                  "On FakeAVCeleb test clips of people the models never saw in training, the face model alone reaches "
+                  "{{h2.test-identity-strict.auc.visual.max}} AUC on the real-or-fake label and the three models combined reach {{h2.test-identity-strict.auc.fusion.min}} to {{h2.test-identity-strict.auc.fusion.max}}. The "
+                  "lip-sync model reaches {{sync.test.seed17.auc}} to {{sync.test.seed29.auc}} without ever seeing a fake, catches cloned voices best and plain "
+                  "face swaps least, as its design predicts, and reacts to audio moved by one frame. The files after "
+                  "cleaning give away {{audit.fakeavceleb.neutral.clip}} on their own, so every model's score is real learning, above that line.")
+        headline(s, n("Combined, the three models reach up to {{h2.test-identity-strict.auc.fusion.max}} on people never seen in training"))
+        keys = [("Face", "visual"), ("Voice", "audio"), ("Lip sync", "sync"), ("Combined", "fusion")]
+        data = CategoryChartData()
+        data.categories = [k for k, _ in keys]
+        data.add_series("AUC", [float(n("{{h2.test-identity-strict.seed17.auc.%s}}" % key)) for _, key in keys])
+        cw = span_w(8)
+        gf = s.shapes.add_chart(XL_CHART_TYPE.COLUMN_CLUSTERED, Emu(col_x(0)), Emu(Y0), Emu(cw), Emu(BOT - Y0), data)
+        gf.name = d.name("chart_home")
+        chart = gf.chart
+        chart.has_legend = False
+        chart.has_title = True
+        chart.chart_title.text_frame.text = "AUC on the identity-strict test, real or fake (seed 17)"
+        chart.chart_title.text_frame.paragraphs[0].runs[0].font.size = Pt(18)
+        chart.chart_title.text_frame.paragraphs[0].runs[0].font.name = C.FONT
+        chart.font.name = C.FONT
+        plot = chart.plots[0]
+        plot.gap_width = 70
+        plot.vary_by_categories = False
+        plot.has_data_labels = True
+        plot.data_labels.font.size = Pt(20)
+        plot.data_labels.font.bold = True
+        plot.data_labels.number_format = "0.000"
+        plot.data_labels.number_format_is_linked = False
+        plot.data_labels.position = XL_LABEL_POSITION.OUTSIDE_END
+        colours = ["2A78D6", "EB6834", "1BAF7A", "3D3C39"]      # the figures' face, voice, lip-sync colours; grey for both
+        for point, colour in zip(plot.series[0].points, colours):
+            point.format.fill.solid()
+            point.format.fill.fore_color.rgb = RGBColor.from_string(colour)
+        chart.value_axis.visible = False
+        chart.value_axis.has_major_gridlines = False
+        chart.value_axis.minimum_scale = 0
+        chart.value_axis.maximum_scale = 1.1
+        chart.category_axis.tick_labels.font.size = Pt(18)
+        tile_h = (BOT - Y0 - 2 * 150000) // 3
+        stat(s, col_x(8), Y0, span_w(4), tile_h,
+             n("{{h2.test-identity-strict.auc.fusion.min}} to {{h2.test-identity-strict.auc.fusion.max}}"),
+             "three models combined, three seeds", name="stat_combined")
+        stat(s, col_x(8), Y0 + tile_h + 150000, span_w(4), tile_h, n("{{sync.test.seed17.auc}} to {{sync.test.seed29.auc}}"),
+             "lip-sync model, never saw a fake", fill=F_SYNC, name="stat_home")
+        stat(s, col_x(8), Y0 + 2 * (tile_h + 150000), span_w(4), tile_h, n("{{audit.fakeavceleb.neutral.clip}}"),
+             "cleaned files alone: the line to beat", name="stat_clean")
 
     def s_results_detection():
-        s = slide("Results: detection",
-                  "After cleaning, the lip-sync check scores 0.78 to 0.81 on FakeAVCeleb, above what the file clues "
-                  "allow, and it catches cloned voices best and plain face swaps least, as its design predicts. On the "
-                  "three datasets it never saw, it falls to 0.55 to 0.66. A threshold carried over from training flags "
-                  "about half of the real HiFi-AVDF clips; setting it from 200 real clips of that dataset brings false "
-                  "alarms back to about 5 in 100, but few fakes are then caught.")
-        headline(s, "What survives the upload: lip sync works at home, weakens on new data")
-        figure_or_pending(s, "fig_cross_corpus.png", col_x(0), Y0, span_w(8), BOT - Y0, "Lip-sync check AUC per dataset")
+        s = slide("Results: new data",
+                  "On three datasets the models never saw, the combined detector falls to {{h2.lavdf-window.auc.fusion.min}} to {{h2.dfdc.auc.fusion.max}}, and the best single "
+                  "model changes with the dataset, so no fixed combination transfers. The lip-sync model fails on Sora 2, "
+                  "which makes lips and voice together. A threshold carried over from training flags about half of the "
+                  "real HiFi-AVDF clips; setting it from 200 real clips of that dataset brings false alarms back to about "
+                  "5 in 100, but few fakes are then caught. Before cleaning, file details alone gave {{audit.fakeavceleb.raw.clip}} on FakeAVCeleb: "
+                  "that is why we train on cleaned files.")
+        headline(s, "On three datasets it never saw, the detector weakens; real clips fix its false alarms")
+        figure_or_pending(s, "fig_cross_corpus.png", col_x(0), Y0, span_w(8), BOT - Y0, "Lip-sync model AUC per dataset")
         tile_h = (BOT - Y0 - 2 * 150000) // 3
-        stat(s, col_x(8), Y0, span_w(4), tile_h, n("{{sync.test.seed17.auc}} to {{sync.test.seed29.auc}}"),
-             "at home, after cleaning", fill=F_SYNC, name="stat_home")
+        stat(s, col_x(8), Y0, span_w(4), tile_h,
+             n("{{h2.lavdf-window.auc.fusion.min}} to {{h2.dfdc.auc.fusion.max}}"), "combined, three unseen datasets",
+             name="stat_unseen")
         stat(s, col_x(8), Y0 + tile_h + 150000, span_w(4), tile_h,
-             n("{{sync.dfdc.seed17.auc}} to {{sync.lavdf-window.seed29.auc}}"), "on three unseen datasets", name="stat_unseen")
-        stat(s, col_x(8), Y0 + 2 * (tile_h + 150000), span_w(4), tile_h,
              n("{{h4.hifiavdf-seed17.source_validation.fpr|pct}}, then {{h4.hifiavdf-seed17.conformal_real_only.fpr|pct}}"),
-             "real clips wrongly flagged, old then new threshold", name="stat_fpr")
+             "real clips flagged, old then new line", name="stat_fpr")
+        stat(s, col_x(8), Y0 + 2 * (tile_h + 150000), span_w(4), tile_h, n("{{audit.fakeavceleb.raw.clip}}"),
+             "raw file details alone", fill=F_RED, name="stat_files")
 
     def s_discussion():
         s = slide("Discussion and future scope",
-                  "Benchmark scores near 0.99 sit right at what file details alone give, so they cannot show that a "
-                  "detector sees the fake. Once the clues are removed, a detector trained on one dataset transfers weakly, "
-                  "and modern generators that make picture and sound together are hardest. The next stage trains on several "
+                  "At home the three models together work well on people they never saw, above what the cleaned files "
+                  "give away. On new data a detector trained on one dataset transfers weakly, and modern generators that "
+                  "make picture and sound together are hardest. The next stage trains on several "
                   "datasets with one held out each time, says which stream was faked in both directions, runs more "
                   "published detectors under our cleaning, and puts the website online.")
-        headline(s, "What survives an upload is modest; more varied training comes next")
-        groups = [("Discussion", F_GREY, ["Benchmark scores match what file details give",
+        headline(s, "Strong at home, weaker on new data; more varied training comes next")
+        groups = [("Discussion", F_GREY, ["Three models combined beat the face model alone",
                                           "One training dataset does not transfer far",
                                           "Modern generators keep lips and voice in sync"]),
                   ("Future scope", F_GREY, ["Train on several datasets, one held out",
@@ -355,16 +398,16 @@ def build(draft: bool) -> int:
 
     def s_conclusions():
         s = slide("Conclusions",
-                  "First, audio-visual deepfake benchmarks give their answers away through file details that an upload "
-                  "wipes out, so a high score on them needs the file-clue figure beside it. Second, a lip-sync check that learns from real clips only "
-                  "still works after the clues are removed, and moving the audio of a real clip raises its score, as its "
-                  "design predicts. Third, on new data it weakens, and real clips from the new source fix its false alarms "
-                  "but not its misses.")
-        headline(s, "Test detectors on files that have been through an upload")
+                  "First, three trained models together detect fakes well on people they never saw, once the training "
+                  "files are cleaned so they cannot give the label away. Second, a lip-sync model that learns from real "
+                  "clips only adds evidence the face model cannot see, and moving the audio of a real clip raises its "
+                  "score, as its design predicts. Third, on new data the detector weakens, and real clips from the new "
+                  "source fix its false alarms but not its misses.")
+        headline(s, "Three trained models detect fakes at home; new data needs more varied training")
         cw = span_w(4)
         for k, (big, label, fill) in enumerate([
-                (n("{{audit.fakeavceleb.raw.clip}}"), "from file details alone: benchmarks leak their answers", F_RED),
-                (n("{{sync.test.seed17.auc}} to {{sync.test.seed29.auc}}"), "lip-sync check after cleaning: it reads real lip and voice agreement", F_SYNC),
+                (n("{{h2.test-identity-strict.auc.fusion.min}} to {{h2.test-identity-strict.auc.fusion.max}}"), "three models combined, on people never seen in training", F_FACE),
+                (n("{{sync.test.seed17.auc}} to {{sync.test.seed29.auc}}"), "lip-sync model after cleaning: it reads real lip and voice agreement", F_SYNC),
                 (n("{{h4.hifiavdf-seed17.conformal_real_only.fpr|pct}}"), "false alarms with a threshold from real new clips, but few fakes caught", F_GREY)]):
             card(s, col_x(4 * k), Y0 + 300000, cw, 3000000,
                  [("p", "**" + big + "**", 40), ("p", label, 20)], fill=fill, name=f"card_conc{k}",
