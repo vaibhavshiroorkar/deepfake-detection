@@ -29,6 +29,7 @@ from deepfake_detection.webapp.detector import Detector
 
 NUMBERS = PROJECT_ROOT / "results" / "numbers.json"
 TEMPLATES = Path(__file__).parent / "templates" / "site"
+STATIC_SITE = Path(__file__).parent / "static" / "site"
 SEEDS = (17, 29, 43)
 
 MAX_UPLOAD_MB = 90
@@ -456,8 +457,16 @@ def send_contact(name: str, email: str, message: str) -> None:
         raise RuntimeError(f"Resend answered {response.status_code}")
 
 
+def render_page(template: str, title: str, path: str, **extra) -> str:
+    """One page as HTML; the server sends it, and scripts/export_site.py writes it for the static frontend."""
+    return (
+        _environment()
+        .get_template(template)
+        .render(title=title, path=path, ceilings=ceilings(), **extra)
+    )
+
+
 def register(app: FastAPI) -> None:
-    env = _environment()
     contact_limit = RateLimiter(CONTACT_LIMIT)
     uploads = RateLimiter(upload_limit())
 
@@ -471,10 +480,7 @@ def register(app: FastAPI) -> None:
         return response
 
     def render(template: str, title: str, path: str, **extra) -> HTMLResponse:
-        page = env.get_template(template).render(
-            title=title, path=path, ceilings=ceilings(), **extra
-        )
-        return HTMLResponse(page)
+        return HTMLResponse(render_page(template, title, path, **extra))
 
     def page_for(template: str, title: str, route: str):
         # A factory, not default arguments: FastAPI would read those as query parameters.

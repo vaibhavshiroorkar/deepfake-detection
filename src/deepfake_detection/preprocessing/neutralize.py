@@ -49,6 +49,9 @@ from pathlib import Path
 
 import numpy as np
 
+# A hostile or broken upload must not hold the only scoring worker forever (docs/SECURITY.md).
+FFMPEG_TIMEOUT = 300  # seconds; the website's longest input is a 60 s video
+
 SAMPLE_RATE = 16_000
 SILENCE_DBFS = -60.0
 VERSION = 4
@@ -261,6 +264,7 @@ def _read_audio(path: Path) -> np.ndarray:
         ],
         capture_output=True,
         check=False,
+        timeout=FFMPEG_TIMEOUT,
     )
     return (
         np.frombuffer(run.stdout, np.float32)
@@ -284,6 +288,7 @@ def _duration(path: Path) -> float:
         capture_output=True,
         text=True,
         check=True,
+        timeout=FFMPEG_TIMEOUT,
     )
     return float(json.loads(run.stdout)["format"]["duration"])
 
@@ -331,6 +336,7 @@ def neutralize_clip(
             ffmpeg_command(source, target, start, end, wav, settings),
             capture_output=True,
             check=False,
+            timeout=FFMPEG_TIMEOUT,
         )
     if run.returncode != 0 or not target.is_file():
         return {"error": run.stderr.decode(errors="replace")[:200]}

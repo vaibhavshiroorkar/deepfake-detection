@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.types import ASGIApp, Receive, Scope, Send
@@ -112,6 +113,11 @@ def _playable(path: str, _mtime: float) -> tuple[bytes, str]:
     return payload, "video/mp4"
 
 
+PAGES_ORIGIN = (
+    "https://vaibhavshiroorkar.github.io"  # where the static frontend is hosted
+)
+
+
 def create_app(registry: Registry | None = None) -> FastAPI:
     app = FastAPI(title="Deepfake check", docs_url=None, redoc_url=None)
     app.state.registry = registry or Registry()
@@ -121,6 +127,18 @@ def create_app(registry: Registry | None = None) -> FastAPI:
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
     app.add_middleware(_UploadLimitMiddleware)
+    # The static frontend on GitHub Pages calls this API from another origin. Only that origin may read the
+    # answers; DDF_CORS_ORIGINS (comma-separated) overrides it.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            o.strip()
+            for o in os.environ.get("DDF_CORS_ORIGINS", PAGES_ORIGIN).split(",")
+            if o.strip()
+        ],
+        allow_methods=["GET", "POST"],
+        allow_headers=["*"],
+    )
 
     def admin_guard(token: str | None) -> None:
         expected = os.environ.get(ADMIN_TOKEN_ENV)

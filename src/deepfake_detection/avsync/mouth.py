@@ -26,6 +26,9 @@ import numpy as np
 
 from deepfake_detection.streams.avhubert import LIP_MEAN, LIP_SIZE, LIP_STD, SAMPLE_RATE
 
+# A hostile or broken upload must not hold the only scoring worker forever (docs/SECURITY.md).
+FFMPEG_TIMEOUT = 300  # seconds; the website's longest input is a 60 s video
+
 FPS = 25
 
 
@@ -89,6 +92,7 @@ def read_window(
             "pipe:1",
         ],
         capture_output=True,
+        timeout=FFMPEG_TIMEOUT,
     )
     if video.returncode != 0:
         raise RuntimeError(
@@ -116,6 +120,7 @@ def read_window(
             "pipe:1",
         ],
         capture_output=True,
+        timeout=FFMPEG_TIMEOUT,
     )
     if audio.returncode != 0:
         raise RuntimeError(

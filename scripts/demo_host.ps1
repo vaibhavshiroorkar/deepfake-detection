@@ -8,11 +8,17 @@
 # waits until /check answers, then shares it with your own Tailscale devices (`tailscale serve`), if
 # Tailscale is installed and logged in. Nothing is opened to the public internet. docs/DEMO.md has
 # the one-time setup and what to do on the day.
+#
+# -Public shares it with the internet instead (`tailscale funnel`), so the static frontend on GitHub Pages
+# (scripts/export_site.py) can reach the detector from any browser. Only do this with the hardening in
+# docs/SECURITY.md in place; stop turns the funnel off again.
 param(
     [ValidateSet("start", "status", "stop")][string]$Action = "status",
     [string]$Device = "cuda",
-    [int]$Port = 8000
+    [int]$Port = 8000,
+    [switch]$Public
 )
+$Share = if ($Public) { "funnel" } else { "serve" }
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 $State = Join-Path $Root "runs\demo-host\state.json"
@@ -33,7 +39,7 @@ function Test-Page {
 
 function Show-Share {
     if (-not (Test-Path $Tailscale)) { Write-Output "Tailscale is not installed: open http://127.0.0.1:$Port/check on this PC only."; return }
-    & $Tailscale serve status
+    & $Tailscale $Share status
 }
 
 switch ($Action) {
@@ -57,7 +63,7 @@ switch ($Action) {
             Start-Sleep -Seconds 3
         }
         Write-Output "Ready on this PC: http://127.0.0.1:$Port/check"
-        if (Test-Path $Tailscale) { & $Tailscale serve --bg $Port | Out-Null }
+        if (Test-Path $Tailscale) { & $Tailscale $Share --bg $Port | Out-Null }
         Show-Share
     }
     "status" {
@@ -67,7 +73,10 @@ switch ($Action) {
     }
     "stop" {
         $running = Get-Running
-        if (Test-Path $Tailscale) { & $Tailscale serve --https=443 off 2>$null | Out-Null }
+        if (Test-Path $Tailscale) {
+            & $Tailscale funnel --https=443 off 2>$null | Out-Null     # whichever was on: public first, then private
+            & $Tailscale serve --https=443 off 2>$null | Out-Null
+        }
         if ($running) {
             & taskkill /PID $running.pid /T /F | Out-Null       # the server and any ffmpeg it started
             Write-Output "Stopped."

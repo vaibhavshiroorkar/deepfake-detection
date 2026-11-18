@@ -10,6 +10,9 @@ import numpy as np
 
 from .preprocessor import MediaInfo
 
+# A hostile or broken upload must not hold the only scoring worker forever (docs/SECURITY.md).
+FFMPEG_TIMEOUT = 300  # seconds; the website's longest input is a 60 s video
+
 
 class FFmpegMediaDecoder:
     def probe(self, path: Path) -> MediaInfo:
@@ -115,6 +118,7 @@ class FFmpegMediaDecoder:
             ],
             check=True,
             capture_output=True,
+            timeout=FFMPEG_TIMEOUT,
         )
         expected = round(duration_sec * sample_rate)
         waveform = np.frombuffer(process.stdout, dtype="<f4").astype(np.float32)

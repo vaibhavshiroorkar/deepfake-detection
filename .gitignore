@@ -22,3 +22,4 @@ mlflow.db
 .env
 /.superpowers/
 .playwright-mcp/
+/site_export/

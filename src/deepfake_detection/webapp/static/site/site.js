@@ -21,6 +21,8 @@
   };
   const CHECKS = [["face", "Face"], ["voice", "Voice"], ["sync", "Lip sync"]];
   const MAX_MB = 90;
+  // The static frontend names the PC's API in a meta tag; served by the PC itself, the API is this origin.
+  const API = (document.querySelector('meta[name="ddf-api"]') || {}).content || "";
 
   const el = (tag, cls, text) => {
     const node = document.createElement(tag);
@@ -109,7 +111,7 @@
   async function follow(status, job) {
     for (let tries = 0; tries < 400; tries++) {
       await pause(1500);
-      const response = await fetch("/api/check/" + job);
+      const response = await fetch(API + "/api/check/" + job);
       const data = await response.json();
       if (data.status === "waiting" || data.status === "running") {
         const ahead = data.ahead ? ` (${data.ahead} ahead of you)` : "";
@@ -137,7 +139,7 @@
     body.append("file", file);
     if (mode) body.append("mode", mode);
     try {
-      const response = await fetch("/api/check", { method: "POST", body });
+      const response = await fetch(API + "/api/check", { method: "POST", body });
       let data = await response.json().catch(() => ({ status: "rejected", reason: "The server sent an unreadable answer." }));
       if (data.status === "queued") {
         status.textContent = STAGES.received + "...";
@@ -147,7 +149,9 @@
       render(card, data);
     } catch (error) {
       status.textContent = "";
-      render(card, { status: "rejected", reason: "The upload failed. Check your connection and try again." });
+      render(card, { status: "rejected", reason: API
+        ? "The detector is offline right now: it runs on our own computer, which may be switched off. Try again later."
+        : "The upload failed. Check your connection and try again." });
     }
   }
 

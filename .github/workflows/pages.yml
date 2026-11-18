@@ -1,0 +1,53 @@
+name: pages
+
+# The static frontend: the website's pages, rendered by scripts/export_site.py, on GitHub Pages. The pages
+# call the detector on the PC through its public Tailscale Funnel address (scripts/demo_host.ps1 -Public).
+# When the PC is off, the pages still load and the check says the detector is offline.
+
+'on':
+  push:
+    branches: [main]
+    paths:
+      - "src/deepfake_detection/webapp/**"
+      - "results/numbers.json"
+      - "scripts/export_site.py"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9
+        with:
+          version: "0.12.1"
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Install
+        # The page renderer imports the detector module, which imports torch; the CPU build is enough.
+        run: uv sync --extra cpu --extra web --no-dev
+      - name: Export
+        run: uv run --no-sync python scripts/export_site.py --api "${{ vars.DDF_API || 'https://computer.tailcd6ab1.ts.net' }}" --out site_export
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site_export
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
