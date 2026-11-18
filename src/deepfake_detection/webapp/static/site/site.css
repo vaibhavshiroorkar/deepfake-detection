@@ -191,3 +191,13 @@ footer.footer { border-top: 1px solid var(--line); padding: 26px 0 44px; color: 
 /* answer card: which part decided, and any AI label found in the file */
 .where { font-size: 14px; color: var(--muted); }
 .filecheck { font-weight: 600; }
+
+/* live input: record a video or a voice, or take a picture */
+.live-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
+.btn-live { font: inherit; font-size: 14px; color: var(--text); background: transparent; border: 1px solid #33414f; border-radius: 999px; padding: 8px 16px; cursor: pointer; }
+.btn-live:hover, .btn-live:focus-visible { border-color: var(--text); }
+.btn-live.primary { background: var(--text); color: #0e141b; border-color: var(--text); }
+.btn-live:disabled { opacity: .5; cursor: default; }
+.live { margin-top: 14px; display: grid; gap: 10px; justify-items: center; text-align: center; }
+.live video { width: 100%; max-width: 420px; border-radius: 12px; background: #000; }
+.live-actions { display: flex; gap: 8px; }

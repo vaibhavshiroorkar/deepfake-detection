@@ -23,7 +23,7 @@ class FakeScorer:
         self.error, self.gate, self.seen = error, gate, []
         self.parts = parts            # a list of probability dicts, one per 3-second part
 
-    def score(self, upload: Path, workdir: Path, progress=lambda stage: None) -> list[ScoreReport]:
+    def score(self, upload: Path, workdir: Path, progress=lambda stage: None, mode="video") -> list[ScoreReport]:
         self.seen.append((upload.exists(), workdir))
         (workdir / "neutral.mp4").write_bytes(b"x")
         progress("scoring")

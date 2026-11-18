@@ -123,7 +123,7 @@
     return { status: "error", reason: "The check took too long. Please try again later." };
   }
 
-  async function submit(root, file) {
+  async function submit(root, file, mode) {
     const status = root.querySelector("[data-status]");
     const card = root.querySelector("[data-result]");
     card.hidden = true;
@@ -135,6 +135,7 @@
     status.textContent = "Uploading " + file.name + "...";
     const body = new FormData();
     body.append("file", file);
+    if (mode) body.append("mode", mode);
     try {
       const response = await fetch("/api/check", { method: "POST", body });
       let data = await response.json().catch(() => ({ status: "rejected", reason: "The server sent an unreadable answer." }));
@@ -164,7 +165,94 @@
       const file = event.dataTransfer.files[0];
       if (file) submit(root, file);
     });
+    liveInput(root);
   });
+
+  /* live input: record a video or a voice, or take a picture, then check it like an upload ---- */
+  const LIVE = {
+    video: { media: { video: true, audio: true }, note: "Look at the camera and speak for 3 to 30 seconds." },
+    voice: { media: { audio: true }, note: "Speak for 3 to 30 seconds. Only the voice check runs on a recording." },
+    picture: { media: { video: true }, note: "Face the camera. Only the face check runs on a picture." },
+  };
+  const MAX_SECONDS = 30, MIN_SECONDS = 4;   // a little over the 3 s the cleaning needs
+
+  function liveInput(root) {
+    const panel = root.querySelector("[data-live-panel]");
+    if (!panel) return;
+    const preview = panel.querySelector("[data-preview]");
+    const note = panel.querySelector("[data-live-note]");
+    const go = panel.querySelector("[data-live-go]");
+    const cancel = panel.querySelector("[data-live-cancel]");
+    let stream = null, recorder = null, chunks = [], kind = null, timer = null, started = 0;
+
+    const stop = () => {
+      clearInterval(timer);
+      if (stream) stream.getTracks().forEach((track) => track.stop());
+      stream = null; recorder = null; chunks = [];
+      panel.hidden = true;
+    };
+    const fail = (reason) => {
+      stop();
+      render(root.querySelector("[data-result]"), { status: "rejected", reason });
+    };
+
+    root.querySelectorAll("[data-live]").forEach((button) => button.addEventListener("click", async () => {
+      stop();
+      kind = button.dataset.live;
+      if (!navigator.mediaDevices || !window.MediaRecorder) {
+        fail("This browser cannot record here. Recording needs a secure (https) page.");
+        return;
+      }
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(LIVE[kind].media);
+      } catch (error) {
+        fail("The camera or microphone was not allowed. Allow it in the browser and try again.");
+        return;
+      }
+      preview.hidden = kind === "voice";
+      preview.srcObject = kind === "voice" ? null : stream;
+      note.textContent = LIVE[kind].note;
+      go.textContent = kind === "picture" ? "Take the picture" : "Start recording";
+      go.disabled = false;
+      panel.hidden = false;
+    }));
+
+    cancel.addEventListener("click", stop);
+
+    go.addEventListener("click", () => {
+      if (kind === "picture") {
+        const canvas = document.createElement("canvas");
+        canvas.width = preview.videoWidth; canvas.height = preview.videoHeight;
+        canvas.getContext("2d").drawImage(preview, 0, 0);
+        canvas.toBlob((blob) => {
+          stop();
+          submit(root, new File([blob], "picture.jpg", { type: "image/jpeg" }), "picture");
+        }, "image/jpeg", 0.95);
+        return;
+      }
+      if (recorder) {                       // the second press stops the recording
+        if ((Date.now() - started) / 1000 < MIN_SECONDS) return;
+        recorder.stop();
+        return;
+      }
+      recorder = new MediaRecorder(stream);
+      chunks = [];
+      recorder.ondataavailable = (event) => event.data.size && chunks.push(event.data);
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: recorder.mimeType || "video/webm" });
+        const mode = kind;
+        stop();
+        submit(root, new File([blob], "recording.webm", { type: blob.type }), mode);
+      };
+      recorder.start();
+      started = Date.now();
+      timer = setInterval(() => {
+        const seconds = Math.floor((Date.now() - started) / 1000);
+        go.textContent = seconds < MIN_SECONDS ? `Recording... ${seconds} s` : `Stop (${seconds} s)`;
+        if (seconds >= MAX_SECONDS && recorder && recorder.state === "recording") recorder.stop();
+      }, 250);
+    });
+  }
 
   /* lip-sync illustration (how it works): loudness and mouth opening over 2 s ---------------- */
   const svg = document.querySelector("[data-trace]");

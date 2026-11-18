@@ -84,10 +84,11 @@ class _FakeScorer:
     def __init__(self):
         self.seen = []
 
-    def score(self, upload, workdir, progress=lambda stage: None):
+    def score(self, upload, workdir, progress=lambda stage: None, mode="video"):
         from deepfake_detection.webapp.scorer import CheckResult, ScoreReport
 
         self.seen.append(upload)
+        self.modes = [*getattr(self, "modes", []), mode]
         progress("scoring")
         checks = {"face": CheckResult((0.9999,) * 3), "voice": CheckResult((0.01,) * 3),
                   "sync": CheckResult(None, "no face in the mouth window")}
@@ -202,3 +203,69 @@ def test_present_puts_a_file_label_first_in_plain_words():
     assert shown["file_check"] == ["an AIGC label marking the file as AI-generated content"]
     plain = site.present({"kind": "no_signs", "raised": [], "checks": checks, "trace": {}, "file_check": []})
     assert plain["file_check"] == []
+
+
+@pytest.mark.parametrize(("suffix", "mode", "streams", "kind"), [
+    (".mp4", "", ["video", "audio"], "video"),
+    (".webm", "video", ["video", "audio"], "video"),
+    (".webm", "voice", ["audio"], "voice"),
+    (".webm", "", ["audio"], "voice"),
+    (".wav", "", ["audio"], "voice"),
+    (".mp3", "", ["audio"], "voice"),
+    (".jpg", "", ["video"], "picture"),
+    (".png", "picture", ["video"], "picture"),
+])
+def test_the_kind_of_input_comes_from_the_mode_the_name_and_the_streams(suffix, mode, streams, kind):
+    info = {"streams": [{"codec_type": s} for s in streams]}
+    assert site.classify(suffix, mode, info) == kind
+
+
+@pytest.mark.parametrize(("suffix", "mode", "streams", "message"), [
+    (".txt", "", ["video"], "Use"),
+    (".wav", "", [], "no sound"),
+    (".mp4", "video", ["audio"], "no picture"),
+    (".jpg", "voice", ["video"], "no sound"),
+])
+def test_an_input_that_does_not_fit_its_kind_is_refused(suffix, mode, streams, message):
+    with pytest.raises(site.ClipRejected, match=message):
+        site.classify(suffix, mode, {"streams": [{"codec_type": s} for s in streams]})
+
+
+@pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="needs ffmpeg")
+def test_a_voice_and_a_picture_become_clips_the_checks_can_read(tmp_path):
+    wav, png = tmp_path / "voice.wav", tmp_path / "face.png"
+    subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "sine=frequency=300", "-t", "4", str(wav)], check=True)
+    subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "testsrc=size=161x121", "-frames:v", "1", str(png)],
+                   check=True)
+    voice = site.to_clip(wav, "voice", tmp_path / "voice.mp4")
+    assert site.check_clip_rules(site.probe(voice)) == pytest.approx(4.0, abs=0.1)
+    picture = site.to_clip(png, "picture", tmp_path / "face.mp4")
+    info = site.probe(picture)
+    assert [s["codec_type"] for s in info["streams"]] == ["video"]
+    assert site.check_clip_rules(info) >= 3.0
+
+
+@pytest.mark.skipif(shutil.which("ffmpeg") is None, reason="needs ffmpeg")
+def test_a_recorded_voice_is_scored_as_a_voice(monkeypatch, tmp_path):
+    fake = _FakeScorer()
+    monkeypatch.setattr(site, "make_scorer", lambda: fake)
+    site.detector.cache_clear()
+    wav = tmp_path / "voice.wav"
+    subprocess.run(["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "sine=frequency=300", "-t", "4", str(wav)], check=True)
+    client = TestClient(create_app(_Registry()))
+    response = client.post("/api/check", files={"file": ("recording.wav", wav.read_bytes(), "audio/wav")},
+                           data={"mode": "voice"})
+    assert response.status_code == 202
+    site.detector().wait(response.json()["job"], timeout=10)
+    assert fake.modes == ["voice"]
+    site.detector.cache_clear()
+
+
+def test_a_picture_and_a_voice_say_which_check_ran():
+    checks = {"face": {"percentile": 0.5, "reason": None}}
+    picture = site.present({"kind": "no_signs", "raised": [], "checks": checks, "trace": {}, "input": "picture",
+                            "parts": 1, "part": {"start": 0.0, "end": 3.0}})
+    assert picture["where"] == "A picture, checked by the face check only."
+    voice = site.present({"kind": "no_signs", "raised": [], "checks": checks, "trace": {}, "input": "voice",
+                          "parts": 2, "part": {"start": 3.0, "end": 6.0}})
+    assert voice["where"].startswith("A voice recording, checked by the voice check only.")

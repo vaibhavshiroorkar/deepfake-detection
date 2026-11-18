@@ -42,7 +42,7 @@ class Detector:
         self._done: dict[str, threading.Event] = {}
         self._lock = threading.Lock()
         self._load_lock = threading.Lock()
-        self._queue: queue.Queue[tuple[str, Path]] = queue.Queue()
+        self._queue: queue.Queue[tuple[str, Path, str]] = queue.Queue()
         threading.Thread(target=self._work, name="detector", daemon=True).start()
 
     def warm(self) -> None:
@@ -51,7 +51,7 @@ class Detector:
             if self._scorer is None:
                 self._scorer = self._make_scorer()
 
-    def submit(self, upload: Path) -> str:
+    def submit(self, upload: Path, mode: str = "video") -> str:
         """Queue an upload the server has already checked against the clip rules. Takes ownership of the file."""
         with self._lock:
             self._expire()
@@ -62,7 +62,7 @@ class Detector:
             job = uuid.uuid4().hex
             self._jobs[job] = {"status": "waiting", "stage": "received", "finished": None}
             self._done[job] = threading.Event()
-        self._queue.put((job, upload))
+        self._queue.put((job, upload, mode))
         return job
 
     def status(self, job: str) -> dict | None:
@@ -90,7 +90,7 @@ class Detector:
 
     def _work(self) -> None:
         while True:
-            job, upload = self._queue.get()
+            job, upload, mode = self._queue.get()
             self._set(job, status="running", stage="cleaning")
             workdir = self._workroot / job
             result: dict
@@ -99,8 +99,9 @@ class Detector:
                 self._set(job, stage="file check")
                 labels = self._read_labels(upload)
                 self.warm()
-                report = self._scorer.score(upload, workdir, progress=lambda stage, job=job: self._set(job, stage=stage))
-                result = {"status": "done", "outcome": self._outcome(report, labels)}
+                report = self._scorer.score(upload, workdir, progress=lambda stage, job=job: self._set(job, stage=stage),
+                                            mode=mode)
+                result = {"status": "done", "outcome": self._outcome(report, labels) | {"input": mode}}
             except ClipRefused as error:
                 result = {"status": "done", "outcome": {"kind": "cant_check", "reason": str(error)}}
             except Exception:  # noqa: BLE001 - any failure must still delete the files and answer the page

@@ -1,11 +1,24 @@
 {# The upload and result card, shared by Home and /check. site.js drives it. #}
 <div class="detector" data-detector>
   <label class="drop" data-drop>
-    <input type="file" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm" data-file>
-    <strong>Drop a video here, or choose one</strong>
-    <span>One person speaking to the camera. MP4, MOV or WebM, 3 to 60 seconds, up to 90 MB.</span>
+    <input type="file" accept="video/*,audio/*,image/jpeg,image/png,image/webp,.mp4,.mov,.webm,.wav,.mp3,.m4a,.ogg,.jpg,.jpeg,.png,.webp" data-file>
+    <strong>Drop a video, a voice recording or a picture here, or choose one</strong>
+    <span>One person speaking to the camera works best. Video or sound 3 to 60 seconds, up to 90 MB.</span>
     <span class="mono small">Checked on our server, then deleted.</span>
   </label>
+  <div class="live-buttons" role="group" aria-label="Or record one now">
+    <button type="button" class="btn-live" data-live="video">Record video</button>
+    <button type="button" class="btn-live" data-live="voice">Record voice</button>
+    <button type="button" class="btn-live" data-live="picture">Take a picture</button>
+  </div>
+  <div class="live" data-live-panel hidden>
+    <video data-preview autoplay muted playsinline></video>
+    <p class="mono small" data-live-note></p>
+    <div class="live-actions">
+      <button type="button" class="btn-live primary" data-live-go>Start</button>
+      <button type="button" class="btn-live" data-live-cancel>Cancel</button>
+    </div>
+  </div>
   <p class="status mono" data-status role="status" aria-live="polite"></p>
   <div class="result" data-result hidden></div>
 </div>

@@ -114,18 +114,19 @@ class Scorer:
             heads=heads,
         )
 
-    def score(self, upload: Path, workdir: Path, progress=lambda stage: None) -> list[ScoreReport]:
+    def score(self, upload: Path, workdir: Path, progress=lambda stage: None, mode: str = "video") -> list[ScoreReport]:
         """Score every 3 s part of `upload`, writing derived files under `workdir`. The caller deletes `workdir`.
 
         `progress` gets the stage names the page shows: cleaning, finding the face, scoring,
-        each with the part it is on, such as "scoring:2/5".
+        each with the part it is on, such as "scoring:2/5". `mode` "voice" runs the voice check alone and
+        "picture" the face check alone, on the clip the server made from them; the other checks say why not.
         """
         from deepfake_detection.preprocessing.neutralize import (
             NeutralSettings,
             plan_windows,
         )
 
-        parts = plan_windows(upload, NeutralSettings())
+        parts = [(0.0, 3.0)] if mode == "picture" else plan_windows(upload, NeutralSettings())
         if not parts:
             raise ClipRefused("The clip has less than 3 seconds of sound, so it cannot be cleaned and checked.")
         reports = []
@@ -137,7 +138,12 @@ class Scorer:
             progress("finding the face" + step)
             checks = self._face_and_voice(neutral, part_dir / "cache")
             progress("scoring" + step)
-            sync, trace = self._sync(neutral)
+            if mode == "video":
+                sync, trace = self._sync(neutral)
+            else:
+                unused = CheckResult(None, f"not used for a {mode}" if mode == "picture" else "not used for a voice recording")
+                sync, trace = unused, {"loudness_db": [], "windows": []}
+                checks["face" if mode == "voice" else "voice"] = unused
             reports.append(ScoreReport({**checks, "sync": sync}, trace, start, end))
             shutil.rmtree(part_dir, ignore_errors=True)    # keep at most one part on disk
         return reports
