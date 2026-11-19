@@ -7,15 +7,6 @@
   </section>
   <div class="check-layout">
     {% include "_detector.html" %}
-    <aside class="side" aria-labelledby="answers-title">
-      <h2 id="answers-title" class="h3">The four answers</h2>
-      <dl class="answers">
-        <dt class="ans-signs">Signs of manipulation</dt><dd>A score reached 0.6 or more (0 is real, 0.5 neutral, 1 fake). It names which model.</dd>
-        <dt>Can't tell</dt><dd>The highest score is between 0.4 and 0.6: neutral.</dd>
-        <dt>No signs found</dt><dd>Every score is below 0.4. Not proof the video is real.</dd>
-        <dt>Can't check</dt><dd>No steady face, no speech, or the clip broke a rule. It says which.</dd>
-      </dl>
-    </aside>
   </div>
 </div>
 {% endblock %}

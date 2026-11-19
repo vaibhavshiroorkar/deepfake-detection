@@ -102,9 +102,8 @@ h2 { font-size: clamp(26px, 3.2vw, 38px); line-height: 1.12; letter-spacing: -.0
 .filecheck { font-weight: 600; }
 
 /* check page */
-.check-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 36px; align-items: start; padding-bottom: 56px; }
+.check-layout { max-width: 880px; padding-bottom: 56px; }
 .check-layout .detector { margin: 8px 0 0; max-width: none; }
-.side { border: 1px solid var(--line); border-radius: 14px; padding: 20px; background: var(--panel); }
 .answers dt { font-weight: 600; margin-top: 12px; }
 .answers dt:first-child { margin-top: 0; }
 .answers dd { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
@@ -193,7 +192,6 @@ footer.footer { border-top: 1px solid var(--line); padding: 26px 0 44px; color: 
   .bento { grid-template-columns: 1fr; }
   .big, .mid, .sm { grid-column: auto; grid-row: auto; }
   .checks3, .results, .people { grid-template-columns: 1fr; }
-  .check-layout { grid-template-columns: 1fr; }
   .db-row, .db-axis { grid-template-columns: 84px 1fr 96px; gap: 10px; }
   .cline { grid-template-columns: 70px 1fr 92px 12px; gap: 8px; }
   .tip .bubble { left: auto; right: -8px; transform: none; }
