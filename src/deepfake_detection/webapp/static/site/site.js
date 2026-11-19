@@ -182,11 +182,42 @@
       if (data.where) card.append(el("p", "where", data.where));
       if (file && data.outcome !== "cant_check") card.append(preview(file, data));
       card.append(checkRows(data.checks, data.lines));
+      const heat = explainView(data.explain, card);
+      if (heat) card.append(heat);
       const trace = traceView(data.trace);
       if (trace) card.append(trace);
       if (data.how_sure) card.append(el("p", "sure", data.how_sure));
     }
     card.hidden = false;
+  }
+
+  /* Grad-CAM: the three face crops the face model leaned on most (webapp/explain.py). A click moves the
+     preview video to that moment. */
+  function explainView(explain, card) {
+    if (!explain || !explain.frames || !explain.frames.length) return null;
+    const box = el("figure", "heatbox");
+    box.append(el("p", "heatlbl", "Where the face model looked"));
+    const row = el("div", "heatrow");
+    for (const frame of explain.frames) {
+      const button = el("button", "heat");
+      button.type = "button";
+      const img = el("img");
+      img.src = frame.image;
+      img.alt = "Face at " + clock(frame.time) + ", heat on the " + frame.region;
+      button.append(img, el("span", "small mono", clock(frame.time) + " " + frame.region));
+      button.addEventListener("click", () => {
+        const media = card.querySelector(".preview video");
+        if (media && Number.isFinite(media.duration)) {
+          media.currentTime = Math.min(frame.time, media.duration);
+          media.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        }
+      });
+      row.append(button);
+    }
+    box.append(row);
+    box.append(el("figcaption", "small", "Warmer colours pushed the face score toward fake. "
+      + (explain.summary || "")));
+    return box;
   }
 
   /* The trace: speech loudness over the first 2 s, and the lip-sync misfit of each 2 s window. */
