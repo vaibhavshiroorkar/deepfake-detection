@@ -9,7 +9,8 @@ where 5 in 100 (flag) and 20 in 100 (can't tell) real videos of each length cros
 weighted equally. Lines never fall below the single-part lines, and never fall as videos get longer.
 
 Scores are saved per video as they come (runs/parts-lines/scores.jsonl), so a crash loses one video.
-Writes parts_lines into results/web-calibration.json; everything else in that file is kept.
+Writes parts_lines into the calibration file the site reads (web-models.json may name it); the rest is kept.
+Scores come from the website's own models, so the lines match what the site runs.
 """
 
 from __future__ import annotations
@@ -83,6 +84,16 @@ def draw(per_corpus: int, seed: int = 41) -> list[dict]:
     return chosen
 
 
+def website(device: str):
+    """The website's scorer factory and the calibration file it reads (results/web-models.json may swap both)."""
+    import os
+
+    os.environ["DDF_SCORER_DEVICE"] = device
+    from deepfake_detection.webapp import site
+
+    return site.make_scorer, site._calibration_file("video")
+
+
 def lines(videos: list[dict], calibration) -> dict[int, tuple[float, float]]:
     """{parts: (flag, lower)} from the real videos' most unusual part."""
     from deepfake_detection.webapp.calibration import corpus_weights, weighted_quantile
@@ -118,7 +129,7 @@ def main() -> int:
     from deepfake_detection.cli.common import _git_commit
     from deepfake_detection.webapp import site
     from deepfake_detection.webapp.calibration import Calibration
-    from deepfake_detection.webapp.scorer import ClipRefused, Scorer
+    from deepfake_detection.webapp.scorer import ClipRefused
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--per-corpus", type=int, default=60)
@@ -130,11 +141,12 @@ def main() -> int:
         for line in SCORES.read_text(encoding="utf-8").splitlines():
             entry = json.loads(line)
             done[entry["clip_id"]] = entry
+    make_scorer, path = website(args.device)
     scorer = None
     videos = []
     for k, video in enumerate(draw(args.per_corpus)):
         if video["clip_id"] not in done:
-            scorer = scorer or Scorer(device=args.device)
+            scorer = scorer or make_scorer()
             with tempfile.TemporaryDirectory() as work:
                 work = Path(work)
                 source = work / "upload.mp4"
@@ -170,7 +182,6 @@ def main() -> int:
             done[video["clip_id"]] = entry
             print(f"{k + 1} {video['corpus']} {len(parts)} parts", flush=True)
         videos.append(done[video["clip_id"]] | {"corpus": video["corpus"]})
-    path = ROOT / "results" / "web-calibration.json"
     calibration = Calibration.from_json(path.read_text(encoding="utf-8"))
     measured = lines(videos, calibration)
     data = json.loads(path.read_text(encoding="utf-8"))
