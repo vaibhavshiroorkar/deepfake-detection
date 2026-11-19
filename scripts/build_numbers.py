@@ -565,7 +565,9 @@ def a19(numbers: dict) -> None:
         _put(numbers, f"{key}.reading", reading, path)
 
 
-V2_MIN_ITEMS = 50  # a v2 set needs this many real and fake items compared to be reported
+V2_MIN_ITEMS = (
+    50  # a v2 set needs this many real and fake items compared to be reported
+)
 
 PARTS_SHOWN = (
     1,

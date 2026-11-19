@@ -506,10 +506,20 @@ def test_v2_eval_keys_skip_sets_with_too_few_real_items(tmp_path):
     out.mkdir(parents=True)
     model = {"auc": 0.9, "auc_low": 0.8, "auc_high": 0.95, "caught_at_5pct": 0.7}
     report = {
-        "ffpp": {"items": 340, "compared": 292, "real": 121, "fake": 171,
-                 "models": {"face": model}},
-        "df26voice": {"items": 207, "compared": 137, "real": 1, "fake": 136,
-                      "models": {"voice": model}},
+        "ffpp": {
+            "items": 340,
+            "compared": 292,
+            "real": 121,
+            "fake": 171,
+            "models": {"face": model},
+        },
+        "df26voice": {
+            "items": 207,
+            "compared": 137,
+            "real": 1,
+            "fake": 136,
+            "models": {"voice": model},
+        },
     }
     (out / "report.json").write_text(json.dumps(report), encoding="utf-8")
     numbers: dict = {}
