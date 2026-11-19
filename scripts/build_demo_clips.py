@@ -32,7 +32,7 @@ import tempfile
 from pathlib import Path
 
 from deepfake_detection.webapp.calibration import Calibration
-from deepfake_detection.webapp.scorer import ClipRefused, Scorer
+from deepfake_detection.webapp.scorer import ClipRefused
 
 ROOT = Path(__file__).resolve().parents[1]
 UPLOAD, WATCH = ROOT / "data" / "demo" / "upload", ROOT / "data" / "demo" / "watch"
@@ -154,6 +154,16 @@ def rescore(calibration: Calibration, scorer) -> list[dict]:
     return rows
 
 
+def website(device: str):
+    """The website's own lines and scorer, so results/web-models.json applies here too."""
+    import os
+
+    from deepfake_detection.webapp import site
+
+    os.environ["DDF_SCORER_DEVICE"] = device
+    return site.calibration(), site.make_scorer()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--per-type", type=int, default=3)
@@ -162,10 +172,7 @@ def main() -> int:
         "--rescore", action="store_true", help="score the listed clips again, in parts"
     )
     arguments = parser.parse_args()
-    calibration = Calibration.from_json(
-        (ROOT / "results" / "web-calibration.json").read_text(encoding="utf-8")
-    )
-    scorer = Scorer(device=arguments.device)
+    calibration, scorer = website(arguments.device)
     rows = rescore(calibration, scorer) if arguments.rescore else []
     for clip in [] if arguments.rescore else candidates(arguments.per_type):
         name = (

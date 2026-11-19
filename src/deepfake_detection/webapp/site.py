@@ -104,6 +104,30 @@ def percent_range(pattern: str) -> str:
     return f"{low}%" if low == high else f"{low} to {high}%"
 
 
+def live_rates() -> dict:
+    """Catch and false-alarm rates of the lines in force (results/web-models.json may swap models).
+
+    FakeAVCeleb is the corpus the study's models trained on; the others are the unseen sources.
+    """
+    rates = {}
+    for corpus, sides in calibration().meta["outcomes"].items():
+        for side, name in (("fake", "caught"), ("real", "flagged")):
+            counts = sides.get(side, {})
+            if sum(counts.values()):
+                rates[corpus, name] = counts.get("signs", 0) / sum(counts.values())
+
+    def span(values: list[float]) -> tuple[str, str]:
+        return f"{min(values):.0%}", f"{max(values):.0%}"
+
+    return {
+        "home_caught": f"{rates['FakeAVCeleb', 'caught']:.0%}",
+        "other_caught": span(
+            [v for (c, n), v in rates.items() if n == "caught" and c != "FakeAVCeleb"]
+        ),
+        "real_flagged": span([v for (c, n), v in rates.items() if n == "flagged"]),
+    }
+
+
 def _environment() -> Environment:
     env = Environment(
         loader=FileSystemLoader(TEMPLATES),
@@ -112,7 +136,13 @@ def _environment() -> Environment:
         trim_blocks=True,
         lstrip_blocks=True,
     )
-    env.globals.update(n=number, seeds=seed_range, pct=percent, pct_range=percent_range)
+    env.globals.update(
+        n=number,
+        seeds=seed_range,
+        pct=percent,
+        pct_range=percent_range,
+        live=live_rates,
+    )
     return env
 
 
@@ -352,8 +382,7 @@ def how_sure(kind: str = "video") -> str:
         )
     return (
         f"On the four test sets we calibrated on, about 5 in 100 real clips get this flag. The same "
-        f"threshold catches {low[0]:.0%} of fakes on {low[1]} and {high[0]:.0%} on {high[1]}: few from "
-        f"sources the models never trained on. For a video from anywhere else, 5 in 100 is an estimate."
+        f"threshold catches {low[0]:.0%} of fakes on {low[1]} and {high[0]:.0%} on {high[1]}. For a video from anywhere else, 5 in 100 is an estimate."
     )
 
 

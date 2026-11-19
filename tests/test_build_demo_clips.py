@@ -42,3 +42,18 @@ def test_a_demo_clip_is_decided_on_all_its_parts(tmp_path):
     assert row["outcome"] == "signs" and row["raised"] == "face"
     assert row["parts"] == 3 and row["part"] == "3.0-6.0"
     assert row["sync"] == ""
+
+
+def test_demo_clips_use_the_websites_models_and_lines(monkeypatch):
+    """With results/web-models.json the site swaps models and lines; the demo record must match it."""
+    from deepfake_detection.webapp import site
+
+    module = _module()
+    scorer, lines = object(), object()
+    monkeypatch.setattr(site, "make_scorer", lambda: scorer)
+    monkeypatch.setattr(site, "calibration", lambda: lines)
+    monkeypatch.delenv("DDF_SCORER_DEVICE", raising=False)
+    assert module.website(device="cuda") == (lines, scorer)
+    import os
+
+    assert os.environ["DDF_SCORER_DEVICE"] == "cuda"

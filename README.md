@@ -13,7 +13,7 @@ By Vaibhav Shiroorkar, Adithya Jithesh and Shivansh Gupta, guided by Dr. Tejashr
 3. **It checks the whole video, 3 seconds at a time.** Each part is cleaned to one format first, so the models judge the content and not how the file was saved.
 4. **Three models score each part:**
    - Face: EfficientNet-B0 with a GRU over 16 face crops.
-   - Voice: Wav2Vec2 Base.
+   - Voice: AntiDeepfake XLS-R 1B, a published model trained on many speech datasets (the study's own voice model was Wav2Vec2 Base; see below).
    - Lip sync: AV-HuBERT features with a head trained on real clips only.
 5. **You get an answer:** signs of manipulation, can't tell, or no signs found. The page also shows each model's score against the flag line, and a timeline coloured part by part.
 
@@ -21,16 +21,16 @@ A score of 0.97 means the clip looked more unusual than 97 in 100 real clips. It
 
 ## How well it works
 
-All three models trained on FakeAVCeleb only. The other datasets were held back for testing. On clips the models never saw, with the website's own thresholds:
+On clips the models never trained on, with the website's own thresholds:
 
 | Test set | Fakes caught | Real clips wrongly flagged |
 |---|---|---|
-| FakeAVCeleb (new speakers) | 75% | 1% |
-| LAV-DF | 37% | 8% |
-| HiFi-AVDF (newer generators) | 23% | 9% |
-| DFDC | 4% | 2% |
+| FakeAVCeleb (new speakers) | 75% | 0% |
+| HiFi-AVDF (2025 generators) | 66% | 7% |
+| LAV-DF (2022 word edits) | 8% | 7% |
+| DFDC | 7% | 7% |
 
-It works on the kinds of fake it learned and misses most others. The voice model has only heard FakeAVCeleb's real speech, so a real voice recorded on a laptop or phone can score high. Full numbers are in [docs/FINAL.md](docs/FINAL.md), and every number in the paper and report comes from [results/numbers.json](results/numbers.json).
+Since 19 November the website's voice model is AntiDeepfake XLS-R 1B instead of the study's Wav2Vec2 Base, which had heard only FakeAVCeleb. On fixed held-out sets it caught 96% of Veo 3 voices against 12% (`results/v2-eval/report.json`). It made HiFi-AVDF much better and LAV-DF worse, where the old model caught 37%. The face and lip-sync models are still the study's: no face model we tried works on 2026 video generators, so a fully generated video is mostly caught by its voice. `DDF_WEB_MODELS=p001` switches the website back to the study's models. Full numbers are in [docs/FINAL.md](docs/FINAL.md), and every number in the paper and report comes from [results/numbers.json](results/numbers.json).
 
 ## The research behind it
 

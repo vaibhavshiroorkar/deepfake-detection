@@ -121,6 +121,7 @@ def test_the_study_models_stay_live_without_a_choice_or_when_asked(
 ):
     from deepfake_detection.webapp import site
 
+    monkeypatch.delenv("DDF_WEB_MODELS")
     monkeypatch.setattr(site, "WEB_MODELS", tmp_path / "web-models.json")
     assert site.web_models() is None
     (tmp_path / "web-models.json").write_text('{"calibration": {}}', encoding="utf-8")
