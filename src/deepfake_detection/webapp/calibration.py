@@ -404,3 +404,16 @@ def display_score(reading: float | None, flag: float, lower: float) -> float | N
             else SHOWN_FLAG + (1 - SHOWN_FLAG) * (reading - flag) / (1 - flag)
         )
     return round(min(max(shown, 0.0), 1.0), 3)
+
+
+def display_open(reading: float | None, flag: float, lower: float) -> float | None:
+    """An open-ended reading (the evidence sum) on the page's 0-to-1 scale: lines at 0.4 and 0.6 as in
+    display_score, and above the flag line a curve that approaches 1 instead of reaching it at once. One
+    step of the "can't tell" band's width above the line shows about 0.85; overwhelming evidence nears 1."""
+    if reading is None:
+        return None
+    if reading < flag:
+        return display_score(reading, flag, lower)
+    width = max(flag - lower, 1e-6)
+    shown = SHOWN_FLAG + (1 - SHOWN_FLAG) * (1 - math.exp(-(reading - flag) / width))
+    return round(min(shown, 1.0), 3)

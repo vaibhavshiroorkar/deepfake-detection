@@ -1,0 +1,24 @@
+{
+ "familiarity": {
+  "accuracy": 0.9960765997197571,
+  "called_reliable_per_corpus": {
+   "DFDC": 0.0017494751574527643,
+   "FakeAVCeleb": 0.9636363636363636,
+   "HiFi-AVDF": 0.9968900197907832,
+   "LAV-DF": 0.0020969855832241153
+  }
+ },
+ "real_line": {
+  "line": 0.9562316141024829,
+  "held_out": {
+   "FakeAVCeleb": {
+    "fakes_called_real": 0.05069124423963134,
+    "reals_called_real": 0.7027027027027027
+   },
+   "HiFi-AVDF": {
+    "fakes_called_real": 0.053830227743271224,
+    "reals_called_real": 0.5112781954887218
+   }
+  }
+ }
+}

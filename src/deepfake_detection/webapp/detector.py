@@ -26,6 +26,7 @@ from deepfake_detection.webapp.calibration import (
     SHOWN_FLAG,
     SHOWN_LOWER,
     Calibration,
+    display_open,
     display_score,
 )
 from deepfake_detection.webapp.scorer import ClipRefused
@@ -225,6 +226,8 @@ class Detector:
         read_flag, read_lower = calibration.reading_limits(
             max(checked, 1)
         )  # the score that decides
+        # The evidence sum is open-ended, so it is shown on a curve; an old file's percentile reading is not.
+        shown = display_open if calibration.fusion is not None else display_score
         # Every part's scores, so the page can colour a timeline and show the score under the cursor.
         timeline = []
         for r, scores, reading in zip(reports, parts, decision.parts, strict=True):
@@ -233,7 +236,7 @@ class Detector:
                 {
                     "start": r.start,
                     "end": r.end,
-                    "reading": display_score(reading, read_flag, read_lower),
+                    "reading": shown(reading, read_flag, read_lower),
                     "checks": {
                         k: display_score(v, flag, lower) for k, v in per_model.items()
                     },
@@ -261,7 +264,7 @@ class Detector:
             "lines": {"flag": SHOWN_FLAG, "lower": SHOWN_LOWER},
             # The main meter: the evidence sum of all checks on the page's scale (the outside face check's
             # reading joins it below when that is higher).
-            "overall": display_score(decision.combined, read_flag, read_lower),
+            "overall": shown(decision.combined, read_flag, read_lower),
             "raw_lines": {"flag": flag, "lower": lower},
             "explain": _face_explanation(reports),
         }

@@ -372,3 +372,16 @@ def test_the_evidence_sum_flags_two_mildly_unusual_checks_that_alone_would_not(
         old.fusion is None
         and old.decide({"face": 50.0, "voice": 50.0, "sync": 50.0}).kind == "no_signs"
     )
+
+
+def test_the_overall_score_grows_past_the_line_instead_of_jumping_to_one() -> None:
+    """The evidence sum is open-ended (its line was about 2.0); the 0-to-1 display put every flagged video at
+    1.00, so a barely flagged video looked like a blatant fake (found 11-20)."""
+    flag, lower = 2.0, 1.36
+    just = cal.display_open(2.1, flag, lower)
+    strong = cal.display_open(6.0, flag, lower)
+    assert 0.6 < just < 0.7
+    assert just < strong < 1.0
+    assert cal.display_open(flag, flag, lower) == 0.6
+    assert cal.display_open(lower, flag, lower) == 0.4
+    assert cal.display_open(0.0, flag, lower) == 0.0
