@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 import threading
@@ -21,8 +22,14 @@ from pathlib import Path
 
 import httpx
 from fastapi import FastAPI, File, Form, Request, UploadFile
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    JSONResponse,
+    RedirectResponse,
+)
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
+from pydantic import BaseModel
 
 from deepfake_detection.paths import PROJECT_ROOT
 from deepfake_detection.webapp.detector import Detector
@@ -65,7 +72,7 @@ RESEND_URL = "https://api.resend.com/emails"
 PAGES = {
     "/": ("home.html", "Home"),
     "/check": ("check.html", "Detector"),
-    "/how-it-works": ("how.html", "How it works"),
+    "/working": ("working.html", "Working"),
     "/research": ("research.html", "Research"),
     "/about": ("about.html", "About us"),
     "/contact": ("contact.html", "Contact"),
@@ -610,6 +617,85 @@ def send_contact(name: str, email: str, message: str) -> None:
         raise RuntimeError(f"Resend answered {response.status_code}")
 
 
+def queue(path: Path, suffix: str, mode: str) -> JSONResponse:
+    """Probe a received file, convert it if its kind needs that, and hand it to the detector.
+
+    The caller passes ownership of `path`: it is deleted on every path out of here, by this function or,
+    once queued, by the detector.
+    """
+    converted = None
+    try:
+        kind = classify(suffix, mode, probe(path))
+        require_calibration(kind)
+        if kind != "video" or suffix == ".webm":
+            converted = to_clip(path, kind, path.with_name(path.stem + "-clip.mp4"))
+            path.unlink(missing_ok=True)
+            path, converted = converted, None
+        check_clip_rules(probe(path))
+        job = detector().submit(path, mode=kind)
+    except ClipRejected as error:
+        path.unlink(missing_ok=True)
+        if converted is not None:
+            converted.unlink(missing_ok=True)
+        return JSONResponse(
+            {"status": "rejected", "reason": str(error)}, status_code=400
+        )
+    except subprocess.TimeoutExpired:
+        path.unlink(missing_ok=True)
+        return JSONResponse(
+            {"status": "rejected", "reason": "Reading the file took too long."},
+            status_code=400,
+        )
+    except Detector.Busy:  # the detector already deleted the file
+        return JSONResponse(
+            {
+                "status": "busy",
+                "reason": "The detector is busy. Try again in a minute.",
+            },
+            status_code=503,
+        )
+    except BaseException:
+        path.unlink(missing_ok=True)
+        raise
+    return JSONResponse({"status": "queued", "job": job}, status_code=202)
+
+
+# Dataset samples ----------------------------------------------------------------------------------
+# Built by scripts/build_samples.py: held-out test-set clips, each with a browser-playable preview.
+
+SAMPLE_DATA = PROJECT_ROOT / "data"
+SAMPLES = SAMPLE_DATA / "samples"
+SAMPLE_ID = re.compile(r"[0-9a-f]{12}")
+
+
+class SamplePick(BaseModel):
+    id: str
+
+
+def sample_catalogue() -> dict[str, dict]:
+    """The samples by id; empty when the catalogue has not been built on this computer."""
+    path = SAMPLES / "catalogue.json"
+    if not path.is_file():
+        return {}
+    return {
+        s["id"]: s
+        for s in json.loads(path.read_text(encoding="utf-8"))
+        if SAMPLE_ID.fullmatch(s["id"])
+    }
+
+
+def sample_original(sample: str) -> Path | None:
+    """The original file of a sample, or None if the id is unknown or its source leaves the data folder."""
+    entry = sample_catalogue().get(sample)
+    if entry is None:
+        return None
+    root = SAMPLE_DATA.resolve()
+    path = (root / entry["source"]).resolve()
+    if not path.is_relative_to(root) or not path.is_file():
+        return None
+    return path
+
+
 def render_page(template: str, title: str, path: str, **extra) -> str:
     """One page as HTML; the server sends it, and scripts/export_site.py writes it for the static frontend."""
     return (
@@ -651,6 +737,11 @@ def register(app: FastAPI) -> None:
             include_in_schema=False,
         )
 
+    @app.get("/how-it-works", include_in_schema=False)
+    def old_working_address() -> RedirectResponse:
+        # The page was "How it works" until 11-20; old links keep working.
+        return RedirectResponse("/working", status_code=301)
+
     @app.post("/api/check")
     async def check(
         request: Request,
@@ -676,7 +767,6 @@ def register(app: FastAPI) -> None:
                 },
                 status_code=400,
             )
-        converted = None
         handle = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
         path = Path(handle.name)
         try:
@@ -685,6 +775,7 @@ def register(app: FastAPI) -> None:
                 while chunk := await file.read(1 << 20):
                     size += len(chunk)
                     if size > MAX_UPLOAD_MB << 20:
+                        path.unlink(missing_ok=True)
                         return JSONResponse(
                             {
                                 "status": "rejected",
@@ -693,41 +784,59 @@ def register(app: FastAPI) -> None:
                             status_code=413,
                         )
                     handle.write(chunk)
-            kind = classify(suffix, mode, probe(path))
-            require_calibration(kind)
-            if kind != "video" or suffix == ".webm":
-                converted = to_clip(path, kind, path.with_name(path.stem + "-clip.mp4"))
-                path.unlink(missing_ok=True)
-                path, converted = converted, None
-            check_clip_rules(probe(path))
-            job = detector().submit(
-                path, mode=kind
-            )  # the detector owns the file from here and deletes it
-        except ClipRejected as error:
-            path.unlink(missing_ok=True)
-            if converted is not None:
-                converted.unlink(missing_ok=True)
-            return JSONResponse(
-                {"status": "rejected", "reason": str(error)}, status_code=400
-            )
-        except subprocess.TimeoutExpired:
-            path.unlink(missing_ok=True)
-            return JSONResponse(
-                {"status": "rejected", "reason": "Reading the file took too long."},
-                status_code=400,
-            )
-        except Detector.Busy:  # the detector already deleted the file
-            return JSONResponse(
-                {
-                    "status": "busy",
-                    "reason": "The detector is busy. Try again in a minute.",
-                },
-                status_code=503,
-            )
         except BaseException:
             path.unlink(missing_ok=True)
             raise
-        return JSONResponse({"status": "queued", "job": job}, status_code=202)
+        return queue(path, suffix, mode)
+
+    @app.get("/api/dataset-samples")
+    def dataset_samples() -> JSONResponse:
+        return JSONResponse(
+            {
+                "samples": [
+                    {k: v for k, v in s.items() if k != "source"}
+                    for s in sample_catalogue().values()
+                ]
+            }
+        )
+
+    @app.get("/api/dataset-samples/{sample}/preview")
+    def sample_preview(sample: str):
+        path = SAMPLES / "previews" / f"{sample}.mp4"
+        if sample not in sample_catalogue() or not path.is_file():
+            return JSONResponse(
+                {"status": "unknown", "reason": "No such sample."}, status_code=404
+            )
+        return FileResponse(path, media_type="video/mp4")
+
+    @app.post("/api/check-sample")
+    def check_sample(request: Request, pick: SamplePick) -> JSONResponse:
+        original = sample_original(pick.id)
+        if original is None:
+            return JSONResponse(
+                {"status": "unknown", "reason": "No such sample."}, status_code=404
+            )
+        client = request.client.host if request.client else "unknown"
+        if not uploads.allow(client):
+            return JSONResponse(
+                {
+                    "status": "rejected",
+                    "reason": "Too many videos from here. Try again in an hour.",
+                },
+                status_code=429,
+            )
+        # The detector deletes the file it is given, so it gets a copy, never the dataset's original.
+        handle = tempfile.NamedTemporaryFile(
+            suffix=original.suffix.lower(), delete=False
+        )
+        handle.close()
+        path = Path(handle.name)
+        try:
+            shutil.copyfile(original, path)
+        except BaseException:
+            path.unlink(missing_ok=True)
+            raise
+        return queue(path, original.suffix.lower(), "")
 
     @app.get("/api/check/{job}")
     def check_status(job: str) -> JSONResponse:

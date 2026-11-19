@@ -423,7 +423,8 @@
     root.querySelectorAll("[data-drop], .live-buttons").forEach((n) => { n.hidden = false; });
   }
 
-  async function submit(root, file, mode) {
+  /* A dataset sample shows its preview and is checked on the server's original; `sample` is its catalogue entry. */
+  async function submit(root, file, mode, sample) {
     const status = root.querySelector("[data-status]");
     const card = root.querySelector("[data-result]");
     const token = String(Number(root.dataset.token || 0) + 1);
@@ -431,17 +432,20 @@
     const current = () => root.dataset.token === token;
     showPicked(root, file);
     card.hidden = true;
-    if (file.size > MAX_MB * 1024 * 1024) {
+    if (!sample && file.size > MAX_MB * 1024 * 1024) {
       status.textContent = "";
       render(card, { status: "rejected", reason: "The file is over " + MAX_MB + " MB." });
       return;
     }
-    status.textContent = "Uploading " + file.name + "...";
+    status.textContent = sample ? "Sending the sample..." : "Uploading " + file.name + "...";
     const body = new FormData();
     body.append("file", file);
     if (mode) body.append("mode", mode);
     try {
-      const response = await fetch(API + "/api/check", { method: "POST", body });
+      const response = sample
+        ? await fetch(API + "/api/check-sample", {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: sample.id }) })
+        : await fetch(API + "/api/check", { method: "POST", body });
       let data = await response.json().catch(() => ({ status: "rejected", reason: "The server sent an unreadable answer." }));
       if (data.status === "queued") {
         status.textContent = STAGES.received + "...";
@@ -450,6 +454,7 @@
       if (!current()) return;
       status.textContent = "";
       render(card, data, file);
+      if (sample && data.status === "done") card.querySelector(".outcome").after(truth(sample));
       // The answer carries its own preview with the timeline; keep only the name and the buttons above it.
       if (card.querySelector(".preview")) root.querySelector("[data-picked-media]").hidden = true;
     } catch (error) {
@@ -478,7 +483,105 @@
       if (file) submit(root, file);
     });
     liveInput(root);
+    samplePicker(root);
   });
+
+  /* slide pages (Home, Working, Research): the rail marks the section in view ----------------------- */
+  const marks = [...document.querySelectorAll(".rail a")];
+  if (marks.length) {
+    const watch = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        for (const mark of marks) mark.setAttribute("aria-current", String(mark.hash === "#" + entry.target.id));
+      }
+    }, { threshold: 0.55 });
+    document.querySelectorAll(".sl").forEach((s) => watch.observe(s));
+  }
+
+  /* dataset samples: pick a held-out test clip, see its preview, check its original ---------------- */
+  function truth(sample) {
+    const fake = sample.label === "fake";
+    const box = el("p", "truth " + (fake ? "fake" : "real"));
+    box.append(el("strong", "", "The true answer: " + (fake ? "Fake" : "Real")),
+      " (" + sample.kind + ", from the " + sample.dataset + " test set)");
+    return box;
+  }
+
+  function samplePicker(root) {
+    const dialog = root.querySelector("[data-samples]");
+    const open = root.querySelector("[data-samples-open]");
+    if (!dialog || !open) return;
+    const list = dialog.querySelector("[data-samples-list]");
+    const count = dialog.querySelector("[data-samples-count]");
+    const search = dialog.querySelector("[data-samples-search]");
+    const filters = [...dialog.querySelectorAll("[data-samples-filter]")];
+    let samples = null;
+
+    const draw = () => {
+      const words = search.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+      const shown = samples.filter((s) => filters.every((f) => !f.value || s[f.dataset.samplesFilter] === f.value)
+        && words.every((w) => [s.title, s.dataset, s.kind, s.label].join(" ").toLowerCase().includes(w)));
+      list.replaceChildren(...shown.map((s) => {
+        const item = el("li");
+        const button = el("button", "sample");
+        button.type = "button";
+        button.append(el("strong", "", s.title), el("span", "small", s.dataset),
+          el("span", "chip " + s.label, s.label === "fake" ? "Fake" : "Real"));
+        button.addEventListener("click", () => pick(s));
+        item.append(button);
+        return item;
+      }));
+      count.textContent = shown.length + " of " + samples.length + " samples";
+    };
+
+    const fill = (select, values) => select.append(...values.map((v) => {
+      const option = el("option", "", v);
+      option.value = v;
+      return option;
+    }));
+
+    async function load() {
+      count.textContent = "Loading the samples...";
+      try {
+        const response = await fetch(API + "/api/dataset-samples");
+        samples = (await response.json()).samples;
+      } catch (error) {
+        count.textContent = "The samples could not be loaded: the detector may be offline. Try again later.";
+        return;
+      }
+      const distinct = (key) => [...new Set(samples.map((s) => s[key]))].sort();
+      fill(filters.find((f) => f.dataset.samplesFilter === "dataset"), distinct("dataset"));
+      fill(filters.find((f) => f.dataset.samplesFilter === "kind"), distinct("kind"));
+      draw();
+    }
+
+    async function pick(sample) {
+      dialog.close();
+      const status = root.querySelector("[data-status]");
+      status.textContent = "Loading the sample...";
+      try {
+        const response = await fetch(API + "/api/dataset-samples/" + sample.id + "/preview");
+        if (!response.ok) throw new Error("preview " + response.status);
+        const blob = await response.blob();
+        const name = sample.dataset + ": " + sample.title;
+        submit(root, new File([blob], name, { type: "video/mp4" }), "", sample);
+      } catch (error) {
+        status.textContent = "";
+        render(root.querySelector("[data-result]"), { status: "rejected",
+          reason: "The sample could not be loaded. The detector may be offline; try again later." });
+      }
+    }
+
+    open.addEventListener("click", () => {
+      dialog.showModal();
+      if (!samples) load();
+    });
+    dialog.querySelector("[data-samples-close]").addEventListener("click", () => dialog.close());
+    // A click on the backdrop lands on the dialog itself, outside its content.
+    dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
+    search.addEventListener("input", () => samples && draw());
+    filters.forEach((f) => f.addEventListener("change", () => samples && draw()));
+  }
 
   /* live input: record a video or a voice, or take a picture, then check it like an upload ---- */
   // Raw microphone: the browser's noise suppression made a real voice score 0.99 (measured 11-18), because the

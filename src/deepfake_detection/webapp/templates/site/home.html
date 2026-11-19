@@ -19,7 +19,7 @@
       <div>
         <h1 class="sl-h1" id="start-h">Is the person in this video real?</h1>
         <p class="sl-lead">Upload a clip of someone speaking. Four checks look at it and tell you plainly what they found, and how far to trust it.</p>
-        <div class="sl-actions"><a class="btn primary" href="/check">Check a video</a><a class="btn ghost" href="#add">See how it works</a></div>
+        <div class="sl-actions"><a class="btn primary" href="/check">Check a video</a><a class="btn ghost" href="#add">See the steps</a></div>
       </div>
       <div class="sl-frame" aria-label="An example answer">
         <div class="sl-card">
@@ -90,17 +90,4 @@
     <div class="sl-in"><div><h2 class="sl-h1" id="try-h">Try it on a video you're unsure about.</h2><div class="sl-actions"><a class="btn primary" href="/check">Check a video</a><a class="btn ghost" href="/research">Read the research</a></div></div></div>
   </section>
 </div>
-<script>
-  // The rail marks the section in view.
-  (function () {
-    const marks = [...document.querySelectorAll(".rail a")];
-    const watch = new IntersectionObserver((entries) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        for (const mark of marks) mark.setAttribute("aria-current", String(mark.hash === "#" + entry.target.id));
-      }
-    }, { threshold: 0.55 });
-    document.querySelectorAll(".sl").forEach((s) => watch.observe(s));
-  })();
-</script>
 {% endblock %}

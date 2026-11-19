@@ -1,110 +1,120 @@
 {% extends "base.html" %}
 {% set repo = "https://github.com/vaibhavshiroorkar/deepfake-detection" %}
 {% block main %}
-<div class="wrap">
-  <section class="page-head">
-    <h1 class="h1-sm">Research</h1>
-    <p class="lede">The checks come from a final-year research study, P-001. Its tests were written down before any model ran, and it reports the ones that failed.</p>
-    <p class="links mono small">
-      <a href="{{ repo }}/blob/main/results/preregistration/P-001-shortcut-neutral-av-study.md">The preregistration</a>
-      <a href="{{ repo }}/tree/main/results">Every result, with receipts</a>
-      <a href="{{ repo }}/tree/main/deliverables">Paper and report</a>
-      <a href="{{ repo }}">Code</a>
-    </p>
-  </section>
+{# Research: the P-001 study, one finding per screen, in the home page's slide layout. Every number comes
+   from numbers.json through the template helpers. #}
+<div class="slides">
+  <nav class="rail" aria-label="Sections">
+    <a href="#start" aria-current="true" aria-label="Start"></a>
+    <a href="#leak" aria-label="The file leak"></a>
+    <a href="#clean" aria-label="After cleaning"></a>
+    <a href="#sync" aria-label="Lip sync"></a>
+    <a href="#tests" aria-label="The tests"></a>
+    <a href="#limits" aria-label="Limits"></a>
+    <a href="#more" aria-label="Read more"></a>
+  </nav>
 
-  <section class="block" aria-labelledby="q-title">
-    <h2 id="q-title">The question</h2>
-    <p class="intro">Audio-visual deepfake detectors score close to perfect on public benchmarks. How much of that is the detector seeing the fake, and how much is it reading the file? And once the file stops giving the answer away, what still works on video the detector has never seen?</p>
-  </section>
-
-  <section class="block" aria-labelledby="h-title">
-    <h2 id="h-title">What was tested, and what happened</h2>
-    <div class="results">
-      <article class="res miss">
-        <div class="res-head"><span class="mono">H1</span><span class="tag">Missed</span></div>
-        <h3>Cleaning removes the file shortcut</h3>
-        <p>Goal: a file-only classifier at or under 0.60 AUC after cleaning. FakeAVCeleb fell from {{ n("audit.fakeavceleb.raw.clip") }} to {{ n("audit.fakeavceleb.neutral.clip") }}, close but over the bar. Video bitrate still carries a little signal, because it follows the image content.</p>
-      </article>
-      <article class="res hold">
-        <div class="res-head"><span class="mono">Sync</span><span class="tag">Works, then fades</span></div>
-        <h3>A lip-sync check trained on real clips only</h3>
-        <p>AUC {{ seeds("sync.test-identity-strict.seed{}.auc") }} on FakeAVCeleb speakers it never saw. On new datasets: LAV-DF {{ seeds("sync.lavdf-window.seed{}.auc") }}, DFDC {{ seeds("sync.dfdc.seed{}.auc") }}, HiFi-AVDF {{ seeds("sync.hifiavdf.seed{}.auc") }}. That is above chance on every dataset, but well below its score on familiar data.</p>
-      </article>
-      <article class="res hold">
-        <div class="res-head"><span class="mono">H4</span><span class="tag">Mostly met</span></div>
-        <h3>False alarms set from real clips</h3>
-        <p>A threshold set from 200 real clips of the new dataset flags {{ pct_range("h4.hifiavdf-seed{}.conformal_real_only.fpr") }} of real HiFi-AVDF clips, against {{ pct_range("h4.hifiavdf-seed{}.source_validation.fpr") }} with the training threshold. Met on HiFi-AVDF and on LAV-DF by file label; two of three seeds miss it on LAV-DF by window label. The price: at that threshold only {{ pct_range("h4.hifiavdf-seed{}.conformal_real_only.tpr") }} of HiFi-AVDF fakes are caught.</p>
-      </article>
-      <article class="res weak">
-        <div class="res-head"><span class="mono">H2</span><span class="tag">Holds, but weak</span></div>
-        <h3>Combining the checks beats the face check alone</h3>
-        <p>It passes the preregistered rule: +{{ n("h2.test-identity-strict.estimate") }} on FakeAVCeleb and +{{ n("h2.lavdf-window.estimate") }} on LAV-DF; +{{ n("h2.dfdc.estimate") }} on DFDC (not significant). But without the cloned-voice clips, which the face check was never trained to flag, the FakeAVCeleb gain is {{ n("h2.test-identity-strict.without_cloned_voice.min") }} to {{ n("h2.test-identity-strict.without_cloned_voice.max") }}. On LAV-DF the face check scores even fakes with untouched video below the real clips ({{ n("visual.lavdf-test.type.RealVideo-FakeAudio.min") }} to {{ n("visual.lavdf-test.type.RealVideo-FakeAudio.max") }}), so the gain is over a broken baseline. A combination fitted on other datasets fell to {{ n("a12.dfdc.auc.leave_one_out") }} on DFDC. That is why this site shows the three checks side by side instead of merging them.</p>
-      </article>
-      <article class="res">
-        <div class="res-head"><span class="mono">A11 to A14</span><span class="tag">Exploratory</span></div>
-        <h3>Four checks added after the main results</h3>
-        <p>Stronger frozen models (CLIP for faces, XLS-R for voices) did not transfer better once the file clues were gone: on HiFi-AVDF, {{ n("a11.clip-vs-visual.hifiavdf.auc_new") }} and {{ n("a11.xlsr-vs-audio.hifiavdf.auc_new") }}. No fixed way of combining the checks carried over between datasets. Six simple frame measures do not explain what the face check reads on LAV-DF (together {{ n("a13.lavdf.all_six") }}). And the voice check does not lean on loudness or clip edges: with both removed it stays at {{ n("a14.test-identity-strict.perturbed_min") }} or above.</p>
-      </article>
+  <section class="sl" id="start" aria-labelledby="start-h">
+    <div class="sl-in">
+      <div>
+        <h1 class="sl-h1" id="start-h">Do detectors see the fake, or read the file?</h1>
+        <p class="sl-lead">Our final-year study, P-001. Every test was written down before any model ran, and the failed ones are reported too.</p>
+        <div class="sl-actions"><a class="btn primary" href="#leak">See the findings</a><a class="btn ghost" href="{{ repo }}/tree/main/deliverables">Paper and report</a></div>
+      </div>
+      <div class="sl-frame"><div class="sl-card sl-list">
+        <div><b>Trained on</b><span>FakeAVCeleb</span></div>
+        <div><b>Tested on</b><span>New speakers, LAV-DF, DFDC, HiFi-AVDF</span></div>
+        <div><b>Checks</b><span>Face, voice, lip sync</span></div>
+        <div><b>Seeds</b><span>Three per model</span></div>
+      </div></div>
     </div>
   </section>
 
-  <section class="block" aria-labelledby="findings-title">
-    <h2 id="findings-title">What the research found</h2>
-    <p class="intro">Results from the study behind the site.</p>
-    <div class="bento">
-      <div class="b big">
-        <div class="lbl">File details alone</div>
-        <div class="stat bad mono">{{ n("audit.fakeavceleb.raw.clip") }}</div>
-        <p>AUC from file details alone on FakeAVCeleb: codec, length and silence, without looking at a face or hearing a voice. Chance is 0.5.</p>
-        <div class="bars">
-          {% for row in ceilings %}
-          <div class="bar mono"><span class="bar-name">{{ row.name }}</span><span class="track"><i style="width:{{ (row.raw * 100)|round(1) }}%"></i></span><span>{{ "%.3f"|format(row.raw) }}</span></div>
-          {% endfor %}
-        </div>
+  <section class="sl" id="leak" aria-labelledby="leak-h">
+    <div class="sl-in">
+      <div>
+        <h2 class="sl-h2" id="leak-h">The file gave the answer away.</h2>
+        <p class="sl-lead">Codec, length and silence alone separate real from fake on FakeAVCeleb at {{ n("audit.fakeavceleb.raw.clip") }} AUC, without looking at a face. Chance is 0.5.</p>
       </div>
-      <div class="b mid">
-        <div class="lbl">After cleaning</div>
-        <div class="stat ok mono">{{ n("audit.hifiavdf.neutral.clip") }}</div>
-        <p>HiFi-AVDF's file-clue ceiling, down from {{ n("audit.hifiavdf.raw.clip") }}. One codec, a fixed length, one loudness for every clip.</p>
-      </div>
-      <div class="b mid">
-        <div class="lbl">False alarms</div>
-        <div class="stat ok mono">{{ pct_range("h4.hifiavdf-seed{}.conformal_real_only.fpr") }}</div>
-        <p>Of real HiFi-AVDF clips flagged, with a threshold set from 200 real clips of that source. The threshold carried over from training flagged {{ pct_range("h4.hifiavdf-seed{}.source_validation.fpr") }}.</p>
-      </div>
-      <div class="b sm">
-        <div class="lbl">Lip sync, familiar data</div>
-        <div class="stat mono">{{ seeds("sync.test-identity-strict.seed{}.auc", 2) }}</div>
-        <p>AUC on FakeAVCeleb speakers it never trained on.</p>
-      </div>
-      <div class="b sm">
-        <div class="lbl">Lip sync, new data</div>
-        <div class="stat mono">{{ seeds("sync.hifiavdf.seed{}.auc", 2) }}</div>
-        <p>AUC on HiFi-AVDF, from newer generators.</p>
-      </div>
-      <div class="b sm">
-        <div class="lbl">Sora 2 clips</div>
-        <div class="stat mono">{{ n("sync.hifiavdf.seed17.method.sora2", 2) }}</div>
-        <p>Below chance (seed 17). Sora 2 makes the lips and voice together, so they already match.</p>
+      <div class="sl-frame sl-card">
+        <p class="sl-sub">File details alone, raw files (AUC)</p>
+        {% for row in ceilings %}
+        <div class="sl-row"><span>{{ row.name }}</span><span class="sl-bar"><i style="width:{{ (row.raw * 100)|round(1) }}%"></i></span><span>{{ "%.3f"|format(row.raw) }}</span></div>
+        {% endfor %}
       </div>
     </div>
   </section>
 
-  <section class="block callout" id="limits" aria-labelledby="limits-title">
-    <h2 id="limits-title">Limits</h2>
-    <ul>
-      <li><strong>One training dataset.</strong> Every model learned from FakeAVCeleb: about 500 real videos from 2021 and older fakes. Newer generators, like Sora 2, are often missed.</li>
-      <li><strong>A small audio clue remains.</strong> After cleaning, file details still predict FakeAVCeleb's fake audio at {{ n("audit.fakeavceleb.neutral.audio") }} AUC, through loudness and the clip edges.</li>
-      <li><strong>Some fixes came after a result was read.</strong> Two changes to the protocol (amendments A9 and A10) were made after early results; both versions are reported.</li>
-      <li><strong>No published detectors compared yet.</strong> AVH-Align and HAVIC have not been run on this protocol.</li>
-      <li><strong>The false-alarm rate is measured on research data.</strong> On your video it is an estimate.</li>
-    </ul>
+  <section class="sl" id="clean" aria-labelledby="clean-h">
+    <div class="sl-in">
+      <div>
+        <h2 class="sl-h2" id="clean-h">Cleaning closed most of the gap.</h2>
+        <p class="sl-lead">One codec, a fixed length and one loudness for every clip, in training and in testing.</p>
+      </div>
+      <div class="sl-frame"><div class="sl-facts">
+        <div class="sl-fact"><b>{{ n("audit.hifiavdf.neutral.clip") }}</b><span>HiFi-AVDF file details after cleaning, down from {{ n("audit.hifiavdf.raw.clip") }}</span></div>
+        <div class="sl-fact miss"><b>{{ n("audit.fakeavceleb.neutral.clip") }}</b><span>FakeAVCeleb after cleaning. The goal was 0.60: missed, as video bitrate still leaks a little</span></div>
+      </div></div>
+    </div>
   </section>
 
-  <section class="block" aria-labelledby="prior-title">
-    <h2 id="prior-title">Prior work</h2>
-    <p class="intro">The leading-silence shortcut was found by Smeu et al. (CVPR 2025) and confirmed by DeepFake Doctor (2025), which also proposed splitting by identity. Training a sync model on real clips only follows AVH-Align. HiFi-AVDF comes from HAVIC (CVPR 2026). This study adds a codec census, a classifier that uses file details only, and cleaning applied to training and test data together.</p>
+  <section class="sl" id="sync" aria-labelledby="sync-h">
+    <div class="sl-in">
+      <div>
+        <h2 class="sl-h2" id="sync-h">Lip sync works, then fades.</h2>
+        <p class="sl-lead">Trained on real clips only. Strong on new speakers, weaker on new datasets, and below chance on Sora 2, which makes lips and voice together.</p>
+      </div>
+      <div class="sl-frame"><div class="sl-facts">
+        <div class="sl-fact"><b>{{ seeds("sync.test-identity-strict.seed{}.auc", 2) }}</b><span>AUC on FakeAVCeleb speakers it never saw</span></div>
+        <div class="sl-fact"><b>{{ seeds("sync.hifiavdf.seed{}.auc", 2) }}</b><span>AUC on HiFi-AVDF, from newer generators</span></div>
+        <div class="sl-fact miss"><b>{{ n("sync.hifiavdf.seed17.method.sora2", 2) }}</b><span>AUC on Sora 2 clips (seed 17)</span></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="sl" id="tests" aria-labelledby="tests-h">
+    <div class="sl-in">
+      <div>
+        <h2 class="sl-h2" id="tests-h">What we tested.</h2>
+        <p class="sl-lead">Each test and its bar were fixed before any model ran.</p>
+      </div>
+      <div class="sl-frame"><div class="sl-card sl-list">
+        <div><b>H1 missed</b><span>Cleaning removes the file shortcut: FakeAVCeleb stayed at {{ n("audit.fakeavceleb.neutral.clip") }}, over the 0.60 bar</span></div>
+        <div><b>H2 weak</b><span>Combining checks beats the face alone, but not without the cloned-voice clips, and a mix fitted elsewhere fell to {{ n("a12.dfdc.auc.leave_one_out") }} on DFDC</span></div>
+        <div><b>H4 mostly met</b><span>A line set from 200 real clips flags {{ pct_range("h4.hifiavdf-seed{}.conformal_real_only.fpr") }} of real HiFi-AVDF clips, against {{ pct_range("h4.hifiavdf-seed{}.source_validation.fpr") }} before</span></div>
+        <div><b>Sync fades</b><span>Above chance on every new dataset: LAV-DF {{ seeds("sync.lavdf-window.seed{}.auc") }}, DFDC {{ seeds("sync.dfdc.seed{}.auc") }}</span></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="sl" id="limits" aria-labelledby="limits-h">
+    <div class="sl-in">
+      <div>
+        <h2 class="sl-h2" id="limits-h">Limits.</h2>
+        <p class="sl-lead">What these results do not show.</p>
+      </div>
+      <div class="sl-frame"><div class="sl-card sl-list">
+        <div><b>One training set</b><span>FakeAVCeleb: about 500 real videos and older fakes</span></div>
+        <div><b>An audio clue</b><span>File details still predict its fake audio at {{ n("audit.fakeavceleb.neutral.audio") }} AUC</span></div>
+        <div><b>Two late fixes</b><span>Amendments A9 and A10 came after early results; both versions are reported</span></div>
+        <div><b>No rivals run</b><span>AVH-Align and HAVIC are not yet tested this way</span></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="sl sl-end" id="more" aria-labelledby="more-h">
+    <div class="sl-in">
+      <div>
+        <h2 class="sl-h2" id="more-h">Read the whole study.</h2>
+        <p class="sl-lead">The leading-silence shortcut was found by Smeu et al. (CVPR 2025). Real-only sync training follows AVH-Align. HiFi-AVDF comes from HAVIC (CVPR 2026).</p>
+        <p class="links small">
+          <a href="{{ repo }}/blob/main/results/preregistration/P-001-shortcut-neutral-av-study.md">Preregistration</a>
+          <a href="{{ repo }}/tree/main/results">Results</a>
+          <a href="{{ repo }}/tree/main/deliverables">Paper and report</a>
+          <a href="{{ repo }}">Code</a>
+        </p>
+      </div>
+    </div>
   </section>
 </div>
 {% endblock %}

@@ -24,3 +24,6 @@ mlflow.db.bak-*
 /.superpowers/
 .playwright-mcp/
 /site_export/
+
+# Run logs from scoring jobs; results go in report files, not logs.
+results/**/run-*.log

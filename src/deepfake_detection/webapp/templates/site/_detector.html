@@ -5,11 +5,28 @@
     <strong>Drop a video, a voice recording or a picture here, or choose one</strong>
     <span>Video or sound, 3 seconds to 10 minutes, up to 300 MB.<button type="button" class="tip" aria-label="Tips and privacy"><span class="tipmark">i</span><span class="bubble">One person speaking to the camera works best. Your file is checked on our computer and deleted before you see the answer. One still frame may also be checked by a third-party detection service.</span></button></span>
   </label>
-  <div class="live-buttons" role="group" aria-label="Or record one now">
+  <div class="live-buttons" role="group" aria-label="Or record one now, or pick a sample">
     <button type="button" class="btn-live" data-live="video">Record video</button>
     <button type="button" class="btn-live" data-live="voice">Record voice</button>
     <button type="button" class="btn-live" data-live="picture">Take a picture</button>
+    <button type="button" class="btn-live" data-samples-open>Pick a sample</button>
   </div>
+  <dialog class="samples" data-samples aria-labelledby="samples-title"><div class="samples-in">
+    <div class="samples-head">
+      <h2 id="samples-title">Pick a sample</h2>
+      <button type="button" class="btn-live" data-samples-close aria-label="Close">Close</button>
+    </div>
+    <p class="small">Clips from the test sets our numbers are measured on: the detector never trained on them. After the check, the clip's true answer shows next to ours.</p>
+    <div class="samples-filters">
+      <input type="search" placeholder="Search" aria-label="Search samples" data-samples-search>
+      <select aria-label="Dataset" data-samples-filter="dataset"><option value="">All datasets</option></select>
+      <select aria-label="Kind" data-samples-filter="kind"><option value="">All kinds</option></select>
+      <select aria-label="Real or fake" data-samples-filter="label"><option value="">Real and fake</option><option value="real">Real</option><option value="fake">Fake</option></select>
+    </div>
+    <p class="small mono" data-samples-count role="status"></p>
+    <ul class="samples-list" data-samples-list></ul>
+  </div>
+  </dialog>
   <div class="live" data-live-panel hidden>
     <video data-preview autoplay muted playsinline></video>
     <p class="mono small" data-live-note></p>

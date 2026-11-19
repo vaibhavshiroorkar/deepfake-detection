@@ -6,7 +6,7 @@ Chosen by Vaibhav on 2026-11-17: **the original direction B** (`b-signal.html`),
 
 ## Feel
 
-Dark, precise, instrument-like. The site measures things and says how sure it is. Numbers are set in mono, like readings. Nothing is decorative unless it carries a number or a signal.
+Dark, precise, instrument-like. Pages use the home page's slide layout (Home, Working, Research). The site measures things and says how sure it is. Numbers are set in mono, like readings. Nothing is decorative unless it carries a number or a signal.
 
 ## Colour
 
@@ -52,7 +52,7 @@ No decoration that carries no information (removed 2026-11-17 at Vaibhav's reque
 - **Drop zone:** dashed border, the file rules underneath, keyboard-operable (a real file input behind it).
 - **Check row:** the check's name in its colour (face blue, voice amber, lip-sync teal), its score in mono, and a bar showing where the score sits against real clips.
 - **Outcome card:** the outcome in bold, which check raised it, the three check rows, the trace, and "How sure?" in plain words.
-- **Trace:** speech loudness (amber) and mouth opening (blue) over the 2 s sync window, as in v2, but drawn from the uploaded clip. A labelled example (real against dubbed) explains it on How it works.
+- **Trace:** speech loudness (amber) and mouth opening (blue) over the 2 s sync window, as in v2, but drawn from the uploaded clip. A labelled example (real against dubbed) explains it on the Working page.
 - **Dumbbell chart (from v2):** file-cue ceiling per corpus, raw (red) to cleaned (blue), with chance marked.
 
 ## Motion and access

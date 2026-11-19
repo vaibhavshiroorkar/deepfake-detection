@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block main %}
+{# Working: what happens to a file, one step per screen, in the home page's slide layout. #}
+<div class="slides">
+  <nav class="rail" aria-label="Sections">
+    <a href="#start" aria-current="true" aria-label="Start"></a>
+    <a href="#clean" aria-label="Cleaning"></a>
+    <a href="#checks" aria-label="The checks"></a>
+    <a href="#sync" aria-label="Lip sync"></a>
+    <a href="#compare" aria-label="Comparing with real clips"></a>
+    <a href="#answers" aria-label="The answers"></a>
+  </nav>
+
+  <section class="sl" id="start" aria-labelledby="start-h">
+    <div class="sl-in">
+      <div>
+        <h1 class="sl-h1" id="start-h">From your file to an answer.</h1>
+        <p class="sl-lead">Four steps. Your file is deleted before you see the answer.</p>
+        <div class="sl-actions"><a class="btn primary" href="/check">Try the detector</a><a class="btn ghost" href="#clean">Start</a></div>
+      </div>
+      <div class="sl-frame"><ol class="sl-life">
+        <li>Clean the file</li><li>Run four checks</li><li>Compare with real clips</li><li>Give the answer</li>
+      </ol></div>
+    </div>
+  </section>
+
+  <section class="sl" id="clean" aria-labelledby="clean-h">
+    <div class="sl-in">
+      <div>
+        <p class="sl-step">Step 1 of 4</p>
+        <h2 class="sl-h2" id="clean-h">Clean the file.</h2>
+        <p class="sl-lead">Research datasets give away their labels through the file: format, length, silence. Every clip is rewritten the same way, so the checks must look at the face and the voice.</p>
+      </div>
+      <figure class="sl-frame sl-card">
+        <figcaption class="sl-sub">File details alone, before and after cleaning (AUC)</figcaption>
+        <div class="dumbbell">
+          {% for row in ceilings %}
+          {% set raw = ((row.raw - 0.5) / 0.5 * 100)|round(1) %}{% set clean = ((row.clean - 0.5) / 0.5 * 100)|round(1) %}
+          <div class="db-row">
+            <span class="db-name">{{ row.name }}</span>
+            <span class="db-track"><span class="db-seg" style="left:{{ clean }}%;width:{{ (raw - clean)|round(1) }}%"></span><span class="db-dot clean" style="left:{{ clean }}%"></span><span class="db-dot raw" style="left:{{ raw }}%"></span></span>
+            <span class="db-vals mono">{{ "%.3f"|format(row.raw) }} to {{ "%.3f"|format(row.clean) }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        <p class="key small"><span class="k raw">Raw files</span><span class="k clean">After cleaning</span><span>0.5 is chance</span></p>
+      </figure>
+    </div>
+  </section>
+
+  <section class="sl" id="checks" aria-labelledby="checks-h">
+    <div class="sl-in">
+      <div>
+        <p class="sl-step">Step 2 of 4</p>
+        <h2 class="sl-h2" id="checks-h">Run four checks.</h2>
+        <p class="sl-lead">Each looks for a different kind of fake. A label an AI tool wrote into the file counts too.</p>
+      </div>
+      <div class="sl-frame"><div class="sl-card sl-list">
+        <div><b>Face</b><span>Swapped faces, from 16 face crops</span></div>
+        <div><b>Generated</b><span>Faces made by AI video tools</span></div>
+        <div><b>Voice</b><span>Cloned or synthetic speech</span></div>
+        <div><b>Lip sync</b><span>Mouth and sound out of step</span></div>
+        <div><b>File audit</b><span>AI labels, such as C2PA</span></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="sl" id="sync" aria-labelledby="sync-h">
+    <div class="sl-in">
+      <div>
+        <h2 class="sl-h2" id="sync-h">Lip sync: the mouth against the sound.</h2>
+        <p class="sl-lead">The mouth opens as speech gets loud. In a dubbed clip the two drift apart. This check learned from real clips only.</p>
+      </div>
+      <figure class="sl-frame sl-card scope">
+        <svg data-trace viewBox="0 0 560 250" role="img" aria-label="Speech loudness and mouth opening over two seconds"></svg>
+        <div class="legend">
+          <span class="key"><span class="k sound">Loudness</span><span class="k face">Mouth</span></span>
+          <span class="toggle" role="group" aria-label="Example clip">
+            <button type="button" aria-pressed="true" data-mode="real">Real</button>
+            <button type="button" aria-pressed="false" data-mode="fake">Dubbed</button>
+          </span>
+        </div>
+        <figcaption class="readout small" data-readout>In a real clip, the mouth opens when the sound gets loud.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="sl" id="compare" aria-labelledby="compare-h">
+    <div class="sl-in">
+      <div>
+        <p class="sl-step">Step 3 of 4</p>
+        <h2 class="sl-h2" id="compare-h">Compare with real clips.</h2>
+        <p class="sl-lead">A raw score means little. Each one is placed among thousands of real clips. A long video is checked in 3-second parts, and its most unusual part decides.</p>
+      </div>
+      <div class="sl-frame"><div class="sl-card">
+        <div class="sl-row"><span>Face</span><span class="sl-bar"><i style="width:97%"></i><b></b></span><span>97</span></div>
+        <p class="sl-desc">Higher than 97 in 100 real clips.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="sl" id="answers" aria-labelledby="answers-h">
+    <div class="sl-in">
+      <div>
+        <p class="sl-step">Step 4 of 4</p>
+        <h2 class="sl-h2" id="answers-h">Give the answer.</h2>
+        <p class="sl-lead">The line is set so about 5 in 100 real clips get flagged.</p>
+        <div class="sl-actions"><a class="btn primary" href="/check">Try the detector</a><a class="btn ghost" href="/research">Read the research</a></div>
+      </div>
+      <div class="sl-frame"><dl class="sl-card answers">
+        <dt class="ans-signs">Signs of manipulation</dt><dd>Above about 95 in 100 real clips.</dd>
+        <dt>Can't tell</dt><dd>Above 80 in 100, under the line.</dd>
+        <dt>No signs found</dt><dd>Below that. Not proof it is real.</dd>
+        <dt>Can't check</dt><dd>No steady face, no speech, or a broken file.</dd>
+      </dl></div>
+    </div>
+  </section>
+</div>
+{% endblock %}
