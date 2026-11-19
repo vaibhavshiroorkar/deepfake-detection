@@ -54,6 +54,9 @@ def upload_limit() -> int:
 
 CALIBRATION = PROJECT_ROOT / "results" / "web-calibration.json"
 PICTURE_CALIBRATION = PROJECT_ROOT / "results" / "web-calibration-picture.json"
+# Which face and voice models are live, and the calibration files measured with them. Without the file,
+# or with DDF_WEB_MODELS=p001, the site runs the study's models and the two files above.
+WEB_MODELS = PROJECT_ROOT / "results" / "web-models.json"
 RESEND_URL = "https://api.resend.com/emails"
 
 PAGES = {
@@ -101,6 +104,30 @@ def percent_range(pattern: str) -> str:
     return f"{low}%" if low == high else f"{low} to {high}%"
 
 
+def live_rates() -> dict:
+    """Catch and false-alarm rates of the lines in force (results/web-models.json may swap models).
+
+    FakeAVCeleb is the corpus the study's models trained on; the others are the unseen sources.
+    """
+    rates = {}
+    for corpus, sides in calibration().meta["outcomes"].items():
+        for side, name in (("fake", "caught"), ("real", "flagged")):
+            counts = sides.get(side, {})
+            if sum(counts.values()):
+                rates[corpus, name] = counts.get("signs", 0) / sum(counts.values())
+
+    def span(values: list[float]) -> tuple[str, str]:
+        return f"{min(values):.0%}", f"{max(values):.0%}"
+
+    return {
+        "home_caught": f"{rates['FakeAVCeleb', 'caught']:.0%}",
+        "other_caught": span(
+            [v for (c, n), v in rates.items() if n == "caught" and c != "FakeAVCeleb"]
+        ),
+        "real_flagged": span([v for (c, n), v in rates.items() if n == "flagged"]),
+    }
+
+
 def _environment() -> Environment:
     env = Environment(
         loader=FileSystemLoader(TEMPLATES),
@@ -109,7 +136,13 @@ def _environment() -> Environment:
         trim_blocks=True,
         lstrip_blocks=True,
     )
-    env.globals.update(n=number, seeds=seed_range, pct=percent, pct_range=percent_range)
+    env.globals.update(
+        n=number,
+        seeds=seed_range,
+        pct=percent,
+        pct_range=percent_range,
+        live=live_rates,
+    )
     return env
 
 
@@ -258,21 +291,43 @@ def to_clip(source: Path, kind: str, target: Path) -> Path:
 # Detector -----------------------------------------------------------------------------------------
 
 
+def web_models() -> dict | None:
+    """The live model choice (results/web-models.json), or None for the study's models."""
+    if os.environ.get("DDF_WEB_MODELS") == "p001" or not WEB_MODELS.exists():
+        return None
+    return json.loads(WEB_MODELS.read_text(encoding="utf-8"))
+
+
 def make_scorer():
-    """The P-001 scorer. Loading takes about a minute: on the first upload, or at start with --preload-detector.
+    """The scorer. Loading takes about a minute: on the first upload, or at start with --preload-detector.
 
     CPU by default, the path checked against the study's scores; DDF_SCORER_DEVICE=cuda for a faster demo.
+    With results/web-models.json the face and voice models it names replace the study's.
     """
     from deepfake_detection.webapp.scorer import Scorer
 
-    return Scorer(device=os.environ.get("DDF_SCORER_DEVICE", "cpu"))
+    device = os.environ.get("DDF_SCORER_DEVICE", "cpu")
+    scorer = Scorer(device=device)
+    choice = web_models()
+    if choice is not None:
+        from deepfake_detection.webapp.candidates import website_models
+
+        scorer.replace = website_models(choice, PROJECT_ROOT, device)
+    return scorer
+
+
+def _calibration_file(kind: str) -> Path:
+    choice = web_models()
+    if choice is None:
+        return PICTURE_CALIBRATION if kind == "picture" else CALIBRATION
+    return PROJECT_ROOT / choice["calibration"][kind]
 
 
 @lru_cache(maxsize=1)
 def calibration():
     from deepfake_detection.webapp.calibration import Calibration
 
-    return Calibration.from_json(CALIBRATION.read_text(encoding="utf-8"))
+    return Calibration.from_json(_calibration_file("video").read_text(encoding="utf-8"))
 
 
 @lru_cache(maxsize=1)
@@ -280,9 +335,10 @@ def picture_calibration():
     """The face check's lines for still pictures (scripts/build_picture_calibration.py), or None if not built."""
     from deepfake_detection.webapp.calibration import Calibration
 
-    if not PICTURE_CALIBRATION.exists():
+    path = _calibration_file("picture")
+    if not path.exists():
         return None
-    return Calibration.from_json(PICTURE_CALIBRATION.read_text(encoding="utf-8"))
+    return Calibration.from_json(path.read_text(encoding="utf-8"))
 
 
 def require_calibration(kind: str) -> None:
@@ -326,8 +382,7 @@ def how_sure(kind: str = "video") -> str:
         )
     return (
         f"On the four test sets we calibrated on, about 5 in 100 real clips get this flag. The same "
-        f"threshold catches {low[0]:.0%} of fakes on {low[1]} and {high[0]:.0%} on {high[1]}: few from "
-        f"sources the models never trained on. For a video from anywhere else, 5 in 100 is an estimate."
+        f"threshold catches {low[0]:.0%} of fakes on {low[1]} and {high[0]:.0%} on {high[1]}. For a video from anywhere else, 5 in 100 is an estimate."
     )
 
 

@@ -11,6 +11,11 @@ From each of the four calibration corpora (the clips scripts/build_web_calibrati
 saved as a JPEG, as a camera picture would be, and goes through the website's own picture path
 (site.to_clip, then the scorer in picture mode). Real frames set the lines; fake frames are counted
 to say how many the lines catch. Writes results/web-calibration-picture.json.
+
+With --choice results/web-models.json the face model it puts live scores the frames, its scores go to
+their own file, and the calibration goes where the choice names it. With --shard i/n a worker scores
+every n-th frame from i into its own file and stops; a run without --shard reads every file, scores
+what is left and builds.
 """
 
 from __future__ import annotations
@@ -19,6 +24,7 @@ import argparse
 import csv
 import json
 import random
+import re
 import subprocess
 import sys
 import tempfile
@@ -113,16 +119,36 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--per-side", type=int, default=100)
     parser.add_argument("--device", default="cuda")
+    parser.add_argument("--choice", type=Path, default=None)
+    parser.add_argument("--shard", default="")
     arguments = parser.parse_args()
     scorer = Scorer(device=arguments.device)
+    scores_file, out = SCORES, ROOT / "results" / "web-calibration-picture.json"
+    choice = None
+    if arguments.choice is not None:
+        from deepfake_detection.webapp.candidates import website_models
+
+        choice = json.loads(arguments.choice.read_text(encoding="utf-8"))
+        scorer.replace = website_models(
+            {"face": choice["face"]}, ROOT, arguments.device
+        )
+        scores_file = SCORES.with_name(f"scores-{choice['face']['column']}.jsonl")
+        out = ROOT / choice["calibration"]["picture"]
     rows, skipped = [], 0
     clips = draw(arguments.per_side)
     SCORES.parent.mkdir(parents=True, exist_ok=True)
     done = {}
-    if SCORES.exists():
-        for line in SCORES.read_text(encoding="utf-8").splitlines():
+    own = re.compile(rf"{re.escape(scores_file.stem)}(-\d+-of-\d+)?\.jsonl")
+    for path in (p for p in SCORES.parent.iterdir() if own.fullmatch(p.name)):
+        for line in path.read_text(encoding="utf-8").splitlines():
             entry = json.loads(line)
             done[entry["clip_id"]] = entry
+    if arguments.shard:
+        index, count = (int(x) for x in arguments.shard.split("/"))
+        clips = clips[index::count]
+        scores_file = scores_file.with_name(
+            f"{scores_file.stem}-{index}-of-{count}.jsonl"
+        )
     for i, clip in enumerate(clips):
         if clip["clip_id"] in done:
             face = done[clip["clip_id"]]["face"]
@@ -169,7 +195,7 @@ def main() -> int:
             except ClipRefused:
                 parts = None
         face = parts[0].scores()["face"] if parts else None
-        with open(SCORES, "a", encoding="utf-8") as f:
+        with open(scores_file, "a", encoding="utf-8") as f:
             f.write(json.dumps({"clip_id": clip["clip_id"], "face": face}) + "\n")
         if face is None:
             skipped += 1
@@ -183,6 +209,9 @@ def main() -> int:
         )
         if i % 50 == 0:
             print(f"{i + 1}/{len(clips)}", flush=True)
+    if arguments.shard:
+        print(f"shard {arguments.shard} done", flush=True)
+        return 0
     calibration, summary = build(rows, checks=("face",))
     data = json.loads(calibration.to_json())
     data["meta"] = {
@@ -195,7 +224,8 @@ def main() -> int:
         "outcomes": summary,
         "note": "Calibration frames come from P-001 test data; the site uses them only to place scores.",
     }
-    out = ROOT / "results" / "web-calibration-picture.json"
+    if choice is not None:
+        data["meta"]["models"] = {"face": choice["face"]}
     out.write_text(json.dumps(data, indent=1) + "\n", encoding="utf-8")
     print(json.dumps({"no_face": skipped, "outcomes": summary}, indent=1))
     print(f"-> {out.relative_to(ROOT)}")

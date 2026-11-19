@@ -498,3 +498,34 @@ def test_picture_keys_come_from_the_picture_calibration(tmp_path):
         numbers["web.picture.no_face"]["source"]
         == "results/web-calibration-picture.json"
     )
+
+
+def test_v2_eval_keys_skip_sets_with_too_few_real_items(tmp_path):
+    module = _module(tmp_path)
+    out = tmp_path / "results" / "v2-eval"
+    out.mkdir(parents=True)
+    model = {"auc": 0.9, "auc_low": 0.8, "auc_high": 0.95, "caught_at_5pct": 0.7}
+    report = {
+        "ffpp": {
+            "items": 340,
+            "compared": 292,
+            "real": 121,
+            "fake": 171,
+            "models": {"face": model},
+        },
+        "df26voice": {
+            "items": 207,
+            "compared": 137,
+            "real": 1,
+            "fake": 136,
+            "models": {"voice": model},
+        },
+    }
+    (out / "report.json").write_text(json.dumps(report), encoding="utf-8")
+    numbers: dict = {}
+    module.v2_eval(numbers)
+    assert numbers["v2.ffpp.face.auc"]["value"] == 0.9
+    assert numbers["v2.ffpp.face.caught"]["value"] == 0.7
+    assert numbers["v2.ffpp.real"]["value"] == 121
+    assert numbers["v2.ffpp.face.auc"]["source"] == "results/v2-eval/report.json"
+    assert not any(key.startswith("v2.df26voice") for key in numbers)

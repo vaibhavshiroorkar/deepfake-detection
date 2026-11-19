@@ -1,2 +1,3 @@
 # Shell scripts run under bash on Linux and WSL, which rejects CRLF line ends.
 *.sh text eol=lf
+.githooks/* text eol=lf

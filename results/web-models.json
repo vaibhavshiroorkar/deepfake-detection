@@ -1,0 +1,13 @@
+{
+ "note": "Website models (not the study's). A check left out keeps the P-001 model. DDF_WEB_MODELS=p001 rolls back. Chosen 11-19 on results/v2-eval/report.json: AntiDeepfake XLS-R 1B beat the P-001 voice model on In-the-Wild, ASVspoof and Veo 3; no face candidate worked on DF26, so the face stays.",
+ "voice": {
+  "loader": "antideepfake",
+  "file": "models/pretrained/xls-r-1b-anti-deepfake/model.safetensors",
+  "sha256": "57da6a47234bb8aad0c61b7f575378a12c2734a30f1f395b95bbf97ed4ba5373",
+  "column": "voice_adf_xlsr1b"
+ },
+ "calibration": {
+  "video": "results/web-calibration-v2.json",
+  "picture": "results/web-calibration-picture.json"
+ }
+}

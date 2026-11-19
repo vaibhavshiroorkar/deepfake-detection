@@ -566,3 +566,31 @@ def test_the_detector_lives_on_the_check_page_not_the_home_page(client):
     assert "data-detector" not in home
     assert 'href="/check"' in home
     assert "data-detector" in client.get("/check").text
+
+
+def test_home_rates_come_from_the_lines_in_force(monkeypatch):
+    """The home page must quote the calibration the site runs on, not the study's numbers."""
+    from types import SimpleNamespace
+
+    meta = {
+        "outcomes": {
+            "FakeAVCeleb": {
+                "real": {"no_signs": 10},
+                "fake": {"signs": 3, "no_signs": 1},
+            },
+            "DFDC": {
+                "real": {"signs": 1, "no_signs": 9},
+                "fake": {"signs": 1, "no_signs": 9},
+            },
+            "HiFi-AVDF": {
+                "real": {"signs": 2, "no_signs": 8},
+                "fake": {"signs": 6, "no_signs": 4},
+            },
+        }
+    }
+    monkeypatch.setattr(site, "calibration", lambda: SimpleNamespace(meta=meta))
+    assert site.live_rates() == {
+        "home_caught": "75%",
+        "other_caught": ("10%", "60%"),
+        "real_flagged": ("0%", "20%"),
+    }

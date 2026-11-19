@@ -25,17 +25,17 @@
     <div class="bento">
       <div class="b mid">
         <div class="lbl">Fakes of the kinds it learned</div>
-        <div class="stat ok mono">{{ pct("web.outcomes.fakeavceleb.fake.caught") }}</div>
+        <div class="stat ok mono">{{ live().home_caught }}</div>
         <p>caught, on people it never saw: face swaps, redrawn mouths and cloned voices.</p>
       </div>
       <div class="b mid">
         <div class="lbl">Fakes from newer tools and other sources</div>
-        <div class="stat bad mono">{{ pct("web.outcomes.dfdc.fake.caught") }} to {{ pct("web.outcomes.lavdf.fake.caught") }}</div>
-        <p>caught. This is the hard part: it misses most fakes made in ways it has not seen.</p>
+        <div class="stat bad mono">{{ live().other_caught[0] }} to {{ live().other_caught[1] }}</div>
+        <p>caught, depending on the source. The voice model catches most fully generated videos; the face model misses them.</p>
       </div>
       <div class="b mid">
         <div class="lbl">Real videos wrongly flagged</div>
-        <div class="stat mono">{{ pct("web.outcomes.fakeavceleb.real.flagged") }} to {{ pct("web.outcomes.hifiavdf.real.flagged") }}</div>
+        <div class="stat mono">{{ live().real_flagged[0] }} to {{ live().real_flagged[1] }}</div>
         <p>depending on where the video comes from; about 5 in 100 on average.</p>
       </div>
       <div class="b mid">

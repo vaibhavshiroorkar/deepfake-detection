@@ -18,6 +18,8 @@ The demo, the PPT, the overnight checks and `docs/SECURITY.md` are done and merg
 
 3. Check the study's cleaned clips for the same assumption: `neutralize_clip(start=None)` judges "enough sound" from the container's length, so a source whose audio ends early could have given a cleaned clip under 3.00 s. Count cleaned clips shorter than 3.00 s in `data/neutral`; if any, say so in the report's limitations.
 
+**Claude, after the 20th: website models, next stage.** The voice swap is done (changelog). Open: (1) score Vaibhav's own phone and laptop recordings, real and voice-cloned, as a held-out set (names like `real_phone_vaibhav_01.mp4`); never train on them. (2) A face model trained on face swaps and generated video together, judged on DF26 and Veo 3; no tested face model works on DF26. (3) Multi-dataset fine-tuning of the voice model only if (1) shows false alarms on real recordings. DF26 and MNW stay evaluation-only. (4) LAV-DF word edits dropped from 37% to 8% caught with the new voice model; check whether the lip-sync model can carry them.
+
 **Claude, also:**
 
 - On request: answer Overleaf compile errors; adjust slides or the demo after Vaibhav's review and rehearsal.
@@ -63,6 +65,7 @@ Chosen 11-16: prepare the rebuild now, with no GPU and no change to anything H2 
   - that the slide master from the October deck is still the college's current one.
 - Ask the guide what "Batch" means on the report. It is set to 2023-27; the academic year is 2026-27.
 - Upload `deliverables/build/overleaf/report.zip` and `paper.zip` to Overleaf, compile with pdfLaTeX, and send any error.
+- Copy `fig_flow1.png` to `fig_flow7.png` from the Overleaf project into `deliverables/figures/` and commit them; until then `deliverables/overleaf.py` builds the report with framed placeholders for those seven flowcharts.
 - Read the paper and the slides and challenge every claim. Practise the talk once with the speaker notes.
 - Decide whether to delete `mlartifacts/`, `mlruns/` and `mlflow.db` (6.8 GB of September to October tracking records) and `dist/` (an old package build and the October `final-report.pdf`).
 - Send the DeepSpeak reminder around 11-22 if there is no answer. Forward any reply from AV-Deepfake1M, AV-Deepfake1M++ or KoDF.

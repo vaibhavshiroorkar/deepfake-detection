@@ -1,6 +1,6 @@
 # Exhibition demo, 20 November
 
-The live demo is the website's detector. You upload a short video of one person speaking. The site first reads the file for AI labels, then checks the whole video in 3-second parts (about 20 seconds per part on the PC, so 40 to 80 seconds for these clips), and answers with one of four outcomes and shows which check raised it: the face, the voice or the lip sync. It runs on the home PC and you open it on the laptop through Tailscale.
+The live demo is the website's detector. You upload a short video of one person speaking. The site first reads the file for AI labels, then checks the whole video in 3-second parts (about 24 seconds per part on the PC's processor, measured 11-19 with the new voice model, so 50 to 100 seconds for these clips), and answers with one of four outcomes and shows which check raised it: the face, the voice or the lip sync. It runs on the home PC and you open it on the laptop through Tailscale.
 
 ## One-time setup (the 18th)
 
@@ -34,29 +34,29 @@ the local network: allow it.
 
 ## Running order (about 5 minutes)
 
-Each outcome below was measured on 11-18 with whole-video checking, on the PC's processor, as the site runs (`docs/demo-clips.csv`). These clips were **chosen to show each outcome**; they say nothing about accuracy, which the paper measures on thousands of clips.
+Each outcome below was measured on 11-19 with the website's current models (voice: AntiDeepfake XLS-R 1B, since 11-19) and whole-video checking, on the PC's processor, as the site runs (`docs/demo-clips.csv`). These clips were **chosen to show each outcome**; they say nothing about accuracy, which the paper measures on thousands of clips.
 
 | # | Clip (in `upload/`) | What it is | Expected answer | Raised by |
 |---|---|---|---|---|
 | 1 | `FakeAVCeleb_real_A__id07161__00159.mp4` | Real person, real voice | No signs found | |
-| 2 | `FakeAVCeleb_cloned-voice_B__id00946__00126_fake.mp4` | Real face, cloned voice | Signs of manipulation | voice, lip sync |
+| 2 | `FakeAVCeleb_cloned-voice_B__id00946__00126_fake.mp4` | Real face, cloned voice | Signs of manipulation | voice |
 | 3 | `FakeAVCeleb_FSGAN-face-swap_C__id00088__00005_id00060_gZ4RkcQ0SXE.mp4` | Face swapped (FSGAN), real voice | Signs of manipulation | face |
 | 4 | `FakeAVCeleb_lip-sync-Wav2Lip_C__id06443__00232_id09181_wavtolip.mp4` | Mouth regenerated to new speech (Wav2Lip) | Can't tell (3 parts raise the bar) | |
 | 5 | `FakeAVCeleb_face-swap-+-Wav2Lip-cloned-voice_D__id00395__00420_id00823_KgExwCvgrUk_faceswap_id00897_wavtolip.mp4` | Face, mouth and voice all fake | Signs of manipulation | face, voice |
 | 6 | `HiFi-AVDF_real_hifiavdf__veo3.1__246.mp4` | Real clip from a modern corpus | No signs found | |
-| 7 | `HiFi-AVDF_generated-sora2_hifiavdf__sora2__1305_generated.mp4` | Whole clip made by Sora 2 | No signs found (a miss) | |
+| 7 | `HiFi-AVDF_generated-sora2_hifiavdf__sora2__1305_generated.mp4` | Whole clip made by Sora 2 | Signs of manipulation | voice |
 
 **What to say at each step:**
 
 1. "A real clip. The three checks place it among thousands of real clips; nothing stands out."
-2. "The lips are real but the voice is cloned. The voice check flags it, and the lip-sync check sees that the lips do not match the words."
+2. "The lips are real but the voice is cloned. The voice check flags it. The lip-sync check also scores it high, because the lips do not match the words."
 3. "A face swap with the real voice. The face check flags it. The voice is real, so the voice check does not."
 4. "Wav2Lip redraws the mouth to fit new audio. The face and lip-sync checks both score it above 99 in 100 real clips. That would flag a 3-second clip, but this video has three parts, and each part is another chance for a real video to look odd by accident, so the bar is higher. It lands on can't tell. We chose to raise the bar rather than flag real long videos."
 5. "Everything is fake. The face and voice checks both flag it."
 6. "A real clip from a newer dataset the models never saw: still no signs."
-7. "Sora 2 makes the picture and the sound together, so the lips already match the voice. Our detector misses it. That is one of the paper's findings: on modern generators, accuracy drops close to chance. We report it instead of hiding it."
+7. "Sora 2 makes the picture and the sound together, so the lips already match the voice and the face check sees nothing. The voice check catches it: the website's voice model was trained on many speech datasets, and on our tests it caught 96 in 100 Veo 3 voices. The study's own voice model caught 12, which is the paper's finding: a model trained on one dataset misses modern generators."
 
-Then open "How sure?" on any result: it says how often real clips get this flag (about 5 in 100) and how few fakes from new sources it catches.
+Then open "How sure?" on any result: it says how often real clips get this flag (about 5 in 100) and how many fakes it catches on each test dataset.
 
 **Recording on the spot:** below the drop box, Record video, Record voice and Take a picture use the laptop's camera and microphone (the browser asks once). A voice runs only the voice check; a picture only the face check. Measured 11-18 on a real person: their voice gave no signs and a cloned voice gave signs. Pictures have their own calibration since 11-19 (`results/web-calibration-picture.json`), because a still frame judged against video looked fake. Checked 11-19 on frames of the demo clips: the three real faces gave no signs; of four face-swap frames, three gave signs and one can't tell. A picture is a rough guide: on still frames the face model catches about a third of FakeAVCeleb fakes and none from DFDC or HiFi-AVDF, so show the video demo first.
 
@@ -75,3 +75,5 @@ Then open "How sure?" on any result: it says how often real clips get this flag 
 ## The PPT
 
 `deliverables/build/Deepfake_Detection_Presentation.pdf` and `.pptx`: exactly the college's 13 slides (title, introduction, need, literature review, three on methodology, two on results, discussion and future scope, conclusions, awards and publications, bibliography). Each slide states one point in its headline and shows it with one visual; what to say is in the speaker notes.
+
+**Rollback:** if the new voice model misbehaves on the day, start the site with the study's models: set `DDF_WEB_MODELS=p001` in the terminal before `scripts/demo_host.ps1 -Action start`.

@@ -104,10 +104,18 @@ def _clock(seconds: float) -> str:
 
 
 def explain_face(
-    models: list[nn.Module], frames: torch.Tensor, times, offset: float, top: int = 3
+    models: list[nn.Module] | None,
+    frames: torch.Tensor,
+    times,
+    offset: float,
+    top: int = 3,
+    maps=None,
 ) -> dict:
-    """The `top` frames with the most evidence, each with its time in the upload, heatmap and region."""
-    cams, share = grad_cam(models, frames)
+    """The `top` frames with the most evidence, each with its time in the upload, heatmap and region.
+
+    `maps(frames)` replaces Grad-CAM for a face model without convolutions (it returns the same pair).
+    """
+    cams, share = maps(frames) if maps is not None else grad_cam(models, frames)
     strongest = share.max() if share.max() > 0 else 1.0
     order = np.argsort(-share, kind="stable")[:top]
     cited = [

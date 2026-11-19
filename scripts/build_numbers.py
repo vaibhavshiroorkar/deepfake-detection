@@ -565,6 +565,10 @@ def a19(numbers: dict) -> None:
         _put(numbers, f"{key}.reading", reading, path)
 
 
+V2_MIN_ITEMS = (
+    50  # a v2 set needs this many real and fake items compared to be reported
+)
+
 PARTS_SHOWN = (
     1,
     2,
@@ -604,6 +608,24 @@ def picture(numbers: dict) -> None:
     _put(numbers, "web.picture.real.frames", frames, path)
     _put(numbers, "web.picture.real.flagged", round(flagged / frames, 3), path)
     _put(numbers, "web.picture.no_face", meta["no_face"], path)
+
+
+def v2_eval(numbers: dict) -> None:
+    """Candidate website models on the fixed v2 sets (scripts/report_v2_eval.py).
+
+    A set with fewer than 50 real or fake items compared is left out: its AUC says little.
+    """
+    path = RESULTS / "v2-eval" / "report.json"
+    if not path.exists():
+        return
+    for name, block in json.loads(path.read_text(encoding="utf-8")).items():
+        if min(block["real"], block["fake"]) < V2_MIN_ITEMS:
+            continue
+        _put(numbers, f"v2.{name}.real", block["real"], path)
+        _put(numbers, f"v2.{name}.fake", block["fake"], path)
+        for model, m in block["models"].items():
+            _put(numbers, f"v2.{name}.{model}.auc", m["auc"], path)
+            _put(numbers, f"v2.{name}.{model}.caught", m["caught_at_5pct"], path)
 
 
 def website(numbers: dict) -> None:
@@ -669,6 +691,7 @@ def main() -> int:
     a19(numbers)
     website(numbers)
     picture(numbers)
+    v2_eval(numbers)
     file_check(numbers)
     out = RESULTS / "numbers.json"
     out.write_text(
