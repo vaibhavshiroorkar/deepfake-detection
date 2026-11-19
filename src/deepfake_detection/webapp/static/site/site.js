@@ -162,9 +162,9 @@
       time = Math.min(Math.max(time, 0), end);
       cursor.style.left = time / end * 100 + "%";
       const part = partAt(timeline, time);
-      const names = { face: "face", voice: "voice", sync: "lip sync" };
-      const scores = Object.entries(part.checks).filter(([, v]) => v != null)
-        .map(([k, v]) => names[k] + " " + fmt(v)).join(", ");
+      // Named from CHECKS, the list the rows use, so every check the server sends has a name.
+      const scores = CHECKS.filter(([k]) => part.checks[k] != null)
+        .map(([k, label]) => label.toLowerCase() + " " + fmt(part.checks[k])).join(", ");
       readout.textContent = clock(time) + "  part " + clock(part.start) + " to " + clock(part.end) + ": "
         + (scores || "no model could run") + (part.reading != null
           ? "  (flag line " + fmt(lines.flag) + ")" : "");
@@ -333,9 +333,48 @@
     return { status: "error", reason: "The check took too long. Please try again later." };
   }
 
+  /* The chosen file replaces the upload box: a preview while it is checked, then the answer below it. */
+  function showPicked(root, file) {
+    const picked = root.querySelector("[data-picked]");
+    const media = root.querySelector("[data-picked-media]");
+    if (media.dataset.url) URL.revokeObjectURL(media.dataset.url);
+    media.replaceChildren();
+    const kind = (file.type || "").split("/")[0];
+    const url = URL.createObjectURL(file);
+    media.dataset.url = url;
+    const node = el(kind === "image" ? "img" : kind === "audio" ? "audio" : "video");
+    node.src = url;
+    if (kind === "image") node.alt = "The picture you chose";
+    else { node.controls = true; node.playsInline = true; node.preload = "auto"; }
+    media.append(node);
+    media.hidden = false;
+    root.querySelector("[data-picked-name]").textContent = file.name || "Your recording";
+    picked.hidden = false;
+    root.querySelectorAll("[data-drop], .live-buttons, [data-live-panel]").forEach((n) => { n.hidden = true; });
+  }
+
+  function reset(root) {
+    root.dataset.token = String(Number(root.dataset.token || 0) + 1);
+    const media = root.querySelector("[data-picked-media]");
+    if (media.dataset.url) URL.revokeObjectURL(media.dataset.url);
+    delete media.dataset.url;
+    media.replaceChildren();
+    root.querySelector("[data-picked]").hidden = true;
+    root.querySelector("[data-status]").textContent = "";
+    const card = root.querySelector("[data-result]");
+    card.replaceChildren();
+    card.hidden = true;
+    root.querySelector("[data-file]").value = "";
+    root.querySelectorAll("[data-drop], .live-buttons").forEach((n) => { n.hidden = false; });
+  }
+
   async function submit(root, file, mode) {
     const status = root.querySelector("[data-status]");
     const card = root.querySelector("[data-result]");
+    const token = String(Number(root.dataset.token || 0) + 1);
+    root.dataset.token = token;
+    const current = () => root.dataset.token === token;
+    showPicked(root, file);
     card.hidden = true;
     if (file.size > MAX_MB * 1024 * 1024) {
       status.textContent = "";
@@ -353,9 +392,13 @@
         status.textContent = STAGES.received + "...";
         data = await follow(status, data.job);
       }
+      if (!current()) return;
       status.textContent = "";
       render(card, data, file);
+      // The answer carries its own preview with the timeline; keep only the name and the buttons above it.
+      if (card.querySelector(".preview")) root.querySelector("[data-picked-media]").hidden = true;
     } catch (error) {
+      if (!current()) return;
       status.textContent = "";
       render(card, { status: "rejected", reason: API
         ? "The detector is offline right now: it runs on our own computer, which may be switched off. Try again later."
@@ -367,6 +410,8 @@
     const drop = root.querySelector("[data-drop]");
     const input = root.querySelector("[data-file]");
     input.addEventListener("change", () => input.files[0] && submit(root, input.files[0]));
+    root.querySelector("[data-remove]").addEventListener("click", () => reset(root));
+    root.querySelector("[data-new]").addEventListener("click", () => { reset(root); input.click(); });
     ["dragenter", "dragover"].forEach((name) => drop.addEventListener(name, (event) => {
       event.preventDefault();
       drop.classList.add("over");
