@@ -32,8 +32,11 @@ TEMPLATES = Path(__file__).parent / "templates" / "site"
 STATIC_SITE = Path(__file__).parent / "static" / "site"
 SEEDS = (17, 29, 43)
 
-MAX_UPLOAD_MB = 90
-MIN_SECONDS, MAX_SECONDS = 3.0, 60.0
+MAX_UPLOAD_MB = 300  # several minutes of 1080p phone video (raised from 90 on 11-20)
+MIN_SECONDS, MAX_SECONDS = (
+    3.0,
+    600.0,
+)  # a long video is checked in at most 20 parts (scorer.MAX_PARTS)
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".webm"}
 AUDIO_EXTENSIONS = {".wav", ".mp3", ".m4a", ".ogg", ".opus", ".webm"}
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
@@ -270,7 +273,7 @@ def check_clip_rules(info: dict) -> float:
         raise ClipRejected("The video's length could not be read.") from error
     if not MIN_SECONDS <= duration <= MAX_SECONDS:
         raise ClipRejected(
-            f"The video must be {MIN_SECONDS:.0f} to {MAX_SECONDS:.0f} seconds long; this one is {duration:.1f} s."
+            f"The video must be 3 seconds to 10 minutes long; this one is {duration:.1f} s."
         )
     return duration
 
@@ -475,6 +478,16 @@ def where(outcome: dict) -> str:
             outcome | {"input": "video"}
         ).replace("video", "recording")
     span = f"{_clock(part['start'])} to {_clock(part['end'])}"
+    timeline = outcome.get("timeline") or []
+    spread_out = any(
+        b["start"] - a["end"] > 0.5
+        for a, b in zip(timeline, timeline[1:], strict=False)
+    )
+    if spread_out:
+        return (
+            f"The video is long, so {parts} parts of 3 seconds, spread across it, were checked. "
+            f"The most unusual part, {span}, is shown."
+        )
     if parts == 1:
         return f"The video has 3 seconds of sound, checked as one part ({span})."
     return f"The whole video was checked in {parts} parts of 3 seconds. The most unusual part, {span}, is shown."

@@ -90,11 +90,28 @@ class Describer:
             return_tensors="pt",
         ).to("cuda")
         with torch.inference_mode():
-            out = self._model.generate(**inputs, max_new_tokens=90, do_sample=False)
+            out = self._model.generate(**inputs, max_new_tokens=70, do_sample=False)
         text = self._processor.batch_decode(
             out[:, inputs["input_ids"].shape[1] :], skip_special_tokens=True
         )[0]
-        return " ".join(text.split())
+        return tidy(" ".join(text.split()))
+
+
+def tidy(text: str, most: int = 2) -> str:
+    """At most `most` sentences, and none that repeats an earlier one's words (found 11-20: the model
+    restated the heatmap sentence)."""
+    import re
+
+    kept, seen = [], []
+    for sentence in re.split(r"(?<=[.!?])\s+", text.strip()):
+        words = set(re.findall(r"[a-z']+", sentence.lower()))
+        if not words or any(len(words & s) / len(words) > 0.6 for s in seen):
+            continue
+        kept.append(sentence)
+        seen.append(words)
+        if len(kept) == most:
+            break
+    return " ".join(kept)
 
 
 _describer = Describer()

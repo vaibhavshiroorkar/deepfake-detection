@@ -70,3 +70,13 @@ def test_scorer_reproduces_the_recorded_study_scores(scorer, clip_id, tmp_path) 
             ), (check, seed)
     assert len(report.trace["loudness_db"]) == 50
     assert [w["start"] for w in report.trace["windows"]] == [0.0, 1.0]
+
+
+def test_a_long_video_is_checked_in_at_most_twenty_parts_spread_evenly():
+    from deepfake_detection.webapp.scorer import MAX_PARTS, spread
+
+    parts = [(3.0 * i, 3.0 * i + 3) for i in range(200)]  # a 10-minute video
+    chosen = spread(parts, MAX_PARTS)
+    assert MAX_PARTS == 20 and len(chosen) == 20
+    assert chosen[0] == parts[0] and chosen[-1] == parts[-1]
+    assert spread(parts[:5], MAX_PARTS) == parts[:5]

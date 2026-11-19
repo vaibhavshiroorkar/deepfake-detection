@@ -56,6 +56,17 @@ def verified_avhubert(path: Path) -> Path:
     return path
 
 
+MAX_PARTS = 20  # parts checked at most; a longer video is checked at parts spread evenly across it
+
+
+def spread(parts: list[tuple[float, float]], most: int) -> list[tuple[float, float]]:
+    """At most `most` of `parts`, spread evenly from the first to the last, so check time has a ceiling."""
+    if len(parts) <= most:
+        return parts
+    step = (len(parts) - 1) / (most - 1)
+    return [parts[round(i * step)] for i in range(most)]
+
+
 class ClipRefused(ValueError):
     """The clip cannot be checked at all, with a reason a visitor can read."""
 
@@ -169,7 +180,7 @@ class Scorer:
         parts = (
             [(0.0, 3.0)]
             if mode == "picture"
-            else plan_windows(upload, NeutralSettings())
+            else spread(plan_windows(upload, NeutralSettings()), MAX_PARTS)
         )
         if not parts:
             raise ClipRefused(

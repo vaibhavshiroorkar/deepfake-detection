@@ -20,7 +20,7 @@
     cant_check: { cls: "cant", text: "Can't check" },
   };
   const CHECKS = [["face", "Face"], ["voice", "Voice"], ["sync", "Lip sync"]];
-  const MAX_MB = 90;
+  const MAX_MB = 300;
   // The static frontend names the PC's API in a meta tag; served by the PC itself, the API is this origin.
   const API = (document.querySelector('meta[name="ddf-api"]') || {}).content || "";
 
@@ -146,7 +146,7 @@
     const line = el("summary", "cline");
     line.append(el("span", "cname", "File audit"),
       el("span", "cfile", labels.length ? "Suspicious" : "Clean"),
-      el("span", "cval mono", labels.length ? "AI label" : "no AI label"));
+      el("span", "cval mono", ""));
     file.append(line);
     const body = aboutBody(about.file, true);
     for (const text of labels) body.prepend(el("p", "strong", "The file carries " + text + "."));
@@ -190,7 +190,7 @@
       media.src = url;
       media.controls = true;
       media.playsInline = true;
-      media.preload = "metadata";
+      media.preload = "auto"; // the first frame shows at once, not a black box
       box.append(media);
     }
     if (!timeline.length || !lines || kind === "image") return box;
@@ -278,9 +278,9 @@
         card.append(what);
       }
       if (data.summary) card.append(el("p", "", data.summary));
-      if (data.where) card.append(el("p", "where", data.where));
       if (data.overall != null && data.lines) card.append(overallMeter(data.overall, data.lines));
       if (file && data.outcome !== "cant_check") card.append(preview(file, data));
+      if (data.where) card.append(el("p", "where small", data.where));
       const heat = explainView(data.explain, card, !!(data.checks && data.checks.face && data.checks.face.raised));
       if (heat) card.append(heat);
       card.append(checkRows(data));
@@ -294,12 +294,10 @@
     if (!explain || !explain.frames || !explain.frames.length) return null;
     const box = el("figure", "heatbox");
     const focus = explain.focus;
-    const lead = el("p", "heatlead" + (faceRaised ? " raised" : ""));
+    const lead = el("p", "heatlead");
     if (focus) {
       const place = focus.region + (focus.side === "centre" ? "" : ", " + focus.side);
-      lead.append(faceRaised ? "The face model flagged this video. Its evidence points to the " :
-        "The face model did not flag this video. It looked hardest at the ");
-      lead.append(el("strong", "", place), ", at " + clock(focus.time) + ".");
+      lead.append("Our face model looked hardest at the ", el("strong", "", place), ", at " + clock(focus.time) + ".");
     } else {
       lead.textContent = explain.summary || "";
     }

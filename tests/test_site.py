@@ -84,13 +84,16 @@ def test_seed_range_and_percent_formats():
         ),
         (
             {"streams": [{"codec_type": "video"}], "format": {"duration": "2.0"}},
-            "3 to 60 seconds",
+            "3 seconds to 10 minutes",
         ),
         (
-            {"streams": [{"codec_type": "video"}], "format": {"duration": "61"}},
-            "3 to 60 seconds",
+            {"streams": [{"codec_type": "video"}], "format": {"duration": "601"}},
+            "3 seconds to 10 minutes",
         ),
-        ({"streams": [{"codec_type": "video"}], "format": {}}, "3 to 60 seconds"),
+        (
+            {"streams": [{"codec_type": "video"}], "format": {}},
+            "3 seconds to 10 minutes",
+        ),
     ],
 )
 def test_clip_rules_reject(info, message):
@@ -634,3 +637,34 @@ def test_an_older_calibration_without_counts_gives_no_rates(monkeypatch):
         site, "calibration", lambda: SimpleNamespace(meta={"outcomes": {}})
     )
     assert site.check_info()["face"]["caught"] == []
+
+
+def test_a_ten_minute_video_and_a_300_mb_file_are_allowed():
+    info = {
+        "streams": [{"codec_type": "video"}, {"codec_type": "audio"}],
+        "format": {"duration": "600"},
+    }
+    assert site.check_clip_rules(info) == 600.0
+    assert site.MAX_UPLOAD_MB == 300
+
+
+def test_a_long_video_says_its_parts_were_spread_out():
+    spread = {
+        "input": "video",
+        "parts": 3,
+        "part": {"start": 0.0, "end": 3.0},
+        "timeline": [
+            {"start": 0.0, "end": 3.0},
+            {"start": 100.0, "end": 103.0},
+            {"start": 200.0, "end": 203.0},
+        ],
+    }
+    assert "spread across" in site.where(spread)
+    whole = spread | {
+        "timeline": [
+            {"start": 0.0, "end": 3.0},
+            {"start": 3.0, "end": 6.0},
+            {"start": 6.0, "end": 9.0},
+        ]
+    }
+    assert "whole video" in site.where(whole)
