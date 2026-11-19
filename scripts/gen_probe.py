@@ -91,7 +91,7 @@ def external(model, cut: float) -> dict:
                 )
             if g == "vaibhav":
                 entry["scores"] = {
-                    Path(v_path).name: round(v["score"], 3)
+                    Path(v_path).name: round(max(v["scores"]), 3)
                     for v_path, v in per_video.items()
                     if v["group"] == g and v["scores"]
                 }
