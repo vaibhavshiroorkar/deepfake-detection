@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deepfake Check, home: B Soft shapes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Demo B, "Soft shapes": a pale cool page, white cards resting on soft pastel shapes, and the hero's three
+   possible answers fanned like cards on a table. The shapes stand for the three checks' colours. */
+:root {
+  --page: #f6f7fb; --ink: #1a1c24; --muted: #646a78; --white: #ffffff; --line: #e3e6ee;
+  --lilac: #e7e3ff; --mint: #d9f3e7; --sky: #dceafe; --peach: #ffe4d6;
+  --fake: #e5484d; --unsure: #e79c12; --real: #2f9e64;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 400 17px/1.6 "Figtree", system-ui, sans-serif; }
+h1, h2, h3, .display { font-family: "Bricolage Grotesque", "Figtree", sans-serif; }
+a { color: inherit; }
+.wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+nav { display: flex; align-items: center; gap: 26px; height: 76px; }
+.logo { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 19px; text-decoration: none; display: flex; gap: 10px; align-items: center; }
+.logo svg { width: 26px; height: 26px; }
+nav .links { display: flex; gap: 22px; font-size: 15px; }
+nav .links a { text-decoration: none; color: var(--muted); }
+nav .end { margin-left: auto; }
+.pill { display: inline-flex; align-items: center; height: 48px; padding: 0 24px; border-radius: 999px; font: 600 16px/1 "Figtree", sans-serif; text-decoration: none; }
+.pill.dark { background: var(--ink); color: #fff; }
+.pill.ghost { background: var(--white); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+.pill:focus-visible { outline: 3px solid #5b6cff; outline-offset: 3px; }
+
+.hero { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; padding: 56px 0 80px; }
+.hero h1 { font-size: clamp(46px, 6.4vw, 84px); font-weight: 800; letter-spacing: -0.035em; line-height: 0.95; margin: 0 0 22px; }
+.hero p { color: var(--muted); font-size: 19px; max-width: 38ch; margin: 0 0 30px; }
+.hero .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* The fan: three answers the site can give, on soft shapes */
+.fan { position: relative; height: 520px; }
+.blob { position: absolute; border-radius: 48% 52% 44% 56% / 52% 46% 54% 48%; }
+.blob.a { width: 340px; height: 300px; background: var(--lilac); top: 20px; right: 10px; }
+.blob.b { width: 260px; height: 240px; background: var(--mint); bottom: 10px; left: 0; }
+.blob.c { width: 180px; height: 170px; background: var(--peach); bottom: 70px; right: 40px; border-radius: 50%; }
+.answer { position: absolute; width: 300px; background: var(--white); border-radius: 22px; padding: 20px; box-shadow: 0 30px 60px -30px rgba(26, 28, 36, 0.35); }
+.answer h4 { margin: 0 0 4px; font: 700 19px/1.2 "Bricolage Grotesque", sans-serif; }
+.answer small { color: var(--muted); font-size: 13.5px; display: block; margin-bottom: 14px; }
+.meter { height: 12px; border-radius: 6px; background: #eef0f5; position: relative; overflow: hidden; }
+.meter i { position: absolute; inset: 0 auto 0 0; border-radius: 6px; }
+.meter b { position: absolute; top: 0; bottom: 0; left: 60%; width: 2px; background: var(--ink); opacity: .55; }
+.answer .num { font: 700 28px/1 "Bricolage Grotesque", sans-serif; float: right; margin-top: -2px; }
+.answer.one { top: 40px; left: 30px; transform: rotate(-6deg); }
+.answer.two { top: 190px; left: 150px; transform: rotate(3deg); z-index: 2; }
+.answer.three { top: 330px; left: 50px; transform: rotate(-2deg); }
+
+section.block { padding: 100px 0 0; }
+.section-h { font-size: clamp(34px, 4.6vw, 54px); font-weight: 800; letter-spacing: -0.03em; line-height: 1; margin: 0 0 14px; max-width: 18ch; }
+.section-p { color: var(--muted); max-width: 52ch; margin: 0 0 44px; }
+
+.flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.tile { background: var(--white); border-radius: 30px; padding: 30px; position: relative; overflow: hidden; min-height: 320px; }
+.tile .shape { position: absolute; right: -40px; bottom: -40px; width: 180px; height: 180px; border-radius: 50%; }
+.tile:nth-child(1) .shape { background: var(--sky); }
+.tile:nth-child(2) .shape { background: var(--lilac); border-radius: 40px; transform: rotate(18deg); }
+.tile:nth-child(3) .shape { background: var(--mint); border-radius: 48% 52% 44% 56% / 52% 46% 54% 48%; }
+.tile .n { font: 800 64px/1 "Bricolage Grotesque", sans-serif; color: #d6dae4; }
+.tile h3 { font-size: 24px; letter-spacing: -0.015em; margin: 6px 0 8px; position: relative; }
+.tile p { color: var(--muted); margin: 0; position: relative; max-width: 30ch; }
+
+.anatomy { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 24px; align-items: stretch; }
+.anatomy .copy { background: var(--sky); border-radius: 32px; padding: 36px; }
+.anatomy .copy h3 { font-size: 30px; letter-spacing: -0.02em; margin: 0 0 18px; }
+.anatomy dl { margin: 0; display: grid; gap: 14px; }
+.anatomy dt { font-weight: 600; }
+.anatomy dd { margin: 2px 0 0; color: #3f4555; }
+.result { background: var(--white); border-radius: 32px; padding: 30px; }
+.result .verdict { font: 800 24px/1.1 "Bricolage Grotesque", sans-serif; color: var(--fake); }
+.result .desc { margin: 12px 0 18px; color: #3f4555; }
+.check { display: grid; grid-template-columns: 96px 1fr 40px; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.check .meter { height: 8px; }
+.check span:last-child { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.gens { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.gens span { background: var(--page); border-radius: 999px; padding: 5px 11px; font-size: 13px; }
+.gens span.top { background: #fde5e5; }
+
+.numbers { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 18px; }
+.num-card { border-radius: 30px; padding: 30px; }
+.num-card b { display: block; font: 800 56px/1 "Bricolage Grotesque", sans-serif; letter-spacing: -0.03em; margin-bottom: 10px; }
+.num-card:nth-child(1) { background: var(--mint); }
+.num-card:nth-child(2) { background: var(--peach); }
+.num-card:nth-child(3) { background: var(--lilac); }
+
+.closing { margin: 110px 0 0; background: var(--ink); color: #fff; border-radius: 40px; padding: 72px 40px; text-align: center; position: relative; overflow: hidden; }
+.closing h2 { font-size: clamp(36px, 5vw, 60px); font-weight: 800; letter-spacing: -0.03em; line-height: 1; margin: 0 auto 16px; max-width: 16ch; }
+.closing p { color: #c4c8d4; margin: 0 auto 28px; max-width: 46ch; }
+.closing .pill { background: #fff; color: var(--ink); }
+.closing::before, .closing::after { content: ""; position: absolute; border-radius: 50%; opacity: .16; }
+.closing::before { width: 320px; height: 320px; background: var(--lilac); left: -90px; top: -110px; }
+.closing::after { width: 240px; height: 240px; background: var(--mint); right: -60px; bottom: -90px; }
+footer { padding: 34px 0 44px; color: var(--muted); font-size: 14px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+
+@media (max-width: 900px) {
+  .hero, .anatomy, .numbers { grid-template-columns: 1fr; }
+  .flow { grid-template-columns: 1fr; }
+  .fan { height: 470px; }
+  nav .links { display: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .answer { transition: transform .5s cubic-bezier(.2, .7, .2, 1); }
+  .fan:hover .answer.one { transform: rotate(-9deg) translate(-10px, -6px); }
+  .fan:hover .answer.three { transform: rotate(1deg) translate(-6px, 8px); }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav aria-label="Main">
+    <a class="logo" href="#"><svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="9" cy="13" r="8" fill="#c9c2ff"/><circle cx="17" cy="13" r="8" fill="#9ee0bf" opacity=".85"/></svg>Deepfake Check</a>
+    <div class="links"><a href="#how">How it works</a><a href="#answer">The answer</a><a href="#">Research</a><a href="#">About us</a></div>
+    <a class="pill dark end" href="#">Detector</a>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <h1>Check a video before you believe it.</h1>
+      <p>Upload a clip of someone speaking. In about a minute you get one of three answers, and every reason behind it.</p>
+      <div class="actions"><a class="pill dark" href="#">Check a video</a><a class="pill ghost" href="#how">How it works</a></div>
+    </div>
+    <div class="fan" aria-label="The three answers the site gives">
+      <span class="blob a"></span><span class="blob b"></span><span class="blob c"></span>
+      <div class="answer one"><span class="num" style="color:var(--real)">0.18</span><h4>No signs found</h4><small>Nothing stood out. Not proof it is real.</small><div class="meter"><i style="width:18%;background:var(--real)"></i><b></b></div></div>
+      <div class="answer two"><span class="num" style="color:var(--fake)">0.96</span><h4>Signs of manipulation</h4><small>The face looks AI-made. Closest match: Veo 3.1.</small><div class="meter"><i style="width:96%;background:var(--fake)"></i><b></b></div></div>
+      <div class="answer three"><span class="num" style="color:var(--unsure)">0.51</span><h4>Can't tell</h4><small>Unusual, but under the line.</small><div class="meter"><i style="width:51%;background:var(--unsure)"></i><b></b></div></div>
+    </div>
+  </header>
+
+  <section class="block" id="how" aria-labelledby="how-h">
+    <h2 class="section-h" id="how-h">How it works, from your side.</h2>
+    <p class="section-p">No account and nothing to install. It works on a phone too.</p>
+    <div class="flow">
+      <div class="tile"><span class="shape"></span><div class="n">1</div><h3>Add a video</h3><p>Upload one person speaking, up to 10 minutes, or record straight from your camera or microphone.</p></div>
+      <div class="tile"><span class="shape"></span><div class="n">2</div><h3>Four checks look at it</h3><p>The face, the voice, whether the lips match the words, and any AI label hidden in the file.</p></div>
+      <div class="tile"><span class="shape"></span><div class="n">3</div><h3>Read your answer</h3><p>One overall score, a timeline of the video and which tool might have made it.</p></div>
+    </div>
+  </section>
+
+  <section class="block anatomy" id="answer" aria-labelledby="ans-h">
+    <div class="copy">
+      <h3 id="ans-h">What the answer tells you</h3>
+      <dl>
+        <div><dt>A plain description</dt><dd>What the video shows, and where on the face the evidence sits.</dd></div>
+        <div><dt>One overall score</dt><dd>All the checks added up. The mark is the line about 5 in 100 real videos cross.</dd></div>
+        <div><dt>Each check on its own</dt><dd>Tap one to see what it looks at and what it misses.</dd></div>
+        <div><dt>Which tool</dt><dd>When the video looks AI-made, how much it resembles each generator we know.</dd></div>
+      </dl>
+    </div>
+    <div class="result" aria-label="An example answer">
+      <div class="verdict">Signs of manipulation</div>
+      <p class="desc">The video shows a person in a room with two monitors. The heatmap covers the eyes and nose.</p>
+      <div class="check"><span>Overall</span><span class="meter"><i style="width:96%;background:var(--fake)"></i><b></b></span><span>0.96</span></div>
+      <div class="check"><span>Face</span><span class="meter"><i style="width:96%;background:var(--fake)"></i><b></b></span><span>0.96</span></div>
+      <div class="check"><span>Voice</span><span class="meter"><i style="width:38%;background:#9aa0ad"></i><b></b></span><span>0.38</span></div>
+      <div class="check"><span>Lip sync</span><span class="meter"><i style="width:3%;background:#9aa0ad"></i><b></b></span><span>0.03</span></div>
+      <div class="check"><span>File audit</span><span style="color:var(--muted)">Clean</span><span></span></div>
+      <div class="gens"><span class="top"><b>Veo 3.1</b> 71%</span><span><b>Seedance 1.0</b> 20%</span><span><b>Wan 2.5</b> 5%</span><span><b>Kling 2.5</b> 2%</span><span><b>Sora 2</b> 2%</span></div>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="num-h">
+    <h2 class="section-h" id="num-h">Honest about its limits.</h2>
+    <p class="section-p">Measured on thousands of clips it never trained on.</p>
+    <div class="numbers">
+      <div class="num-card"><b>73%</b>of videos from 2025 AI generators are flagged.</div>
+      <div class="num-card"><b>6%</b>of fakes from older, unfamiliar sources. Most are missed, so "no signs" is never proof.</div>
+      <div class="num-card"><b>5 in 100</b>real videos are wrongly flagged, on average.</div>
+    </div>
+  </section>
+
+  <section class="closing" aria-labelledby="close-h">
+    <h2 id="close-h">Your video is deleted before you see the answer.</h2>
+    <p>Checked on our own computer, never kept. One still frame may also be checked by a detection service.</p>
+    <a class="pill" href="#">Check a video</a>
+  </section>
+
+  <footer><span>Deepfake Check, a final-year project at K. J. Somaiya School of Engineering.</span><span>About us &nbsp; Limits &nbsp; Contact</span></footer>
+</div>
+</body>
+</html>

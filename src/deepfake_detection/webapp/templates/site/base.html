@@ -18,11 +18,11 @@
     <a class="brand" href="/">Deepfake Check</a>
     <button class="menu" type="button" aria-expanded="false" aria-controls="nav-links">Menu</button>
     <ul id="nav-links">
-      {% for href, label in [("/check", "Detector"), ("/how-it-works", "How it works"), ("/research", "Research"), ("/about", "About us"), ("/contact", "Contact")] %}
+      {% for href, label in [("/how-it-works", "How it works"), ("/research", "Research"), ("/about", "About us"), ("/contact", "Contact")] %}
       <li><a href="{{ href }}"{% if path == href %} aria-current="page"{% endif %}>{{ label }}</a></li>
       {% endfor %}
     </ul>
-    <a class="btn primary nav-cta" href="/check">Check a video</a>
+    <a class="btn primary nav-cta" href="/check">Detector</a>
   </nav>
 </div>
 <main id="main">

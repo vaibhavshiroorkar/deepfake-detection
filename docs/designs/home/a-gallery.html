@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deepfake Check, home: A Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Demo A, "Gallery": closest to mobbin.com. White page, black type, the product shown inside soft grey
+   rounded frames. Verdict colours carry meaning only: red flagged, amber can't tell, green no signs. */
+:root {
+  --page: #ffffff; --ink: #15171c; --muted: #6b7079; --panel: #f2f3f5; --line: #e4e6ea;
+  --fake: #e5484d; --unsure: #f0a020; --real: #2f9e64; --link: #3358d4;
+  --r-frame: 36px; --r-card: 18px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 400 17px/1.55 "Instrument Sans", system-ui, sans-serif; }
+a { color: inherit; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+nav { display: flex; align-items: center; gap: 28px; height: 72px; }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 700; text-decoration: none; letter-spacing: -0.01em; }
+.logo i { width: 22px; height: 22px; border-radius: 7px; background: var(--ink); display: inline-block; position: relative; }
+.logo i::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: var(--page); }
+nav .links { display: flex; gap: 22px; font-size: 15px; }
+nav .links a { text-decoration: none; color: var(--muted); }
+nav .links a:hover { color: var(--ink); }
+nav .end { margin-left: auto; }
+.pill { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 22px; border-radius: 999px; font: 600 16px/1 inherit; text-decoration: none; border: 0; cursor: pointer; }
+.pill.dark { background: var(--ink); color: #fff; }
+.pill.light { background: var(--panel); color: var(--ink); }
+.pill:focus-visible { outline: 3px solid var(--link); outline-offset: 3px; }
+
+.hero { text-align: center; padding: 96px 0 56px; }
+.hero h1 { font-size: clamp(44px, 7.4vw, 92px); line-height: 0.98; letter-spacing: -0.035em; font-weight: 700; margin: 0 auto; max-width: 13ch; }
+.hero p { color: var(--muted); font-size: 20px; margin: 26px auto 34px; max-width: 34ch; }
+.hero .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+.frame { background: var(--panel); border-radius: var(--r-frame); padding: 40px; }
+.showcase { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 24px; align-items: start; }
+
+/* The product, drawn as it looks on the site */
+.card { background: #fff; border-radius: var(--r-card); padding: 22px; box-shadow: 0 1px 0 var(--line), 0 18px 40px -24px rgba(21, 23, 28, 0.25); }
+.verdict { font-weight: 700; font-size: 22px; color: var(--fake); letter-spacing: -0.01em; }
+.describe { margin: 12px 0 16px; padding: 12px 14px; border-radius: 12px; background: #eef7f5; font-size: 15px; line-height: 1.5; }
+.overall { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.overall .head { display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 8px; }
+.overall .head b { color: var(--fake); font-size: 20px; }
+.track { position: relative; height: 12px; border-radius: 6px; background: #eceef1; overflow: hidden; }
+.track i { display: block; height: 100%; border-radius: 6px; background: var(--fake); }
+.track b { position: absolute; top: 0; bottom: 0; left: 60%; width: 2px; background: var(--ink); opacity: .6; }
+.video { margin-top: 14px; aspect-ratio: 16 / 9; border-radius: 12px; background:
+  radial-gradient(circle at 50% 38%, #c9ccd3 0 13%, transparent 13.5%),
+  radial-gradient(ellipse at 50% 92%, #c9ccd3 0 30%, transparent 30.5%), #dfe2e7; }
+.parts { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3px; margin-top: 6px; }
+.parts span { height: 10px; border-radius: 3px; background: var(--real); }
+.parts span.f { background: var(--fake); }
+.rows { margin-top: 16px; display: grid; gap: 2px; }
+.row { display: grid; grid-template-columns: 90px 1fr 44px; gap: 12px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.row:last-child { border-bottom: 0; }
+.row .bar { height: 8px; border-radius: 4px; background: #eceef1; position: relative; overflow: hidden; }
+.row .bar i { display: block; height: 100%; border-radius: 4px; background: #9aa0a9; }
+.row .bar i.f { background: var(--fake); }
+.row .v { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.chip { border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 13px; color: var(--muted); }
+.chip b { color: var(--ink); font-weight: 600; }
+.chip.top { border-color: var(--fake); }
+.side h3 { font-size: 26px; letter-spacing: -0.02em; margin: 6px 0 10px; }
+.side p { color: var(--muted); margin: 0 0 22px; }
+.legend { display: grid; gap: 10px; }
+.legend div { display: flex; gap: 12px; align-items: baseline; background: #fff; border-radius: 14px; padding: 14px 16px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; transform: translateY(1px); }
+
+section.block { padding: 120px 0 0; }
+.center-h { text-align: center; font-size: clamp(34px, 5vw, 56px); letter-spacing: -0.035em; line-height: 1.04; margin: 0 auto 18px; max-width: 16ch; }
+.center-p { text-align: center; color: var(--muted); max-width: 52ch; margin: 0 auto 48px; }
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.step { background: var(--panel); border-radius: 28px; padding: 28px; min-height: 300px; display: flex; flex-direction: column; }
+.step .n { width: 32px; height: 32px; border-radius: 50%; background: var(--ink); color: #fff; display: grid; place-items: center; font-weight: 600; font-size: 15px; }
+.step h3 { font-size: 22px; letter-spacing: -0.015em; margin: 18px 0 8px; }
+.step p { color: var(--muted); margin: 0; font-size: 16px; }
+.step .ui { margin-top: auto; background: #fff; border-radius: 16px; padding: 14px; font-size: 14px; }
+.drop { border: 1.5px dashed #c4c8cf; border-radius: 12px; padding: 18px; text-align: center; color: var(--muted); }
+.mini-pills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.mini-pills span { background: var(--panel); border-radius: 999px; padding: 5px 10px; font-size: 12px; }
+.checklist div { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.checklist div:last-child { border-bottom: 0; }
+
+.honest { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.stat { background: var(--panel); border-radius: 24px; padding: 26px; }
+.stat b { display: block; font-size: 44px; letter-spacing: -0.04em; line-height: 1; margin-bottom: 10px; }
+.stat span { color: var(--muted); font-size: 15px; }
+.stat.warn b { color: var(--fake); }
+
+.privacy { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+.privacy h2 { font-size: clamp(32px, 4.4vw, 50px); letter-spacing: -0.035em; line-height: 1.05; margin: 0 0 14px; }
+.privacy p { color: var(--muted); margin: 0; }
+.timeline-ui { background: var(--panel); border-radius: 28px; padding: 28px; display: grid; gap: 10px; }
+.tl { display: flex; align-items: center; gap: 12px; background: #fff; border-radius: 14px; padding: 14px 16px; font-size: 15px; }
+.tl i { width: 8px; height: 8px; border-radius: 50%; background: var(--ink); }
+.tl.gone { color: var(--muted); text-decoration: line-through; }
+
+.final { text-align: center; padding: 140px 0 120px; }
+.final h2 { font-size: clamp(40px, 6vw, 72px); letter-spacing: -0.045em; line-height: 1; margin: 0 0 28px; }
+footer { border-top: 1px solid var(--line); padding: 28px 0 40px; color: var(--muted); font-size: 14px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+
+@media (max-width: 860px) {
+  .showcase, .privacy { grid-template-columns: 1fr; }
+  .steps { grid-template-columns: 1fr; }
+  .honest { grid-template-columns: 1fr 1fr; }
+  .frame { padding: 18px; border-radius: 26px; }
+  nav .links { display: none; }
+  .hero { padding: 64px 0 40px; }
+  section.block { padding-top: 88px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hero h1, .hero p, .hero .actions { animation: rise .7s cubic-bezier(.2, .7, .2, 1) both; }
+  .hero p { animation-delay: .08s; } .hero .actions { animation-delay: .16s; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav aria-label="Main">
+    <a class="logo" href="#"><i aria-hidden="true"></i>Deepfake Check</a>
+    <div class="links"><a href="#how">How it works</a><a href="#honest">What it catches</a><a href="#">Research</a><a href="#">About us</a></div>
+    <a class="pill dark end" href="#">Detector</a>
+  </nav>
+
+  <header class="hero">
+    <h1>Is the person in this video real?</h1>
+    <p>Drop in a clip of someone talking. Four checks look at the face, the voice, the lips and the file, and tell you plainly what they found.</p>
+    <div class="actions"><a class="pill dark" href="#">Check a video</a><a class="pill light" href="#how">See how it works</a></div>
+  </header>
+
+  <div class="frame showcase" aria-label="An example answer">
+    <div class="card">
+      <div class="verdict">Signs of manipulation</div>
+      <p class="describe">The video shows a person in a room with two monitors. The heatmap covers the eyes and nose.</p>
+      <div class="overall"><div class="head"><span>Overall</span><b>0.96</b></div><div class="track"><i style="width:96%"></i><b></b></div></div>
+      <div class="video" role="img" aria-label="The uploaded video"></div>
+      <div class="parts"><span class="f"></span><span></span><span></span></div>
+      <div class="rows">
+        <div class="row"><span>Face</span><span class="bar"><i class="f" style="width:96%"></i></span><span class="v">0.96</span></div>
+        <div class="row"><span>Voice</span><span class="bar"><i style="width:38%"></i></span><span class="v">0.38</span></div>
+        <div class="row"><span>Lip sync</span><span class="bar"><i style="width:3%"></i></span><span class="v">0.03</span></div>
+        <div class="row"><span>File audit</span><span style="color:var(--muted)">Clean</span><span></span></div>
+      </div>
+      <div class="chips"><span class="chip top"><b>Veo 3.1</b> 71%</span><span class="chip"><b>Seedance 1.0</b> 20%</span><span class="chip"><b>Wan 2.5</b> 5%</span><span class="chip"><b>Kling 2.5</b> 2%</span></div>
+    </div>
+    <div class="side">
+      <h3>One answer, and the reasons behind it.</h3>
+      <p>Every check shows its own score against the line about 5 in 100 real videos cross. Tap any of them to see what it looks at and what it misses.</p>
+      <div class="legend">
+        <div><span class="dot" style="background:var(--fake)"></span><span><b>Signs of manipulation.</b> The evidence crossed the line.</span></div>
+        <div><span class="dot" style="background:var(--unsure)"></span><span><b>Can't tell.</b> Unusual, but not enough to flag.</span></div>
+        <div><span class="dot" style="background:var(--real)"></span><span><b>No signs found.</b> Nothing stood out. That is not proof it is real.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <section class="block" id="how" aria-labelledby="how-h">
+    <h2 class="center-h" id="how-h">Three steps, about a minute.</h2>
+    <p class="center-p">No account, nothing to install. It works on a phone.</p>
+    <div class="steps">
+      <div class="step"><span class="n">1</span><h3>Give it a video</h3><p>Upload a clip of one person speaking, up to 10 minutes, or record one with your camera.</p>
+        <div class="ui"><div class="drop">Drop a video here</div><div class="mini-pills"><span>Record video</span><span>Record voice</span><span>Take a picture</span></div></div></div>
+      <div class="step"><span class="n">2</span><h3>Four checks run</h3><p>The face, the voice, whether the lips match the words, and labels AI tools leave in files.</p>
+        <div class="ui checklist"><div><span>Face</span><span>done</span></div><div><span>Voice</span><span>done</span></div><div><span>Lip sync</span><span>running</span></div><div><span>File audit</span><span>done</span></div></div></div>
+      <div class="step"><span class="n">3</span><h3>Read the answer</h3><p>A plain verdict, one overall score, a timeline of the video, and which tool might have made it.</p>
+        <div class="ui"><div class="verdict" style="font-size:17px">Signs of manipulation</div><div class="track" style="margin-top:10px"><i style="width:96%"></i><b></b></div></div></div>
+    </div>
+  </section>
+
+  <section class="block" id="honest" aria-labelledby="honest-h">
+    <h2 class="center-h" id="honest-h">What it catches, and what it misses.</h2>
+    <p class="center-p">Measured on thousands of clips the models never trained on. We show the misses too.</p>
+    <div class="honest">
+      <div class="stat"><b>73%</b><span>of videos made by 2025 AI generators flagged</span></div>
+      <div class="stat"><b>71%</b><span>of face swaps and cloned voices of the kind it learned</span></div>
+      <div class="stat warn"><b>6%</b><span>of fakes from older, unfamiliar sources. Most are missed.</span></div>
+      <div class="stat"><b>5 in 100</b><span>real videos wrongly flagged, on average</span></div>
+    </div>
+  </section>
+
+  <section class="block privacy" aria-labelledby="priv-h">
+    <div><h2 id="priv-h">Your video is deleted before you see the answer.</h2><p>It is checked on our own computer and never kept. One still frame may also be checked by a detection service.</p></div>
+    <div class="timeline-ui" aria-label="What happens to your file">
+      <div class="tl"><i></i>Uploaded</div><div class="tl"><i></i>Checked, part by part</div><div class="tl"><i></i>Answer ready</div><div class="tl gone"><i></i>File deleted</div>
+    </div>
+  </section>
+
+  <section class="final" aria-labelledby="final-h">
+    <h2 id="final-h">Try it on a video you're unsure about.</h2>
+    <a class="pill dark" href="#">Check a video</a>
+  </section>
+
+  <footer><span>Deepfake Check, a final-year project at K. J. Somaiya School of Engineering.</span><span>About us &nbsp; Limits &nbsp; Contact</span></footer>
+</div>
+</body>
+</html>

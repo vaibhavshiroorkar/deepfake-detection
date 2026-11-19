@@ -64,7 +64,7 @@ RESEND_URL = "https://api.resend.com/emails"
 
 PAGES = {
     "/": ("home.html", "Home"),
-    "/check": ("check.html", "Check a video"),
+    "/check": ("check.html", "Detector"),
     "/how-it-works": ("how.html", "How it works"),
     "/research": ("research.html", "Research"),
     "/about": ("about.html", "About us"),

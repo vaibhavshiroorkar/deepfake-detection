@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deepfake Check, home: C Presentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Demo C, "Presentation": the home page doubles as the exhibition talk. Each section fills the screen and
+   snaps into place on scroll, like a slide; left-aligned copy, the product on the right. A slim progress
+   rail on the left shows where you are in the story. */
+:root {
+  --page: #fbfbfc; --ink: #171a21; --muted: #626875; --frame: #eef0f4; --line: #e1e4ea;
+  --blue: #2f5bd8; --blue-soft: #e6edfd;
+  --fake: #e5484d; --unsure: #e79c12; --real: #2f9e64;
+}
+* { box-sizing: border-box; }
+html { scroll-snap-type: y proximity; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 400 18px/1.55 "Schibsted Grotesk", system-ui, sans-serif; }
+a { color: inherit; }
+nav { position: fixed; inset: 0 0 auto; z-index: 5; display: flex; align-items: center; gap: 24px; padding: 18px 40px; background: rgba(251, 251, 252, 0.86); backdrop-filter: blur(10px); }
+.logo { font-weight: 800; text-decoration: none; display: flex; align-items: center; gap: 9px; }
+.logo span { width: 12px; height: 12px; border-radius: 3px; background: var(--blue); transform: rotate(45deg); }
+nav .links { display: flex; gap: 20px; font-size: 15px; }
+nav .links a { text-decoration: none; color: var(--muted); }
+nav .end { margin-left: auto; }
+.pill { display: inline-flex; align-items: center; height: 46px; padding: 0 22px; border-radius: 999px; font: 600 16px/1 inherit; text-decoration: none; }
+.pill.dark { background: var(--ink); color: #fff; }
+.pill.soft { background: var(--blue-soft); color: var(--blue); }
+.pill:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+
+.rail { position: fixed; left: 18px; top: 50%; transform: translateY(-50%); display: grid; gap: 10px; z-index: 4; }
+.rail a { width: 8px; height: 8px; border-radius: 50%; background: #c9cdd6; display: block; }
+.rail a[aria-current="true"] { background: var(--ink); height: 22px; border-radius: 4px; }
+
+.slide { min-height: 100vh; scroll-snap-align: start; display: grid; align-items: center; padding: 96px 64px 56px; }
+.inner { max-width: 1180px; margin: 0 auto; width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+.slide h1 { font-size: clamp(48px, 7vw, 96px); font-weight: 800; line-height: 0.95; letter-spacing: -0.04em; margin: 0 0 24px; }
+.slide h2 { font-size: clamp(36px, 5vw, 64px); font-weight: 800; line-height: 1; letter-spacing: -0.035em; margin: 0 0 20px; }
+.slide p.lead { font-size: 21px; color: var(--muted); margin: 0 0 30px; max-width: 34ch; }
+.step-no { font-weight: 700; color: var(--blue); margin: 0 0 12px; font-size: 16px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.frame { background: var(--frame); border-radius: 34px; padding: 34px; }
+.panel { background: #fff; border-radius: 20px; padding: 22px; box-shadow: 0 24px 48px -30px rgba(23, 26, 33, 0.35); }
+.verdict { font-weight: 800; font-size: 22px; color: var(--fake); }
+.desc { margin: 10px 0 16px; padding: 12px 14px; border-radius: 12px; background: var(--blue-soft); font-size: 15px; }
+.big-meter .top { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 8px; }
+.big-meter .top b { color: var(--fake); font-size: 22px; }
+.bar { height: 12px; border-radius: 6px; background: #edf0f4; position: relative; overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 6px; }
+.bar b { position: absolute; top: 0; bottom: 0; left: 60%; width: 2px; background: var(--ink); opacity: .55; }
+.row { display: grid; grid-template-columns: 92px 1fr 44px; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 15px; }
+.row:last-child { border-bottom: 0; }
+.row .bar { height: 8px; }
+.row span:last-child { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.drop { border: 2px dashed #c3c8d2; border-radius: 16px; padding: 46px 20px; text-align: center; color: var(--muted); }
+.drop strong { color: var(--ink); display: block; font-size: 19px; margin-bottom: 4px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.chips span { background: #fff; border-radius: 999px; padding: 8px 14px; font-size: 14px; box-shadow: inset 0 0 0 1px var(--line); }
+.gen { display: grid; gap: 8px; }
+.gen div { display: grid; grid-template-columns: 110px 1fr 44px; gap: 10px; align-items: center; font-size: 15px; }
+.gen .bar { height: 10px; }
+.gen span:last-child { text-align: right; color: var(--muted); }
+
+.facts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.fact { background: #fff; border-radius: 22px; padding: 22px; }
+.fact b { display: block; font-size: 46px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; margin-bottom: 8px; }
+.fact.miss b { color: var(--fake); }
+.fact span { color: var(--muted); font-size: 15px; }
+
+.steps-life { display: grid; gap: 10px; }
+.life { display: flex; gap: 14px; align-items: center; background: #fff; border-radius: 16px; padding: 16px 18px; }
+.life i { width: 26px; height: 26px; border-radius: 50%; background: var(--blue-soft); color: var(--blue); display: grid; place-items: center; font-style: normal; font-weight: 700; font-size: 14px; }
+.life.gone { color: var(--muted); }
+.life.gone i { background: #fde7e7; color: var(--fake); }
+
+.end-slide { text-align: left; }
+.end-slide .inner { grid-template-columns: 1fr; }
+.end-slide h2 { font-size: clamp(44px, 7vw, 92px); max-width: 14ch; }
+footer { padding: 28px 64px 40px; color: var(--muted); font-size: 14px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-top: 1px solid var(--line); }
+
+@media (max-width: 900px) {
+  .slide { padding: 92px 20px 48px; min-height: auto; }
+  .inner { grid-template-columns: 1fr; gap: 32px; }
+  .rail, nav .links { display: none; }
+  nav { padding: 14px 20px; }
+  .frame { padding: 18px; border-radius: 26px; }
+  html { scroll-snap-type: none; }
+}
+</style>
+</head>
+<body>
+<nav aria-label="Main">
+  <a class="logo" href="#top"><span aria-hidden="true"></span>Deepfake Check</a>
+  <div class="links"><a href="#s2">How it works</a><a href="#s5">Limits</a><a href="#">Research</a><a href="#">About us</a></div>
+  <a class="pill dark end" href="#">Detector</a>
+</nav>
+<div class="rail" aria-label="Sections">
+  <a href="#top" aria-current="true" aria-label="Start"></a><a href="#s2" aria-label="Add a video"></a><a href="#s3" aria-label="The checks"></a><a href="#s4" aria-label="The answer"></a><a href="#s5" aria-label="Limits"></a><a href="#s6" aria-label="Privacy"></a><a href="#s7" aria-label="Try it"></a>
+</div>
+
+<section class="slide" id="top">
+  <div class="inner">
+    <div>
+      <h1>Is the person in this video real?</h1>
+      <p class="lead">Upload a clip of someone speaking. Four checks look at it and tell you plainly what they found, and how far to trust it.</p>
+      <div class="actions"><a class="pill dark" href="#">Check a video</a><a class="pill soft" href="#s2">See how it works</a></div>
+    </div>
+    <div class="frame"><div class="panel">
+      <div class="verdict">Signs of manipulation</div>
+      <div class="desc">The video shows a person in a room with two monitors. The heatmap covers the eyes and nose.</div>
+      <div class="big-meter"><div class="top"><span>Overall</span><b>0.96</b></div><div class="bar"><i style="width:96%;background:var(--fake)"></i><b></b></div></div>
+    </div></div>
+  </div>
+</section>
+
+<section class="slide" id="s2">
+  <div class="inner">
+    <div><p class="step-no">Step 1 of 3</p><h2>Add a video, or record one.</h2><p class="lead">One person speaking works best. Up to 10 minutes and 300 MB, from a phone or a laptop. A voice recording or a picture works too.</p></div>
+    <div class="frame"><div class="drop"><strong>Drop a video here</strong>or choose one from your device</div><div class="chips"><span>Record video</span><span>Record voice</span><span>Take a picture</span><span>Pick a sample</span></div></div>
+  </div>
+</section>
+
+<section class="slide" id="s3">
+  <div class="inner">
+    <div><p class="step-no">Step 2 of 3</p><h2>Four checks look at it.</h2><p class="lead">Each one looks for a different kind of fake, so a fake that fools one can still trip another.</p></div>
+    <div class="frame"><div class="panel">
+      <div class="row"><span>Face</span><span>Swapped or AI-made faces</span><span></span></div>
+      <div class="row"><span>Voice</span><span>Cloned or generated speech</span><span></span></div>
+      <div class="row"><span>Lip sync</span><span>Lips that don't match the words</span><span></span></div>
+      <div class="row"><span>File audit</span><span>AI labels written into the file</span><span></span></div>
+    </div></div>
+  </div>
+</section>
+
+<section class="slide" id="s4">
+  <div class="inner">
+    <div><p class="step-no">Step 3 of 3</p><h2>Read the answer, and why.</h2><p class="lead">One overall score, each check on its own, a timeline of the video, and which AI tool it most resembles.</p></div>
+    <div class="frame"><div class="panel">
+      <div class="row"><span>Face</span><span class="bar"><i style="width:96%;background:var(--fake)"></i><b></b></span><span>0.96</span></div>
+      <div class="row"><span>Voice</span><span class="bar"><i style="width:38%;background:#9aa0ad"></i><b></b></span><span>0.38</span></div>
+      <div class="row"><span>Lip sync</span><span class="bar"><i style="width:3%;background:#9aa0ad"></i><b></b></span><span>0.03</span></div>
+      <div style="margin-top:18px;font-weight:700">Closest generator</div>
+      <div class="gen" style="margin-top:10px">
+        <div><span>Veo 3.1</span><span class="bar"><i style="width:71%;background:var(--fake)"></i></span><span>71%</span></div>
+        <div><span>Seedance 1.0</span><span class="bar"><i style="width:20%;background:#9aa0ad"></i></span><span>20%</span></div>
+        <div><span>Wan 2.5</span><span class="bar"><i style="width:5%;background:#9aa0ad"></i></span><span>5%</span></div>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<section class="slide" id="s5">
+  <div class="inner">
+    <div><h2>What it catches, and what it misses.</h2><p class="lead">Measured on thousands of clips it never trained on. "No signs found" is never proof a video is real.</p></div>
+    <div class="frame"><div class="facts">
+      <div class="fact"><b>73%</b><span>of videos from 2025 AI generators flagged</span></div>
+      <div class="fact"><b>71%</b><span>of face swaps and cloned voices it learned</span></div>
+      <div class="fact miss"><b>6%</b><span>of fakes from older, unfamiliar sources</span></div>
+      <div class="fact"><b>5 in 100</b><span>real videos wrongly flagged</span></div>
+    </div></div>
+  </div>
+</section>
+
+<section class="slide" id="s6">
+  <div class="inner">
+    <div><h2>Your video is gone before you read the answer.</h2><p class="lead">Checked on our own computer and never kept. One still frame may also be checked by a detection service.</p></div>
+    <div class="frame"><div class="steps-life">
+      <div class="life"><i>1</i>Uploaded</div><div class="life"><i>2</i>Checked, three seconds at a time</div><div class="life"><i>3</i>Answer ready</div><div class="life gone"><i>4</i>Your file is deleted</div>
+    </div></div>
+  </div>
+</section>
+
+<section class="slide end-slide" id="s7">
+  <div class="inner"><div><h2>Try it on a video you're unsure about.</h2><div class="actions"><a class="pill dark" href="#">Check a video</a><a class="pill soft" href="#">Read the research</a></div></div></div>
+</section>
+<footer><span>Deepfake Check, a final-year project at K. J. Somaiya School of Engineering.</span><span>About us &nbsp; Limits &nbsp; Contact</span></footer>
+<script>
+  // The rail marks the section in view.
+  const marks = [...document.querySelectorAll(".rail a")];
+  const watch = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      for (const mark of marks) mark.setAttribute("aria-current", String(mark.hash === "#" + entry.target.id));
+    }
+  }, { threshold: 0.55 });
+  document.querySelectorAll(".slide").forEach((slide) => watch.observe(slide));
+</script>
+</body>
+</html>
