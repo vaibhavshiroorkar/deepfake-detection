@@ -245,6 +245,24 @@ def build(
     }
 
 
+def raised_by(calibration: Calibration, rows: list[dict]) -> dict:
+    """Per corpus, how many fake clips each check flagged, for the page's per-check catch rates.
+
+    A fake flagged by two checks counts for both. Real clips are left out.
+    """
+    counts: dict = {}
+    for r in rows:
+        if not r["label"]:
+            continue
+        tally = counts.setdefault(r["corpus"], {"fakes": 0} | dict.fromkeys(CHECKS, 0))
+        tally["fakes"] += 1
+        outcome = calibration.decide(r["scores"])
+        if outcome.kind == "signs":
+            for check in outcome.raised:
+                tally[check] += 1
+    return counts
+
+
 # The page's one scale, set by Vaibhav: 0 is real, 0.5 is neutral, 1 is fake. "Can't tell" is the band
 # around 0.5 and a score is flagged from 0.6.
 SHOWN_LOWER, SHOWN_FLAG = 0.4, 0.6

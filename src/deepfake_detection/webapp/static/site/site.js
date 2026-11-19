@@ -34,14 +34,46 @@
   const fmt = (x) => x.toFixed(2);
   const clock = (s) => Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0");
 
-  function checkRows(checks, lines) {
+  /* A small "i" button whose text shows on hover or tap, so details stay out of the way until asked for. */
+  function tip(text, label) {
+    const button = el("button", "tip");
+    button.type = "button";
+    button.setAttribute("aria-label", label || "More information");
+    button.append(el("span", "tipmark", "i"), el("span", "bubble", text));
+    return button;
+  }
+
+  function aboutBody(about) {
+    const body = el("div", "cbody small");
+    if (!about) return body;
+    body.append(el("p", "", about.what));
+    body.append(el("p", "", "High score: " + about.high));
+    body.append(el("p", "", "Misses: " + about.misses));
+    if (about.caught && about.caught.length) {
+      body.append(el("p", "muted", "Fakes it caught on our test sets: "
+        + about.caught.map(([set, rate]) => set + " " + rate).join(", ") + "."));
+    }
+    return body;
+  }
+
+  function checkRows(data) {
+    const checks = data.checks || {}, lines = data.lines, about = data.about || {};
     const box = el("div", "checks");
     const flag = lines ? lines.flag : null;
+    const head = el("p", "checkhead");
+    head.append(el("span", "", "Checks"));
+    if (flag != null) {
+      head.append(tip("Scores run from 0 (looks real) through 0.5 (neutral) to 1 (looks fake). The mark on each bar is the "
+        + "flag line, " + fmt(flag) + ": about 5 in 100 real videos reach it. Tap a row to see what that check does.",
+        "How to read the scores"));
+    }
+    box.append(head);
     for (const [key, label] of CHECKS) {
-      const c = (checks || {})[key];
+      const c = checks[key];
       const score = c && c.score != null ? c.score : null;
-      const row = el("div", "crow " + key + (c && c.raised ? " raised" : ""));
-      row.append(el("span", "cname", label));
+      const row = el("details", "crow " + key + (c && c.raised ? " raised" : ""));
+      const line = el("summary", "cline");
+      line.append(el("span", "cname", label));
       const track = el("span", "ctrack");
       const fill = el("i");
       fill.style.width = score != null ? score * 100 + "%" : "0%";
@@ -51,16 +83,28 @@
         tick.style.left = flag * 100 + "%";
         track.append(tick);
       }
-      row.append(track);
-      row.append(el("span", "cval mono", score != null ? fmt(score) : "not checked"));
-      if (c && c.reason) row.title = c.reason;
+      line.append(track, el("span", "cval mono", score != null ? fmt(score) : "not checked"));
+      row.append(line);
+      const body = aboutBody(about[key]);
+      if (c && c.reason) body.prepend(el("p", "", "Not checked: " + c.reason));
+      if (key === "sync") {
+        const trace = traceView(data.trace);
+        if (trace) body.append(trace);
+      }
+      row.append(body);
       box.append(row);
     }
-    if (flag != null) {
-      box.append(el("p", "scale small", "0 is real, 0.5 is neutral, 1 is fake. Below " + fmt(lines.lower)
-        + ": no signs. " + fmt(lines.lower) + " to " + fmt(flag) + ": can't tell. From " + fmt(flag)
-        + " (the mark on each bar): flagged. The flag mark is set so that about 5 in 100 real videos reach it."));
-    }
+    const labels = data.file_check || [];
+    const file = el("details", "crow file" + (labels.length ? " raised" : ""));
+    const line = el("summary", "cline");
+    line.append(el("span", "cname", "File"),
+      el("span", "cfile", labels.length ? "AI label found" : "No AI label"),
+      el("span", "cval mono", labels.length ? "flagged" : "proves nothing"));
+    file.append(line);
+    const body = aboutBody(about.file);
+    for (const text of labels) body.prepend(el("p", "strong", "The file carries " + text + "."));
+    file.append(body);
+    box.append(file);
     return box;
   }
 
@@ -154,10 +198,11 @@
       show(now + step);
     });
     if (media) media.addEventListener("timeupdate", () => { if (!held) show(media.currentTime); });
-    const legend = el("p", "legend small");
-    legend.append(el("span", "key ok", "real side, below " + fmt(lines.lower)), el("span", "key unsure", "neutral, can't tell"),
-      el("span", "key flag", "fake side, from " + fmt(lines.flag)), el("span", "key none", "not scored"));
-    box.append(bar, readout, legend);
+    const readrow = el("div", "readrow");
+    readrow.append(readout, tip("The bar is the video in 3-second parts. Green: real side, below " + fmt(lines.lower)
+      + ". Yellow: can't tell. Red: fake side, from " + fmt(lines.flag) + ". Grey: not scored. Hold or drag on it to see each part's scores.",
+      "How to read the timeline"));
+    box.append(bar, readrow);
     show(0);
     return box;
   }
@@ -174,19 +219,15 @@
     } else {
       const o = OUTCOMES[data.outcome] || OUTCOMES.cant_check;
       card.classList.add(o.cls);
-      card.append(el("p", "outcome " + o.cls, o.text));
+      const title = el("p", "outcome " + o.cls, o.text);
+      if (data.how_sure) title.append(tip(data.how_sure, "How sure is this answer?"));
+      card.append(title);
       if (data.summary) card.append(el("p", "", data.summary));
-      if (data.file_check && data.file_check.length) {
-        card.append(el("p", "filecheck", "File check: " + data.file_check.join("; ") + "."));
-      }
       if (data.where) card.append(el("p", "where", data.where));
       if (file && data.outcome !== "cant_check") card.append(preview(file, data));
-      card.append(checkRows(data.checks, data.lines));
       const heat = explainView(data.explain, card, !!(data.checks && data.checks.face && data.checks.face.raised));
       if (heat) card.append(heat);
-      const trace = traceView(data.trace);
-      if (trace) card.append(trace);
-      if (data.how_sure) card.append(el("p", "sure", data.how_sure));
+      card.append(checkRows(data));
     }
     card.hidden = false;
   }
@@ -235,9 +276,11 @@
       });
       row.append(button);
     }
-    panel.append(row, el("p", "small heatnote", "Warmer colours pushed the face score toward fake. Click a face to jump the video there."));
-    box.append(el("p", "small heatnote", "A heatmap shows where the model looked; it is not proof that this area was edited."),
-      toggle, panel);
+    panel.append(row, el("p", "small heatnote", "Warmer colours pushed the face score toward fake. Tap a face to jump the video there."));
+    const tools = el("div", "heattools");
+    tools.append(toggle, tip("A heatmap shows where the face model looked. It is not proof that this area was edited.",
+      "What a heatmap shows"));
+    box.append(tools, panel);
     return box;
   }
 

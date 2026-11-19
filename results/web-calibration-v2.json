@@ -1,7 +1,7 @@
 {
  "meta": {
   "built": "2026-11-19",
-  "code_commit": "c902dd1e3e9b3bc210e69832da705d207d7d67c8",
+  "code_commit": "32e7d42080fb59c093bd313b2bad03901bcca5df",
   "note": "Calibration clips are P-001 test data; the site uses them only to place scores.",
   "check_score": "mean logit of the three seeds",
   "flag_quantile": 0.95,
@@ -80,6 +80,32 @@
      "cant_tell": 161,
      "no_signs": 483
     }
+   }
+  },
+  "raised_by": {
+   "FakeAVCeleb": {
+    "fakes": 420,
+    "face": 202,
+    "voice": 171,
+    "sync": 67
+   },
+   "DFDC": {
+    "fakes": 2838,
+    "face": 46,
+    "voice": 96,
+    "sync": 60
+   },
+   "LAV-DF": {
+    "fakes": 1516,
+    "face": 30,
+    "voice": 62,
+    "sync": 24
+   },
+   "HiFi-AVDF": {
+    "fakes": 1903,
+    "face": 31,
+    "voice": 1234,
+    "sync": 79
    }
   },
   "sources": {

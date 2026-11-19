@@ -137,6 +137,50 @@ def live_rates() -> dict:
     }
 
 
+# What each row on the result card means, shown when a visitor opens it. "misses" comes from the
+# measured catch rates (results/web-calibration-v2.json, raised_by) and the 11-19 model test.
+CHECK_ABOUT = {
+    "face": {
+        "what": "Looks at 16 face crops from the part for traces a face swap leaves.",
+        "high": "The face looks more unusual than almost all real faces we tested.",
+        "misses": "Fully generated videos (such as Veo or Sora), which have no pasted face.",
+    },
+    "voice": {
+        "what": "Listens to the speech for signs of a cloned or generated voice.",
+        "high": "The voice sounds more unusual than almost all real voices we tested.",
+        "misses": "Videos where only the face is fake and the voice is real.",
+    },
+    "sync": {
+        "what": "Checks whether the lips move with the words. It learned from real clips only.",
+        "high": "Lips and words fit together worse than in almost all real clips.",
+        "misses": "Most fakes from sources it has not seen; it is the weakest of the three.",
+    },
+    "file": {
+        "what": "Reads labels that AI tools write into a file on purpose, such as a C2PA content credential.",
+        "high": "A label was found: the file says it was made by AI.",
+        "misses": "Most fakes: uploading or re-saving a file removes its labels, so no label proves nothing.",
+    },
+}
+
+
+def check_info() -> dict:
+    """Each check's explanation, with the share of fakes it flagged on each test set (highest first)."""
+    counts = calibration().meta.get("raised_by", {})
+    about = {}
+    for check, text in CHECK_ABOUT.items():
+        rates = [
+            (c[check] / c["fakes"], corpus)
+            for corpus, c in counts.items()
+            if check in c and c["fakes"]
+        ]
+        about[check] = text | {
+            "caught": [
+                [corpus, f"{rate:.0%}"] for rate, corpus in sorted(rates, reverse=True)
+            ]
+        }
+    return about
+
+
 def _environment() -> Environment:
     env = Environment(
         loader=FileSystemLoader(TEMPLATES),
@@ -474,6 +518,7 @@ def present(outcome: dict) -> dict:
         "timeline": outcome.get("timeline", []),
         "explain": outcome.get("explain", {}),
         "lines": outcome.get("lines"),
+        "about": check_info(),
         "trace": outcome.get("trace", {}),
         "how_sure": how_sure(outcome.get("input", "video"))
         if kind != "cant_check"

@@ -30,7 +30,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from deepfake_detection.cli.common import _git_commit  # noqa: E402
-from deepfake_detection.webapp.calibration import build, check_score  # noqa: E402
+from deepfake_detection.webapp.calibration import (  # noqa: E402
+    build,
+    check_score,
+    raised_by,
+)
 
 RESULTS = ROOT / "results"
 OUTPUT = RESULTS / "web-calibration.json"
@@ -154,6 +158,7 @@ def main() -> int:
         "unsure_quantile": 0.80,
         "coverage": coverage,
         "outcomes": summary,
+        "raised_by": raised_by(calibration, rows),
         "sources": sources,
     }
     if choice is not None:

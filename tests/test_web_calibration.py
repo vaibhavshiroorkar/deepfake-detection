@@ -253,3 +253,24 @@ def test_a_model_named_as_raising_the_flag_is_on_the_fake_side_of_the_page_scale
         assert (
             cal.display_score(outcome.percentiles[name], flag, lower) >= cal.SHOWN_FLAG
         )
+
+
+def test_raised_by_counts_which_check_flagged_each_fake_per_corpus() -> None:
+    def row(corpus, label, face, voice):
+        return {
+            "corpus": corpus,
+            "label": label,
+            "scores": {"face": face, "voice": voice, "sync": 0.0},
+        }
+
+    rows = [
+        row("A", 1, 99.5, 0.0),  # flagged by the face
+        row("A", 1, 0.0, 99.5),  # flagged by the voice
+        row("A", 1, 0.0, 0.0),  # missed
+        row("A", 0, 99.5, 0.0),  # a real clip: not counted
+        row("B", 1, 99.5, 99.5),  # flagged by both
+    ]
+    assert cal.raised_by(_calibration(), rows) == {
+        "A": {"fakes": 3, "face": 1, "voice": 1, "sync": 0},
+        "B": {"fakes": 1, "face": 1, "voice": 1, "sync": 0},
+    }

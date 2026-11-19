@@ -51,3 +51,31 @@ def test_a_c2pa_manifest_without_an_ai_source_is_not_evidence():
         == []
     )
     assert provenance.labels_from_bytes(b"plain video bytes") == []
+
+
+def test_the_label_names_the_tool_when_the_file_says_which():
+    tags = {
+        "AIGC": SEEDANCE_AIGC,
+        "UserComment": json.dumps({"aigc_label_type": 0, "source_info": "dreamina"}),
+    }
+    found = provenance.labels_from_tags(tags)
+    assert len(found) == 1 and '"dreamina"' in found[0]
+    # A tool name is only reported beside an AI label, and only in plain characters.
+    assert (
+        provenance.labels_from_tags(
+            {"UserComment": json.dumps({"source_info": "dreamina"})}
+        )
+        == []
+    )
+    odd = {
+        "AIGC": SEEDANCE_AIGC,
+        "UserComment": json.dumps({"source_info": "<script>"}),
+    }
+    assert "script" not in provenance.labels_from_tags(odd)[0]
+
+
+def test_a_c2pa_label_names_a_known_maker_inside_the_manifest():
+    data = b"jumb c2pa claim_generator OpenAI-API digitalsourcetype/trainedAlgorithmicMedia"
+    assert '"OpenAI"' in provenance.labels_from_bytes(data)[0]
+    plain = b"jumb c2pa digitalsourcetype/trainedAlgorithmicMedia"
+    assert "names" not in provenance.labels_from_bytes(plain)[0]

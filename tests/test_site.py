@@ -606,3 +606,31 @@ def test_home_page_quotes_no_study_auc():
     text = (site.TEMPLATES / "home.html").read_text(encoding="utf-8")
     assert "auc" not in text.lower()
     assert "live().all_caught" in text
+
+
+def test_each_check_carries_its_explanation_and_measured_catch_rates(monkeypatch):
+    from types import SimpleNamespace
+
+    meta = {
+        "outcomes": {},
+        "raised_by": {
+            "FakeAVCeleb": {"fakes": 4, "face": 2, "voice": 1, "sync": 0},
+            "HiFi-AVDF": {"fakes": 10, "face": 0, "voice": 7, "sync": 1},
+        },
+    }
+    monkeypatch.setattr(site, "calibration", lambda: SimpleNamespace(meta=meta))
+    about = site.check_info()
+    assert set(about) == {"face", "voice", "sync", "file"}
+    for check in ("face", "voice", "sync", "file"):
+        assert about[check]["what"] and about[check]["misses"]
+    assert about["voice"]["caught"] == [["HiFi-AVDF", "70%"], ["FakeAVCeleb", "25%"]]
+    assert about["file"]["caught"] == []
+
+
+def test_an_older_calibration_without_counts_gives_no_rates(monkeypatch):
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(
+        site, "calibration", lambda: SimpleNamespace(meta={"outcomes": {}})
+    )
+    assert site.check_info()["face"]["caught"] == []
