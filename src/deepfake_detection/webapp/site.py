@@ -2,7 +2,7 @@
 
 The design is `docs/DESIGN.md`; the structure is the 2026-11-17 website design spec. An upload
 is checked against the clip rules, then queued for the P-001 detector (`detector.py`), which
-scores it with the three checks (`scorer.py`), places the scores among real calibration clips
+scores it with the four checks (`scorer.py`), places the scores among real calibration clips
 (`calibration.py`) and deletes every file before the result can be read.
 """
 

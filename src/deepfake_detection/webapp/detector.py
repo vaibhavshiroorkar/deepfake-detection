@@ -210,7 +210,11 @@ class Detector:
         if decision.kind == "cant_check":
             outcome["reason"] = (
                 "Neither the face nor the voice could be checked: "
-                + "; ".join(r for r in (c["reason"] for c in checks.values()) if r)
+                + "; ".join(
+                    dict.fromkeys(
+                        r for r in (c["reason"] for c in checks.values()) if r
+                    )
+                )
             )
         return outcome
 

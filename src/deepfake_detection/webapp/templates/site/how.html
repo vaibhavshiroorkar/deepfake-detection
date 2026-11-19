@@ -28,13 +28,14 @@
   </section>
 
   <section class="block" aria-labelledby="checks-title">
-    <h2 id="checks-title">The three checks</h2>
+    <h2 id="checks-title">The four checks</h2>
     <div class="checks3">
       <div class="check3 face"><h3>Face</h3><p>A face model (EfficientNet with a short-term memory over 16 frames) trained to spot face swaps and re-rendered mouths.</p></div>
-      <div class="check3 voice"><h3>Voice</h3><p>A speech model (wav2vec 2.0) trained to spot cloned and synthetic voices.</p></div>
+      <div class="check3 face"><h3>Generated</h3><p>A small model on CLIP image features of the same face crops, trained on videos from six 2025 generators and the real videos they started from. It looks for faces made by a video generator.</p></div>
+      <div class="check3 voice"><h3>Voice</h3><p>AntiDeepfake XLS-R 1B, a published speech model trained on many speech datasets to spot cloned and synthetic voices.</p></div>
       <div class="check3 sync"><h3>Lip sync</h3><p>AV-HuBERT, a model that reads lips and hears speech, with a small head trained on real clips only. It scores how far the mouth and the sound fall out of step.</p></div>
     </div>
-    <p class="intro">Each check was trained three times with different random seeds; the answer uses the average of the three.</p>
+    <p class="intro">The face and lip-sync checks come from our study, each trained three times with different random seeds; the answer uses the average of the three. The voice and generated-video checks are single models chosen after the study for how well they do on new data.</p>
   </section>
 
   <section class="block" aria-labelledby="trace-title">
@@ -55,7 +56,7 @@
 
   <section class="block" id="answer" aria-labelledby="answer-title">
     <h2 id="answer-title">Comparing with real clips</h2>
-    <p class="intro">Before the three checks, the file itself is read for labels that AI tools write on purpose: an AIGC tag marked as AI-generated, or a C2PA content credential that declares AI-made media. A label is strong evidence, so it gives "signs of manipulation" on its own. A missing label proves nothing, because an upload or a re-save removes it. The codec, bitrate and length are never used as evidence: in research datasets they describe how the files were saved, not whether a clip is fake.</p>
+    <p class="intro">Before the four checks, the file itself is read for labels that AI tools write on purpose: an AIGC tag marked as AI-generated, or a C2PA content credential that declares AI-made media. A label is strong evidence, so it gives "signs of manipulation" on its own. A missing label proves nothing, because an upload or a re-save removes it. The codec, bitrate and length are never used as evidence: in research datasets they describe how the files were saved, not whether a clip is fake.</p>
     <p class="intro">A raw score means little on its own. Each check's score is compared with the same check's scores on thousands of real clips from four research datasets: "higher than 97 in 100 real clips". The clip's overall reading is its most unusual check. A longer video is checked in parts of three seconds, and its most unusual part decides. Because each part is another chance for a real video to look odd, a video in more parts has to clear a higher line, so real videos are flagged no more often than real clips.</p>
     <h2 class="h2-sub">How the answer is chosen</h2>
     <dl class="answers wide">

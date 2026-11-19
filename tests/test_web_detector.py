@@ -288,3 +288,12 @@ def test_the_outcome_explains_the_part_where_the_face_scored_highest(tmp_path) -
     outcome = _finished(detector, detector.submit(_upload(tmp_path)))["outcome"]
     assert outcome["explain"]["summary"] == "part 1"
     assert outcome["explain"]["frames"][0]["time"] == 4.0
+
+
+def test_cant_check_names_each_reason_once(tmp_path) -> None:
+    """The generated-video check reads the face crops, so with no face it repeats the face's reason (found 11-19)."""
+    scorer = FakeScorer({"face": None, "gen": None, "voice": None, "sync": None})
+    detector = Detector(lambda: scorer, _calibration(), workroot=tmp_path / "work")
+    status = _finished(detector, detector.submit(_upload(tmp_path)))
+    assert status["outcome"]["kind"] == "cant_check"
+    assert status["outcome"]["reason"].count("not checked") == 1
