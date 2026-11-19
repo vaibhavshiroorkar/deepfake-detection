@@ -20,7 +20,7 @@ The demo, the PPT, the overnight checks and `docs/SECURITY.md` are done and merg
 
 **Lines for videos in parts:** measured and live (changelog). Any rebuild of `web-calibration-v2.json` drops them; rerun `scripts/build_parts_lines.py` after one.
 
-**Upload caps (asked by Vaibhav 11-20; Vaibhav decides).** Proposed: allow videos up to about 10 minutes but check at most 20 parts spread evenly (check time stays about 3 minutes on the GPU; a short fake stretch between parts can be missed), and raise the size cap from 90 MB to about 300 MB. **Possibly flaky test:** `test_a_valid_clip_is_scored_through_a_job_and_deleted` failed once in a full `tests/test_site.py` run while the GPU was busy, then passed three times; watch it.
+**Upload caps (asked by Vaibhav 11-20; Vaibhav decides).** Proposed: allow videos up to about 10 minutes but check at most 20 parts spread evenly (check time stays about 3 minutes on the GPU; a short fake stretch between parts can be missed), and raise the size cap from 90 MB to about 300 MB.
 
 **Everyday-device false alarms (found 11-19, Vaibhav).** A real webcam recording with a headset read as fake to the voice check (0.91). Vaibhav: record 10 to 20 short real clips (laptop webcam with and without headset, phone front camera, one or two friends, a few sent through WhatsApp) into `data/user-real/` (git-ignored; consent from everyone filmed); one is there. Claude: `scripts/score_user_reals.py`, then name `results/realworld/user-reals.csv` under `extra_reals` in `results/web-models.json`, rebuild the calibration, compare false alarms on these clips and catches on every fake set before and after, then re-measure the part lines.
 
