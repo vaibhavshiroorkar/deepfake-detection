@@ -320,9 +320,8 @@ def test_the_outside_face_score_replaces_ours_when_it_answers(tmp_path) -> None:
     outcome = status["outcome"]
     assert outcome["kind"] == "signs" and outcome["raised"] == ["face"]
     assert outcome["checks"]["face"]["score"] >= 0.6
-    assert asked == [
-        (True, 1.0)
-    ]  # one still, at the cited face frame, before the upload was deleted
+    # one still from the first part, asked while our models score, before the upload is deleted
+    assert asked == [(True, 1.5)]
     assert not upload.exists()
 
 
@@ -408,3 +407,52 @@ def test_a_label_that_names_the_tool_wins(tmp_path) -> None:
         "share": None,
         "sure": True,
     }
+
+
+def test_a_description_tops_the_answer_and_a_failure_never_breaks_it(tmp_path) -> None:
+    seen = []
+
+    def describe(upload, time, explain):
+        seen.append((upload.exists(), time, explain.get("summary")))
+        return "A woman talks in a kitchen. The heatmap covers her mouth."
+
+    detector = Detector(
+        lambda: FakeScorer(), _calibration(), workroot=tmp_path / "a", describe=describe
+    )
+    outcome = _finished(detector, detector.submit(_upload(tmp_path, "a.mp4")))[
+        "outcome"
+    ]
+    assert (
+        outcome["description"]
+        == "A woman talks in a kitchen. The heatmap covers her mouth."
+    )
+    assert seen == [(True, 1.0, "part 0")]
+
+    voice = _finished(
+        detector, detector.submit(_upload(tmp_path, "b.mp4"), mode="voice")
+    )["outcome"]
+    assert "description" not in voice and len(seen) == 1
+
+    def broken(upload, time, explain):
+        raise RuntimeError("model missing")
+
+    failing = Detector(
+        lambda: FakeScorer(), _calibration(), workroot=tmp_path / "c", describe=broken
+    )
+    status = _finished(failing, failing.submit(_upload(tmp_path, "c.mp4")))
+    assert status["status"] == "done" and "description" not in status["outcome"]
+
+
+def test_a_labelled_file_is_not_sent_out(tmp_path) -> None:
+    asked = []
+    detector = Detector(
+        lambda: FakeScorer(),
+        _calibration(),
+        workroot=tmp_path / "w",
+        read_labels=lambda path: [
+            "a C2PA content credential declaring AI-generated media"
+        ],
+        face_opinion=lambda upload, time: asked.append(1) or {"error": "x"},
+    )
+    outcome = _finished(detector, detector.submit(_upload(tmp_path)))["outcome"]
+    assert outcome["kind"] == "signs" and asked == []

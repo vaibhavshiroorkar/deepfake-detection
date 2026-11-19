@@ -263,3 +263,4 @@ footer.footer { border-top: 1px solid var(--line); padding: 26px 0 44px; color: 
 [data-detector] [hidden] { display: none !important; }
 .crow.generator .cname { color: var(--text); }
 .crow.generator.raised .cfile { color: var(--alert); font-weight: 700; }
+.describe { margin: 8px 0 12px; padding: 12px 14px; border-left: 3px solid var(--accent); border-radius: 6px; background: rgba(94, 234, 212, 0.08); color: var(--text); font-size: 16px; font-weight: 600; line-height: 1.5; }

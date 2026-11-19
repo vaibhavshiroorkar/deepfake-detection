@@ -74,3 +74,34 @@ def test_a_failed_call_says_so_and_costs_nothing(keys, tmp_path):
         raise httpx.ConnectError("no route")
 
     assert "error" in outside.ask(_image(tmp_path), post=down, quota=quota)
+
+
+def test_the_same_file_is_never_paid_for_twice(keys, tmp_path):
+    quota = outside.Quota(tmp_path / "usage.json", today=lambda: date(2026, 11, 19))
+    cache = outside.Cache(tmp_path / "cache.json")
+    upload = tmp_path / "clip.mp4"
+    upload.write_bytes(b"same bytes")
+    calls = []
+
+    def post(*args, **kwargs):
+        calls.append(1)
+        return httpx.Response(
+            200,
+            json={
+                "status": "success",
+                "request": {"operations": 10},
+                "type": {"ai_generated": 0.9, "deepfake": 0.1},
+            },
+        )
+
+    still = _image(tmp_path)
+    first = outside.ask(
+        still, post=post, quota=quota, cache=cache, key=outside.fingerprint(upload)
+    )
+    again = outside.ask(
+        still, post=post, quota=quota, cache=cache, key=outside.fingerprint(upload)
+    )
+    assert first == again == {"ai_generated": 0.9, "deepfake": 0.1}
+    assert len(calls) == 1 and quota.used()["day"] == 10
+    reloaded = outside.Cache(tmp_path / "cache.json")  # survives a restart
+    assert reloaded.get(outside.fingerprint(upload)) == first

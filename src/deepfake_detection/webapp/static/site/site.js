@@ -241,6 +241,12 @@
       const title = el("p", "outcome " + o.cls, o.text);
       if (data.how_sure) title.append(tip(data.how_sure, "How sure is this answer?"));
       card.append(title);
+      if (data.description) {
+        const what = el("p", "describe");
+        what.append(data.description, tip("Written by an AI model on our computer from one still and the heatmap. "
+          + "It describes what is visible; the verdict comes from the checks below.", "Who wrote this"));
+        card.append(what);
+      }
       if (data.summary) card.append(el("p", "", data.summary));
       if (data.where) card.append(el("p", "where", data.where));
       if (file && data.outcome !== "cant_check") card.append(preview(file, data));
@@ -331,7 +337,7 @@
     return box;
   }
 
-  const STAGES = { received: "Received. Waiting for the detector", "file check": "Reading the file for AI labels", "face check": "Checking the face",
+  const STAGES = { received: "Received. Waiting for the detector", "file check": "Reading the file for AI labels", "face check": "Checking the face", describing: "Describing what it shows",
     cleaning: "Cleaning the clip",
     "finding the face": "Finding the face", scoring: "Scoring", done: "Done" };
   const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

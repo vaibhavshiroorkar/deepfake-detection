@@ -535,6 +535,7 @@ def present(outcome: dict) -> dict:
         "lines": outcome.get("lines"),
         "about": check_info(),
         "generator": outcome.get("generator"),
+        "description": outcome.get("description"),
         "trace": outcome.get("trace", {}),
         "how_sure": how_sure(outcome.get("input", "video"))
         if kind != "cant_check"

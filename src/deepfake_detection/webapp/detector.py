@@ -17,8 +17,10 @@ import threading
 import time
 import uuid
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+from deepfake_detection.webapp import describe as describe_module
 from deepfake_detection.webapp import outside, provenance
 from deepfake_detection.webapp.calibration import (
     SHOWN_FLAG,
@@ -46,10 +48,14 @@ class Detector:
         read_labels: Callable[[Path], list[str]] | None = None,
         calibrations: dict[str, Calibration] | None = None,
         face_opinion: Callable[[Path, float], dict] | None = None,
+        describe: Callable[[Path, float, dict], str | None] | None = None,
     ) -> None:
         self._make_scorer, self._scorer = make_scorer, None
         # (upload, time) -> the outside face check on one still, or {"error": ...} to fall back to ours
         self._face_opinion = face_opinion or outside.face_opinion
+        self._pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="outside")
+        # (upload, time, explain) -> a plain description of the still and the heatmap, or None
+        self._describe = describe or describe_module.describe
         self._read_labels = read_labels or provenance.read
         # An input kind with its own reference: a still picture is not judged against moving video.
         self._calibrations = calibrations or {}
@@ -130,11 +136,16 @@ class Detector:
             job, upload, mode = self._queue.get()
             self._set(job, status="running", stage="cleaning")
             workdir = self._workroot / job
+            asking = None
             result: dict
             try:
                 workdir.mkdir(parents=True, exist_ok=True)
                 self._set(job, stage="file check")
                 labels = self._read_labels(upload)
+                # The outside face check runs while our models score. A labelled file is already decided,
+                # and a voice recording has no face, so neither is sent.
+                if mode != "voice" and not labels:
+                    asking = self._pool.submit(self._face_opinion, upload, FIRST_STILL)
                 self.warm()
                 report = self._scorer.score(
                     upload,
@@ -143,10 +154,17 @@ class Detector:
                     mode=mode,
                 )
                 opinion = None
-                if mode != "voice":
+                if asking is not None:
                     self._set(job, stage="face check")
-                    opinion = self._face_opinion(upload, _still_time(report))
+                    opinion = _settled(asking)
                 outcome = self._outcome(report, labels, mode, opinion) | {"input": mode}
+                if mode != "voice":
+                    self._set(job, stage="describing")
+                    text = self._describe_safely(
+                        upload, _still_time(report), outcome.get("explain") or {}
+                    )
+                    if text:
+                        outcome["description"] = text
                 result = {"status": "done", "outcome": outcome}
             except ClipRefused as error:
                 result = {
@@ -160,10 +178,22 @@ class Detector:
                     "reason": "The check failed on our side. Please try again later.",
                 }
             finally:
+                if asking is not None:
+                    _settled(
+                        asking
+                    )  # it reads the upload: let it finish before the file goes
                 upload.unlink(missing_ok=True)
                 shutil.rmtree(workdir, ignore_errors=True)
             self._set(job, **result, stage="done", finished=time.monotonic())
             self._done[job].set()
+
+    def _describe_safely(self, upload: Path, time: float, explain: dict) -> str | None:
+        """The description is a courtesy: a failure is logged and the answer goes out without it."""
+        try:
+            return self._describe(upload, time, explain)
+        except Exception:  # noqa: BLE001 - the checks' answer must not depend on the describer
+            log.exception("describing the still failed")
+            return None
 
     def _outcome(
         self,
@@ -243,6 +273,18 @@ class Detector:
                 )
             )
         return outcome
+
+
+def _settled(asking) -> dict:
+    """The outside face check's answer, or an error that makes our face model answer instead."""
+    try:
+        return asking.result()
+    except Exception:  # noqa: BLE001 - any failure there falls back to our own face model
+        log.exception("the outside face check failed")
+        return {"error": "failed"}
+
+
+FIRST_STILL = 1.5  # seconds: the middle of the first part, where the face usually is
 
 
 # The outside face check gives probabilities, not percentiles among our real clips; these lines set where

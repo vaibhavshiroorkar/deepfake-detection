@@ -23,6 +23,10 @@ COST = 10  # operations per still for the two models (measured 11-19)
 DAY_LIMIT, MONTH_LIMIT = 480, 1900  # plan: 500 a day, 2,000 a month
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 USAGE = PROJECT_ROOT / "runs" / "outside" / "usage.json"
+CACHE = PROJECT_ROOT / "runs" / "outside" / "cache.json"
+CACHE_SIZE = 5000  # answers kept, newest first; one entry is about 80 bytes
+TIMEOUT = 12  # seconds; past this our face model answers instead
+MAX_SIDE = 1024  # pixels; a smaller still uploads faster and costs the same
 log = logging.getLogger(__name__)
 
 
@@ -82,9 +86,67 @@ class Quota:
             )
 
 
-def ask(image: Path, post=httpx.post, quota: Quota | None = None) -> dict:
-    """{"ai_generated": 0..1, "deepfake": 0..1} for one still, or {"error": reason} (the site then falls back)."""
-    quota = quota or Quota()
+class Cache:
+    """Answers by file fingerprint, so the same file is never paid for twice (re-uploads, demos, retries)."""
+
+    _lock = threading.Lock()
+
+    def __init__(self, path: Path = CACHE) -> None:
+        self.path = path
+
+    def _load(self) -> dict:
+        try:
+            return json.loads(self.path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            return {}
+
+    def get(self, key: str) -> dict | None:
+        return self._load().get(key)
+
+    def put(self, key: str, answer: dict) -> None:
+        with self._lock:
+            entries = self._load()
+            entries.pop(key, None)
+            entries = {key: answer, **dict(list(entries.items())[: CACHE_SIZE - 1])}
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self.path.write_text(json.dumps(entries), encoding="utf-8")
+
+
+def fingerprint(path: Path) -> str:
+    import hashlib
+
+    digest = hashlib.sha256()
+    with open(path, "rb") as f:
+        while chunk := f.read(1 << 20):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+_client: httpx.Client | None = None
+
+
+def _post(*args, **kwargs):
+    """One kept-alive connection for every call, instead of a new handshake each time."""
+    global _client
+    if _client is None:
+        _client = httpx.Client(timeout=TIMEOUT)
+    return _client.post(*args, **kwargs)
+
+
+def ask(
+    image: Path,
+    post=_post,
+    quota: Quota | None = None,
+    cache: Cache | None = None,
+    key: str | None = None,
+) -> dict:
+    """{"ai_generated": 0..1, "deepfake": 0..1} for one still, or {"error": reason} (the site then falls back).
+
+    With `key` (the upload's fingerprint) a cached answer is returned without a call or any cost.
+    """
+    quota, cache = quota or Quota(), cache or Cache()
+    if key is not None and (known := cache.get(key)) is not None:
+        return known
     keys = credentials()
     if keys is None:
         return {"error": "not set up"}
@@ -96,7 +158,7 @@ def ask(image: Path, post=httpx.post, quota: Quota | None = None) -> dict:
                 API,
                 data={"models": MODELS, "api_user": keys[0], "api_secret": keys[1]},
                 files={"media": ("frame.jpg", f, "image/jpeg")},
-                timeout=30,
+                timeout=TIMEOUT,
             )
         reply = response.json()
     except (httpx.HTTPError, ValueError) as error:
@@ -107,10 +169,13 @@ def ask(image: Path, post=httpx.post, quota: Quota | None = None) -> dict:
         return {"error": "refused"}
     quota.record(int(reply.get("request", {}).get("operations", COST)))
     kinds = reply.get("type", {})
-    return {
+    answer = {
         "ai_generated": float(kinds.get("ai_generated", 0.0)),
         "deepfake": float(kinds.get("deepfake", 0.0)),
     }
+    if key is not None:
+        cache.put(key, answer)
+    return answer
 
 
 def frame(upload: Path, time: float, target: Path) -> Path:
@@ -127,6 +192,8 @@ def frame(upload: Path, time: float, target: Path) -> Path:
             str(upload),
             "-frames:v",
             "1",
+            "-vf",
+            f"scale='min({MAX_SIDE},iw)':-2",
             "-q:v",
             "3",
             str(target),
@@ -146,7 +213,10 @@ def face_opinion(upload: Path, time: float) -> dict:
         return {"error": "not set up"}
     target = upload.with_name(upload.stem + "-still.jpg")
     try:
-        return ask(frame(upload, time, target))
+        key = fingerprint(upload)
+        if (known := Cache().get(key)) is not None:
+            return known  # no still, no call
+        return ask(frame(upload, time, target), key=key)
     except (RuntimeError, subprocess.TimeoutExpired) as error:
         log.warning("outside face check skipped: %s", error)
         return {"error": "no still"}
