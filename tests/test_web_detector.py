@@ -320,6 +320,7 @@ def test_the_outside_face_score_replaces_ours_when_it_answers(tmp_path) -> None:
     outcome = status["outcome"]
     assert outcome["kind"] == "signs" and outcome["raised"] == ["face"]
     assert outcome["checks"]["face"]["score"] >= 0.6
+    assert outcome["timeline"][0]["reading"] >= 0.6  # the part holding the still shows the flag too
     # one still from the first part, asked while our models score, before the upload is deleted
     assert asked == [(True, 1.5)]
     assert not upload.exists()
@@ -503,3 +504,58 @@ def test_a_labelled_file_is_not_sent_out(tmp_path) -> None:
     )
     outcome = _finished(detector, detector.submit(_upload(tmp_path)))["outcome"]
     assert outcome["kind"] == "signs" and asked == []
+
+
+def _fused_calibration() -> cal.Calibration:
+    import random
+
+    rng = random.Random(41)  # noqa: S311 - a seeded sample, not security
+    rows = [
+        {
+            "corpus": c,
+            "label": 0,
+            "scores": {
+                "face": rng.gauss(0, 1),
+                "voice": rng.gauss(0, 1),
+                "sync": rng.gauss(0, 1),
+            },
+        }
+        for c in ("A", "B")
+        for _ in range(400)
+    ]
+    return cal.build(rows)[0]
+
+
+class _Scores:
+    """One part whose checks score the given logits (the probability whose logit it is, one seed)."""
+
+    def __init__(self, face, voice, sync):
+        import math
+
+        self.checks = {
+            k: CheckResult((1 / (1 + math.exp(-v)),))
+            for k, v in {"face": face, "voice": voice, "sync": sync}.items()
+        }
+
+    def score(self, upload, workdir, progress=lambda stage: None, mode="video"):
+        return [ScoreReport(self.checks, {"loudness_db": [], "windows": []})]
+
+
+def test_the_overall_meter_shows_the_evidence_sum_and_flags_with_the_verdict(
+    tmp_path,
+) -> None:
+    detector = Detector(
+        lambda: _Scores(0.0, 1.75, 1.75), _fused_calibration(), workroot=tmp_path / "a"
+    )
+    outcome = _finished(detector, detector.submit(_upload(tmp_path, "a.mp4")))[
+        "outcome"
+    ]
+    assert (
+        outcome["kind"] == "signs" and outcome["raised"] == []
+    )  # several checks together
+    assert outcome["overall"] >= 0.6
+    calm = Detector(
+        lambda: _Scores(0.0, 0.0, 0.0), _fused_calibration(), workroot=tmp_path / "b"
+    )
+    outcome = _finished(calm, calm.submit(_upload(tmp_path, "b.mp4")))["outcome"]
+    assert outcome["kind"] == "no_signs" and outcome["overall"] < 0.4

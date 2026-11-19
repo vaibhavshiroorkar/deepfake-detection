@@ -2,7 +2,8 @@
 
 Each check's score is placed as a percentile among real calibration clips, the
 real clips of the four P-001 evaluation sets with every corpus weighted equally.
-The combined score is the highest available percentile. The threshold is the
+Since 11-20 the evidence sum of all checks decides (`Fusion`); before, and in older files, the combined
+score was the highest available percentile. The threshold is the
 95th weighted percentile of the combined score over the same real clips, so at
 most 5 in 100 of them are flagged; the 80th percentile starts "can't tell".
 
@@ -78,6 +79,39 @@ class Reference:
         return float(min(1.0, cum[left] + 0.5 * (cum[right] - cum[left])))
 
 
+def evidence_sum(percentiles: list[float]) -> float:
+    """Fisher's statistic over the checks that ran, divided by its degrees of freedom: several mildly unusual
+    checks add up. Nothing is learned from fakes; the lines come from real clips like every other line."""
+    stat = -2 * sum(math.log(max(1 - p, 1e-6)) for p in percentiles)
+    return stat / (2 * len(percentiles))
+
+
+@dataclass(frozen=True)
+class Fusion:
+    """The overall score: the evidence sum, with its own lines set on the same real clips (11-20).
+
+    Tested on corpora it never saw (scripts/fusion_test.py): 32% of fakes caught against 29% for the
+    most-unusual-check rule, at about 5 in 100 real clips; a trained fusion dropped to 41% on FakeAVCeleb.
+    """
+
+    reference: Reference  # the real clips' evidence sums, one part each
+    threshold: float
+    lower: float
+    parts_lines: dict[int, tuple[float, float]] | None = None
+
+    def limits(self, parts: int) -> tuple[float, float]:
+        if parts <= 1:
+            return self.threshold, self.lower
+        if self.parts_lines:
+            counts = sorted(self.parts_lines)
+            at_least = [n for n in counts if n >= parts]
+            return self.parts_lines[at_least[0] if at_least else counts[-1]]
+        return (
+            self.reference.quantile(1 - (1 - FLAG_QUANTILE) / parts),
+            self.reference.quantile(1 - (1 - UNSURE_QUANTILE) / parts),
+        )
+
+
 @dataclass(frozen=True)
 class Outcome:
     kind: str  # signs, cant_tell, no_signs or cant_check
@@ -102,6 +136,12 @@ class Calibration:
     # Lines measured on real videos checked in parts: {parts: (flag, lower)}. They replace the Bonferroni
     # bound, which assumes a video's parts are unrelated and so sets the line far too high.
     parts_lines: dict[int, tuple[float, float]] | None = None
+    # With a fusion block the evidence sum decides; the per-check lines above still place each check's bar.
+    fusion: Fusion | None = None
+
+    def reading_limits(self, parts: int) -> tuple[float, float]:
+        """The lines of the score that decides: the evidence sum's when there is one."""
+        return self.fusion.limits(parts) if self.fusion else self.limits(parts)
 
     def percentiles(self, scores: dict[str, float | None]) -> dict[str, float | None]:
         return {
@@ -150,6 +190,8 @@ class Calibration:
                 pcts[0] if pcts else {c: None for c in CHECKS},
                 parts=combined,
             )
+        if self.fusion is not None:
+            return self._decide_fused(pcts, checked)
         worst = max(checked, key=lambda i: combined[i])
         pct, top = pcts[worst], combined[worst]
         threshold, lower = self.limits(len(checked))
@@ -159,6 +201,28 @@ class Calibration:
             return Outcome("signs", top, pct, raised, worst, combined)
         return Outcome(
             "cant_tell" if top > lower else "no_signs", top, pct, [], worst, combined
+        )
+
+    def _decide_fused(self, pcts: list[dict], checked: list[int]) -> Outcome:
+        fused = [
+            evidence_sum([p for p in pct.values() if p is not None])
+            if i in checked
+            else None
+            for i, pct in enumerate(pcts)
+        ]
+        worst = max(checked, key=lambda i: fused[i])
+        pct, top = pcts[worst], fused[worst]
+        threshold, lower = self.fusion.limits(len(checked))
+        if top > threshold:
+            # A check is named when it would cross its own line; an empty list means several checks together.
+            try:
+                own = self.limits(len(checked))[0]
+            except ValueError:
+                own = self.threshold
+            raised = [c for c in CHECKS if pct[c] is not None and pct[c] > own]
+            return Outcome("signs", top, pct, raised, worst, fused)
+        return Outcome(
+            "cant_tell" if top > lower else "no_signs", top, pct, [], worst, fused
         )
 
     def to_json(self) -> str:
@@ -181,6 +245,21 @@ class Calibration:
             data["parts_lines"] = {
                 str(n): list(v) for n, v in sorted(self.parts_lines.items())
             }
+        if self.fusion is not None:
+            f = self.fusion
+            data["fusion"] = {
+                "rule": "evidence sum",
+                "threshold": f.threshold,
+                "lower": f.lower,
+                "reference": {
+                    "values": list(f.reference.values),
+                    "weights": list(f.reference.weights),
+                },
+            }
+            if f.parts_lines:
+                data["fusion"]["parts_lines"] = {
+                    str(n): list(v) for n, v in sorted(f.parts_lines.items())
+                }
         return json.dumps(data, indent=1)
 
     @classmethod
@@ -191,6 +270,25 @@ class Calibration:
             for c, r in data["references"].items()
         }
         combined = data.get("combined")
+        fused = data.get("fusion")
+        fusion = (
+            None
+            if fused is None
+            else Fusion(
+                Reference(
+                    tuple(fused["reference"]["values"]),
+                    tuple(fused["reference"]["weights"]),
+                ),
+                float(fused["threshold"]),
+                float(fused["lower"]),
+                {
+                    int(n): (float(v[0]), float(v[1]))
+                    for n, v in fused["parts_lines"].items()
+                }
+                if fused.get("parts_lines")
+                else None,
+            )
+        )
         return cls(
             refs,
             float(data["threshold"]),
@@ -202,6 +300,7 @@ class Calibration:
             {int(n): (float(v[0]), float(v[1])) for n, v in data["parts_lines"].items()}
             if data.get("parts_lines")
             else None,
+            fusion,
         )
 
 
@@ -234,11 +333,22 @@ def build(
     scored = [(r, c) for r, c in scored if c is not None]
     combined = [c for _, c in scored]
     weights = corpus_weights([r["corpus"] for r, _ in scored])
+    sums = [
+        evidence_sum(
+            [p for p in draft.percentiles(r["scores"]).values() if p is not None]
+        )
+        for r, _ in scored
+    ]
     final = Calibration(
         references,
         weighted_quantile(combined, weights, FLAG_QUANTILE),
         weighted_quantile(combined, weights, UNSURE_QUANTILE),
         combined=Reference.from_scores(combined, weights),
+        fusion=Fusion(
+            Reference.from_scores(sums, weights),
+            weighted_quantile(sums, weights, FLAG_QUANTILE),
+            weighted_quantile(sums, weights, UNSURE_QUANTILE),
+        ),
     )
     summary: dict = {}
     for r in rows:

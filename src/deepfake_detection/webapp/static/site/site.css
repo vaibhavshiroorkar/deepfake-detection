@@ -270,3 +270,13 @@ footer.footer { border-top: 1px solid var(--line); padding: 26px 0 44px; color: 
 .genchip.top { border-color: var(--alert); }
 .genwrap { border-bottom: 1px solid var(--line); }
 .genwrap .crow { border-bottom: 0; }
+.overall { margin: 4px 0 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel2); }
+.overall-head { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.overall-name { font-weight: 700; font-size: 16px; }
+.overall-val { margin-left: auto; font-size: 20px; font-weight: 700; }
+.overall-track { position: relative; height: 14px; background: #0e141b; border-radius: 7px; overflow: hidden; }
+.overall-track i { display: block; height: 100%; background: #2e9e6a; border-radius: 7px; }
+.overall.unsure .overall-track i { background: #d4a72c; }
+.overall.raised .overall-track i { background: var(--alert); }
+.overall.raised .overall-val { color: var(--alert); }
+.overall .flagtick { top: 0; bottom: 0; }

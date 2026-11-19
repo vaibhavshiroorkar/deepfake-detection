@@ -85,6 +85,24 @@
     return wrap;
   }
 
+  /* The main meter: every check's evidence added up into one score on the page's 0..1 scale. */
+  function overallMeter(score, lines) {
+    const box = el("div", "overall" + (score >= lines.flag ? " raised" : score >= lines.lower ? " unsure" : ""));
+    const head = el("div", "overall-head");
+    head.append(el("span", "overall-name", "Overall"), tip("All the checks' evidence added up: several mildly unusual "
+      + "checks count for more than one. Below " + fmt(lines.lower) + " looks real, " + fmt(lines.lower) + " to "
+      + fmt(lines.flag) + " can't tell, from " + fmt(lines.flag) + " (the mark) flagged; about 5 in 100 real "
+      + "videos reach the mark.", "How the overall score works"), el("span", "overall-val mono", fmt(score)));
+    const track = el("div", "overall-track");
+    const fill = el("i");
+    fill.style.width = Math.min(Math.max(score, 0), 1) * 100 + "%";
+    const tick = el("b", "flagtick");
+    tick.style.left = lines.flag * 100 + "%";
+    track.append(fill, tick);
+    box.append(head, track);
+    return box;
+  }
+
   function checkRows(data) {
     const checks = data.checks || {}, lines = data.lines, about = data.about || {};
     const box = el("div", "checks");
@@ -261,6 +279,7 @@
       }
       if (data.summary) card.append(el("p", "", data.summary));
       if (data.where) card.append(el("p", "where", data.where));
+      if (data.overall != null && data.lines) card.append(overallMeter(data.overall, data.lines));
       if (file && data.outcome !== "cant_check") card.append(preview(file, data));
       const heat = explainView(data.explain, card, !!(data.checks && data.checks.face && data.checks.face.raised));
       if (heat) card.append(heat);

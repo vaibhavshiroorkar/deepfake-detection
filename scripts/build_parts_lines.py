@@ -94,23 +94,31 @@ def website(device: str):
     return site.make_scorer, site._calibration_file("video")
 
 
-def lines(videos: list[dict], calibration) -> dict[int, tuple[float, float]]:
-    """{parts: (flag, lower)} from the real videos' most unusual part."""
+def most_unusual(percentiles: list[float]) -> float:
+    return max(percentiles)
+
+
+def lines(
+    videos: list[dict],
+    calibration,
+    reading=most_unusual,
+    floor: tuple[float, float] | None = None,
+) -> dict[int, tuple[float, float]]:
+    """{parts: (flag, lower)} from the real videos' most unusual part, under `reading` (a part's checks'
+    percentiles to one score: the most unusual check, or the evidence sum)."""
     from deepfake_detection.webapp.calibration import corpus_weights, weighted_quantile
 
     by_count = defaultdict(list)
     for v in videos:
-        readings = [
-            max(
-                (p for p in calibration.percentiles(s).values() if p is not None),
-                default=None,
-            )
-            for s in v["parts"]
-        ]
+        readings = []
+        for s in v["parts"]:
+            seen = [p for p in calibration.percentiles(s).values() if p is not None]
+            readings.append(reading(seen) if seen else None)
         readings = [r for r in readings if r is not None]
         if len(readings) >= 2:
             by_count[len(readings)].append((v["corpus"], max(readings)))
-    out, pool, floor = {}, [], (calibration.threshold, calibration.lower)
+    out, pool = {}, []
+    floor = floor or (calibration.threshold, calibration.lower)
     for n in sorted(by_count):
         pool += by_count[n]
         if len(pool) < MIN_VIDEOS and n != max(by_count):
@@ -186,6 +194,17 @@ def main() -> int:
     measured = lines(videos, calibration)
     data = json.loads(path.read_text(encoding="utf-8"))
     data["parts_lines"] = {str(n): list(v) for n, v in measured.items()}
+    if calibration.fusion is not None:
+        from deepfake_detection.webapp.calibration import evidence_sum
+
+        fused = lines(
+            videos,
+            calibration,
+            reading=evidence_sum,
+            floor=(calibration.fusion.threshold, calibration.fusion.lower),
+        )
+        data["fusion"]["parts_lines"] = {str(n): list(v) for n, v in fused.items()}
+        print("evidence sum:", json.dumps(fused))
     data.setdefault("meta", {})["parts_lines"] = {
         "built": date.today().isoformat(),
         "code_commit": _git_commit(),

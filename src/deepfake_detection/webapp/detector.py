@@ -221,7 +221,10 @@ class Detector:
         ]
         decision = calibration.decide_parts(parts)
         checked = sum(p is not None for p in decision.parts)
-        flag, lower = calibration.limits(max(checked, 1))
+        flag, lower = calibration.limits(max(checked, 1))  # each check's own bar
+        read_flag, read_lower = calibration.reading_limits(
+            max(checked, 1)
+        )  # the score that decides
         # Every part's scores, so the page can colour a timeline and show the score under the cursor.
         timeline = []
         for r, scores, reading in zip(reports, parts, decision.parts, strict=True):
@@ -230,7 +233,7 @@ class Detector:
                 {
                     "start": r.start,
                     "end": r.end,
-                    "reading": display_score(reading, flag, lower),
+                    "reading": display_score(reading, read_flag, read_lower),
                     "checks": {
                         k: display_score(v, flag, lower) for k, v in per_model.items()
                     },
@@ -256,6 +259,9 @@ class Detector:
             "file_check": labels,
             "timeline": timeline,
             "lines": {"flag": SHOWN_FLAG, "lower": SHOWN_LOWER},
+            # The main meter: the evidence sum of all checks on the page's scale (the outside face check's
+            # reading joins it below when that is higher).
+            "overall": display_score(decision.combined, read_flag, read_lower),
             "raw_lines": {"flag": flag, "lower": lower},
             "explain": _face_explanation(reports),
         }
@@ -319,6 +325,12 @@ def _apply_outside_face(outcome: dict, p: float) -> None:
         "score": _outside_display(p),
         "reason": None,
     }
+    outcome["overall"] = max(outcome.get("overall") or 0.0, _outside_display(p))
+    # The still was taken in the part holding FIRST_STILL; that part shows the outside reading too.
+    for part in outcome.get("timeline", []):
+        if part["start"] <= FIRST_STILL < part["end"]:
+            part["reading"] = max(part["reading"] or 0.0, _outside_display(p))
+            break
     if p >= OUTSIDE_FLAG:
         outcome["raised"] = [*outcome["raised"], "face"]
         outcome["kind"] = "signs"

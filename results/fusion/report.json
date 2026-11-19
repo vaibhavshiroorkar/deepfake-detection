@@ -1,0 +1,70 @@
+{
+ "rules": {
+  "max": {
+   "held_out": {
+    "FakeAVCeleb": {
+     "caught": 0.7023809523809523,
+     "reals_flagged": 0.02666666666666667
+    },
+    "DFDC": {
+     "caught": 0.04897815362931642,
+     "reals_flagged": 0.05670103092783505
+    },
+    "LAV-DF": {
+     "caught": 0.08311345646437995,
+     "reals_flagged": 0.06198526224534027
+    },
+    "HiFi-AVDF": {
+     "caught": 0.7130846032580137,
+     "reals_flagged": 0.06410930110352075
+    }
+   },
+   "all_fakes_caught": 0.28710498726973194,
+   "mean_reals_flagged": 0.05236556523584068
+  },
+  "sum": {
+   "held_out": {
+    "FakeAVCeleb": {
+     "caught": 0.6428571428571429,
+     "reals_flagged": 0.0
+    },
+    "DFDC": {
+     "caught": 0.06659619450317125,
+     "reals_flagged": 0.06701030927835051
+    },
+    "LAV-DF": {
+     "caught": 0.17150395778364116,
+     "reals_flagged": 0.08149111400086692
+    },
+    "HiFi-AVDF": {
+     "caught": 0.743562795585917,
+     "reals_flagged": 0.07566999474513926
+    }
+   },
+   "all_fakes_caught": 0.31960461285008235,
+   "mean_reals_flagged": 0.056042854506089174
+  },
+  "trained": {
+   "held_out": {
+    "FakeAVCeleb": {
+     "caught": 0.40714285714285714,
+     "reals_flagged": 0.013333333333333334
+    },
+    "DFDC": {
+     "caught": 0.13424947145877378,
+     "reals_flagged": 0.07731958762886598
+    },
+    "LAV-DF": {
+     "caught": 0.21437994722955145,
+     "reals_flagged": 0.07845687039445166
+    },
+    "HiFi-AVDF": {
+     "caught": 0.627430373095113,
+     "reals_flagged": 0.05307409353652128
+    }
+   },
+   "all_fakes_caught": 0.31016923768159355,
+   "mean_reals_flagged": 0.05554597122329307
+  }
+ }
+}

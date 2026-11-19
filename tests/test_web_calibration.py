@@ -332,3 +332,43 @@ def test_real_world_reals_join_the_calibration_as_their_own_corpora(tmp_path) ->
             "scores": {"face": None, "voice": -3.0, "sync": None, "gen": -1.5},
         },
     ]
+
+
+def test_the_evidence_sum_flags_two_mildly_unusual_checks_that_alone_would_not(
+    tmp_path,
+) -> None:
+    """The most-unusual-check rule missed word edits (LAV-DF) that leave a little in voice and lip sync; an
+    untrained evidence sum caught twice as many on corpora it never saw (scripts/fusion_test.py, 11-20)."""
+    import random
+
+    rng = random.Random(41)  # noqa: S311 - a seeded sample, not security
+    rows = [
+        {
+            "corpus": c,
+            "label": 0,
+            "scores": {
+                "face": rng.gauss(0, 1),
+                "voice": rng.gauss(0, 1),
+                "sync": rng.gauss(0, 1),
+            },
+        }
+        for c in ("A", "B")
+        for _ in range(400)
+    ]
+    calibration, _ = cal.build(rows)
+    assert calibration.fusion is not None
+    two = calibration.decide({"face": 0.0, "voice": 1.75, "sync": 1.75})
+    assert all(
+        p < calibration.threshold for p in two.percentiles.values() if p is not None
+    )  # none alone
+    assert two.kind == "signs"
+    assert (
+        calibration.decide({"face": 0.0, "voice": 0.0, "sync": 0.0}).kind == "no_signs"
+    )
+    again = cal.Calibration.from_json(calibration.to_json())
+    assert again.decide({"face": 0.0, "voice": 1.75, "sync": 1.75}).kind == "signs"
+    old = _calibration()  # a file without the fusion block keeps the old rule
+    assert (
+        old.fusion is None
+        and old.decide({"face": 50.0, "voice": 50.0, "sync": 50.0}).kind == "no_signs"
+    )

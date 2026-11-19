@@ -510,6 +510,11 @@ def present(outcome: dict) -> dict:
                 + " and ".join(CHECK_NAMES[n] for n in checks_raised)
                 + " checks also flagged it."
             )
+    elif kind == "signs" and not outcome["raised"]:
+        summary = (
+            "No single check crossed its line, but several were unusual at once; together they cross the "
+            "overall line, which about 5 in 100 real clips reach."
+        )
     elif kind == "signs":
         words = [CHECK_NAMES[n] for n in outcome["raised"]]
         names = (
@@ -536,6 +541,7 @@ def present(outcome: dict) -> dict:
         "about": check_info(),
         "generator": outcome.get("generator"),
         "description": outcome.get("description"),
+        "overall": outcome.get("overall"),
         "trace": outcome.get("trace", {}),
         "how_sure": how_sure(outcome.get("input", "video"))
         if kind != "cant_check"
