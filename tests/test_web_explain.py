@@ -69,3 +69,29 @@ def test_regions_are_named_by_where_the_heat_is():
     cam = np.zeros((30, 30))
     cam[13:17, 0:3] = 1.0
     assert explain.region(cam) == "edge of the face"
+
+
+def test_the_side_of_the_picture_is_named_by_where_the_heat_is():
+    cam = np.zeros((30, 30))
+    cam[13:17, 3:7] = 1.0
+    assert explain.side(cam) == "left of the picture"
+    cam = np.zeros((30, 30))
+    cam[13:17, 23:27] = 1.0
+    assert explain.side(cam) == "right of the picture"
+    cam = np.zeros((30, 30))
+    cam[13:17, 13:17] = 1.0
+    assert explain.side(cam) == "centre"
+    assert explain.side(np.zeros((30, 30))) == "centre"
+
+
+def test_the_focus_names_the_region_side_and_time_the_page_highlights():
+    found = explain.explain_face(
+        [BottomLooker()],
+        _frames(bright=1),
+        times=[0.25, 1.0, 1.75, 2.5],
+        offset=6.0,
+        top=2,
+    )
+    assert found["focus"] == {"region": "mouth and jaw", "side": "centre", "time": 7.0}
+    assert found["frames"][0]["side"] == "centre"
+    assert "from the mouth and jaw, strongest at 0:07" in found["summary"]

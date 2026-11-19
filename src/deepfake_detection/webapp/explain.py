@@ -83,6 +83,17 @@ def region(cam: np.ndarray) -> str:
     return "nose and cheeks" if y < 0.62 else "mouth and jaw"
 
 
+def side(cam: np.ndarray) -> str:
+    """Which side of the face crop the heat sits on, as the viewer sees the picture (not the person's left)."""
+    hot = np.where(cam >= 0.5 * cam.max(), cam, 0.0)
+    if hot.sum() <= 0:
+        return "centre"
+    x = float((np.indices(cam.shape)[1] * hot).sum() / hot.sum()) / cam.shape[1]
+    if x < 0.4:
+        return "left of the picture"
+    return "right of the picture" if x > 0.6 else "centre"
+
+
 def overlay(frame: np.ndarray, cam: np.ndarray) -> str:
     """The face crop with its heatmap laid over it, as a JPEG data URL. Cool areas keep the face visible."""
     rgb = np.clip((frame.transpose(1, 2, 0) * STD + MEAN) * 255.0, 0, 255).astype(
@@ -123,13 +134,18 @@ def explain_face(
             "time": round(offset + float(times[i]), 2),
             "image": overlay(frames[0, i].detach().float().cpu().numpy(), cams[i]),
             "region": region(cams[i]),
+            "side": side(cams[i]),
             "strength": round(float(share[i] / strongest), 2),
         }
         for i in order
     ]
     where = Counter(c["region"] for c in cited).most_common(1)[0][0]
+    # The strongest cited frame in the most cited region: the one place the page names.
+    lead = next(c for c in cited if c["region"] == where)
+    focus = {"region": where, "side": lead["side"], "time": lead["time"]}
+    place = where if lead["side"] == "centre" else f"{where}, {lead['side']}"
     summary = (
-        f"The face model's evidence came mostly from the {where}, strongest at {_clock(cited[0]['time'])}. "
-        "The heatmap shows where the model looked; it is not proof that this area was edited."
+        f"The face model's evidence came mostly from the {place}, strongest at "
+        f"{_clock(lead['time'])}. The heatmap shows where the model looked; it is not proof that this area was edited."
     )
-    return {"frames": cited, "summary": summary}
+    return {"frames": cited, "focus": focus, "summary": summary}

@@ -223,10 +223,16 @@ footer.footer { border-top: 1px solid var(--line); padding: 26px 0 44px; color: 
 .key::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 28px; }
 .heatbox { margin: 14px 0 0; }
-.heatlbl { font-size: 14px; margin: 0 0 8px; }
+.heatlead { margin: 0 0 6px; padding: 10px 12px; border-left: 3px solid var(--face); border-radius: 6px; background: rgba(169, 196, 255, 0.08); color: var(--text); font-weight: 600; }
+.heatlead.raised { border-left-color: var(--alert); background: rgba(248, 113, 113, 0.12); }
+.heatlead strong { font-weight: 800; color: var(--face); }
+.heatlead.raised strong { color: var(--alert); }
+.heatnote { color: var(--muted); margin: 6px 0; }
+.heattoggle { font: inherit; font-size: 14px; color: var(--text); background: transparent; border: 1px solid #33414f; border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+.heattoggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.heatpanel { margin-top: 10px; }
 .heatrow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .heat { display: grid; gap: 4px; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: inherit; cursor: pointer; overflow: hidden; text-align: left; }
 .heat img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
 .heat span { padding: 0 6px 6px; overflow-wrap: anywhere; }
 .heat:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.heatbox figcaption { margin-top: 6px; color: var(--muted); }

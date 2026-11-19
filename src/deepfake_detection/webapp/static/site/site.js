@@ -182,7 +182,7 @@
       if (data.where) card.append(el("p", "where", data.where));
       if (file && data.outcome !== "cant_check") card.append(preview(file, data));
       card.append(checkRows(data.checks, data.lines));
-      const heat = explainView(data.explain, card);
+      const heat = explainView(data.explain, card, !!(data.checks && data.checks.face && data.checks.face.raised));
       if (heat) card.append(heat);
       const trace = traceView(data.trace);
       if (trace) card.append(trace);
@@ -191,12 +191,32 @@
     card.hidden = false;
   }
 
-  /* Grad-CAM: the three face crops the face model leaned on most (webapp/explain.py). A click moves the
-     preview video to that moment. */
-  function explainView(explain, card) {
+  /* Grad-CAM (webapp/explain.py): one highlighted sentence on where the face model's evidence sits, and
+     the three face crops it leaned on most behind a button. A click on a crop moves the preview there. */
+  function explainView(explain, card, faceRaised) {
     if (!explain || !explain.frames || !explain.frames.length) return null;
     const box = el("figure", "heatbox");
-    box.append(el("p", "heatlbl", "Where the face model looked"));
+    const focus = explain.focus;
+    const lead = el("p", "heatlead" + (faceRaised ? " raised" : ""));
+    if (focus) {
+      const place = focus.region + (focus.side === "centre" ? "" : ", " + focus.side);
+      lead.append(faceRaised ? "The face model flagged this video. Its evidence points to the " :
+        "The face model did not flag this video. It looked hardest at the ");
+      lead.append(el("strong", "", place), ", at " + clock(focus.time) + ".");
+    } else {
+      lead.textContent = explain.summary || "";
+    }
+    box.append(lead);
+    const toggle = el("button", "heattoggle", "Show heatmaps");
+    toggle.type = "button";
+    toggle.setAttribute("aria-expanded", "false");
+    const panel = el("div", "heatpanel");
+    panel.hidden = true;
+    toggle.addEventListener("click", () => {
+      panel.hidden = !panel.hidden;
+      toggle.textContent = panel.hidden ? "Show heatmaps" : "Hide heatmaps";
+      toggle.setAttribute("aria-expanded", String(!panel.hidden));
+    });
     const row = el("div", "heatrow");
     for (const frame of explain.frames) {
       const button = el("button", "heat");
@@ -204,7 +224,8 @@
       const img = el("img");
       img.src = frame.image;
       img.alt = "Face at " + clock(frame.time) + ", heat on the " + frame.region;
-      button.append(img, el("span", "small mono", clock(frame.time) + " " + frame.region));
+      button.append(img, el("span", "small mono", clock(frame.time) + " " + frame.region
+        + (frame.side && frame.side !== "centre" ? ", " + frame.side.replace(" of the picture", "") : "")));
       button.addEventListener("click", () => {
         const media = card.querySelector(".preview video");
         if (media && Number.isFinite(media.duration)) {
@@ -214,9 +235,9 @@
       });
       row.append(button);
     }
-    box.append(row);
-    box.append(el("figcaption", "small", "Warmer colours pushed the face score toward fake. "
-      + (explain.summary || "")));
+    panel.append(row, el("p", "small heatnote", "Warmer colours pushed the face score toward fake. Click a face to jump the video there."));
+    box.append(el("p", "small heatnote", "A heatmap shows where the model looked; it is not proof that this area was edited."),
+      toggle, panel);
     return box;
   }
 

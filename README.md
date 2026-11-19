@@ -15,7 +15,7 @@ By Vaibhav Shiroorkar, Adithya Jithesh and Shivansh Gupta, guided by Dr. Tejashr
    - Face: EfficientNet-B0 with a GRU over 16 face crops.
    - Voice: AntiDeepfake XLS-R 1B, a published model trained on many speech datasets (the study's own voice model was Wav2Vec2 Base; see below).
    - Lip sync: AV-HuBERT features with a head trained on real clips only.
-5. **You get an answer:** signs of manipulation, can't tell, or no signs found. The page also shows each model's score against the flag line, a timeline coloured part by part, and the three face frames the face model leaned on most, as heatmaps.
+5. **You get an answer:** signs of manipulation, can't tell, or no signs found. The page also shows each model's score against the flag line, a timeline coloured part by part, and a highlighted sentence naming where on the face the face model found its evidence (heatmaps on request).
 
 Scores run from 0 (looks real) through 0.5 (neutral) to 1 (looks fake). They are not probabilities: a score is placed by comparing the clip with thousands of real clips. The flag line (0.60) sits where about 5 in 100 real clips cross it.
 
