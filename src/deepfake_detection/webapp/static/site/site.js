@@ -43,11 +43,11 @@
     return button;
   }
 
-  function aboutBody(about) {
+  function aboutBody(about, found) {
     const body = el("div", "cbody small");
     if (!about) return body;
     body.append(el("p", "", about.what));
-    body.append(el("p", "", "High score: " + about.high));
+    body.append(el("p", "", (found ? "If found: " : "High score: ") + about.high));
     body.append(el("p", "", "Misses: " + about.misses));
     if (about.caught && about.caught.length) {
       body.append(el("p", "muted", "Fakes it caught on our test sets: "
@@ -101,8 +101,7 @@
       el("span", "cfile", labels.length ? "AI label found" : "No AI label"),
       el("span", "cval mono", labels.length ? "flagged" : "proves nothing"));
     file.append(line);
-    const body = aboutBody(about.file);
-    for (const text of labels) body.prepend(el("p", "strong", "The file carries " + text + "."));
+    const body = aboutBody(about.file, true);
     file.append(body);
     box.append(file);
     return box;

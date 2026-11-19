@@ -157,7 +157,7 @@ CHECK_ABOUT = {
     },
     "file": {
         "what": "Reads labels that AI tools write into a file on purpose, such as a C2PA content credential.",
-        "high": "A label was found: the file says it was made by AI.",
+        "high": "the file says it was made by AI, which is strong evidence on its own.",
         "misses": "Most fakes: uploading or re-saving a file removes its labels, so no label proves nothing.",
     },
 }
