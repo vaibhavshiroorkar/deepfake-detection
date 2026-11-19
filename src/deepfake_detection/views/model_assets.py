@@ -28,7 +28,7 @@ def fetch_yunet_model(destination: Path, *, force: bool = False) -> Path:
 
     resolved.parent.mkdir(parents=True, exist_ok=True)
     temporary = resolved.with_name(f".{resolved.name}.{uuid4().hex}.tmp")
-    request = Request(YUNET_URL, headers={"User-Agent": "deepfake-generalization"})
+    request = Request(YUNET_URL, headers={"User-Agent": "deepfake-detection"})
     try:
         with urlopen(request, timeout=60) as response:  # noqa: S310
             with temporary.open("xb") as output:

@@ -107,7 +107,7 @@ def _configuration() -> ResolvedConfiguration:
                 "artifact_root": "mlartifacts",
                 "experiment_name": "tracking-tests",
                 "run_name": "fake-run",
-                "tags": {"project": "deepfake-generalization"},
+                "tags": {"project": "deepfake-detection"},
             },
         },
         sources=(Path("configs/local.yaml"),),
@@ -217,7 +217,7 @@ def test_tracking_normalizes_over_limit_parameter_and_tag_data(tmp_path: Path) -
     tracking_values = dict(configuration.values["tracking"])
     tracking_values["run_name"] = "n" * 8001
     tracking_values["tags"] = {
-        "project": "deepfake-generalization",
+        "project": "deepfake-detection",
         "custom": long_tag_value,
         long_tag_key: "custom tag value",
     }
@@ -275,7 +275,7 @@ def test_tracking_normalizes_over_limit_parameter_and_tag_data(tmp_path: Path) -
             key for key in caller_parameters if key.endswith(f"__{key_hash}")
         )
         assert caller_parameters[normalized_key] == f"unsafe value {unsafe_path_key}"
-    assert tags["project"] == "deepfake-generalization"
+    assert tags["project"] == "deepfake-detection"
     assert tags["custom"] == _shortened(long_tag_value, 8000)
     assert tags["cpu"] == _shortened(long_runtime_value, 8000)
     assert long_tag_key not in tags

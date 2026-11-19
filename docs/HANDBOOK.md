@@ -934,7 +934,7 @@ uncommitted working tree unless marked open.
 - **What it cost:** An unknown span of commits went untested locally. No green
   run since the rename can be trusted.
 - **Fix:** The editable path now points at `deepfake-detection\src`.
-- **Source:** `.venv/Lib/site-packages/_editable_impl_deepfake_generalization.pth`.
+- **Source:** `.venv/Lib/site-packages/_editable_impl_deepfake_detection.pth`.
 
 #### 50. A training script still changed into the old folder
 
@@ -1182,6 +1182,14 @@ uncommitted working tree unless marked open.
 - **What it cost:** About two minutes of compute, and a restart of the A13 and A14 chain before it had read anything. The three CLIP models were kept.
 - **Fix:** `--freeze-epochs 6`, which the trainer reads as frozen for the whole run. The script now keeps a model already scored on every target, and ends with "a11 done v2", which the A13 and A14 chain waits for. A run script's flags are now checked against `--help` before a long run.
 - **Source:** `runs/p001-a11.log`, `runs/p001/a11/logs/train-xlsr-seed17.log`.
+
+#### 74. The old folder kept coming back after the rename
+
+- **What went wrong:** MLflow stores each experiment's artifact folder as an absolute path when the experiment is created. All 11 experiments in `mlflow.db` still pointed at `deepfake-generalization`, so every smoke run from the local CI step recreated `../deepfake-generalization/mlartifacts` beside the repo. The `.venv` prompt and activate scripts also still carried the old name.
+- **How it was caught:** Vaibhav saw the old folder reappear on 2026-11-20.
+- **What it cost:** 8 smoke runs' artifacts landed outside the repo. Nothing was lost. They were moved into `mlartifacts/`.
+- **Fix:** Rewrote `experiments.artifact_location` and `runs.artifact_uri` (105 rows) to the `deepfake-detection` path, after a backup at `mlflow.db.bak-20261120`. Renamed the venv prompt and activate paths. A fresh smoke run then logged inside the repo. A rename now includes a search of `mlflow.db` and `.venv` for the old name.
+- **Source:** `mlflow.db`, `configs/local.yaml`, `.github/workflows/ci.yml` (the smoke step).
 
 ## 7. What a hard reviewer would say
 

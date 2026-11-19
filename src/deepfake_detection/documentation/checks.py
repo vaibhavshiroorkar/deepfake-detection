@@ -181,7 +181,7 @@ def external_urls(root: Path) -> tuple[str, ...]:
 def _fetch_status(url: str) -> int:
     request = Request(  # noqa: S310
         url,
-        headers={"User-Agent": "deepfake-generalization-doc-checker"},
+        headers={"User-Agent": "deepfake-detection-doc-checker"},
     )
     try:
         with urlopen(request, timeout=15) as response:  # noqa: S310
