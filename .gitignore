@@ -16,6 +16,7 @@ htmlcov/
 /runs/*
 !/runs/p001-*.sh
 mlflow.db
+mlflow.db.bak-*
 /mlartifacts/
 /mlruns/
 /models/
