@@ -319,6 +319,10 @@ class GenProbe(torch.nn.Module):
             "name": g["classes"][best],
             "share": round(float(shares[best]), 3),
             "sure": bool(shares[best] >= g["shown_from"]),
+            "shares": {
+                name: round(float(v), 3)
+                for name, v in zip(g["classes"], shares, strict=True)
+            },
         }
 
 

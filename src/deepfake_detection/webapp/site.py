@@ -161,9 +161,9 @@ CHECK_ABOUT = {
         "misses": "Most fakes from sources it has not seen; it is the weakest of the three.",
     },
     "generator": {
-        "what": "Names the tool that may have made the video: the one the file's label names, or the closest match among six generators our generated-video check learned (Kling 2.5, PixVerse V5, Seedance 1.0, Sora 2, Veo 3.1, Wan 2.5).",
-        "high": "a tool is named only when the label says so or the match is confident; in our tests a confident match was right about 84 times in 100.",
-        "misses": "Generators it has not learned: a video from another tool is matched to the closest of the six.",
+        "what": "When the video looks AI-made, how much it resembles each of six AI video generators (Kling 2.5, PixVerse V5, Seedance 1.0, Sora 2, Veo 3.1, Wan 2.5); the shares add up to 100%. A tool named in the file's label is shown instead.",
+        "high": "the top box is the closest match; in our tests a match of 60% or more was the right generator about 84 times in 100.",
+        "misses": "Generators it has not learned: a video from another tool is still split among these six.",
     },
     "file": {
         "what": "Reads labels that AI tools write into a file on purpose, such as a C2PA content credential.",

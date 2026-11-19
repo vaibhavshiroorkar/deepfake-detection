@@ -371,8 +371,11 @@ def _with_gen() -> cal.Calibration:
     return calibration
 
 
+SHARES = {"sora2": 0.8, "veo3.1": 0.15, "kling2.5": 0.05}
+
+
 def test_the_generator_is_named_only_when_the_video_looks_generated(tmp_path) -> None:
-    guess = {"name": "sora2", "share": 0.8, "sure": True}
+    guess = {"name": "sora2", "share": 0.8, "sure": True, "shares": SHARES}
     flagged = Detector(
         lambda: _GenScorer(0.999, guess), _with_gen(), workroot=tmp_path / "a"
     )
@@ -383,12 +386,56 @@ def test_the_generator_is_named_only_when_the_video_looks_generated(tmp_path) ->
         "name": "sora2",
         "share": 0.8,
         "sure": True,
+        "shares": SHARES,
     }
     calm = Detector(
         lambda: _GenScorer(0.01, guess), _with_gen(), workroot=tmp_path / "b"
     )
     outcome = _finished(calm, calm.submit(_upload(tmp_path, "b.mp4")))["outcome"]
     assert outcome["generator"] == {"suspected": False}
+
+
+def test_the_generated_check_decides_only_when_the_outside_face_check_cannot(
+    tmp_path,
+) -> None:
+    guess = {"name": "veo3.1", "share": 0.7, "sure": True, "shares": SHARES}
+    answered = Detector(
+        lambda: _GenScorer(0.999, guess),
+        _with_gen(),
+        workroot=tmp_path / "a",
+        face_opinion=lambda upload, time: {"ai_generated": 0.2, "deepfake": 0.01},
+    )
+    outcome = _finished(answered, answered.submit(_upload(tmp_path, "a.mp4")))[
+        "outcome"
+    ]
+    assert "gen" not in outcome["raised"] and outcome["kind"] != "signs"
+    assert outcome["generator"] == {
+        "suspected": False
+    }  # the outside check saw no AI-made face
+    fallback = Detector(
+        lambda: _GenScorer(0.999, guess),
+        _with_gen(),
+        workroot=tmp_path / "b",
+        face_opinion=lambda upload, time: {"error": "allowance used up"},
+    )
+    outcome = _finished(fallback, fallback.submit(_upload(tmp_path, "b.mp4")))[
+        "outcome"
+    ]
+    assert outcome["raised"] == ["gen"] and outcome["kind"] == "signs"
+
+
+def test_an_ai_made_face_seen_outside_brings_the_generator_shares(tmp_path) -> None:
+    guess = {"name": "veo3.1", "share": 0.4, "sure": False, "shares": SHARES}
+    detector = Detector(
+        lambda: _GenScorer(0.01, guess),
+        _with_gen(),
+        workroot=tmp_path / "w",
+        face_opinion=lambda upload, time: {"ai_generated": 0.95, "deepfake": 0.01},
+    )
+    outcome = _finished(detector, detector.submit(_upload(tmp_path)))["outcome"]
+    assert (
+        outcome["generator"]["suspected"] and outcome["generator"]["shares"] == SHARES
+    )
 
 
 def test_a_label_that_names_the_tool_wins(tmp_path) -> None:

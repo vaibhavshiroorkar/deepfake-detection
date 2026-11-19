@@ -122,10 +122,35 @@ def replace_scores(rows: list[dict], choice: dict, sources: dict) -> None:
             row["scores"][check] = float(value) if value else None
 
 
+def add_extra_reals(rows: list[dict], path: Path, sources: dict) -> None:
+    """Real-world real clips (scripts/build_realworld_reals.py), each source its own corpus, real only.
+
+    The research corpora hold studio, broadcast and actor footage; a visitor's webcam or phone recording
+    read as fake against them alone (found 11-19). These rows only set the lines; they hold no fakes.
+    """
+
+    def value(text: str) -> float | None:
+        return float(text) if text not in ("", None) else None
+
+    for r in _read_rows(path, sources):
+        rows.append(
+            {
+                "corpus": r["corpus"],
+                "clip_id": r["clip_id"],
+                "label": 0,
+                "scores": {
+                    "face": value(r.get("face")),
+                    "voice": value(r.get("voice")),
+                    "sync": value(r.get("sync")),
+                    "gen": value(r.get("gen")),
+                },
+            }
+        )
+
+
 def _read_rows(path: Path, sources: dict) -> list[dict]:
-    sources[str(path.relative_to(ROOT).as_posix())] = hashlib.sha256(
-        path.read_bytes()
-    ).hexdigest()
+    name = path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else str(path)
+    sources[name] = hashlib.sha256(path.read_bytes()).hexdigest()
     with open(path, encoding="utf-8", newline="") as f:
         return list(csv.DictReader(f))
 
@@ -145,6 +170,8 @@ def main() -> int:
     if arguments.choice is not None:
         choice = json.loads(arguments.choice.read_text(encoding="utf-8"))
         replace_scores(rows, choice, sources)
+        if choice.get("extra_reals"):
+            add_extra_reals(rows, ROOT / choice["extra_reals"], sources)
         output = ROOT / choice["calibration"]["video"]
     calibration, summary = build(rows)
     coverage = {
@@ -155,7 +182,7 @@ def main() -> int:
             for check in ("face", "voice", "sync", "gen")
         }
         | {"clips": sum(r["corpus"] == c for r in rows)}
-        for c in CORPORA
+        for c in dict.fromkeys(r["corpus"] for r in rows)
     }
     meta = {
         "built": date.today().isoformat(),

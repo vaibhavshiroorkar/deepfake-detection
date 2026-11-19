@@ -211,8 +211,12 @@ class Detector:
         outside_face = (
             None if not opinion or "error" in opinion else max(opinion.values())
         )
+        # With the outside face check's answer, it replaces our face model, and the generated-video check stops
+        # deciding: the outside check already looks for AI-made faces, so ours only added its false alarms. Ours
+        # decide again when the outside check cannot answer.
         parts = [
-            r.scores() | ({"face": None} if outside_face is not None else {})
+            r.scores()
+            | ({"face": None, "gen": None} if outside_face is not None else {})
             for r in reports
         ]
         decision = calibration.decide_parts(parts)
@@ -336,12 +340,12 @@ def _generator(reports, labels: list[str], outcome: dict, opinion: dict | None) 
             "share": None,
             "sure": named is not None,
         }
-    outside_says = (
-        bool(opinion)
-        and "error" not in opinion
-        and opinion.get("ai_generated", 0.0) >= OUTSIDE_FLAG
-    )
-    if "gen" not in outcome["raised"] and not outside_says:
+    if opinion and "error" not in opinion:
+        looks = opinion.get("ai_generated", 0.0) >= OUTSIDE_LOWER
+    else:
+        gen = outcome["checks"].get("gen") or {}
+        looks = "gen" in outcome["raised"] or (gen.get("score") or 0.0) >= SHOWN_LOWER
+    if not looks:
         return {"suspected": False}
     scored = [
         r

@@ -20,6 +20,8 @@ The demo, the PPT, the overnight checks and `docs/SECURITY.md` are done and merg
 
 **Lines for videos in parts:** measured and live (changelog). Any rebuild of `web-calibration-v2.json` drops them; rerun `scripts/build_parts_lines.py` after one.
 
+**Everyday-device false alarms (found 11-19, Vaibhav).** A real webcam recording with a headset read as fake to the voice check (0.91). Vaibhav: record 10 to 20 short real clips (laptop webcam with and without headset, phone front camera, one or two friends, a few sent through WhatsApp) into `data/user-real/` (git-ignored; consent from everyone filmed); one is there. Claude: `scripts/score_user_reals.py`, then name `results/realworld/user-reals.csv` under `extra_reals` in `results/web-models.json`, rebuild the calibration, compare false alarms on these clips and catches on every fake set before and after, then re-measure the part lines.
+
 **Claude, after the 20th: website models, next stage.** The voice swap is done (changelog). Open: (1) score Vaibhav's own phone and laptop recordings, real and voice-cloned, as a held-out set (names like `real_phone_vaibhav_01.mp4`); never train on them. (2) A face model trained on face swaps and generated video together, judged on DF26 and Veo 3; no tested face model works on DF26. (3) Multi-dataset fine-tuning of the voice model only if (1) shows false alarms on real recordings. DF26 and MNW stay evaluation-only. (4) LAV-DF word edits dropped from 37% to 8% caught with the new voice model; check whether the lip-sync model can carry them.
 
 **Claude, also:**

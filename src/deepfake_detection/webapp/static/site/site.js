@@ -19,7 +19,7 @@
     cant_tell: { cls: "unsure", text: "Can't tell" },
     cant_check: { cls: "cant", text: "Can't check" },
   };
-  const CHECKS = [["face", "Face"], ["gen", "Generated"], ["voice", "Voice"], ["sync", "Lip sync"]];
+  const CHECKS = [["face", "Face"], ["voice", "Voice"], ["sync", "Lip sync"]];
   const MAX_MB = 90;
   // The static frontend names the PC's API in a meta tag; served by the PC itself, the API is this origin.
   const API = (document.querySelector('meta[name="ddf-api"]') || {}).content || "";
@@ -61,16 +61,28 @@
 
   function generatorRow(g, about) {
     g = g || { suspected: false };
+    const wrap = el("div", "genwrap");
     const row = el("details", "crow generator" + (g.suspected ? " raised" : ""));
     const line = el("summary", "cline");
-    const name = g.name ? (GENERATORS[g.name] || g.name) : null;
-    let text = "None suspected", value = "";
-    if (g.suspected && g.source === "label") { text = name ? name : "AI-made (label)"; value = "from label"; }
-    else if (g.suspected && g.sure && name) { text = "Looks most like " + name; value = Math.round(g.share * 100) + "%"; }
-    else if (g.suspected) { text = "Generated, tool unclear"; value = ""; }
-    line.append(el("span", "cname", "Generator audit"), el("span", "cfile", text), el("span", "cval mono", value));
+    const named = g.name ? (GENERATORS[g.name] || g.name) : null;
+    const text = !g.suspected ? "None suspected" : g.source === "label" ? (named || "AI-made (label)") : "Looks AI-made";
+    line.append(el("span", "cname", "Generator audit"), el("span", "cfile", text),
+      el("span", "cval mono", g.source === "label" && g.suspected ? "from label" : ""));
     row.append(line, aboutBody(about, true));
-    return row;
+    wrap.append(row);
+    // One box per generator it learned, highest first; shown only when the video looks AI-made.
+    const shares = g.suspected && g.source === "model" ? Object.entries(g.shares || {}) : [];
+    const shown = shares.filter(([, v]) => Math.round(v * 100) > 0).sort((a, b) => b[1] - a[1]);
+    if (shown.length) {
+      const chips = el("div", "genchips");
+      for (const [name, v] of shown) {
+        const chip = el("span", "genchip" + (name === g.name && g.sure ? " top" : ""));
+        chip.append(el("b", "", GENERATORS[name] || name), el("span", "mono", " " + Math.round(v * 100) + "%"));
+        chips.append(chip);
+      }
+      wrap.append(chips);
+    }
+    return wrap;
   }
 
   function checkRows(data) {

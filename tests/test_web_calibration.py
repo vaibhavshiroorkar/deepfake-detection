@@ -297,3 +297,38 @@ def test_a_fourth_check_is_calibrated_and_an_old_three_check_file_still_decides(
         old.decide({"face": 0.0, "voice": 0.0, "sync": 0.0, "gen": 500.0}).kind
         == "no_signs"
     )
+
+
+def test_real_world_reals_join_the_calibration_as_their_own_corpora(tmp_path) -> None:
+    """Webcam and phone speech read as fake against research clips only (found 11-19); real-world real
+    clips join the references so a visitor's real recording is compared with recordings like it."""
+    import importlib.util
+
+    from deepfake_detection.paths import PROJECT_ROOT
+
+    spec = importlib.util.spec_from_file_location(
+        "build_web_calibration", PROJECT_ROOT / "scripts" / "build_web_calibration.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    extra = tmp_path / "reals.csv"
+    extra.write_text(
+        "corpus,clip_id,voice,gen\nWeb speech,a,-2.5,\nWeb video,b,-3.0,-1.5\n",
+        encoding="utf-8",
+    )
+    rows: list = []
+    module.add_extra_reals(rows, extra, {})
+    assert rows == [
+        {
+            "corpus": "Web speech",
+            "clip_id": "a",
+            "label": 0,
+            "scores": {"face": None, "voice": -2.5, "sync": None, "gen": None},
+        },
+        {
+            "corpus": "Web video",
+            "clip_id": "b",
+            "label": 0,
+            "scores": {"face": None, "voice": -3.0, "sync": None, "gen": -1.5},
+        },
+    ]
