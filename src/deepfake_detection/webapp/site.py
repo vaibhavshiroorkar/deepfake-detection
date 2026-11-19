@@ -25,7 +25,6 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
 from deepfake_detection.paths import PROJECT_ROOT
-from deepfake_detection.webapp import outside
 from deepfake_detection.webapp.detector import Detector
 
 NUMBERS = PROJECT_ROOT / "results" / "numbers.json"
@@ -142,9 +141,9 @@ def live_rates() -> dict:
 # measured catch rates (results/web-calibration-v2.json, raised_by) and the 11-19 model test.
 CHECK_ABOUT = {
     "face": {
-        "what": "Looks at 16 face crops from the part for traces a face swap leaves.",
-        "high": "The face looks more unusual than almost all real faces we tested.",
-        "misses": "Fully generated videos (such as Veo or Sora), which have no pasted face.",
+        "what": "Checks one still of the face for a swapped or AI-made face; when that check is unavailable, our face model reads 16 face crops instead.",
+        "high": "The face looks swapped or AI-made.",
+        "misses": "Fakes where the face is real and only the voice or the words were changed.",
     },
     "gen": {
         "what": "Looks at the face for signs that the whole video was made by an AI video generator, such as Veo, Sora or Kling.",
@@ -160,6 +159,11 @@ CHECK_ABOUT = {
         "what": "Checks whether the lips move with the words. It learned from real clips only.",
         "high": "Lips and words fit together worse than in almost all real clips.",
         "misses": "Most fakes from sources it has not seen; it is the weakest of the three.",
+    },
+    "generator": {
+        "what": "Names the tool that may have made the video: the one the file's label names, or the closest match among six generators our generated-video check learned (Kling 2.5, PixVerse V5, Seedance 1.0, Sora 2, Veo 3.1, Wan 2.5).",
+        "high": "a tool is named only when the label says so or the match is confident; in our tests a confident match was right about 84 times in 100.",
+        "misses": "Generators it has not learned: a video from another tool is matched to the closest of the six.",
     },
     "file": {
         "what": "Reads labels that AI tools write into a file on purpose, such as a C2PA content credential.",
@@ -530,7 +534,7 @@ def present(outcome: dict) -> dict:
         "explain": outcome.get("explain", {}),
         "lines": outcome.get("lines"),
         "about": check_info(),
-        "outside": outcome.get("outside"),
+        "generator": outcome.get("generator"),
         "trace": outcome.get("trace", {}),
         "how_sure": how_sure(outcome.get("input", "video"))
         if kind != "cant_check"
@@ -631,7 +635,6 @@ def register(app: FastAPI) -> None:
         request: Request,
         file: UploadFile = File(...),
         mode: str = Form(""),
-        second: str = Form(""),
     ) -> JSONResponse:
         client = request.client.host if request.client else "unknown"
         if not uploads.allow(client):
@@ -677,7 +680,7 @@ def register(app: FastAPI) -> None:
                 path, converted = converted, None
             check_clip_rules(probe(path))
             job = detector().submit(
-                path, mode=kind, second=second == "1" and outside.enabled()
+                path, mode=kind
             )  # the detector owns the file from here and deletes it
         except ClipRejected as error:
             path.unlink(missing_ok=True)
@@ -704,14 +707,6 @@ def register(app: FastAPI) -> None:
             path.unlink(missing_ok=True)
             raise
         return JSONResponse({"status": "queued", "job": job}, status_code=202)
-
-    @app.get("/api/outside")
-    def outside_status() -> JSONResponse:
-        """Whether the page may offer the second opinion, and how many are left today."""
-        on = outside.enabled()
-        return JSONResponse(
-            {"enabled": on, "left_today": outside.Quota().left_today() if on else 0}
-        )
 
     @app.get("/api/check/{job}")
     def check_status(job: str) -> JSONResponse:

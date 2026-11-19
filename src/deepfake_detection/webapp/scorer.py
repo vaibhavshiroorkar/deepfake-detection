@@ -66,6 +66,9 @@ class CheckResult:
         tuple[float, ...] | None
     )  # one per seed, or None when the check could not run
     reason: str | None = None
+    detail: dict | None = (
+        None  # extra findings of the check, such as the generated-video check's generator guess
+    )
 
     @property
     def score(self) -> float | None:
@@ -290,7 +293,15 @@ class Scorer:
                 out[name] = CheckResult((candidate(batch),))
             # The generated-video check reads the very face crops the face check read.
             if check == "face" and "gen" in self.replace:
-                out["gen"] = CheckResult((self.replace["gen"](batch),))
+                gen = self.replace["gen"]
+                out["gen"] = CheckResult(
+                    (gen(batch),),
+                    detail={
+                        "generator": getattr(
+                            getattr(gen, "model", None), "last_generator", None
+                        )
+                    },
+                )
             if check == "face":
                 explained = self._explain_face(
                     batch.values.to(self.device), neutral, offset, top

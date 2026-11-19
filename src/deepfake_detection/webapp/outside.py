@@ -1,11 +1,8 @@
-"""An optional second opinion: the outside service's AI-generated image model on one frame, only when the visitor asks.
+"""The face check's first source: an outside detection service on one still of the upload.
 
-The site's own four checks decide the answer. This is shown beside them, labelled as an outside service
-whose accuracy on our test sets is not yet measured. One still frame leaves the computer, and only for a
-visitor who ticked the box; the page says so before they upload.
-
-The free plan allows 2,000 operations a month and 500 a day; the AI-generated model costs 5 per image
-(measured 11-19). The quota file keeps the site under both limits, with a margin.
+When the service is set up and today's allowance has room, the face check reads its scores for one still
+(face swap and AI-made image); otherwise the site's own face model answers. Nothing else of the upload is
+sent. The allowance file keeps use under the plan's daily and monthly limits, with a margin.
 """
 
 from __future__ import annotations
@@ -21,10 +18,9 @@ from pathlib import Path
 import httpx
 
 API = "https://still-check.example/1.0/check.json"
-MODEL = "genai"
-COST = 5  # operations per image for the AI-generated model
-DAY_LIMIT, MONTH_LIMIT = 480, 1900  # free plan: 500 a day, 2,000 a month
-SERVICE = "the outside service"
+MODELS = "genai,deepfake"
+COST = 10  # operations per still for the two models (measured 11-19)
+DAY_LIMIT, MONTH_LIMIT = 480, 1900  # plan: 500 a day, 2,000 a month
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 USAGE = PROJECT_ROOT / "runs" / "outside" / "usage.json"
 log = logging.getLogger(__name__)
@@ -85,38 +81,36 @@ class Quota:
                 encoding="utf-8",
             )
 
-    def left_today(self) -> int:
-        used = self.used()
-        return max(0, min(DAY_LIMIT - used["day"], MONTH_LIMIT - used["month"]) // COST)
-
 
 def ask(image: Path, post=httpx.post, quota: Quota | None = None) -> dict:
-    """{"ai_generated": 0..1, "service": ...} for one image, or {"error": reason} in plain words."""
+    """{"ai_generated": 0..1, "deepfake": 0..1} for one still, or {"error": reason} (the site then falls back)."""
     quota = quota or Quota()
     keys = credentials()
     if keys is None:
-        return {"error": "The second opinion is not set up on this server."}
+        return {"error": "not set up"}
     if not quota.room(COST):
-        return {
-            "error": "Today's free allowance for second opinions is used up. Try again tomorrow."
-        }
+        return {"error": "allowance used up"}
     try:
         with open(image, "rb") as f:
             response = post(
                 API,
-                data={"models": MODEL, "api_user": keys[0], "api_secret": keys[1]},
+                data={"models": MODELS, "api_user": keys[0], "api_secret": keys[1]},
                 files={"media": ("frame.jpg", f, "image/jpeg")},
                 timeout=30,
             )
         reply = response.json()
     except (httpx.HTTPError, ValueError) as error:
-        log.warning("second opinion failed: %s", error)
-        return {"error": "The second opinion could not be reached."}
+        log.warning("outside face check failed: %s", error)
+        return {"error": "unreachable"}
     if reply.get("status") != "success":
-        log.warning("second opinion refused: %s", reply.get("error"))
-        return {"error": "The second opinion could not be reached."}
+        log.warning("outside face check refused: %s", reply.get("error"))
+        return {"error": "refused"}
     quota.record(int(reply.get("request", {}).get("operations", COST)))
-    return {"ai_generated": float(reply["type"]["ai_generated"]), "service": SERVICE}
+    kinds = reply.get("type", {})
+    return {
+        "ai_generated": float(kinds.get("ai_generated", 0.0)),
+        "deepfake": float(kinds.get("deepfake", 0.0)),
+    }
 
 
 def frame(upload: Path, time: float, target: Path) -> Path:
@@ -146,13 +140,15 @@ def frame(upload: Path, time: float, target: Path) -> Path:
     return target
 
 
-def second_opinion(upload: Path, time: float) -> dict:
+def face_opinion(upload: Path, time: float) -> dict:
     """The detector's hook: a still at `time`, sent once, then deleted."""
-    target = upload.with_name(upload.stem + "-second.jpg")
+    if not enabled():
+        return {"error": "not set up"}
+    target = upload.with_name(upload.stem + "-still.jpg")
     try:
         return ask(frame(upload, time, target))
     except (RuntimeError, subprocess.TimeoutExpired) as error:
-        log.warning("second opinion skipped: %s", error)
-        return {"error": "No still could be taken from this file."}
+        log.warning("outside face check skipped: %s", error)
+        return {"error": "no still"}
     finally:
         target.unlink(missing_ok=True)

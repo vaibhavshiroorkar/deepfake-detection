@@ -13,7 +13,7 @@
  "gen": {
   "loader": "genprobe",
   "file": "models/website/gen-probe.json",
-  "sha256": "ee752fc38fb913ce8dc6e50d3221577717494ab54f245f364d2ab3b1f152d687",
+  "sha256": "6511a49a06395cbbfe5a360dbc7bb077c553ea83e920b0850481400d93fde8b5",
   "column": "face_gen",
   "scores": "results/gen-probe/cache-scores.csv"
  }

@@ -51,6 +51,11 @@
      "reach_line": 0.8,
      "auc_vs_set_reals": 0.8111111111111111
     },
+    "Kling_3.0": {
+     "videos": 13,
+     "reach_line": 0.6153846153846154,
+     "auc_vs_set_reals": 0.7350427350427351
+    },
     "real": {
      "videos": 18,
      "reach_line": 0.2222222222222222
@@ -58,13 +63,13 @@
    },
    "own": {
     "real-own": {
-     "videos": 27,
-     "reach_line": 0.037037037037037035
+     "videos": 33,
+     "reach_line": 0.030303030303030304
     },
     "vaibhav": {
      "videos": 3,
      "reach_line": 0.6666666666666666,
-     "auc_vs_set_reals": 0.9876543209876544,
+     "auc_vs_set_reals": 0.98989898989899,
      "scores": {
       "WhatsApp Video 2026-11-18 at 9.59.25 PM (1).mp4": 4.444,
       "WhatsApp Video 2026-11-18 at 9.59.25 PM.mp4": 5.027,
@@ -74,9 +79,24 @@
     "veo3-own": {
      "videos": 2,
      "reach_line": 0.5,
-     "auc_vs_set_reals": 0.537037037037037
+     "auc_vs_set_reals": 0.5303030303030303
     }
    }
   }
+ },
+ "generator_id": {
+  "accuracy": 0.6158160403813797,
+  "named_share": 0.4441951766685362,
+  "named_accuracy": 0.8434343434343434,
+  "per_generator": {
+   "kling2.5": 0.37727272727272726,
+   "pixverseV5": 0.6496350364963503,
+   "seedance1.0": 0.5417789757412399,
+   "sora2": 0.8543417366946778,
+   "veo3.1": 0.5709459459459459,
+   "wan2.5": 0.6113207547169811
+  },
+  "C": 0.01,
+  "shown_from": 0.6
  }
 }

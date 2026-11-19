@@ -299,29 +299,112 @@ def test_cant_check_names_each_reason_once(tmp_path) -> None:
     assert status["outcome"]["reason"].count("not checked") == 1
 
 
-def test_a_second_opinion_is_asked_only_when_the_visitor_opted_in(tmp_path) -> None:
+def test_the_outside_face_score_replaces_ours_when_it_answers(tmp_path) -> None:
     asked = []
 
-    def second(upload, time):
+    def opinion(upload, time):
         asked.append((upload.exists(), time))
-        return {"ai_generated": 0.9, "service": "the outside service"}
+        return {"ai_generated": 0.97, "deepfake": 0.02}
 
-    scorer = FakeScorer({"face": (0.5,) * 3, "voice": (0.5,) * 3, "sync": None})
+    low = {
+        "face": (0.01,) * 3,
+        "voice": (0.5,) * 3,
+        "sync": None,
+    }  # our face model says real
+    scorer = FakeScorer(low)
     detector = Detector(
-        lambda: scorer,
-        _calibration(),
-        workroot=tmp_path / "work",
-        second_opinion=second,
+        lambda: scorer, _calibration(), workroot=tmp_path / "work", face_opinion=opinion
     )
-    plain = _finished(detector, detector.submit(_upload(tmp_path, "a.mp4")))
-    assert "outside" not in plain["outcome"] and not asked
-    upload = _upload(tmp_path, "b.mp4")
-    opted = _finished(detector, detector.submit(upload, second=True))
-    assert opted["outcome"]["outside"] == {
-        "ai_generated": 0.9,
-        "service": "the outside service",
-    }
+    upload = _upload(tmp_path)
+    status = _finished(detector, detector.submit(upload))
+    outcome = status["outcome"]
+    assert outcome["kind"] == "signs" and outcome["raised"] == ["face"]
+    assert outcome["checks"]["face"]["score"] >= 0.6
     assert asked == [
         (True, 1.0)
-    ]  # the upload still existed, at the cited face frame's time
+    ]  # one still, at the cited face frame, before the upload was deleted
     assert not upload.exists()
+
+
+def test_our_face_model_answers_when_the_outside_check_cannot(tmp_path) -> None:
+    high = {"face": (0.999,) * 3, "voice": (0.5,) * 3, "sync": None}
+    detector = Detector(
+        lambda: FakeScorer(high),
+        _calibration(),
+        workroot=tmp_path / "work",
+        face_opinion=lambda upload, time: {"error": "allowance used up"},
+    )
+    outcome = _finished(detector, detector.submit(_upload(tmp_path)))["outcome"]
+    assert outcome["kind"] == "signs" and outcome["raised"] == ["face"]
+
+
+def test_a_voice_recording_is_never_sent_out(tmp_path) -> None:
+    asked = []
+    detector = Detector(
+        lambda: FakeScorer(),
+        _calibration(),
+        workroot=tmp_path / "work",
+        face_opinion=lambda upload, time: asked.append(1) or {"error": "x"},
+    )
+    _finished(detector, detector.submit(_upload(tmp_path), mode="voice"))
+    assert asked == []
+
+
+class _GenScorer:
+    """One part whose generated-video check scored `gen` and guessed `guess`."""
+
+    def __init__(self, gen: float, guess: dict) -> None:
+        self.gen, self.guess = gen, guess
+
+    def score(self, upload, workdir, progress=lambda stage: None, mode="video"):
+        checks = {
+            "face": CheckResult((0.5,) * 3),
+            "voice": CheckResult((0.5,) * 3),
+            "sync": CheckResult(None, "not checked"),
+            "gen": CheckResult((self.gen,), detail={"generator": self.guess}),
+        }
+        return [ScoreReport(checks, {"loudness_db": [], "windows": []})]
+
+
+def _with_gen() -> cal.Calibration:
+    calibration = _calibration()
+    calibration.references["gen"] = calibration.references["face"]
+    return calibration
+
+
+def test_the_generator_is_named_only_when_the_video_looks_generated(tmp_path) -> None:
+    guess = {"name": "sora2", "share": 0.8, "sure": True}
+    flagged = Detector(
+        lambda: _GenScorer(0.999, guess), _with_gen(), workroot=tmp_path / "a"
+    )
+    outcome = _finished(flagged, flagged.submit(_upload(tmp_path, "a.mp4")))["outcome"]
+    assert outcome["generator"] == {
+        "suspected": True,
+        "source": "model",
+        "name": "sora2",
+        "share": 0.8,
+        "sure": True,
+    }
+    calm = Detector(
+        lambda: _GenScorer(0.01, guess), _with_gen(), workroot=tmp_path / "b"
+    )
+    outcome = _finished(calm, calm.submit(_upload(tmp_path, "b.mp4")))["outcome"]
+    assert outcome["generator"] == {"suspected": False}
+
+
+def test_a_label_that_names_the_tool_wins(tmp_path) -> None:
+    label = 'an AIGC label marking the file as AI-generated content, which names the tool "dreamina"'
+    detector = Detector(
+        lambda: _GenScorer(0.01, None),
+        _with_gen(),
+        workroot=tmp_path / "w",
+        read_labels=lambda path: [label],
+    )
+    outcome = _finished(detector, detector.submit(_upload(tmp_path)))["outcome"]
+    assert outcome["generator"] == {
+        "suspected": True,
+        "source": "label",
+        "name": "dreamina",
+        "share": None,
+        "sure": True,
+    }

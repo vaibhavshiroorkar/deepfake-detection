@@ -10,3 +10,10 @@ import pytest
 @pytest.fixture(autouse=True)
 def _study_models(monkeypatch):
     monkeypatch.setenv("DDF_WEB_MODELS", "p001")
+
+
+@pytest.fixture(autouse=True)
+def _no_outside_service(monkeypatch):
+    """Tests never call the outside face check; a test that wants it sets the keys itself."""
+    monkeypatch.delenv("STILL_CHECK_USER", raising=False)
+    monkeypatch.delenv("STILL_CHECK_SECRET", raising=False)

@@ -292,14 +292,34 @@ class GenProbe(torch.nn.Module):
         head = json.loads(path.read_text(encoding="utf-8"))
         self.mean, self.scale = np.asarray(head["mean"]), np.asarray(head["scale"])
         self.coef, self.intercept = np.asarray(head["coef"]), float(head["intercept"])
+        # Which of the generators it was trained on a clip looks most like; named only from `shown_from`.
+        self.generators = head.get("generators")
+        self.last_generator: dict | None = None
         self.embed = embed or ClipEmbedder(
             path.parent.parent / "pretrained" / "clip-vit-large-patch14", device
         )
 
     def forward(self, crops: torch.Tensor) -> float:
-        z = (np.asarray(self.embed(crops)) - self.mean) / self.scale
+        embedding = np.asarray(self.embed(crops))
+        z = (embedding - self.mean) / self.scale
         logit = float(z @ self.coef + self.intercept)
+        self.last_generator = self._guess(embedding)
         return float(torch.sigmoid(torch.tensor(logit)))
+
+    def _guess(self, embedding) -> dict | None:
+        g = self.generators
+        if not g:
+            return None
+        z = (embedding - np.asarray(g["mean"])) / np.asarray(g["scale"])
+        logits = np.asarray(g["coef"]) @ z + np.asarray(g["intercept"])
+        shares = np.exp(logits - logits.max())
+        shares /= shares.sum()
+        best = int(shares.argmax())
+        return {
+            "name": g["classes"][best],
+            "share": round(float(shares[best]), 3),
+            "sure": bool(shares[best] >= g["shown_from"]),
+        }
 
 
 class OnBatch:

@@ -115,13 +115,64 @@ def head(model) -> dict:
     }
 
 
+GENERATOR_C = 0.01  # chosen by 5-fold cross-validation on HiFi-AVDF fakes (11-19)
+GENERATOR_SHOWN = 0.6  # a guess is named only at or above this share
+
+
+def generator_head(x, gens) -> tuple[dict, dict]:
+    """Which of the six HiFi-AVDF generators a generated clip looks most like, and how often that is right."""
+    from sklearn.model_selection import StratifiedKFold, cross_val_predict
+
+    model = make_pipeline(
+        StandardScaler(), LogisticRegression(C=GENERATOR_C, max_iter=4000)
+    )
+    shares = cross_val_predict(
+        model,
+        x,
+        gens,
+        cv=StratifiedKFold(5, shuffle=True, random_state=41),
+        method="predict_proba",
+    )
+    classes = sorted(set(gens))
+    top, share = np.array(classes)[shares.argmax(1)], shares.max(1)
+    sure = share >= GENERATOR_SHOWN
+    measured = {
+        "accuracy": float(np.mean(top == gens)),
+        "named_share": float(np.mean(sure)),
+        "named_accuracy": float(np.mean(top[sure] == gens[sure])),
+        "per_generator": {g: float(np.mean(top[gens == g] == g)) for g in classes},
+    }
+    model.fit(x, gens)
+    scaler, logistic = (
+        model.named_steps["standardscaler"],
+        model.named_steps["logisticregression"],
+    )
+    return {
+        "classes": [str(c) for c in logistic.classes_],
+        "mean": scaler.mean_.tolist(),
+        "scale": scaler.scale_.tolist(),
+        "coef": logistic.coef_.tolist(),
+        "intercept": logistic.intercept_.tolist(),
+        "shown_from": GENERATOR_SHOWN,
+    }, measured
+
+
 def export(x, y, ids, gens) -> None:
     import csv
 
     final = fit(x, y)
     target = ROOT / "models" / "website" / "gen-probe.json"
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(head(final)) + "\n", encoding="utf-8")
+    generators, measured = generator_head(x[y == 1], gens[y == 1])
+    target.write_text(
+        json.dumps(head(final) | {"generators": generators}) + "\n", encoding="utf-8"
+    )
+    report = json.loads(OUT.read_text(encoding="utf-8"))
+    report["generator_id"] = measured | {
+        "C": GENERATOR_C,
+        "shown_from": GENERATOR_SHOWN,
+    }
+    OUT.write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
     held_out = {g: fit(x[gens != g], y[gens != g]) for g in sorted(set(gens))}
     out = ROOT / "results" / "gen-probe" / "cache-scores.csv"
     out.parent.mkdir(parents=True, exist_ok=True)

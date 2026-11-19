@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import queue
+import re
 import shutil
 import tempfile
 import threading
@@ -44,11 +45,11 @@ class Detector:
         waiting: int = 3,
         read_labels: Callable[[Path], list[str]] | None = None,
         calibrations: dict[str, Calibration] | None = None,
-        second_opinion: Callable[[Path, float], dict] | None = None,
+        face_opinion: Callable[[Path, float], dict] | None = None,
     ) -> None:
         self._make_scorer, self._scorer = make_scorer, None
-        # (upload, time) -> an outside service's reading of one still; only for visitors who opt in
-        self._second_opinion = second_opinion or outside.second_opinion
+        # (upload, time) -> the outside face check on one still, or {"error": ...} to fall back to ours
+        self._face_opinion = face_opinion or outside.face_opinion
         self._read_labels = read_labels or provenance.read
         # An input kind with its own reference: a still picture is not judged against moving video.
         self._calibrations = calibrations or {}
@@ -59,7 +60,7 @@ class Detector:
         self._done: dict[str, threading.Event] = {}
         self._lock = threading.Lock()
         self._load_lock = threading.Lock()
-        self._queue: queue.Queue[tuple[str, Path, str, bool]] = queue.Queue()
+        self._queue: queue.Queue[tuple[str, Path, str]] = queue.Queue()
         threading.Thread(target=self._work, name="detector", daemon=True).start()
 
     def warm(self) -> None:
@@ -68,7 +69,7 @@ class Detector:
             if self._scorer is None:
                 self._scorer = self._make_scorer()
 
-    def submit(self, upload: Path, mode: str = "video", second: bool = False) -> str:
+    def submit(self, upload: Path, mode: str = "video") -> str:
         """Queue an upload the server has already checked against the clip rules. Takes ownership of the file."""
         with self._lock:
             self._expire()
@@ -85,7 +86,7 @@ class Detector:
                 "finished": None,
             }
             self._done[job] = threading.Event()
-        self._queue.put((job, upload, mode, second))
+        self._queue.put((job, upload, mode))
         return job
 
     def status(self, job: str) -> dict | None:
@@ -126,7 +127,7 @@ class Detector:
 
     def _work(self) -> None:
         while True:
-            job, upload, mode, second = self._queue.get()
+            job, upload, mode = self._queue.get()
             self._set(job, status="running", stage="cleaning")
             workdir = self._workroot / job
             result: dict
@@ -141,12 +142,11 @@ class Detector:
                     progress=lambda stage, job=job: self._set(job, stage=stage),
                     mode=mode,
                 )
-                outcome = self._outcome(report, labels, mode) | {"input": mode}
-                if second and mode != "voice":
-                    self._set(job, stage="second opinion")
-                    outcome["outside"] = self._second_opinion(
-                        upload, _still_time(outcome)
-                    )
+                opinion = None
+                if mode != "voice":
+                    self._set(job, stage="face check")
+                    opinion = self._face_opinion(upload, _still_time(report))
+                outcome = self._outcome(report, labels, mode, opinion) | {"input": mode}
                 result = {"status": "done", "outcome": outcome}
             except ClipRefused as error:
                 result = {
@@ -165,19 +165,33 @@ class Detector:
             self._set(job, **result, stage="done", finished=time.monotonic())
             self._done[job].set()
 
-    def _outcome(self, reports, labels: list[str], mode: str = "video") -> dict:
+    def _outcome(
+        self,
+        reports,
+        labels: list[str],
+        mode: str = "video",
+        opinion: dict | None = None,
+    ) -> dict:
         """One outcome from the file check and the reports of every part; the part that decided supplies the details.
 
-        An AI label in the file is decisive on its own: the answer is "signs", with "file" named first.
+        An AI label in the file is decisive on its own: the answer is "signs", with "file" named first. When the
+        outside face check answered (`opinion`), it replaces the face model's scores; otherwise ours stand.
         """
         calibration = self._calibrations.get(mode, self.calibration)
-        decision = calibration.decide_parts([r.scores() for r in reports])
+        outside_face = (
+            None if not opinion or "error" in opinion else max(opinion.values())
+        )
+        parts = [
+            r.scores() | ({"face": None} if outside_face is not None else {})
+            for r in reports
+        ]
+        decision = calibration.decide_parts(parts)
         checked = sum(p is not None for p in decision.parts)
         flag, lower = calibration.limits(max(checked, 1))
         # Every part's scores, so the page can colour a timeline and show the score under the cursor.
         timeline = []
-        for r, reading in zip(reports, decision.parts, strict=True):
-            per_model = calibration.percentiles(r.scores())
+        for r, scores, reading in zip(reports, parts, decision.parts, strict=True):
+            per_model = calibration.percentiles(scores)
             timeline.append(
                 {
                     "start": r.start,
@@ -211,9 +225,15 @@ class Detector:
             "raw_lines": {"flag": flag, "lower": lower},
             "explain": _face_explanation(reports),
         }
+        if outside_face is not None:
+            _apply_outside_face(outcome, outside_face)
         if labels:
-            outcome["kind"], outcome["raised"] = "signs", ["file", *decision.raised]
-        if decision.kind == "cant_check":
+            outcome["kind"], outcome["raised"] = (
+                "signs",
+                ["file", *[c for c in outcome["raised"] if c != "file"]],
+            )
+        outcome["generator"] = _generator(reports, labels, outcome, opinion)
+        if outcome["kind"] == "cant_check":
             outcome["reason"] = (
                 "Neither the face nor the voice could be checked: "
                 + "; ".join(
@@ -225,14 +245,87 @@ class Detector:
         return outcome
 
 
-def _still_time(outcome: dict) -> float:
-    """Where to take the one still for a second opinion: the face frame the face model cited first, else the
-    middle of the part that decided."""
-    frames = (outcome.get("explain") or {}).get("frames") or []
+# The outside face check gives probabilities, not percentiles among our real clips; these lines set where
+# its score flags (0.90) and where it means "can't tell" (0.50) on the page's 0..1 scale.
+OUTSIDE_FLAG, OUTSIDE_LOWER = 0.90, 0.50
+
+
+def _outside_display(p: float) -> float:
+    """The outside probability on the page's scale, whose lines sit at 0.4 and 0.6."""
+    if p < OUTSIDE_LOWER:
+        return round(p / OUTSIDE_LOWER * SHOWN_LOWER, 3)
+    if p < OUTSIDE_FLAG:
+        return round(
+            SHOWN_LOWER
+            + (p - OUTSIDE_LOWER)
+            / (OUTSIDE_FLAG - OUTSIDE_LOWER)
+            * (SHOWN_FLAG - SHOWN_LOWER),
+            3,
+        )
+    return round(
+        SHOWN_FLAG + (p - OUTSIDE_FLAG) / (1 - OUTSIDE_FLAG) * (1 - SHOWN_FLAG), 3
+    )
+
+
+def _apply_outside_face(outcome: dict, p: float) -> None:
+    outcome["checks"]["face"] = {
+        "percentile": None,
+        "score": _outside_display(p),
+        "reason": None,
+    }
+    if p >= OUTSIDE_FLAG:
+        outcome["raised"] = [*outcome["raised"], "face"]
+        outcome["kind"] = "signs"
+    elif outcome["kind"] == "cant_check":
+        outcome["kind"] = "cant_tell" if p >= OUTSIDE_LOWER else "no_signs"
+    elif p >= OUTSIDE_LOWER and outcome["kind"] == "no_signs":
+        outcome["kind"] = "cant_tell"
+
+
+def _generator(reports, labels: list[str], outcome: dict, opinion: dict | None) -> dict:
+    """Which tool may have made the upload: the one a file label names, else the generated-video check's
+    closest match among the generators it learned, given only when the upload looks generated."""
+    for label in labels:
+        named = re.search(r'"([^"]+)"', label)
+        return {
+            "suspected": True,
+            "source": "label",
+            "name": named.group(1) if named else None,
+            "share": None,
+            "sure": named is not None,
+        }
+    outside_says = (
+        bool(opinion)
+        and "error" not in opinion
+        and opinion.get("ai_generated", 0.0) >= OUTSIDE_FLAG
+    )
+    if "gen" not in outcome["raised"] and not outside_says:
+        return {"suspected": False}
+    scored = [
+        r
+        for r in reports
+        if r.checks.get("gen") is not None and r.checks["gen"].score is not None
+    ]
+    best = max(scored, key=lambda r: r.checks["gen"].score, default=None)
+    guess = (best.checks["gen"].detail or {}).get("generator") if best else None
+    if not guess:
+        return {
+            "suspected": True,
+            "source": "model",
+            "name": None,
+            "share": None,
+            "sure": False,
+        }
+    return {"suspected": True, "source": "model", **guess}
+
+
+def _still_time(reports) -> float:
+    """Where to take the one still for the outside face check: the face frame our face model cited first,
+    else the middle of the first part."""
+    frames = (_face_explanation(reports) or {}).get("frames") or []
     if frames:
         return float(frames[0]["time"])
-    part = outcome.get("part") or {"start": 0.0, "end": 3.0}
-    return (part["start"] + part["end"]) / 2
+    return (reports[0].start + reports[0].end) / 2
 
 
 def _face_explanation(reports) -> dict:

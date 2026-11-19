@@ -41,10 +41,10 @@ def test_a_score_comes_back_and_its_operations_are_counted(keys, tmp_path):
     reply = {
         "status": "success",
         "request": {"operations": 5},
-        "type": {"ai_generated": 0.73},
+        "type": {"ai_generated": 0.73, "deepfake": 0.01},
     }
     out = outside.ask(_image(tmp_path), post=_reply(reply), quota=quota)
-    assert out == {"ai_generated": 0.73, "service": "the outside service"}
+    assert out == {"ai_generated": 0.73, "deepfake": 0.01}
     assert quota.used() == {"day": 5, "month": 5}
 
 
