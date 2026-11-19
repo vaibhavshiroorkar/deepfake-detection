@@ -320,7 +320,9 @@ def test_the_outside_face_score_replaces_ours_when_it_answers(tmp_path) -> None:
     outcome = status["outcome"]
     assert outcome["kind"] == "signs" and outcome["raised"] == ["face"]
     assert outcome["checks"]["face"]["score"] >= 0.6
-    assert outcome["timeline"][0]["reading"] >= 0.6  # the part holding the still shows the flag too
+    assert (
+        outcome["timeline"][0]["reading"] >= 0.6
+    )  # the part holding the still shows the flag too
     # one still from the first part, asked while our models score, before the upload is deleted
     assert asked == [(True, 1.5)]
     assert not upload.exists()
