@@ -19,8 +19,9 @@ class DocumentationIssue:
 
 # Nested checkouts hold their own copy of every document, so walking them
 # reports each issue twice and reports issues already fixed in the primary tree.
+# models/ and runs/ are git-ignored too: a model download brings its own README.
 IGNORED_PARTS = frozenset(
-    {".git", ".pytest_cache", ".venv", "data", ".worktrees", ".kilo"}
+    {".git", ".pytest_cache", ".venv", "data", "models", "runs", ".worktrees", ".kilo"}
 )
 INCOMPLETE_MARKERS = ("[IN" + "COMPLETE]", "PENDING" + " CONTENT")
 FORBIDDEN_CHARACTERS = frozenset(

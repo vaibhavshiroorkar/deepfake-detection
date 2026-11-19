@@ -267,6 +267,18 @@ def test_markdown_checker_ignores_external_dataset_documentation(
     assert check_markdown_tree(tmp_path) == ()
 
 
+def test_markdown_checker_ignores_downloaded_model_and_run_documentation(
+    tmp_path: Path,
+) -> None:
+    """A model download brings its own README (found 11-19: it blocked a push); models/ and runs/ are git-ignored."""
+    for folder in ("models", "runs"):
+        readme = tmp_path / folder / "some-model" / "README.md"
+        readme.parent.mkdir(parents=True)
+        readme.write_text("Downloaded\u2014text.\n", encoding="utf-8")
+
+    assert check_markdown_tree(tmp_path) == ()
+
+
 def test_markdown_checker_reports_broken_links_and_prose_rules(
     tmp_path: Path,
 ) -> None:
