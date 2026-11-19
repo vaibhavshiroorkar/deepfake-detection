@@ -1,5 +1,5 @@
 {
- "note": "Website models (not the study's). A check left out keeps the P-001 model. DDF_WEB_MODELS=p001 rolls back. Chosen 11-19 on results/v2-eval/report.json: AntiDeepfake XLS-R 1B beat the P-001 voice model on In-the-Wild, ASVspoof and Veo 3; no face candidate worked on DF26, so the face stays.",
+ "note": "Website models (not the study's). A check left out keeps the P-001 model. DDF_WEB_MODELS=p001 rolls back. Chosen 11-19 on results/v2-eval/report.json: AntiDeepfake XLS-R 1B beat the P-001 voice model on In-the-Wild, ASVspoof and Veo 3; no face candidate worked on DF26, so the face stays. 11-19: a generated-video check (gen) added, a linear head on CLIP face embeddings trained on HiFi-AVDF; it caught 31-43% of fakes from generators it never saw at 5 in 100 real clips (results/gen-probe/report.json).",
  "voice": {
   "loader": "antideepfake",
   "file": "models/pretrained/xls-r-1b-anti-deepfake/model.safetensors",
@@ -9,5 +9,12 @@
  "calibration": {
   "video": "results/web-calibration-v2.json",
   "picture": "results/web-calibration-picture.json"
+ },
+ "gen": {
+  "loader": "genprobe",
+  "file": "models/website/gen-probe.json",
+  "sha256": "ee752fc38fb913ce8dc6e50d3221577717494ab54f245f364d2ab3b1f152d687",
+  "column": "face_gen",
+  "scores": "results/gen-probe/cache-scores.csv"
  }
 }

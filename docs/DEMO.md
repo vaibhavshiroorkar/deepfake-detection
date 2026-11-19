@@ -34,7 +34,7 @@ the local network: allow it.
 
 ## Running order (about 5 minutes)
 
-Each outcome below was measured on 11-19 with the website's current models (voice: AntiDeepfake XLS-R 1B, since 11-19) and whole-video checking, on the PC's processor, as the site runs (`docs/demo-clips.csv`). These clips were **chosen to show each outcome**; they say nothing about accuracy, which the paper measures on thousands of clips.
+Note (11-19, evening): a fourth check (generated video) went live after these outcomes were measured; rescoring is pending (docs/PENDING.md). Each outcome below was measured on 11-19 with the website's models of that afternoon (voice: AntiDeepfake XLS-R 1B, since 11-19) and whole-video checking, on the PC's processor, as the site runs (`docs/demo-clips.csv`). These clips were **chosen to show each outcome**; they say nothing about accuracy, which the paper measures on thousands of clips.
 
 | # | Clip (in `upload/`) | What it is | Expected answer | Raised by |
 |---|---|---|---|---|

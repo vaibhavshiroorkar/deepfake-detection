@@ -1,0 +1,82 @@
+{
+ "C": 0.005,
+ "leave_one_generator_out": {
+  "kling2.5": {
+   "auc_vs_twins": 0.7769753610875106,
+   "caught_at_5pct_other_reals": 0.33181818181818185,
+   "twins_flagged": 0.0514018691588785
+  },
+  "pixverseV5": {
+   "auc_vs_twins": 0.7989775935298455,
+   "caught_at_5pct_other_reals": 0.35036496350364965,
+   "twins_flagged": 0.07665505226480836
+  },
+  "seedance1.0": {
+   "auc_vs_twins": 0.7938568500401685,
+   "caught_at_5pct_other_reals": 0.33153638814016173,
+   "twins_flagged": 0.04456824512534819
+  },
+  "sora2": {
+   "auc_vs_twins": 0.8354085536653687,
+   "caught_at_5pct_other_reals": 0.42857142857142855,
+   "twins_flagged": 0.07621951219512195
+  },
+  "veo3.1": {
+   "auc_vs_twins": 0.8784238784238785,
+   "caught_at_5pct_other_reals": 0.375,
+   "twins_flagged": 0.04040404040404041
+  },
+  "wan2.5": {
+   "auc_vs_twins": 0.8074489724345936,
+   "caught_at_5pct_other_reals": 0.30566037735849055,
+   "twins_flagged": 0.03345724907063197
+  }
+ },
+ "all_generators": {
+  "line_5pct_other_reals": 0.990250825881958,
+  "other_reals_flagged_per_corpus": {
+   "FakeAVCeleb": 0.04,
+   "DFDC": 0.0,
+   "LAV-DF": 0.05430060816681147
+  },
+  "other_fakes_reaching_line": {
+   "FakeAVCeleb": 0.0380952380952381,
+   "DFDC": 0.004109077325364214,
+   "LAV-DF": 0.0667547918043622
+  },
+  "external": {
+   "df26": {
+    "Grok_Imagine": {
+     "videos": 25,
+     "reach_line": 0.8,
+     "auc_vs_set_reals": 0.8111111111111111
+    },
+    "real": {
+     "videos": 18,
+     "reach_line": 0.2222222222222222
+    }
+   },
+   "own": {
+    "real-own": {
+     "videos": 27,
+     "reach_line": 0.037037037037037035
+    },
+    "vaibhav": {
+     "videos": 3,
+     "reach_line": 0.6666666666666666,
+     "auc_vs_set_reals": 0.9876543209876544,
+     "scores": {
+      "WhatsApp Video 2026-11-18 at 9.59.25 PM (1).mp4": 4.444,
+      "WhatsApp Video 2026-11-18 at 9.59.25 PM.mp4": 5.027,
+      "WhatsApp Video 2026-11-18 at 10.29.44 PM.mp4": 0.506
+     }
+    },
+    "veo3-own": {
+     "videos": 2,
+     "reach_line": 0.5,
+     "auc_vs_set_reals": 0.537037037037037
+    }
+   }
+  }
+ }
+}
