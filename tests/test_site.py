@@ -34,7 +34,7 @@ def test_home_takes_its_numbers_from_numbers_json(client):
     # the research page.
     home = client.get("/").text
     assert site.percent("web.outcomes.fakeavceleb.fake.caught") in home
-    assert site.percent("web.outcomes.hifiavdf.real.flagged") in home
+    assert site.live_rates()["real_flagged_mean"] + " in 100" in home
     assert site.number("audit.fakeavceleb.raw.clip") not in home
     research = client.get("/research").text
     assert site.number("audit.fakeavceleb.raw.clip") in research
@@ -601,6 +601,7 @@ def test_home_rates_come_from_the_lines_in_force(monkeypatch):
         "all_flagged": "10%",
         "fake_clips": "24",
         "real_clips": "30",
+        "caught_by": {"FakeAVCeleb": "75%", "DFDC": "10%", "HiFi-AVDF": "60%"},
     }
 
 
@@ -608,7 +609,7 @@ def test_home_page_quotes_no_study_auc():
     """The study's fusion AUC (98 to 99%) read as the site's accuracy; the site does not run that model."""
     text = (site.TEMPLATES / "home.html").read_text(encoding="utf-8")
     assert "auc" not in text.lower()
-    assert "live().all_caught" in text
+    assert "all_caught" in text
 
 
 def test_each_check_carries_its_explanation_and_measured_catch_rates(monkeypatch):

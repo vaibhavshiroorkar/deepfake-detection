@@ -1,64 +1,106 @@
 {% extends "base.html" %}
 {% block main %}
-<div class="wrap">
-  <section class="hero">
-    <h1>Is this video real?</h1>
-    <p class="lede">Four models check the face, the voice and the lip movement of a talking-head video, and look for signs of an AI video generator. They tell you what they found and how far to trust it.</p>
-    <div class="hero-actions">
-      <a class="btn primary" href="/check">Open the detector</a>
-      <a class="btn ghost" href="/how-it-works">How it works</a>
-    </div>
-  </section>
+{# Home, design C (docs/designs/home/c-presentation.html): each section fills the screen like a slide, so the
+   page doubles as the exhibition talk. It tells the visitor's side; training and results are on Research. #}
+{% set r = live() %}
+<div class="slides">
+  <nav class="rail" aria-label="Sections">
+    <a href="#start" aria-current="true" aria-label="Start"></a>
+    <a href="#add" aria-label="Add a video"></a>
+    <a href="#checks" aria-label="The checks"></a>
+    <a href="#answer" aria-label="The answer"></a>
+    <a href="#limits" aria-label="What it catches"></a>
+    <a href="#private" aria-label="Privacy"></a>
+    <a href="#try" aria-label="Try it"></a>
+  </nav>
 
-  <section class="block" aria-labelledby="steps-title">
-    <h2 id="steps-title">How it works</h2>
-    <div class="checks3">
-      <div class="check3"><h3>1. Give it a video</h3><p>Upload a clip of one person talking, or record one with your camera or microphone. A voice recording or a picture works too.</p></div>
-      <div class="check3"><h3>2. Four models check it</h3><p>One looks at the face, one looks for a generated video, one listens to the voice, and one checks whether the lips move with the words. The whole video is checked, three seconds at a time.</p></div>
-      <div class="check3"><h3>3. You get a plain answer</h3><p>Signs of manipulation, can't tell, or no signs found, with each model's score and a timeline showing which moment stood out.</p></div>
-    </div>
-  </section>
-
-  <section class="block" aria-labelledby="good-title">
-    <h2 id="good-title">How well it works</h2>
-    <p class="intro">Measured on clips the models never trained on, with the same thresholds the site uses.</p>
-    <div class="bento">
-      <div class="b mid">
-        <div class="lbl">Fakes of the kinds it learned</div>
-        <div class="stat ok mono">{{ live().home_caught }}</div>
-        <p>caught, on people it never saw: face swaps, redrawn mouths and cloned voices.</p>
+  <section class="sl" id="start" aria-labelledby="start-h">
+    <div class="sl-in">
+      <div>
+        <h1 class="sl-h1" id="start-h">Is the person in this video real?</h1>
+        <p class="sl-lead">Upload a clip of someone speaking. Four checks look at it and tell you plainly what they found, and how far to trust it.</p>
+        <div class="sl-actions"><a class="btn primary" href="/check">Check a video</a><a class="btn ghost" href="#add">See how it works</a></div>
       </div>
-      <div class="b mid">
-        <div class="lbl">Fakes from newer tools and other sources</div>
-        <div class="stat bad mono">{{ live().other_caught[0] }} to {{ live().other_caught[1] }}</div>
-        <p>caught, depending on the source. The voice model catches most fully generated videos; the face model misses them.</p>
-      </div>
-      <div class="b mid">
-        <div class="lbl">Real videos wrongly flagged</div>
-        <div class="stat mono">{{ live().real_flagged[0] }} to {{ live().real_flagged[1] }}</div>
-        <p>depending on where the video comes from; about {{ live().real_flagged_mean }} in 100 on average.</p>
-      </div>
-      <div class="b mid">
-        <div class="lbl">All test fakes together</div>
-        <div class="stat mono">{{ live().all_caught }}</div>
-        <p>of {{ live().fake_clips }} fake clips from four datasets caught, while {{ live().all_flagged }} of {{ live().real_clips }} real clips were wrongly flagged.</p>
+      <div class="sl-frame" aria-label="An example answer">
+        <div class="sl-card">
+          <p class="sl-verdict">Signs of manipulation</p>
+          <p class="sl-desc">The video shows a person in a room with two monitors. The heatmap covers the eyes and nose.</p>
+          <div class="sl-meter"><div class="sl-meter-top"><span>Overall</span><b>0.96</b></div><div class="sl-bar"><i style="width:96%"></i><b></b></div></div>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="block" aria-labelledby="private-title">
-    <h2 id="private-title">Your video stays private</h2>
-    <p class="intro">Your video is checked on our computer and deleted before you see the answer. Nothing is kept. One still frame may also be checked by a third-party detection service.</p>
+  <section class="sl" id="add" aria-labelledby="add-h">
+    <div class="sl-in">
+      <div><p class="sl-step">Step 1 of 3</p><h2 class="sl-h2" id="add-h">Add a video, or record one.</h2><p class="sl-lead">One person speaking works best. Up to 10 minutes and 300 MB, from a phone or a laptop. A voice recording or a picture works too.</p></div>
+      <div class="sl-frame"><div class="sl-drop"><strong>Drop a video here</strong>or choose one from your device</div><div class="sl-chips"><span>Record video</span><span>Record voice</span><span>Take a picture</span></div></div>
+    </div>
   </section>
 
-  <section class="block callout" aria-labelledby="limits-title">
-    <h2 id="limits-title">Limits</h2>
-    <ul>
-      <li>"No signs found" is not proof a video is real. On footage unlike the training data, the checks miss many fakes.</li>
-      <li>About 5 in 100 real clips get flagged. That rate was measured on four research datasets; for anything else it is an estimate.</li>
-      <li>It needs one face and speech. Other clips get "can't check".</li>
-    </ul>
-    <a class="btn ghost" href="/research#limits">All the limits</a>
+  <section class="sl" id="checks" aria-labelledby="checks-h">
+    <div class="sl-in">
+      <div><p class="sl-step">Step 2 of 3</p><h2 class="sl-h2" id="checks-h">Four checks look at it.</h2><p class="sl-lead">Each looks for a different kind of fake, so a fake that fools one can still trip another.</p></div>
+      <div class="sl-frame"><div class="sl-card sl-list">
+        <div><b>Face</b><span>Swapped or AI-made faces</span></div>
+        <div><b>Voice</b><span>Cloned or generated speech</span></div>
+        <div><b>Lip sync</b><span>Lips that don't match the words</span></div>
+        <div><b>File audit</b><span>AI labels written into the file</span></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="sl" id="answer" aria-labelledby="answer-h">
+    <div class="sl-in">
+      <div><p class="sl-step">Step 3 of 3</p><h2 class="sl-h2" id="answer-h">Read the answer, and why.</h2><p class="sl-lead">One overall score, each check on its own, a timeline of the video, and which AI tool it most resembles.</p></div>
+      <div class="sl-frame"><div class="sl-card">
+        <div class="sl-row"><span>Face</span><span class="sl-bar"><i style="width:96%"></i><b></b></span><span>0.96</span></div>
+        <div class="sl-row"><span>Voice</span><span class="sl-bar quiet"><i style="width:38%"></i><b></b></span><span>0.38</span></div>
+        <div class="sl-row"><span>Lip sync</span><span class="sl-bar quiet"><i style="width:3%"></i><b></b></span><span>0.03</span></div>
+        <p class="sl-sub">Closest generator</p>
+        <div class="sl-row gen"><span>Veo 3.1</span><span class="sl-bar"><i style="width:71%"></i></span><span>71%</span></div>
+        <div class="sl-row gen"><span>Seedance 1.0</span><span class="sl-bar quiet"><i style="width:20%"></i></span><span>20%</span></div>
+        <div class="sl-row gen"><span>Wan 2.5</span><span class="sl-bar quiet"><i style="width:5%"></i></span><span>5%</span></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="sl" id="limits" aria-labelledby="limits-h">
+    <div class="sl-in">
+      <div><h2 class="sl-h2" id="limits-h">What it catches, and what it misses.</h2><p class="sl-lead">Measured on thousands of clips it never trained on. "No signs found" is never proof a video is real. Of {{ r.fake_clips }} test fakes, {{ r.all_caught }} were caught.</p></div>
+      <div class="sl-frame"><div class="sl-facts">
+        <div class="sl-fact"><b>{{ r.caught_by["HiFi-AVDF"] }}</b><span>of videos from 2025 AI generators flagged</span></div>
+        <div class="sl-fact"><b>{{ r.home_caught }}</b><span>of face swaps and cloned voices of the kind it learned</span></div>
+        <div class="sl-fact miss"><b>{{ r.caught_by["DFDC"] }}</b><span>of fakes from older, unfamiliar sources. Most are missed.</span></div>
+        <div class="sl-fact"><b>{{ r.real_flagged_mean }} in 100</b><span>real videos wrongly flagged, on average</span></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section class="sl" id="private" aria-labelledby="private-h">
+    <div class="sl-in">
+      <div><h2 class="sl-h2" id="private-h">Your video is gone before you read the answer.</h2><p class="sl-lead">Checked on our own computer and never kept. One still frame may also be checked by a third-party detection service.</p></div>
+      <div class="sl-frame"><ol class="sl-life">
+        <li>Uploaded</li><li>Checked, three seconds at a time</li><li>Answer ready</li><li class="gone">Your file is deleted</li>
+      </ol></div>
+    </div>
+  </section>
+
+  <section class="sl sl-end" id="try" aria-labelledby="try-h">
+    <div class="sl-in"><div><h2 class="sl-h1" id="try-h">Try it on a video you're unsure about.</h2><div class="sl-actions"><a class="btn primary" href="/check">Check a video</a><a class="btn ghost" href="/research">Read the research</a></div></div></div>
   </section>
 </div>
+<script>
+  // The rail marks the section in view.
+  (function () {
+    const marks = [...document.querySelectorAll(".rail a")];
+    const watch = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        for (const mark of marks) mark.setAttribute("aria-current", String(mark.hash === "#" + entry.target.id));
+      }
+    }, { threshold: 0.55 });
+    document.querySelectorAll(".sl").forEach((s) => watch.observe(s));
+  })();
+</script>
 {% endblock %}

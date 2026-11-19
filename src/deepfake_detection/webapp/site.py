@@ -137,6 +137,7 @@ def live_rates() -> dict:
         "all_flagged": f"{pooled['flagged'][0] / pooled['flagged'][1]:.0%}",
         "fake_clips": f"{pooled['caught'][1]:,}",
         "real_clips": f"{pooled['flagged'][1]:,}",
+        "caught_by": {c: f"{v:.0%}" for (c, n), v in rates.items() if n == "caught"},
     }
 
 
