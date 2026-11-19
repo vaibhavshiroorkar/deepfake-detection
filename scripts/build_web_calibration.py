@@ -104,14 +104,20 @@ def rows_for(corpus: str, branch_set: str, sync_stem: str, sources: dict) -> lis
 
 
 def replace_scores(rows: list[dict], choice: dict, sources: dict) -> None:
-    """Put the chosen models' cache scores in place of the study's face and voice scores."""
-    path = RESULTS / "v2-eval" / "cache-scores.csv"
-    by_clip = {(r["corpus"], r["clip_id"]): r for r in _read_rows(path, sources)}
-    for row in rows:
-        cached = by_clip.get((row["corpus"], row["clip_id"]))
-        for check in ("face", "voice"):
-            if check not in choice:
-                continue
+    """Put the chosen models' cache scores in place of the study's face and voice scores, and add the
+    generated-video check's. Each check's entry may name its score file ("scores"); the default is
+    results/v2-eval/cache-scores.csv."""
+    tables: dict[str, dict] = {}
+    for check in ("face", "voice", "gen"):
+        if check not in choice:
+            continue
+        name = choice[check].get("scores", "results/v2-eval/cache-scores.csv")
+        if name not in tables:
+            tables[name] = {
+                (r["corpus"], r["clip_id"]): r for r in _read_rows(ROOT / name, sources)
+            }
+        for row in rows:
+            cached = tables[name].get((row["corpus"], row["clip_id"]))
             value = None if cached is None else cached.get(choice[check]["column"], "")
             row["scores"][check] = float(value) if value else None
 
@@ -143,8 +149,10 @@ def main() -> int:
     calibration, summary = build(rows)
     coverage = {
         c: {
-            check: sum(r["scores"][check] is not None for r in rows if r["corpus"] == c)
-            for check in ("face", "voice", "sync")
+            check: sum(
+                r["scores"].get(check) is not None for r in rows if r["corpus"] == c
+            )
+            for check in ("face", "voice", "sync", "gen")
         }
         | {"clips": sum(r["corpus"] == c for r in rows)}
         for c in CORPORA
@@ -162,7 +170,7 @@ def main() -> int:
         "sources": sources,
     }
     if choice is not None:
-        meta["models"] = {c: choice[c] for c in ("face", "voice") if c in choice}
+        meta["models"] = {c: choice[c] for c in ("face", "voice", "gen") if c in choice}
     data = json.loads(calibration.to_json())
     data["meta"] = meta
     output.write_text(json.dumps(data, indent=1) + "\n", encoding="utf-8")

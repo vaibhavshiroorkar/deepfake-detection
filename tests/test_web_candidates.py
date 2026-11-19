@@ -128,3 +128,35 @@ def test_the_study_models_stay_live_without_a_choice_or_when_asked(
     assert site.web_models() == {"calibration": {}}
     monkeypatch.setenv("DDF_WEB_MODELS", "p001")
     assert site.web_models() is None
+
+
+def test_the_generated_video_probe_scores_the_mean_embedding_through_its_linear_head(
+    tmp_path,
+):
+    import json
+
+    params = {
+        "mean": [1.0, 0.0],
+        "scale": [2.0, 1.0],
+        "coef": [1.0, -1.0],
+        "intercept": 0.5,
+    }
+    (tmp_path / "gen.json").write_text(json.dumps(params), encoding="utf-8")
+    probe = candidates.GenProbe(
+        tmp_path / "gen.json", "cpu", embed=lambda crops: np.array([3.0, 1.0])
+    )
+    # standardized (3-1)/2 = 1 and (1-0)/1 = 1, so the logit is 1 - 1 + 0.5 = 0.5
+    assert probe(torch.zeros(4, 3, 8, 8)) == float(torch.sigmoid(torch.tensor(0.5)))
+
+
+def test_a_generated_video_check_is_loaded_as_a_live_check(tmp_path, monkeypatch):
+    (tmp_path / "gen.json").write_text("{}", encoding="utf-8")
+    digest = candidates.sha256(tmp_path / "gen.json")
+    monkeypatch.setitem(
+        candidates.LOADERS, "genprobe", lambda path, device: torch.nn.Identity()
+    )
+    choice = {"gen": {"loader": "genprobe", "file": "gen.json", "sha256": digest}}
+    live = candidates.website_models(choice, tmp_path, "cpu")
+    assert (
+        set(live) == {"gen"} and live["gen"].check == "face"
+    )  # it reads the face crops

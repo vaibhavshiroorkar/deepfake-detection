@@ -31,19 +31,30 @@ class ClipEmbedder:
     def __init__(self, device: str) -> None:
         from transformers import CLIPVisionModelWithProjection
 
-        from deepfake_detection.webapp.candidates import CLIP_MEAN, CLIP_STD, IMAGENET_MEAN, IMAGENET_STD
+        from deepfake_detection.webapp.candidates import (
+            CLIP_MEAN,
+            CLIP_STD,
+            IMAGENET_MEAN,
+            IMAGENET_STD,
+        )
 
         self.device = device
-        self.model = CLIPVisionModelWithProjection.from_pretrained(CLIP_DIR, torch_dtype=torch.float16).to(device)
+        self.model = CLIPVisionModelWithProjection.from_pretrained(
+            CLIP_DIR, torch_dtype=torch.float16
+        ).to(device)
         self.model.eval()
-        self.stats = [s.to(device) for s in (IMAGENET_MEAN, IMAGENET_STD, CLIP_MEAN, CLIP_STD)]
+        self.stats = [
+            s.to(device) for s in (IMAGENET_MEAN, IMAGENET_STD, CLIP_MEAN, CLIP_STD)
+        ]
 
     @torch.inference_mode()
     def __call__(self, crops: torch.Tensor) -> np.ndarray:
         """Mean L2-normalized image embedding of (T, 3, H, W) ImageNet-normalized crops."""
         im_mean, im_std, clip_mean, clip_std = self.stats
         rgb = (crops.to(self.device).float() * im_std + im_mean).clamp(0, 1)
-        rgb = F.interpolate(rgb, size=(224, 224), mode="bicubic", align_corners=False).clamp(0, 1)
+        rgb = F.interpolate(
+            rgb, size=(224, 224), mode="bicubic", align_corners=False
+        ).clamp(0, 1)
         x = ((rgb - clip_mean) / clip_std).half()
         emb = self.model(pixel_values=x).image_embeds.float()
         emb = F.normalize(emb, dim=1).mean(0)
@@ -81,8 +92,16 @@ def main() -> int:
             ids.append(clip_id)
             labels.append(row["label"])
             if len(ids) % 500 == 0:
-                print(f"{corpus} {len(ids)} clips, {(time.time() - began) / len(ids):.3f} s/clip", flush=True)
-        np.savez(target, clip_id=np.array(ids), label=np.array(labels), embedding=np.stack(embs))
+                print(
+                    f"{corpus} {len(ids)} clips, {(time.time() - began) / len(ids):.3f} s/clip",
+                    flush=True,
+                )
+        np.savez(
+            target,
+            clip_id=np.array(ids),
+            label=np.array(labels),
+            embedding=np.stack(embs),
+        )
         print(f"{corpus}: {len(ids)} clips -> {target.relative_to(ROOT)}", flush=True)
     return 0
 

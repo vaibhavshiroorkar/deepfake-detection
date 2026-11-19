@@ -197,6 +197,8 @@ class Scorer:
                 )
                 sync, trace = unused, {"loudness_db": [], "windows": []}
                 checks["face" if mode == "voice" else "voice"] = unused
+                if mode == "voice" and "gen" in checks:
+                    checks["gen"] = unused
             if mode == "voice":
                 explained = {}
             reports.append(
@@ -261,6 +263,8 @@ class Scorer:
                     if check == "face"
                     else "no usable sound",
                 )
+                if check == "face" and "gen" in self.replace:
+                    out["gen"] = CheckResult(None, "no steady face was found")
                 continue
             item = CachedBranchDataset(
                 records=[record],
@@ -284,6 +288,9 @@ class Scorer:
             # Candidate models see the very batch the current model saw, so a comparison is fair.
             for name, candidate in self.extra.get(check, {}).items():
                 out[name] = CheckResult((candidate(batch),))
+            # The generated-video check reads the very face crops the face check read.
+            if check == "face" and "gen" in self.replace:
+                out["gen"] = CheckResult((self.replace["gen"](batch),))
             if check == "face":
                 explained = self._explain_face(
                     batch.values.to(self.device), neutral, offset, top

@@ -91,7 +91,7 @@ h2 { font-size: clamp(26px, 3.2vw, 38px); line-height: 1.12; letter-spacing: -.0
 .heattools { display: flex; align-items: center; gap: 4px; }
 .crow:last-of-type { border-bottom: 0; }
 .crow .cname { font-weight: 600; }
-.crow.face .cname { color: var(--face); } .crow.voice .cname { color: var(--sound); } .crow.sync .cname { color: var(--accent); }
+.crow.face .cname, .crow.gen .cname { color: var(--face); } .crow.voice .cname { color: var(--sound); } .crow.sync .cname { color: var(--accent); }
 .crow .ctrack { height: 8px; background: #0e141b; border-radius: 4px; overflow: hidden; }
 .crow .ctrack i { display: block; height: 100%; background: var(--muted); }
 .crow.raised .ctrack i { background: var(--alert); }

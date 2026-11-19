@@ -19,6 +19,7 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 
@@ -239,6 +240,68 @@ class ClipLnFace(torch.nn.Module):
         return (cams / peak if peak > 0 else cams), share
 
 
+class ClipEmbedder:
+    """CLIP ViT-L/14 image embedding of the website's face crops: L2-normalized per crop, averaged per clip.
+
+    Crops arrive ImageNet-normalized, as the face model reads them; they are turned back into RGB and
+    prepared as CLIPProcessor would (224 x 224, bicubic, CLIP-normalized).
+    """
+
+    def __init__(self, clip_dir: Path, device: str) -> None:
+        from transformers import CLIPVisionModelWithProjection
+
+        self.device = device
+        self.dtype = torch.float16 if device.startswith("cuda") else torch.float32
+        self.model = (
+            CLIPVisionModelWithProjection.from_pretrained(
+                clip_dir, torch_dtype=self.dtype
+            )
+            .to(device)
+            .eval()
+        )
+
+    @torch.inference_mode()
+    def __call__(self, crops: torch.Tensor):
+        rgb = (
+            crops.to(self.device).float() * IMAGENET_STD.to(self.device)
+            + IMAGENET_MEAN.to(self.device)
+        ).clamp(0, 1)
+        rgb = F.interpolate(
+            rgb, size=(224, 224), mode="bicubic", align_corners=False
+        ).clamp(0, 1)
+        x = ((rgb - CLIP_MEAN.to(self.device)) / CLIP_STD.to(self.device)).to(
+            self.dtype
+        )
+        emb = F.normalize(self.model(pixel_values=x).image_embeds.float(), dim=1).mean(
+            0
+        )
+        return emb.cpu().numpy()
+
+
+class GenProbe(torch.nn.Module):
+    """The generated-video check: a linear head on the CLIP embedding of the face crops (scripts/gen_probe.py).
+
+    The head file holds the standardization (mean, scale) and the logistic weights (coef, intercept),
+    trained on HiFi-AVDF generated clips and their real twins. Returns the probability of "generated".
+    """
+
+    def __init__(self, path: Path, device: str, embed=None) -> None:
+        import json
+
+        super().__init__()
+        head = json.loads(path.read_text(encoding="utf-8"))
+        self.mean, self.scale = np.asarray(head["mean"]), np.asarray(head["scale"])
+        self.coef, self.intercept = np.asarray(head["coef"]), float(head["intercept"])
+        self.embed = embed or ClipEmbedder(
+            path.parent.parent / "pretrained" / "clip-vit-large-patch14", device
+        )
+
+    def forward(self, crops: torch.Tensor) -> float:
+        z = (np.asarray(self.embed(crops)) - self.mean) / self.scale
+        logit = float(z @ self.coef + self.intercept)
+        return float(torch.sigmoid(torch.tensor(logit)))
+
+
 class OnBatch:
     """A candidate as the scorer calls it: on the website's batch for one check.
 
@@ -265,7 +328,10 @@ LOADERS = {
         path.parent.parent / "clip-vit-large-patch14", path
     ).to(device),
     "antideepfake": lambda path, device: AntiDeepfakeVoice(path.parent).to(device),
+    "genprobe": lambda path, device: GenProbe(path, device),
 }
+# The batch each live check reads: the generated-video check reads the face crops.
+BATCH_OF = {"face": "face", "voice": "voice", "gen": "face"}
 
 
 def website_models(choice: dict, root: Path, device: str) -> dict[str, OnBatch]:
@@ -275,10 +341,10 @@ def website_models(choice: dict, root: Path, device: str) -> dict[str, OnBatch]:
     the study's model.
     """
     live = {}
-    for check in ("face", "voice"):
+    for check, batch in BATCH_OF.items():
         entry = choice.get(check)
         if entry is None:
             continue
         path = verified(root / entry["file"], entry["sha256"])
-        live[check] = OnBatch(LOADERS[entry["loader"]](path, device).eval(), check)
+        live[check] = OnBatch(LOADERS[entry["loader"]](path, device).eval(), batch)
     return live

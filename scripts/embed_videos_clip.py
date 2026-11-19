@@ -28,7 +28,10 @@ OUT = ROOT / "runs" / "gen-probe"
 
 def face_batch(preprocessor, neutral: Path, cache_root: Path):
     """The face crops the website scores for one cleaned part, or None when no steady face is found."""
-    from deepfake_detection.data.datasets import CachedBranchDataset, collate_branch_items
+    from deepfake_detection.data.datasets import (
+        CachedBranchDataset,
+        collate_branch_items,
+    )
     from deepfake_detection.data.manifest import ClipRecord
     from deepfake_detection.views.cache_store import CacheStore
     from deepfake_detection.webapp.scorer import P001_PREPROCESSING_HASH
@@ -63,7 +66,10 @@ def face_batch(preprocessor, neutral: Path, cache_root: Path):
 def main() -> int:
     from embed_faces_clip import ClipEmbedder
 
-    from deepfake_detection.preprocessing.neutralize import NeutralSettings, plan_windows
+    from deepfake_detection.preprocessing.neutralize import (
+        NeutralSettings,
+        plan_windows,
+    )
     from deepfake_detection.webapp.scorer import Scorer
 
     parser = argparse.ArgumentParser(description=__doc__)
@@ -75,7 +81,10 @@ def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     done = set()
     if target.exists():
-        done = {json.loads(line)["path"] for line in target.read_text(encoding="utf-8").splitlines()}
+        done = {
+            json.loads(line)["path"]
+            for line in target.read_text(encoding="utf-8").splitlines()
+        }
     with open(args.list, encoding="utf-8", newline="") as f:
         videos = [r for r in csv.DictReader(f) if r["path"] not in done]
     preprocessor = Scorer(device=args.device).models.preprocessor
@@ -96,16 +105,29 @@ def main() -> int:
                     "label": int(video["label"]),
                     "group": video["group"],
                     "part": i,
-                    "embedding": None if crops is None else [round(float(x), 6) for x in embed(crops)],
+                    "embedding": None
+                    if crops is None
+                    else [round(float(x), 6) for x in embed(crops)],
                 }
             )
         if not parts:
-            lines.append({"path": video["path"], "label": int(video["label"]), "group": video["group"], "part": None, "embedding": None})
+            lines.append(
+                {
+                    "path": video["path"],
+                    "label": int(video["label"]),
+                    "group": video["group"],
+                    "part": None,
+                    "embedding": None,
+                }
+            )
         with open(target, "a", encoding="utf-8") as f:
             for line in lines:
                 f.write(json.dumps(line) + "\n")
         if n % 20 == 0:
-            print(f"{args.set} {n}/{len(videos)}, {(time.time() - began) / n:.1f} s/video", flush=True)
+            print(
+                f"{args.set} {n}/{len(videos)}, {(time.time() - began) / n:.1f} s/video",
+                flush=True,
+            )
     print(f"done: {args.set} -> {target.relative_to(ROOT)}", flush=True)
     return 0
 

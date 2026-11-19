@@ -12,11 +12,17 @@ and scene) and tests it three ways:
    (the most unusual part), at the same line.
 
 Writes results/gen-probe/report.json.
+
+With --export it also writes the website's model, models/website/gen-probe.json (trained on every
+HiFi-AVDF generator), and results/gen-probe/cache-scores.csv: the check's logit for every calibration
+clip. A HiFi-AVDF clip is scored by the model trained without its generator, so the site's lines and
+catch rates for it describe a generator the model did not see.
 """
 
 from __future__ import annotations
 
 import json
+import sys
 from collections import defaultdict
 from pathlib import Path
 
@@ -42,7 +48,10 @@ def generator(clip_id: str) -> str:
 
 
 def fit(x, y):
-    model = make_pipeline(StandardScaler(), LogisticRegression(C=C, max_iter=3000, class_weight="balanced"))
+    model = make_pipeline(
+        StandardScaler(),
+        LogisticRegression(C=C, max_iter=3000, class_weight="balanced"),
+    )
     return model.fit(x, y)
 
 
@@ -59,8 +68,12 @@ def external(model, cut: float) -> dict:
             v = per_video[r["path"]]
             v["label"], v["group"] = r["label"], r["group"]
             if r["embedding"] is not None:
-                v["scores"].append(float(model.decision_function(np.array([r["embedding"]]))[0]))
-        videos = [v | {"score": max(v["scores"])} for v in per_video.values() if v["scores"]]
+                v["scores"].append(
+                    float(model.decision_function(np.array([r["embedding"]]))[0])
+                )
+        videos = [
+            v | {"score": max(v["scores"])} for v in per_video.values() if v["scores"]
+        ]
         groups = defaultdict(list)
         for v in videos:
             groups[v["group"]].append(v)
@@ -68,16 +81,69 @@ def external(model, cut: float) -> dict:
         block = {}
         for g, vs in sorted(groups.items()):
             scores = [v["score"] for v in vs]
-            entry = {"videos": len(vs), "reach_line": float(np.mean([s >= cut for s in scores]))}
+            entry = {
+                "videos": len(vs),
+                "reach_line": float(np.mean([s >= cut for s in scores])),
+            }
             if vs[0]["label"] == 1 and reals:
                 entry["auc_vs_set_reals"] = float(
                     roc_auc_score([0] * len(reals) + [1] * len(scores), reals + scores)
                 )
             if g == "vaibhav":
-                entry["scores"] = {Path(v_path).name: round(v["score"], 3) for v_path, v in per_video.items() if v["group"] == g and v["scores"]}
+                entry["scores"] = {
+                    Path(v_path).name: round(v["score"], 3)
+                    for v_path, v in per_video.items()
+                    if v["group"] == g and v["scores"]
+                }
             block[g] = entry
         out[path.stem.removeprefix("videos-")] = block
     return out
+
+
+def head(model) -> dict:
+    scaler, logistic = (
+        model.named_steps["standardscaler"],
+        model.named_steps["logisticregression"],
+    )
+    return {
+        "note": "Generated-video check: logistic head on mean CLIP ViT-L/14 face-crop embeddings (scripts/gen_probe.py).",
+        "C": C,
+        "mean": scaler.mean_.tolist(),
+        "scale": scaler.scale_.tolist(),
+        "coef": logistic.coef_[0].tolist(),
+        "intercept": float(logistic.intercept_[0]),
+    }
+
+
+def export(x, y, ids, gens) -> None:
+    import csv
+
+    final = fit(x, y)
+    target = ROOT / "models" / "website" / "gen-probe.json"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(head(final)) + "\n", encoding="utf-8")
+    held_out = {g: fit(x[gens != g], y[gens != g]) for g in sorted(set(gens))}
+    out = ROOT / "results" / "gen-probe" / "cache-scores.csv"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with open(out, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["corpus", "clip_id", "label", "face_gen"])
+        for corpus in ("FakeAVCeleb", "DFDC", "LAV-DF"):
+            cids, labels, emb = load(corpus)
+            for c, lab, s in zip(
+                cids, labels, final.decision_function(emb), strict=True
+            ):
+                writer.writerow([corpus, c, int(lab), f"{s:.6f}"])
+        for c, lab, g, e in zip(ids, y, gens, x, strict=True):
+            writer.writerow(
+                [
+                    "HiFi-AVDF",
+                    c,
+                    int(lab),
+                    f"{held_out[g].decision_function(e[None])[0]:.6f}",
+                ]
+            )
+    print(f"wrote {target.relative_to(ROOT)} and {out.relative_to(ROOT)}")
 
 
 def main() -> int:
@@ -103,15 +169,19 @@ def main() -> int:
     report["all_generators"] = {
         "line_5pct_other_reals": cut,
         "other_reals_flagged_per_corpus": {
-            c: float(np.mean(model.decision_function(e[y_ == 0]) >= cut)) for c, (_, y_, e) in others.items()
+            c: float(np.mean(model.decision_function(e[y_ == 0]) >= cut))
+            for c, (_, y_, e) in others.items()
         },
         "other_fakes_reaching_line": {
-            c: float(np.mean(model.decision_function(e[y_ == 1]) >= cut)) for c, (_, y_, e) in others.items()
+            c: float(np.mean(model.decision_function(e[y_ == 1]) >= cut))
+            for c, (_, y_, e) in others.items()
         },
         "external": external(model, cut),
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")
+    if "--export" in sys.argv:
+        export(x, y, ids, gens)
     print(json.dumps(report, indent=1))
     return 0
 

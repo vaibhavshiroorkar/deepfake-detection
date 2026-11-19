@@ -23,7 +23,8 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-CHECKS = ("face", "voice", "sync")
+# "gen" (generated video) is optional: a calibration without its reference ignores it.
+CHECKS = ("face", "voice", "sync", "gen")
 FLAG_QUANTILE = 0.95
 UNSURE_QUANTILE = 0.80
 _EPS = 1e-7
@@ -205,15 +206,20 @@ class Calibration:
 
 
 def build(
-    rows: list[dict], checks: tuple[str, ...] = CHECKS
+    rows: list[dict], checks: tuple[str, ...] | None = None
 ) -> tuple[Calibration, dict]:
     """Calibration from rows {corpus, label (0 real, 1 fake, clip label), scores {check: float | None}}.
 
-    `checks` names the checks the input can feed: a picture feeds the face check alone.
+    `checks` names the checks the input can feed: a picture feeds the face check alone. By default it is
+    every check some real clip has a score for.
 
     Returns the calibration and, per corpus and label, how many clips land in each outcome.
     """
     reals = [r for r in rows if r["label"] == 0]
+    if checks is None:  # every check some real clip has a score for
+        checks = tuple(
+            c for c in CHECKS if any(r["scores"].get(c) is not None for r in reals)
+        )
     references = {}
     for check in checks:
         have = [r for r in reals if r["scores"].get(check) is not None]
@@ -254,7 +260,9 @@ def raised_by(calibration: Calibration, rows: list[dict]) -> dict:
     for r in rows:
         if not r["label"]:
             continue
-        tally = counts.setdefault(r["corpus"], {"fakes": 0} | dict.fromkeys(CHECKS, 0))
+        tally = counts.setdefault(
+            r["corpus"], {"fakes": 0} | dict.fromkeys(calibration.references, 0)
+        )
         tally["fakes"] += 1
         outcome = calibration.decide(r["scores"])
         if outcome.kind == "signs":

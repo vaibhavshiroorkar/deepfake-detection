@@ -31,12 +31,18 @@ SPEECH = ROOT / "data" / "downloads" / "real-speech"
 
 
 def sets(per_set: int) -> dict[str, list[tuple[Path, int]]]:
-    rng = random.Random(41)
+    rng = random.Random(41)  # noqa: S311 - a seeded sample, not security
     pools = {
         "fleurs-real": (sorted((SPEECH / "fleurs-en" / "x").rglob("*.wav")), 0),
         "librispeech-real": (sorted((SPEECH / "librispeech" / "x").rglob("*.flac")), 0),
-        "own-real": (sorted((ROOT / "data" / "generated" / "raw" / "real").glob("*.mp4")), 0),
-        "veo3-own": (sorted((ROOT / "data" / "generated" / "raw" / "fake").rglob("*.mp4")), 1),
+        "own-real": (
+            sorted((ROOT / "data" / "generated" / "raw" / "real").glob("*.mp4")),
+            0,
+        ),
+        "veo3-own": (
+            sorted((ROOT / "data" / "generated" / "raw" / "fake").rglob("*.mp4")),
+            1,
+        ),
     }
     out = {}
     for name, (files, label) in pools.items():
@@ -48,7 +54,22 @@ def sets(per_set: int) -> dict[str, list[tuple[Path, int]]]:
 
 def resend(source: Path, target: Path) -> Path:
     subprocess.run(
-        ["ffmpeg", "-v", "error", "-y", "-i", str(source), "-vn", "-ac", "1", "-c:a", "aac", "-b:a", "48k", str(target)],
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-y",
+            "-i",
+            str(source),
+            "-vn",
+            "-ac",
+            "1",
+            "-c:a",
+            "aac",
+            "-b:a",
+            "48k",
+            str(target),
+        ],
         check=True,
         capture_output=True,
         timeout=120,
@@ -57,14 +78,19 @@ def resend(source: Path, target: Path) -> Path:
 
 
 def score(scorer, site, path: Path, work: Path) -> float | None:
-    from deepfake_detection.preprocessing.neutralize import NeutralSettings, plan_windows
+    from deepfake_detection.preprocessing.neutralize import (
+        NeutralSettings,
+        plan_windows,
+    )
 
     clip = site.to_clip(path, "voice", work / "clip.mp4")
     parts = plan_windows(clip, NeutralSettings())
     if not parts:
         return None
     neutral = scorer._neutralize(clip, work / "neutral.mp4", parts[0][0])
-    checks, _ = scorer._face_and_voice(neutral, work / "cache", offset=parts[0][0], top=1)
+    checks, _ = scorer._face_and_voice(
+        neutral, work / "cache", offset=parts[0][0], top=1
+    )
     return checks["voice"].score
 
 
@@ -82,7 +108,12 @@ def main() -> int:
     scores_file = RUNS / "scores.jsonl"
     done = set()
     if scores_file.exists():
-        done = {(r["set"], r["path"], r["version"]) for r in map(json.loads, scores_file.read_text(encoding="utf-8").splitlines())}
+        done = {
+            (r["set"], r["path"], r["version"])
+            for r in map(
+                json.loads, scores_file.read_text(encoding="utf-8").splitlines()
+            )
+        }
     for name, items in sets(args.per_set).items():
         for path, label in items:
             for version in ("original", "resent"):
@@ -92,24 +123,59 @@ def main() -> int:
                 with tempfile.TemporaryDirectory() as work:
                     work = Path(work)
                     try:
-                        source = path if version == "original" else resend(path, work / "resent.m4a")
+                        source = (
+                            path
+                            if version == "original"
+                            else resend(path, work / "resent.m4a")
+                        )
                         value = score(scorer, site, source, work)
                         reason = None
-                    except (site.ClipRejected, RuntimeError, subprocess.SubprocessError) as error:
+                    except (
+                        site.ClipRejected,
+                        RuntimeError,
+                        subprocess.SubprocessError,
+                    ) as error:
                         value, reason = None, f"{type(error).__name__}: {error}"[:160]
                 with open(scores_file, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({"set": name, "path": str(path), "label": label, "version": version, "score": value, "reason": reason}) + "\n")
+                    f.write(
+                        json.dumps(
+                            {
+                                "set": name,
+                                "path": str(path),
+                                "label": label,
+                                "version": version,
+                                "score": value,
+                                "reason": reason,
+                            }
+                        )
+                        + "\n"
+                    )
             print(name, path.name, flush=True)
-    rows = [json.loads(line) for line in scores_file.read_text(encoding="utf-8").splitlines()]
-    report = {"flag_line": calibration.threshold, "lower_line": calibration.lower, "sets": {}}
+    rows = [
+        json.loads(line)
+        for line in scores_file.read_text(encoding="utf-8").splitlines()
+    ]
+    report = {
+        "flag_line": calibration.threshold,
+        "lower_line": calibration.lower,
+        "sets": {},
+    }
     for name in sets(args.per_set):
         for version in ("original", "resent"):
-            values = [r["score"] for r in rows if r["set"] == name and r["version"] == version and r["score"] is not None]
+            values = [
+                r["score"]
+                for r in rows
+                if r["set"] == name
+                and r["version"] == version
+                and r["score"] is not None
+            ]
             pct = [calibration.percentiles({"voice": v})["voice"] for v in values]
             report["sets"].setdefault(name, {})[version] = {
                 "scored": len(values),
-                "flagged": sum(p >= calibration.threshold for p in pct) / max(len(pct), 1),
-                "cant_tell_or_flagged": sum(p >= calibration.lower for p in pct) / max(len(pct), 1),
+                "flagged": sum(p >= calibration.threshold for p in pct)
+                / max(len(pct), 1),
+                "cant_tell_or_flagged": sum(p >= calibration.lower for p in pct)
+                / max(len(pct), 1),
             }
     REPORT.parent.mkdir(parents=True, exist_ok=True)
     REPORT.write_text(json.dumps(report, indent=1) + "\n", encoding="utf-8")

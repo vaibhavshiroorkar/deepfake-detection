@@ -274,3 +274,26 @@ def test_raised_by_counts_which_check_flagged_each_fake_per_corpus() -> None:
         "A": {"fakes": 3, "face": 1, "voice": 1, "sync": 0},
         "B": {"fakes": 1, "face": 1, "voice": 1, "sync": 0},
     }
+
+
+def test_a_fourth_check_is_calibrated_and_an_old_three_check_file_still_decides() -> (
+    None
+):
+    def row(label, face, gen):
+        return {
+            "corpus": "A",
+            "label": label,
+            "scores": {"face": face, "voice": 0.0, "sync": 0.0, "gen": gen},
+        }
+
+    rows = [row(0, float(i % 10), float(i)) for i in range(100)] + [row(1, 0.0, 500.0)]
+    calibration, summary = cal.build(rows, checks=("face", "voice", "sync", "gen"))
+    assert summary["A"]["fake"] == {"signs": 1}
+    assert calibration.decide(
+        {"face": 0.0, "voice": 0.0, "sync": 0.0, "gen": 500.0}
+    ).raised == ["gen"]
+    old = _calibration()  # no "gen" reference: the check is ignored, not an error
+    assert (
+        old.decide({"face": 0.0, "voice": 0.0, "sync": 0.0, "gen": 500.0}).kind
+        == "no_signs"
+    )

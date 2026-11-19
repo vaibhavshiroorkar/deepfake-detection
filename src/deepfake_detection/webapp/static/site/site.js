@@ -19,7 +19,7 @@
     cant_tell: { cls: "unsure", text: "Can't tell" },
     cant_check: { cls: "cant", text: "Can't check" },
   };
-  const CHECKS = [["face", "Face"], ["voice", "Voice"], ["sync", "Lip sync"]];
+  const CHECKS = [["face", "Face"], ["gen", "Generated"], ["voice", "Voice"], ["sync", "Lip sync"]];
   const MAX_MB = 90;
   // The static frontend names the PC's API in a meta tag; served by the PC itself, the API is this origin.
   const API = (document.querySelector('meta[name="ddf-api"]') || {}).content || "";

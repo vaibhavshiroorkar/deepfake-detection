@@ -620,8 +620,8 @@ def test_each_check_carries_its_explanation_and_measured_catch_rates(monkeypatch
     }
     monkeypatch.setattr(site, "calibration", lambda: SimpleNamespace(meta=meta))
     about = site.check_info()
-    assert set(about) == {"face", "voice", "sync", "file"}
-    for check in ("face", "voice", "sync", "file"):
+    assert set(about) == {"face", "gen", "voice", "sync", "file"}
+    for check in ("face", "gen", "voice", "sync", "file"):
         assert about[check]["what"] and about[check]["misses"]
     assert about["voice"]["caught"] == [["HiFi-AVDF", "70%"], ["FakeAVCeleb", "25%"]]
     assert about["file"]["caught"] == []

@@ -145,6 +145,11 @@ CHECK_ABOUT = {
         "high": "The face looks more unusual than almost all real faces we tested.",
         "misses": "Fully generated videos (such as Veo or Sora), which have no pasted face.",
     },
+    "gen": {
+        "what": "Looks at the face for signs that the whole video was made by an AI video generator, such as Veo, Sora or Kling.",
+        "high": "The face looks more like generated video than almost all real faces we tested.",
+        "misses": "Many videos from generators it has not learned, and face swaps (the face check covers those).",
+    },
     "voice": {
         "what": "Listens to the speech for signs of a cloned or generated voice.",
         "high": "The voice sounds more unusual than almost all real voices we tested.",
@@ -413,7 +418,12 @@ def detector():
     )
 
 
-CHECK_NAMES = {"face": "face", "voice": "voice", "sync": "lip-sync"}
+CHECK_NAMES = {
+    "face": "face",
+    "gen": "generated-video",
+    "voice": "voice",
+    "sync": "lip-sync",
+}
 
 
 def how_sure(kind: str = "video") -> str:
