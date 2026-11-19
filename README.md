@@ -15,9 +15,9 @@ By Vaibhav Shiroorkar, Adithya Jithesh and Shivansh Gupta, guided by Dr. Tejashr
    - Face: EfficientNet-B0 with a GRU over 16 face crops.
    - Voice: AntiDeepfake XLS-R 1B, a published model trained on many speech datasets (the study's own voice model was Wav2Vec2 Base; see below).
    - Lip sync: AV-HuBERT features with a head trained on real clips only.
-5. **You get an answer:** signs of manipulation, can't tell, or no signs found. The page also shows each model's score against the flag line, and a timeline coloured part by part.
+5. **You get an answer:** signs of manipulation, can't tell, or no signs found. The page also shows each model's score against the flag line, a timeline coloured part by part, and the three face frames the face model leaned on most, as heatmaps.
 
-A score of 0.97 means the clip looked more unusual than 97 in 100 real clips. It is not a 97% chance of being fake. The flag line sits where about 5 in 100 real clips cross it.
+Scores run from 0 (looks real) through 0.5 (neutral) to 1 (looks fake). They are not probabilities: a score is placed by comparing the clip with thousands of real clips. The flag line (0.60) sits where about 5 in 100 real clips cross it.
 
 ## How well it works
 
@@ -29,6 +29,7 @@ On clips the models never trained on, with the website's own thresholds:
 | HiFi-AVDF (2025 generators) | 66% | 7% |
 | LAV-DF (2022 word edits) | 8% | 7% |
 | DFDC | 7% | 7% |
+| All four together | 28% of 6,677 | 6% of 4,481 |
 
 Since 19 November the website's voice model is AntiDeepfake XLS-R 1B instead of the study's Wav2Vec2 Base, which had heard only FakeAVCeleb. On fixed held-out sets it caught 96% of Veo 3 voices against 12% (`results/v2-eval/report.json`). It made HiFi-AVDF much better and LAV-DF worse, where the old model caught 37%. The face and lip-sync models are still the study's: no face model we tried works on 2026 video generators, so a fully generated video is mostly caught by its voice. `DDF_WEB_MODELS=p001` switches the website back to the study's models. Full numbers are in [docs/FINAL.md](docs/FINAL.md), and every number in the paper and report comes from [results/numbers.json](results/numbers.json).
 
