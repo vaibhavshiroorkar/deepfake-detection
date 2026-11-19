@@ -529,3 +529,26 @@ def test_v2_eval_keys_skip_sets_with_too_few_real_items(tmp_path):
     assert numbers["v2.ffpp.real"]["value"] == 121
     assert numbers["v2.ffpp.face.auc"]["source"] == "results/v2-eval/report.json"
     assert not any(key.startswith("v2.df26voice") for key in numbers)
+
+
+def test_clip_length_keys_count_short_and_silent_clips_per_side(tmp_path):
+    module = _module(tmp_path)
+    out = tmp_path / "results" / "clip-lengths"
+    out.mkdir(parents=True)
+    side = {"clips": 100, "short_video": 5, "short_audio": 1, "no_audio": 2}
+    summary = {
+        "DFDC": {"real": side, "fake": side | {"clips": 900, "short_video": 60}},
+        "LAV-DF": {
+            "real": side | {"short_video": 0},
+            "fake": side | {"short_video": 0},
+        },
+    }
+    (out / "summary.json").write_text(json.dumps(summary), encoding="utf-8")
+    numbers: dict = {}
+    module.clip_lengths(numbers)
+    assert numbers["lengths.DFDC.fake.short_video"]["value"] == 60
+    assert numbers["lengths.DFDC.fake.short_video_share"]["value"] == 60 / 900
+    assert numbers["lengths.all.clips"]["value"] == 1200
+    assert numbers["lengths.all.short_video"]["value"] == 65
+    assert numbers["lengths.all.short_audio"]["value"] == 4
+    assert numbers["lengths.all.no_audio"]["value"] == 8

@@ -5114,6 +5114,9 @@ generated speech and none real. Results on the neutral copies describe clips
 with at least 3.00 s of sound. They say nothing about very short generated
 clips.
 
+A count after the study found cleaned clips a frame short of 3.00 s, and a few
+test clips with short or no sound (Section~ef{sec:a-lengths}).
+
 \subsection{Parts of the Study That Have Not Run}
 
 Two parts of the preregistered study are incomplete in this version, and the
@@ -5475,6 +5478,25 @@ stage whose receipt matches its current files is skipped on rerun. Feature
 extraction and sync training ran before receipts existed, so those two stages
 have none. Their outputs are committed with per-clip predictions, so every
 metric can be recomputed from them.
+
+\section{Clip Lengths After Cleaning}
+\label{sec:a-lengths}
+
+The neutralizer judged length from the container, not from each stream.
+\texttt{scripts/audit\_clip\_lengths.py} later measured the picture and sound
+of every cleaned clip the study lists. {{lengths.all.short_video|int}} of
+{{lengths.all.clips|int}} clips have under 3.00 s of picture, nearly all of
+them one frame short. Both sides are affected alike: on DFDC,
+{{lengths.DFDC.fake.short_video_share|pct}} of fakes and
+{{lengths.DFDC.real.short_video_share|pct}} of real clips. The file audit read
+the container's length, which is the same for every clip, so it did not test
+this. In HiFi-AVDF, which is used for testing only,
+{{lengths.HiFi-AVDF.real.short_audio|int}} real clips have under 3.00 s of
+sound and {{lengths.all.no_audio|int}} clips
+({{lengths.HiFi-AVDF.real.no_audio|int}} real,
+{{lengths.HiFi-AVDF.fake.no_audio|int}} fake) have no sound track, so their
+voice and lip-sync scores do not come from speech. The next cleaning step
+should refuse a clip unless both its picture and its sound last 3.00 s.
 
 \section{How Numbers Enter This Report}
 

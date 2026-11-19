@@ -1,0 +1,58 @@
+{
+  "FakeAVCeleb": {
+    "real": {
+      "clips": 500,
+      "short_video": 1,
+      "short_audio": 0,
+      "no_audio": 0
+    },
+    "fake": {
+      "clips": 19784,
+      "short_video": 72,
+      "short_audio": 0,
+      "no_audio": 0
+    }
+  },
+  "DFDC": {
+    "real": {
+      "clips": 194,
+      "short_video": 10,
+      "short_audio": 0,
+      "no_audio": 0
+    },
+    "fake": {
+      "clips": 2838,
+      "short_video": 214,
+      "short_audio": 0,
+      "no_audio": 0
+    }
+  },
+  "LAV-DF": {
+    "real": {
+      "clips": 1000,
+      "short_video": 0,
+      "short_audio": 0,
+      "no_audio": 0
+    },
+    "fake": {
+      "clips": 2823,
+      "short_video": 0,
+      "short_audio": 0,
+      "no_audio": 0
+    }
+  },
+  "HiFi-AVDF": {
+    "real": {
+      "clips": 1905,
+      "short_video": 4,
+      "short_audio": 4,
+      "no_audio": 14
+    },
+    "fake": {
+      "clips": 1903,
+      "short_video": 0,
+      "short_audio": 0,
+      "no_audio": 9
+    }
+  }
+}

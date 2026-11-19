@@ -628,6 +628,25 @@ def v2_eval(numbers: dict) -> None:
             _put(numbers, f"v2.{name}.{model}.caught", m["caught_at_5pct"], path)
 
 
+def clip_lengths(numbers: dict) -> None:
+    """Cleaned clips with less than 3.00 s of picture or sound, per corpus and side (scripts/audit_clip_lengths.py)."""
+    path = RESULTS / "clip-lengths" / "summary.json"
+    if not path.exists():
+        return
+    fields = ("clips", "short_video", "short_audio", "no_audio")
+    total = dict.fromkeys(fields, 0)
+    for corpus, sides in json.loads(path.read_text(encoding="utf-8")).items():
+        for side, counts in sides.items():
+            for field in fields:
+                _put(numbers, f"lengths.{corpus}.{side}.{field}", counts[field], path)
+                total[field] += counts[field]
+            if counts["clips"]:
+                share = counts["short_video"] / counts["clips"]
+                _put(numbers, f"lengths.{corpus}.{side}.short_video_share", share, path)
+    for field, value in total.items():
+        _put(numbers, f"lengths.all.{field}", value, path)
+
+
 def website(numbers: dict) -> None:
     """The website's flag and unsure lines per number of parts, and its measured speed per part."""
     import sys
@@ -692,6 +711,7 @@ def main() -> int:
     website(numbers)
     picture(numbers)
     v2_eval(numbers)
+    clip_lengths(numbers)
     file_check(numbers)
     out = RESULTS / "numbers.json"
     out.write_text(

@@ -7235,6 +7235,182 @@
   "value": 0.024,
   "source": "results/p001-h4/sync-lavdf-window-seed43.json"
  },
+ "lengths.DFDC.fake.clips": {
+  "value": 2838,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.DFDC.fake.no_audio": {
+  "value": 0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.DFDC.fake.short_audio": {
+  "value": 0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.DFDC.fake.short_video": {
+  "value": 214,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.DFDC.fake.short_video_share": {
+  "value": 0.07540521494009866,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.DFDC.real.clips": {
+  "value": 194,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.DFDC.real.no_audio": {
+  "value": 0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.DFDC.real.short_audio": {
+  "value": 0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.DFDC.real.short_video": {
+  "value": 10,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.DFDC.real.short_video_share": {
+  "value": 0.05154639175257732,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.FakeAVCeleb.fake.clips": {
+  "value": 19784,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.FakeAVCeleb.fake.no_audio": {
+  "value": 0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.FakeAVCeleb.fake.short_audio": {
+  "value": 0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.FakeAVCeleb.fake.short_video": {
+  "value": 72,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.FakeAVCeleb.fake.short_video_share": {
+  "value": 0.003639304488475536,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.FakeAVCeleb.real.clips": {
+  "value": 500,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.FakeAVCeleb.real.no_audio": {
+  "value": 0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.FakeAVCeleb.real.short_audio": {
+  "value": 0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.FakeAVCeleb.real.short_video": {
+  "value": 1,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.FakeAVCeleb.real.short_video_share": {
+  "value": 0.002,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.HiFi-AVDF.fake.clips": {
+  "value": 1903,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.HiFi-AVDF.fake.no_audio": {
+  "value": 9,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.HiFi-AVDF.fake.short_audio": {
+  "value": 0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.HiFi-AVDF.fake.short_video": {
+  "value": 0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.HiFi-AVDF.fake.short_video_share": {
+  "value": 0.0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.HiFi-AVDF.real.clips": {
+  "value": 1905,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.HiFi-AVDF.real.no_audio": {
+  "value": 14,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.HiFi-AVDF.real.short_audio": {
+  "value": 4,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.HiFi-AVDF.real.short_video": {
+  "value": 4,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.HiFi-AVDF.real.short_video_share": {
+  "value": 0.002099737532808399,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.LAV-DF.fake.clips": {
+  "value": 2823,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.LAV-DF.fake.no_audio": {
+  "value": 0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.LAV-DF.fake.short_audio": {
+  "value": 0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.LAV-DF.fake.short_video": {
+  "value": 0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.LAV-DF.fake.short_video_share": {
+  "value": 0.0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.LAV-DF.real.clips": {
+  "value": 1000,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.LAV-DF.real.no_audio": {
+  "value": 0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.LAV-DF.real.short_audio": {
+  "value": 0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.LAV-DF.real.short_video": {
+  "value": 0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.LAV-DF.real.short_video_share": {
+  "value": 0.0,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.all.clips": {
+  "value": 30947,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.all.no_audio": {
+  "value": 23,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.all.short_audio": {
+  "value": 4,
+  "source": "results/clip-lengths/summary.json"
+ },
+ "lengths.all.short_video": {
+  "value": 301,
+  "source": "results/clip-lengths/summary.json"
+ },
  "neutral.fakeavceleb.in.FakeVideo-FakeAudio": {
   "value": 10835,
   "source": "results/shortcut-audit/fakeavceleb-neutral/neutralize-summary.json"

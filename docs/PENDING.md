@@ -16,8 +16,6 @@ The demo, the PPT, the overnight checks and `docs/SECURITY.md` are done and merg
 1. Measure the voice model on today's voice recordings before trusting voice-only answers beyond a rough guide.
 2. Public site hardening, before it is left public unattended (`docs/SECURITY.md`): per-visitor rate limits behind the Funnel proxy, memory limits on FFmpeg, uploads in a container without `data/`. Until then `-Public` only while someone watches.
 
-3. Check the study's cleaned clips for the same assumption: `neutralize_clip(start=None)` judges "enough sound" from the container's length, so a source whose audio ends early could have given a cleaned clip under 3.00 s. Count cleaned clips shorter than 3.00 s in `data/neutral`; if any, say so in the report's limitations.
-
 **Claude, after the 20th: website models, next stage.** The voice swap is done (changelog). Open: (1) score Vaibhav's own phone and laptop recordings, real and voice-cloned, as a held-out set (names like `real_phone_vaibhav_01.mp4`); never train on them. (2) A face model trained on face swaps and generated video together, judged on DF26 and Veo 3; no tested face model works on DF26. (3) Multi-dataset fine-tuning of the voice model only if (1) shows false alarms on real recordings. DF26 and MNW stay evaluation-only. (4) LAV-DF word edits dropped from 37% to 8% caught with the new voice model; check whether the lip-sync model can carry them.
 
 **Claude, also:**
@@ -103,8 +101,8 @@ The full design, with what to keep, what to replace and why, is in [P-002 design
 - AV-Deepfake1M, AV-Deepfake1M++, KoDF and DeepSpeak v2, if access arrives. They are scored by frozen models only.
 - Measure speaker overlap between FakeAVCeleb, LAV-DF and AV-HuBERT's pretraining data (VoxCeleb2, LRS3).
 - H1 residual: video bitrate still carries the label after neutralization. Test a fixed-bitrate encode under a new amendment.
-- Make the neutralizer refuse a clip with less than 3.00 s of video, not only less than 3.00 s of sound (handbook mistake 67). Apply it under a new amendment, since it changes which clips are kept.
-- Finish neutralizing LAV-DF's dev and train sets (`runs/p001-resume2.sh`, last step), for H3. It stopped in the 11-16 crash and resumes from its cut log.
+- Make the neutralizer refuse a clip unless both its picture and its sound last 3.00 s, measured per stream, not from the container (handbook mistake 67; counts in `results/clip-lengths/summary.json`: 301 clips a frame short, 4 HiFi-AVDF clips with short sound, 23 with none). Apply it under a new amendment, since it changes which clips are kept.
+- Finish neutralizing LAV-DF's dev and train sets (`runs/p001-resume2.sh`, last step), for H3. It stopped in the 11-16 crash and resumes from its cut log. 13 LAV-DF train files written before the crash cannot be read (ffprobe: invalid mvhd, found 11-19); redo them.
 - Fix the `data/legacy-team/ffpp` links, which point at folders deleted with `team/`.
 - Speed up the visual and audio cache build. It is CPU-bound at about 340 clips an hour when shared.
 - Clear the remaining lint findings, mostly in the slide helpers.
