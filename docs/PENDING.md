@@ -70,6 +70,7 @@ Chosen 11-16: prepare the rebuild now, with no GPU and no change to anything H2 
   - that the slide master from the October deck is still the college's current one.
 - Ask the guide what "Batch" means on the report. It is set to 2023-27; the academic year is 2026-27.
 - Upload `deliverables/build/overleaf/report.zip` and `paper.zip` to Overleaf, compile with pdfLaTeX, and send any error.
+- Copy `fig_flow1.png` to `fig_flow7.png` from the Overleaf project into `deliverables/figures/` and commit them; until then `deliverables/overleaf.py` builds the report with framed placeholders for those seven flowcharts.
 - Read the paper and the slides and challenge every claim. Practise the talk once with the speaker notes.
 - Decide whether to delete `mlartifacts/`, `mlruns/` and `mlflow.db` (6.8 GB of September to October tracking records) and `dist/` (an old package build and the October `final-report.pdf`).
 - Send the DeepSpeak reminder around 11-22 if there is no answer. Forward any reply from AV-Deepfake1M, AV-Deepfake1M++ or KoDF.

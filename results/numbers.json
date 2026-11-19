@@ -8235,6 +8235,230 @@
   "value": 3104,
   "source": "results/p001-sync/sync-val-seed43-metrics.json"
  },
+ "v2.asv.fake": {
+  "value": 73,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.asv.real": {
+  "value": 102,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.asv.voice.auc": {
+  "value": 0.892,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.asv.voice.caught": {
+  "value": 0.74,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.asv.voice_adf_mms300m.auc": {
+  "value": 0.999,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.asv.voice_adf_mms300m.caught": {
+  "value": 1.0,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.asv.voice_adf_xlsr1b.auc": {
+  "value": 1.0,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.asv.voice_adf_xlsr1b.caught": {
+  "value": 1.0,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.celebdf.face.auc": {
+  "value": 0.679,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.celebdf.face.caught": {
+  "value": 0.16,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.celebdf.face_clipln.auc": {
+  "value": 0.893,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.celebdf.face_clipln.caught": {
+  "value": 0.714,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.celebdf.fake": {
+  "value": 318,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.celebdf.real": {
+  "value": 168,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.df26face.face.auc": {
+  "value": 0.557,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.df26face.face.caught": {
+  "value": 0.053,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.df26face.face_clipln.auc": {
+  "value": 0.456,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.df26face.face_clipln.caught": {
+  "value": 0.053,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.df26face.fake": {
+  "value": 188,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.df26face.real": {
+  "value": 148,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.fav.fake": {
+  "value": 150,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.fav.real": {
+  "value": 150,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.fav.voice.auc": {
+  "value": 1.0,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.fav.voice.caught": {
+  "value": 1.0,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.fav.voice_adf_mms300m.auc": {
+  "value": 1.0,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.fav.voice_adf_mms300m.caught": {
+  "value": 1.0,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.fav.voice_adf_xlsr1b.auc": {
+  "value": 1.0,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.fav.voice_adf_xlsr1b.caught": {
+  "value": 1.0,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.favface.face.auc": {
+  "value": 0.929,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.favface.face.caught": {
+  "value": 0.805,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.favface.face_clipln.auc": {
+  "value": 0.788,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.favface.face_clipln.caught": {
+  "value": 0.477,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.favface.fake": {
+  "value": 149,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.favface.real": {
+  "value": 142,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.ffpp.face.auc": {
+  "value": 0.652,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.ffpp.face.caught": {
+  "value": 0.146,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.ffpp.face_clipln.auc": {
+  "value": 0.912,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.ffpp.face_clipln.caught": {
+  "value": 0.749,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.ffpp.fake": {
+  "value": 171,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.ffpp.real": {
+  "value": 121,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.itw.fake": {
+  "value": 112,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.itw.real": {
+  "value": 84,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.itw.voice.auc": {
+  "value": 0.939,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.itw.voice.caught": {
+  "value": 0.866,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.itw.voice_adf_mms300m.auc": {
+  "value": 0.996,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.itw.voice_adf_mms300m.caught": {
+  "value": 0.973,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.itw.voice_adf_xlsr1b.auc": {
+  "value": 0.997,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.itw.voice_adf_xlsr1b.caught": {
+  "value": 0.982,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.veo3voice.fake": {
+  "value": 100,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.veo3voice.real": {
+  "value": 100,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.veo3voice.voice.auc": {
+  "value": 0.677,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.veo3voice.voice.caught": {
+  "value": 0.12,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.veo3voice.voice_adf_mms300m.auc": {
+  "value": 0.961,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.veo3voice.voice_adf_mms300m.caught": {
+  "value": 0.78,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.veo3voice.voice_adf_xlsr1b.auc": {
+  "value": 0.994,
+  "source": "results/v2-eval/report.json"
+ },
+ "v2.veo3voice.voice_adf_xlsr1b.caught": {
+  "value": 0.96,
+  "source": "results/v2-eval/report.json"
+ },
  "visual.dfdc.seed17.auc": {
   "value": 0.726,
   "source": "results/p001-branches/visual-seed17-dfdc-metrics.json"
