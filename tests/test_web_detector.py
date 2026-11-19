@@ -297,3 +297,31 @@ def test_cant_check_names_each_reason_once(tmp_path) -> None:
     status = _finished(detector, detector.submit(_upload(tmp_path)))
     assert status["outcome"]["kind"] == "cant_check"
     assert status["outcome"]["reason"].count("not checked") == 1
+
+
+def test_a_second_opinion_is_asked_only_when_the_visitor_opted_in(tmp_path) -> None:
+    asked = []
+
+    def second(upload, time):
+        asked.append((upload.exists(), time))
+        return {"ai_generated": 0.9, "service": "the outside service"}
+
+    scorer = FakeScorer({"face": (0.5,) * 3, "voice": (0.5,) * 3, "sync": None})
+    detector = Detector(
+        lambda: scorer,
+        _calibration(),
+        workroot=tmp_path / "work",
+        second_opinion=second,
+    )
+    plain = _finished(detector, detector.submit(_upload(tmp_path, "a.mp4")))
+    assert "outside" not in plain["outcome"] and not asked
+    upload = _upload(tmp_path, "b.mp4")
+    opted = _finished(detector, detector.submit(upload, second=True))
+    assert opted["outcome"]["outside"] == {
+        "ai_generated": 0.9,
+        "service": "the outside service",
+    }
+    assert asked == [
+        (True, 1.0)
+    ]  # the upload still existed, at the cited face frame's time
+    assert not upload.exists()

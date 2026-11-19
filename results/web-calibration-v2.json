@@ -171,6 +171,14 @@
     "column": "face_gen",
     "scores": "results/gen-probe/cache-scores.csv"
    }
+  },
+  "parts_lines": {
+   "built": "2026-11-19",
+   "code_commit": "8ebe83815a61f76d2c38102e49e8a6f967101481",
+   "device": "cuda",
+   "real_videos": 120,
+   "per_corpus": 40,
+   "rule": "flag and can't-tell lines at the 95th and 80th weighted percentile of real videos' most unusual part, per part count; never below the single-part lines or a shorter count's"
   }
  },
  "threshold": 0.9872623440260366,
@@ -44099,6 +44107,20 @@
    0.00013137151865475567,
    0.00013137151865475567,
    0.00010836584308625922
+  ]
+ },
+ "parts_lines": {
+  "3": [
+   0.9933,
+   0.9615
+  ],
+  "4": [
+   0.9958,
+   0.978
+  ],
+  "6": [
+   0.9963,
+   0.9796
   ]
  }
 }

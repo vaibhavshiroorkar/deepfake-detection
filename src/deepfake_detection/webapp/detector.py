@@ -18,7 +18,7 @@ import uuid
 from collections.abc import Callable
 from pathlib import Path
 
-from deepfake_detection.webapp import provenance
+from deepfake_detection.webapp import outside, provenance
 from deepfake_detection.webapp.calibration import (
     SHOWN_FLAG,
     SHOWN_LOWER,
@@ -44,8 +44,11 @@ class Detector:
         waiting: int = 3,
         read_labels: Callable[[Path], list[str]] | None = None,
         calibrations: dict[str, Calibration] | None = None,
+        second_opinion: Callable[[Path, float], dict] | None = None,
     ) -> None:
         self._make_scorer, self._scorer = make_scorer, None
+        # (upload, time) -> an outside service's reading of one still; only for visitors who opt in
+        self._second_opinion = second_opinion or outside.second_opinion
         self._read_labels = read_labels or provenance.read
         # An input kind with its own reference: a still picture is not judged against moving video.
         self._calibrations = calibrations or {}
@@ -56,7 +59,7 @@ class Detector:
         self._done: dict[str, threading.Event] = {}
         self._lock = threading.Lock()
         self._load_lock = threading.Lock()
-        self._queue: queue.Queue[tuple[str, Path, str]] = queue.Queue()
+        self._queue: queue.Queue[tuple[str, Path, str, bool]] = queue.Queue()
         threading.Thread(target=self._work, name="detector", daemon=True).start()
 
     def warm(self) -> None:
@@ -65,7 +68,7 @@ class Detector:
             if self._scorer is None:
                 self._scorer = self._make_scorer()
 
-    def submit(self, upload: Path, mode: str = "video") -> str:
+    def submit(self, upload: Path, mode: str = "video", second: bool = False) -> str:
         """Queue an upload the server has already checked against the clip rules. Takes ownership of the file."""
         with self._lock:
             self._expire()
@@ -82,7 +85,7 @@ class Detector:
                 "finished": None,
             }
             self._done[job] = threading.Event()
-        self._queue.put((job, upload, mode))
+        self._queue.put((job, upload, mode, second))
         return job
 
     def status(self, job: str) -> dict | None:
@@ -123,7 +126,7 @@ class Detector:
 
     def _work(self) -> None:
         while True:
-            job, upload, mode = self._queue.get()
+            job, upload, mode, second = self._queue.get()
             self._set(job, status="running", stage="cleaning")
             workdir = self._workroot / job
             result: dict
@@ -138,10 +141,13 @@ class Detector:
                     progress=lambda stage, job=job: self._set(job, stage=stage),
                     mode=mode,
                 )
-                result = {
-                    "status": "done",
-                    "outcome": self._outcome(report, labels, mode) | {"input": mode},
-                }
+                outcome = self._outcome(report, labels, mode) | {"input": mode}
+                if second and mode != "voice":
+                    self._set(job, stage="second opinion")
+                    outcome["outside"] = self._second_opinion(
+                        upload, _still_time(outcome)
+                    )
+                result = {"status": "done", "outcome": outcome}
             except ClipRefused as error:
                 result = {
                     "status": "done",
@@ -217,6 +223,16 @@ class Detector:
                 )
             )
         return outcome
+
+
+def _still_time(outcome: dict) -> float:
+    """Where to take the one still for a second opinion: the face frame the face model cited first, else the
+    middle of the part that decided."""
+    frames = (outcome.get("explain") or {}).get("frames") or []
+    if frames:
+        return float(frames[0]["time"])
+    part = outcome.get("part") or {"start": 0.0, "end": 3.0}
+    return (part["start"] + part["end"]) / 2
 
 
 def _face_explanation(reports) -> dict:

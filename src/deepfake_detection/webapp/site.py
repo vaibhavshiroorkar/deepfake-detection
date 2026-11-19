@@ -25,6 +25,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
 from deepfake_detection.paths import PROJECT_ROOT
+from deepfake_detection.webapp import outside
 from deepfake_detection.webapp.detector import Detector
 
 NUMBERS = PROJECT_ROOT / "results" / "numbers.json"
@@ -529,6 +530,7 @@ def present(outcome: dict) -> dict:
         "explain": outcome.get("explain", {}),
         "lines": outcome.get("lines"),
         "about": check_info(),
+        "outside": outcome.get("outside"),
         "trace": outcome.get("trace", {}),
         "how_sure": how_sure(outcome.get("input", "video"))
         if kind != "cant_check"
@@ -626,7 +628,10 @@ def register(app: FastAPI) -> None:
 
     @app.post("/api/check")
     async def check(
-        request: Request, file: UploadFile = File(...), mode: str = Form("")
+        request: Request,
+        file: UploadFile = File(...),
+        mode: str = Form(""),
+        second: str = Form(""),
     ) -> JSONResponse:
         client = request.client.host if request.client else "unknown"
         if not uploads.allow(client):
@@ -672,7 +677,7 @@ def register(app: FastAPI) -> None:
                 path, converted = converted, None
             check_clip_rules(probe(path))
             job = detector().submit(
-                path, mode=kind
+                path, mode=kind, second=second == "1" and outside.enabled()
             )  # the detector owns the file from here and deletes it
         except ClipRejected as error:
             path.unlink(missing_ok=True)
@@ -699,6 +704,14 @@ def register(app: FastAPI) -> None:
             path.unlink(missing_ok=True)
             raise
         return JSONResponse({"status": "queued", "job": job}, status_code=202)
+
+    @app.get("/api/outside")
+    def outside_status() -> JSONResponse:
+        """Whether the page may offer the second opinion, and how many are left today."""
+        on = outside.enabled()
+        return JSONResponse(
+            {"enabled": on, "left_today": outside.Quota().left_today() if on else 0}
+        )
 
     @app.get("/api/check/{job}")
     def check_status(job: str) -> JSONResponse:

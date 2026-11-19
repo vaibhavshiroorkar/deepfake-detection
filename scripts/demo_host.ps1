@@ -47,6 +47,16 @@ switch ($Action) {
         if (Get-Running) { Write-Output "Already running."; Show-Share; break }
         $logs = Join-Path $Root "runs\demo-host"
         New-Item -ItemType Directory -Force $logs | Out-Null
+        # Keys the server reads (the outside service for the optional second opinion, Resend for the contact form)
+        # live in .env, which git ignores; they go to the server process only and are never printed.
+        $envFile = Join-Path $Root ".env"
+        if (Test-Path $envFile) {
+            foreach ($line in Get-Content $envFile) {
+                if ($line -match '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$') {
+                    [Environment]::SetEnvironmentVariable($Matches[1], $Matches[2].Trim().Trim('"'), "Process")
+                }
+            }
+        }
         $env:DDF_SCORER_DEVICE = $Device
         $env:DDF_UPLOAD_LIMIT = "500"        # every request arrives through the local Tailscale proxy
         $python = Join-Path $Root ".venv\Scripts\python.exe"

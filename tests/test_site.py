@@ -634,3 +634,19 @@ def test_an_older_calibration_without_counts_gives_no_rates(monkeypatch):
         site, "calibration", lambda: SimpleNamespace(meta={"outcomes": {}})
     )
     assert site.check_info()["face"]["caught"] == []
+
+
+def test_the_second_opinion_is_offered_only_with_keys(monkeypatch, tmp_path):
+    from deepfake_detection.webapp import outside
+
+    monkeypatch.setattr(outside, "USAGE", tmp_path / "usage.json")
+    monkeypatch.delenv("STILL_CHECK_USER", raising=False)
+    monkeypatch.delenv("STILL_CHECK_SECRET", raising=False)
+    client = TestClient(create_app())
+    assert client.get("/api/outside").json() == {"enabled": False, "left_today": 0}
+    monkeypatch.setenv("STILL_CHECK_USER", "u")
+    monkeypatch.setenv("STILL_CHECK_SECRET", "s")
+    assert client.get("/api/outside").json() == {
+        "enabled": True,
+        "left_today": outside.DAY_LIMIT // outside.COST,
+    }

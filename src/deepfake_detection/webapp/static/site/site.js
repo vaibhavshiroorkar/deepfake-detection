@@ -56,6 +56,22 @@
     return body;
   }
 
+  function secondRow(second) {
+    const row = el("details", "crow second");
+    const line = el("summary", "cline");
+    const share = second.ai_generated;
+    line.append(el("span", "cname", "2nd opinion"),
+      el("span", "cfile", second.error ? "not available" : Math.round(share * 100) + "% likely AI-generated"),
+      el("span", "cval mono", second.error ? "" : (second.service || "outside")));
+    row.append(line);
+    const body = el("div", "cbody small");
+    if (second.error) body.append(el("p", "", second.error));
+    body.append(el("p", "", "From " + (second.service || "an outside service")
+      + ", on one still from your file. It is shown beside our checks and does not change our answer. We have not yet measured how well it does on our test sets."));
+    row.append(body);
+    return row;
+  }
+
   function checkRows(data) {
     const checks = data.checks || {}, lines = data.lines, about = data.about || {};
     const box = el("div", "checks");
@@ -104,6 +120,7 @@
     const body = aboutBody(about.file, true);
     file.append(body);
     box.append(file);
+    if (data.outside) box.append(secondRow(data.outside));
     return box;
   }
 
@@ -311,7 +328,7 @@
     return box;
   }
 
-  const STAGES = { received: "Received. Waiting for the detector", "file check": "Reading the file for AI labels",
+  const STAGES = { received: "Received. Waiting for the detector", "file check": "Reading the file for AI labels", "second opinion": "Asking the outside service",
     cleaning: "Cleaning the clip",
     "finding the face": "Finding the face", scoring: "Scoring", done: "Done" };
   const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -350,7 +367,7 @@
     media.hidden = false;
     root.querySelector("[data-picked-name]").textContent = file.name || "Your recording";
     picked.hidden = false;
-    root.querySelectorAll("[data-drop], .live-buttons, [data-live-panel]").forEach((n) => { n.hidden = true; });
+    root.querySelectorAll("[data-drop], .live-buttons, [data-live-panel], [data-second]").forEach((n) => { n.hidden = true; });
   }
 
   function reset(root) {
@@ -366,6 +383,7 @@
     card.hidden = true;
     root.querySelector("[data-file]").value = "";
     root.querySelectorAll("[data-drop], .live-buttons").forEach((n) => { n.hidden = false; });
+    offerSecond(root);
   }
 
   async function submit(root, file, mode) {
@@ -374,6 +392,8 @@
     const token = String(Number(root.dataset.token || 0) + 1);
     root.dataset.token = token;
     const current = () => root.dataset.token === token;
+    const label = root.querySelector("[data-second]"), box = root.querySelector("[data-second-box]");
+    const wantSecond = !!(label && box && !label.hidden && box.checked);  // read before the box is hidden
     showPicked(root, file);
     card.hidden = true;
     if (file.size > MAX_MB * 1024 * 1024) {
@@ -385,6 +405,7 @@
     const body = new FormData();
     body.append("file", file);
     if (mode) body.append("mode", mode);
+    if (wantSecond) body.append("second", "1");
     try {
       const response = await fetch(API + "/api/check", { method: "POST", body });
       let data = await response.json().catch(() => ({ status: "rejected", reason: "The server sent an unreadable answer." }));
@@ -406,6 +427,18 @@
     }
   }
 
+  async function offerSecond(root) {
+    const label = root.querySelector("[data-second]");
+    if (!label) return;
+    try {
+      const response = await fetch(API + "/api/outside");
+      const state = await response.json();
+      label.hidden = !(state.enabled && state.left_today > 0);
+    } catch (error) {
+      label.hidden = true; // no detector, no second opinion
+    }
+  }
+
   document.querySelectorAll("[data-detector]").forEach((root) => {
     const drop = root.querySelector("[data-drop]");
     const input = root.querySelector("[data-file]");
@@ -423,6 +456,7 @@
       if (file) submit(root, file);
     });
     liveInput(root);
+    offerSecond(root);
   });
 
   /* live input: record a video or a voice, or take a picture, then check it like an upload ---- */
