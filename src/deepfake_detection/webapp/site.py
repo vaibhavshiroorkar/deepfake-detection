@@ -110,21 +110,30 @@ def live_rates() -> dict:
     FakeAVCeleb is the corpus the study's models trained on; the others are the unseen sources.
     """
     rates = {}
+    pooled = {"caught": [0, 0], "flagged": [0, 0]}  # [signs, clips] over every corpus
     for corpus, sides in calibration().meta["outcomes"].items():
         for side, name in (("fake", "caught"), ("real", "flagged")):
             counts = sides.get(side, {})
             if sum(counts.values()):
                 rates[corpus, name] = counts.get("signs", 0) / sum(counts.values())
+                pooled[name][0] += counts.get("signs", 0)
+                pooled[name][1] += sum(counts.values())
 
     def span(values: list[float]) -> tuple[str, str]:
         return f"{min(values):.0%}", f"{max(values):.0%}"
 
+    flagged = [v for (c, n), v in rates.items() if n == "flagged"]
     return {
         "home_caught": f"{rates['FakeAVCeleb', 'caught']:.0%}",
         "other_caught": span(
             [v for (c, n), v in rates.items() if n == "caught" and c != "FakeAVCeleb"]
         ),
-        "real_flagged": span([v for (c, n), v in rates.items() if n == "flagged"]),
+        "real_flagged": span(flagged),
+        "real_flagged_mean": f"{100 * sum(flagged) / len(flagged):.0f}",
+        "all_caught": f"{pooled['caught'][0] / pooled['caught'][1]:.0%}",
+        "all_flagged": f"{pooled['flagged'][0] / pooled['flagged'][1]:.0%}",
+        "fake_clips": f"{pooled['caught'][1]:,}",
+        "real_clips": f"{pooled['flagged'][1]:,}",
     }
 
 

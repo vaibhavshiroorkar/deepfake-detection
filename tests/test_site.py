@@ -593,4 +593,16 @@ def test_home_rates_come_from_the_lines_in_force(monkeypatch):
         "home_caught": "75%",
         "other_caught": ("10%", "60%"),
         "real_flagged": ("0%", "20%"),
+        "real_flagged_mean": "10",
+        "all_caught": "42%",
+        "all_flagged": "10%",
+        "fake_clips": "24",
+        "real_clips": "30",
     }
+
+
+def test_home_page_quotes_no_study_auc():
+    """The study's fusion AUC (98 to 99%) read as the site's accuracy; the site does not run that model."""
+    text = (site.TEMPLATES / "home.html").read_text(encoding="utf-8")
+    assert "auc" not in text.lower()
+    assert "live().all_caught" in text

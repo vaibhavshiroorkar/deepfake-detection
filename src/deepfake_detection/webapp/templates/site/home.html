@@ -36,12 +36,12 @@
       <div class="b mid">
         <div class="lbl">Real videos wrongly flagged</div>
         <div class="stat mono">{{ live().real_flagged[0] }} to {{ live().real_flagged[1] }}</div>
-        <p>depending on where the video comes from; about 5 in 100 on average.</p>
+        <p>depending on where the video comes from; about {{ live().real_flagged_mean }} in 100 on average.</p>
       </div>
       <div class="b mid">
-        <div class="lbl">Telling a fake from a real clip</div>
-        <div class="stat ok mono">{{ pct("h2.test-identity-strict.auc.fusion.min") }} to {{ pct("h2.test-identity-strict.auc.fusion.max") }}</div>
-        <p>of the time, shown one real and one fake clip of the kinds it learned, the three models together pick the fake.</p>
+        <div class="lbl">All test fakes together</div>
+        <div class="stat mono">{{ live().all_caught }}</div>
+        <p>of {{ live().fake_clips }} fake clips from four datasets caught, while {{ live().all_flagged }} of {{ live().real_clips }} real clips were wrongly flagged.</p>
       </div>
     </div>
   </section>
