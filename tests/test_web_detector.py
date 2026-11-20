@@ -476,7 +476,7 @@ def test_a_description_tops_the_answer_and_a_failure_never_breaks_it(tmp_path) -
         outcome["description"]
         == "A woman talks in a kitchen. The heatmap covers her mouth."
     )
-    assert seen == [(True, 1.0, "part 0")]
+    assert seen == [(True, 1.0, None)]  # not flagged, so no map (see the test below)
 
     voice = _finished(
         detector, detector.submit(_upload(tmp_path, "b.mp4"), mode="voice")
@@ -491,6 +491,28 @@ def test_a_description_tops_the_answer_and_a_failure_never_breaks_it(tmp_path) -
     )
     status = _finished(failing, failing.submit(_upload(tmp_path, "c.mp4")))
     assert status["status"] == "done" and "description" not in status["outcome"]
+
+
+def test_only_a_flagged_answer_names_a_suspicious_area(tmp_path) -> None:
+    """The description calls the mapped area suspicious (asked by Vaibhav 11-20), so it gets the map only
+    when the answer is "signs"; otherwise it describes the scene alone."""
+    seen = []
+
+    def describe(upload, time, explain):
+        seen.append(explain)
+        return "A person talks."
+
+    calm = {"face": (0.01,) * 3, "voice": (0.01,) * 3, "sync": None}
+    loud = {"face": (0.9999,) * 3, "voice": (0.01,) * 3, "sync": None}
+    for name, probabilities in (("a.mp4", loud), ("b.mp4", calm)):
+        detector = Detector(
+            lambda p=probabilities: FakeScorer(p),
+            _calibration(),
+            workroot=tmp_path / ("work-" + name),
+            describe=describe,
+        )
+        _finished(detector, detector.submit(_upload(tmp_path, name)))
+    assert seen[0].get("frames") and seen[1] == {}
 
 
 def test_a_labelled_file_is_not_sent_out(tmp_path) -> None:
@@ -535,7 +557,9 @@ class _Scores:
         import math
 
         self.checks = {
-            k: CheckResult((1 / (1 + math.exp(-v)),))
+            k: CheckResult(None, "not checked")
+            if v is None
+            else CheckResult((1 / (1 + math.exp(-v)),))
             for k, v in {"face": face, "voice": voice, "sync": sync}.items()
         }
 
@@ -561,3 +585,20 @@ def test_the_overall_meter_shows_the_evidence_sum_and_flags_with_the_verdict(
     )
     outcome = _finished(calm, calm.submit(_upload(tmp_path, "b.mp4")))["outcome"]
     assert outcome["kind"] == "no_signs" and outcome["overall"] < 0.4
+
+
+def test_a_single_check_is_judged_by_its_own_line_not_the_evidence_sum(
+    tmp_path,
+) -> None:
+    """Found 11-20: a voice recording read voice 0.38 yet "signs" with overall 0.65. The evidence sum's
+    line comes from real clips where several checks ran; one check alone swings past it."""
+    detector = Detector(
+        lambda: _Scores(None, 1.5, None),  # about the 93rd percentile of real voices
+        _fused_calibration(),
+        workroot=tmp_path / "a",
+    )
+    outcome = _finished(
+        detector, detector.submit(_upload(tmp_path, "a.mp4"), mode="voice")
+    )["outcome"]
+    assert outcome["kind"] != "signs"
+    assert outcome["overall"] == outcome["checks"]["voice"]["score"] < 0.6

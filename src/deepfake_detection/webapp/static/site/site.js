@@ -173,6 +173,30 @@
     return reading >= lines.lower ? "unsure" : "ok";
   }
 
+  /* One check's score as a ring: the arc fills to the score, coloured by which side of the lines it falls. */
+  function ring(label, value, lines) {
+    const ns = "http://www.w3.org/2000/svg";
+    const box = el("div", "ring " + level(value, lines));
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 44 44");
+    svg.setAttribute("aria-hidden", "true");
+    const track = document.createElementNS(ns, "circle");
+    const arc = document.createElementNS(ns, "circle");
+    for (const c of [track, arc]) {
+      c.setAttribute("cx", "22"); c.setAttribute("cy", "22"); c.setAttribute("r", "18");
+      svg.append(c);
+    }
+    track.setAttribute("class", "track");
+    arc.setAttribute("class", "arc");
+    const length = 2 * Math.PI * 18;
+    arc.setAttribute("stroke-dasharray", (Math.min(Math.max(value, 0), 1) * length) + " " + length);
+    const text = el("span", "ring-val mono", fmt(value));
+    const figure = el("span", "ring-fig");
+    figure.append(svg, text);
+    box.append(figure, el("span", "ring-label small", label));
+    return box;
+  }
+
   function preview(file, data) {
     const timeline = data.timeline || [];
     const lines = data.lines;
@@ -207,18 +231,23 @@
     }
     const cursor = el("i", "cursor");
     bar.append(cursor);
-    const readout = el("p", "readout mono");
+    // The part under the cursor: its time, then one round meter per check that ran on it.
+    const readout = el("div", "readout");
+    const when = el("p", "when mono");
+    const rings = el("div", "rings");
+    readout.append(when, rings);
     const show = (time) => {
       time = Math.min(Math.max(time, 0), end);
       cursor.style.left = time / end * 100 + "%";
       const part = partAt(timeline, time);
+      when.replaceChildren(el("b", "", clock(time)), el("span", "", clock(part.start) + " to " + clock(part.end)));
       // Named from CHECKS, the list the rows use, so every check the server sends has a name.
-      const scores = CHECKS.filter(([k]) => part.checks[k] != null)
-        .map(([k, label]) => label.toLowerCase() + " " + fmt(part.checks[k])).join(", ");
-      readout.textContent = clock(time) + "  part " + clock(part.start) + " to " + clock(part.end) + ": "
-        + (scores || "no model could run") + (part.reading != null
-          ? "  (flag line " + fmt(lines.flag) + ")" : "");
-      bar.setAttribute("aria-valuetext", readout.textContent);
+      const scored = CHECKS.filter(([k]) => part.checks[k] != null);
+      rings.replaceChildren(...(scored.length
+        ? scored.map(([k, label]) => ring(label, part.checks[k], lines))
+        : [el("span", "small", "No check could run on this part.")]));
+      bar.setAttribute("aria-valuetext", clock(time) + ": " + (scored.map(([k, label]) => label + " "
+        + fmt(part.checks[k])).join(", ") || "no check ran"));
     };
     const fromPointer = (event) => {
       const rect = bar.getBoundingClientRect();
@@ -249,7 +278,7 @@
     if (media) media.addEventListener("timeupdate", () => { if (!held) show(media.currentTime); });
     const readrow = el("div", "readrow");
     readrow.append(readout, tip("The bar is the video in 3-second parts. Green: real side, below " + fmt(lines.lower)
-      + ". Yellow: can't tell. Red: fake side, from " + fmt(lines.flag) + ". Grey: not scored. Hold or drag on it to see each part's scores.",
+      + ". Yellow: can't tell. Red: fake side, from " + fmt(lines.flag) + ". Grey: not scored. Hold or drag on it: each ring shows a check's score for that part, against the flag line " + fmt(lines.flag) + ".",
       "How to read the timeline"));
     box.append(bar, readrow);
     show(0);
@@ -266,6 +295,7 @@
       card.classList.add("cant");
       card.append(el("p", "outcome cant", data.status === "busy" ? "Busy" : "Not checked"), el("p", "", data.reason));
     } else {
+      if (file && data.outcome !== "cant_check") card.append(preview(file, data));
       const o = OUTCOMES[data.outcome] || OUTCOMES.cant_check;
       card.classList.add(o.cls);
       const title = el("p", "outcome " + o.cls, o.text);
@@ -279,8 +309,6 @@
       }
       if (data.summary) card.append(el("p", "", data.summary));
       if (data.overall != null && data.lines) card.append(overallMeter(data.overall, data.lines));
-      if (file && data.outcome !== "cant_check") card.append(preview(file, data));
-      if (data.where) card.append(el("p", "where small", data.where));
       const heat = explainView(data.explain, card, !!(data.checks && data.checks.face && data.checks.face.raised));
       if (heat) card.append(heat);
       card.append(checkRows(data));
@@ -301,7 +329,6 @@
     } else {
       lead.textContent = explain.summary || "";
     }
-    box.append(lead);
     const toggle = el("button", "heattoggle", "Show heatmaps");
     toggle.type = "button";
     toggle.setAttribute("aria-expanded", "false");
@@ -330,7 +357,7 @@
       });
       row.append(button);
     }
-    panel.append(row, el("p", "small heatnote", "Warmer colours pushed the face score toward fake. Tap a face to jump the video there."));
+    panel.append(lead, row, el("p", "small heatnote", "Warmer colours pushed the face score toward fake. Tap a face to jump the video there."));
     const tools = el("div", "heattools");
     tools.append(toggle, tip("A heatmap shows where the face model looked. It is not proof that this area was edited.",
       "What a heatmap shows"));

@@ -161,8 +161,13 @@ class Detector:
                 outcome = self._outcome(report, labels, mode, opinion) | {"input": mode}
                 if mode != "voice":
                     self._set(job, stage="describing")
+                    # The description names the mapped area as suspicious, so it only gets the map
+                    # when the answer flags the video; otherwise it describes the scene alone.
+                    flagged = outcome.get("kind") == "signs"
                     text = self._describe_safely(
-                        upload, _still_time(report), outcome.get("explain") or {}
+                        upload,
+                        _still_time(report),
+                        (outcome.get("explain") or {}) if flagged else {},
                     )
                     if text:
                         outcome["description"] = text
@@ -224,10 +229,10 @@ class Detector:
         checked = sum(p is not None for p in decision.parts)
         flag, lower = calibration.limits(max(checked, 1))  # each check's own bar
         read_flag, read_lower = calibration.reading_limits(
-            max(checked, 1)
+            max(checked, 1), decision.fused
         )  # the score that decides
-        # The evidence sum is open-ended, so it is shown on a curve; an old file's percentile reading is not.
-        shown = display_open if calibration.fusion is not None else display_score
+        # The evidence sum is open-ended, so it is shown on a curve; a single check's percentile is not.
+        shown = display_open if decision.fused else display_score
         # Every part's scores, so the page can colour a timeline and show the score under the cursor.
         timeline = []
         for r, scores, reading in zip(reports, parts, decision.parts, strict=True):

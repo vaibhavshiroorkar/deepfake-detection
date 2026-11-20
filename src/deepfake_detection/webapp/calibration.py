@@ -122,6 +122,7 @@ class Outcome:
     parts: list[float | None] = field(
         default_factory=list
     )  # each part's combined percentile
+    fused: bool = False  # True when the evidence sum decided (several checks ran), not one check's line
 
 
 @dataclass(frozen=True)
@@ -139,9 +140,11 @@ class Calibration:
     # With a fusion block the evidence sum decides; the per-check lines above still place each check's bar.
     fusion: Fusion | None = None
 
-    def reading_limits(self, parts: int) -> tuple[float, float]:
-        """The lines of the score that decides: the evidence sum's when there is one."""
-        return self.fusion.limits(parts) if self.fusion else self.limits(parts)
+    def reading_limits(self, parts: int, fused: bool = True) -> tuple[float, float]:
+        """The lines of the score that decides: the evidence sum's when it decided."""
+        return (
+            self.fusion.limits(parts) if self.fusion and fused else self.limits(parts)
+        )
 
     def percentiles(self, scores: dict[str, float | None]) -> dict[str, float | None]:
         return {
@@ -190,7 +193,11 @@ class Calibration:
                 pcts[0] if pcts else {c: None for c in CHECKS},
                 parts=combined,
             )
-        if self.fusion is not None:
+        # The evidence sum's lines come from real clips where several checks ran. With one check there is
+        # nothing to combine, and that check alone swings past those lines (found 11-20: a voice recording
+        # read voice 0.38 yet "signs"), so it is judged by its own line.
+        several = any(sum(p is not None for p in pcts[i].values()) > 1 for i in checked)
+        if self.fusion is not None and several:
             return self._decide_fused(pcts, checked)
         worst = max(checked, key=lambda i: combined[i])
         pct, top = pcts[worst], combined[worst]
@@ -220,9 +227,15 @@ class Calibration:
             except ValueError:
                 own = self.threshold
             raised = [c for c in CHECKS if pct[c] is not None and pct[c] > own]
-            return Outcome("signs", top, pct, raised, worst, fused)
+            return Outcome("signs", top, pct, raised, worst, fused, fused=True)
         return Outcome(
-            "cant_tell" if top > lower else "no_signs", top, pct, [], worst, fused
+            "cant_tell" if top > lower else "no_signs",
+            top,
+            pct,
+            [],
+            worst,
+            fused,
+            fused=True,
         )
 
     def to_json(self) -> str:

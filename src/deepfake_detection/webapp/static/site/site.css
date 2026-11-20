@@ -383,3 +383,21 @@ html:has(.slides) .nav { scroll-snap-align: start; }
   .samples-filters { grid-template-columns: 1fr 1fr; }
   .samples-filters input { grid-column: 1 / -1; }
 }
+
+/* Timeline readout: the part's time, then one ring per check (score on a 0 to 1 arc, coloured by its line). */
+.readout { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-top: 10px; min-height: 0; }
+.when { display: grid; gap: 2px; margin: 0; font-size: 13px; color: var(--muted); }
+.when b { font-size: 20px; color: var(--text); font-weight: 600; }
+.rings { display: flex; gap: 14px; flex-wrap: wrap; }
+.ring { display: grid; justify-items: center; gap: 4px; }
+.ring-fig { position: relative; width: 52px; height: 52px; }
+.ring svg { width: 52px; height: 52px; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 4; }
+.ring .track { stroke: var(--track); }
+.ring .arc { stroke: var(--ok); stroke-linecap: round; transition: stroke-dasharray .15s; }
+.ring.unsure .arc { stroke: var(--unsure); }
+.ring.flag .arc { stroke: var(--alert); }
+.ring-val { position: absolute; inset: 0; display: grid; place-items: center; font-size: 12px; }
+.ring-label { font-size: 12px; }
+.heatpanel .heatlead { margin-bottom: 10px; }
+.result > .preview { margin: 0 0 18px; }

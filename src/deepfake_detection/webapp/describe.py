@@ -25,9 +25,10 @@ SYSTEM = (
 WITH_HEAT = (
     "Image 1 is a still from a video. Image 2 is the face from it with a heatmap; the warm (yellow and red) "
     "area is where a detector looked. Write exactly two sentences. Sentence 1: what image 1 shows (person, "
-    "setting). Sentence 2: which part of the face the warm area covers in image 2, and what that part looks "
-    "like in image 1 (for example skin, eyes, mouth, edge of the face). Say 'the video' and 'the "
-    "heatmap', never 'image 1' or 'image 2'."
+    "setting). Sentence 2: name the part of the face the warm area covers in image 2 as the suspicious "
+    "area, and say what it looks like in image 1, for example 'The mouth and jaw look suspicious: the "
+    "skin there is smoother than the rest of the face.' Say 'the video'. Never say 'heatmap', 'warm "
+    "area', 'image 1' or 'image 2'."
 )
 STILL_ONLY = "This is a still from a video. In one sentence, say what it shows (person, setting)."
 log = logging.getLogger(__name__)
