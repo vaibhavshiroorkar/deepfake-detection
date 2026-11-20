@@ -1,17 +1,19 @@
-"""The optional second opinion: the outside service's AI-generated image model on one frame, only when asked."""
+"""The still check: one frame sent to a face service, only when it is set up."""
 
 from datetime import date
 
 import httpx
 import pytest
 
-from deepfake_detection.webapp import outside
+from deepfake_detection.webapp import stillcheck
 
 
 @pytest.fixture
 def keys(monkeypatch):
     monkeypatch.setenv("STILL_CHECK_USER", "user")
     monkeypatch.setenv("STILL_CHECK_SECRET", "secret")
+    monkeypatch.setenv("STILL_CHECK_URL", "https://still-check.example/check")
+    monkeypatch.setenv("STILL_CHECK_MODELS", "a,b")
 
 
 def _image(tmp_path):
@@ -27,42 +29,44 @@ def _reply(payload, status=200):
 def test_it_is_off_without_keys(monkeypatch, tmp_path):
     monkeypatch.delenv("STILL_CHECK_USER", raising=False)
     monkeypatch.delenv("STILL_CHECK_SECRET", raising=False)
-    assert not outside.enabled()
-    quota = outside.Quota(tmp_path / "usage.json")
+    assert not stillcheck.enabled()
+    quota = stillcheck.Quota(tmp_path / "usage.json")
     called = []
-    out = outside.ask(
+    out = stillcheck.ask(
         _image(tmp_path), post=lambda *a, **k: called.append(1), quota=quota
     )
     assert "error" in out and not called
 
 
 def test_a_score_comes_back_and_its_operations_are_counted(keys, tmp_path):
-    quota = outside.Quota(tmp_path / "usage.json", today=lambda: date(2026, 11, 19))
+    quota = stillcheck.Quota(tmp_path / "usage.json", today=lambda: date(2026, 11, 19))
     reply = {
         "status": "success",
         "request": {"operations": 5},
         "type": {"ai_generated": 0.73, "deepfake": 0.01},
     }
-    out = outside.ask(_image(tmp_path), post=_reply(reply), quota=quota)
+    out = stillcheck.ask(_image(tmp_path), post=_reply(reply), quota=quota)
     assert out == {"ai_generated": 0.73, "deepfake": 0.01}
     assert quota.used() == {"day": 5, "month": 5}
 
 
 def test_the_free_allowance_is_never_exceeded(keys, tmp_path):
-    quota = outside.Quota(tmp_path / "usage.json", today=lambda: date(2026, 11, 19))
-    quota.record(outside.DAY_LIMIT - 2)
+    quota = stillcheck.Quota(tmp_path / "usage.json", today=lambda: date(2026, 11, 19))
+    quota.record(stillcheck.DAY_LIMIT - 2)
     called = []
-    out = outside.ask(
+    out = stillcheck.ask(
         _image(tmp_path), post=lambda *a, **k: called.append(1), quota=quota
     )
     assert "allowance" in out["error"] and not called
-    tomorrow = outside.Quota(tmp_path / "usage.json", today=lambda: date(2026, 11, 20))
-    assert tomorrow.room(outside.COST)  # a new day, same month
+    tomorrow = stillcheck.Quota(
+        tmp_path / "usage.json", today=lambda: date(2026, 11, 20)
+    )
+    assert tomorrow.room(stillcheck.COST)  # a new day, same month
 
 
 def test_a_failed_call_says_so_and_costs_nothing(keys, tmp_path):
-    quota = outside.Quota(tmp_path / "usage.json", today=lambda: date(2026, 11, 19))
-    out = outside.ask(
+    quota = stillcheck.Quota(tmp_path / "usage.json", today=lambda: date(2026, 11, 19))
+    out = stillcheck.ask(
         _image(tmp_path),
         post=_reply({"status": "failure", "error": {"message": "bad key"}}),
         quota=quota,
@@ -73,12 +77,12 @@ def test_a_failed_call_says_so_and_costs_nothing(keys, tmp_path):
     def down(*args, **kwargs):
         raise httpx.ConnectError("no route")
 
-    assert "error" in outside.ask(_image(tmp_path), post=down, quota=quota)
+    assert "error" in stillcheck.ask(_image(tmp_path), post=down, quota=quota)
 
 
 def test_the_same_file_is_never_paid_for_twice(keys, tmp_path):
-    quota = outside.Quota(tmp_path / "usage.json", today=lambda: date(2026, 11, 19))
-    cache = outside.Cache(tmp_path / "cache.json")
+    quota = stillcheck.Quota(tmp_path / "usage.json", today=lambda: date(2026, 11, 19))
+    cache = stillcheck.Cache(tmp_path / "cache.json")
     upload = tmp_path / "clip.mp4"
     upload.write_bytes(b"same bytes")
     calls = []
@@ -95,13 +99,13 @@ def test_the_same_file_is_never_paid_for_twice(keys, tmp_path):
         )
 
     still = _image(tmp_path)
-    first = outside.ask(
-        still, post=post, quota=quota, cache=cache, key=outside.fingerprint(upload)
+    first = stillcheck.ask(
+        still, post=post, quota=quota, cache=cache, key=stillcheck.fingerprint(upload)
     )
-    again = outside.ask(
-        still, post=post, quota=quota, cache=cache, key=outside.fingerprint(upload)
+    again = stillcheck.ask(
+        still, post=post, quota=quota, cache=cache, key=stillcheck.fingerprint(upload)
     )
     assert first == again == {"ai_generated": 0.9, "deepfake": 0.1}
     assert len(calls) == 1 and quota.used()["day"] == 10
-    reloaded = outside.Cache(tmp_path / "cache.json")  # survives a restart
-    assert reloaded.get(outside.fingerprint(upload)) == first
+    reloaded = stillcheck.Cache(tmp_path / "cache.json")  # survives a restart
+    assert reloaded.get(stillcheck.fingerprint(upload)) == first

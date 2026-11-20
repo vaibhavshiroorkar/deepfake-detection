@@ -13,8 +13,8 @@ def _study_models(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def _no_outside_service(monkeypatch):
-    """Tests never call the outside face check; a test that wants it sets the keys itself."""
+def _no_still_check(monkeypatch):
+    """Tests never call the still check; a test that wants it sets the keys itself."""
     monkeypatch.delenv("STILL_CHECK_USER", raising=False)
     monkeypatch.delenv("STILL_CHECK_SECRET", raising=False)
 

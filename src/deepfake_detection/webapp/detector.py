@@ -21,7 +21,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from deepfake_detection.webapp import describe as describe_module
-from deepfake_detection.webapp import outside, provenance
+from deepfake_detection.webapp import provenance, stillcheck
 from deepfake_detection.webapp.calibration import (
     SHOWN_FLAG,
     SHOWN_LOWER,
@@ -52,9 +52,9 @@ class Detector:
         describe: Callable[[Path, float, dict], str | None] | None = None,
     ) -> None:
         self._make_scorer, self._scorer = make_scorer, None
-        # (upload, time) -> the outside face check on one still, or {"error": ...} to fall back to ours
-        self._face_opinion = face_opinion or outside.face_opinion
-        self._pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="outside")
+        # (upload, time) -> the still check on one still, or {"error": ...} to fall back to ours
+        self._face_opinion = face_opinion or stillcheck.face_opinion
+        self._pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="still-check")
         # (upload, time, explain) -> a plain description of the still and the heatmap, or None
         self._describe = describe or describe_module.describe
         self._read_labels = read_labels or provenance.read
@@ -143,7 +143,7 @@ class Detector:
                 workdir.mkdir(parents=True, exist_ok=True)
                 self._set(job, stage="file check")
                 labels = self._read_labels(upload)
-                # The outside face check runs while our models score. A labelled file is already decided,
+                # The still check runs while our models score. A labelled file is already decided,
                 # and a voice recording has no face, so neither is sent.
                 if mode != "voice" and not labels:
                     asking = self._pool.submit(self._face_opinion, upload, FIRST_STILL)
@@ -211,18 +211,17 @@ class Detector:
         """One outcome from the file check and the reports of every part; the part that decided supplies the details.
 
         An AI label in the file is decisive on its own: the answer is "signs", with "file" named first. When the
-        outside face check answered (`opinion`), it replaces the face model's scores; otherwise ours stand.
+        the still check answered (`opinion`), it replaces the face model's scores; otherwise ours stand.
         """
         calibration = self._calibrations.get(mode, self.calibration)
-        outside_face = (
+        still_face = (
             None if not opinion or "error" in opinion else max(opinion.values())
         )
-        # With the outside face check's answer, it replaces our face model, and the generated-video check stops
-        # deciding: the outside check already looks for AI-made faces, so ours only added its false alarms. Ours
-        # decide again when the outside check cannot answer.
+        # With the still check's answer, it replaces our face model, and the generated-video check stops
+        # deciding: the still check already looks for AI-made faces, so ours only added its false alarms. Ours
+        # decide again when the still check cannot answer.
         parts = [
-            r.scores()
-            | ({"face": None, "gen": None} if outside_face is not None else {})
+            r.scores() | ({"face": None, "gen": None} if still_face is not None else {})
             for r in reports
         ]
         decision = calibration.decide_parts(parts)
@@ -267,14 +266,14 @@ class Detector:
             "file_check": labels,
             "timeline": timeline,
             "lines": {"flag": SHOWN_FLAG, "lower": SHOWN_LOWER},
-            # The main meter: the evidence sum of all checks on the page's scale (the outside face check's
+            # The main meter: the evidence sum of all checks on the page's scale (The still check's
             # reading joins it below when that is higher).
             "overall": shown(decision.combined, read_flag, read_lower),
             "raw_lines": {"flag": flag, "lower": lower},
             "explain": _face_explanation(reports),
         }
-        if outside_face is not None:
-            _apply_outside_face(outcome, outside_face)
+        if still_face is not None:
+            _apply_still_face(outcome, still_face)
         if labels:
             outcome["kind"], outcome["raised"] = (
                 "signs",
@@ -294,57 +293,55 @@ class Detector:
 
 
 def _settled(asking) -> dict:
-    """The outside face check's answer, or an error that makes our face model answer instead."""
+    """The still check's answer, or an error that makes our face model answer instead."""
     try:
         return asking.result()
     except Exception:  # noqa: BLE001 - any failure there falls back to our own face model
-        log.exception("the outside face check failed")
+        log.exception("The still check failed")
         return {"error": "failed"}
 
 
 FIRST_STILL = 1.5  # seconds: the middle of the first part, where the face usually is
 
 
-# The outside face check gives probabilities, not percentiles among our real clips; these lines set where
+# The still check gives probabilities, not percentiles among our real clips; these lines set where
 # its score flags (0.90) and where it means "can't tell" (0.50) on the page's 0..1 scale.
-OUTSIDE_FLAG, OUTSIDE_LOWER = 0.90, 0.50
+STILL_FLAG, STILL_LOWER = 0.90, 0.50
 
 
-def _outside_display(p: float) -> float:
-    """The outside probability on the page's scale, whose lines sit at 0.4 and 0.6."""
-    if p < OUTSIDE_LOWER:
-        return round(p / OUTSIDE_LOWER * SHOWN_LOWER, 3)
-    if p < OUTSIDE_FLAG:
+def _still_display(p: float) -> float:
+    """The still check's probability on the page's scale, whose lines sit at 0.4 and 0.6."""
+    if p < STILL_LOWER:
+        return round(p / STILL_LOWER * SHOWN_LOWER, 3)
+    if p < STILL_FLAG:
         return round(
             SHOWN_LOWER
-            + (p - OUTSIDE_LOWER)
-            / (OUTSIDE_FLAG - OUTSIDE_LOWER)
+            + (p - STILL_LOWER)
+            / (STILL_FLAG - STILL_LOWER)
             * (SHOWN_FLAG - SHOWN_LOWER),
             3,
         )
-    return round(
-        SHOWN_FLAG + (p - OUTSIDE_FLAG) / (1 - OUTSIDE_FLAG) * (1 - SHOWN_FLAG), 3
-    )
+    return round(SHOWN_FLAG + (p - STILL_FLAG) / (1 - STILL_FLAG) * (1 - SHOWN_FLAG), 3)
 
 
-def _apply_outside_face(outcome: dict, p: float) -> None:
+def _apply_still_face(outcome: dict, p: float) -> None:
     outcome["checks"]["face"] = {
         "percentile": None,
-        "score": _outside_display(p),
+        "score": _still_display(p),
         "reason": None,
     }
-    outcome["overall"] = max(outcome.get("overall") or 0.0, _outside_display(p))
-    # The still was taken in the part holding FIRST_STILL; that part shows the outside reading too.
+    outcome["overall"] = max(outcome.get("overall") or 0.0, _still_display(p))
+    # The still was taken in the part holding FIRST_STILL; that part shows the still check's reading too.
     for part in outcome.get("timeline", []):
         if part["start"] <= FIRST_STILL < part["end"]:
-            part["reading"] = max(part["reading"] or 0.0, _outside_display(p))
+            part["reading"] = max(part["reading"] or 0.0, _still_display(p))
             break
-    if p >= OUTSIDE_FLAG:
+    if p >= STILL_FLAG:
         outcome["raised"] = [*outcome["raised"], "face"]
         outcome["kind"] = "signs"
     elif outcome["kind"] == "cant_check":
-        outcome["kind"] = "cant_tell" if p >= OUTSIDE_LOWER else "no_signs"
-    elif p >= OUTSIDE_LOWER and outcome["kind"] == "no_signs":
+        outcome["kind"] = "cant_tell" if p >= STILL_LOWER else "no_signs"
+    elif p >= STILL_LOWER and outcome["kind"] == "no_signs":
         outcome["kind"] = "cant_tell"
 
 
@@ -361,7 +358,7 @@ def _generator(reports, labels: list[str], outcome: dict, opinion: dict | None) 
             "sure": named is not None,
         }
     if opinion and "error" not in opinion:
-        looks = opinion.get("ai_generated", 0.0) >= OUTSIDE_LOWER
+        looks = opinion.get("ai_generated", 0.0) >= STILL_LOWER
     else:
         gen = outcome["checks"].get("gen") or {}
         looks = "gen" in outcome["raised"] or (gen.get("score") or 0.0) >= SHOWN_LOWER
@@ -386,7 +383,7 @@ def _generator(reports, labels: list[str], outcome: dict, opinion: dict | None) 
 
 
 def _still_time(reports) -> float:
-    """Where to take the one still for the outside face check: the face frame our face model cited first,
+    """Where to take the one still for the still check: the face frame our face model cited first,
     else the middle of the first part."""
     frames = (_face_explanation(reports) or {}).get("frames") or []
     if frames:

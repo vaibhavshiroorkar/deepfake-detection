@@ -1,4 +1,4 @@
-"""The face check's first source: an outside detection service on one still of the upload.
+"""The still check, the face check's first source, on one still of the upload.
 
 When the service is set up and today's allowance has room, the face check reads its scores for one still
 (face swap and AI-made image); otherwise the site's own face model answers. Nothing else of the upload is
@@ -17,29 +17,31 @@ from pathlib import Path
 
 import httpx
 
-API = "https://still-check.example/1.0/check.json"
-MODELS = "genai,deepfake"
 COST = 10  # operations per still for the two models (measured 11-19)
 DAY_LIMIT, MONTH_LIMIT = 480, 1900  # plan: 500 a day, 2,000 a month
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
-USAGE = PROJECT_ROOT / "runs" / "outside" / "usage.json"
-CACHE = PROJECT_ROOT / "runs" / "outside" / "cache.json"
+USAGE = PROJECT_ROOT / "runs" / "still-check" / "usage.json"
+CACHE = PROJECT_ROOT / "runs" / "still-check" / "cache.json"
 CACHE_SIZE = 5000  # answers kept, newest first; one entry is about 80 bytes
 TIMEOUT = 12  # seconds; past this our face model answers instead
 MAX_SIDE = 1024  # pixels; a smaller still uploads faster and costs the same
 log = logging.getLogger(__name__)
 
 
-def credentials() -> tuple[str, str] | None:
-    user, secret = (
-        os.environ.get(k, "").strip()
-        for k in ("STILL_CHECK_USER", "STILL_CHECK_SECRET")
-    )
-    return (user, secret) if user and secret else None
+def settings() -> dict[str, str] | None:
+    """The service's address, models and keys, from the environment (.env); None when any is missing."""
+    names = {
+        "url": "STILL_CHECK_URL",
+        "models": "STILL_CHECK_MODELS",
+        "user": "STILL_CHECK_USER",
+        "secret": "STILL_CHECK_SECRET",
+    }
+    found = {k: os.environ.get(v, "").strip() for k, v in names.items()}
+    return found if all(found.values()) else None
 
 
 def enabled() -> bool:
-    return credentials() is not None
+    return settings() is not None
 
 
 class Quota:
@@ -147,7 +149,7 @@ def ask(
     quota, cache = quota or Quota(), cache or Cache()
     if key is not None and (known := cache.get(key)) is not None:
         return known
-    keys = credentials()
+    keys = settings()
     if keys is None:
         return {"error": "not set up"}
     if not quota.room(COST):
@@ -155,17 +157,21 @@ def ask(
     try:
         with open(image, "rb") as f:
             response = post(
-                API,
-                data={"models": MODELS, "api_user": keys[0], "api_secret": keys[1]},
+                keys["url"],
+                data={
+                    "models": keys["models"],
+                    "api_user": keys["user"],
+                    "api_secret": keys["secret"],
+                },
                 files={"media": ("frame.jpg", f, "image/jpeg")},
                 timeout=TIMEOUT,
             )
         reply = response.json()
     except (httpx.HTTPError, ValueError) as error:
-        log.warning("outside face check failed: %s", error)
+        log.warning("The still check failed: %s", error)
         return {"error": "unreachable"}
     if reply.get("status") != "success":
-        log.warning("outside face check refused: %s", reply.get("error"))
+        log.warning("The still check refused: %s", reply.get("error"))
         return {"error": "refused"}
     quota.record(int(reply.get("request", {}).get("operations", COST)))
     kinds = reply.get("type", {})
@@ -218,7 +224,7 @@ def face_opinion(upload: Path, time: float) -> dict:
             return known  # no still, no call
         return ask(frame(upload, time, target), key=key)
     except (RuntimeError, subprocess.TimeoutExpired) as error:
-        log.warning("outside face check skipped: %s", error)
+        log.warning("The still check skipped: %s", error)
         return {"error": "no still"}
     finally:
         target.unlink(missing_ok=True)

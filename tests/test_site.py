@@ -151,6 +151,7 @@ def _clip(tmp_path):
     subprocess.run(
         [
             "ffmpeg",
+            "-y",  # a test may ask for the clip twice in one folder; GitHub's ffmpeg refuses to overwrite
             "-v",
             "error",
             "-f",

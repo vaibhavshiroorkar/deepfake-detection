@@ -14,7 +14,7 @@ import os
 import threading
 from pathlib import Path
 
-from deepfake_detection.webapp import outside
+from deepfake_detection.webapp import stillcheck
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 MODEL_DIR = PROJECT_ROOT / "models" / "pretrained" / "qwen3-vl-2b-instruct"
@@ -134,7 +134,7 @@ def describe(upload: Path, time: float, explain: dict) -> str | None:
         return None
     target = upload.with_name(upload.stem + "-describe.jpg")
     try:
-        with Image.open(outside.frame(upload, time, target)) as still:
+        with Image.open(stillcheck.frame(upload, time, target)) as still:
             frames = explain.get("frames") or []
             heat = _image(frames[0]["image"]) if frames else None
             return _describer(still.convert("RGB"), heat)

@@ -299,7 +299,7 @@ def test_cant_check_names_each_reason_once(tmp_path) -> None:
     assert status["outcome"]["reason"].count("not checked") == 1
 
 
-def test_the_outside_face_score_replaces_ours_when_it_answers(tmp_path) -> None:
+def test_the_still_check_score_replaces_ours_when_it_answers(tmp_path) -> None:
     asked = []
 
     def opinion(upload, time):
@@ -328,7 +328,7 @@ def test_the_outside_face_score_replaces_ours_when_it_answers(tmp_path) -> None:
     assert not upload.exists()
 
 
-def test_our_face_model_answers_when_the_outside_check_cannot(tmp_path) -> None:
+def test_our_face_model_answers_when_the_still_check_cannot(tmp_path) -> None:
     high = {"face": (0.999,) * 3, "voice": (0.5,) * 3, "sync": None}
     detector = Detector(
         lambda: FakeScorer(high),
@@ -398,7 +398,7 @@ def test_the_generator_is_named_only_when_the_video_looks_generated(tmp_path) ->
     assert outcome["generator"] == {"suspected": False}
 
 
-def test_the_generated_check_decides_only_when_the_outside_face_check_cannot(
+def test_the_generated_check_decides_only_when_the_still_check_cannot(
     tmp_path,
 ) -> None:
     guess = {"name": "veo3.1", "share": 0.7, "sure": True, "shares": SHARES}
@@ -414,7 +414,7 @@ def test_the_generated_check_decides_only_when_the_outside_face_check_cannot(
     assert "gen" not in outcome["raised"] and outcome["kind"] != "signs"
     assert outcome["generator"] == {
         "suspected": False
-    }  # the outside check saw no AI-made face
+    }  # The still check saw no AI-made face
     fallback = Detector(
         lambda: _GenScorer(0.999, guess),
         _with_gen(),
@@ -427,7 +427,9 @@ def test_the_generated_check_decides_only_when_the_outside_face_check_cannot(
     assert outcome["raised"] == ["gen"] and outcome["kind"] == "signs"
 
 
-def test_an_ai_made_face_seen_outside_brings_the_generator_shares(tmp_path) -> None:
+def test_an_ai_made_face_seen_by_the_still_check_brings_the_generator_shares(
+    tmp_path,
+) -> None:
     guess = {"name": "veo3.1", "share": 0.4, "sure": False, "shares": SHARES}
     detector = Detector(
         lambda: _GenScorer(0.01, guess),

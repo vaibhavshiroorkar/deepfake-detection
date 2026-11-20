@@ -227,7 +227,7 @@ footer.footer { border-top: 1px solid var(--line); padding: 26px 0 44px; color: 
 .btn-live.primary { background: var(--text); color: var(--on-text); border-color: var(--text); }
 .btn-live:disabled { opacity: .5; cursor: default; }
 .live { margin-top: 14px; display: grid; gap: 10px; justify-items: center; text-align: center; }
-.live video { width: 100%; max-width: 420px; border-radius: 12px; background: #000; }
+.live video { width: 100%; max-width: 420px; border-radius: 12px; background: #000; transform: scaleX(-1); }  /* a mirror, as people expect; recordings stay unflipped */
 .live-actions { display: flex; gap: 8px; }
 .live[hidden], .live video[hidden] { display: none; }   /* display:grid above would otherwise override hidden */
 .scale { margin-top: 8px; color: var(--muted); }

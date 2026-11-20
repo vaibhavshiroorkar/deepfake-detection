@@ -152,7 +152,7 @@ def live_rates() -> dict:
 # measured catch rates (results/web-calibration-v2.json, raised_by) and the 11-19 model test.
 CHECK_ABOUT = {
     "face": {
-        "what": "Checks one still of the face for a swapped or AI-made face; when that check is unavailable, our face model reads 16 face crops instead.",
+        "what": "Checks the face for signs of a swap or an AI-made face.",
         "high": "The face looks swapped or AI-made.",
         "misses": "Fakes where the face is real and only the voice or the words were changed.",
     },
