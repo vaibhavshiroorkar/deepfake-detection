@@ -87,7 +87,7 @@
   function overallMeter(score, lines) {
     const box = el("div", "overall" + (score >= lines.flag ? " raised" : score >= lines.lower ? " unsure" : ""));
     const head = el("div", "overall-head");
-    head.append(el("span", "overall-name", "Overall"), tip("The highest of the checks. Below " + fmt(lines.lower) + " looks real, " + fmt(lines.lower) + " to "
+    head.append(el("span", "overall-name", "Overall"), tip("A check at " + fmt(lines.flag) + " or more decides alone. Otherwise the weighted average of the checks (lip sync counts half). Below " + fmt(lines.lower) + " looks real, " + fmt(lines.lower) + " to "
       + fmt(lines.flag) + " can't tell, from " + fmt(lines.flag) + " (the mark) flagged.", "How the overall score works"), el("span", "overall-val mono", fmt(score)));
     const track = el("div", "overall-track");
     const fill = el("i");

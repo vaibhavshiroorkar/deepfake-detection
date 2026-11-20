@@ -576,9 +576,14 @@ def test_the_overall_meter_agrees_with_the_verdict(tmp_path) -> None:
     outcome = _finished(detector, detector.submit(_upload(tmp_path, "a.mp4")))[
         "outcome"
     ]
-    # Two checks at about 0.5 used to add up to a flag; since 11-20 neither reaches the line, so no flag.
-    assert outcome["kind"] == "cant_tell" and outcome["raised"] == []
-    assert 0.4 <= outcome["overall"] < 0.6
+    # Two checks at about 0.5 used to add up to a flag; since 11-20 neither reaches the line, so no flag,
+    # and the verdict follows the overall's band.
+    assert (
+        outcome["kind"] != "signs"
+        and outcome["raised"] == []
+        and outcome["overall"] < 0.6
+    )
+    assert outcome["kind"] == ("cant_tell" if outcome["overall"] >= 0.4 else "no_signs")
     calm = Detector(
         lambda: _Scores(0.0, 0.0, 0.0), _fused_calibration(), workroot=tmp_path / "b"
     )
@@ -603,11 +608,11 @@ def test_a_single_check_is_judged_by_its_own_line_not_the_evidence_sum(
     assert outcome["overall"] == outcome["checks"]["voice"]["score"] < 0.6
 
 
-def test_the_overall_is_the_highest_check_and_only_a_check_at_the_line_flags(
+def test_only_a_check_at_the_line_flags_and_the_overall_never_exceeds_it(
     tmp_path,
 ) -> None:
     """Found 11-20: three checks near 0.38, all on the real side, summed to an overall 0.64 and "signs".
-    Vaibhav's rule (11-20): suspicious only when one check reaches 0.6; the overall is the highest check."""
+    Vaibhav's rule (11-20): suspicious only when one check reaches 0.6, and the overall never exceeds the highest check."""
     for name, z, kind in (
         ("a.mp4", 1.2, "no_signs"),
         ("b.mp4", 1.75, "cant_tell"),
@@ -622,11 +627,36 @@ def test_the_overall_is_the_highest_check_and_only_a_check_at_the_line_flags(
             "outcome"
         ]
         top = max(outcome["checks"][k]["score"] for k in ("face", "voice", "sync"))
-        assert outcome["overall"] == top and outcome["kind"] == kind, (
-            z,
-            outcome["kind"],
-            top,
+        assert outcome["kind"] == kind, (z, outcome["kind"], top)
+        assert outcome["overall"] <= top  # never above the highest check
+        if kind == "signs":
+            assert outcome["overall"] == top
+
+
+def test_below_the_line_the_overall_is_a_weighted_average(tmp_path) -> None:
+    """Vaibhav, 11-20: face 0, voice 0 and lip sync about 0.5 should read real, not "can't tell". Below the
+    flag line the overall is the weighted average (lip sync counts half); one check at the line still flags."""
+    from deepfake_detection.webapp.detector import WEIGHTS
+
+    cases = (
+        ("a.mp4", (-6.0, -6.0, 1.75), "no_signs"),
+        ("b.mp4", (-6.0, 2.2, -6.0), "signs"),
+    )
+    for name, logits, kind in cases:
+        detector = Detector(
+            lambda logits=logits: _Scores(*logits),
+            _fused_calibration(),
+            workroot=tmp_path / ("w" + name),
         )
-        for part in outcome["timeline"]:
-            own = [v for v in part["checks"].values() if v is not None]
-            assert part["reading"] == max(own)
+        outcome = _finished(detector, detector.submit(_upload(tmp_path, name)))[
+            "outcome"
+        ]
+        scores = {k: outcome["checks"][k]["score"] for k in ("face", "voice", "sync")}
+        assert outcome["kind"] == kind, (name, outcome["kind"], scores)
+        if kind == "signs":
+            assert outcome["overall"] == max(scores.values())
+        else:
+            mean = sum(WEIGHTS[k] * s for k, s in scores.items()) / sum(
+                WEIGHTS[k] for k in scores
+            )
+            assert abs(outcome["overall"] - mean) < 1e-3

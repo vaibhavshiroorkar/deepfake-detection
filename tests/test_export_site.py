@@ -41,7 +41,7 @@ def test_links_stay_inside_the_base_path_and_the_api_is_named(tmp_path):
     root_relative = re.findall(r'(?:href|src|action)="/(?!/|repo/)[^"]*"', html)
     assert root_relative == []
     assert 'href="/repo/check/"' in html
-    assert 'src="/repo/static/site/site.js?v=32"' in html
+    assert 'src="/repo/static/site/site.js?v=33"' in html
     contact = (out / "contact" / "index.html").read_text(encoding="utf-8")
     assert f'action="{API}/contact"' in contact
 

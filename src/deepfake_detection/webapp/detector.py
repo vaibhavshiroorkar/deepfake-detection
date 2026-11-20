@@ -325,17 +325,34 @@ def _still_display(p: float) -> float:
     return round(SHOWN_FLAG + (p - STILL_FLAG) / (1 - STILL_FLAG) * (1 - SHOWN_FLAG), 3)
 
 
-def _highest_check_decides(outcome: dict) -> None:
-    """The overall is the highest single check, and only a check at the flag line flags (Vaibhav, 11-20).
+# Below the flag line the overall is a weighted average of the checks (Vaibhav, 11-20). Lip sync counts half:
+# it is the weakest check in the study. The weights are chosen, not fitted.
+WEIGHTS = {"face": 1.0, "gen": 1.0, "voice": 1.0, "sync": 0.5}
 
-    The evidence sum let several real-looking checks add up: three near 0.38 reached 0.64 and "signs". It
-    caught a few more fakes on unseen data (32% against 29%, scripts/fusion_test.py), but an answer a viewer
-    cannot trace to one check was judged worse than those extra catches. Timeline parts follow the same rule.
+
+def _reading(scores: dict[str, float]) -> float:
+    """One number for a set of check scores: the highest when it reaches the flag line, else the weighted average."""
+    top = max(scores.values())
+    if top >= SHOWN_FLAG:
+        return top
+    weight = sum(WEIGHTS.get(k, 1.0) for k in scores)
+    return round(sum(WEIGHTS.get(k, 1.0) * s for k, s in scores.items()) / weight, 3)
+
+
+def _highest_check_decides(outcome: dict) -> None:
+    """One check at the flag line flags on its own, and the overall shows it; otherwise the overall is the
+    weighted average of the checks, so a single middling check among real-looking ones reads real.
+
+    The evidence sum let several real-looking checks add up (three near 0.38 reached 0.64 and "signs"); it
+    caught a few more fakes on unseen data (32% against 29% for the highest check, scripts/fusion_test.py),
+    but an answer a viewer cannot trace to one check was judged worse (Vaibhav, 11-20). A plain average would
+    hide one-sided fakes, such as a cloned voice on a real face, so the highest check still decides at the line.
+    Timeline parts follow the same rule.
     """
     for part in outcome.get("timeline", []):
-        own = [v for v in part["checks"].values() if v is not None]
+        own = {k: v for k, v in part["checks"].items() if v is not None}
         if own:
-            part["reading"] = max(own)
+            part["reading"] = _reading(own)
     scores = {
         k: c["score"]
         for k, c in outcome["checks"].items()
@@ -343,14 +360,14 @@ def _highest_check_decides(outcome: dict) -> None:
     }
     if not scores or outcome["kind"] == "cant_check":
         return
-    top = max(scores.values())
-    outcome["overall"] = top
+    overall = _reading(scores)
+    outcome["overall"] = overall
     outcome["raised"] = [k for k, s in scores.items() if s >= SHOWN_FLAG]
     outcome["kind"] = (
         "signs"
-        if top >= SHOWN_FLAG
+        if overall >= SHOWN_FLAG
         else "cant_tell"
-        if top >= SHOWN_LOWER
+        if overall >= SHOWN_LOWER
         else "no_signs"
     )
 
