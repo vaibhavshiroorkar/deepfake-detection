@@ -569,19 +569,16 @@ class _Scores:
         return [ScoreReport(self.checks, {"loudness_db": [], "windows": []})]
 
 
-def test_the_overall_meter_shows_the_evidence_sum_and_flags_with_the_verdict(
-    tmp_path,
-) -> None:
+def test_the_overall_meter_agrees_with_the_verdict(tmp_path) -> None:
     detector = Detector(
         lambda: _Scores(0.0, 1.75, 1.75), _fused_calibration(), workroot=tmp_path / "a"
     )
     outcome = _finished(detector, detector.submit(_upload(tmp_path, "a.mp4")))[
         "outcome"
     ]
-    assert (
-        outcome["kind"] == "signs" and outcome["raised"] == []
-    )  # several checks together
-    assert outcome["overall"] >= 0.6
+    # Two checks at about 0.5 used to add up to a flag; since 11-20 neither reaches the line, so no flag.
+    assert outcome["kind"] == "cant_tell" and outcome["raised"] == []
+    assert 0.4 <= outcome["overall"] < 0.6
     calm = Detector(
         lambda: _Scores(0.0, 0.0, 0.0), _fused_calibration(), workroot=tmp_path / "b"
     )
@@ -604,3 +601,32 @@ def test_a_single_check_is_judged_by_its_own_line_not_the_evidence_sum(
     )["outcome"]
     assert outcome["kind"] != "signs"
     assert outcome["overall"] == outcome["checks"]["voice"]["score"] < 0.6
+
+
+def test_the_overall_is_the_highest_check_and_only_a_check_at_the_line_flags(
+    tmp_path,
+) -> None:
+    """Found 11-20: three checks near 0.38, all on the real side, summed to an overall 0.64 and "signs".
+    Vaibhav's rule (11-20): suspicious only when one check reaches 0.6; the overall is the highest check."""
+    for name, z, kind in (
+        ("a.mp4", 1.2, "no_signs"),
+        ("b.mp4", 1.75, "cant_tell"),
+        ("c.mp4", 2.2, "signs"),
+    ):
+        detector = Detector(
+            lambda z=z: _Scores(z, z, z),
+            _fused_calibration(),
+            workroot=tmp_path / ("w" + name),
+        )
+        outcome = _finished(detector, detector.submit(_upload(tmp_path, name)))[
+            "outcome"
+        ]
+        top = max(outcome["checks"][k]["score"] for k in ("face", "voice", "sync"))
+        assert outcome["overall"] == top and outcome["kind"] == kind, (
+            z,
+            outcome["kind"],
+            top,
+        )
+        for part in outcome["timeline"]:
+            own = [v for v in part["checks"].values() if v is not None]
+            assert part["reading"] == max(own)

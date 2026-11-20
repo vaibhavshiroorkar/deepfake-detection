@@ -274,6 +274,7 @@ class Detector:
         }
         if still_face is not None:
             _apply_still_face(outcome, still_face)
+        _highest_check_decides(outcome)
         if labels:
             outcome["kind"], outcome["raised"] = (
                 "signs",
@@ -324,6 +325,36 @@ def _still_display(p: float) -> float:
     return round(SHOWN_FLAG + (p - STILL_FLAG) / (1 - STILL_FLAG) * (1 - SHOWN_FLAG), 3)
 
 
+def _highest_check_decides(outcome: dict) -> None:
+    """The overall is the highest single check, and only a check at the flag line flags (Vaibhav, 11-20).
+
+    The evidence sum let several real-looking checks add up: three near 0.38 reached 0.64 and "signs". It
+    caught a few more fakes on unseen data (32% against 29%, scripts/fusion_test.py), but an answer a viewer
+    cannot trace to one check was judged worse than those extra catches. Timeline parts follow the same rule.
+    """
+    for part in outcome.get("timeline", []):
+        own = [v for v in part["checks"].values() if v is not None]
+        if own:
+            part["reading"] = max(own)
+    scores = {
+        k: c["score"]
+        for k, c in outcome["checks"].items()
+        if c.get("score") is not None
+    }
+    if not scores or outcome["kind"] == "cant_check":
+        return
+    top = max(scores.values())
+    outcome["overall"] = top
+    outcome["raised"] = [k for k, s in scores.items() if s >= SHOWN_FLAG]
+    outcome["kind"] = (
+        "signs"
+        if top >= SHOWN_FLAG
+        else "cant_tell"
+        if top >= SHOWN_LOWER
+        else "no_signs"
+    )
+
+
 def _apply_still_face(outcome: dict, p: float) -> None:
     outcome["checks"]["face"] = {
         "percentile": None,
@@ -335,6 +366,7 @@ def _apply_still_face(outcome: dict, p: float) -> None:
     for part in outcome.get("timeline", []):
         if part["start"] <= FIRST_STILL < part["end"]:
             part["reading"] = max(part["reading"] or 0.0, _still_display(p))
+            part["checks"] = {**part["checks"], "face": _still_display(p)}
             break
     if p >= STILL_FLAG:
         outcome["raised"] = [*outcome["raised"], "face"]

@@ -87,10 +87,8 @@
   function overallMeter(score, lines) {
     const box = el("div", "overall" + (score >= lines.flag ? " raised" : score >= lines.lower ? " unsure" : ""));
     const head = el("div", "overall-head");
-    head.append(el("span", "overall-name", "Overall"), tip("All the checks' evidence added up: several mildly unusual "
-      + "checks count for more than one. Below " + fmt(lines.lower) + " looks real, " + fmt(lines.lower) + " to "
-      + fmt(lines.flag) + " can't tell, from " + fmt(lines.flag) + " (the mark) flagged; about 5 in 100 real "
-      + "videos reach the mark.", "How the overall score works"), el("span", "overall-val mono", fmt(score)));
+    head.append(el("span", "overall-name", "Overall"), tip("The highest of the checks. Below " + fmt(lines.lower) + " looks real, " + fmt(lines.lower) + " to "
+      + fmt(lines.flag) + " can't tell, from " + fmt(lines.flag) + " (the mark) flagged.", "How the overall score works"), el("span", "overall-val mono", fmt(score)));
     const track = el("div", "overall-track");
     const fill = el("i");
     fill.style.width = Math.min(Math.max(score, 0), 1) * 100 + "%";
