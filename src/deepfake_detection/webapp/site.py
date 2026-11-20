@@ -157,27 +157,27 @@ CHECK_ABOUT = {
         "misses": "Fakes where the face is real and only the voice or the words were changed.",
     },
     "gen": {
-        "what": "Looks at the face for signs that the whole video was made by an AI video generator, such as Veo, Sora or Kling.",
+        "what": "Looks for faces made by AI video tools such as Veo, Sora or Kling.",
         "high": "The face looks more like generated video than almost all real faces we tested.",
         "misses": "Many videos from generators it has not learned, and face swaps (the face check covers those).",
     },
     "voice": {
-        "what": "Listens to the speech for signs of a cloned or generated voice.",
+        "what": "Listens for a cloned or generated voice.",
         "high": "The voice sounds more unusual than almost all real voices we tested.",
         "misses": "Videos where only the face is fake and the voice is real.",
     },
     "sync": {
-        "what": "Checks whether the lips move with the words. It learned from real clips only.",
+        "what": "Checks whether the lips move with the words.",
         "high": "Lips and words fit together worse than in almost all real clips.",
         "misses": "Most fakes from sources it has not seen; it is the weakest of the three.",
     },
     "generator": {
-        "what": "When the video looks AI-made, how much it resembles each of six AI video generators (Kling 2.5, PixVerse V5, Seedance 1.0, Sora 2, Veo 3.1, Wan 2.5); the shares add up to 100%. A tool named in the file's label is shown instead.",
+        "what": "If the video looks AI-made, which of six AI video tools it most resembles.",
         "high": "the top box is the closest match; in our tests a match of 60% or more was the right generator about 84 times in 100.",
         "misses": "Generators it has not learned: a video from another tool is still split among these six.",
     },
     "file": {
-        "what": "Reads labels that AI tools write into a file on purpose, such as a C2PA content credential.",
+        "what": "Looks for AI labels written into the file, such as C2PA.",
         "high": "the file says it was made by AI, which is strong evidence on its own.",
         "misses": "Most fakes: uploading or re-saving a file removes its labels, so no label proves nothing.",
     },

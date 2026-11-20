@@ -1,0 +1,54 @@
+{
+ "flag_line": 0.9872623440260366,
+ "lower_line": 0.9456093261868151,
+ "sets": {
+  "fleurs-real": {
+   "original": {
+    "scored": 100,
+    "flagged": 0.01,
+    "cant_tell_or_flagged": 0.02
+   },
+   "resent": {
+    "scored": 100,
+    "flagged": 0.01,
+    "cant_tell_or_flagged": 0.02
+   }
+  },
+  "librispeech-real": {
+   "original": {
+    "scored": 53,
+    "flagged": 0.03773584905660377,
+    "cant_tell_or_flagged": 0.07547169811320754
+   },
+   "resent": {
+    "scored": 53,
+    "flagged": 0.05660377358490566,
+    "cant_tell_or_flagged": 0.11320754716981132
+   }
+  },
+  "own-real": {
+   "original": {
+    "scored": 60,
+    "flagged": 0.0,
+    "cant_tell_or_flagged": 0.016666666666666666
+   },
+   "resent": {
+    "scored": 60,
+    "flagged": 0.0,
+    "cant_tell_or_flagged": 0.05
+   }
+  },
+  "veo3-own": {
+   "original": {
+    "scored": 60,
+    "flagged": 0.45,
+    "cant_tell_or_flagged": 0.9333333333333333
+   },
+   "resent": {
+    "scored": 60,
+    "flagged": 0.5166666666666667,
+    "cant_tell_or_flagged": 0.95
+   }
+  }
+ }
+}

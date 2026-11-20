@@ -49,13 +49,8 @@
   function aboutBody(about, found) {
     const body = el("div", "cbody small");
     if (!about) return body;
+    // One line: what the check does (asked by Vaibhav 11-20). Its limits and rates are on the Research page.
     body.append(el("p", "", about.what));
-    body.append(el("p", "", (found ? "If found: " : "High score: ") + about.high));
-    body.append(el("p", "", "Misses: " + about.misses));
-    if (about.caught && about.caught.length) {
-      body.append(el("p", "muted", "Fakes it caught on our test sets: "
-        + about.caught.map(([set, rate]) => set + " " + rate).join(", ") + "."));
-    }
     return body;
   }
 
@@ -169,7 +164,7 @@
     file.append(line);
     const body = aboutBody(about.file, true);
     for (const text of labels) body.prepend(el("p", "strong", "The file carries " + text + "."));
-    if (!labels.length) body.prepend(el("p", "", "Clean means no AI label was found. Most uploads lose their labels when re-saved, so a clean file can still be fake."));
+    if (!labels.length) body.prepend(el("p", "", "No AI label found. Re-saved files often lose them."));
     file.append(body);
     box.append(file);
     // The generator guess reads the face, so a voice recording has none.
