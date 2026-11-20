@@ -559,6 +559,7 @@ def present(outcome: dict) -> dict:
         "timeline": outcome.get("timeline", []),
         "explain": outcome.get("explain", {}),
         "lines": outcome.get("lines"),
+        "part": outcome.get("part"),
         "about": check_info(),
         "generator": outcome.get("generator"),
         "description": outcome.get("description"),

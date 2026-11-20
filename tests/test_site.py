@@ -669,3 +669,15 @@ def test_a_long_video_says_its_parts_were_spread_out():
         ]
     }
     assert "whole video" in site.where(whole)
+
+
+def test_present_names_the_part_that_decided():
+    """The check rows show the deciding part at rest, so the page needs its time range."""
+    outcome = {
+        "kind": "no_signs",
+        "raised": [],
+        "checks": {},
+        "part": {"start": 3.0, "end": 6.0},
+        "parts": 2,
+    }
+    assert site.present(outcome)["part"] == {"start": 3.0, "end": 6.0}
