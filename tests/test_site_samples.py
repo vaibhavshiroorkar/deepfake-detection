@@ -5,10 +5,10 @@ import shutil
 
 import pytest
 from fastapi.testclient import TestClient
+from test_site import _clip, _FakeScorer, _Registry
 
 from deepfake_detection.webapp import site
 from deepfake_detection.webapp.server import create_app
-from tests.test_site import _clip, _FakeScorer, _Registry
 
 ID = "a1b2c3d4e5f6"
 

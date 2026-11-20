@@ -20,7 +20,8 @@ step "Lint";          "$PY" -m ruff check src tests scripts
 step "Format";        "$PY" -m ruff format --check src tests scripts
 step "Lock";          uv lock --check
 step "Documentation"; "$PY" -m deepfake_detection.documentation
-step "Tests";         "$PY" -m pytest -q -p no:cacheprovider
+# -P keeps the working folder off the import path, as the `pytest` command on GitHub does.
+step "Tests";         "$PY" -P -m pytest -q -p no:cacheprovider
 step "Browser behavior"; node --test tests/test_webapp_behavior.js
 step "Tracked smoke"; "$PY" -m deepfake_detection.cli run --root . --config configs/local.yaml --config configs/smoke.yaml
 
