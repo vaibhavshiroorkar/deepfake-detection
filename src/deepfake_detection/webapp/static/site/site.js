@@ -20,6 +20,9 @@
     cant_check: { cls: "cant", text: "Can't check" },
   };
   const CHECKS = [["face", "Face"], ["voice", "Voice"], ["sync", "Lip sync"]];
+  // The checks each kind of input can run: a voice has no face, a picture has no sound; a video gets all.
+  const RUNS_ON = { voice: ["voice"], picture: ["face"] };
+  const runsOn = (data, key) => !RUNS_ON[data.input] || RUNS_ON[data.input].includes(key);
   const MAX_MB = 300;
   // The static frontend names the PC's API in a meta tag; served by the PC itself, the API is this origin.
   const API = (document.querySelector('meta[name="ddf-api"]') || {}).content || "";
@@ -131,7 +134,7 @@
         "How to read the scores"));
     }
     box.append(head);
-    for (const [key, label] of CHECKS) {
+    for (const [key, label] of CHECKS.filter(([k]) => runsOn(data, k))) {
       const c = checks[key];
       const score = c && c.score != null ? c.score : null;
       const row = el("details", "crow " + key + (c && c.raised ? " raised" : ""));
@@ -169,7 +172,8 @@
     if (!labels.length) body.prepend(el("p", "", "Clean means no AI label was found. Most uploads lose their labels when re-saved, so a clean file can still be fake."));
     file.append(body);
     box.append(file);
-    box.append(generatorRow(data.generator, about.generator));
+    // The generator guess reads the face, so a voice recording has none.
+    if (data.input !== "voice") box.append(generatorRow(data.generator, about.generator));
     return box;
   }
 
@@ -297,14 +301,16 @@
       card.classList.add(o.cls);
       const title = el("p", "outcome " + o.cls, o.text);
       if (data.how_sure) title.append(tip(data.how_sure, "How sure is this answer?"));
-      card.append(title);
+      const head = el("div", "verdict");
+      head.append(title);
+      if (data.overall != null && data.lines) head.append(overallMeter(data.overall, data.lines));
+      card.append(head);
       if (data.description) {
         const what = el("p", "describe");
         what.append(data.description, tip("Written by an AI model on our computer from one still and the heatmap. "
           + "It describes what is visible; the verdict comes from the checks below.", "Who wrote this"));
         card.append(what);
       }
-      if (data.overall != null && data.lines) card.append(overallMeter(data.overall, data.lines));
       const rows = checkRows(data);
       if (file && data.outcome !== "cant_check") card.append(preview(file, data, (checks) => showChecks(rows, data, checks)));
       const heat = explainView(data.explain, card, !!(data.checks && data.checks.face && data.checks.face.raised));
@@ -441,6 +447,9 @@
     delete media.dataset.url;
     media.replaceChildren();
     root.querySelector("[data-picked]").hidden = true;
+    root.querySelector("[data-start]").hidden = true;
+    media.classList.remove("scanning");
+    root.querySelector("[data-status]").classList.remove("working");
     root.querySelector("[data-status]").textContent = "";
     const card = root.querySelector("[data-result]");
     card.replaceChildren();
@@ -463,6 +472,15 @@
       render(card, { status: "rejected", reason: "The file is over " + MAX_MB + " MB." });
       return;
     }
+    const start = root.querySelector("[data-start]");
+    const media = root.querySelector("[data-picked-media]");
+    start.hidden = false;
+    status.textContent = "";
+    await new Promise((go) => { start.onclick = go; });
+    if (!current()) return;
+    start.hidden = true;
+    media.classList.add("scanning");
+    status.classList.add("working");
     status.textContent = sample ? "Sending the sample..." : "Uploading " + file.name + "...";
     const body = new FormData();
     body.append("file", file);
@@ -478,13 +496,17 @@
         data = await follow(status, data.job);
       }
       if (!current()) return;
+      media.classList.remove("scanning");
+      status.classList.remove("working");
       status.textContent = "";
       render(card, data, file);
-      if (sample && data.status === "done") card.querySelector(".outcome").after(truth(sample));
+      if (sample && data.status === "done") card.querySelector(".verdict").after(truth(sample));
       // The answer carries its own preview with the timeline; keep only the name and the buttons above it.
       if (card.querySelector(".preview")) root.querySelector("[data-picked-media]").hidden = true;
     } catch (error) {
       if (!current()) return;
+      media.classList.remove("scanning");
+      status.classList.remove("working");
       status.textContent = "";
       render(card, { status: "rejected", reason: API
         ? "The detector is offline right now: it runs on our own computer, which may be switched off. Try again later."
@@ -527,9 +549,9 @@
   /* dataset samples: pick a held-out test clip, see its preview, check its original ---------------- */
   function truth(sample) {
     const fake = sample.label === "fake";
-    const box = el("p", "truth " + (fake ? "fake" : "real"));
-    box.append(el("strong", "", "The true answer: " + (fake ? "Fake" : "Real")),
-      " (" + sample.kind + ", from the " + sample.dataset + " test set)");
+    const box = el("p", "truth");
+    box.append("True answer ", el("strong", "", fake ? "Fake" : "Real"),
+      el("span", "", sample.kind + ", " + sample.dataset + " test set"));
     return box;
   }
 

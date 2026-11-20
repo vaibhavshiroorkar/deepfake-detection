@@ -554,6 +554,8 @@ def present(outcome: dict) -> dict:
         "outcome": kind,
         "summary": summary,
         "where": where(outcome),
+        # Which kind of input was checked, so the page lists only the checks that can run on it.
+        "input": outcome.get("input", "video"),
         "file_check": labels,
         "checks": checks,
         "timeline": outcome.get("timeline", []),

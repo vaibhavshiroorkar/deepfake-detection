@@ -376,8 +376,9 @@ html:has(.slides) .nav { scroll-snap-align: start; }
 .chip { font-size: 12px; font-weight: 600; border-radius: 999px; padding: 2px 9px; }
 .chip.fake { color: var(--alert); background: var(--alert-soft); }
 .chip.real { color: var(--ok); background: rgba(74, 222, 128, 0.12); }
-.truth { margin: 4px 0 10px; padding: 10px 12px; border-radius: 8px; border-left: 3px solid var(--ok); background: rgba(74, 222, 128, 0.08); }
-.truth.fake { border-left-color: var(--alert); background: var(--alert-soft); }
+.truth { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 6px; margin: 0 0 14px; padding: 5px 12px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+.truth strong { color: var(--text); }
+.truth span::before { content: "("; } .truth span::after { content: ")"; }
 @media (max-width: 640px) {
   .samples-filters { grid-template-columns: 1fr 1fr; }
   .samples-filters input { grid-column: 1 / -1; }
@@ -389,3 +390,22 @@ html:has(.slides) .nav { scroll-snap-align: start; }
 .crow.unsure .ctrack i { background: var(--unsure); }
 .crow.flag .ctrack i { background: var(--alert); }
 .readout { margin: 8px 0 0; }
+
+/* Verdict and overall on one row; the overall loses its box so the card reads as one block. */
+.verdict { display: grid; grid-template-columns: auto minmax(180px, 1fr); gap: 8px 28px; align-items: end; margin-bottom: 18px; }
+.verdict .outcome { margin: 0; }
+.verdict .overall { margin: 0; padding: 0; border: 0; background: none; }
+.verdict .overall-name { font-size: 13px; font-weight: 600; color: var(--muted); }
+.verdict .overall-track { height: 8px; }
+@media (max-width: 640px) { .verdict { grid-template-columns: 1fr; } }
+/* Softer timeline, so the verdict carries the colour. */
+.timeline .seg { opacity: 0.55; }
+/* While a check runs: a line sweeps down the preview and the status dots pulse. */
+.picked-media { position: relative; overflow: hidden; border-radius: 14px; }
+.picked-media.scanning::after { content: ""; position: absolute; left: 0; right: 0; top: -30%; height: 30%; pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(126, 164, 255, 0.28) 70%, rgba(126, 164, 255, 0.9) 98%, transparent);
+  animation: scan 1.8s linear infinite; }
+.picked-media.scanning > * { filter: saturate(0.6) brightness(0.85); }
+@keyframes scan { to { top: 100%; } }
+.status.working::after { content: ""; display: inline-block; width: 8px; height: 8px; margin-left: 10px; border-radius: 50%; background: var(--accent); animation: pulse 1s ease-in-out infinite; vertical-align: middle; }
+@keyframes pulse { 50% { opacity: 0.2; transform: scale(0.6); } }
