@@ -47,7 +47,7 @@ switch ($Action) {
         if (Get-Running) { Write-Output "Already running."; Show-Share; break }
         $logs = Join-Path $Root "runs\demo-host"
         New-Item -ItemType Directory -Force $logs | Out-Null
-        # Keys the server reads (the outside service for the optional second opinion, Resend for the contact form)
+        # Keys the server reads (the outside face check and Resend for the contact form)
         # live in .env, which git ignores; they go to the server process only and are never printed.
         $envFile = Join-Path $Root ".env"
         if (Test-Path $envFile) {
