@@ -11,10 +11,9 @@ import base64
 import io
 import logging
 import os
+import subprocess
 import threading
 from pathlib import Path
-
-from deepfake_detection.webapp import stillcheck
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 MODEL_DIR = PROJECT_ROOT / "models" / "pretrained" / "qwen3-vl-2b-instruct"
@@ -31,6 +30,7 @@ WITH_HEAT = (
     "area', 'image 1' or 'image 2'."
 )
 STILL_ONLY = "This is a still from a video. In one sentence, say what it shows (person, setting)."
+MAX_SIDE = 1024  # pixels; the describer does not need more
 log = logging.getLogger(__name__)
 
 
@@ -134,9 +134,38 @@ def describe(upload: Path, time: float, explain: dict) -> str | None:
         return None
     target = upload.with_name(upload.stem + "-describe.jpg")
     try:
-        with Image.open(stillcheck.frame(upload, time, target)) as still:
+        with Image.open(frame(upload, time, target)) as still:
             frames = explain.get("frames") or []
             heat = _image(frames[0]["image"]) if frames else None
             return _describer(still.convert("RGB"), heat)
     finally:
         target.unlink(missing_ok=True)
+
+
+def frame(upload: Path, time: float, target: Path) -> Path:
+    """One still of the upload at `time` seconds, as JPEG."""
+    run = subprocess.run(
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-y",
+            "-ss",
+            f"{max(time, 0.0):.2f}",
+            "-i",
+            str(upload),
+            "-frames:v",
+            "1",
+            "-vf",
+            f"scale='min({MAX_SIDE},iw)':-2",
+            "-q:v",
+            "3",
+            str(target),
+        ],
+        capture_output=True,
+        timeout=60,
+        check=False,
+    )
+    if run.returncode != 0 or not target.is_file():
+        raise RuntimeError("could not take a still from the upload")
+    return target

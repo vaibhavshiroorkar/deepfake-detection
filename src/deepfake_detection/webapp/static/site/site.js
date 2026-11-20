@@ -391,7 +391,7 @@
     return box;
   }
 
-  const STAGES = { received: "Received. Waiting for the detector", "file check": "Reading the file for AI labels", "face check": "Checking the face", describing: "Describing what it shows",
+  const STAGES = { received: "Received. Waiting for the detector", "file check": "Reading the file for AI labels", describing: "Describing what it shows",
     cleaning: "Cleaning the clip",
     "finding the face": "Finding the face", scoring: "Scoring", done: "Done" };
   const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

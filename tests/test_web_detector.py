@@ -299,59 +299,6 @@ def test_cant_check_names_each_reason_once(tmp_path) -> None:
     assert status["outcome"]["reason"].count("not checked") == 1
 
 
-def test_the_still_check_score_replaces_ours_when_it_answers(tmp_path) -> None:
-    asked = []
-
-    def opinion(upload, time):
-        asked.append((upload.exists(), time))
-        return {"ai_generated": 0.97, "deepfake": 0.02}
-
-    low = {
-        "face": (0.01,) * 3,
-        "voice": (0.5,) * 3,
-        "sync": None,
-    }  # our face model says real
-    scorer = FakeScorer(low)
-    detector = Detector(
-        lambda: scorer, _calibration(), workroot=tmp_path / "work", face_opinion=opinion
-    )
-    upload = _upload(tmp_path)
-    status = _finished(detector, detector.submit(upload))
-    outcome = status["outcome"]
-    assert outcome["kind"] == "signs" and outcome["raised"] == ["face"]
-    assert outcome["checks"]["face"]["score"] >= 0.6
-    assert (
-        outcome["timeline"][0]["reading"] >= 0.6
-    )  # the part holding the still shows the flag too
-    # one still from the first part, asked while our models score, before the upload is deleted
-    assert asked == [(True, 1.5)]
-    assert not upload.exists()
-
-
-def test_our_face_model_answers_when_the_still_check_cannot(tmp_path) -> None:
-    high = {"face": (0.999,) * 3, "voice": (0.5,) * 3, "sync": None}
-    detector = Detector(
-        lambda: FakeScorer(high),
-        _calibration(),
-        workroot=tmp_path / "work",
-        face_opinion=lambda upload, time: {"error": "allowance used up"},
-    )
-    outcome = _finished(detector, detector.submit(_upload(tmp_path)))["outcome"]
-    assert outcome["kind"] == "signs" and outcome["raised"] == ["face"]
-
-
-def test_a_voice_recording_is_never_sent_out(tmp_path) -> None:
-    asked = []
-    detector = Detector(
-        lambda: FakeScorer(),
-        _calibration(),
-        workroot=tmp_path / "work",
-        face_opinion=lambda upload, time: asked.append(1) or {"error": "x"},
-    )
-    _finished(detector, detector.submit(_upload(tmp_path), mode="voice"))
-    assert asked == []
-
-
 class _GenScorer:
     """One part whose generated-video check scored `gen` and guessed `guess`."""
 
@@ -398,49 +345,17 @@ def test_the_generator_is_named_only_when_the_video_looks_generated(tmp_path) ->
     assert outcome["generator"] == {"suspected": False}
 
 
-def test_the_generated_check_decides_only_when_the_still_check_cannot(
-    tmp_path,
-) -> None:
+def test_the_generated_check_decides(tmp_path) -> None:
     guess = {"name": "veo3.1", "share": 0.7, "sure": True, "shares": SHARES}
-    answered = Detector(
-        lambda: _GenScorer(0.999, guess),
-        _with_gen(),
-        workroot=tmp_path / "a",
-        face_opinion=lambda upload, time: {"ai_generated": 0.2, "deepfake": 0.01},
-    )
-    outcome = _finished(answered, answered.submit(_upload(tmp_path, "a.mp4")))[
-        "outcome"
-    ]
-    assert "gen" not in outcome["raised"] and outcome["kind"] != "signs"
-    assert outcome["generator"] == {
-        "suspected": False
-    }  # The still check saw no AI-made face
     fallback = Detector(
         lambda: _GenScorer(0.999, guess),
         _with_gen(),
         workroot=tmp_path / "b",
-        face_opinion=lambda upload, time: {"error": "allowance used up"},
     )
     outcome = _finished(fallback, fallback.submit(_upload(tmp_path, "b.mp4")))[
         "outcome"
     ]
     assert outcome["raised"] == ["gen"] and outcome["kind"] == "signs"
-
-
-def test_an_ai_made_face_seen_by_the_still_check_brings_the_generator_shares(
-    tmp_path,
-) -> None:
-    guess = {"name": "veo3.1", "share": 0.4, "sure": False, "shares": SHARES}
-    detector = Detector(
-        lambda: _GenScorer(0.01, guess),
-        _with_gen(),
-        workroot=tmp_path / "w",
-        face_opinion=lambda upload, time: {"ai_generated": 0.95, "deepfake": 0.01},
-    )
-    outcome = _finished(detector, detector.submit(_upload(tmp_path)))["outcome"]
-    assert (
-        outcome["generator"]["suspected"] and outcome["generator"]["shares"] == SHARES
-    )
 
 
 def test_a_label_that_names_the_tool_wins(tmp_path) -> None:
@@ -515,21 +430,6 @@ def test_only_a_flagged_answer_names_a_suspicious_area(tmp_path) -> None:
         )
         _finished(detector, detector.submit(_upload(tmp_path, name)))
     assert seen[0].get("frames") and seen[1] == {}
-
-
-def test_a_labelled_file_is_not_sent_out(tmp_path) -> None:
-    asked = []
-    detector = Detector(
-        lambda: FakeScorer(),
-        _calibration(),
-        workroot=tmp_path / "w",
-        read_labels=lambda path: [
-            "a C2PA content credential declaring AI-generated media"
-        ],
-        face_opinion=lambda upload, time: asked.append(1) or {"error": "x"},
-    )
-    outcome = _finished(detector, detector.submit(_upload(tmp_path)))["outcome"]
-    assert outcome["kind"] == "signs" and asked == []
 
 
 def _fused_calibration() -> cal.Calibration:

@@ -13,13 +13,6 @@ def _study_models(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def _no_still_check(monkeypatch):
-    """Tests never call the still check; a test that wants it sets the keys itself."""
-    monkeypatch.delenv("STILL_CHECK_USER", raising=False)
-    monkeypatch.delenv("STILL_CHECK_SECRET", raising=False)
-
-
-@pytest.fixture(autouse=True)
 def _processor_device(monkeypatch):
     """Every test starts on the processor, and the setting is restored after it. Two tests let scripts set
     DDF_SCORER_DEVICE=cuda; it leaked, so later website jobs loaded the description model on the GPU and

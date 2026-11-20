@@ -17,11 +17,10 @@ import threading
 import time
 import uuid
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from deepfake_detection.webapp import describe as describe_module
-from deepfake_detection.webapp import provenance, stillcheck
+from deepfake_detection.webapp import provenance
 from deepfake_detection.webapp.calibration import (
     SHOWN_FLAG,
     SHOWN_LOWER,
@@ -48,13 +47,9 @@ class Detector:
         waiting: int = 3,
         read_labels: Callable[[Path], list[str]] | None = None,
         calibrations: dict[str, Calibration] | None = None,
-        face_opinion: Callable[[Path, float], dict] | None = None,
         describe: Callable[[Path, float, dict], str | None] | None = None,
     ) -> None:
         self._make_scorer, self._scorer = make_scorer, None
-        # (upload, time) -> the still check on one still, or {"error": ...} to fall back to ours
-        self._face_opinion = face_opinion or stillcheck.face_opinion
-        self._pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="still-check")
         # (upload, time, explain) -> a plain description of the still and the heatmap, or None
         self._describe = describe or describe_module.describe
         self._read_labels = read_labels or provenance.read
@@ -137,16 +132,11 @@ class Detector:
             job, upload, mode = self._queue.get()
             self._set(job, status="running", stage="cleaning")
             workdir = self._workroot / job
-            asking = None
             result: dict
             try:
                 workdir.mkdir(parents=True, exist_ok=True)
                 self._set(job, stage="file check")
                 labels = self._read_labels(upload)
-                # The still check runs while our models score. A labelled file is already decided,
-                # and a voice recording has no face, so neither is sent.
-                if mode != "voice" and not labels:
-                    asking = self._pool.submit(self._face_opinion, upload, FIRST_STILL)
                 self.warm()
                 report = self._scorer.score(
                     upload,
@@ -154,11 +144,7 @@ class Detector:
                     progress=lambda stage, job=job: self._set(job, stage=stage),
                     mode=mode,
                 )
-                opinion = None
-                if asking is not None:
-                    self._set(job, stage="face check")
-                    opinion = _settled(asking)
-                outcome = self._outcome(report, labels, mode, opinion) | {"input": mode}
+                outcome = self._outcome(report, labels, mode) | {"input": mode}
                 if mode != "voice":
                     self._set(job, stage="describing")
                     # The description names the mapped area as suspicious, so it only gets the map
@@ -166,7 +152,7 @@ class Detector:
                     flagged = outcome.get("kind") == "signs"
                     text = self._describe_safely(
                         upload,
-                        _still_time(report),
+                        _describe_time(report),
                         (outcome.get("explain") or {}) if flagged else {},
                     )
                     if text:
@@ -184,10 +170,6 @@ class Detector:
                     "reason": "The check failed on our side. Please try again later.",
                 }
             finally:
-                if asking is not None:
-                    _settled(
-                        asking
-                    )  # it reads the upload: let it finish before the file goes
                 upload.unlink(missing_ok=True)
                 shutil.rmtree(workdir, ignore_errors=True)
             self._set(job, **result, stage="done", finished=time.monotonic())
@@ -206,24 +188,13 @@ class Detector:
         reports,
         labels: list[str],
         mode: str = "video",
-        opinion: dict | None = None,
     ) -> dict:
         """One outcome from the file check and the reports of every part; the part that decided supplies the details.
 
-        An AI label in the file is decisive on its own: the answer is "signs", with "file" named first. When the
-        the still check answered (`opinion`), it replaces the face model's scores; otherwise ours stand.
+        An AI label in the file is decisive on its own: the answer is "signs", with "file" named first.
         """
         calibration = self._calibrations.get(mode, self.calibration)
-        still_face = (
-            None if not opinion or "error" in opinion else max(opinion.values())
-        )
-        # With the still check's answer, it replaces our face model, and the generated-video check stops
-        # deciding: the still check already looks for AI-made faces, so ours only added its false alarms. Ours
-        # decide again when the still check cannot answer.
-        parts = [
-            r.scores() | ({"face": None, "gen": None} if still_face is not None else {})
-            for r in reports
-        ]
+        parts = [r.scores() for r in reports]
         decision = calibration.decide_parts(parts)
         checked = sum(p is not None for p in decision.parts)
         flag, lower = calibration.limits(max(checked, 1))  # each check's own bar
@@ -266,21 +237,18 @@ class Detector:
             "file_check": labels,
             "timeline": timeline,
             "lines": {"flag": SHOWN_FLAG, "lower": SHOWN_LOWER},
-            # The main meter: the evidence sum of all checks on the page's scale (The still check's
-            # reading joins it below when that is higher).
+            # The main meter: the evidence sum of all checks on the page's scale.
             "overall": shown(decision.combined, read_flag, read_lower),
             "raw_lines": {"flag": flag, "lower": lower},
             "explain": _face_explanation(reports),
         }
-        if still_face is not None:
-            _apply_still_face(outcome, still_face)
         _highest_check_decides(outcome)
         if labels:
             outcome["kind"], outcome["raised"] = (
                 "signs",
                 ["file", *[c for c in outcome["raised"] if c != "file"]],
             )
-        outcome["generator"] = _generator(reports, labels, outcome, opinion)
+        outcome["generator"] = _generator(reports, labels, outcome)
         if outcome["kind"] == "cant_check":
             outcome["reason"] = (
                 "Neither the face nor the voice could be checked: "
@@ -291,38 +259,6 @@ class Detector:
                 )
             )
         return outcome
-
-
-def _settled(asking) -> dict:
-    """The still check's answer, or an error that makes our face model answer instead."""
-    try:
-        return asking.result()
-    except Exception:  # noqa: BLE001 - any failure there falls back to our own face model
-        log.exception("The still check failed")
-        return {"error": "failed"}
-
-
-FIRST_STILL = 1.5  # seconds: the middle of the first part, where the face usually is
-
-
-# The still check gives probabilities, not percentiles among our real clips; these lines set where
-# its score flags (0.90) and where it means "can't tell" (0.50) on the page's 0..1 scale.
-STILL_FLAG, STILL_LOWER = 0.90, 0.50
-
-
-def _still_display(p: float) -> float:
-    """The still check's probability on the page's scale, whose lines sit at 0.4 and 0.6."""
-    if p < STILL_LOWER:
-        return round(p / STILL_LOWER * SHOWN_LOWER, 3)
-    if p < STILL_FLAG:
-        return round(
-            SHOWN_LOWER
-            + (p - STILL_LOWER)
-            / (STILL_FLAG - STILL_LOWER)
-            * (SHOWN_FLAG - SHOWN_LOWER),
-            3,
-        )
-    return round(SHOWN_FLAG + (p - STILL_FLAG) / (1 - STILL_FLAG) * (1 - SHOWN_FLAG), 3)
 
 
 # Below the flag line the overall is a weighted average of the checks (Vaibhav, 11-20). Lip sync counts half:
@@ -372,29 +308,7 @@ def _highest_check_decides(outcome: dict) -> None:
     )
 
 
-def _apply_still_face(outcome: dict, p: float) -> None:
-    outcome["checks"]["face"] = {
-        "percentile": None,
-        "score": _still_display(p),
-        "reason": None,
-    }
-    outcome["overall"] = max(outcome.get("overall") or 0.0, _still_display(p))
-    # The still was taken in the part holding FIRST_STILL; that part shows the still check's reading too.
-    for part in outcome.get("timeline", []):
-        if part["start"] <= FIRST_STILL < part["end"]:
-            part["reading"] = max(part["reading"] or 0.0, _still_display(p))
-            part["checks"] = {**part["checks"], "face": _still_display(p)}
-            break
-    if p >= STILL_FLAG:
-        outcome["raised"] = [*outcome["raised"], "face"]
-        outcome["kind"] = "signs"
-    elif outcome["kind"] == "cant_check":
-        outcome["kind"] = "cant_tell" if p >= STILL_LOWER else "no_signs"
-    elif p >= STILL_LOWER and outcome["kind"] == "no_signs":
-        outcome["kind"] = "cant_tell"
-
-
-def _generator(reports, labels: list[str], outcome: dict, opinion: dict | None) -> dict:
+def _generator(reports, labels: list[str], outcome: dict) -> dict:
     """Which tool may have made the upload: the one a file label names, else the generated-video check's
     closest match among the generators it learned, given only when the upload looks generated."""
     for label in labels:
@@ -406,11 +320,8 @@ def _generator(reports, labels: list[str], outcome: dict, opinion: dict | None) 
             "share": None,
             "sure": named is not None,
         }
-    if opinion and "error" not in opinion:
-        looks = opinion.get("ai_generated", 0.0) >= STILL_LOWER
-    else:
-        gen = outcome["checks"].get("gen") or {}
-        looks = "gen" in outcome["raised"] or (gen.get("score") or 0.0) >= SHOWN_LOWER
+    gen = outcome["checks"].get("gen") or {}
+    looks = "gen" in outcome["raised"] or (gen.get("score") or 0.0) >= SHOWN_LOWER
     if not looks:
         return {"suspected": False}
     scored = [
@@ -431,8 +342,8 @@ def _generator(reports, labels: list[str], outcome: dict, opinion: dict | None) 
     return {"suspected": True, "source": "model", **guess}
 
 
-def _still_time(reports) -> float:
-    """Where to take the one still for the still check: the face frame our face model cited first,
+def _describe_time(reports) -> float:
+    """Where to take the still to describe: the face frame our face model cited first,
     else the middle of the first part."""
     frames = (_face_explanation(reports) or {}).get("frames") or []
     if frames:
